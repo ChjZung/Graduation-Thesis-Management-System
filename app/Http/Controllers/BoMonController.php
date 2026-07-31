@@ -22,8 +22,17 @@ class BoMonController extends Controller
 
     public function store(Request $request)
     {
-        BoMon::create($request->all());
-        return redirect()->route('bomon.index')->with('success', 'Thêm thành công!');
+        $request->validate([
+            'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon',
+            'MoTa' => 'nullable|string|max:500'
+        ], [
+            'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
+            'TenBoMon.unique' => 'Tên bộ môn này đã tồn tại trong hệ thống.',
+            'TenBoMon.max' => 'Tên bộ môn không được vượt quá 100 ký tự.'
+        ]);
+
+        BoMon::create($request->only(['TenBoMon', 'MoTa']));
+        return redirect()->route('bomon.index')->with('success', 'Thêm bộ môn thành công!');
     }
 
     public function edit($id)
@@ -35,8 +44,18 @@ class BoMonController extends Controller
     public function update(Request $request, $id)
     {
         $bomon = BoMon::findOrFail($id);
-        $bomon->update($request->all());
-        return redirect()->route('bomon.index')->with('success', 'Cập nhật thành công!');
+
+        $request->validate([
+            'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon,' . $id . ',MaBoMon',
+            'MoTa' => 'nullable|string|max:500'
+        ], [
+            'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
+            'TenBoMon.unique' => 'Tên bộ môn này đã tồn tại trong hệ thống.',
+            'TenBoMon.max' => 'Tên bộ môn không được vượt quá 100 ký tự.'
+        ]);
+
+        $bomon->update($request->only(['TenBoMon', 'MoTa']));
+        return redirect()->route('bomon.index')->with('success', 'Cập nhật bộ môn thành công!');
     }
 
     public function destroy($id)

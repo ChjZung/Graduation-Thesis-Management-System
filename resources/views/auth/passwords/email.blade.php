@@ -90,22 +90,41 @@
 <div class="reset-container">
     <i class="fa-solid fa-unlock-keyhole reset-icon"></i>
     <div class="reset-title">Khôi Phục Mật Khẩu</div>
-    <div class="reset-desc">Nhập địa chỉ Email của bạn để nhận đường dẫn đặt lại mật khẩu.</div>
+    <div class="reset-desc">Vui lòng nhập Mã số (MSSV/Mã GV) và Họ tên để gửi yêu cầu reset mật khẩu tới Admin.</div>
 
     @if (session('status'))
-        <div class="alert alert-success border-0 shadow-sm" role="alert" style="border-radius: 10px;">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('status') }}
+        <div class="alert alert-info border-0 shadow-sm" role="alert" style="border-radius: 10px;">
+            <i class="fa-solid fa-circle-info me-2"></i> {{ session('status') }}
         </div>
     @endif
 
-    <form method="POST" action="{{ route('password.email') }}" class="text-start">
+    <form method="POST" action="{{ route('password.send_request') }}" class="text-start">
         @csrf
 
         <div class="mb-3">
-            <label for="email" class="form-label fw-bold text-muted" style="font-size: 0.85rem;">Địa chỉ Email</label>
-            <input id="email" type="email" class="form-control form-control-custom @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="ví dụ: sinhvien@gmail.com">
+            <label class="form-label fw-bold text-muted" style="font-size: 0.85rem;">Bạn là</label>
+            <select name="Role" class="form-select form-control-custom" required>
+                <option value="Sinh viên" {{ old('Role') == 'Sinh viên' ? 'selected' : '' }}>Sinh viên</option>
+                <option value="Giảng viên" {{ old('Role') == 'Giảng viên' ? 'selected' : '' }}>Giảng viên</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="TenDangNhap" class="form-label fw-bold text-muted" style="font-size: 0.85rem;">Mã Số (MSSV / Mã GV) <span class="text-danger">*</span></label>
+            <input id="TenDangNhap" type="text" class="form-control form-control-custom @error('TenDangNhap') is-invalid @enderror" name="TenDangNhap" value="{{ old('TenDangNhap') }}" required autofocus placeholder="Ví dụ: 2001201234">
             
-            @error('email')
+            @error('TenDangNhap')
+                <span class="invalid-feedback" role="alert">
+                    <strong>{{ $message }}</strong>
+                </span>
+            @enderror
+        </div>
+
+        <div class="mb-3">
+            <label for="HoTen" class="form-label fw-bold text-muted" style="font-size: 0.85rem;">Họ và Tên <span class="text-danger">*</span></label>
+            <input id="HoTen" type="text" class="form-control form-control-custom @error('HoTen') is-invalid @enderror" name="HoTen" value="{{ old('HoTen') }}" required placeholder="Ví dụ: Nguyễn Văn A">
+            
+            @error('HoTen')
                 <span class="invalid-feedback" role="alert">
                     <strong>{{ $message }}</strong>
                 </span>
@@ -113,7 +132,7 @@
         </div>
 
         <button type="submit" class="btn btn-reset">
-            Gửi Link Khôi Phục <i class="fa-solid fa-paper-plane ms-1"></i>
+            Gửi Yêu Cầu Cho Admin <i class="fa-solid fa-paper-plane ms-1"></i>
         </button>
     </form>
     

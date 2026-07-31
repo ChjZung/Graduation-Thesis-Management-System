@@ -41,20 +41,35 @@ class SanPhamController extends Controller
     {
         $request->validate([
             'TenSanPham' => 'required|string|max:200',
-            'FileUpLoad' => 'nullable|file|max:20480',
-            'LinkFile' => 'nullable|string'
+            'FileUpLoad' => 'required|file|max:20480',
+            'LinkFile' => 'required|url',
+            'MaNhom' => 'nullable|exists:nhom_do_ans,MaNhom'
         ], [
-            'TenSanPham.required' => 'Vui lòng nhập tên sản phẩm / source code.'
+            'TenSanPham.required' => 'Vui lòng nhập tên sản phẩm / source code.',
+            'FileUpLoad.required' => 'Vui lòng tải lên tệp đính kèm sản phẩm (.zip, .rar, .pdf).',
+            'LinkFile.required' => 'Vui lòng nhập liên kết GitHub repository.',
+            'LinkFile.url' => 'Liên kết GitHub không đúng định dạng URL.'
         ]);
 
         $sv = SinhVien::where('MaTK', Auth::user()->MaTK)->first();
-        $thanhVien = ThanhVienNhom::where('MaSV', $sv->MaSV)->whereIn('TrangThai', ['da_tham_gia', 'da_chap_nhan'])->first();
 
-        if (!$thanhVien) {
+        // Đọc MaNhom từ form truyền lên (nếu không có, lấy nhóm đầu tiên)
+        $maNhom = $request->input('MaNhom');
+        if (!$maNhom) {
+            $thanhVien = ThanhVienNhom::where('MaSV', $sv->MaSV)->whereIn('TrangThai', ['da_tham_gia', 'da_chap_nhan'])->first();
+            $maNhom = $thanhVien->MaNhom ?? null;
+        }
+
+        if (!$maNhom) {
             return redirect()->back()->withErrors('Bạn chưa tham gia nhóm nào!');
         }
 
-        $nhom = NhomDoAn::with('dangKyDeTai.deTai')->findOrFail($thanhVien->MaNhom);
+        $isMember = ThanhVienNhom::where('MaSV', $sv->MaSV)->where('MaNhom', $maNhom)->whereIn('TrangThai', ['da_tham_gia', 'da_chap_nhan'])->exists();
+        if (!$isMember) {
+            return redirect()->back()->withErrors('Bạn không thuộc nhóm này!');
+        }
+
+        $nhom = NhomDoAn::with('dangKyDeTai.deTai')->findOrFail($maNhom);
 
         if ($nhom->TruongNhom != $sv->MaSV) {
             return redirect()->back()->withErrors('Chỉ trưởng nhóm mới được nộp sản phẩm!');
@@ -73,16 +88,14 @@ class SanPhamController extends Controller
         }
 
         $fileService = new FileUploadService();
-        $fileOrLink = $fileService->handleUploadOrLink($request, 'FileUpLoad', 'LinkFile', 'sanpham');
-
-        if (!$fileOrLink) {
-            return redirect()->back()->withErrors('Vui lòng nhập Link hoặc Tải lên File đính kèm sản phẩm.');
-        }
+        $filePath = $fileService->handleUploadOrLink($request, 'FileUpLoad', 'LinkFile', 'sanpham');
+        $gitUrl = $request->input('LinkFile');
 
         $sp = SanPham::create([
             'MaNhom' => $nhom->MaNhom,
             'TenSanPham' => $request->TenSanPham,
-            'LinkFile' => $fileOrLink,
+            'LinkFile' => $filePath,
+            'LinkSourceCode' => $gitUrl,
             'NgayNop' => date('Y-m-d')
         ]);
 
@@ -96,7 +109,7 @@ class SanPhamController extends Controller
 
         AuditLog::log('nop_san_pham', 'SanPham', $sp->MaSanPham ?? null, ['MaNhom' => $nhom->MaNhom, 'TenSanPham' => $sp->TenSanPham]);
 
-        return redirect()->back()->with('success', 'Nộp sản phẩm đồ án thành công!');
+        return redirect()->route('sinhvien.sanpham.index', ['maNhom' => $nhom->MaNhom])->with('success', 'Nộp sản phẩm đồ án thành công!');
     }
 
     /**

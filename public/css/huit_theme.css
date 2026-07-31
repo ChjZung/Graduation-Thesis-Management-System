@@ -443,119 +443,145 @@ body {
 /* ═══════════════════════════════════════════════
    BUTTONS
 ═══════════════════════════════════════════════ */
-.btn-huit-primary {
-    background: linear-gradient(135deg, var(--huit-blue) 0%, var(--huit-navy) 100%);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 9px 22px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: var(--transition);
+/* ═══════════════════════════════════════════════
+   BUTTONS (UNIFIED PREMIUM SYSTEM FOR ALL ROLES)
+═══════════════════════════════════════════════ */
+.btn {
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.btn-huit-primary:hover, .btn-huit-primary:focus {
-    background: linear-gradient(135deg, #0059A8 0%, #003B73 100%);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(0, 114, 206, 0.4);
-    transform: translateY(-1px);
-}
-
-.btn-huit-secondary {
-    background: var(--columbia-blue);
-    color: var(--huit-blue-dark);
-    border: 1.5px solid var(--uranian-blue);
-    border-radius: var(--radius-sm);
-    padding: 9px 22px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.btn-huit-secondary:hover {
-    background: var(--uranian-blue);
-    border-color: var(--light-sky);
-    color: var(--huit-blue-dark);
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-huit-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 7px 16px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
+    justify-content: center;
     gap: 6px;
-    cursor: pointer;
-    text-decoration: none;
 }
 
-.btn-huit-danger:hover {
-    background: linear-gradient(135deg, #b02a37 0%, #842029 100%);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
-    transform: translateY(-1px);
+.btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
-.btn-huit-warning {
-    background: linear-gradient(135deg, #fd7e14 0%, #dc6f0d 100%);
-    color: #fff;
-    border: none;
+.btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Primary Button (HUIT Gradient Blue) */
+.btn-primary, .btn-primary-custom, .btn-huit-primary {
+    background: linear-gradient(135deg, #0072CE 0%, #004A8F 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 114, 206, 0.25);
+    padding: 8px 20px;
     border-radius: var(--radius-sm);
-    padding: 7px 16px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    text-decoration: none;
+}
+.btn-primary:hover, .btn-primary-custom:hover, .btn-huit-primary:hover {
+    background: linear-gradient(135deg, #0059A8 0%, #003B73 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(0, 114, 206, 0.4) !important;
 }
 
-.btn-huit-warning:hover {
-    background: linear-gradient(135deg, #dc6f0d 0%, #b86109 100%);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(253,126,20,0.35);
-    transform: translateY(-1px);
-}
-
-.btn-huit-success {
-    background: linear-gradient(135deg, #198754 0%, #157347 100%);
-    color: #fff;
-    border: none;
+/* Success Button (Emerald Green Gradient) */
+.btn-success, .btn-huit-success {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    padding: 8px 20px;
     border-radius: var(--radius-sm);
-    padding: 7px 16px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    text-decoration: none;
+}
+.btn-success:hover, .btn-huit-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.38) !important;
 }
 
-.btn-huit-success:hover {
-    background: linear-gradient(135deg, #157347 0%, #0d6035 100%);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(25,135,84,0.35);
-    transform: translateY(-1px);
+/* Outline Success Button (Soft emerald background with strong border) */
+.btn-outline-success {
+    color: #047857 !important;
+    border: 1.8px solid #10B981 !important;
+    background: #ECFDF5 !important;
+}
+.btn-outline-success:hover {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Outline Primary Button */
+.btn-outline-primary {
+    color: #0072CE !important;
+    border: 1.8px solid #0072CE !important;
+    background: #F0F7FF !important;
+}
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #0072CE 0%, #004A8F 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(0, 114, 206, 0.35) !important;
+}
+
+/* Outline Secondary Button */
+.btn-outline-secondary, .btn-huit-secondary {
+    color: #334155 !important;
+    border: 1.8px solid #CBD5E1 !important;
+    background: #F8FAFC !important;
+}
+.btn-outline-secondary:hover, .btn-huit-secondary:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(71, 85, 105, 0.25) !important;
+}
+
+/* Warning Button (Warm Amber Gradient) */
+.btn-warning, .btn-huit-warning {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+.btn-warning:hover, .btn-huit-warning:hover {
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Danger Button (Rose Red Gradient) */
+.btn-danger, .btn-huit-danger {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+.btn-danger:hover, .btn-huit-danger:hover {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35) !important;
+}
+
+/* Info Button */
+.btn-info {
+    background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+.btn-info:hover {
+    background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.35) !important;
+}
+
+/* Light Button (Slate tinted light background) */
+.btn-light {
+    background: #F1F5F9 !important;
+    color: #334155 !important;
+    border: 1px solid #CBD5E1 !important;
+}
+.btn-light:hover {
+    background: #E2E8F0 !important;
+    color: #0F172A !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ═══════════════════════════════════════════════

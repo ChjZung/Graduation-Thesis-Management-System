@@ -28,7 +28,7 @@ class NhomController extends Controller
             ->pluck('MaNhom');
 
         $nhoms = NhomDoAn::whereIn('MaNhom', $nhomIds)
-            ->with(['thanhVienNhoms.sinhVien.lop', 'chamDiem', 'monHoc', 'hocKy', 'dangKyDeTai.deTai.giangVien', 'sanPhams'])
+            ->with(['thanhVienNhoms.sinhVien.lop', 'chamDiem', 'monHoc', 'hocKy', 'lopHocPhan.giangVien', 'dangKyDeTai.deTai.giangVien', 'sanPhams'])
             ->get();
 
         // Nạp tiến độ báo cáo cho từng nhóm
@@ -49,49 +49,69 @@ class NhomController extends Controller
         $currentHocKy = HocKy::latest('MaHocKy')->first();
         $currentHocKyId = $currentHocKy->MaHocKy ?? 1;
 
-        // 3. Môn học thuộc lớp sinh viên & chưa có nhóm trong học kỳ hiện tại
-        $subjectIdsForClass = DeTai::where('MaLop', $sinhVien->MaLop)->pluck('MaMon')->toArray();
-        $allClassMonHocs = empty($subjectIdsForClass) 
-            ? MonHoc::all() 
-            : MonHoc::whereIn('MaMon', array_unique($subjectIdsForClass))->get();
+        // Danh sách tất cả Lớp Học Phần đang mở để sinh viên lựa chọn
+        $allLopHocPhans = \App\Models\LopHocPhan::with(['monHoc', 'hocKy', 'giangVien'])
+            ->where('TrangThai', 'Đang mở')
+            ->orderBy('MaLopHP', 'desc')
+            ->get();
 
-        // Môn học mà sinh viên ĐÃ CÓ NHÓM trong học kỳ này
-        $joinedMonIds = NhomDoAn::whereIn('MaNhom', $nhomIds)
+        // 3. Môn học mà sinh viên CHƯA CÓ NHÓM ĐANG HOẠT ĐỘNG trong học kỳ hiện tại
+        $allClassMonHocs = MonHoc::all();
+
+        // Môn học mà sinh viên ĐÃ CÓ NHÓM ĐANG HOẠT ĐỘNG (chưa chấm điểm & chưa kết thúc) trong học kỳ hiện tại
+        $joinedActiveMonIds = NhomDoAn::whereIn('MaNhom', $nhomIds)
             ->where('MaHocKy', $currentHocKyId)
+            ->whereDoesntHave('chamDiem')
+            ->whereNotIn('TrangThai', ['Đã hoàn thành', 'Đã chấm điểm'])
             ->pluck('MaMon')
             ->toArray();
 
-        // Lọc môn học sinh viên CHƯA tham gia nhóm
-        $availableMonHocs = $allClassMonHocs->reject(function ($mh) use ($joinedMonIds) {
-            return in_array($mh->MaMon, $joinedMonIds);
+        // Lọc môn học sinh viên CHƯA tham gia nhóm đang hoạt động
+        $availableMonHocs = $allClassMonHocs->reject(function ($mh) use ($joinedActiveMonIds) {
+            return in_array($mh->MaMon, $joinedActiveMonIds);
         });
 
-        return view('sinhvien.nhom.index', compact('nhoms', 'sinhVien', 'loiMois', 'hockys', 'availableMonHocs', 'currentHocKyId'));
+        return view('sinhvien.nhom.index', compact('nhoms', 'sinhVien', 'loiMois', 'hockys', 'availableMonHocs', 'allLopHocPhans', 'currentHocKyId'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'TenNhom' => 'required|string|max:100',
-            'MaMon' => 'required|exists:mon_hocs,MaMon',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy'
+            'MaLopHP' => 'nullable|exists:lop_hoc_phans,MaLopHP',
+            'MaMon' => 'required_without:MaLopHP|nullable|exists:mon_hocs,MaMon',
+            'MaHocKy' => 'required_without:MaLopHP|nullable|exists:hoc_kies,MaHocKy'
         ], [
             'TenNhom.required' => 'Vui lòng nhập tên nhóm đồ án.',
-            'MaMon.required' => 'Vui lòng chọn môn học.',
-            'MaHocKy.required' => 'Vui lòng chọn học kỳ.'
+            'MaMon.required_without' => 'Vui lòng chọn môn học.',
+            'MaHocKy.required_without' => 'Vui lòng chọn học kỳ.'
         ]);
 
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
 
-        // Kiểm tra sinh viên đã thuộc nhóm nào trong môn học này ở học kỳ này chưa
+        $maMon = $request->MaMon;
+        $maHocKy = $request->MaHocKy;
+        $maLopHP = $request->MaLopHP;
+
+        if ($maLopHP) {
+            $lhp = \App\Models\LopHocPhan::find($maLopHP);
+            if ($lhp) {
+                $maMon = $lhp->MaMon;
+                $maHocKy = $lhp->MaHocKy;
+            }
+        }
+
+        // Kiểm tra sinh viên đã thuộc nhóm ĐANG HOẠT ĐỘNG nào trong môn học này ở học kỳ này chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->whereHas('nhomDoAn', function ($q) use ($request) {
-                $q->where('MaMon', $request->MaMon)
-                  ->where('MaHocKy', $request->MaHocKy);
+            ->whereHas('nhomDoAn', function ($q) use ($maMon, $maHocKy) {
+                $q->where('MaMon', $maMon)
+                  ->where('MaHocKy', $maHocKy)
+                  ->whereDoesntHave('chamDiem')
+                  ->whereNotIn('TrangThai', ['Đã hoàn thành', 'Đã chấm điểm']);
             })->exists();
 
         if ($alreadyInGroup) {
-            return redirect()->back()->withErrors('Bạn đã có nhóm đồ án cho môn học này trong học kỳ đã chọn. Mỗi môn học chỉ được tham gia duy nhất một nhóm!')->withInput();
+            return redirect()->back()->withErrors('Bạn đang có một nhóm đồ án ĐANG HOẠT ĐỘNG (chưa chấm điểm/kết thúc) cho môn học này trong học kỳ đã chọn!')->withInput();
         }
 
         try {
@@ -99,8 +119,9 @@ class NhomController extends Controller
 
             $nhom = NhomDoAn::create([
                 'TenNhom' => $request->TenNhom,
-                'MaMon' => $request->MaMon,
-                'MaHocKy' => $request->MaHocKy,
+                'MaMon' => $maMon,
+                'MaHocKy' => $maHocKy,
+                'MaLopHP' => $maLopHP,
                 'TruongNhom' => $sinhVien->MaSV,
                 'TrangThai' => 'Đang hoạt động'
             ]);
@@ -141,19 +162,33 @@ class NhomController extends Controller
         $maHocKy = $nhom ? $nhom->MaHocKy : null;
 
         $query = SinhVien::with('taiKhoan')
-            ->where('MaLop', $svCurrent->MaLop)
-            ->where('MaSV', '!=', $svCurrent->MaSV)
-            ->where(function ($q) use ($term) {
-                $q->where('HoTen', 'LIKE', "%{$term}%")
-                  ->orWhereHas('taiKhoan', function ($tkQ) use ($term) {
-                      $tkQ->where('TenDangNhap', 'LIKE', "%{$term}%");
-                  });
-            });
+            ->where('MaSV', '!=', $svCurrent->MaSV);
 
-        // Loại bỏ những sinh viên đã ở trong nhóm thuộc cùng môn học & học kỳ
+        if ($nhom && $nhom->MaLopHP) {
+            $svLhpIds = \App\Models\SinhVienLopHocPhan::where('MaLopHP', $nhom->MaLopHP)->pluck('MaSV');
+            if ($svLhpIds->isNotEmpty()) {
+                $query->whereIn('MaSV', $svLhpIds);
+            } else {
+                $query->where('MaLop', $svCurrent->MaLop);
+            }
+        } else {
+            $query->where('MaLop', $svCurrent->MaLop);
+        }
+
+        $query->where(function ($q) use ($term) {
+            $q->where('HoTen', 'LIKE', "%{$term}%")
+              ->orWhereHas('taiKhoan', function ($tkQ) use ($term) {
+                  $tkQ->where('TenDangNhap', 'LIKE', "%{$term}%");
+              });
+        });
+
+        // Loại bỏ những sinh viên đã ở trong nhóm ĐANG HOẠT ĐỘNG thuộc cùng môn học & học kỳ
         if ($maMon && $maHocKy) {
             $busySvIds = ThanhVienNhom::whereHas('nhomDoAn', function ($q) use ($maMon, $maHocKy) {
-                $q->where('MaMon', $maMon)->where('MaHocKy', $maHocKy);
+                $q->where('MaMon', $maMon)
+                  ->where('MaHocKy', $maHocKy)
+                  ->whereDoesntHave('chamDiem')
+                  ->whereNotIn('TrangThai', ['Đã hoàn thành', 'Đã chấm điểm']);
             })->pluck('MaSV')->toArray();
 
             $query->whereNotIn('MaSV', $busySvIds);
@@ -225,20 +260,30 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Bạn không thể tự mời chính mình!');
         }
 
-        // 3. Kiểm tra phải cùng lớp
-        if ($svThem->MaLop != $sinhVien->MaLop) {
+        // 3. Kiểm tra phải cùng Lớp Học Phần (hoặc cùng Lớp)
+        if ($nhom->MaLopHP) {
+            $svLhpExists = \App\Models\SinhVienLopHocPhan::where('MaLopHP', $nhom->MaLopHP)
+                ->where('MaSV', $svThem->MaSV)
+                ->exists();
+            $hasLhpStudents = \App\Models\SinhVienLopHocPhan::where('MaLopHP', $nhom->MaLopHP)->exists();
+            if ($hasLhpStudents && !$svLhpExists) {
+                return redirect()->back()->withErrors('Bạn chỉ có thể mời sinh viên đã đăng ký Lớp Học Phần ' . ($nhom->lopHocPhan->TenLopHP ?? '') . '!');
+            }
+        } elseif ($svThem->MaLop != $sinhVien->MaLop) {
             return redirect()->back()->withErrors('Bạn chỉ có thể mời sinh viên học CÙNG LỚP với bạn!');
         }
 
-        // 4. Kiểm tra sinh viên đã ở trong nhóm môn học này chưa
+        // 4. Kiểm tra sinh viên đã ở trong nhóm ĐANG HOẠT ĐỘNG môn học này chưa
         $inOtherGroup = ThanhVienNhom::where('MaSV', $svThem->MaSV)
             ->whereHas('nhomDoAn', function ($q) use ($nhom) {
                 $q->where('MaMon', $nhom->MaMon)
-                  ->where('MaHocKy', $nhom->MaHocKy);
+                  ->where('MaHocKy', $nhom->MaHocKy)
+                  ->whereDoesntHave('chamDiem')
+                  ->whereNotIn('TrangThai', ['Đã hoàn thành', 'Đã chấm điểm']);
             })->exists();
 
         if ($inOtherGroup) {
-            return redirect()->back()->withErrors('Sinh viên này đã tham gia một nhóm khác cho môn học này!');
+            return redirect()->back()->withErrors('Sinh viên này đã tham gia một nhóm đang hoạt động khác cho môn học này!');
         }
 
         // 5. Kiểm tra lời mời trùng lặp
@@ -288,16 +333,18 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Không thể gia nhập: Nhóm đã đủ 5 thành viên tối đa!');
         }
 
-        // 2. Kiểm tra nếu sinh viên đã lỡ gia nhập nhóm khác trong cùng môn học
+        // 2. Kiểm tra nếu sinh viên đã lỡ gia nhập nhóm ĐANG HOẠT ĐỘNG khác trong cùng môn học
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->whereHas('nhomDoAn', function ($q) use ($nhom) {
                 $q->where('MaMon', $nhom->MaMon)
-                  ->where('MaHocKy', $nhom->MaHocKy);
+                  ->where('MaHocKy', $nhom->MaHocKy)
+                  ->whereDoesntHave('chamDiem')
+                  ->whereNotIn('TrangThai', ['Đã hoàn thành', 'Đã chấm điểm']);
             })->exists();
 
         if ($alreadyInGroup) {
             $loiMoi->update(['TrangThai' => 'da_tu_choi', 'NgayPhanHoi' => now()]);
-            return redirect()->back()->withErrors('Bạn đã ở trong một nhóm khác của môn học này rồi!');
+            return redirect()->back()->withErrors('Bạn đang ở trong một nhóm đang hoạt động khác của môn học này rồi!');
         }
 
         DB::transaction(function () use ($loiMoi, $nhom, $sinhVien) {

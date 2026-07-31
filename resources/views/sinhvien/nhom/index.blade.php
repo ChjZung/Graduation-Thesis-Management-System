@@ -22,7 +22,7 @@
         <h4 class="mb-1 text-primary fw-bold"><i class="fa-solid fa-users-gear me-2"></i>Nhóm Đồ Án Của Tôi</h4>
         <p class="text-muted small mb-0">Quản lý nhóm, xem tiến độ, nộp sản phẩm và theo dõi nhận xét giảng viên</p>
     </div>
-    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+    <button type="button" class="btn btn-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createGroupModal">
         <i class="fa-solid fa-plus me-2"></i>Tạo Nhóm Mới
     </button>
 </div>
@@ -83,11 +83,14 @@
             <div>
                 <h5 class="mb-1 fw-bold text-primary">
                     <i class="fa-solid fa-users me-2"></i>{{ $nhom->TenNhom }}
-                    <span class="badge bg-{{ $nhom->TrangThai == 'Đang hoạt động' || $nhom->TrangThai == 'Đã nộp sản phẩm' ? 'success' : 'secondary' }} fs-7 ms-2">
-                        {{ $nhom->TrangThai }}
+                    <span class="badge bg-{{ $nhom->TrangThai == 'Đã có điểm' ? 'success' : ($nhom->TrangThai == 'Đang hoạt động' || $nhom->TrangThai == 'Đã nộp sản phẩm' ? 'info' : 'secondary') }} fs-7 ms-2">
+                        <i class="fa-solid {{ $nhom->TrangThai == 'Đã có điểm' ? 'fa-award' : 'fa-circle-check' }} me-1"></i>{{ $nhom->TrangThai }}
                     </span>
                 </h5>
                 <div class="text-muted small">
+                    @if($nhom->lopHocPhan)
+                        <span class="badge bg-primary-subtle text-primary border border-primary me-2"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp HP: {{ $nhom->lopHocPhan->TenLopHP }}</span>
+                    @endif
                     <i class="fa-solid fa-book me-1"></i>Môn: <strong>{{ $nhom->monHoc->TenMon ?? '—' }}</strong> &nbsp;|&nbsp;
                     <i class="fa-solid fa-calendar me-1"></i>Học kỳ: <strong>{{ $nhom->hocKy->TenHocKy ?? '—' }}</strong>
                 </div>
@@ -157,7 +160,7 @@
                     {{-- Mời thành viên mới (Chỉ dành cho Trưởng nhóm) --}}
                     @if($nhom->TruongNhom == $sinhVien->MaSV && $nhom->thanhVienNhoms->count() < 5)
                     <div class="p-3 bg-white border rounded shadow-sm">
-                        <h6 class="fw-bold small text-success mb-2"><i class="fa-solid fa-user-plus me-1"></i>Mời thành viên mới vào nhóm (MSSV Cùng Lớp)</h6>
+                        <h6 class="fw-bold small text-success mb-2"><i class="fa-solid fa-user-plus me-1"></i>Mời thành viên mới vào nhóm (Cùng Lớp Học Phần)</h6>
                         <form action="{{ route('sinhvien.nhom.moiThanhVien') }}" method="POST" class="row g-2">
                             @csrf
                             <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
@@ -179,13 +182,34 @@
                 <div class="col-md-5">
                     {{-- Điểm số tổng kết nếu có --}}
                     @if($nhom->chamDiem)
-                    <div class="alert alert-success border-0 shadow-sm p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="fw-bold text-success mb-0"><i class="fa-solid fa-award me-1"></i>KẾT QUẢ ĐIỂM SỐ</h6>
-                                <small class="text-muted">Nhận xét: {{ $nhom->chamDiem->NhanXet ?? 'Chưa có' }}</small>
+                    <div class="card border-0 shadow-sm mb-3 bg-success-subtle border-start border-success border-4 rounded-3">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-success mb-0">
+                                    <i class="fa-solid fa-award me-1"></i>KẾT QUẢ ĐIỂM SỐ ĐỒ ÁN
+                                </h6>
+                                <span class="badge bg-success fs-6 fw-bold">Điểm tổng: {{ number_format($nhom->chamDiem->DiemTong ?? 0, 1) }} / 10</span>
                             </div>
-                            <div class="display-6 fw-bold text-success">{{ number_format($nhom->chamDiem->DiemTong ?? 0, 1) }}</div>
+                            <div class="row g-2 text-center my-2">
+                                <div class="col-6">
+                                    <div class="bg-white p-2 rounded border">
+                                        <small class="text-muted d-block">Điểm Báo Cáo</small>
+                                        <strong class="text-dark fs-5">{{ number_format($nhom->chamDiem->DiemBaoCao ?? 0, 1) }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-white p-2 rounded border">
+                                        <small class="text-muted d-block">Điểm Bảo Vệ</small>
+                                        <strong class="text-dark fs-5">{{ number_format($nhom->chamDiem->DiemBaoVe ?? 0, 1) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            @if($nhom->chamDiem->NhanXet)
+                                <div class="small text-muted mt-2 border-top pt-2">
+                                    <i class="fa-solid fa-comment-dots me-1 text-success"></i><strong>Nhận xét:</strong> 
+                                    <i>"{{ $nhom->chamDiem->NhanXet }}"</i>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -261,9 +285,24 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3 p-3 bg-light rounded border border-primary-subtle">
+                        <label class="form-label fw-bold text-primary"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp Học Phần <span class="badge bg-primary text-white ms-1">Mới</span></label>
+                        <select name="MaLopHP" id="select_MaLopHP" class="form-select border-primary" onchange="onLopHocPhanChange(this)">
+                            <option value="">-- Chọn Lớp Học Phần (Khuyên dùng) --</option>
+                            @if(isset($allLopHocPhans))
+                                @foreach($allLopHocPhans as $lhp)
+                                    <option value="{{ $lhp->MaLopHP }}" data-mamon="{{ $lhp->MaMon }}" data-mahocky="{{ $lhp->MaHocKy }}">
+                                        {{ $lhp->TenLopHP }} ({{ $lhp->monHoc->TenMon ?? 'Môn' }} - {{ $lhp->hocKy->TenHocKy ?? 'Kỳ' }} - GV: {{ $lhp->giangVien->HoTen ?? 'Chưa gán' }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div class="form-text text-muted small">Chọn Lớp Học Phần để tự động gán đúng Môn học, Học kỳ và Giảng viên hướng dẫn.</div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Học Kỳ <span class="text-danger">*</span></label>
-                        <select name="MaHocKy" class="form-select" required>
+                        <select name="MaHocKy" id="select_MaHocKy" class="form-select" required>
                             @foreach($hockys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $hk->MaHocKy == $currentHocKyId ? 'selected' : '' }}>
                                     {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
@@ -275,15 +314,15 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Môn Học Đồ Án <span class="text-danger">*</span></label>
                         @if(isset($availableMonHocs) && $availableMonHocs->isNotEmpty())
-                            <select name="MaMon" class="form-select" required>
-                                <option value="">-- Chọn Môn Học CHƯA Có Nhóm --</option>
+                            <select name="MaMon" id="select_MaMon" class="form-select" required>
+                                <option value="">-- Chọn Môn Học --</option>
                                 @foreach($availableMonHocs as $mh)
                                     <option value="{{ $mh->MaMon }}">{{ $mh->TenMon }} ({{ $mh->SoTinChi }} tín chỉ)</option>
                                 @endforeach
                             </select>
                         @else
                             <div class="alert alert-warning mb-0 small">
-                                <i class="fa-solid fa-circle-info me-1"></i>Bạn đã tham gia nhóm đồ án cho tất cả các môn học thuộc lớp trong học kỳ hiện tại!
+                                <i class="fa-solid fa-circle-info me-1"></i>Bạn đã tham gia nhóm đồ án cho tất cả các môn học trong học kỳ hiện tại!
                             </div>
                         @endif
                     </div>
@@ -357,5 +396,20 @@ document.addEventListener('DOMContentLoaded', function() {
     @endforeach
     @endif
 });
+
+function onLopHocPhanChange(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const maMon = selectedOption.getAttribute('data-mamon');
+    const maHocKy = selectedOption.getAttribute('data-mahocky');
+
+    if (maMon) {
+        const monSelect = document.getElementById('select_MaMon');
+        if (monSelect) monSelect.value = maMon;
+    }
+    if (maHocKy) {
+        const hkSelect = document.getElementById('select_MaHocKy');
+        if (hkSelect) hkSelect.value = maHocKy;
+    }
+}
 </script>
 @endsection

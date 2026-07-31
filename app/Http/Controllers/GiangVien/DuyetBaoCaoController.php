@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BaoCaoTienDo;
 use App\Models\NhanXet;
 use App\Models\HuongDan;
+use App\Models\NhomDoAn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,10 +16,15 @@ class DuyetBaoCaoController extends Controller
         $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
         if (!$gv) abort(403);
 
-        // Lấy danh sách các nhóm do giảng viên này hướng dẫn
-        $nhomIds = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom');
-        
-        $baocaos = BaoCaoTienDo::whereIn('MaNhom', $nhomIds)
+        // Lấy danh sách các nhóm do giảng viên này hướng dẫn hoặc thuộc Lớp Học Phần của giảng viên
+        $nhomIds1 = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom')->toArray();
+        $nhomIds2 = NhomDoAn::whereHas('lopHocPhan', function($q) use ($gv) {
+            $q->where('MaGV', $gv->MaGV);
+        })->pluck('MaNhom')->toArray();
+
+        $allNhomIds = array_unique(array_merge($nhomIds1, $nhomIds2));
+
+        $baocaos = BaoCaoTienDo::whereIn('MaNhom', $allNhomIds)
                                ->with(['nhomDoAn', 'nhanXets'])
                                ->orderBy('NgayNop', 'desc')
                                ->paginate(10);

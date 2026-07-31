@@ -6,10 +6,11 @@ class NhomDoAn extends Model
 {
     protected $table = 'nhom_do_ans';
     protected $primaryKey = 'MaNhom';
-    protected $fillable = ['TenNhom', 'MaHocKy', 'MaMon', 'TruongNhom', 'TrangThai'];
+    protected $fillable = ['TenNhom', 'MaHocKy', 'MaMon', 'MaLopHP', 'TruongNhom', 'TrangThai'];
 
     public function hocKy() { return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy'); }
     public function monHoc() { return $this->belongsTo(MonHoc::class, 'MaMon', 'MaMon'); }
+    public function lopHocPhan() { return $this->belongsTo(LopHocPhan::class, 'MaLopHP', 'MaLopHP'); }
     public function sinhVienTruongNhom() { return $this->belongsTo(SinhVien::class, 'TruongNhom', 'MaSV'); }
     public function thanhVienNhoms() { return $this->hasMany(ThanhVienNhom::class, 'MaNhom', 'MaNhom'); }
     public function loiMois() { return $this->hasMany(LoiMoiNhom::class, 'MaNhom', 'MaNhom'); }

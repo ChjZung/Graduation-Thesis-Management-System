@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lop;
 use App\Models\Nganh;
+use App\Models\HocKy;
 use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
 
@@ -13,14 +14,15 @@ class LopController extends Controller
 
     public function index()
     {
-        $lops = Lop::with('nganh')->paginate(10);
+        $lops = Lop::with(['nganh', 'hocKy'])->paginate(10);
         return view('admin.lop.index', compact('lops'));
     }
 
     public function create()
     {
         $nganhs = Nganh::all();
-        return view('admin.lop.create', compact('nganhs'));
+        $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+        return view('admin.lop.create', compact('nganhs', 'hocKies'));
     }
 
     public function store(Request $request)
@@ -28,6 +30,7 @@ class LopController extends Controller
         $request->validate([
             'TenLop' => 'required|string|max:50|unique:lops,TenLop',
             'MaNganh' => 'required|exists:nganhs,MaNganh',
+            'MaHocKy' => 'nullable|exists:hoc_kies,MaHocKy',
             'KhoaHoc' => 'required|string|max:20'
         ], [
             'TenLop.required' => 'Vui lòng nhập tên lớp.',
@@ -36,7 +39,7 @@ class LopController extends Controller
             'KhoaHoc.required' => 'Vui lòng nhập khóa học.'
         ]);
 
-        Lop::create($request->only(['TenLop', 'MaNganh', 'KhoaHoc']));
+        Lop::create($request->only(['TenLop', 'MaNganh', 'MaHocKy', 'KhoaHoc']));
         return redirect()->route('lop.index')->with('success', 'Thêm lớp thành công!');
     }
 
@@ -44,7 +47,8 @@ class LopController extends Controller
     {
         $lop = Lop::findOrFail($id);
         $nganhs = Nganh::all();
-        return view('admin.lop.edit', compact('lop', 'nganhs'));
+        $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+        return view('admin.lop.edit', compact('lop', 'nganhs', 'hocKies'));
     }
 
     public function update(Request $request, $id)
@@ -54,6 +58,7 @@ class LopController extends Controller
         $request->validate([
             'TenLop' => 'required|string|max:50|unique:lops,TenLop,' . $id . ',MaLop',
             'MaNganh' => 'required|exists:nganhs,MaNganh',
+            'MaHocKy' => 'nullable|exists:hoc_kies,MaHocKy',
             'KhoaHoc' => 'required|string|max:20'
         ], [
             'TenLop.required' => 'Vui lòng nhập tên lớp.',
@@ -62,7 +67,7 @@ class LopController extends Controller
             'KhoaHoc.required' => 'Vui lòng nhập khóa học.'
         ]);
 
-        $lop->update($request->only(['TenLop', 'MaNganh', 'KhoaHoc']));
+        $lop->update($request->only(['TenLop', 'MaNganh', 'MaHocKy', 'KhoaHoc']));
         return redirect()->route('lop.index')->with('success', 'Cập nhật thông tin lớp thành công!');
     }
 

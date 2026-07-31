@@ -21,14 +21,10 @@ class SanPhamController extends Controller
         // 1. Nhóm từ bảng HuongDan
         $nhomIds1 = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom')->toArray();
 
-        // 2. Nhóm từ phân công hướng dẫn lớp (qua SinhVien.MaLop — nhom_do_ans không có MaLop)
-        $lopIds = PhanCongHuongDanLop::where('MaGV', $gv->MaGV)->pluck('MaLop')->toArray();
-        $nhomIds2 = [];
-        if (!empty($lopIds)) {
-            $nhomIds2 = \App\Models\ThanhVienNhom::whereHas('sinhVien', function ($q) use ($lopIds) {
-                $q->whereIn('MaLop', $lopIds);
-            })->pluck('MaNhom')->toArray();
-        }
+        // 2. Nhóm thuộc Lớp Học Phần do Giảng viên phụ trách
+        $nhomIds2 = NhomDoAn::whereHas('lopHocPhan', function ($q) use ($gv) {
+            $q->where('MaGV', $gv->MaGV);
+        })->pluck('MaNhom')->toArray();
 
         // 3. Nhóm có đề tài do giảng viên tạo
         $nhomIds3 = DangKyDeTai::whereHas('deTai', function ($q) use ($gv) {

@@ -27,35 +27,45 @@ class ExcelTemplateService
                 ],
                 'note'     => 'Lưu ý: TenBoMon là bắt buộc và không được trùng lặp.'
             ],
+            'sinhvien_lophocphan' => [
+                'filename' => 'Template_SinhVien_LopHocPhan.xlsx',
+                'title'    => 'MẪU NHẬP DANH SÁCH SINH VIÊN VÀO LỚP HỌC PHẦN',
+                'headers'  => ['MSSV', 'HoTen', 'TenLop', 'Email', 'SoDienThoai', 'TenLopHP'],
+                'examples' => [
+                    ['21DTH01001', 'Nguyễn Văn Bảo', '21DTH01', 'bao.nv@st.edu.vn', '0901234567', '14DHTH005'],
+                    ['21DTH02002', 'Trần Thị Bình', '21DTH02', 'binh.tt@st.edu.vn', '0987654321', '14DHTH005'],
+                ],
+                'note'     => 'Lưu ý: Cột MSSV là bắt buộc. Cột TenLop (Lớp hành chính), Email, SoDienThoai dùng để tự động tạo sinh viên nếu chưa có. Cột TenLopHP có thể bỏ qua khi import trực tiếp tại trang Chi Tiết Lớp HP.'
+            ],
             'nganh' => [
                 'filename' => 'Template_Nganh.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU NGÀNH HỌC',
-                'headers'  => ['TenNganh', 'MaBoMon'],
+                'headers'  => ['TenNganh', 'MoTa', 'MaBoMon'],
                 'examples' => [
-                    ['Công Nghệ Thông Tin', 1],
-                    ['Hệ Thống Thông Tin', 1],
+                    ['Công Nghệ Thông Tin', 'Đào tạo kỹ sư CNTT toàn diện', 'Công Nghệ Phần Mềm'],
+                    ['Kỹ Thuật Phần Mềm', 'Chuyên ngành phát triển phần mềm', 1],
                 ],
-                'note'     => 'Lưu ý: TenNganh bắt buộc. MaBoMon phải là ID bộ môn đã tồn tại.'
+                'note'     => 'Lưu ý: TenNganh bắt buộc. MaBoMon có thể điền ID bộ môn hoặc Tên bộ môn.'
             ],
             'lop' => [
                 'filename' => 'Template_Lop.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU LỚP HỌC',
+                'title'    => 'MẪU NHẬP LIỆU LỚP HỌC HÀNH CHÍNH',
                 'headers'  => ['TenLop', 'MaNganh', 'KhoaHoc'],
                 'examples' => [
-                    ['21DTH01', 1, '2021-2025'],
+                    ['21DTH01', 'Công Nghệ Thông Tin', '2021-2025'],
                     ['21DTH02', 1, '2021-2025'],
                 ],
-                'note'     => 'Lưu ý: TenLop bắt buộc không trùng. MaNganh phải là ID ngành đã tồn tại.'
+                'note'     => 'Lưu ý: TenLop bắt buộc không trùng. MaNganh có thể nhập ID Ngành hoặc Tên Ngành.'
             ],
             'monhoc' => [
                 'filename' => 'Template_MonHoc.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU MÔN HỌC',
                 'headers'  => ['TenMon', 'SoTinChi', 'MaBoMon'],
                 'examples' => [
-                    ['Đồ Án Chuyên Ngành Web', 3, 1],
+                    ['Đồ Án Chuyên Ngành Web', 3, 'Công Nghệ Phần Mềm'],
                     ['Lập Trình Di Động', 3, 1],
                 ],
-                'note'     => 'Lưu ý: TenMon bắt buộc. SoTinChi là số nguyên (>0).'
+                'note'     => 'Lưu ý: TenMon bắt buộc. SoTinChi là số nguyên (>0). MaBoMon có thể nhập ID hoặc Tên Bộ Môn.'
             ],
             'hocky' => [
                 'filename' => 'Template_HocKy.xlsx',
@@ -65,36 +75,48 @@ class ExcelTemplateService
                     ['Học kỳ 1', '2025-2026', '2025-09-01', '2026-01-15'],
                     ['Học kỳ 2', '2025-2026', '2026-01-20', '2026-06-01'],
                 ],
-                'note'     => 'Lưu ý: Định dạng ngày YYYY-MM-DD (ví dụ 2025-09-01).'
+                'note'     => 'Lưu ý: TenHocKy và NamHoc không trùng. Định dạng ngày YYYY-MM-DD (ví dụ 2025-09-01).'
             ],
             'giangvien' => [
                 'filename' => 'Template_GiangVien.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU GIẢNG VIÊN',
                 'headers'  => ['TenDangNhap', 'HoTen', 'Email', 'SoDienThoai', 'HocVi', 'MaBoMon'],
                 'examples' => [
-                    ['gv001', 'Nguyễn Văn A', 'gv001@fe.edu.vn', '0901234567', 'Thạc sĩ', 1],
+                    ['gv001', 'Nguyễn Văn A', 'gv001@fe.edu.vn', '0901234567', 'Thạc sĩ', 'Công Nghệ Phần Mềm'],
                     ['gv002', 'Trần Thị B', 'gv002@fe.edu.vn', '0912345678', 'Tiến sĩ', 1],
                 ],
-                'note'     => 'Lưu ý: TenDangNhap (mã GV) bắt buộc không trùng. Email & SDT đúng định dạng.'
+                'note'     => 'Lưu ý: TenDangNhap (mã GV) bắt buộc không trùng. Email & SDT chuẩn 10 số. MaBoMon có thể nhập ID hoặc Tên Bộ Môn.'
             ],
             'sinhvien' => [
                 'filename' => 'Template_SinhVien.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU SINH VIÊN',
                 'headers'  => ['TenDangNhap', 'HoTen', 'Email', 'SoDienThoai', 'MaLop'],
                 'examples' => [
-                    ['sv001', 'Phạm Văn C', 'sv001@st.fe.edu.vn', '0987654321', 1],
+                    ['sv001', 'Phạm Văn C', 'sv001@st.fe.edu.vn', '0987654321', '21DTH01'],
                     ['sv002', 'Lê Thị D', 'sv002@st.fe.edu.vn', '0976543210', 1],
                 ],
-                'note'     => 'Lưu ý: TenDangNhap (MSSV) bắt buộc không trùng. MaLop phải là ID lớp đã tồn tại.'
+                'note'     => 'Lưu ý: TenDangNhap (MSSV) bắt buộc không trùng. MaLop có thể nhập ID Lớp hoặc Tên Lớp.'
+            ],
+            'lophocphan' => [
+                'filename' => 'Template_LopHocPhan.xlsx',
+                'title'    => 'MẪU NHẬP LIỆU LỚP HỌC PHẦN (LỚP TÍN CHỈ)',
+                'headers'  => ['TenLopHP', 'MaMon', 'MaHocKy', 'MaGV', 'SiSoToiDa', 'MoTa'],
+                'examples' => [
+                    ['21DTH01_WEB_N01', 'Đồ Án Chuyên Ngành Web', 'Học kỳ 1', 'gv001', 40, 'Lớp học phần tín chỉ đồ án web nhom 01'],
+                    ['21DTH02_MOBILE_N01', 'Lập Trình Di Động', 'Học kỳ 1', 'gv002', 45, 'Lớp học phần di động'],
+                ],
+                'note'     => 'Lưu ý: TenLopHP bắt buộc không trùng. MaMon (ID hoặc Tên môn), MaHocKy (ID hoặc Tên học kỳ), MaGV (ID hoặc Mã GV/Tên GV).'
             ],
             'detai' => [
                 'filename' => 'Template_DeTai.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU ĐỀ TÀI ĐỒ ÁN',
-                'headers'  => ['TenDeTai', 'MaMon', 'MaLop', 'MaHocKy', 'MoTa', 'YeuCau', 'HanDangKy', 'HanBaoCao', 'HanNopSanPham'],
+                'headers'  => ['TenDeTai', 'MaLopHP', 'MaMon', 'MaHocKy', 'MoTa', 'YeuCau', 'HanDangKy', 'HanBaoCao', 'HanNopSanPham'],
                 'examples' => [
                     [
-                        'Xây Dựng Hệ Thống Quản Lý Đồ Án',
-                        1, 1, 1,
+                        'Xây Dựng Hệ Thống Quản Lý Đồ Án Tín Chỉ',
+                        '21DTH01_WEB_N01',
+                        'Đồ Án Chuyên Ngành Web',
+                        'Học kỳ 1',
                         'Đề tài nghiên cứu và lập trình ứng dụng Web Laravel',
                         'Sử dụng MySQL, Bootstrap 5 và Vite',
                         '2026-08-10',
@@ -102,27 +124,27 @@ class ExcelTemplateService
                         '2026-09-05'
                     ],
                 ],
-                'note'     => 'Lưu ý: TenDeTai bắt buộc. MaMon, MaLop, MaHocKy phải hợp lệ trong hệ thống.'
+                'note'     => 'Lưu ý: TenDeTai bắt buộc. MaLopHP có thể nhập ID Lớp HP hoặc Tên Lớp HP. MaMon, MaHocKy tự động điền theo Lớp HP hoặc nhập tên.'
             ],
             'nhom' => [
                 'filename' => 'Template_NhomDoAn.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU NHÓM ĐỒ ÁN',
-                'headers'  => ['TenNhom', 'MaMon', 'MaLop', 'MaHocKy', 'MaSV_TruongNhom'],
+                'headers'  => ['TenNhom', 'MaLopHP', 'MaMon', 'MaHocKy', 'MaSV_TruongNhom'],
                 'examples' => [
-                    ['Nhóm Đồ Án 01', 1, 1, 1, 1],
-                    ['Nhóm Đồ Án 02', 1, 1, 1, 2],
+                    ['Nhóm Đồ Án Web 01', '21DTH01_WEB_N01', 'Đồ Án Chuyên Ngành Web', 'Học kỳ 1', 'sv001'],
+                    ['Nhóm Mobile 02', 1, 1, 1, 'sv002'],
                 ],
-                'note'     => 'Lưu ý: TenNhom không trùng trong môn/lớp. MaSV_TruongNhom là ID sinh viên trưởng nhóm.'
+                'note'     => 'Lưu ý: TenNhom không trùng trong môn/lớp. MaSV_TruongNhom có thể nhập ID hoặc MSSV.'
             ],
             'phancong' => [
                 'filename' => 'Template_PhanCongHuongDan.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU PHÂN CÔNG HƯỚNG DẪN',
-                'headers'  => ['MaGV', 'MaLop', 'MaHocKy', 'NgayPhanCong'],
+                'headers'  => ['LoaiPhanCong', 'MaGV', 'TenLop_Hoac_TenLopHP', 'MaHocKy', 'NgayPhanCong'],
                 'examples' => [
-                    [1, 1, 1, date('Y-m-d')],
-                    [2, 2, 1, date('Y-m-d')],
+                    ['Lớp Hành Chính', 'TS. Nguyễn Văn An', '21DTH01', 'Học kỳ 1', date('Y-m-d')],
+                    ['Lớp Học Phần', 'ThS. Trần Thị Bình', '14DHTH005', 'Học kỳ 1', date('Y-m-d')],
                 ],
-                'note'     => 'Lưu ý: MaGV, MaLop, MaHocKy là ID hợp lệ tồn tại trong hệ thống.'
+                'note'     => 'Lưu ý: LoaiPhanCong ("Lớp Hành Chính" hoặc "Lớp Học Phần"). MaGV (ID, Mã GV hoặc Họ Tên). TenLop_Hoac_TenLopHP (Tên Lớp HC hoặc Tên Lớp HP). MaHocKy (Tên/ID Học Kỳ).'
             ]
         ];
     }
@@ -136,17 +158,23 @@ class ExcelTemplateService
         
         // Normalize alias
         $aliasMap = [
-            'detais'             => 'detai',
-            'bomons'             => 'bomon',
-            'nganhs'             => 'nganh',
-            'lops'               => 'lop',
-            'monhocs'            => 'monhoc',
-            'giangviens'         => 'giangvien',
-            'sinhviens'          => 'sinhvien',
-            'hockys'             => 'hocky',
-            'hockies'            => 'hocky',
-            'phancongs'          => 'phancong',
-            'nhoms'              => 'nhom',
+            'detais'              => 'detai',
+            'bomons'              => 'bomon',
+            'nganhs'              => 'nganh',
+            'lops'                => 'lop',
+            'monhocs'             => 'monhoc',
+            'giangviens'          => 'giangvien',
+            'sinhviens'           => 'sinhvien',
+            'hockys'              => 'hocky',
+            'hockies'             => 'hocky',
+            'phancongs'           => 'phancong',
+            'nhoms'               => 'nhom',
+            'lophocphan'          => 'lophocphan',
+            'lophocphans'         => 'lophocphan',
+            'lop-hoc-phan'        => 'lophocphan',
+            'lop-hoc-phans'       => 'lophocphan',
+            'sinhvien_lophocphan' => 'sinhvien_lophocphan',
+            'sinhvien-lophocphan' => 'sinhvien_lophocphan',
         ];
 
         $key = $aliasMap[strtolower($key)] ?? strtolower($key);
@@ -160,7 +188,14 @@ class ExcelTemplateService
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template');
 
-        // Row 1: Instruction Note
+        // Row 1: Instruction Note (Merged across headers to avoid wide column A)
+        $headers = $cfg['headers'];
+        $colCount = count($headers);
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colCount);
+        if ($colCount > 1) {
+            $sheet->mergeCells("A1:{$lastColLetter}1");
+        }
+
         $sheet->setCellValue('A1', '💡 ' . $cfg['note']);
         $sheet->getStyle('A1')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
 

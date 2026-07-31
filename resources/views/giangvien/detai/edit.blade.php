@@ -21,30 +21,19 @@
                 @error('TenDeTai')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            {{-- Môn học & Học kỳ --}}
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Môn Học <span class="text-danger">*</span></label>
-                    <select name="MaMon" class="form-select @error('MaMon') is-invalid @enderror" required>
-                        @foreach($monhocs as $m)
-                            <option value="{{ $m->MaMon }}" {{ $detai->MaMon == $m->MaMon ? 'selected' : '' }}>
-                                {{ $m->TenMon }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('MaMon')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Học Kỳ <span class="text-danger">*</span></label>
-                    <select name="MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror" required>
-                        @foreach($hockys as $hk)
-                            <option value="{{ $hk->MaHocKy }}" {{ $detai->MaHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('MaHocKy')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
+            {{-- Môn học, Học kỳ, Lớp --}}
+            {{-- Lớp học phần --}}
+            <div class="mb-3 p-3 bg-light rounded border border-primary-subtle">
+                <label class="form-label fw-bold text-primary"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp Học Phần (Lớp Tín Chỉ) <span class="text-danger">*</span></label>
+                <select name="MaLopHP" class="form-select border-primary @error('MaLopHP') is-invalid @enderror" required>
+                    <option value="">— Chọn Lớp Học Phần —</option>
+                    @foreach($lopHocPhans as $lhp)
+                        <option value="{{ $lhp->MaLopHP }}" {{ (old('MaLopHP', $detai->MaLopHP) == $lhp->MaLopHP) ? 'selected' : '' }}>
+                            {{ $lhp->TenLopHP }} — {{ $lhp->monHoc->TenMon ?? '' }} ({{ $lhp->hocKy->TenHocKy ?? '' }} - GV: {{ $lhp->giangVien->HoTen ?? 'Chưa gán' }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('MaLopHP')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
             {{-- Trạng thái --}}

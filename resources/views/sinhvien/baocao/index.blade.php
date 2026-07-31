@@ -20,13 +20,46 @@
         </form>
         @endif
 
+        @php
+            $dangKy = $nhom->dangKyDeTai ?? null;
+            $isApprovedTopic = $dangKy && $dangKy->TrangThai == 'Đã duyệt';
+            $deTai = $dangKy->deTai ?? null;
+            $isHetHanBaoCao = $deTai && $deTai->HanBaoCao && date('Y-m-d') > $deTai->HanBaoCao;
+        @endphp
+
         @if($nhom->TruongNhom == $sv->MaSV)
-        <button class="btn btn-primary-custom rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addModal">
-            <i class="fa-solid fa-upload me-2"></i>Nộp Báo Cáo
-        </button>
+            @if(!$isApprovedTopic)
+                <button class="btn btn-secondary rounded-pill px-4" disabled title="Nhóm chưa có đề tài được duyệt">
+                    <i class="fa-solid fa-lock me-2"></i>Chưa Được Nộp Báo Cáo
+                </button>
+            @elseif($isHetHanBaoCao)
+                <button class="btn btn-secondary rounded-pill px-4" disabled title="Đã quá hạn nộp báo cáo tiến độ">
+                    <i class="fa-solid fa-lock me-2"></i>Đã Khóa Nộp Báo Cáo
+                </button>
+            @else
+                <button class="btn btn-primary-custom rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addModal">
+                    <i class="fa-solid fa-upload me-2"></i>Nộp Báo Cáo
+                </button>
+            @endif
         @endif
     </div>
 </div>
+
+@if(!$isApprovedTopic)
+<div class="alert alert-info border-info d-flex align-items-center gap-2 rounded-3 mb-3" role="alert">
+    <i class="fa-solid fa-circle-info fa-lg text-info"></i>
+    <div>
+        <strong>Chưa thể nộp báo cáo tiến độ!</strong> Nhóm của bạn cần đăng ký đề tài và được Giảng viên phê duyệt trước khi có thể nộp báo cáo.
+    </div>
+</div>
+@elseif($isHetHanBaoCao)
+<div class="alert alert-warning border-warning d-flex align-items-center gap-2 rounded-3 mb-3" role="alert">
+    <i class="fa-solid fa-clock-rotate-left fa-lg text-warning"></i>
+    <div>
+        <strong>Đã hết hạn nộp báo cáo tiến độ!</strong> Hạn chót nộp báo cáo là {{ date('d/m/Y', strtotime($deTai->HanBaoCao)) }}. Chức năng nộp báo cáo tiến độ đã bị khóa hoàn toàn.
+    </div>
+</div>
+@endif
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -66,7 +99,7 @@
                     <td>
                         @if($bc->FileBaoCao)
                             @if(Str::startsWith($bc->FileBaoCao, '/storage') || Str::contains($bc->FileBaoCao, 'storage/'))
-                                <a href="{{ asset($bc->FileBaoCao) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File</a>
+                                <a href="{{ asset(ltrim($bc->FileBaoCao, '/')) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File</a>
                             @else
                                 <a href="{{ $bc->FileBaoCao }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="fa-solid fa-link me-1"></i>Mở Link</a>
                             @endif
@@ -115,6 +148,7 @@
     <div class="modal-dialog">
         <form action="{{ route('sinhvien.baocao.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="fa-solid fa-file-arrow-up me-2"></i>Nộp Báo Cáo Mới</h5>

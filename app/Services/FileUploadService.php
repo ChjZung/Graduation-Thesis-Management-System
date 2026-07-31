@@ -24,8 +24,8 @@ class FileUploadService
             $filename = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
             $path = $file->storeAs("public/{$folder}", $filename);
             
-            // Trả về đường dẫn dạng storage relative url
-            return Storage::url($path);
+            // Trả về đường dẫn dạng storage relative url (không bắt đầu bằng slash để tránh 403 double-slash)
+            return ltrim(Storage::url($path), '/');
         }
 
         // 2. Nếu không có file, lấy link URL nhập từ form

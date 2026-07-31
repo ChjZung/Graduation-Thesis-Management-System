@@ -60,11 +60,21 @@
                 <tr>
                     <td class="px-4 fw-bold text-muted">{{ $sp->TenSanPham }}</td>
                     <td>
-                        @if(Str::startsWith($sp->LinkFile, '/storage') || Str::contains($sp->LinkFile, 'storage/'))
-                            <a href="{{ asset($sp->LinkFile) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File .Zip</a>
-                        @else
-                            <a href="{{ $sp->LinkFile }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="fa-solid fa-link me-1"></i>Truy Cập Link</a>
-                        @endif
+                        @php
+                            $fileUrl = $sp->LinkFile && !filter_var($sp->LinkFile, FILTER_VALIDATE_URL) ? asset(ltrim($sp->LinkFile, '/')) : null;
+                            $gitUrl = $sp->LinkSourceCode ?? (filter_var($sp->LinkFile, FILTER_VALIDATE_URL) ? $sp->LinkFile : null);
+                        @endphp
+                        <div class="d-flex gap-2">
+                            @if($fileUrl)
+                                <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File</a>
+                            @endif
+                            @if($gitUrl)
+                                <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3"><i class="fa-brands fa-github me-1"></i>GitHub</a>
+                            @endif
+                            @if(!$fileUrl && !$gitUrl)
+                                <span class="text-muted">—</span>
+                            @endif
+                        </div>
                     </td>
                     <td>{{ date('d/m/Y', strtotime($sp->NgayNop)) }}</td>
                 </tr>
@@ -83,6 +93,7 @@
     <div class="modal-dialog">
         <form action="{{ route('sinhvien.sanpham.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="fa-solid fa-box-open me-2"></i>Nộp Sản Phẩm / Source Code</h5>
@@ -94,13 +105,13 @@
                         <input type="text" name="TenSanPham" class="form-control" required placeholder="Ví dụ: Source code Web App">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Tải Lên File Nén (.ZIP, .RAR, .PDF)</label>
-                        <input type="file" name="FileUpLoad" class="form-control" accept=".zip,.rar,.pdf">
+                        <label class="form-label text-muted small fw-bold">1. Tải Lên File Nén/Tài Liệu (.ZIP, .RAR, .PDF) <span class="text-danger">*</span></label>
+                        <input type="file" name="FileUpLoad" class="form-control" accept=".zip,.rar,.pdf" required>
                         <div class="form-text text-muted">Dung lượng tối đa 20MB.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Hoặc Dán Link Truy Cập (GitHub, Drive...)</label>
-                        <input type="url" name="LinkFile" class="form-control" placeholder="https://github.com/...">
+                        <label class="form-label text-muted small fw-bold">2. Link GitHub Repository <span class="text-danger">*</span></label>
+                        <input type="url" name="LinkFile" class="form-control" placeholder="https://github.com/..." required>
                     </div>
                 </div>
                 <div class="modal-footer">

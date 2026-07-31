@@ -16,7 +16,12 @@ class ChamDiemController extends Controller
         $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
         if (!$gv) abort(403);
 
-        $nhomIds = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom');
+        $nhomIds1 = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom')->toArray();
+        $nhomIds2 = NhomDoAn::whereHas('lopHocPhan', function($q) use ($gv) {
+            $q->where('MaGV', $gv->MaGV);
+        })->pluck('MaNhom')->toArray();
+
+        $nhomIds = array_unique(array_merge($nhomIds1, $nhomIds2));
         
         // Lấy các nhóm do Giảng viên này hướng dẫn đã nộp sản phẩm hoặc đã được chấm điểm
         $nhoms = NhomDoAn::whereIn('MaNhom', $nhomIds)

@@ -14,22 +14,21 @@ class DeTaiController extends Controller
     use HandlesExcelImport;
     public function index(Request $request) {
         $maTK = Auth::user()->MaTK;
-        $gv = \App\Models\GiangVien::where('MaTK', $maTK)->firstOrFail();
+        $gv = \App\Models\GiangVien::where('MaTK', $maTK)->first();
         
-        $phanCongs = \App\Models\PhanCongHuongDanLop::with(['lop', 'hocKy'])->where('MaGV', $gv->MaGV)->get();
-        $lops = $phanCongs->pluck('lop')->filter()->unique('MaLop');
+        $lopHocPhans = \App\Models\LopHocPhan::with(['monHoc', 'hocKy'])->orderBy('MaLopHP', 'desc')->get();
         $hockys = \App\Models\HocKy::all();
         $monhocs = \App\Models\MonHoc::all();
 
-        $query = DeTai::with(['monHoc', 'lop', 'hocKy'])
+        $query = DeTai::with(['monHoc', 'lop', 'hocKy', 'lopHocPhan'])
                         ->where('MaTK', $maTK);
 
         if ($request->filled('MaHocKy')) {
             $query->where('MaHocKy', $request->MaHocKy);
         }
 
-        if ($request->filled('MaLop')) {
-            $query->where('MaLop', $request->MaLop);
+        if ($request->filled('MaLopHP')) {
+            $query->where('MaLopHP', $request->MaLopHP);
         }
 
         if ($request->filled('MaMon')) {
@@ -42,56 +41,52 @@ class DeTaiController extends Controller
 
         $detais = $query->orderBy('MaDeTai', 'desc')->paginate(10);
 
-        return view('giangvien.detai.index', compact('detais', 'lops', 'hockys', 'monhocs'));
+        return view('giangvien.detai.index', compact('detais', 'lopHocPhans', 'hockys', 'monhocs'));
     }
 
     public function create() {
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
-        $phanCongs = \App\Models\PhanCongHuongDanLop::with('lop')->where('MaGV', $gv->MaGV)->get();
-        $lops = $phanCongs->pluck('lop')->filter()->unique('MaLop');
+        $maTK = Auth::user()->MaTK;
+        $gv = \App\Models\GiangVien::where('MaTK', $maTK)->first();
+
+        $lopHocPhans = \App\Models\LopHocPhan::with(['monHoc', 'hocKy', 'giangVien'])
+            ->orderBy('MaLopHP', 'desc')
+            ->get();
 
         $monhocs = MonHoc::all();
         $hockys = HocKy::all();
-        return view('giangvien.detai.create', compact('monhocs', 'hockys', 'lops'));
+        return view('giangvien.detai.create', compact('monhocs', 'hockys', 'lopHocPhans'));
     }
 
     public function store(Request $request) {
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
 
         $request->validate([
             'TenDeTai' => 'required|string|max:200',
-            'MaMon' => 'required|exists:mon_hocs,MaMon',
-            'MaLop' => 'required|exists:lops,MaLop',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
+            'MaLopHP' => 'required|exists:lop_hoc_phans,MaLopHP',
             'HanDangKy' => 'nullable|date',
             'HanBaoCao' => 'nullable|date|after_or_equal:HanDangKy',
             'HanNopSanPham' => 'nullable|date|after_or_equal:HanBaoCao',
         ], [
             'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
-            'MaLop.required' => 'Vui lòng chọn lớp phụ trách.',
+            'MaLopHP.required' => 'Vui lòng chọn Lớp Học Phần.',
             'HanBaoCao.after_or_equal' => 'Hạn báo cáo phải sau hoặc bằng hạn đăng ký.',
             'HanNopSanPham.after_or_equal' => 'Hạn nộp sản phẩm phải sau hoặc bằng hạn báo cáo.',
         ]);
 
-        // Kiểm tra phân công giảng viên đối với lớp
-        $isAssigned = \App\Models\PhanCongHuongDanLop::where('MaGV', $gv->MaGV)
-                                                     ->where('MaLop', $request->MaLop)
-                                                     ->exists();
-        if (!$isAssigned) {
-            return redirect()->back()->withErrors('Bạn chưa được phân công phụ trách lớp này!')->withInput();
-        }
+        $lopHP = \App\Models\LopHocPhan::findOrFail($request->MaLopHP);
 
-        // Kiểm tra trùng tên đề tài trong lớp
-        $exists = DeTai::where('TenDeTai', $request->TenDeTai)->where('MaLop', $request->MaLop)->exists();
+        // Kiểm tra trùng tên đề tài trong cùng Lớp Học Phần
+        $exists = DeTai::where('TenDeTai', $request->TenDeTai)->where('MaLopHP', $request->MaLopHP)->exists();
         if ($exists) {
-            return redirect()->back()->withErrors("Đề tài '{$request->TenDeTai}' đã tồn tại trong lớp này!")->withInput();
+            return redirect()->back()->withErrors("Đề tài '{$request->TenDeTai}' đã tồn tại trong Lớp Học Phần này!")->withInput();
         }
 
         $dt = DeTai::create([
             'MaTK' => Auth::user()->MaTK,
-            'MaMon' => $request->MaMon,
-            'MaLop' => $request->MaLop,
-            'MaHocKy' => $request->MaHocKy,
+            'MaMon' => $lopHP->MaMon,
+            'MaHocKy' => $lopHP->MaHocKy,
+            'MaLopHP' => $lopHP->MaLopHP,
+            'MaLop' => null,
             'TenDeTai' => $request->TenDeTai,
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
@@ -109,13 +104,11 @@ class DeTaiController extends Controller
 
     public function edit($id) {
         $detai = DeTai::where('MaDeTai', $id)->where('MaTK', Auth::user()->MaTK)->firstOrFail();
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
-        $phanCongs = \App\Models\PhanCongHuongDanLop::with('lop')->where('MaGV', $gv->MaGV)->get();
-        $lops = $phanCongs->pluck('lop')->filter()->unique('MaLop');
+        $lopHocPhans = \App\Models\LopHocPhan::with(['monHoc', 'hocKy', 'giangVien'])->orderBy('MaLopHP', 'desc')->get();
 
         $monhocs = MonHoc::all();
         $hockys = HocKy::all();
-        return view('giangvien.detai.edit', compact('detai', 'monhocs', 'hockys', 'lops'));
+        return view('giangvien.detai.edit', compact('detai', 'monhocs', 'hockys', 'lopHocPhans'));
     }
 
     public function update(Request $request, $id) {
@@ -123,15 +116,26 @@ class DeTaiController extends Controller
         
         $request->validate([
             'TenDeTai' => 'required|string|max:200',
-            'MaMon' => 'required|exists:mon_hocs,MaMon',
-            'MaLop' => 'required|exists:lops,MaLop',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
+            'MaLopHP' => 'required|exists:lop_hoc_phans,MaLopHP',
             'HanDangKy' => 'nullable|date',
             'HanBaoCao' => 'nullable|date|after_or_equal:HanDangKy',
             'HanNopSanPham' => 'nullable|date|after_or_equal:HanBaoCao',
         ]);
 
-        $detai->update($request->only(['TenDeTai', 'MoTa', 'YeuCau', 'MaMon', 'MaLop', 'MaHocKy', 'TrangThai', 'HanDangKy', 'HanBaoCao', 'HanNopSanPham']));
+        $lopHP = \App\Models\LopHocPhan::findOrFail($request->MaLopHP);
+
+        $detai->update([
+            'TenDeTai' => $request->TenDeTai,
+            'MaLopHP' => $lopHP->MaLopHP,
+            'MaMon' => $lopHP->MaMon,
+            'MaHocKy' => $lopHP->MaHocKy,
+            'TrangThai' => $request->TrangThai ?? $detai->TrangThai,
+            'MoTa' => $request->MoTa,
+            'YeuCau' => $request->YeuCau,
+            'HanDangKy' => $request->HanDangKy,
+            'HanBaoCao' => $request->HanBaoCao,
+            'HanNopSanPham' => $request->HanNopSanPham,
+        ]);
         
         \App\Models\AuditLog::log('cap_nhat_de_tai', 'DeTai', $id, ['TenDeTai' => $request->TenDeTai]);
 

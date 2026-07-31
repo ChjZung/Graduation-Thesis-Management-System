@@ -21,6 +21,7 @@
             <thead class="table-light">
                 <tr>
                     <th class="px-4">Ngày đăng</th>
+                    <th>Đối tượng nhận</th>
                     <th>Tiêu đề</th>
                     <th>Nội dung</th>
                     <th class="text-end px-4">Thao tác</th>
@@ -30,6 +31,15 @@
                 @forelse($thongbaos as $tb)
                 <tr>
                     <td class="px-4 text-muted small"><i class="fa-regular fa-clock me-1"></i> {{ date('d/m/Y', strtotime($tb->NgayTao)) }}</td>
+                    <td>
+                        @if($tb->lopHocPhan)
+                            <span class="badge bg-info text-white"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp HP: {{ $tb->lopHocPhan->TenLopHP }}</span>
+                        @elseif($tb->lop)
+                            <span class="badge bg-primary text-white"><i class="fa-solid fa-users-rectangle me-1"></i>Lớp HC: {{ $tb->lop->TenLop }}</span>
+                        @else
+                            <span class="badge bg-secondary">Tất cả lớp / Toàn trường</span>
+                        @endif
+                    </td>
                     <td class="fw-bold">{{ $tb->TieuDe }}</td>
                     <td>{{ Str::limit($tb->NoiDung, 80) }}</td>
                     <td class="text-end px-4">
@@ -49,7 +59,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">Bạn chưa đăng thông báo nào.</td>
+                    <td colspan="5" class="text-center text-muted py-4">Bạn chưa đăng thông báo nào.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -71,6 +81,26 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Gửi tới Lớp phụ trách <span class="text-danger">*</span></label>
+                        <select name="Target" class="form-select">
+                            <option value="">-- Gửi tất cả các lớp phụ trách --</option>
+                            @if(isset($lopHocPhans) && $lopHocPhans->isNotEmpty())
+                                <optgroup label="🎓 Lớp Học Phần (Lớp Tín Chỉ)">
+                                    @foreach($lopHocPhans as $lhp)
+                                        <option value="lhp_{{ $lhp->MaLopHP }}">Lớp HP: {{ $lhp->TenLopHP }} ({{ $lhp->monHoc->TenMon ?? '' }})</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if(isset($lops) && $lops->isNotEmpty())
+                                <optgroup label="🏫 Lớp Hành Chính">
+                                    @foreach($lops as $l)
+                                        <option value="lh_{{ $l->MaLop }}">Lớp HC: {{ $l->TenLop }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Tiêu đề thông báo <span class="text-danger">*</span></label>
                         <input type="text" name="TieuDe" class="form-control" required placeholder="Nhập tiêu đề...">

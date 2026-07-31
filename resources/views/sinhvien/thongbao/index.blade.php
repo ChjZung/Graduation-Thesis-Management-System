@@ -43,9 +43,17 @@
                         <div class="d-flex justify-content-between align-items-center mt-2">
                             <div>
                                 @if(optional($tb->taiKhoan)->MaVaiTro == 1)
-                                    <span class="badge bg-danger"><i class="fa-solid fa-shield-halved me-1"></i> Ban Quản Trị</span>
+                                    <span class="badge bg-danger me-1"><i class="fa-solid fa-shield-halved me-1"></i> Ban Quản Trị</span>
                                 @else
-                                    <span class="badge bg-success"><i class="fa-solid fa-chalkboard-user me-1"></i> Giảng Viên / Hệ Thống</span>
+                                    <span class="badge bg-success me-1"><i class="fa-solid fa-chalkboard-user me-1"></i> GV: {{ $tb->taiKhoan->giangVien->HoTen ?? $tb->taiKhoan->TenDangNhap ?? 'Giảng Viên' }}</span>
+                                @endif
+
+                                @if($tb->lopHocPhan)
+                                    <span class="badge bg-info text-white me-1"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp HP: {{ $tb->lopHocPhan->TenLopHP }}</span>
+                                @elseif($tb->lop)
+                                    <span class="badge bg-primary text-white me-1"><i class="fa-solid fa-users-rectangle me-1"></i>Lớp HC: {{ $tb->lop->TenLop }}</span>
+                                @else
+                                    <span class="badge bg-secondary me-1">Tất cả các lớp phụ trách</span>
                                 @endif
                             </div>
 

@@ -91,33 +91,37 @@
                         $nhom = $sp->nhomDoAn;
                         $deTai = $nhom->dangKyDeTai->deTai ?? null;
                         $gvName = $deTai->giangVien->HoTen ?? '—';
-                        $linkSp = $sp->LinkFile;
-                        $isUrlSp = filter_var($linkSp, FILTER_VALIDATE_URL) || str_starts_with($linkSp, 'http://') || str_starts_with($linkSp, 'https://');
-                        $targetUrlSp = $isUrlSp ? $linkSp : asset($linkSp ? (str_starts_with($linkSp, '/') ? $linkSp : '/' . $linkSp) : '#');
+                        $fileUrl = $sp->LinkFile && !filter_var($sp->LinkFile, FILTER_VALIDATE_URL) ? asset(ltrim($sp->LinkFile, '/')) : null;
+                        $gitUrl = $sp->LinkSourceCode ?? (filter_var($sp->LinkFile, FILTER_VALIDATE_URL) ? $sp->LinkFile : null);
                     @endphp
                     <tr>
-                        <td>{{ $sanphams->firstItem() + $index }}</td>
+                        <td class="text-center fw-bold text-muted">{{ $index + 1 }}</td>
                         <td>
-                            <strong class="text-primary">{{ $nhom->TenNhom ?? 'N/A' }}</strong><br>
-                            <small class="text-muted"><i class="fa-solid fa-book me-1"></i>{{ $nhom->monHoc->TenMon ?? 'N/A' }}</small>
+                            <strong class="text-dark">{{ $nhom->TenNhom ?? '—' }}</strong><br>
+                            <small class="text-muted"><i class="fa-solid fa-book me-1"></i>{{ $deTai->monHoc->TenMon ?? ($nhom->monHoc->TenMon ?? '—') }}</small>
                         </td>
                         <td>
-                            <span class="fw-semibold">{{ $deTai->TenDeTai ?? 'Chưa đăng ký' }}</span>
+                            <span class="fw-semibold text-primary" title="{{ $deTai->TenDeTai ?? 'Chưa đăng ký' }}">
+                                {{ Str::limit($deTai->TenDeTai ?? 'Chưa đăng ký', 40) }}
+                            </span>
                         </td>
-                        <td>{{ $gvName }}</td>
+                        <td class="small">{{ $gvName }}</td>
                         <td>
-                            @if($linkSp)
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ $targetUrlSp }}" target="_blank" class="btn btn-outline-primary py-0 px-2" title="Xem file">
-                                        <i class="fa-solid fa-eye me-1"></i>Xem file
+                            <div class="d-flex gap-1">
+                                @if($fileUrl)
+                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success py-0 px-2" title="Tải File Báo Cáo">
+                                        <i class="fa-solid fa-download me-1"></i>File
                                     </a>
-                                    <a href="{{ $targetUrlSp }}" download class="btn btn-outline-success py-0 px-2" title="Download">
-                                        <i class="fa-solid fa-download me-1"></i>Download
+                                @endif
+                                @if($gitUrl)
+                                    <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" title="Xem GitHub">
+                                        <i class="fa-brands fa-github me-1"></i>GitHub
                                     </a>
-                                </div>
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
+                                @endif
+                                @if(!$fileUrl && !$gitUrl)
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             @if($sp->baoCaos->isNotEmpty())

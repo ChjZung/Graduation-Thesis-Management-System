@@ -45,12 +45,12 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Lớp phụ trách</label>
-                <select name="MaLop" class="form-select form-select-sm">
-                    <option value="">-- Tất cả lớp --</option>
-                    @foreach($lops as $l)
-                        <option value="{{ $l->MaLop }}" {{ request('MaLop') == $l->MaLop ? 'selected' : '' }}>
-                            {{ $l->TenLop }}
+                <label class="form-label small fw-semibold">Lớp Học Phần</label>
+                <select name="MaLopHP" class="form-select form-select-sm">
+                    <option value="">-- Tất cả Lớp HP --</option>
+                    @foreach($lopHocPhans as $lhp)
+                        <option value="{{ $lhp->MaLopHP }}" {{ request('MaLopHP') == $lhp->MaLopHP ? 'selected' : '' }}>
+                            {{ $lhp->TenLopHP }}
                         </option>
                     @endforeach
                 </select>
@@ -110,7 +110,7 @@
                         <span title="{{ $dt->TenDeTai }}">{{ Str::limit($dt->TenDeTai, 55) }}</span>
                     </td>
                     <td class="small">
-                        <strong>{{ $dt->lop->TenLop ?? '—' }}</strong><br>
+                        <span class="badge bg-primary-subtle text-primary border border-primary mb-1">{{ $dt->lopHocPhan->TenLopHP ?? $dt->lop->TenLop ?? '—' }}</span><br>
                         <span class="text-muted">{{ $dt->monHoc->TenMon ?? '—' }}</span>
                     </td>
                     <td class="small text-muted">{{ $dt->hocKy->TenHocKy ?? '—' }}</td>

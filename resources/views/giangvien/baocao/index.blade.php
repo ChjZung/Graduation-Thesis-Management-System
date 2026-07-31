@@ -43,10 +43,15 @@
                     <td>{{ Str::limit($bc->NoiDung, 50) }}</td>
                     <td>
                         @if($bc->FileBaoCao)
-                            @if(Str::startsWith($bc->FileBaoCao, '/storage') || Str::contains($bc->FileBaoCao, 'storage/'))
-                                <a href="{{ asset($bc->FileBaoCao) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File .Zip</a>
+                            @php
+                                $fileBc = $bc->FileBaoCao;
+                                $isUrlBc = filter_var($fileBc, FILTER_VALIDATE_URL) || str_starts_with($fileBc, 'http://') || str_starts_with($fileBc, 'https://');
+                                $targetUrlBc = $isUrlBc ? $fileBc : asset(str_starts_with($fileBc, '/') ? $fileBc : '/' . $fileBc);
+                            @endphp
+                            @if($isUrlBc)
+                                <a href="{{ $fileBc }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3"><i class="fa-brands fa-github me-1"></i>Xem Link GitHub</a>
                             @else
-                                <a href="{{ $bc->FileBaoCao }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="fa-solid fa-link me-1"></i>Xem Link</a>
+                                <a href="{{ $targetUrlBc }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Download File</a>
                             @endif
                         @else
                             <span class="text-muted small">Không có</span>

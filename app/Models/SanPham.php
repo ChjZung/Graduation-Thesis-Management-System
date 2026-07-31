@@ -14,6 +14,7 @@ class SanPham extends Model
         'MaNhom',
         'TenSanPham',
         'LinkFile',
+        'LinkSourceCode',
         'NgayNop'
     ];
 

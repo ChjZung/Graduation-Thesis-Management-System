@@ -32,33 +32,61 @@
                 @error('TenDeTai')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            {{-- Môn học & Học kỳ --}}
+            {{-- Lớp học phần, Môn học, Học kỳ --}}
+            <div class="mb-3 p-3 bg-light rounded border border-primary-subtle">
+                <label class="form-label fw-bold text-primary"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp Học Phần (Lớp Tín Chỉ) <span class="text-danger">*</span></label>
+                <select name="MaLopHP" id="select_MaLopHP" class="form-select border-primary @error('MaLopHP') is-invalid @enderror" required onchange="onLopHPSelectChange(this)">
+                    <option value="">— Chọn Lớp Học Phần —</option>
+                    @foreach($lopHocPhans as $lhp)
+                        <option value="{{ $lhp->MaLopHP }}" data-mamon="{{ $lhp->MaMon }}" data-mahocky="{{ $lhp->MaHocKy }}" {{ old('MaLopHP') == $lhp->MaLopHP ? 'selected' : '' }}>
+                            {{ $lhp->TenLopHP }} — {{ $lhp->monHoc->TenMon ?? '' }} ({{ $lhp->hocKy->TenHocKy ?? '' }} - GV: {{ $lhp->giangVien->HoTen ?? 'Chưa gán' }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('MaLopHP')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <div class="form-text text-muted small">Chọn Lớp Học Phần để tự động xác định đúng Môn học và Học kỳ tương ứng.</div>
+            </div>
+
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Môn Học <span class="text-danger">*</span></label>
-                    <select name="MaMon" class="form-select @error('MaMon') is-invalid @enderror" required>
-                        <option value="">— Chọn môn học —</option>
+                    <label class="form-label fw-semibold">Môn Học</label>
+                    <select name="MaMon" id="select_MaMon" class="form-select @error('MaMon') is-invalid @enderror">
+                        <option value="">— Tự động điền theo Lớp HP —</option>
                         @foreach($monhocs as $m)
                             <option value="{{ $m->MaMon }}" {{ old('MaMon') == $m->MaMon ? 'selected' : '' }}>
                                 {{ $m->TenMon }}
                             </option>
                         @endforeach
                     </select>
-                    @error('MaMon')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Học Kỳ <span class="text-danger">*</span></label>
-                    <select name="MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror" required>
-                        <option value="">— Chọn học kỳ —</option>
+                    <label class="form-label fw-semibold">Học Kỳ</label>
+                    <select name="MaHocKy" id="select_MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror">
+                        <option value="">— Tự động điền theo Lớp HP —</option>
                         @foreach($hockys as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
                                 {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
                             </option>
                         @endforeach
                     </select>
-                    @error('MaHocKy')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
+
+            <script>
+            function onLopHPSelectChange(selectEl) {
+                const opt = selectEl.options[selectEl.selectedIndex];
+                const maMon = opt.getAttribute('data-mamon');
+                const maHocKy = opt.getAttribute('data-mahocky');
+                if (maMon) {
+                    const mSel = document.getElementById('select_MaMon');
+                    if (mSel) mSel.value = maMon;
+                }
+                if (maHocKy) {
+                    const hkSel = document.getElementById('select_MaHocKy');
+                    if (hkSel) hkSel.value = maHocKy;
+                }
+            }
+            </script>
 
             {{-- Deadlines --}}
             <div class="p-3 bg-light rounded-3 border mb-3">

@@ -20,6 +20,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
+// Quên mật khẩu gửi Admin duyệt (Custom Flow)
+Route::get('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'showForm'])->name('password.request');
+Route::post('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'sendRequest'])->name('password.send_request');
+
 // ==========================================
 // API ENDPOINTS (RESTful JSON)
 // Tổng cộng: 16 endpoints chuẩn REST
@@ -88,12 +92,25 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('hocky', \App\Http\Controllers\HocKyController::class);
 
     Route::post('phancong/import', [\App\Http\Controllers\PhanCongController::class, 'importExcel'])->name('admin.phancong.import');
+    Route::delete('phancong/lhp/{id}', [\App\Http\Controllers\PhanCongController::class, 'unassignLhp'])->name('admin.phancong.unassign_lhp');
     Route::resource('phancong', \App\Http\Controllers\PhanCongController::class)->only(['index', 'store', 'destroy']);
     
 
     Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->only(['index', 'store', 'destroy']);
     Route::get('sanpham', [\App\Http\Controllers\Admin\SanPhamController::class, 'index'])->name('admin.sanpham.index');
     Route::get('ketqua', [\App\Http\Controllers\Admin\KetQuaController::class, 'index'])->name('admin.ketqua.index');
+    
+    // Duyệt Quên Mật Khẩu
+    Route::get('yeu-cau-doi-mat-khau', [\App\Http\Controllers\Admin\YeuCauDoiMatKhauController::class, 'index'])->name('admin.yeucau.index');
+    Route::post('yeu-cau-doi-mat-khau/{id}/duyet', [\App\Http\Controllers\Admin\YeuCauDoiMatKhauController::class, 'approve'])->name('admin.yeucau.approve');
+    Route::post('yeu-cau-doi-mat-khau/{id}/tu-choi', [\App\Http\Controllers\Admin\YeuCauDoiMatKhauController::class, 'reject'])->name('admin.yeucau.reject');
+
+    // Quản Lý Lớp Học Phần
+    Route::post('lop-hoc-phan/import', [\App\Http\Controllers\Admin\LopHocPhanController::class, 'import'])->name('admin.lophocphan.import');
+    Route::post('lop-hoc-phan/{id}/import-students', [\App\Http\Controllers\Admin\LopHocPhanController::class, 'importStudents'])->name('admin.lophocphan.importStudents');
+    Route::resource('lop-hoc-phan', \App\Http\Controllers\Admin\LopHocPhanController::class)->names('admin.lophocphan');
+    Route::post('lop-hoc-phan/{id}/add-sv', [\App\Http\Controllers\Admin\LopHocPhanController::class, 'addStudent'])->name('admin.lophocphan.addStudent');
+    Route::delete('lop-hoc-phan/{id}/remove-sv/{maSV}', [\App\Http\Controllers\Admin\LopHocPhanController::class, 'removeStudent'])->name('admin.lophocphan.removeStudent');
 });
 
 // Giảng Viên Routes
@@ -108,6 +125,8 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::delete('detai/{id}/delete-tai-lieu', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'deleteTaiLieu'])->name('giangvien.detai.deleteTaiLieu');
 
     Route::resource('detai', App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
+    Route::get('/lop', [\App\Http\Controllers\GiangVien\LopController::class, 'index'])->name('giangvien.lop.index');
+    Route::get('/lop/{id}', [\App\Http\Controllers\GiangVien\LopController::class, 'show'])->name('giangvien.lop.show');
     Route::resource('duyet', App\Http\Controllers\GiangVien\DuyetDeTaiController::class)->names('giangvien.duyet')->only(['index', 'update']);
     Route::get('/baocao', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'index'])->name('giangvien.baocao.index');
     Route::post('/baocao/{maBaoCao}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXet'])->name('giangvien.baocao.nhanxet');
@@ -132,7 +151,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('nhom/moi/{id}/xac-nhan', [App\Http\Controllers\SinhVien\NhomController::class, 'xacNhanLoiMoi'])->name('sinhvien.nhom.xacNhan');
     Route::post('nhom/moi/{id}/tu-choi', [App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiLoiMoi'])->name('sinhvien.nhom.tuChoi');
     
-    Route::resource('dangky', App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store']);
+    Route::resource('dangky', App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store', 'destroy']);
 
     Route::get('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'index'])->name('sinhvien.baocao.index');
     Route::post('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'store'])->name('sinhvien.baocao.store');

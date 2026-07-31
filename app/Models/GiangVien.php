@@ -9,4 +9,5 @@ class GiangVien extends Model
     
     public function taiKhoan() { return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK'); }
     public function boMon() { return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon'); }
+    public function lopHocPhans() { return $this->hasMany(LopHocPhan::class, 'MaGV', 'MaGV'); }
 }

@@ -11,4 +11,5 @@ class SinhVien extends Model
     public function lop() { return $this->belongsTo(Lop::class, 'MaLop', 'MaLop'); }
     public function thanhVienNhom() { return $this->hasOne(ThanhVienNhom::class, 'MaSV', 'MaSV'); }
     public function thanhVienNhoms() { return $this->hasMany(ThanhVienNhom::class, 'MaSV', 'MaSV'); }
+    public function lopHocPhans() { return $this->belongsToMany(LopHocPhan::class, 'sinh_vien_lop_hoc_phans', 'MaSV', 'MaLopHP'); }
 }

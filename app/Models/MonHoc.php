@@ -14,4 +14,9 @@ class MonHoc extends Model
     {
         return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon');
     }
+
+    public function lopHocPhans()
+    {
+        return $this->hasMany(LopHocPhan::class, 'MaMon', 'MaMon');
+    }
 }

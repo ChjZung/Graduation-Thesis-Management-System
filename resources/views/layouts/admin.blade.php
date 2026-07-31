@@ -57,6 +57,11 @@
                     <i class="fa-solid fa-chalkboard-user"></i> Quản lý Giảng viên
                 </a>
             </li>
+            <li class="{{ request()->routeIs('admin.yeucau.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.yeucau.index') }}">
+                    <i class="fa-solid fa-key"></i> Duyệt Quên Mật Khẩu
+                </a>
+            </li>
 
             <!-- Quản Lý Danh Mục -->
             <li class="nav-section-label">Quản Lý Danh Mục</li>
@@ -72,7 +77,12 @@
             </li>
             <li class="{{ request()->routeIs('lop.*') ? 'active' : '' }}">
                 <a href="{{ route('lop.index') }}">
-                    <i class="fa-solid fa-users-rectangle"></i> Quản lý Lớp
+                    <i class="fa-solid fa-users-rectangle"></i> Quản lý Lớp Hành Chính
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.lophocphan.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.lophocphan.index') }}">
+                    <i class="fa-solid fa-graduation-cap"></i> Quản lý Lớp Học Phần
                 </a>
             </li>
             <li class="{{ request()->routeIs('monhoc.*') ? 'active' : '' }}">

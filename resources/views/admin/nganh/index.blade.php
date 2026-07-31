@@ -30,7 +30,7 @@
             <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fa-solid fa-file-excel me-1"></i>Import Excel
             </button>
-            <a href="{{ route('nganh.create') }}" class="btn btn-primary-custom btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i> Thêm Mới</a>
+            <a href="{{ route('nganh.create') }}" class="btn btn-success btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i> Thêm Mới</a>
         </div>
     </div>
     <div class="card-body p-0">

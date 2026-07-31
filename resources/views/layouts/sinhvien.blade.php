@@ -60,7 +60,37 @@
             </li>
 
             @php
-                $unreadNotiCount = \App\Models\ThongBao::where('MaTK', Auth::user()->MaTK)->where('DaDoc', false)->count();
+                $user = Auth::user();
+                $sv = $user ? \App\Models\SinhVien::where('MaTK', $user->MaTK)->first() : null;
+                $unreadNotiCount = 0;
+                if ($sv) {
+                    $adminTKs = \App\Models\TaiKhoan::where('MaVaiTro', 1)->pluck('MaTK')->toArray();
+                    $studentLhpIds = \App\Models\SinhVienLopHocPhan::where('MaSV', $sv->MaSV)->pluck('MaLopHP')->toArray();
+                    
+                    $lecturerGvIdsFromLh = \App\Models\PhanCongHuongDanLop::where('MaLop', $sv->MaLop)->pluck('MaGV')->toArray();
+                    $lecturerGvIdsFromLhp = \App\Models\LopHocPhan::whereIn('MaLopHP', $studentLhpIds)->whereNotNull('MaGV')->pluck('MaGV')->toArray();
+                    $allGvIds = array_unique(array_merge($lecturerGvIdsFromLh, $lecturerGvIdsFromLhp));
+                    $lecturerTKs = \App\Models\GiangVien::whereIn('MaGV', $allGvIds)->pluck('MaTK')->toArray();
+
+                    $unreadNotiCount = \App\Models\ThongBao::where(function($q) use ($adminTKs, $sv, $studentLhpIds, $lecturerTKs) {
+                        $q->whereIn('MaTK', $adminTKs);
+                        if ($sv->MaLop) {
+                            $q->orWhere('MaLop', $sv->MaLop);
+                        }
+                        if (!empty($studentLhpIds)) {
+                            $q->orWhereIn('MaLopHP', $studentLhpIds);
+                        }
+                        if (!empty($lecturerTKs)) {
+                            $q->orWhere(function($subQ) use ($lecturerTKs) {
+                                $subQ->whereIn('MaTK', $lecturerTKs)
+                                     ->whereNull('MaLop')
+                                     ->whereNull('MaLopHP');
+                            });
+                        }
+                    })
+                    ->where('DaDoc', false)
+                    ->count();
+                }
             @endphp
             <li class="{{ request()->routeIs('sinhvien.thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">

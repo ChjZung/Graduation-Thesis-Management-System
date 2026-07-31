@@ -18,19 +18,50 @@
                 @endif
             </div>
             <div class="card-body">
-                <p class="mb-2 fw-bold small text-muted">Sản Phẩm Đã Nộp:</p>
-                @foreach($nhom->sanPhams as $sp)
-                    <div class="border rounded p-3 mb-3 bg-light shadow-sm">
-                        <div class="fw-bold text-dark mb-2" style="word-wrap: break-word;">
-                            <i class="fa-solid fa-file-code text-primary me-2"></i>{{ $sp->TenSanPham }}
+                <p class="mb-2 fw-bold small text-muted"><i class="fa-solid fa-box-archive me-1 text-primary"></i>Sản Phẩm Đã Nộp:</p>
+                @forelse($nhom->sanPhams as $sp)
+                    <div class="border rounded-3 p-3 mb-3 bg-white shadow-sm border-start border-4 border-primary">
+                        <div class="fw-bold text-dark mb-2">
+                            <i class="fa-solid fa-folder-closed text-warning me-2"></i>{{ $sp->TenSanPham }}
+                            @if($sp->NgayNop)
+                            <span class="badge bg-light text-muted border ms-2 small fw-normal">
+                                <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($sp->NgayNop)->format('d/m/Y H:i') }}
+                            </span>
+                            @endif
                         </div>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white"><i class="fa-solid fa-link text-muted"></i></span>
-                            <input type="text" class="form-control bg-white text-primary" value="{{ $sp->LinkFile }}" readonly>
-                            <a href="{{ $sp->LinkFile }}" target="_blank" class="btn btn-primary"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở</a>
+                        
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {{-- 1. File đính kèm tải từ máy --}}
+                            @if($sp->LinkFile && !str_starts_with($sp->LinkFile, 'http'))
+                                @php
+                                    $filePath = asset(ltrim($sp->LinkFile, '/'));
+                                @endphp
+                                <a href="{{ $filePath }}" target="_blank" download class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fa-solid fa-download me-1"></i>Tải File Báo Cáo (.pdf/.zip)
+                                </a>
+                            @elseif($sp->LinkFile && str_starts_with($sp->LinkFile, 'http'))
+                                <a href="{{ $sp->LinkFile }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Xem Link File
+                                </a>
+                            @else
+                                <span class="badge bg-light text-muted border py-2 px-3"><i class="fa-solid fa-file-xmark me-1"></i>Chưa nộp file từ máy</span>
+                            @endif
+
+                            {{-- 2. Link Source Code / GitHub / Drive --}}
+                            @if($sp->LinkSourceCode)
+                                <a href="{{ $sp->LinkSourceCode }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                    <i class="fa-brands fa-github me-1"></i>Xem Link Source Code / GitHub
+                                </a>
+                            @else
+                                <span class="badge bg-light text-muted border py-2 px-3"><i class="fa-solid fa-link-slash me-1"></i>Chưa nộp link GitHub</span>
+                            @endif
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="alert alert-light border text-muted small py-2 text-center mb-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>Nhóm chưa nộp sản phẩm đồ án.
+                    </div>
+                @endforelse
                 
                 <hr>
                 

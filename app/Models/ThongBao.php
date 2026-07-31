@@ -12,6 +12,8 @@ class ThongBao extends Model
 
     protected $fillable = [
         'MaTK',
+        'MaLop',
+        'MaLopHP',
         'TieuDe',
         'NoiDung',
         'LoaiThongBao',
@@ -23,6 +25,16 @@ class ThongBao extends Model
     public function taiKhoan()
     {
         return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK');
+    }
+
+    public function lop()
+    {
+        return $this->belongsTo(Lop::class, 'MaLop', 'MaLop');
+    }
+
+    public function lopHocPhan()
+    {
+        return $this->belongsTo(LopHocPhan::class, 'MaLopHP', 'MaLopHP');
     }
 
     public function scopeChuaDoc($query)

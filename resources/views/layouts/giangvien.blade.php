@@ -43,6 +43,11 @@
                     <i class="fa-solid fa-folder-open"></i> Đề tài của tôi
                 </a>
             </li>
+            <li class="{{ request()->routeIs('giangvien.lop.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.lop.index') }}">
+                    <i class="fa-solid fa-users-gear"></i> Lớp phụ trách
+                </a>
+            </li>
             <li class="{{ request()->routeIs('giangvien.duyet.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.duyet.index') }}">
                     <i class="fa-solid fa-user-check"></i> Duyệt đăng ký
