@@ -1,15 +1,33 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class SinhVien extends Model
 {
+    use HasFactory;
+
     protected $table = 'sinh_viens';
     protected $primaryKey = 'MaSV';
-    protected $fillable = ['MaTK', 'MaLop', 'HoTen', 'Email', 'SoDienThoai'];
-    
-    public function taiKhoan() { return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK'); }
-    public function lop() { return $this->belongsTo(Lop::class, 'MaLop', 'MaLop'); }
-    public function thanhVienNhom() { return $this->hasOne(ThanhVienNhom::class, 'MaSV', 'MaSV'); }
-    public function thanhVienNhoms() { return $this->hasMany(ThanhVienNhom::class, 'MaSV', 'MaSV'); }
-    public function lopHocPhans() { return $this->belongsToMany(LopHocPhan::class, 'sinh_vien_lop_hoc_phans', 'MaSV', 'MaLopHP'); }
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $fillable = [
+        'MaSV', 'MaTK', 'MaLop', 'MaSoSinhVien', 'HoTen', 'NgaySinh', 'GioiTinh', 'Email', 'SoDienThoai', 'NgayNhapHoc', 'KhoaHoc', 'SoTinChiTichLuy', 'DiemTichLuy', 'TrangThai'
+    ];
+
+    public $timestamps = true;
+
+    public function lop()
+    {
+        return $this->belongsTo(Lop::class, 'MaLop', 'MaLop');
+    }
+
+    public function taiKhoan()
+    {
+        return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK');
+    }
 }
+

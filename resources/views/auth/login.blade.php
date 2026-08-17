@@ -394,6 +394,63 @@
 
     }
 
+    /* Alerts */
+    .alert-locked {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: #FFF0F0;
+        border: 2px solid #FF4D4D;
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-bottom: 25px;
+        animation: pulseAlert 2s infinite ease-in-out;
+    }
+
+    .alert-locked-icon {
+        width: 45px;
+        height: 45px;
+        background: #FF4D4D;
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .alert-locked-text {
+        font-size: 0.95rem;
+        color: #D32F2F;
+        line-height: 1.5;
+    }
+
+    .alert-error {
+        background: #FFF5F5;
+        border-left: 4px solid #E53E3E;
+        color: #C53030;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+
+    .alert-warning-box {
+        background: #FEFCBF;
+        border-left: 4px solid #D69E2E;
+        color: #744210;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+
+    @keyframes pulseAlert {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+        50% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+    }
+
 </style>
 
 <div class="login-card">
@@ -429,6 +486,36 @@
 
         <h1>Đăng Nhập</h1>
         <p class="welcome-sub">Vui lòng nhập thông tin tài khoản của bạn để tiếp tục</p>
+
+        {{-- ── ALERT KHÓA TÀI KHOẢN ── --}}
+        @if ($errors->has('TenDangNhap') && str_contains($errors->first('TenDangNhap'), 'bị khóa'))
+        <div class="alert-locked">
+            <div class="alert-locked-icon"><i class="fa-solid fa-lock"></i></div>
+            <div class="alert-locked-text">
+                <strong>Tài khoản bị khóa!</strong><br>
+                {{ $errors->first('TenDangNhap') }}
+            </div>
+        </div>
+        @elseif ($errors->has('TenDangNhap'))
+        <div class="alert-error">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            {{ $errors->first('TenDangNhap') }}
+        </div>
+        @endif
+
+        @if ($errors->has('password'))
+        <div class="alert-error">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            {{ $errors->first('password') }}
+        </div>
+        @endif
+
+        @if (session('warning'))
+        <div class="alert-warning-box">
+            <i class="fa-solid fa-exclamation-circle me-2"></i>
+            {{ session('warning') }}
+        </div>
+        @endif
 
         <form method="POST" action="{{ route('login') }}">
             @csrf

@@ -45,6 +45,19 @@
                 </a>
             </li>
 
+            <!-- Kế Hoạch & Lịch -->
+            <li class="nav-section-label">Kế Hoạch & Lịch Timeline</li>
+            <li class="{{ request()->routeIs('admin.kehoach.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.kehoach.index') }}">
+                    <i class="fa-solid fa-calendar-check"></i> Kế hoạch 5 Mốc Báo Cáo
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.calendar') ? 'active' : '' }}">
+                <a href="{{ route('admin.calendar') }}">
+                    <i class="fa-regular fa-calendar-days"></i> Lịch Calendar Tổng Quan
+                </a>
+            </li>
+
             <!-- Quản Lý Tài Khoản -->
             <li class="nav-section-label">Quản Lý Tài Khoản</li>
             <li class="{{ request()->routeIs('sinhvien.*') ? 'active' : '' }}">
@@ -65,6 +78,11 @@
 
             <!-- Quản Lý Danh Mục -->
             <li class="nav-section-label">Quản Lý Danh Mục</li>
+            <li class="{{ request()->routeIs('khoa.*') ? 'active' : '' }}">
+                <a href="{{ route('khoa.index') }}">
+                    <i class="fa-solid fa-university"></i> Quản lý Khoa
+                </a>
+            </li>
             <li class="{{ request()->routeIs('bomon.*') ? 'active' : '' }}">
                 <a href="{{ route('bomon.index') }}">
                     <i class="fa-solid fa-building"></i> Quản lý Bộ môn
@@ -77,17 +95,7 @@
             </li>
             <li class="{{ request()->routeIs('lop.*') ? 'active' : '' }}">
                 <a href="{{ route('lop.index') }}">
-                    <i class="fa-solid fa-users-rectangle"></i> Quản lý Lớp Hành Chính
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.lophocphan.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.lophocphan.index') }}">
-                    <i class="fa-solid fa-graduation-cap"></i> Quản lý Lớp Học Phần
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('monhoc.*') ? 'active' : '' }}">
-                <a href="{{ route('monhoc.index') }}">
-                    <i class="fa-solid fa-book"></i> Quản lý Môn học
+                    <i class="fa-solid fa-users-rectangle"></i> Quản lý Lớp
                 </a>
             </li>
             <li class="{{ request()->routeIs('hocky.*') ? 'active' : '' }}">
@@ -95,31 +103,17 @@
                     <i class="fa-solid fa-calendar-days"></i> Quản lý Học kỳ
                 </a>
             </li>
-            <li class="{{ request()->routeIs('phancong.*') ? 'active' : '' }}">
-                <a href="{{ route('phancong.index') }}">
-                    <i class="fa-solid fa-sitemap"></i> Phân công hướng dẫn
-                </a>
-            </li>
 
             <!-- Thông Tin Hệ Thống -->
             <li class="nav-section-label">Thông Tin Hệ Thống</li>
-            <li class="{{ request()->routeIs('admin.sanpham.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.sanpham.index') }}">
-                    <i class="fa-solid fa-box-archive"></i> Quản lý Sản phẩm
-                </a>
-            </li>
             <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('thongbao.index') }}">
                     <i class="fa-solid fa-bell"></i> Quản lý Thông Báo
                 </a>
             </li>
-            <li class="{{ request()->routeIs('admin.ketqua.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.ketqua.index') }}">
-                    <i class="fa-solid fa-square-poll-vertical"></i> Quản lý Kết Quả
-                </a>
-            </li>
         </ul>
     </nav>
+
     <!-- /SIDEBAR -->
 
     <!-- ═══ MAIN CONTENT ═══ -->

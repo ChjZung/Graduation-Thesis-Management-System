@@ -38,19 +38,14 @@
         </div>
 
         <ul class="list-unstyled components">
+            <li class="{{ request()->routeIs('giangvien.calendar') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.calendar') }}">
+                    <i class="fa-regular fa-calendar-days"></i> Lịch Báo Cáo & Timeline
+                </a>
+            </li>
             <li class="{{ request()->routeIs('giangvien.detai.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.detai.index') }}">
                     <i class="fa-solid fa-folder-open"></i> Đề tài của tôi
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('giangvien.lop.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.lop.index') }}">
-                    <i class="fa-solid fa-users-gear"></i> Lớp phụ trách
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('giangvien.duyet.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.duyet.index') }}">
-                    <i class="fa-solid fa-user-check"></i> Duyệt đăng ký
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.baocao.*') ? 'active' : '' }}">
@@ -58,23 +53,17 @@
                     <i class="fa-solid fa-clipboard-check"></i> Duyệt báo cáo tiến độ
                 </a>
             </li>
-            <li class="{{ request()->routeIs('giangvien.sanpham.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.sanpham.index') }}">
-                    <i class="fa-solid fa-box-open"></i> Quản lý sản phẩm
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('giangvien.chamdiem.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.chamdiem.index') }}">
-                    <i class="fa-solid fa-gavel"></i> Chấm điểm đồ án
-                </a>
-            </li>
 
             @php
-                $unreadGvNoti = \App\Models\ThongBao::where('MaTK', Auth::user()->MaTK)->where('DaDoc', false)->count();
+                $user = Auth::user();
+                $unreadGvNoti = 0;
+                if ($user) {
+                    $unreadGvNoti = \App\Models\NguoiNhanThongBao::where('MaTK', $user->MaTK)->where('DaDoc', false)->count();
+                }
             @endphp
             <li class="{{ request()->routeIs('giangvien.thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-bell"></i> Đăng thông báo</span>
+                    <span><i class="fa-solid fa-bell"></i> Thông báo</span>
                     @if($unreadGvNoti > 0)
                         <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $unreadGvNoti }}</span>
                     @endif
@@ -82,6 +71,7 @@
             </li>
         </ul>
     </nav>
+
     <!-- /SIDEBAR -->
 
     <!-- ═══ MAIN CONTENT ═══ -->

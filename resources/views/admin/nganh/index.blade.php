@@ -22,35 +22,43 @@
 
 <div class="card card-premium">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-list text-primary me-2"></i> Quản Lý Ngành</span>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.import.template', 'nganh') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
-            </a>
-            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-excel me-1"></i>Import Excel
-            </button>
-            <a href="{{ route('nganh.create') }}" class="btn btn-success btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i> Thêm Mới</a>
-        </div>
+        <span><i class="fa-solid fa-book-open text-primary me-2"></i> Quản Lý Ngành</span>
+        <a href="{{ route('nganh.create') }}" class="btn btn-success btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-plus me-1"></i> Thêm Mới Ngành
+        </a>
     </div>
     <div class="card-body p-0">
         <table class="table table-custom mb-0">
-            <thead><tr><th>Mã</th><th>Tên Ngành</th><th>Mô Tả</th><th class="text-center">Thao Tác</th></tr></thead>
+            <thead>
+                <tr>
+                    <th width="15%">Mã Ngành</th>
+                    <th width="35%">Tên Ngành</th>
+                    <th width="35%">Mô Tả</th>
+                    <th width="15%" class="text-center">Thao Tác</th>
+                </tr>
+            </thead>
             <tbody>
-                @foreach($nganhs as $item)
+                @forelse($nganhs as $item)
                 <tr>
                     <td><span class="badge bg-light text-dark fw-bold border">{{ $item->MaNganh }}</span></td>
                     <td class="fw-medium">{{ $item->TenNganh }}</td>
-                    <td class="text-muted">{{ $item->MoTa }}</td>
+                    <td class="text-muted">{{ $item->MoTa ?? 'Không có mô tả' }}</td>
                     <td class="text-center">
-                        <a href="{{ route('nganh.edit', $item->MaNganh) }}" class="btn btn-sm btn-light text-primary rounded-circle"><i class="fa-solid fa-pen"></i></a>
+                        <a href="{{ route('nganh.edit', $item->MaNganh) }}" class="btn btn-sm btn-light text-primary rounded-circle" title="Sửa"><i class="fa-solid fa-pen"></i></a>
                         <form action="{{ route('nganh.destroy', $item->MaNganh) }}" method="POST" class="d-inline" onsubmit="return confirm('Xóa ngành này?');">
                             @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                         </form>
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-folder-open fs-1 text-light mb-3 d-block"></i>
+                        Chưa có dữ liệu Ngành
+                    </td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
@@ -59,33 +67,5 @@
         {{ $nganhs->links('pagination::bootstrap-5') }}
     </div>
     @endif
-</div>
-
-<!-- MODAL IMPORT -->
-<div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form action="{{ route('admin.nganh.import') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="fa-solid fa-file-excel me-2"></i>Import Danh Sách Ngành</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">Chọn file (.xlsx, .csv)</label>
-                        <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
-                    </div>
-                    <div class="alert alert-light border small text-muted mb-0">
-                        <i class="fa-solid fa-circle-info me-1"></i> Tải <a href="{{ route('admin.import.template', 'nganh') }}" class="fw-bold">File mẫu .xlsx</a> để nhập đúng định dạng dữ liệu.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
-                </div>
-            </div>
-        </form>
-    </div>
 </div>
 @endsection

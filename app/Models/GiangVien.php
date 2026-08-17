@@ -1,13 +1,28 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class GiangVien extends Model
 {
+    use HasFactory;
+
     protected $table = 'giang_viens';
     protected $primaryKey = 'MaGV';
-    protected $fillable = ['MaTK', 'MaBoMon', 'HoTen', 'Email', 'SoDienThoai', 'HocVi'];
-    
-    public function taiKhoan() { return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK'); }
-    public function boMon() { return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon'); }
-    public function lopHocPhans() { return $this->hasMany(LopHocPhan::class, 'MaGV', 'MaGV'); }
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $fillable = [
+        'MaGV', 'MaTK', 'MaBoMon', 'MaSoCanBo', 'HoTen', 'NgaySinh', 'GioiTinh', 'Email', 'SoDienThoai', 'HocHam', 'HocVi', 'ChuyenNganh', 'TrangThai'
+    ];
+
+    public $timestamps = true;
+
+    public function boMon()
+    {
+        return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon');
+    }
 }
+

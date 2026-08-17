@@ -15,7 +15,7 @@ class ProfileController extends Controller
         $role = $user->vaiTro->TenVaiTro ?? '';
         $profile = null;
 
-        if ($role === 'Admin') {
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
             $layout = 'layouts.admin';
         } elseif ($role === 'Giảng viên') {
             $layout = 'layouts.giangvien';
@@ -33,7 +33,7 @@ class ProfileController extends Controller
         $role = $user->vaiTro->TenVaiTro ?? '';
         
         // Determine which layout to use based on role
-        if ($role === 'Admin') {
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
             $layout = 'layouts.admin';
         } elseif ($role === 'Giảng viên') {
             $layout = 'layouts.giangvien';
@@ -58,15 +58,27 @@ class ProfileController extends Controller
         ]);
 
         $user = Auth::user();
+        $user->loadMissing('vaiTro');
+        $role = $user->vaiTro->TenVaiTro ?? '';
 
         // Check if current password matches
         if (!Hash::check($request->current_password, $user->MatKhau)) {
             return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
         }
 
-        // Update password
+        // Determine layout
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
+            $layout = 'layouts.admin';
+        } elseif ($role === 'Giảng viên') {
+            $layout = 'layouts.giangvien';
+        } else {
+            $layout = 'layouts.sinhvien';
+        }
+
+        // Update password and clear force change flag
         TaiKhoan::where('MaTK', $user->MaTK)->update([
-            'MatKhau' => Hash::make($request->new_password)
+            'MatKhau' => Hash::make($request->new_password),
+            'BatBuocDoiMatKhau' => false,
         ]);
 
         return back()->with('success', 'Đổi mật khẩu thành công!');

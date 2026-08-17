@@ -1,0 +1,410 @@
+=== TARGET FILE: \\Mac\Home\Documents\1_monhoc\KhoaLuan\cơ sở dữ liệu dự án.docx ===
+
+=== PARAGRAPHS ===
+-- =========================================================================
+-- 1. BẢNG DANH MỤC & HỆ THỐNG
+-- =========================================================================
+-- 1. Bảng VaiTro
+CREATE TABLE VaiTro (
+MaVaiTro VARCHAR(10) PRIMARY KEY,
+TenVaiTro NVARCHAR(50) NOT NULL UNIQUE,
+CONSTRAINT CK_VaiTro_Ten CHECK (TenVaiTro IN (N'Giáo vụ', N'Sinh viên', N'Giảng viên'))
+);
+-- 2. Bảng TaiKhoan
+CREATE TABLE TaiKhoan (
+MaTK VARCHAR(10) PRIMARY KEY,
+MaVaiTro VARCHAR(10) NOT NULL,
+TenDangNhap VARCHAR(50) NOT NULL UNIQUE,
+MatKhau VARCHAR(255) NOT NULL,
+TrangThai BIT NOT NULL DEFAULT 1,
+SoLanDangNhapSai INT DEFAULT 0,
+BatBuocDoiMatKhau BIT DEFAULT 1,
+NgayTao DATETIME DEFAULT GETDATE(),
+NgayCapNhat DATETIME NULL,
+LanDangNhapCuoi DATETIME NULL,
+NgayKhoa DATETIME NULL,
+CONSTRAINT FK_TaiKhoan_VaiTro FOREIGN KEY (MaVaiTro) REFERENCES VaiTro(MaVaiTro)
+);
+-- 3. Bảng Khoa
+CREATE TABLE Khoa (
+MaKhoa VARCHAR(10) PRIMARY KEY,
+TenKhoa NVARCHAR(100) NOT NULL UNIQUE
+);
+-- 4. Bảng BoMon
+CREATE TABLE BoMon (
+MaBoMon VARCHAR(10) PRIMARY KEY,
+TenBoMon NVARCHAR(100) NOT NULL,
+MaKhoa VARCHAR(10) NOT NULL,
+CONSTRAINT FK_BoMon_Khoa FOREIGN KEY (MaKhoa) REFERENCES Khoa(MaKhoa)
+);
+-- 5. Bảng Nganh
+CREATE TABLE Nganh (
+MaNganh VARCHAR(10) PRIMARY KEY,
+TenNganh NVARCHAR(100) NOT NULL,
+MaKhoa VARCHAR(10) NOT NULL,
+CONSTRAINT FK_Nganh_Khoa FOREIGN KEY (MaKhoa) REFERENCES Khoa(MaKhoa)
+);
+-- 6. Bảng Lop
+CREATE TABLE Lop (
+MaLop VARCHAR(10) PRIMARY KEY,
+TenLop NVARCHAR(100) NOT NULL,
+MaNganh VARCHAR(10) NOT NULL,
+KhoaHoc VARCHAR(20) NOT NULL,
+CONSTRAINT FK_Lop_Nganh FOREIGN KEY (MaNganh) REFERENCES Nganh(MaNganh)
+);
+-- 7. Bảng HocKy
+CREATE TABLE HocKy (
+MaHocKy VARCHAR(10) PRIMARY KEY,
+TenHocKy NVARCHAR(50) NOT NULL,
+NamHoc VARCHAR(20) NOT NULL,
+NgayBatDau DATE NOT NULL,
+NgayKetThuc DATE NOT NULL,
+TrangThai BIT DEFAULT 1
+);
+-- =========================================================================
+-- 2. BẢNG NGƯỜI DÙNG (THÔNG TIN CHI TIẾT)
+-- =========================================================================
+-- 8. Bảng GiaoVu
+CREATE TABLE GiaoVu (
+MaGVu VARCHAR(10) PRIMARY KEY,
+MaTK VARCHAR(10) NOT NULL UNIQUE,
+MaKhoa VARCHAR(10) NOT NULL,
+HoTen NVARCHAR(100) NOT NULL,
+Email VARCHAR(100) UNIQUE,
+SoDienThoai VARCHAR(15),
+ChucVu NVARCHAR(50),
+CONSTRAINT FK_GiaoVu_TaiKhoan FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK),
+CONSTRAINT FK_GiaoVu_Khoa FOREIGN KEY (MaKhoa) REFERENCES Khoa(MaKhoa)
+);
+-- 9. Bảng GiangVien
+CREATE TABLE GiangVien (
+MaGV VARCHAR(10) PRIMARY KEY,
+MaTK VARCHAR(10) NOT NULL UNIQUE,
+MaBoMon VARCHAR(10) NOT NULL,
+MaSoCanBo VARCHAR(20) UNIQUE,
+HoTen NVARCHAR(100) NOT NULL,
+NgaySinh DATE NULL,
+GioiTinh BIT NULL,
+Email VARCHAR(100) UNIQUE,
+SoDienThoai VARCHAR(15),
+HocHam NVARCHAR(50),
+HocVi NVARCHAR(50),
+ChuyenNganh NVARCHAR(100),
+TrangThai BIT DEFAULT 1,
+CONSTRAINT FK_GiangVien_TaiKhoan FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK),
+CONSTRAINT FK_GiangVien_BoMon FOREIGN KEY (MaBoMon) REFERENCES BoMon(MaBoMon)
+);
+-- 10. Bảng SinhVien (Đã bỏ cột MaNganh dư thừa)
+CREATE TABLE SinhVien (
+MaSV VARCHAR(10) PRIMARY KEY,
+MaTK VARCHAR(10) NOT NULL UNIQUE,
+MaLop VARCHAR(10) NOT NULL,
+MaSoSinhVien VARCHAR(20) UNIQUE,
+HoTen NVARCHAR(100) NOT NULL,
+NgaySinh DATE NULL,
+GioiTinh BIT NULL,
+Email VARCHAR(100) UNIQUE,
+SoDienThoai VARCHAR(15),
+NgayNhapHoc DATE NULL,
+KhoaHoc VARCHAR(20),
+SoTinChiTichLuy INT DEFAULT 0,
+DiemTichLuy DECIMAL(3,2) DEFAULT 0.00,
+TrangThai NVARCHAR(50) DEFAULT N'Đang học',
+CONSTRAINT FK_SinhVien_TaiKhoan FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK),
+CONSTRAINT FK_SinhVien_Lop FOREIGN KEY (MaLop) REFERENCES Lop(MaLop)
+);
+-- =========================================================================
+-- 3. QUẢN LÝ ĐIỀU KIỆN & CHỈ TIÊU HỌC KỲ
+-- =========================================================================
+-- 11. Bảng DanhSachSVDuDieuKien (Công báo danh sách đủ điều kiện)
+CREATE TABLE DanhSachSVDuDieuKien (
+MaSV VARCHAR(10) NOT NULL,
+MaHocKy VARCHAR(10) NOT NULL,
+NgayXetDuyet DATE DEFAULT GETDATE(),
+TrangThai NVARCHAR(50) DEFAULT N'Đủ điều kiện',
+GhiChu NVARCHAR(255) NULL,
+PRIMARY KEY (MaSV, MaHocKy),
+CONSTRAINT FK_DSSV_SinhVien FOREIGN KEY (MaSV) REFERENCES SinhVien(MaSV),
+CONSTRAINT FK_DSSV_HocKy FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy)
+);
+-- 12. Bảng ChiTieuHuongDan (Phân bổ chỉ tiêu giảng viên hướng dẫn)
+CREATE TABLE ChiTieuHuongDan (
+MaGV VARCHAR(10) NOT NULL,
+MaHocKy VARCHAR(10) NOT NULL,
+SoNhomToiDa INT DEFAULT 3,
+NgayPhanBo DATE DEFAULT GETDATE(),
+PRIMARY KEY (MaGV, MaHocKy),
+CONSTRAINT FK_ChiTieu_GiangVien FOREIGN KEY (MaGV) REFERENCES GiangVien(MaGV),
+CONSTRAINT FK_ChiTieu_HocKy FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy)
+);
+-- =========================================================================
+-- 4. KẾ HOẠCH & ĐỀ TÀI (Đề tài cho phép Sinh viên tự đề xuất)
+-- =========================================================================
+-- 13. Bảng KeHoachKhoaLuan
+CREATE TABLE KeHoachKhoaLuan (
+MaKeHoach VARCHAR(10) PRIMARY KEY,
+MaHocKy VARCHAR(10) NOT NULL,
+MaGVu VARCHAR(10) NOT NULL,
+TenKeHoach NVARCHAR(200) NOT NULL,
+NoiDung NVARCHAR(MAX) NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Nháp',
+NgayTao DATE DEFAULT GETDATE(),
+NgayCongBo DATE NULL,
+CONSTRAINT FK_KeHoach_HocKy FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy),
+CONSTRAINT FK_KeHoach_GiaoVu FOREIGN KEY (MaGVu) REFERENCES GiaoVu(MaGVu)
+);
+-- 14. Bảng MocThoiGianKhoaLuan
+CREATE TABLE MocThoiGianKhoaLuan (
+MaMoc VARCHAR(10) PRIMARY KEY,
+MaKeHoach VARCHAR(10) NOT NULL,
+TenMoc NVARCHAR(100) NOT NULL,
+NgayBatDau DATE NOT NULL,
+NgayKetThuc DATE NOT NULL,
+MoTa NVARCHAR(255) NULL,
+CONSTRAINT FK_MocThoiGian_KeHoach FOREIGN KEY (MaKeHoach) REFERENCES KeHoachKhoaLuan(MaKeHoach)
+);
+-- 15. Bảng QuyDinhKhoaLuan
+CREATE TABLE QuyDinhKhoaLuan (
+MaQuyDinh VARCHAR(10) PRIMARY KEY,
+MaKeHoach VARCHAR(10) NOT NULL,
+TenQuyDinh NVARCHAR(200) NOT NULL,
+GiaTri NVARCHAR(100) NOT NULL,
+MoTa NVARCHAR(MAX) NULL,
+CONSTRAINT FK_QuyDinh_KeHoach FOREIGN KEY (MaKeHoach) REFERENCES KeHoachKhoaLuan(MaKeHoach)
+);
+-- 16. Bảng BieuMau
+CREATE TABLE BieuMau (
+MaBieuMau VARCHAR(10) PRIMARY KEY,
+MaKeHoach VARCHAR(10) NOT NULL,
+TenBieuMau NVARCHAR(200) NOT NULL,
+DuongDanFile VARCHAR(255) NOT NULL,
+CONSTRAINT FK_BieuMau_KeHoach FOREIGN KEY (MaKeHoach) REFERENCES KeHoachKhoaLuan(MaKeHoach)
+);
+-- 17. Bảng DeTai
+CREATE TABLE DeTai (
+MaDeTai VARCHAR(10) PRIMARY KEY,
+MaGV VARCHAR(10) NOT NULL, -- Giảng viên đề xuất đề tài
+TenDeTai NVARCHAR(200) NOT NULL,
+MoTa NVARCHAR(MAX),
+YeuCau NVARCHAR(MAX),
+LinhVuc NVARCHAR(100),
+SoLuongSinhVienToiDa INT DEFAULT 1,
+MaHocKy VARCHAR(10) NOT NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Chờ duyệt',
+NgayDeXuat DATE DEFAULT GETDATE(),
+NgayDuyet DATE NULL,
+LyDoTuChoi NVARCHAR(255),
+CONSTRAINT FK_DeTai_GiangVien
+FOREIGN KEY (MaGV) REFERENCES GiangVien(MaGV),
+CONSTRAINT FK_DeTai_HocKy
+FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy),
+CONSTRAINT CK_DeTai_TrangThai
+CHECK (
+TrangThai IN (
+N'Chờ duyệt',
+N'Đã duyệt',
+N'Từ chối',
+N'Yêu cầu chỉnh sửa',
+N'Đã đóng đăng ký'
+)
+)
+);-- =========================================================================
+-- 5. PHÂN BỔ NHÓM & ĐĂNG KÝ
+-- =========================================================================
+-- 18. Bảng Nhom (Cho phép MaDeTai NULL khi khởi tạo nhóm)
+CREATE TABLE Nhom (
+MaNhom VARCHAR(10) PRIMARY KEY,
+MaDeTai VARCHAR(10) NULL,
+MaTruongNhom VARCHAR(10) NOT NULL,
+TenNhom NVARCHAR(100) NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Đang tạo',
+NgayTao DATE DEFAULT GETDATE(),
+CONSTRAINT FK_Nhom_DeTai FOREIGN KEY (MaDeTai) REFERENCES DeTai(MaDeTai),
+CONSTRAINT FK_Nhom_TruongNhom FOREIGN KEY (MaTruongNhom) REFERENCES SinhVien(MaSV)
+);
+-- 19. Bảng ThanhVienNhom
+CREATE TABLE ThanhVienNhom (
+MaNhom VARCHAR(10) NOT NULL,
+MaSV VARCHAR(10) NOT NULL,
+VaiTro NVARCHAR(50) DEFAULT N'Thành viên',
+NgayThamGia DATE DEFAULT GETDATE(),
+PRIMARY KEY (MaNhom, MaSV),
+CONSTRAINT FK_ThanhVienNhom_Nhom FOREIGN KEY (MaNhom) REFERENCES Nhom(MaNhom),
+CONSTRAINT FK_ThanhVienNhom_SinhVien FOREIGN KEY (MaSV) REFERENCES SinhVien(MaSV)
+);
+-- 20. Bảng DangKyDeTai (Bổ sung cột LyDoTuChoi)
+CREATE TABLE DangKyDeTai (
+MaDangKy VARCHAR(10) PRIMARY KEY,
+MaNhom VARCHAR(10) NOT NULL,
+MaDeTai VARCHAR(10) NOT NULL,
+MaGVHuongDan VARCHAR(10) NOT NULL,
+NgayDangKy DATE DEFAULT GETDATE(),
+TrangThai NVARCHAR(50) DEFAULT N'Chờ duyệt',
+NgayDuyet DATE NULL,
+GhiChu NVARCHAR(255) NULL,
+LyDoTuChoi NVARCHAR(255) NULL,
+CONSTRAINT FK_DangKyDeTai_Nhom FOREIGN KEY (MaNhom) REFERENCES Nhom(MaNhom),
+CONSTRAINT FK_DangKyDeTai_DeTai FOREIGN KEY (MaDeTai) REFERENCES DeTai(MaDeTai),
+CONSTRAINT FK_DangKyDeTai_GiangVien FOREIGN KEY (MaGVHuongDan) REFERENCES GiangVien(MaGV)
+);
+-- =========================================================================
+-- 6. TIẾN ĐỘ & BÁO CÁO
+-- =========================================================================
+-- 21. Bảng BaoCaoTienDo (Loại bỏ cột NhanXetGVHD dư thừa)
+CREATE TABLE BaoCaoTienDo (
+MaBaoCao VARCHAR(10) PRIMARY KEY,
+MaNhom VARCHAR(10) NOT NULL,
+LanBaoCao INT NOT NULL,
+TieuDe NVARCHAR(200) NOT NULL,
+NoiDungBaoCao NVARCHAR(MAX) NULL,
+NgayNop DATE DEFAULT GETDATE(),
+TenFile NVARCHAR(255) NULL,
+DuongDanFile VARCHAR(500) NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Chờ duyệt',
+CONSTRAINT FK_BaoCaoTienDo_Nhom FOREIGN KEY (MaNhom) REFERENCES Nhom(MaNhom)
+);
+-- 22. Bảng TomTatBaoCao
+CREATE TABLE TomTatBaoCao (
+MaTomTat VARCHAR(10) PRIMARY KEY,
+MaBaoCao VARCHAR(10) NOT NULL,
+CongViecDaHoanThanh NVARCHAR(MAX) NULL,
+KhoKhan NVARCHAR(MAX) NULL,
+KeHoachTuanToi NVARCHAR(MAX) NULL,
+NoiDungAI NVARCHAR(MAX) NULL,
+DoTinCayAI DECIMAL(5,2) NULL,
+NgayTomTat DATETIME DEFAULT GETDATE(),
+TrangThai NVARCHAR(50) DEFAULT N'Đã tạo',
+CONSTRAINT FK_TomTatBaoCao_BaoCaoTienDo FOREIGN KEY (MaBaoCao) REFERENCES BaoCaoTienDo(MaBaoCao)
+);
+-- 23. Bảng NhanXet
+CREATE TABLE NhanXet (
+MaNhanXet VARCHAR(10) PRIMARY KEY,
+MaBaoCao VARCHAR(10) NOT NULL,
+MaGV VARCHAR(10) NOT NULL,
+NoiDung NVARCHAR(MAX) NOT NULL,
+LoaiNhanXet NVARCHAR(50) NULL,
+NgayNhanXet DATETIME DEFAULT GETDATE(),
+TrangThai NVARCHAR(50) DEFAULT N'Đã nhận xét',
+CONSTRAINT FK_NhanXet_BaoCaoTienDo FOREIGN KEY (MaBaoCao) REFERENCES BaoCaoTienDo(MaBaoCao),
+CONSTRAINT FK_NhanXet_GiangVien FOREIGN KEY (MaGV) REFERENCES GiangVien(MaGV)
+);
+-- 24. Bảng TienDo (Liên kết trực tiếp tới các giai đoạn)
+CREATE TABLE TienDo (
+MaTienDo VARCHAR(10) PRIMARY KEY,
+MaNhom VARCHAR(10) NOT NULL,
+MaMoc VARCHAR(10) NOT NULL,
+TyLeHoanThanh INT DEFAULT 0,
+TrangThai NVARCHAR(50) NULL,
+NgayCapNhat DATETIME DEFAULT GETDATE(),
+GhiChu NVARCHAR(MAX) NULL,
+CONSTRAINT FK_TienDo_Nhom FOREIGN KEY (MaNhom) REFERENCES Nhom(MaNhom),
+CONSTRAINT FK_TienDo_MocThoiGian FOREIGN KEY (MaMoc) REFERENCES MocThoiGianKhoaLuan(MaMoc)
+);
+-- =========================================================================
+-- 7. HỒ SƠ BẢO VỆ & HỘI ĐỒNG (Turnitin & Giảng viên phản biện)
+-- =========================================================================
+-- 25. Bảng HoiDong (Tách MaHoSo quản lý ca trực chi tiết)
+CREATE TABLE HoiDong (
+MaHoiDong VARCHAR(10) PRIMARY KEY,
+TenHoiDong NVARCHAR(200) NOT NULL,
+ThoiGianBatDau DATETIME NOT NULL,
+ThoiGianKetThuc DATETIME NOT NULL,
+DiaDiem NVARCHAR(200) NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Chưa diễn ra',
+GhiChu NVARCHAR(255) NULL
+);
+-- 26. Bảng ThanhVienHoiDong
+CREATE TABLE ThanhVienHoiDong (
+MaHoiDong VARCHAR(10) NOT NULL,
+MaGV VARCHAR(10) NOT NULL,
+VaiTro NVARCHAR(50) NOT NULL,
+PRIMARY KEY (MaHoiDong, MaGV),
+CONSTRAINT FK_ThanhVienHoiDong_HoiDong FOREIGN KEY (MaHoiDong) REFERENCES HoiDong(MaHoiDong),
+CONSTRAINT FK_ThanhVienHoiDong_GiangVien FOREIGN KEY (MaGV) REFERENCES GiangVien(MaGV),
+CONSTRAINT CK_ThanhVienHoiDong_VaiTro CHECK (
+VaiTro IN (
+N'Chủ tịch',
+N'Thư ký',
+N'Phản biện 1',
+N'Phản biện 2',
+N'Ủy viên'
+)
+)
+);
+-- 27. Bảng HoSoBaoVe (Thêm giảng viên phản biện, Turnitin và mã Hội đồng)
+CREATE TABLE HoSoBaoVe (
+MaHoSo VARCHAR(10) PRIMARY KEY,
+MaNhom VARCHAR(10) NOT NULL,
+MaHoiDong VARCHAR(10) NULL,
+MaGVPhanBien VARCHAR(10) NULL,
+XacNhanGVHD BIT DEFAULT 0,
+NgayXacNhanGVHD DATE NULL,
+TyLeTrungLap DECIMAL(5,2) NULL,
+MinhChungDaoVan VARCHAR(255) NULL,
+TrangThai NVARCHAR(50) DEFAULT N'Chờ xác nhận',
+NgayNop DATE DEFAULT GETDATE(),
+NgayXacNhan DATE NULL,
+NguoiXacNhan VARCHAR(10) NULL,
+GhiChu NVARCHAR(255) NULL,
+CONSTRAINT FK_HoSoBaoVe_Nhom FOREIGN KEY (MaNhom) REFERENCES Nhom(MaNhom),
+CONSTRAINT FK_HoSoBaoVe_GiangVien FOREIGN KEY (MaGVPhanBien) REFERENCES GiangVien(MaGV),
+CONSTRAINT FK_HoSoBaoVe_GiaoVu FOREIGN KEY (NguoiXacNhan) REFERENCES GiaoVu(MaGVu),
+CONSTRAINT FK_HoSoBaoVe_HoiDong FOREIGN KEY (MaHoiDong) REFERENCES HoiDong(MaHoiDong)
+);
+-- =========================================================================
+-- 8. KẾT QUẢ ĐÁNH GIÁ (CÁ NHÂN HÓA ĐẦU ĐIỂM)
+-- =========================================================================
+-- 28. Bảng ChiTietDiemHoiDong (Lưu điểm của từng thành viên chấm cho sinh viên)
+CREATE TABLE ChiTietDiemHoiDong (
+MaHoiDong VARCHAR(10) NOT NULL,
+MaGV VARCHAR(10) NOT NULL,
+MaSV VARCHAR(10) NOT NULL,
+Diem DECIMAL(4,2) NOT NULL CONSTRAINT CK_DiemHoiDong CHECK (Diem >= 0 AND Diem <= 10),
+NhanXet NVARCHAR(MAX) NULL,
+NgayCham DATETIME DEFAULT GETDATE(),
+PRIMARY KEY (MaHoiDong, MaGV, MaSV),
+CONSTRAINT FK_DiemHD_ThanhVien FOREIGN KEY (MaHoiDong, MaGV) REFERENCES ThanhVienHoiDong(MaHoiDong, MaGV),
+CONSTRAINT FK_DiemHD_SinhVien FOREIGN KEY (MaSV) REFERENCES SinhVien(MaSV)
+);
+-- 29. Bảng KetQuaSinhVien (Điểm cá nhân hóa cuối cùng của sinh viên)
+CREATE TABLE KetQuaSinhVien (
+MaKetQua VARCHAR(10) PRIMARY KEY,
+MaSV VARCHAR(10) NOT NULL,
+MaHocKy VARCHAR(10) NOT NULL,
+DiemHuongDan DECIMAL(4,2) NULL CONSTRAINT CK_DiemHDD CHECK (DiemHuongDan >= 0 AND DiemHuongDan <= 10),
+DiemPhanBien DECIMAL(4,2) NULL CONSTRAINT CK_DiemPB CHECK (DiemPhanBien >= 0 AND DiemPhanBien <= 10),
+DiemHoiDongTB DECIMAL(4,2) NULL CONSTRAINT CK_DiemHDTB CHECK (DiemHoiDongTB >= 0 AND DiemHoiDongTB <= 10),
+DiemTongKet DECIMAL(4,2) NULL CONSTRAINT CK_DiemTK CHECK (DiemTongKet >= 0 AND DiemTongKet <= 10),
+KetQua NVARCHAR(50) NULL,
+NhanXetChung NVARCHAR(MAX) NULL,
+NgayCham DATE DEFAULT GETDATE(),
+CONSTRAINT FK_KetQuaSV_SinhVien FOREIGN KEY (MaSV) REFERENCES SinhVien(MaSV),
+CONSTRAINT FK_KetQuaSV_HocKy FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy)
+);
+-- =========================================================================
+-- 9. THÔNG BÁO DIỆN RỘNG
+-- =========================================================================
+-- 30. Bảng ThongBao
+CREATE TABLE ThongBao (
+MaThongBao VARCHAR(10) PRIMARY KEY,
+MaGVu VARCHAR(10) NULL,
+TieuDe NVARCHAR(200) NOT NULL,
+NoiDung NVARCHAR(MAX) NOT NULL,
+LoaiThongBao NVARCHAR(50) NULL,
+DoiTuongNhan NVARCHAR(50) DEFAULT N'Tất cả',
+NgayTao DATETIME DEFAULT GETDATE(),
+TrangThai NVARCHAR(50) DEFAULT N'Đã tạo',
+CONSTRAINT FK_ThongBao_GiaoVu FOREIGN KEY (MaGVu) REFERENCES GiaoVu(MaGVu)
+);
+-- 31. Bảng NguoiNhanThongBao
+CREATE TABLE NguoiNhanThongBao (
+MaThongBao VARCHAR(10) NOT NULL,
+MaTK VARCHAR(10) NOT NULL,
+DaDoc BIT DEFAULT 0,
+NgayDoc DATETIME NULL,
+PRIMARY KEY (MaThongBao, MaTK),
+CONSTRAINT FK_NguoiNhanThongBao_ThongBao FOREIGN KEY (MaThongBao) REFERENCES ThongBao(MaThongBao),
+CONSTRAINT FK_NguoiNhanThongBao_TaiKhoan FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK)
+);
+
+=== TABLES ===

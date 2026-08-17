@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\SinhVien;
 use App\Models\GiangVien;
 use App\Models\DeTai;
-use App\Models\NhomDoAn;
+use App\Models\Nhom;
 use App\Models\TaiKhoan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -19,11 +19,11 @@ class DashboardController extends Controller
         $soSinhVien = Cache::remember('dashboard_soSinhVien', 60, function () { return SinhVien::count(); });
         $soGiangVien = Cache::remember('dashboard_soGiangVien', 60, function () { return GiangVien::count(); });
         $soDeTai = Cache::remember('dashboard_soDeTai', 60, function () { return DeTai::count(); });
-        $soNhom = Cache::remember('dashboard_soNhom', 60, function () { return NhomDoAn::count(); });
+        $soNhom = Cache::remember('dashboard_soNhom', 60, function () { return Nhom::count(); });
 
         // Thống kê trạng thái nhóm
         $trangThaiNhom = Cache::remember('dashboard_trangThaiNhom', 60, function () {
-            return NhomDoAn::select('TrangThai', DB::raw('count(*) as total'))
+            return Nhom::select('TrangThai', DB::raw('count(*) as total'))
                                  ->groupBy('TrangThai')
                                  ->pluck('total', 'TrangThai')
                                  ->toArray();

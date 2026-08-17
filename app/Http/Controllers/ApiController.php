@@ -9,7 +9,7 @@ use App\Models\HocKy;
 use App\Models\Lop;
 use App\Models\MonHoc;
 use App\Models\Nganh;
-use App\Models\NhomDoAn;
+use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThongBao;
 use Illuminate\Http\Request;
@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\Validator;
  *   GET  /api/nhoms/{id}      - Chi tiết 1 nhóm đồ án
  *   GET  /api/sinhviens       - Danh sách sinh viên
  *   GET  /api/giangviens      - Danh sách giảng viên
- *   GET  /api/monhocs         - Danh sách môn học
  *   GET  /api/lops            - Danh sách lớp
  *   GET  /api/hockys          - Danh sách học kỳ
  *   GET  /api/bomons          - Danh sách bộ môn
@@ -79,7 +78,7 @@ class ApiController extends Controller
      */
     public function getDeTaiDetail($id)
     {
-        $detai = DeTai::with(['giangVien:MaGV,HoTen,MaTK', 'dangKyDeTais.nhomDoAn'])
+        $detai = DeTai::with(['giangVien:MaGV,HoTen,MaTK'])
             ->find($id);
 
         if (!$detai) {
@@ -104,7 +103,8 @@ class ApiController extends Controller
         $validator = Validator::make($request->all(), [
             'TenDeTai' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
-            'MaTK' => 'required|integer|exists:tai_khoans,MaTK',
+            'MaGV' => 'required|string|exists:giang_viens,MaGV',
+            'MaHocKy' => 'required|string|exists:hoc_kies,MaHocKy',
         ]);
 
         if ($validator->fails()) {
@@ -115,7 +115,7 @@ class ApiController extends Controller
             ], 422);
         }
 
-        $detai = DeTai::create($request->only(['TenDeTai', 'MoTa', 'MaTK']));
+        $detai = DeTai::create($request->only(['TenDeTai', 'MoTa', 'MaGV', 'MaHocKy']));
 
         return response()->json([
             'status' => 'success',
@@ -200,7 +200,7 @@ class ApiController extends Controller
      */
     public function getNhoms()
     {
-        $nhoms = NhomDoAn::with(['thanhVienNhoms.sinhVien:MaSV,HoTen'])->get();
+        $nhoms = Nhom::all();
 
         return response()->json([
             'status' => 'success',
@@ -215,7 +215,7 @@ class ApiController extends Controller
      */
     public function getNhomDetail($id)
     {
-        $nhom = NhomDoAn::with(['thanhVienNhoms.sinhVien:MaSV,HoTen,MaSV', 'deTai'])->find($id);
+        $nhom = Nhom::find($id);
 
         if (!$nhom) {
             return response()->json([
@@ -249,15 +249,6 @@ class ApiController extends Controller
     public function getGiangViens()
     {
         $data = GiangVien::with('boMon:MaBoMon,TenBoMon')->get();
-        return response()->json(['status' => 'success', 'count' => $data->count(), 'data' => $data], 200);
-    }
-
-    /**
-     * GET /api/monhocs
-     */
-    public function getMonHocs()
-    {
-        $data = MonHoc::all();
         return response()->json(['status' => 'success', 'count' => $data->count(), 'data' => $data], 200);
     }
 
@@ -322,9 +313,8 @@ class ApiController extends Controller
                 'so_sinh_vien' => SinhVien::count(),
                 'so_giang_vien' => GiangVien::count(),
                 'so_de_tai' => DeTai::count(),
-                'so_nhom' => NhomDoAn::count(),
+                'so_nhom' => Nhom::count(),
                 'so_lop' => Lop::count(),
-                'so_mon_hoc' => MonHoc::count(),
                 'so_hoc_ky' => HocKy::count(),
                 'so_bo_mon' => BoMon::count(),
                 'so_nganh' => Nganh::count(),
@@ -332,3 +322,4 @@ class ApiController extends Controller
         ], 200);
     }
 }
+

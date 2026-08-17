@@ -43,10 +43,12 @@ class GiangVienController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
+            $maTK = 'TK_GV_' . \Illuminate\Support\Str::random(6);
             $tk = TaiKhoan::create([
+                'MaTK' => $maTK,
                 'TenDangNhap' => $request->TenDangNhap,
                 'MatKhau' => Hash::make('123456'),
-                'MaVaiTro' => 2,
+                'MaVaiTro' => 'VT02',
                 'TrangThai' => true
             ]);
             GiangVien::create([

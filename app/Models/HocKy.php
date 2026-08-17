@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class HocKy extends Model
 {
+    use HasFactory;
+
     protected $table = 'hoc_kies';
     protected $primaryKey = 'MaHocKy';
-    protected $fillable = ['TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc'];
+    public $incrementing = false;
+    protected $keyType = 'string';
 
-    public function lopHocPhans()
-    {
-        return $this->hasMany(LopHocPhan::class, 'MaHocKy', 'MaHocKy');
-    }
+    protected $fillable = [
+        'MaHocKy', 'TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'
+    ];
+
+    public $timestamps = true;
 }

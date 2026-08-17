@@ -140,17 +140,6 @@ class ApiTest extends TestCase
     }
 
     /**
-     * Test API lấy danh sách môn học.
-     */
-    public function test_api_get_monhocs_returns_json()
-    {
-        $response = $this->getJson('/api/monhocs');
-
-        $response->assertStatus(200)
-                 ->assertJsonStructure(['status', 'count', 'data']);
-    }
-
-    /**
      * Test API lấy danh sách lớp.
      */
     public function test_api_get_lops_returns_json()
@@ -225,7 +214,6 @@ class ApiTest extends TestCase
                          'so_de_tai',
                          'so_nhom',
                          'so_lop',
-                         'so_mon_hoc',
                          'so_hoc_ky',
                          'so_bo_mon',
                          'so_nganh',
@@ -233,3 +221,4 @@ class ApiTest extends TestCase
                  ]);
     }
 }
+

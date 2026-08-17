@@ -33,6 +33,7 @@ class LoginController extends Controller implements HasMiddleware
         $role = $user->vaiTro->TenVaiTro ?? '';
 
         if ($role === 'Admin') return route('admin.dashboard');
+        if ($role === 'Giáo vụ') return route('admin.dashboard');
         if ($role === 'Giảng viên') return route('giangvien.dashboard');
         if ($role === 'Sinh viên') return route('sinhvien.dashboard');
 
@@ -44,7 +45,6 @@ class LoginController extends Controller implements HasMiddleware
      *
      * @return void
      */
-    
     public static function middleware(): array
     {
         return [
@@ -52,7 +52,6 @@ class LoginController extends Controller implements HasMiddleware
             new Middleware('auth', only: ["logout"])
         ];
     }
-
 
     /**
      * Get the login username to be used by the controller.
@@ -65,33 +64,95 @@ class LoginController extends Controller implements HasMiddleware
     }
 
     /**
-     * Chỉ cho phép đăng nhập nếu tài khoản chưa bị khóa (TrangThai = 1)
+     * Chỉ lấy credentials cơ bản, không filter TrangThai ở đây
+     * vì cần xử lý thông báo khóa TK riêng biệt
      */
     protected function credentials(\Illuminate\Http\Request $request)
     {
         return [
             'TenDangNhap' => $request->get('TenDangNhap'),
-            'password' => $request->get('password'),
-            'TrangThai' => 1
+            'password'    => $request->get('password'),
         ];
     }
 
     /**
-     * Attempt to log the user into the application.
+     * Override attemptLogin để xử lý khóa tài khoản trước
      */
     protected function attemptLogin(\Illuminate\Http\Request $request)
     {
-        return $this->guard()->attempt(
+        // Tìm tài khoản theo username
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $request->TenDangNhap)->first();
+
+        // Nếu tài khoản bị khóa → từ chối ngay
+        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+            return false;
+        }
+
+        $attempt = $this->guard()->attempt(
             $this->credentials($request), $request->boolean('remember')
         );
+
+        if (!$attempt && $taiKhoan) {
+            // Sai mật khẩu → tăng đếm
+            $taiKhoan->increment('SoLanDangNhapSai');
+            // Nếu đủ 5 lần → tự động khóa
+            if ($taiKhoan->SoLanDangNhapSai >= 5) {
+                $taiKhoan->update([
+                    'TrangThai' => false,
+                    'NgayKhoa'  => now(),
+                ]);
+            }
+        }
+
+        return $attempt;
     }
 
+    /**
+     * Xử lý sau khi đăng nhập thành công
+     */
     protected function authenticated(\Illuminate\Http\Request $request, $user)
     {
+        // Kiểm tra tài khoản bị khóa (trường hợp khóa thủ công)
         if (!$user->TrangThai) {
             auth()->logout();
-            return redirect()->route('login')->withErrors(['TenDangNhap' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.']);
+            return redirect()->route('login')
+                ->withErrors(['TenDangNhap' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ khôi phục.']);
         }
-        \App\Models\AuditLog::log('dang_nhap', 'TaiKhoan', $user->MaTK, ['TenDangNhap' => $user->TenDangNhap]);
+
+        // Reset đếm sai mật khẩu + ghi thời gian đăng nhập
+        $user->update([
+            'SoLanDangNhapSai' => 0,
+            'LanDangNhapCuoi'  => now(),
+        ]);
+
+        // Nếu bị bắt buộc đổi mật khẩu → chuyển hướng sang trang đổi MK
+        if ($user->BatBuocDoiMatKhau) {
+            return redirect()->route('password.change')
+                ->with('warning', 'Vui lòng đổi mật khẩu trước khi sử dụng hệ thống.');
+        }
+    }
+
+    /**
+     * Override sendFailedLoginResponse để thêm thông tin khóa TK
+     */
+    protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
+    {
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $request->TenDangNhap)->first();
+
+        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $this->username() => ['Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ khôi phục.'],
+            ]);
+        }
+
+        $soLanCon = $taiKhoan ? max(0, 5 - $taiKhoan->SoLanDangNhapSai) : null;
+        $msg = __('auth.failed');
+        if ($soLanCon !== null && $soLanCon > 0) {
+            $msg .= " (Còn {$soLanCon} lần thử trước khi tài khoản bị khóa)";
+        }
+
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            $this->username() => [$msg],
+        ]);
     }
 }

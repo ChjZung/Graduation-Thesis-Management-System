@@ -88,8 +88,8 @@
                     <a href="{{ route('giangvien.index') }}" class="btn btn-outline-success text-start p-3 rounded-3">
                         <i class="fa-solid fa-user-tie me-2"></i> Quản lý Giảng Viên
                     </a>
-                    <a href="{{ route('phancong.index') }}" class="btn btn-outline-warning text-start p-3 rounded-3">
-                        <i class="fa-solid fa-sitemap me-2"></i> Phân Công Hướng Dẫn
+                    <a href="{{ route('hocky.index') }}" class="btn btn-outline-warning text-start p-3 rounded-3">
+                        <i class="fa-solid fa-calendar-days me-2"></i> Quản lý Học Kỳ
                     </a>
                     <a href="{{ route('thongbao.index') }}" class="btn btn-outline-danger text-start p-3 rounded-3">
                         <i class="fa-solid fa-envelope me-2"></i> Quản Lý Thông Báo

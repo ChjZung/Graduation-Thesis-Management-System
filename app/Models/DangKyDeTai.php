@@ -1,13 +1,22 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DangKyDeTai extends Model
 {
+    use HasFactory;
+
     protected $table = 'dang_ky_de_tais';
     protected $primaryKey = 'MaDangKy';
-    protected $fillable = ['MaNhom', 'MaDeTai', 'NgayDangKy', 'TrangThai', 'NgayDuyet', 'LyDoTuChoi'];
+    public $incrementing = false;
+    protected $keyType = 'string';
 
-    public function nhomDoAn() { return $this->belongsTo(NhomDoAn::class, 'MaNhom', 'MaNhom'); }
-    public function deTai() { return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai'); }
+    protected $fillable = [
+        'MaDangKy', 'MaNhom', 'MaDeTai', 'MaGVHuongDan', 'NgayDangKy', 'TrangThai', 'NgayDuyet', 'GhiChu', 'LyDoTuChoi'
+    ];
+
+    public $timestamps = true;
 }

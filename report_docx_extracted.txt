@@ -1,0 +1,2591 @@
+=== TARGET FILE: \\Mac\Home\Documents\1_monhoc\KhoaLuan\BaoCaoKhoaLuan_No1.docx ===
+
+=== PARAGRAPHS ===
+BỘ CÔNG THƯƠNG
+TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HCM
+KHOA CÔNG NGHỆ THÔNG TIN
+------
+ĐỒ ÁN CHUYÊN NGÀNH/KHÓA LUẬN TỐT NGHIỆP
+ĐỀ TÀI: XÂY DỰNG HỆ THỐNG QUẢN LÝ CÔNG TÁC KHÓA LUẬN TỐT NGHIỆP
+Ngành: Công nghệ thông tin
+SINH VIÊN THỰC HIỆN:
+1. 2001230136-Nguyễn Thị Thùy Dương-14DHTH05
+2. 2001230106-Hồ Chí Dũng-14DHTH05
+3. 2001230634-La Thuận Phát-14DHTH11
+TP. HỒ CHÍ MINH, tháng 07 năm 2026
+BỘ CÔNG THƯƠNG
+TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HCM
+KHOA CÔNG NGHỆ THÔNG TIN
+------
+ĐỒ ÁN CHUYÊN NGÀNH/LUẬN VĂN TỐT NGHIỆP
+ĐỀ TÀI: XÂY DỰNG HỆ THỐNG QUẢN LÝ CÔNG TÁC KHÓA LUẬN TỐT NGHIỆP
+Ngành: Công nghệ thông tin
+GIẢNG VIÊN HƯỚNG DẪN:
+ThS. Nguyễn Văn Lễ
+SINH VIÊN THỰC HIỆN:
+1. 2001230136-Nguyễn Thị Thùy Dương-14DHTH05
+2. 2001230106-Hồ Chí Dũng-14DHTH05
+3. 2001230634-La Thuận Phát-14DHTH11
+TP. HỒ CHÍ MINH, tháng 07 năm 2026
+LỜI CẢM ƠN
+Nhóm tác giả xin bày tỏ lòng biết ơn sâu sắc đến ThS. Nguyễn Văn Lễ – giảng viên hướng dẫn đã tận tình hướng dẫn, góp ý và hỗ trợ nhóm trong suốt quá trình thực hiện khóa luận tốt nghiệp.
+Nhóm cũng xin cảm ơn quý thầy cô Khoa Công nghệ Thông tin – Trường Đại học Công Thương TP.HCM đã truyền đạt kiến thức và tạo điều kiện thuận lợi để nhóm hoàn thành đề tài này.
+Xin chân thành cảm ơn gia đình, bạn bè đã động viên, khích lệ và hỗ trợ nhóm trong suốt thời gian học tập và nghiên cứu.
+Mặc dù đã cố gắng hết sức, song khóa luận khó tránh khỏi những thiếu sót. Nhóm rất mong nhận được sự góp ý của quý thầy cô để đề tài được hoàn thiện hơn.
+TP. HCM, tháng 07 năm 2026
+Nhóm sinh viên thực hiện
+NHẬN XÉT CỦA GIẢNG VIÊN HƯỚNG DẪN
+GIẢNG VIÊN HƯỚNG DẪN
+(Ký và ghi rõ họ tên)
+MỤC LỤC
+LỜI CẢM ƠNii
+NHẬN XÉT CỦA GIẢNG VIÊN HƯỚNG DẪNiii
+MỤC LỤCiv
+DANH MỤC CÁC KÝ HIỆU VÀ CHỮ VIẾT TẮTviii
+DANH MỤC HÌNHix
+DANH MỤC BẢNGx
+MỞ ĐẦU1
+Chương 1: KHẢO SÁT HỆ THỐNG5
+1.1. Cơ cấu tổ chức của hệ thống5
+1.2. Quy trình nghiệp vụ diễn ra bên trong hệ thống5
+1.2.1. Quy trình Lập kế hoạch học kỳ khóa luận5
+1.2.2. Quy trình Quản lý danh sách sinh viên đủ điều kiện6
+1.2.3. Quy trình Quản lý đề tài khóa luận6
+1.2.4. Quy trình Đăng ký đề tài khóa luận7
+1.2.5. Quy trình Theo dõi tiến độ thực hiện8
+1.2.6. Quy trình Quản lý hồ sơ bảo vệ khóa luận8
+1.2.7. Quy trình Tổ chức bảo vệ khóa luận9
+1.2.8. Quy trình Lưu trữ và báo cáo kết quả9
+1.3. MÔ TẢ CẤU TRÚC ĐỀ TÀI9
+1.4. Kết chương9
+Chương 2: CƠ SỞ LÝ THUYẾT10
+Chương 3: PHÂN TÍCH HỆ THỐNG11
+3.1. GIỚI THIỆU11
+3.2. MÔ HÌNH HÓA NGHIỆP VỤ11
+3.2.1. Sơ đồ Use-Case nghiệp vụ11
+3.2.2. Mô hình hóa quy trình nghiệp vụ12
+3.3. MÔ HÌNH HÓA CHỨC NĂNG17
+3.3.1. Sơ đồ Use-case hệ thống17
+3.3.2. Đặc tả Use-Case hệ thống17
+3.4. SƠ ĐỒ LỚP MỨC PHÂN TÍCH17
+3.5. KẾT CHƯƠNG17
+Chương 4: THIẾT KẾ HỆ THỐNG18
+4.1. GIỚI THIỆU18
+4.2. THIẾT KẾ CƠ SỞ DỮ LIỆU18
+4.2.1. Mô hình quan hệ cơ sở dữ liệu18
+4.2.2. Mô hình quan hệ18
+4.2.3. Đặc tả các bảng dữ liệu18
+4.3. THIẾT KẾ GIAO DIỆN HỆ THỐNG18
+4.3.1. Giao diện đăng nhập18
+4.3.2. Giao diện Giáo vụ18
+4.3.3. Giao diện Giảng viên18
+4.3.4. Giao diện Sinh viên18
+4.4. SƠ ĐỒ LỚP Ở MỨC THIẾT KẾ18
+4.5. THIẾT KẾ CHỨC NĂNG HỆ THÔNG18
+4.6. KẾT CHƯƠNG18
+Chương 5: CÀI ĐẶT HỆ THỐNG19
+5.1. GIỚI THIỆU19
+5.2. CÔNG NGHỆ SỬ DỤNG VÀ CẤU HÌNH CÀI ĐẶT19
+5.2.1. Môi trường phát triển19
+5.2.2. Cấu hình phần cứng19
+5.2.3. Cấu hình phần mềm19
+5.2.4. Cài đặt hệ thống19
+5.3. TRIỂN KHAI CƠ SỞ DỮ LIỆU19
+5.3.1. Tạo cơ sở dữ liệu19
+5.3.2. Triển khai các bảng dữ liệu19
+5.3.3. Thiết lập khóa chính, khóa ngoại19
+5.3.4. Dữ liệu mẫu19
+5.4. TRIỂN KHAI CÁC CHỨC NĂNG CHÍNH19
+5.4.1. Chức năng đăng nhập19
+5.4.2. Chức năng lập kế hoạch khóa luận19
+5.4.3. Chức năng quản lý đề tài19
+5.4.4. Chức năng đăng ký đề tài19
+5.4.5. Chức năng quản lý tiến độ19
+5.4.6. Chức năng quản lý bảo vệ19
+5.4.7. Chức năng thống kê19
+5.5. KIỂM THỬ HỆ THỐNG19
+5.5.1. Mục tiêu kiểm thử19
+5.5.2. Phương pháp kiểm thử19
+5.5.3. Kết quả kiểm thử19
+5.5.4. Đánh giá kết quả19
+Chương 6: THỬ NGHIỆM VÀ TRIỂN KHAI20
+KẾT LUẬN21
+TÀI LIỆU THAM KHẢO22
+DANH MỤC CÁC KÝ HIỆU VÀ CHỮ VIẾT TẮT
+Viết tắt
+Tiếng Anh
+Tiếng Việt
+DBMS
+Database Management System
+Hệ quản trị cơ sở dữ liệu
+IT
+Information Technology
+Công nghệ thông tin
+DANH MỤC HÌNH
+Hình 1.1  Biểu mẫu Thông báo triển khai Khóa luận7
+Hình 1.2  Biểu mẫu Danh sách đề tài8
+Hình 1.3   Biểu mẫu phiếu đăng ký9
+Hình 1.4  Biểu mẫu phiếu chấm điểm11
+Hình 3.1  Sơ đồ Use-Case nghiệp vụ15
+Hình 3.2  Sơ đồ hoạt động lập kế hoạch học kỳ khóa luận16
+Hình 3.3  Sơ đồ hoạt động quản lý danh sách sinh viên đủ điều kiện17
+Hình 3.4  Sơ đồ hoạt động quản lý đề tài khóa luận18
+Hình 3.5  Sơ đồ hoạt động quản lý đăng ký đề tài khóa luận19
+Hình 3.6  Sơ đồ hoạt động tiến độ thực hiện khóa luận20
+Hình 3.7  Sơ đồ hoạt động hồ sơ bảo vệ khóa luận21
+Hình 3.8  Sơ đồ hoạt động tổ chức và bảo vệ khóa luận22
+Hình 3.9  Sơ đồ hoạt động Thống kê, báo cáo khóa luận23
+Hình 3.10   Sơ đồ Use-Case hệ thống24
+Hình 3.11  Sơ đồ lớp mức phân tích33
+DANH MỤC BẢNG
+Bảng 3.1  Đặc tả Use Case lập kế hoạch học kỳ khóa luận25
+Bảng 3.2  Đặc tả Use Case quản lý danh sách sinh viên đủ điều kiện26
+Bảng 3.3  Đặc tả Use Case quản lý đề tài khóa luận27
+Bảng 3.4  Đặc tả Use Case đăng ký đề tài khóa luận28
+Bảng 3.5  Đặc tả Use Case theo dõi tiến độ thực hiện29
+Bảng 3.6  Đặc tả Use Case  quản lý hồ sơ bảo vệ khóa luận30
+Bảng 3.7  Đặc tả Use Case Tổ chức bảo vệ khóa luận31
+Bảng 3.8  Đặc tả Use Case  lưu trữ và báo cáo kết quả32
+MỞ ĐẦU
+LÝ DO CHỌN ĐỀ TÀI
+Trong bối cảnh chuyển đổi số đang được đẩy mạnh trong lĩnh vực giáo dục, việc ứng dụng công nghệ thông tin vào công tác quản lý đã trở thành yêu cầu tất yếu nhằm nâng cao hiệu quả quản lý và chất lượng đào tạo. Đối với các trường đại học, quản lý khóa luận tốt nghiệp là một hoạt động quan trọng, bao gồm quản lý đề tài, đăng ký, hướng dẫn, theo dõi tiến độ, tổ chức bảo vệ và tổng hợp kết quả, góp phần đánh giá năng lực học tập, nghiên cứu và vận dụng kiến thức chuyên ngành của sinh viên trước khi tốt nghiệp.
+Tuy nhiên, tại nhiều cơ sở giáo dục đại học, công tác quản lý khóa luận tốt nghiệp vẫn được thực hiện thông qua nhiều công cụ và nền tảng riêng lẻ. Các thông báo thường được đăng tải trên website, email hoặc các nhóm trao đổi trực tuyến; việc đăng ký đề tài chủ yếu thực hiện thông qua các biểu mẫu trực tuyến (Google Forms, Microsoft Forms) hoặc biểu mẫu giấy; trong khi dữ liệu được tổng hợp và quản lý bằng các tệp. Cách thức quản lý này khiến thông tin bị phân tán, khó đồng bộ, gây khó khăn trong việc tra cứu, cập nhật và chia sẻ dữ liệu giữa giáo vụ, giảng viên và sinh viên.
+Xuất phát từ vấn đề thực tiễn trên, nhóm lựa chọn đề tài "Xây dựng hệ thống quản lý công tác khóa luận tốt nghiệp tại Trường Đại học Công Thương Thành phố Hồ Chí Minh" nhằm xây dựng một hệ thống quản lý tập trung trên nền tảng web, hỗ trợ số hóa toàn bộ quy trình quản lý khóa luận, từ lập kế hoạch học kỳ, quản lý đề tài, đăng ký và xét duyệt đề tài đến theo dõi tiến độ và tổ chức bảo vệ.
+Việc xây dựng hệ thống không chỉ giúp giảm bớt khối lượng công việc thủ công, hạn chế sai sót trong quá trình quản lý và lưu trữ dữ liệu mà còn nâng cao tính minh bạch, khả năng theo dõi và hỗ trợ ra quyết định trong công tác quản lý khóa luận tốt nghiệp.
+GIỚI THIỆU ĐỀ TÀI
+Đề tài nghiên cứu và xây dựng một hệ thống website hỗ trợ quản lý toàn bộ công tác khóa luận tốt nghiệp của khoa Công nghệ thông tin. Hệ thống được phát triển theo mô hình quản lý tập trung, cho phép các đối tượng sử dụng thực hiện các nghiệp vụ tương ứng thông qua tài khoản được phân quyền.
+Các đối tượng sử dụng chính của hệ thống bao gồm:
+Giáo vụ
+Giảng viên
+Sinh viên
+Mỗi đối tượng sẽ được cấp tài khoản đăng nhập và chỉ được sử dụng những chức năng phù hợp với quyền hạn của mình.
+Chức năng dành cho Giáo vụ
+Giáo vụ là người quản lý toàn bộ quy trình thực hiện khóa luận tốt nghiệp của khoa. Các nghiệp vụ thực hiện bao gồm:
+Quản lý thông tin học kỳ, kế hoạch và các mốc thời gian thực hiện khóa luận.
+Quản lý danh mục đề tài khóa luận do giảng viên đề xuất hoặc khoa phê duyệt.
+Quản lý danh sách sinh viên đủ điều kiện thực hiện khóa luận.
+Tiếp nhận, xét duyệt đăng ký đề tài của sinh viên hoặc nhóm sinh viên.
+Phân công giảng viên hướng dẫn cho từng đề tài và Theo dõi tiến độ thực hiện khóa luận của các nhóm sinh viên.
+Tiếp nhận hồ sơ đăng ký bảo vệ khóa luận. Thành lập hội đồng bảo vệ, phân công chủ tịch, thư ký, phản biện và các thành viên hội đồng.
+Phân công các khóa luận vào từng hội đồng bảo vệ. Thiết lập tiêu chí và thang điểm đánh giá khóa luận.
+Khóa hội đồng sau khi hoàn tất việc chấm điểm để đảm bảo kết quả không bị chỉnh sửa.
+Công bố kết quả và gửi thông báo đến sinh viên.
+Thống kê, báo cáo tình hình thực hiện và kết quả khóa luận theo học kỳ, ngành hoặc giảng viên.Gửi thông báo đến giảng viên và sinh viên.
+Chức năng dành cho Giảng viên
+Giảng viên là người hướng dẫn và tham gia đánh giá khóa luận tốt nghiệp của sinh viên. Các nghiệp vụ thực hiện bao gồm:
+Đề xuất và quản lý các đề tài khóa luận.
+Hướng dẫn sinh viên hoặc nhóm sinh viên trong suốt quá trình thực hiện khóa luận.
+Theo dõi tiến độ, nhận xét và yêu cầu chỉnh sửa khi cần thiết.
+Duyệt khóa luận đủ điều kiện tham gia bảo vệ.
+Nhận thông báo khi được phân công tham gia hội đồng hoặc làm giảng viên phản biện.
+Thực hiện chấm điểm khóa luận theo các tiêu chí đã được thiết lập và nhận xét và kết quả đánh giá .
+Xem và in bảng điểm sau khi hội đồng hoàn thành việc chấm điểm.
+Chức năng dành cho Sinh viên
+Sinh viên là đối tượng trực tiếp thực hiện khóa luận tốt nghiệp. Các nghiệp vụ thực hiện bao gồm:
+Xem danh sách đề tài khóa luận được công bố.
+Đăng ký đề tài hoặc tham gia nhóm thực hiện khóa luận theo quy định. Theo dõi trạng thái đăng ký và kết quả xét duyệt đề tài.
+Xem thông tin giảng viên hướng dẫn và lịch trình thực hiện.
+Cập nhật tiến độ, nộp báo cáo và các tài liệu khóa luận theo từng mốc thời gian.
+Theo dõi lịch bảo vệ khóa luận.
+Xem kết quả chấm điểm và nhận các thông báo
+ĐỐI TƯỢNG VÀ PHẠM VI ĐỀ TÀI
+Đối tượng nghiên cứu
+Đối tượng nghiên cứu của đề tài là quy trình quản lý khóa luận tốt nghiệp dành cho sinh viên Khoa Công nghệ Thông tin tại Trường Đại học Công Thương TP. Hồ Chí Minh. Hệ thống tập trung vào các nghiệp vụ quản lý từ khâu đề xuất và phê duyệt đề tài, đăng ký khóa luận, phân công giảng viên hướng dẫn, theo dõi tiến độ, nộp báo cáo, tổ chức hội đồng bảo vệ, chấm điểm đến công bố kết quả.
+Mục tiêu đề tài
+Đề tài hướng đến việc xây dựng một hệ thống quản lý công tác khóa luận tốt nghiệp trên nền tảng web nhằm hỗ trợ số hóa quy trình quản lý tại Khoa Công nghệ Thông tin, Trường Đại học Công Thương Thành phố Hồ Chí Minh. Hệ thống được xây dựng nhằm nâng cao hiệu quả quản lý, giảm bớt các thao tác thủ công và tạo môi trường làm việc thống nhất giữa giáo vụ, giảng viên và sinh viên.
+Các mục tiêu cụ thể của đề tài bao gồm:
+Quản lý tập trung thông tin sinh viên, giảng viên, đề tài, nhóm thực hiện và hội đồng bảo vệ.
+Hỗ trợ quản lý kế hoạch học kỳ, đăng ký và xét duyệt đề tài, phân công giảng viên hướng dẫn.
+Hỗ trợ theo dõi tiến độ thực hiện, quản lý hồ sơ bảo vệ và tổ chức hội đồng chấm khóa luận.
+Hỗ trợ nhập điểm, tổng hợp kết quả, thống kê và báo cáo.
+Phân quyền người dùng theo từng vai trò (Giáo vụ, Giảng viên, Sinh viên), đảm bảo tính bảo mật, chính xác và minh bạch trong quá trình quản lý.Góp phần thúc đẩy chuyển đổi số trong công tác quản lý khóa luận tốt nghiệp của Khoa Công nghệ Thông tin.
+Phạm vi và giới hạn đề tài
+Đề tài được thực hiện trong phạm vi Khoa Công nghệ Thông tin - Trường Đại học Công Thương Thành phố Hồ Chí Minh và chỉ phục vụ công tác quản lý khóa luận tốt nghiệp của khoa.
+Phạm vi của hệ thống bao gồm:
+Quản lý khóa luận của một học kỳ.
+Quản lý ba nhóm người dùng: Giáo vụ, Giảng viên và Sinh viên.
+Quản lý đề tài, đăng ký đề tài, giảng viên hướng dẫn, hội đồng bảo vệ, chấm điểm và kết quả khóa luận.
+Hỗ trợ theo dõi tiến độ thực hiện và lưu trữ hồ sơ khóa luận.
+Thống kê và báo cáo dữ liệu liên quan đến khóa luận trong học kỳ.
+Giới hạn của đề tài:
+Chỉ áp dụng cho Khoa Công nghệ Thông tin, chưa triển khai cho các khoa khác.
+Chỉ quản lý dữ liệu trong một học kỳ, chưa hỗ trợ quản lý nhiều học kỳ hoặc nhiều năm học.
+Không tích hợp với các hệ thống quản lý đào tạo, cổng thông tin sinh viên hoặc hệ thống LMS của nhà trường.
+KHẢO SÁT HỆ THỐNG
+Cơ cấu tổ chức của hệ thống
+Hệ thống quản lý công tác khóa luận tốt nghiệp được triển khai tại Khoa Công nghệ Thông tin - Trường Đại học Công Thương Thành phố Hồ Chí Minh, với ba nhóm người dùng chính:
+Giáo vụ: Quản lý kế hoạch khóa luận, đề tài, phân công giảng viên hướng dẫn, thành lập hội đồng bảo vệ, quản lý kết quả và thống kê báo cáo.
+Giảng viên: Đề xuất và hướng dẫn đề tài, theo dõi tiến độ thực hiện, đánh giá khóa luận và tham gia hội đồng bảo vệ.
+Sinh viên: Đăng ký đề tài, thực hiện khóa luận, nộp báo cáo và hồ sơ bảo vệ, đồng thời theo dõi kết quả trên hệ thống.
+Ba nhóm người dùng phối hợp và tương tác thông qua hệ thống nhằm đảm bảo quá trình quản lý khóa luận được thực hiện thống nhất, hiệu quả và minh bạch.
+Quy trình nghiệp vụ diễn ra bên trong hệ thống
+Hệ thống quản lý công tác khóa luận tốt nghiệp bao gồm 08 quy trình nghiệp vụ chính. Các quy trình này được mô tả chi tiết như sau:
+Quy trình lập kế hoạch học kỳ khóa luận
+Quy trình này bắt đầu khi Giáo vụ tiến hành xây dựng kế hoạch triển khai khóa luận cho một học kỳ mới. Kế hoạch bao gồm các thông tin như học kỳ, tên kế hoạch, thời gian bắt đầu và kết thúc, các mốc thời gian quan trọng, quy định thực hiện và biểu mẫu sử dụng. Sau khi được Ban Chủ nhiệm Khoa phê duyệt, kế hoạch sẽ được công bố để giảng viên và sinh viên thực hiện theo đúng tiến độ. Đây là bước khởi đầu quan trọng, đảm bảo toàn bộ quy trình khóa luận diễn ra có tổ chức và thống nhất.
+Hình 1.1 Biểu mẫu Thông báo triển khai Khóa luận
+Quy trình quản lý danh sách sinh viên đủ điều kiện
+Giáo vụ rà soát dữ liệu sinh viên dựa trên các tiêu chí như số tín chỉ tích lũy, điểm trung bình (GPA) và tình trạng học tập. Danh sách sinh viên đủ điều kiện được công bố chính thức trên hệ thống, giúp minh bạch hóa thông tin và đảm bảo chỉ những sinh viên đáp ứng yêu cầu mới được tham gia khóa luận. Đồng thời, Giáo vụ xác định chỉ tiêu hướng dẫn của từng giảng viên để đảm bảo việc phân công hợp lý, tránh tình trạng quá tải hoặc thiếu cân đối trong công tác hướng dẫn.
+Quy trình quản lý đề tài khóa luận
+Giảng viên đề xuất các đề tài khóa luận thuộc lĩnh vực chuyên môn của mình. Mỗi đề tài có thông tin chi tiết gồm mã đề tài, tên đề tài, lĩnh vực nghiên cứu, mô tả, yêu cầu, số lượng sinh viên tối đa và trạng thái xét duyệt. Giáo vụ tiếp nhận, kiểm tra tính hợp lệ và trình lãnh đạo khoa phê duyệt trước khi công bố cho sinh viên đăng ký. Quy trình này giúp đảm bảo đề tài phù hợp với định hướng đào tạo và năng lực của sinh viên.
+Hình 1.2 Biểu mẫu Danh sách đề tài
+Quy trình đăng ký đề tài khóa luận
+Sinh viên căn cứ vào danh sách đề tài đã công bố để đăng ký cá nhân hoặc theo nhóm. Thông tin đăng ký bao gồm mã nhóm, trưởng nhóm, danh sách thành viên, đề tài đăng ký, giảng viên hướng dẫn và ngày đăng ký. Giáo vụ kiểm tra điều kiện đăng ký, số lượng thành viên và chỉ tiêu hướng dẫn trước khi phê duyệt chính thức. Quy trình này đảm bảo việc phân bổ đề tài công bằng, đúng quy định và phù hợp với năng lực của sinh viên.
+Hình 1.3  Biểu mẫu phiếu đăng ký
+Quy trình theo dõi tiến độ thực hiện
+Trong quá trình thực hiện, sinh viên phải nộp báo cáo tiến độ theo các mốc thời gian quy định. Báo cáo gồm nội dung thực hiện, tệp đính kèm, thời gian nộp và nhận xét của giảng viên. Giảng viên theo dõi tiến độ, đưa ra nhận xét, đánh giá và yêu cầu chỉnh sửa để đảm bảo khóa luận đi đúng kế hoạch. Đây là bước quan trọng giúp giảng viên kiểm soát chất lượng và hỗ trợ sinh viên kịp thời.
+Quy trình quản lý hồ sơ bảo vệ khóa luận
+Khi hoàn thành, sinh viên nộp hồ sơ bảo vệ gồm báo cáo khóa luận, tài liệu minh chứng và xác nhận của giảng viên hướng dẫn. Giáo vụ kiểm tra tính đầy đủ của hồ sơ, phân công giảng viên phản biện, thành lập hội đồng bảo vệ và xây dựng lịch bảo vệ cho từng nhóm sinh viên. Quy trình này đảm bảo hồ sơ được chuẩn bị đầy đủ, đúng quy định trước khi bước vào buổi bảo vệ chính thức.
+Quy trình tổ chức bảo vệ khóa luận
+Quy trình tổ chức bảo vệ khóa luận được tiến hành theo hai giai đoạn chính. Trước hết, Giáo vụ thực hiện việc phân công giảng viên phản biện và thành lập hội đồng chấm khóa luận. Công việc này bao gồm việc lập danh sách sinh viên đủ điều kiện bảo vệ, đề xuất giảng viên phản biện và các thành viên hội đồng, kiểm tra tính hợp lệ, soạn thảo hồ sơ thành lập hội đồng và ban hành quyết định phân công. Trong trường hợp giảng viên hoặc thành viên hội đồng không thể tham gia, Ban Chủ nhiệm Khoa sẽ điều chỉnh để đảm bảo hội đồng được thành lập đầy đủ và đúng quy định.
+Sau khi hội đồng được thành lập, sinh viên tiến hành buổi bảo vệ trước hội đồng. Giảng viên hướng dẫn cùng các thành viên hội đồng chấm điểm khóa luận dựa trên các tiêu chí đánh giá đã được quy định. Điểm số và nhận xét được ghi vào phiếu chấm điểm, sau đó Giáo vụ tiếp nhận, tổng hợp và tính toán kết quả cuối cùng. Kết quả này được kiểm tra, cập nhật vào sổ quản lý điểm khóa luận và lưu trữ hồ sơ để công bố chính thức. Nhờ đó, quy trình bảo vệ không chỉ đảm bảo việc đánh giá khách quan, minh bạch mà còn giúp xác nhận năng lực nghiên cứu, trình bày và vận dụng kiến thức của sinh viên một cách toàn diện.
+Hình 1.4 Biểu mẫu phiếu chấm điểm
+Quy trình lưu trữ và báo cáo kết quả
+Sau khi kết thúc đợt bảo vệ, toàn bộ dữ liệu về kế hoạch, sinh viên, giảng viên, đề tài, nhóm thực hiện, báo cáo tiến độ, hồ sơ bảo vệ, hội đồng và kết quả được lưu trữ trong hệ thống. Các dữ liệu này phục vụ cho việc tra cứu, thống kê, lập báo cáo và hỗ trợ xây dựng kế hoạch cho các học kỳ tiếp theo. Quy trình này giúp đảm bảo tính minh bạch, dễ dàng quản lý và nâng cao hiệu quả công tác tổng kết
+MÔ TẢ CẤU TRÚC ĐỀ TÀI
+Đề tài được trình bày theo cấu trúc gồm phần Mở đầu và 6 chương chính, cụ thể như sau:
+Chương 1 – Khảo sát hệ thống: Khảo sát và phân tích thực trạng công tác quản lý khóa luận tại Khoa Công nghệ Thông tin, xác định các đối tượng tham gia, quy trình nghiệp vụ hiện tại, đồng thời đánh giá những hạn chế của phương pháp quản lý hiện có.
+Chương 2 – Cơ sở lý thuyết: Trình bày các khái niệm, mô hình và công nghệ liên quan đến hệ thống quản lý khóa luận.
+Chương 3 – Phân tích hệ thống: Phân tích yêu cầu hệ thống, mô hình hóa nghiệp vụ bằng các sơ đồ UML như Use Case, Activity, Sequence; đặc tả các chức năng và xây dựng sơ đồ lớp ở mức phân tích.
+Chương 4 – Thiết kế hệ thống: Thiết kế kiến trúc hệ thống, cơ sở dữ liệu, sơ đồ lớp mức thiết kế, giao diện người dùng và thiết kế chi tiết các chức năng của hệ thống.
+Chương 5 – Cài đặt hệ thống: Trình bày môi trường phát triển, công nghệ sử dụng, cấu hình cài đặt, triển khai cơ sở dữ liệu, xây dựng các chức năng và thực hiện kiểm thử hệ thống.
+Chương 6 – Thử nghiệm và đánh giá: Trình bày kết quả thử nghiệm, đánh giá hiệu quả của hệ thống, khả năng áp dụng trong thực tế, những hạn chế còn tồn tại và đề xuất hướng phát triển trong tương lai.
+Kết chương
+Chương 1 đã trình bày tổng quan về đề tài "Xây dựng hệ thống quản lý công tác khóa luận tốt nghiệp tại Trường Đại học Công Thương Thành phố Hồ Chí Minh", bao gồm lý do lựa chọn đề tài, giới thiệu hệ thống, mục tiêu và phạm vi nghiên cứu. Bên cạnh đó, chương đã khảo sát quy trình nghiệp vụ thực tế, xác định các đối tượng tham gia và mô tả các hoạt động chính trong quá trình quản lý khóa luận tốt nghiệp như lập kế hoạch học kỳ, quản lý đề tài, đăng ký và xét duyệt đề tài, theo dõi tiến độ, quản lý hồ sơ bảo vệ, tổ chức hội đồng chấm và tổng hợp kết quả.
+Thông qua quá trình khảo sát, có thể thấy việc ứng dụng một hệ thống quản lý tập trung sẽ góp phần nâng cao hiệu quả quản lý, giảm thiểu các thao tác thủ công, tăng tính chính xác, minh bạch và hỗ trợ chuyển đổi số trong công tác quản lý khóa luận tốt nghiệp.
+CƠ SỞ LÝ THUYẾT
+Kiến trúc hệ thống Web
+Mô hình Client – Server
+Khái niệm mô hình Client – Server.
+Nguyên lý hoạt động.
+Vai trò của Client và Server trong ứng dụng web.
+. Mô hình MVC
+Khái niệm và cấu trúc MVC.
+Chức năng của Model, View và Controller.
+Ưu điểm của mô hình MVC.
+Quy trình xử lý Request – Response
+Luồng xử lý yêu cầu trong ứng dụng web.
+Minh họa quy trình xử lý trong hệ thống quản lý khóa luận.
+Hệ quản trị cơ sở dữ liệu
+MySQL
+Giới thiệu MySQL.
+Đặc điểm và ưu điểm.
+SQL
+Khái niệm.
+Các nhóm lệnh SQL cơ bản.
+CƠ SỞ LÝ THUYẾT VỀ XỬ LÝ NGÔN NGỮ TỰ NHIÊN VÀ MÔ HÌNH NGÔN NGỮ LỚN
+Xử lý ngôn ngữ tự nhiên
+Khái niệm xử lý ngôn ngữ tự nhiên (Natural Language Processing – NLP).
+Vai trò của NLP trong xử lý tài liệu văn bản.
+Một số bài toán NLP phổ biến.
+Ứng dụng NLP trong tóm tắt văn bản.
+Sau đó liên hệ:
+Trong đề tài, NLP được ứng dụng để xử lý nội dung các báo cáo tiến độ do sinh viên nộp, từ đó trích xuất và tổng hợp những thông tin quan trọng phục vụ việc theo dõi tiến độ của giảng viên.
+Mô hình ngôn ngữ lớn
+Trình bày:
+Khái niệm Large Language Model (LLM).
+Đặc điểm của LLM.
+Khả năng hiểu và sinh văn bản.
+Khả năng tóm tắt và trích xuất thông tin.
+Hình thức sử dụng LLM thông qua API.
+Tóm tắt văn bản tự động
+Khái niệm tóm tắt văn bản.
+Mục đích của tóm tắt văn bản.
+Khó khăn khi xử lý tài liệu dài.
+Tóm tắt toàn văn và tóm tắt theo từng phần.
+Lý do cần phân đoạn tài liệu trước khi đưa vào LLM.
+Phân đoạn tài liệu
+Kiến trúc Map – Reduce trong tóm tắt văn bản
+Sinh dữ liệu có cấu trúc bằng JSON
+Quy trình xử lý tự động tóm tắt báo cáo
+Công cụ phát triển
+Ngôn ngữ lập trình
+Laravel Framework
+Laragon
+MySQL và phpMyAdmin
+Git và GitHub
+Thư viện xử lý tài liệu
+API của mô hình ngôn ngữ lớn
+Kết chương
+PHÂN TÍCH HỆ THỐNG
+GIỚI THIỆU
+Chương 3 đóng vai trò trọng tâm trong việc phân tích và thiết kế "Hệ thống quản lý công tác khóa luận tốt nghiệp". Chương này sử dụng Ngôn ngữ mô hình hóa thống nhất (UML) để biểu diễn và chuẩn hóa hệ thống. Nội dung chính của Chương 3 bao gồm:
+Mô hình hóa nghiệp vụ: Phân tích các luồng quy trình thực tế hiện tại (lập kế hoạch, đăng ký đề tài, lập hội đồng, chấm điểm, thống kê...) thông qua các sơ đồ Use Case nghiệp vụ, Hoạt động (Activity) và Tuần tự (Sequence).
+Mô hình hóa chức năng: Xác định các tính năng phần mềm tương lai giúp số hóa quy trình thông qua sơ đồ Use Case hệ thống và các bản đặc tả chi tiết.
+Sơ đồ lớp mức phân tích: Xây dựng cấu trúc tĩnh, xác định các thực thể dữ liệu và mối quan hệ giữa chúng, làm tiền đề cho việc thiết kế CSDL.
+Những kết quả phân tích trong chương này là cơ sở trực tiếp để nhóm triển khai thiết kế và xây dựng phần mềm ở các chương tiếp theo.
+MÔ HÌNH HÓA NGHIỆP VỤ
+Sơ đồ Use-Case nghiệp vụ
+Hình 3.1 Sơ đồ Use-Case nghiệp vụ
+Mô hình hóa quy trình nghiệp vụ
+Quy trình lập kế hoạch học kỳ khóa luận
+Hình 3.2 Sơ đồ hoạt động lập kế hoạch học kỳ khóa luận
+Quy trình quản lý danh sách sinh viên đủ điều kiện
+Hình 3.3 Sơ đồ hoạt động quản lý danh sách sinh viên đủ điều kiện
+Quy trình quản lý đề tài khóa luận
+Hình 3.4 Sơ đồ hoạt động quản lý đề tài khóa luận
+Quy trình đăng ký đề tài khóa luận
+Hình 3.5 Sơ đồ hoạt động quản lý đăng ký đề tài khóa luận
+Quy trình theo dõi tiến độ thực hiện
+Hình 3.6 Sơ đồ hoạt động tiến độ thực hiện khóa luận
+Quy trình quản lý hồ sơ bảo vệ khóa luận
+Hình 3.7 Sơ đồ hoạt động hồ sơ bảo vệ khóa luận
+Quy trình Tổ chức bảo vệ khóa luận
+Hình 3.8 Sơ đồ hoạt động tổ chức và bảo vệ khóa luận
+Quy trình lưu trữ và báo cáo kết quả
+Hình 3.9 Sơ đồ hoạt động Thống kê, báo cáo khóa luận
+MÔ HÌNH HÓA CHỨC NĂNG
+Sơ đồ Use-case hệ thống
+Hình 3.10  Sơ đồ Use-Case hệ thống
+Đặc tả Use-Case hệ thống
+Đặc tả Use Case lập kế hoạch học kỳ khóa luận
+Bảng 3.1 Đặc tả Use Case lập kế hoạch học kỳ khóa luận
+Thuộc tính
+Nội dung
+Tên chức năng
+Lập kế hoạch học kỳ
+Tác nhân
+Giáo vụ
+Mô tả
+Giáo vụ lập kế hoạch khóa luận cho học kỳ, bao gồm thời gian, quy định và tiêu chí, sau đó công bố kế hoạch đến giảng viên và sinh viên.
+Tiền điều kiện
+Giáo vụ đã đăng nhập hệ thống và học kỳ đã được tạo.
+Luồng chính
+Giáo vụ chọn chức năng Lập kế hoạch học kỳ.
+Hệ thống hiển thị biểu mẫu lập kế hoạch.
+Giáo vụ nhập mốc thời gian, quy định và tiêu chí.
+Hệ thống kiểm tra tính hợp lệ của dữ liệu.
+Giáo vụ xem xét và xác nhận kế hoạch.
+Hệ thống lưu kế hoạch.
+Giáo vụ công bố kế hoạch và gửi thông báo đến giảng viên và sinh viên.
+Luồng phụ
+A1: Nếu dữ liệu không hợp lệ sẽ thông báo lỗi và yêu cầu chỉnh sửa.
+A2: Nếu đã tồn tại kế hoạch của học kỳ thì thông báo và cho phép cập nhật hoặc hủy thao tác.
+Hậu điều kiện
+Kế hoạch học kỳ được lưu thành công, công bố và thông báo đến các đối tượng liên quan.
+Đặc tả Use Case quản lý danh sách sinh viên đủ điều kiện
+Bảng 3.2 Đặc tả Use Case quản lý danh sách sinh viên đủ điều kiện
+Thuộc tính
+Nội dung
+Tên chức năng
+Quản lý danh sách sinh viên đủ điều kiện
+Tác nhân
+Giáo vụ
+Mô tả
+Giáo vụ đối chiếu hồ sơ sinh viên với các tiêu chí trong kế hoạch học kỳ. Những sinh viên đủ điều kiện sẽ được đưa vào danh sách chốt, những sinh viên không đạt sẽ bị ghi nhận lý do và loại khỏi danh sách
+Tiền điều kiện
+Giáo vụ đã đăng nhập hệ thống và học kỳ đã được tạo
+Dữ liệu về kế hoạch học kỳ và hồ sơ sinh viên đã tồn tại và sẵn sàng trên hệ thống
+Luồng chính
+Giáo vụ tiếp nhận kế hoạch học kỳ đã được phê duyệt.
+Giáo vụ thực hiện chức năng Lập danh sách sinh viên đủ điều kiện thực hiện khóa luận.
+Hệ thống thu thập thông tin sinh viên từ cơ sở dữ liệu (điểm trung bình, số tín chỉ tích lũy, số tín chỉ còn nợ và các tiêu chí khác theo quy định).
+Hệ thống kiểm tra các tiêu chí đủ điều kiện đối với từng sinh viên.
+Nếu sinh viên đáp ứng đầy đủ các tiêu chí, hệ thống đưa sinh viên vào danh sách dự kiến đủ điều kiện.
+Giáo vụ xem xét danh sách dự kiến và thực hiện chốt danh sách sinh viên đủ điều kiện.
+Hệ thống cập nhật trạng thái, lưu danh sách sinh viên đủ điều kiện và cho phép xuất danh sách dưới dạng Excel hoặc PDF.
+Luồng phụ
+A1: Nếu sinh viên không đủ điều kiện, Giáo vụ tiến hành ghi nhận lý do không hợp lệ; loại sinh viên đó khỏi danh sách
+Hậu điều kiện
+Danh sách sinh viên đủ điều kiện được chốt và lưu trữ thành công; những sinh viên không đủ điều kiện được lưu lại lý do từ chối.
+Đặc tả Use Case quản lý đề tài khóa luận
+Bảng 3.3 Đặc tả Use Case quản lý đề tài khóa luận
+Thuộc tính
+Nội dung
+Tên chức năng
+Quản lý danh sách đề tài
+Tác nhân
+Giáo vụ
+Mô tả
+Giáo vụ quản lý danh sách đề tài khóa luận bằng cách thêm mới, chỉnh sửa, xóa , sau đó công bố các đề tài đã được phê duyệt cho sinh viên đăng ký.
+Tiền điều kiện
+Giáo vụ đã đăng nhập hệ thống. Có quyền quản lý đề tài.
+Luồng chính
+Giáo vụ truy cập chức năng Quản lý danh sách đề tài.
+Hiển thị danh sách đề tài.
+Giáo vụ chọn một trong các chức năng Thêm, Sửa, Xóa hoặc Nhập từ Excel.
+Nếu chọn Nhập từ Excel, giáo vụ tải tệp Excel theo mẫu của hệ thống.
+Hệ thống kiểm tra định dạng tệp, các cột dữ liệu và tính hợp lệ của dữ liệu. Hệ thống hiển thị kết quả kiểm tra (số bản ghi hợp lệ, số bản ghi lỗi).
+Giáo vụ xác nhận nhập dữ liệu lưu các đề tài hợp lệ vào cơ sở dữ liệu.
+Giáo vụ chọn Công bố danh sách đề tài đã được phê duyệt và hiển thị cho sinh viên đăng ký.
+Luồng phụ
+A1: Nếu mã đề tài hoặc tên đề tài bị trùng sẽ  cảnh báo và bỏ qua hoặc yêu cầu cập nhật theo quy định.
+A2: Nếu dữ liệu trong tệp không hợp lệ thì Hệ thống hiển thị danh sách lỗi để giáo vụ chỉnh sửa.
+A3: Nếu đề tài chưa được giảng viên hoặc Ban chủ nhiệm khoa phê duyệt thì Hệ thống lưu ở trạng thái Chưa công bố.
+Hậu điều kiện
+Danh sách đề tài được cập nhật. Các đề tài hợp lệ và đã được phê duyệt được công bố cho sinh viên đăng ký.
+Đặc tả Use Case đăng ký đề tài khóa luận
+Bảng 3.4 Đặc tả Use Case đăng ký đề tài khóa luận
+Thuộc tính
+Nội dung
+Tên chức năng
+Đăng ký đề tài
+Tác nhân
+Sinh viên
+Mô tả
+Sinh viên đăng ký đề tài khóa luận theo hình thức cá nhân hoặc nhóm trong thời gian cho phép. Hệ thống kiểm tra điều kiện đăng ký trước khi ghi nhận kết quả.
+Tiền điều kiện
+Sinh viên đã đăng nhập hệ thống, đủ điều kiện thực hiện khóa luận, đang trong thời gian đăng ký và danh sách đề tài đã được công bố.
+Luồng chính
+Sinh viên đăng nhập hệ thống và chọn chức năng Đăng ký đề tài.
+Hệ thống hiển thị danh sách đề tài đã được công bố và còn chỉ tiêu.
+Sinh viên xem thông tin chi tiết đề tài (tên đề tài, mô tả, giảng viên hướng dẫn, số lượng thành viên tối đa, số lượng còn lại, yêu cầu...).
+Sinh viên chọn đề tài muốn đăng ký.
+Sinh viên chọn hình thức đăng ký (cá nhân hoặc nhóm)
+Nếu đăng ký nhóm, sinh viên nhập hoặc chọn các thành viên trong nhóm.
+Hệ thống kiểm tra điều kiện đăng ký của sinh viên và các thành viên trong nhóm.
+Sinh viên xác nhận đăng ký.
+Hệ thống ghi nhận đăng ký, cập nhật số lượng sinh viên của đề tài và thông báo đăng ký thành công.
+Luồng phụ
+A1: Nếu đề tài đã đủ số lượng sinh viên thì hệ thống từ chối đăng ký và thông báo đề tài đã hết chỉ tiêu.
+A2: Nếu sinh viên không đủ điều kiện thực hiện khóa luận (không đủ tín chỉ, GPA không đạt, còn nợ môn hoặc không thuộc đối tượng được phép đăng ký...) thì Hệ thống thông báo lý do và không cho phép đăng ký.
+A3: Nếu sinh viên đã đăng ký hoặc đã được duyệt một đề tài khác thì hệ thống không cho phép đăng ký thêm.
+Hậu điều kiện
+Thông tin đăng ký đề tài được lưu trong hệ thống, trạng thái đăng ký được cập nhật và số lượng sinh viên còn lại của đề tài được điều chỉnh.
+Đặc tả Use Case theo dõi tiến độ thực hiện
+Bảng 3.5 Đặc tả Use Case theo dõi tiến độ thực hiện
+Thuộc tính
+Nội dung
+Tên chức năng
+Theo dõi tiến độ thực hiện
+Tác nhân
+Sinh viên, Giảng viên, Giáo vụ
+Mô tả
+Quy trình phối hợp giữa Sinh viên, Giảng viên và Giáo vụ trong việc theo dõi tiến độ khóa luận.
+Tiền điều kiện
+Các tác nhân (Sinh viên, Giảng viên, Giáo vụ) đã đăng nhập vào hệ thống.
+Đề tài khóa luận đã được phân công và đang trong giai đoạn thực hiện.
+Luồng chính
+Sinh viên thực hiện nghiên cứu và triển khai nội dung khóa luận theo kế hoạch.
+Sinh viên cập nhật báo cáo tiến độ lên hệ thống bằng cách tải tệp báo cáo và nhập các thông tin cần thiết.
+Hệ thống tiếp nhận báo cáo, lưu trữ dữ liệu và tự động tạo bản tóm tắt nội dung báo cáo để hỗ trợ giảng viên theo dõi.
+Giảng viên xem nội dung báo cáo, xem bản tóm tắt và đánh giá tiến độ thực hiện của sinh viên.
+Giảng viên nhập nhận xét, góp ý và cập nhật kết quả đánh giá.
+Nếu báo cáo đạt yêu cầu, Giảng viên xác nhận sinh viên đủ điều kiện tiếp tục hoặc hoàn thành giai đoạn theo quy định.
+Giáo vụ theo dõi tình trạng thực hiện khóa luận của các nhóm thông qua kết quả báo cáo và đánh giá của giảng viên.
+Hệ thống ghi nhận, lưu trữ báo cáo tiến độ, nhận xét của giảng viên và cập nhật trạng thái thực hiện của khóa luận.
+Luồng phụ
+A1: Nếu chưa đạt, Giảng viên yêu cầu chỉnh sửa
+A2: Nếu giảng viên yêu cầu chỉnh sửa, sinh viên tiến hành thực hiện nghiên cứu và cập nhật lại báo cáo
+Hậu điều kiện
+Tiến độ thực hiện khóa luận của sinh viên được cập nhật, đánh giá, và đối tượng Báo cáo tiến độ được lưu trữ thành công trên hệ thống để Giáo vụ quản lý.
+Đặc tả Use Case  quản lý hồ sơ bảo vệ khóa luận
+Bảng 3.6 Đặc tả Use Case  quản lý hồ sơ bảo vệ khóa luận
+Mục
+Nội dung
+Tên chức năng
+Quản lý hồ sơ bảo vệ khóa luận
+Mục tiêu
+Tiếp nhận, kiểm tra và quản lý hồ sơ bảo vệ khóa luận của sinh viên trên hệ thống.
+Tác nhân
+Sinh viên, Giáo vụ
+Tiền điều kiện
+Sinh viên và Giáo vụ đã đăng nhập hệ thống. Đợt nộp hồ sơ bảo vệ đang mở.
+Luồng chính
+Sinh viên chọn chức năng "Nộp hồ sơ bảo vệ" trên hệ thống.
+Hệ thống hiển thị biểu mẫu nộp hồ sơ.
+Sinh viên tải lên tệp báo cáo, kết quả kiểm tra đạo văn và nhấn "Nộp hồ sơ".
+Hệ thống kiểm tra định dạng tệp, ghi nhận thời gian nộp và lưu hồ sơ ở trạng thái "Chờ duyệt".
+Giáo vụ truy cập chức năng "Quản lý hồ sơ bảo vệ" để xem danh sách hồ sơ đã nộp.
+Giáo vụ kiểm tra tính đầy đủ, hợp lệ và chọn "Phê duyệt" hoặc "Yêu cầu chỉnh sửa".
+Hệ thống cập nhật trạng thái và gửi thông báo kết quả duyệt đến Sinh viên.
+Luồng ngoại lệ
+A1: Tệp đính kèm không đúng định dạng hoặc vượt dung lượng thì cảnh báo lỗi và yêu cầu tải lại. A2: Hồ sơ bị từ chối thì Giáo vụ nhập lý do, hệ thống cập nhật trạng thái "Cần bổ sung" và thông báo cho Sinh viên.
+Hậu điều kiện
+Hồ sơ bảo vệ được lưu trữ trên hệ thống, trạng thái hồ sơ được cập nhật sẵn sàng cho việc phân công hội đồng.
+Đặc tả Use Case Tổ chức bảo vệ khóa luận
+Bảng 3.7 Đặc tả Use Case Tổ chức bảo vệ khóa luận
+Mục
+Nội dung
+Tên chức năng
+Tổ chức bảo vệ và tổng hợp kết quả khóa luận
+Mục tiêu
+Hệ thống hỗ trợ Giáo vụ lập hội đồng, phân công GVPB, lên lịch bảo vệ; hỗ trợ Giảng viên chấm điểm trên phiếu chấm điện tử và tự động tổng hợp kết quả.
+Tác nhân
+Giáo vụ, Giảng viên hướng dẫn, Hội đồng chấm khóa luận, Sinh viên
+Tiền điều kiện
+Giáo vụ và Giảng viên đã đăng nhập hệ thống. Danh sách sinh viên đủ hồ sơ bảo vệ đã được xác nhận.
+Luồng chính
+Giáo vụ truy cập chức năng "Lập hội đồng bảo vệ" trên hệ thống.
+Hệ thống hiển thị danh sách sinh viên đủ điều kiện và danh sách giảng viên khả dụng.
+Giáo vụ nhập thông tin hội đồng (tên, thời gian, địa điểm), gán vai trò thành viên (Chủ tịch, Thư ký, GVPB, Ủy viên) và phân công danh sách nhóm sinh viên vào hội đồng.
+Hệ thống kiểm tra trùng lịch, lưu hội đồng và gửi thông báo lịch bảo vệ đến Giảng viên và Sinh viên.
+Sinh viên tiến hành trình bày bảo vệ trước hội đồng.
+Giảng viên hướng dẫn và các thành viên hội đồng truy cập chức năng "Chấm điểm bảo vệ".
+Hệ thống hiển thị phiếu chấm điểm điện tử theo tiêu chí và thang điểm quy định.
+Giảng viên nhập điểm số, nhận xét chi tiết cho từng sinh viên và nhấn "Lưu phiếu chấm".
+Giáo vụ truy cập chức năng "Tổng hợp kết quả".
+Hệ thống tự động tính toán điểm trung bình và điểm tổng kết theo quy định.
+Giáo vụ kiểm tra, xác nhận kết quả và lưu trữ vào hệ thống.
+Luồng ngoại lệ
+A1: Giảng viên bị trùng lịch thì hệ thống cảnh báo và yêu cầu Giáo vụ chọn giảng viên khác. A2: Thiếu phiếu chấm điểm của thành viên hội đồng hoặc GVHD thì hệ thống hiển thị danh sách giảng viên chưa chấm và gửi nhắc nhở.
+Hậu điều kiện
+Hội đồng được thành lập, điểm cuối cùng và kết quả khóa luận được xác nhận, lưu trữ trên hệ thống.
+Đặc tả Use Case  lưu trữ và báo cáo kết quả
+Bảng 3.8 Đặc tả Use Case  lưu trữ và báo cáo kết quả
+Mục
+Nội dung
+Tên chức năng
+Thống kê và báo cáo kết quả khóa luận
+Mục tiêu
+Hệ thống tổng hợp số liệu và lập báo cáo thống kê về công tác khóa luận theo học kỳ.
+Tác nhân
+Giáo vụ
+Tiền điều kiện
+Giáo vụ đã đăng nhập hệ thống. Dữ liệu khóa luận của học kỳ đã được tổng hợp.
+Luồng chính
+Giáo vụ truy cập chức năng "Thống kê & Báo cáo" trên hệ thống.
+Hệ thống hiển thị bộ lọc thống kê (theo học kỳ, ngành học, giảng viên, kết quả đạt/không đạt).
+Giáo vụ chọn các tiêu chí thống kê cần xuất báo cáo.
+Hệ thống xử lý dữ liệu, hiển thị bảng tổng hợp số liệu (số lượng đề tài, sinh viên, giảng viên hướng dẫn, kết quả bảo vệ) cùng biểu đồ trực quan.
+Giáo vụ chọn "Xuất báo cáo" (dạng Excel hoặc PDF).
+Hệ thống tạo tệp báo cáo theo mẫu quy định và cho phép tải về.
+Giáo vụ lưu trữ báo cáo trên hệ thống.
+Luồng ngoại lệ
+A1: Thiếu dữ liệu thống kê thì hệ thống thông báo .
+Hậu điều kiện
+Báo cáo thống kê khóa luận được hoàn thành, lưu trữ trên hệ thống và sẵn sàng cung cấp theo yêu cầu của Khoa hoặc Nhà trường.
+SƠ ĐỒ LỚP MỨC PHÂN TÍCH
+Hình 3.11 Sơ đồ lớp mức phân tích
+KẾT CHƯƠNG
+Trong chương 3, nhóm đã tiến hành phân tích hệ thống quản lý công tác khóa luận tốt nghiệp bằng cách áp dụng các công cụ mô hình hóa UML để biểu diễn quy trình nghiệp vụ và chức năng hệ thống. Các sơ đồ Use Case, Activity và sơ đồ lớp mức phân tích đã giúp làm rõ mối quan hệ giữa ba tác nhân chính (Giáo vụ, Giảng viên, Sinh viên) với hệ thống, đồng thời xác định các chức năng trọng yếu cần triển khai.
+Kết quả phân tích đã chỉ ra được các yêu cầu nghiệp vụ, các luồng sự kiện chính và phụ, cũng như cấu trúc dữ liệu cần thiết cho hệ thống. Đây là cơ sở quan trọng để chuyển sang giai đoạn thiết kế, đảm bảo rằng hệ thống được xây dựng phù hợp với mục tiêu đề tài, đáp ứng nhu cầu quản lý thực tế và hỗ trợ quá trình số hóa công tác khóa luận tốt nghiệp.
+THIẾT KẾ HỆ THỐNG
+GIỚI THIỆU
+Chương này trình bày thiết kế của hệ thống quản lý công tác khóa luận tốt nghiệp dựa trên cấu trúc cơ sở dữ liệu thực tế và các đặc tả nghiệp vụ đã được xây dựng ở chương trước đó. Mục tiêu của thiết kế là chuyển các yêu cầu và quy trình nghiệp vụ thành cấu trúc dữ liệu, luồng xử lý và các thành phần triển khai có thể sử dụng làm cơ sở cho giai đoạn cài đặt hệ thống.
+Hệ thống được mô tả là một hệ thống Web quản lý tập trung dành cho ba nhóm đối tượng gồm Giáo vụ, Giảng viên và Sinh viên. Phạm vi nghiệp vụ bao gồm quản lý học kỳ và kế hoạch, quản lý đề tài, đăng ký đề tài, theo dõi tiến độ, quản lý hồ sơ bảo vệ, tổ chức hội đồng, đánh giá và công bố kết quả. Tài liệu đặc tả cũng xác định chức năng tự động tạo bản tóm tắt báo cáo tiến độ để hỗ trợ Giảng viên theo dõi tình hình thực hiện của sinh viên.
+THIẾT KẾ CƠ SỞ DỮ LIỆU
+Cơ sở dữ liệu được thiết kế theo mô hình quan hệ, trong đó các thông tin được phân tách thành các bảng có khóa chính và liên kết với nhau bằng khóa ngoại. Các bảng được phân nhóm theo nghiệp vụ nhằm giảm sự phụ thuộc không cần thiết giữa các thành phần .
+Mô hình quan hệ cơ sở dữ liệu
+Dựa trên các thiết kế ở sơ đồ class ỡ chương trước,, mô hình quan hệ của hệ thống có thể được xác định thành các nhóm chính sau:
+Nhóm dữ liệu
+Các bảng
+Nhóm danh mục và hệ thống
+VaiTro, TaiKhoan, Khoa, BoMon, Nganh, Lop, HocKy
+Nhóm người dùng
+GiaoVu, GiangVien, SinhVien
+Nhóm điều kiện và chỉ tiêu học kỳ
+DanhSachSVDuDieuKien, ChiTieuHuongDan
+Nhóm kế hoạch và đề tài
+KeHoachKhoaLuan, MocThoiGianKhoaLuan, QuyDinhKhoaLuan, BieuMau, DeTai
+Nhóm phân bổ nhóm và đăng ký
+Nhom, ThanhVienNhom, DangKyDeTai
+Nhóm tiến độ và báo cáo
+BaoCaoTienDo, TomTatBaoCao, NhanXet, TienDo
+Nhóm hồ sơ bảo vệ và hội đồng
+HoiDong, ThanhVienHoiDong, HoSoBaoVe
+Nhóm kết quả đánh giá
+ChiTietDiemHoiDong, KetQuaSinhVien
+Nhóm thông báo
+ThongBao, NguoiNhanThongBao
+Các quan hệ nổi bật được xác định trực tiếp từ khóa ngoại gồm:
+VaiTro (1) – TaiKhoan (N): mỗi tài khoản tham chiếu một vai trò thông qua MaVaiTro.
+Khoa (1) – BoMon (N) và Khoa (1) – Nganh (N); Nganh (1) – Lop (N).
+TaiKhoan (1) – GiaoVu/GiangVien/SinhVien theo các khóa MaTK được khai báo UNIQUE ở các bảng chi tiết.
+GiangVien (1) – DeTai (N), GiangVien (1) – DangKyDeTai (N), và GiangVien (1) – NhanXet (N).
+HocKy (1) – KeHoachKhoaLuan (N), HocKy (1) – DeTai (N), HocKy (1) – DanhSachSVDuDieuKien (N), HocKy (1) – ChiTieuHuongDan (N) và HocKy (1) – KetQuaSinhVien (N).
+KeHoachKhoaLuan (1) – MocThoiGianKhoaLuan (N), QuyDinhKhoaLuan (N) và BieuMau (N).
+DeTai (1) – Nhom (N) và Nhom (1) – BaoCaoTienDo (N), TienDo (N), HoSoBaoVe (N).
+Nhom và SinhVien có quan hệ N–N thông qua ThanhVienNhom.
+Nhom, DeTai và GiangVien được liên kết trong DangKyDeTai để lưu yêu cầu đăng ký và giảng viên hướng dẫn.
+BaoCaoTienDo (1) – TomTatBaoCao (N) theo ràng buộc FK hiện tại; BaoCaoTienDo (1) – NhanXet (N).
+HoiDong và GiangVien có quan hệ N–N thông qua ThanhVienHoiDong; bảng này đồng thời lưu VaiTro của thành viên hội đồng.
+ThanhVienHoiDong được tham chiếu bởi ChiTietDiemHoiDong thông qua khóa ngoại kép (MaHoiDong, MaGV).
+ThongBao và TaiKhoan có quan hệ N–N thông qua NguoiNhanThongBao.
+Thiết kế sử dụng các khóa chính đơn và khóa chính ghép ở những bảng thể hiện quan hệ nhiều-nhiều hoặc ngữ cảnh theo học kỳ.
+Mô hình quan hệ
+Mô hình quan hệ được biểu diễn theo dạng TEN_BANG(ThuocTinh, ...) với ký hiệu PK và FK như sau:
+STT
+Tên bảng
+Khóa chính
+Khóa ngoại
+1
+VaiTro
+—
+2
+TaiKhoan
+MaVaiTro
+3
+Khoa
+—
+4
+BoMon
+MaKhoa
+5
+Nganh
+MaKhoa
+6
+Lop
+MaNganh
+7
+HocKy
+—
+8
+GiaoVu
+MaTK , MaKhoa
+9
+GiangVien
+MaTK , MaBoMon
+10
+SinhVien
+MaTK , MaLop
+11
+DanhSachSVDuDieuKien
+MaSV, MaHocKy
+MaSV , MaHocKy
+12
+ChiTieuHuongDan
+MaGV, MaHocKy
+MaGV , MaHocKy
+13
+KeHoachKhoaLuan
+MaHocKy , MaGVu
+14
+MocThoiGianKhoaLuan
+MaKeHoach
+15
+QuyDinhKhoaLuan
+MaKeHoach
+16
+BieuMau
+MaKeHoach
+17
+DeTai
+—
+18
+Nhom
+MaDeTai, MaTruongNhom
+19
+ThanhVienNhom
+MaNhom, MaSV
+MaNhom → Nhom.MaNhom, MaSV → SinhVien.MaSV
+20
+DangKyDeTai
+MaNhom , MaDeTai , MaGVHuongDan
+21
+BaoCaoTienDo
+MaNhom
+22
+TomTatBaoCao
+MaBaoCao
+23
+NhanXet
+MaBaoCao , MaGV
+24
+TienDo
+MaNhom,  MaMoc
+25
+HoiDong
+—
+26
+ThanhVienHoiDong
+MaHoiDong, MaGV
+MaHoiDong , MaGV
+27
+HoSoBaoVe
+MaNhom , MaGVPhanBien , NguoiXacNhan, MaHoiDong
+28
+ChiTietDiemHoiDong
+MaHoiDong, MaGV, MaSV
+MaHoiDong, MaGV , MaSV
+29
+KetQuaSinhVien
+MaSV , MaHocKy
+30
+ThongBao
+MaGVu
+31
+NguoiNhanThongBao
+MaThongBao, MaTK
+MaThongBao, MaTK
+Đặc tả các bảng dữ liệu
+Các đặc tả dưới đây lấy trực tiếp tên bảng, thuộc tính, kiểu dữ liệu, trạng thái NULL/NOT NULL, khóa chính và khóa ngoại từ file SQL. Các giá trị mặc định được ghi khi SQL có khai báo DEFAULT.
+Bảng VaiTro
+Mục đích: Lưu danh mục các vai trò được phép sử dụng hệ thống.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+1
+MaVaiTro
+VARCHAR(10)
+MaVaiTro
+NULL
+2
+TenVaiTro
+NVARCHAR(50)
+NOT NULL
+Mô tả thông tin bảng:
+Thuộc tính UNIQUE: TenVaiTro.
+Ràng buộc CHECK: CONSTRAINT CK_VaiTro_Ten CHECK (TenVaiTro IN (N'Giáo vụ', N'Sinh viên', N'Giảng viên')).
+Nhận xét: Bảng VaiTro đóng vai trò lưu danh mục các vai trò được phép sử dụng hệ thống.
+Bảng TaiKhoan
+Mục đích: Lưu thông tin tài khoản đăng nhập, trạng thái tài khoản và thông tin phục vụ quản lý đăng nhập.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+1
+MaTK
+VARCHAR(10)
+MaTK
+NULL
+2
+MaVaiTro
+VARCHAR(10)
+MaVaiTro
+NOT NULL
+3
+TenDangNhap
+VARCHAR(50)
+NOT NULL
+4
+MatKhau
+VARCHAR(255)
+NOT NULL
+5
+TrangThai
+BIT
+NOT NULL
+6
+SoLanDangNhapSai
+INT
+NULL
+7
+BatBuocDoiMatKhau
+BIT
+NULL
+8
+NgayTao
+DATETIME
+NULL
+9
+NgayCapNhat
+DATETIME
+NULL
+10
+LanDangNhapCuoi
+DATETIME
+NULL
+11
+NgayKhoa
+DATETIME
+NULL
+Mô tả thông tin bảng:
+Khóa ngoại: MaVaiTro tham chiếu VaiTro(MaVaiTro).
+Thuộc tính UNIQUE: TenDangNhap.
+Nhận xét: Bảng TaiKhoan đóng vai trò lưu thông tin tài khoản đăng nhập, trạng thái tài khoản và thông tin phục vụ quản lý đăng nhập.
+Bảng Khoa
+Mục đích: Lưu thông tin khoa trong hệ thống.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaKhoa
+VARCHAR(10)
+NULL
+—
+2
+TenKhoa
+NVARCHAR(100)
+NOT NULL
+—
+Mô tả thông tin bảng:
+Thuộc tính UNIQUE: TenKhoa.
+Nhận xét: Bảng Khoa đóng vai trò lưu thông tin khoa trong hệ thống.
+Bảng BoMon
+Mục đích: Lưu thông tin bộ môn và liên kết bộ môn với khoa.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaBoMon
+VARCHAR(10)
+NULL
+—
+2
+TenBoMon
+NVARCHAR(100)
+NOT NULL
+—
+3
+MaKhoa
+VARCHAR(10)
+Khoa.MaKhoa
+NOT NULL
+—
+Khóa ngoại: MaKhoa tham chiếu Khoa(MaKhoa).
+Nhận xét: Bảng BoMon đóng vai trò lưu thông tin bộ môn và liên kết bộ môn với khoa..
+Bảng Nganh
+Mục đích: Lưu thông tin ngành và liên kết ngành với khoa.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaNganh
+VARCHAR(10)
+NULL
+—
+2
+TenNganh
+NVARCHAR(100)
+NOT NULL
+—
+3
+MaKhoa
+VARCHAR(10)
+Khoa.MaKhoa
+NOT NULL
+—
+Khóa ngoại: MaKhoa tham chiếu Khoa(MaKhoa).
+Nhận xét: Bảng Nganh đóng vai trò lưu thông tin ngành và liên kết ngành với khoa..
+Bảng Lop
+Mục đích: Lưu thông tin lớp, ngành và khóa học.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaLop
+VARCHAR(10)
+NULL
+—
+2
+TenLop
+NVARCHAR(100)
+NOT NULL
+—
+3
+MaNganh
+VARCHAR(10)
+Nganh.MaNganh
+NOT NULL
+—
+4
+KhoaHoc
+VARCHAR(20)
+NOT NULL
+—
+Khóa ngoại: MaNganh tham chiếu Nganh(MaNganh).
+Nhận xét: Bảng Lop đóng vai trò lưu thông tin lớp, ngành và khóa học..
+Bảng HocKy
+Mục đích: Lưu thông tin học kỳ, năm học, thời gian bắt đầu/kết thúc và trạng thái.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaHocKy
+VARCHAR(10)
+NULL
+—
+2
+TenHocKy
+NVARCHAR(50)
+NOT NULL
+—
+3
+NamHoc
+VARCHAR(20)
+NOT NULL
+—
+4
+NgayBatDau
+DATE
+NOT NULL
+—
+5
+NgayKetThuc
+DATE
+NOT NULL
+—
+6
+TrangThai
+BIT
+NULL
+1
+Nhận xét: Bảng HocKy đóng vai trò lưu thông tin học kỳ, năm học, thời gian bắt đầu/kết thúc và trạng thái..
+Bảng GiaoVu
+Mục đích: Lưu thông tin chi tiết của người dùng thuộc vai trò Giáo vụ.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaGVu
+VARCHAR(10)
+NULL
+—
+2
+MaTK
+VARCHAR(10)
+TaiKhoan.MaTK
+NOT NULL
+—
+3
+MaKhoa
+VARCHAR(10)
+Khoa.MaKhoa
+NOT NULL
+—
+4
+HoTen
+NVARCHAR(100)
+NOT NULL
+—
+5
+Email
+VARCHAR(100)
+NULL
+—
+6
+SoDienThoai
+VARCHAR(15)
+NULL
+—
+7
+ChucVu
+NVARCHAR(50)
+NULL
+—
+Khóa ngoại: MaTK tham chiếu TaiKhoan(MaTK); MaKhoa tham chiếu Khoa(MaKhoa).
+Thuộc tính UNIQUE: MaTK, Email.
+Nhận xét: Bảng GiaoVu đóng vai trò lưu thông tin chi tiết của người dùng thuộc vai trò giáo vụ..
+Bảng GiangVien
+Mục đích: Lưu thông tin chi tiết giảng viên và bộ môn quản lý giảng viên.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaGV
+VARCHAR(10)
+NULL
+—
+2
+MaTK
+VARCHAR(10)
+TaiKhoan.MaTK
+NOT NULL
+—
+3
+MaBoMon
+VARCHAR(10)
+BoMon.MaBoMon
+NOT NULL
+—
+4
+MaSoCanBo
+VARCHAR(20)
+NULL
+—
+5
+HoTen
+NVARCHAR(100)
+NOT NULL
+—
+6
+NgaySinh
+DATE
+NULL
+—
+7
+GioiTinh
+BIT
+NULL
+—
+8
+Email
+VARCHAR(100)
+NULL
+—
+9
+SoDienThoai
+VARCHAR(15)
+NULL
+—
+10
+HocHam
+NVARCHAR(50)
+NULL
+—
+11
+HocVi
+NVARCHAR(50)
+NULL
+—
+12
+ChuyenNganh
+NVARCHAR(100)
+NULL
+—
+13
+TrangThai
+BIT
+NULL
+1
+Khóa ngoại: MaTK tham chiếu TaiKhoan(MaTK); MaBoMon tham chiếu BoMon(MaBoMon).
+Thuộc tính UNIQUE: MaTK, MaSoCanBo, Email.
+Nhận xét: Bảng GiangVien đóng vai trò lưu thông tin chi tiết giảng viên và bộ môn quản lý giảng viên..
+Bảng SinhVien
+Mục đích: Lưu thông tin chi tiết sinh viên, lớp, khóa học và các chỉ số học tập được sử dụng trong quản lý điều kiện.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaSV
+VARCHAR(10)
+NULL
+—
+2
+MaTK
+VARCHAR(10)
+TaiKhoan.MaTK
+NOT NULL
+—
+3
+MaLop
+VARCHAR(10)
+Lop.MaLop
+NOT NULL
+—
+4
+MaSoSinhVien
+VARCHAR(20)
+NULL
+—
+5
+HoTen
+NVARCHAR(100)
+NOT NULL
+—
+6
+NgaySinh
+DATE
+NULL
+—
+7
+GioiTinh
+BIT
+NULL
+—
+8
+Email
+VARCHAR(100)
+NULL
+—
+9
+SoDienThoai
+VARCHAR(15)
+NULL
+—
+10
+NgayNhapHoc
+DATE
+NULL
+—
+11
+KhoaHoc
+VARCHAR(20)
+NULL
+—
+12
+SoTinChiTichLuy
+INT
+NULL
+0
+13
+DiemTichLuy
+DECIMAL(3,2)
+NULL
+0.00
+14
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đang học'
+Khóa ngoại: MaTK tham chiếu TaiKhoan(MaTK); MaLop tham chiếu Lop(MaLop).
+Thuộc tính UNIQUE: MaTK, MaSoSinhVien, Email.
+Nhận xét: Bảng SinhVien đóng vai trò lưu thông tin chi tiết sinh viên, lớp, khóa học và các chỉ số học tập được sử dụng trong quản lý điều kiện..
+Bảng DanhSachSVDuDieuKien
+Mục đích: Lưu danh sách sinh viên đủ điều kiện theo từng học kỳ.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaSV
+VARCHAR(10)
+Có
+SinhVien.MaSV
+NOT NULL
+—
+2
+MaHocKy
+VARCHAR(10)
+Có
+HocKy.MaHocKy
+NOT NULL
+—
+3
+NgayXetDuyet
+DATE
+NULL
+GETDATE()
+4
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đủ điều kiện'
+5
+GhiChu
+NVARCHAR(255)
+NULL
+—
+Khóa ngoại: MaSV tham chiếu SinhVien(MaSV); MaHocKy tham chiếu HocKy(MaHocKy).
+Nhận xét: Bảng DanhSachSVDuDieuKien đóng vai trò lưu danh sách sinh viên đủ điều kiện theo từng học kỳ..
+Bảng ChiTieuHuongDan
+Mục đích: Lưu chỉ tiêu hướng dẫn tối đa của giảng viên theo từng học kỳ.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaGV
+VARCHAR(10)
+Có
+GiangVien.MaGV
+NOT NULL
+—
+2
+MaHocKy
+VARCHAR(10)
+Có
+HocKy.MaHocKy
+NOT NULL
+—
+3
+SoNhomToiDa
+INT
+NULL
+3
+4
+NgayPhanBo
+DATE
+NULL
+GETDATE()
+Khóa ngoại: MaGV tham chiếu GiangVien(MaGV); MaHocKy tham chiếu HocKy(MaHocKy).
+Nhận xét: Bảng ChiTieuHuongDan đóng vai trò lưu chỉ tiêu hướng dẫn tối đa của giảng viên theo từng học kỳ..
+Bảng KeHoachKhoaLuan
+Mục đích: Lưu kế hoạch khóa luận theo học kỳ do Giáo vụ quản lý.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaKeHoach
+VARCHAR(10)
+NULL
+—
+2
+MaHocKy
+VARCHAR(10)
+HocKy.MaHocKy
+NOT NULL
+—
+3
+MaGVu
+VARCHAR(10)
+GiaoVu.MaGVu
+NOT NULL
+—
+4
+TenKeHoach
+NVARCHAR(200)
+NOT NULL
+—
+5
+NoiDung
+NVARCHAR(MAX)
+NULL
+—
+6
+TrangThai
+NVARCHAR(50)
+NULL
+N'Nháp'
+7
+NgayTao
+DATE
+NULL
+GETDATE()
+8
+NgayCongBo
+DATE
+NULL
+—
+Khóa ngoại: MaHocKy tham chiếu HocKy(MaHocKy); MaGVu tham chiếu GiaoVu(MaGVu).
+Nhận xét: Bảng KeHoachKhoaLuan đóng vai trò lưu kế hoạch khóa luận theo học kỳ do giáo vụ quản lý..
+Bảng MocThoiGianKhoaLuan
+Mục đích: Lưu các mốc thời gian thuộc một kế hoạch khóa luận.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaMoc
+VARCHAR(10)
+NULL
+—
+2
+MaKeHoach
+VARCHAR(10)
+KeHoachKhoaLuan.MaKeHoach
+NOT NULL
+—
+3
+TenMoc
+NVARCHAR(100)
+NOT NULL
+—
+4
+NgayBatDau
+DATE
+NOT NULL
+—
+5
+NgayKetThuc
+DATE
+NOT NULL
+—
+6
+MoTa
+NVARCHAR(255)
+NULL
+—
+Khóa ngoại: MaKeHoach tham chiếu KeHoachKhoaLuan(MaKeHoach).
+Nhận xét: Bảng MocThoiGianKhoaLuan đóng vai trò lưu các mốc thời gian thuộc một kế hoạch khóa luận..
+Bảng QuyDinhKhoaLuan
+Mục đích: Lưu các quy định và giá trị áp dụng trong một kế hoạch khóa luận.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaQuyDinh
+VARCHAR(10)
+NULL
+—
+2
+MaKeHoach
+VARCHAR(10)
+KeHoachKhoaLuan.MaKeHoach
+NOT NULL
+—
+3
+TenQuyDinh
+NVARCHAR(200)
+NOT NULL
+—
+4
+GiaTri
+NVARCHAR(100)
+NOT NULL
+—
+5
+MoTa
+NVARCHAR(MAX)
+NULL
+—
+Khóa ngoại: MaKeHoach tham chiếu KeHoachKhoaLuan(MaKeHoach).
+Nhận xét: Bảng QuyDinhKhoaLuan đóng vai trò lưu các quy định và giá trị áp dụng trong một kế hoạch khóa luận..
+Bảng BieuMau
+Mục đích: Lưu thông tin các biểu mẫu và đường dẫn tệp thuộc một kế hoạch.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaBieuMau
+VARCHAR(10)
+NULL
+—
+2
+MaKeHoach
+VARCHAR(10)
+KeHoachKhoaLuan.MaKeHoach
+NOT NULL
+—
+3
+TenBieuMau
+NVARCHAR(200)
+NOT NULL
+—
+4
+DuongDanFile
+VARCHAR(255)
+NOT NULL
+—
+Khóa ngoại: MaKeHoach tham chiếu KeHoachKhoaLuan(MaKeHoach).
+Nhận xét: Bảng BieuMau đóng vai trò lưu thông tin các biểu mẫu và đường dẫn tệp thuộc một kế hoạch..
+Bảng DeTai
+Mục đích: Lưu danh mục đề tài khóa luận, giảng viên đề xuất, học kỳ và trạng thái xét duyệt.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaDeTai
+VARCHAR(10)
+NULL
+—
+2
+MaGV
+VARCHAR(10)
+NOT NULL
+—
+3
+TenDeTai
+NVARCHAR(200)
+NOT NULL
+—
+4
+MoTa
+NVARCHAR(MAX)
+NULL
+—
+5
+YeuCau
+NVARCHAR(MAX)
+NULL
+—
+6
+LinhVuc
+NVARCHAR(100)
+NULL
+—
+7
+SoLuongSinhVienToiDa
+INT
+NULL
+1
+8
+MaHocKy
+VARCHAR(10)
+NOT NULL
+—
+9
+TrangThai
+NVARCHAR(50)
+NULL
+N'Chờ duyệt'
+10
+NgayDeXuat
+DATE
+NULL
+GETDATE()
+11
+NgayDuyet
+DATE
+NULL
+—
+12
+LyDoTuChoi
+NVARCHAR(255)
+NULL
+—
+13
+FOREIGN
+KEY
+NULL
+—
+14
+FOREIGN
+KEY
+NULL
+—
+15
+TrangThai
+IN
+NULL
+—
+Nhận xét: Bảng DeTai đóng vai trò lưu danh mục đề tài khóa luận, giảng viên đề xuất, học kỳ và trạng thái xét duyệt..
+Bảng Nhom
+Mục đích: Lưu thông tin nhóm thực hiện khóa luận và đề tài mà nhóm được gắn vào.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaNhom
+VARCHAR(10)
+NULL
+—
+2
+MaDeTai
+VARCHAR(10)
+DeTai.MaDeTai
+NULL
+—
+3
+MaTruongNhom
+VARCHAR(10)
+SinhVien.MaSV
+NOT NULL
+—
+4
+TenNhom
+NVARCHAR(100)
+NULL
+—
+5
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đang tạo'
+6
+NgayTao
+DATE
+NULL
+GETDATE()
+Khóa ngoại: MaDeTai tham chiếu DeTai(MaDeTai); MaTruongNhom tham chiếu SinhVien(MaSV).
+Nhận xét: Bảng Nhom đóng vai trò lưu thông tin nhóm thực hiện khóa luận và đề tài mà nhóm được gắn vào..
+Bảng ThanhVienNhom
+Mục đích: Lưu quan hệ thành viên giữa sinh viên và nhóm, bao gồm vai trò và ngày tham gia.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaNhom
+VARCHAR(10)
+Có
+Nhom.MaNhom
+NOT NULL
+—
+2
+MaSV
+VARCHAR(10)
+Có
+SinhVien.MaSV
+NOT NULL
+—
+3
+VaiTro
+NVARCHAR(50)
+NULL
+N'Thành viên'
+4
+NgayThamGia
+DATE
+NULL
+GETDATE()
+Khóa ngoại: MaNhom tham chiếu Nhom(MaNhom); MaSV tham chiếu SinhVien(MaSV).
+Nhận xét: Bảng ThanhVienNhom đóng vai trò lưu quan hệ thành viên giữa sinh viên và nhóm, bao gồm vai trò và ngày tham gia..
+Bảng DangKyDeTai
+Mục đích: Lưu yêu cầu đăng ký đề tài của nhóm và giảng viên hướng dẫn, cùng trạng thái xét duyệt.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaDangKy
+VARCHAR(10)
+NULL
+—
+2
+MaNhom
+VARCHAR(10)
+Nhom.MaNhom
+NOT NULL
+—
+3
+MaDeTai
+VARCHAR(10)
+DeTai.MaDeTai
+NOT NULL
+—
+4
+MaGVHuongDan
+VARCHAR(10)
+GiangVien.MaGV
+NOT NULL
+—
+5
+NgayDangKy
+DATE
+NULL
+GETDATE()
+6
+TrangThai
+NVARCHAR(50)
+NULL
+N'Chờ duyệt'
+7
+NgayDuyet
+DATE
+NULL
+—
+8
+GhiChu
+NVARCHAR(255)
+NULL
+—
+9
+LyDoTuChoi
+NVARCHAR(255)
+NULL
+—
+Khóa ngoại: MaNhom tham chiếu Nhom(MaNhom); MaDeTai tham chiếu DeTai(MaDeTai); MaGVHuongDan tham chiếu GiangVien(MaGV).
+Nhận xét: Bảng DangKyDeTai đóng vai trò lưu yêu cầu đăng ký đề tài của nhóm và giảng viên hướng dẫn, cùng trạng thái xét duyệt..
+Bảng BaoCaoTienDo
+Mục đích: Lưu các lần nộp báo cáo tiến độ của nhóm, nội dung, tệp đính kèm và trạng thái.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaBaoCao
+VARCHAR(10)
+NULL
+—
+2
+MaNhom
+VARCHAR(10)
+Nhom.MaNhom
+NOT NULL
+—
+3
+LanBaoCao
+INT
+NOT NULL
+—
+4
+TieuDe
+NVARCHAR(200)
+NOT NULL
+—
+5
+NoiDungBaoCao
+NVARCHAR(MAX)
+NULL
+—
+6
+NgayNop
+DATE
+NULL
+GETDATE()
+7
+TenFile
+NVARCHAR(255)
+NULL
+—
+8
+DuongDanFile
+VARCHAR(500)
+NULL
+—
+9
+TrangThai
+NVARCHAR(50)
+NULL
+N'Chờ duyệt'
+Khóa ngoại: MaNhom tham chiếu Nhom(MaNhom).
+Nhận xét: Bảng BaoCaoTienDo đóng vai trò lưu các lần nộp báo cáo tiến độ của nhóm, nội dung, tệp đính kèm và trạng thái..
+Bảng TomTatBaoCao
+Mục đích: Lưu kết quả tóm tắt báo cáo, các nội dung chính, nội dung AI, độ tin cậy và trạng thái.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaTomTat
+VARCHAR(10)
+NULL
+—
+2
+MaBaoCao
+VARCHAR(10)
+BaoCaoTienDo.MaBaoCao
+NOT NULL
+—
+3
+CongViecDaHoanThanh
+NVARCHAR(MAX)
+NULL
+—
+4
+KhoKhan
+NVARCHAR(MAX)
+NULL
+—
+5
+KeHoachTuanToi
+NVARCHAR(MAX)
+NULL
+—
+6
+NoiDungAI
+NVARCHAR(MAX)
+NULL
+—
+7
+DoTinCayAI
+DECIMAL(5,2)
+NULL
+—
+8
+NgayTomTat
+DATETIME
+NULL
+GETDATE()
+9
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đã tạo'
+Khóa ngoại: MaBaoCao tham chiếu BaoCaoTienDo(MaBaoCao).
+Nhận xét: Bảng TomTatBaoCao đóng vai trò lưu kết quả tóm tắt báo cáo, các nội dung chính, nội dung ai, độ tin cậy và trạng thái..
+Bảng NhanXet
+Mục đích: Lưu nhận xét của giảng viên đối với báo cáo tiến độ.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaNhanXet
+VARCHAR(10)
+NULL
+—
+2
+MaBaoCao
+VARCHAR(10)
+BaoCaoTienDo.MaBaoCao
+NOT NULL
+—
+3
+MaGV
+VARCHAR(10)
+GiangVien.MaGV
+NOT NULL
+—
+4
+NoiDung
+NVARCHAR(MAX)
+NOT NULL
+—
+5
+LoaiNhanXet
+NVARCHAR(50)
+NULL
+—
+6
+NgayNhanXet
+DATETIME
+NULL
+GETDATE()
+7
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đã nhận xét'
+Khóa ngoại: MaBaoCao tham chiếu BaoCaoTienDo(MaBaoCao); MaGV tham chiếu GiangVien(MaGV).
+Nhận xét: Bảng NhanXet đóng vai trò lưu nhận xét của giảng viên đối với báo cáo tiến độ..
+Bảng TienDo
+Mục đích: Lưu tỷ lệ hoàn thành và trạng thái tiến độ của nhóm theo từng mốc thời gian.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaTienDo
+VARCHAR(10)
+NULL
+—
+2
+MaNhom
+VARCHAR(10)
+Nhom.MaNhom
+NOT NULL
+—
+3
+MaMoc
+VARCHAR(10)
+MocThoiGianKhoaLuan.MaMoc
+NOT NULL
+—
+4
+TyLeHoanThanh
+INT
+NULL
+0
+5
+TrangThai
+NVARCHAR(50)
+NULL
+—
+6
+NgayCapNhat
+DATETIME
+NULL
+GETDATE()
+7
+GhiChu
+NVARCHAR(MAX)
+NULL
+—
+Khóa ngoại: MaNhom tham chiếu Nhom(MaNhom); MaMoc tham chiếu MocThoiGianKhoaLuan(MaMoc).
+Nhận xét: Bảng TienDo đóng vai trò lưu tỷ lệ hoàn thành và trạng thái tiến độ của nhóm theo từng mốc thời gian..
+Bảng HoiDong
+Mục đích: Lưu thông tin hội đồng bảo vệ, thời gian, địa điểm và trạng thái.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaHoiDong
+VARCHAR(10)
+NULL
+—
+2
+TenHoiDong
+NVARCHAR(200)
+NOT NULL
+—
+3
+ThoiGianBatDau
+DATETIME
+NOT NULL
+—
+4
+ThoiGianKetThuc
+DATETIME
+NOT NULL
+—
+5
+DiaDiem
+NVARCHAR(200)
+NULL
+—
+6
+TrangThai
+NVARCHAR(50)
+NULL
+N'Chưa diễn ra'
+7
+GhiChu
+NVARCHAR(255)
+NULL
+—
+Nhận xét: Bảng HoiDong đóng vai trò lưu thông tin hội đồng bảo vệ, thời gian, địa điểm và trạng thái..
+Bảng ThanhVienHoiDong
+Mục đích: Lưu danh sách giảng viên tham gia hội đồng và vai trò của từng thành viên.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaHoiDong
+VARCHAR(10)
+Có
+HoiDong.MaHoiDong
+NOT NULL
+—
+2
+MaGV
+VARCHAR(10)
+Có
+GiangVien.MaGV
+NOT NULL
+—
+3
+VaiTro
+NVARCHAR(50)
+NOT NULL
+—
+4
+VaiTro
+IN
+NULL
+—
+Khóa ngoại: MaHoiDong tham chiếu HoiDong(MaHoiDong); MaGV tham chiếu GiangVien(MaGV).
+Ràng buộc CHECK: CONSTRAINT CK_ThanhVienHoiDong_VaiTro CHECK (.
+Nhận xét: Bảng ThanhVienHoiDong đóng vai trò lưu danh sách giảng viên tham gia hội đồng và vai trò của từng thành viên..
+Bảng HoSoBaoVe
+Mục đích: Lưu hồ sơ bảo vệ của nhóm, xác nhận GVHD, thông tin phản biện, Turnitin và hội đồng.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaHoSo
+VARCHAR(10)
+NULL
+—
+2
+MaNhom
+VARCHAR(10)
+Nhom.MaNhom
+NOT NULL
+—
+3
+MaHoiDong
+VARCHAR(10)
+HoiDong.MaHoiDong
+NULL
+—
+4
+MaGVPhanBien
+VARCHAR(10)
+GiangVien.MaGV
+NULL
+—
+5
+XacNhanGVHD
+BIT
+NULL
+0
+6
+NgayXacNhanGVHD
+DATE
+NULL
+—
+7
+TyLeTrungLap
+DECIMAL(5,2)
+NULL
+—
+8
+MinhChungDaoVan
+VARCHAR(255)
+NULL
+—
+9
+TrangThai
+NVARCHAR(50)
+NULL
+N'Chờ xác nhận'
+10
+NgayNop
+DATE
+NULL
+GETDATE()
+11
+NgayXacNhan
+DATE
+NULL
+—
+12
+NguoiXacNhan
+VARCHAR(10)
+GiaoVu.MaGVu
+NULL
+—
+13
+GhiChu
+NVARCHAR(255)
+NULL
+—
+Khóa ngoại: MaNhom tham chiếu Nhom(MaNhom); MaGVPhanBien tham chiếu GiangVien(MaGV); NguoiXacNhan tham chiếu GiaoVu(MaGVu); MaHoiDong tham chiếu HoiDong(MaHoiDong).
+Nhận xét: Bảng HoSoBaoVe đóng vai trò lưu hồ sơ bảo vệ của nhóm, xác nhận gvhd, thông tin phản biện, turnitin và hội đồng..
+Bảng ChiTietDiemHoiDong
+Mục đích: Lưu điểm và nhận xét của từng giảng viên trong hội đồng đối với từng sinh viên.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaHoiDong
+VARCHAR(10)
+Có
+ThanhVienHoiDong.MaHoiDong, MaGV
+NOT NULL
+—
+2
+MaGV
+VARCHAR(10)
+Có
+ThanhVienHoiDong.MaHoiDong, MaGV
+NOT NULL
+—
+3
+MaSV
+VARCHAR(10)
+Có
+SinhVien.MaSV
+NOT NULL
+—
+4
+Diem
+DECIMAL(4,2)
+NOT NULL
+—
+5
+NhanXet
+NVARCHAR(MAX)
+NULL
+—
+6
+NgayCham
+DATETIME
+NULL
+GETDATE()
+Khóa ngoại: MaHoiDong, MaGV tham chiếu ThanhVienHoiDong(MaHoiDong, MaGV); MaSV tham chiếu SinhVien(MaSV).
+Nhận xét: Bảng ChiTietDiemHoiDong đóng vai trò lưu điểm và nhận xét của từng giảng viên trong hội đồng đối với từng sinh viên..
+Bảng KetQuaSinhVien
+Mục đích: Lưu các thành phần điểm, điểm tổng kết và kết quả cuối cùng của từng sinh viên theo học kỳ.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaKetQua
+VARCHAR(10)
+NULL
+—
+2
+MaSV
+VARCHAR(10)
+SinhVien.MaSV
+NOT NULL
+—
+3
+MaHocKy
+VARCHAR(10)
+HocKy.MaHocKy
+NOT NULL
+—
+4
+DiemHuongDan
+DECIMAL(4,2)
+NULL
+—
+5
+DiemPhanBien
+DECIMAL(4,2)
+NULL
+—
+6
+DiemHoiDongTB
+DECIMAL(4,2)
+NULL
+—
+7
+DiemTongKet
+DECIMAL(4,2)
+NULL
+—
+8
+KetQua
+NVARCHAR(50)
+NULL
+—
+9
+NhanXetChung
+NVARCHAR(MAX)
+NULL
+—
+10
+NgayCham
+DATE
+NULL
+GETDATE()
+Khóa ngoại: MaSV tham chiếu SinhVien(MaSV); MaHocKy tham chiếu HocKy(MaHocKy).
+Nhận xét: Bảng KetQuaSinhVien đóng vai trò lưu các thành phần điểm, điểm tổng kết và kết quả cuối cùng của từng sinh viên theo học kỳ..
+Bảng ThongBao
+Mục đích: Lưu thông báo do Giáo vụ tạo và thông tin đối tượng nhận.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaThongBao
+VARCHAR(10)
+NULL
+—
+2
+MaGVu
+VARCHAR(10)
+GiaoVu.MaGVu
+NULL
+—
+3
+TieuDe
+NVARCHAR(200)
+NOT NULL
+—
+4
+NoiDung
+NVARCHAR(MAX)
+NOT NULL
+—
+5
+LoaiThongBao
+NVARCHAR(50)
+NULL
+—
+6
+DoiTuongNhan
+NVARCHAR(50)
+NULL
+N'Tất cả'
+7
+NgayTao
+DATETIME
+NULL
+GETDATE()
+8
+TrangThai
+NVARCHAR(50)
+NULL
+N'Đã tạo'
+Khóa ngoại: MaGVu tham chiếu GiaoVu(MaGVu).
+Nhận xét: Bảng ThongBao đóng vai trò lưu thông báo do giáo vụ tạo và thông tin đối tượng nhận..
+Bảng NguoiNhanThongBao
+Mục đích: Lưu quan hệ giữa thông báo và tài khoản nhận, trạng thái đã đọc và thời điểm đọc.
+STT
+Tên thuộc tính
+Kiểu dữ liệu
+PK
+FK
+NULL
+Mặc định
+1
+MaThongBao
+VARCHAR(10)
+Có
+ThongBao.MaThongBao
+NOT NULL
+—
+2
+MaTK
+VARCHAR(10)
+Có
+TaiKhoan.MaTK
+NOT NULL
+—
+3
+DaDoc
+BIT
+NULL
+0
+4
+NgayDoc
+DATETIME
+NULL
+—
+Khóa ngoại: MaThongBao tham chiếu ThongBao(MaThongBao); MaTK tham chiếu TaiKhoan(MaTK).
+Nhận xét: Bảng NguoiNhanThongBao đóng vai trò lưu quan hệ giữa thông báo và tài khoản nhận, trạng thái đã đọc và thời điểm đọc..
+THIẾT KẾ GIAO DIỆN HỆ THỐNG
+Giao diện đăng nhập
+Giao diện Giáo vụ
+Giao diện Giảng viên
+Giao diện Sinh viên
+SƠ ĐỒ LỚP Ở MỨC THIẾT KẾ
+THIẾT KẾ CHỨC NĂNG HỆ THỐNG
+Chức năng Giáo vụ
+Lập kế hoạch học kỳ khóa luận
+Quản lý danh sách sinh viên đủ điều kiện
+Quản lý đề tài khóa luận
+Theo dõi tiến độ thực hiện
+Quản lý hồ sơ bảo vệ
+Tổ chức hội đồng và quản lý chấm điểm
+Thống kê, báo cáo và thông báo
+Chức năng Giảng viên
+Đề xuất và quản lý đề tài
+Tự động tóm tắt báo cáo
+Theo dõi tiến độ và nhận xét
+Xác nhận điều kiện bảo vệ
+Tham gia hội đồng và chấm điểm
+Chức năng Sinh viên
+Xem và đăng ký đề tài
+Quản lý nhóm
+Nộp báo cáo và cập nhật tiến độ
+Nộp hồ sơ bảo vệ
+Xem kết quả và thông báo
+KẾT CHƯƠNG
+CÀI ĐẶT HỆ THỐNG
+GIỚI THIỆU
+CÔNG NGHỆ SỬ DỤNG VÀ CẤU HÌNH CÀI ĐẶT
+Môi trường phát triển
+Cấu hình phần cứng
+Cấu hình phần mềm
+Cài đặt hệ thống
+TRIỂN KHAI CƠ SỞ DỮ LIỆU
+Tạo cơ sở dữ liệu
+Triển khai các bảng dữ liệu
+Thiết lập khóa chính, khóa ngoại
+Dữ liệu mẫu
+TRIỂN KHAI CÁC CHỨC NĂNG CHÍNH
+Chức năng đăng nhập
+Chức năng lập kế hoạch khóa luận
+Chức năng quản lý đề tài
+Chức năng đăng ký đề tài
+Chức năng quản lý tiến độ
+Chức năng quản lý bảo vệ
+Chức năng thống kê
+KIỂM THỬ HỆ THỐNG
+Mục tiêu kiểm thử
+Phương pháp kiểm thử
+Kết quả kiểm thử
+Đánh giá kết quả
+THỬ NGHIỆM VÀ TRIỂN KHAI
+Trình bày các nội dung liên quan đến việc thử nghiệm, triển khai hệ thống / đánh giá mô hình, thuật toán.
+KẾT LUẬN
+Kết quả đạt được: Trình bày tóm tắt kết quả đạt được của đề tài
+Đánh giá kết quả: Xác định hệ thống đã hoàn thành được những yêu cầu nào, mức độ hoàn thiện bao nhiêu so với mục tiêu ban đầu.
+Hạn chế: Nêu ra những điểm còn hạn chế, khó khăn gặp phải trong quá trình thực hiện.
+Hướng phát triển: Đề xuất các cải tiến hoặc mở rộng để phát triển hệ thống hoàn thiện hơn trong tương lai.
+TÀI LIỆU THAM KHẢO
+[1] Trần Minh Hải, Giáo trình Phát triển hệ thống, NXB Giáo Dục, 2024
+[2] Peter MacIntyre, Kevin Tatroe, Programming PHP 4th Edition, O'Reilly Media, Inc, 2020
+[3] Unil Yun, Donggyu Kim, Mining of high average-utility itemsets using novel list structure and pruning strategy, Future Generation Computer Systems, vol. 68, pp. 346-360, 2017
+[4] https://react.dev/learn, truy cập ngày 12/03/2025
+
+=== TABLES ===
+Viết tắt | Tiếng Anh | Tiếng Việt
+DBMS | Database Management System | Hệ quản trị cơ sở dữ liệu
+IT | Information Technology | Công nghệ thông tin
+Thuộc tính | Nội dung
+Tên chức năng | Lập kế hoạch học kỳ
+Tác nhân | Giáo vụ
+Mô tả | Giáo vụ lập kế hoạch khóa luận cho học kỳ, bao gồm thời gian, quy định và tiêu chí, sau đó công bố kế hoạch đến giảng viên và sinh viên.
+Tiền điều kiện | Giáo vụ đã đăng nhập hệ thống và học kỳ đã được tạo.
+Luồng chính | Giáo vụ chọn chức năng Lập kế hoạch học kỳ. Hệ thống hiển thị biểu mẫu lập kế hoạch. Giáo vụ nhập mốc thời gian, quy định và tiêu chí. Hệ thống kiểm tra tính hợp lệ của dữ liệu.Giáo vụ xem xét và xác nhận kế hoạch.Hệ thống lưu kế hoạch.Giáo vụ công bố kế hoạch và gửi thông báo đến giảng viên và sinh viên.
+Luồng phụ | A1: Nếu dữ liệu không hợp lệ sẽ thông báo lỗi và yêu cầu chỉnh sửa.A2: Nếu đã tồn tại kế hoạch của học kỳ thì thông báo và cho phép cập nhật hoặc hủy thao tác.
+Hậu điều kiện | Kế hoạch học kỳ được lưu thành công, công bố và thông báo đến các đối tượng liên quan.
+Thuộc tính | Nội dung
+Tên chức năng | Quản lý danh sách sinh viên đủ điều kiện
+Tác nhân | Giáo vụ
+Mô tả | Giáo vụ đối chiếu hồ sơ sinh viên với các tiêu chí trong kế hoạch học kỳ. Những sinh viên đủ điều kiện sẽ được đưa vào danh sách chốt, những sinh viên không đạt sẽ bị ghi nhận lý do và loại khỏi danh sách
+Tiền điều kiện | Giáo vụ đã đăng nhập hệ thống và học kỳ đã được tạoDữ liệu về kế hoạch học kỳ và hồ sơ sinh viên đã tồn tại và sẵn sàng trên hệ thống
+Luồng chính | Giáo vụ tiếp nhận kế hoạch học kỳ đã được phê duyệt.Giáo vụ thực hiện chức năng Lập danh sách sinh viên đủ điều kiện thực hiện khóa luận.Hệ thống thu thập thông tin sinh viên từ cơ sở dữ liệu (điểm trung bình, số tín chỉ tích lũy, số tín chỉ còn nợ và các tiêu chí khác theo quy định).Hệ thống kiểm tra các tiêu chí đủ điều kiện đối với từng sinh viên.Nếu sinh viên đáp ứng đầy đủ các tiêu chí, hệ thống đưa sinh viên vào danh sách dự kiến đủ điều kiện.Giáo vụ xem xét danh sách dự kiến và thực hiện chốt danh sách sinh viên đủ điều kiện.Hệ thống cập nhật trạng thái, lưu danh sách sinh viên đủ điều kiện và cho phép xuất danh sách dưới dạng Excel hoặc PDF.
+Luồng phụ | A1: Nếu sinh viên không đủ điều kiện, Giáo vụ tiến hành ghi nhận lý do không hợp lệ; loại sinh viên đó khỏi danh sách
+Hậu điều kiện | Danh sách sinh viên đủ điều kiện được chốt và lưu trữ thành công; những sinh viên không đủ điều kiện được lưu lại lý do từ chối.
+Thuộc tính | Nội dung
+Tên chức năng | Quản lý danh sách đề tài
+Tác nhân | Giáo vụ
+Mô tả | Giáo vụ quản lý danh sách đề tài khóa luận bằng cách thêm mới, chỉnh sửa, xóa , sau đó công bố các đề tài đã được phê duyệt cho sinh viên đăng ký.
+Tiền điều kiện | Giáo vụ đã đăng nhập hệ thống. Có quyền quản lý đề tài.
+Luồng chính | Giáo vụ truy cập chức năng Quản lý danh sách đề tài.Hiển thị danh sách đề tài. Giáo vụ chọn một trong các chức năng Thêm, Sửa, Xóa hoặc Nhập từ Excel. Nếu chọn Nhập từ Excel, giáo vụ tải tệp Excel theo mẫu của hệ thống. Hệ thống kiểm tra định dạng tệp, các cột dữ liệu và tính hợp lệ của dữ liệu. Hệ thống hiển thị kết quả kiểm tra (số bản ghi hợp lệ, số bản ghi lỗi).Giáo vụ xác nhận nhập dữ liệu lưu các đề tài hợp lệ vào cơ sở dữ liệu.Giáo vụ chọn Công bố danh sách đề tài đã được phê duyệt và hiển thị cho sinh viên đăng ký.
+Luồng phụ | A1: Nếu mã đề tài hoặc tên đề tài bị trùng sẽ  cảnh báo và bỏ qua hoặc yêu cầu cập nhật theo quy định.A2: Nếu dữ liệu trong tệp không hợp lệ thì Hệ thống hiển thị danh sách lỗi để giáo vụ chỉnh sửa.A3: Nếu đề tài chưa được giảng viên hoặc Ban chủ nhiệm khoa phê duyệt thì Hệ thống lưu ở trạng thái Chưa công bố.
+Hậu điều kiện | Danh sách đề tài được cập nhật. Các đề tài hợp lệ và đã được phê duyệt được công bố cho sinh viên đăng ký.
+Thuộc tính | Nội dung
+Tên chức năng | Đăng ký đề tài
+Tác nhân | Sinh viên
+Mô tả | Sinh viên đăng ký đề tài khóa luận theo hình thức cá nhân hoặc nhóm trong thời gian cho phép. Hệ thống kiểm tra điều kiện đăng ký trước khi ghi nhận kết quả.
+Tiền điều kiện | Sinh viên đã đăng nhập hệ thống, đủ điều kiện thực hiện khóa luận, đang trong thời gian đăng ký và danh sách đề tài đã được công bố.
+Luồng chính | Sinh viên đăng nhập hệ thống và chọn chức năng Đăng ký đề tài.Hệ thống hiển thị danh sách đề tài đã được công bố và còn chỉ tiêu. Sinh viên xem thông tin chi tiết đề tài (tên đề tài, mô tả, giảng viên hướng dẫn, số lượng thành viên tối đa, số lượng còn lại, yêu cầu...).Sinh viên chọn đề tài muốn đăng ký.Sinh viên chọn hình thức đăng ký (cá nhân hoặc nhóm)Nếu đăng ký nhóm, sinh viên nhập hoặc chọn các thành viên trong nhóm. Hệ thống kiểm tra điều kiện đăng ký của sinh viên và các thành viên trong nhóm.Sinh viên xác nhận đăng ký. Hệ thống ghi nhận đăng ký, cập nhật số lượng sinh viên của đề tài và thông báo đăng ký thành công.
+Luồng phụ | A1: Nếu đề tài đã đủ số lượng sinh viên thì hệ thống từ chối đăng ký và thông báo đề tài đã hết chỉ tiêu.A2: Nếu sinh viên không đủ điều kiện thực hiện khóa luận (không đủ tín chỉ, GPA không đạt, còn nợ môn hoặc không thuộc đối tượng được phép đăng ký...) thì Hệ thống thông báo lý do và không cho phép đăng ký.A3: Nếu sinh viên đã đăng ký hoặc đã được duyệt một đề tài khác thì hệ thống không cho phép đăng ký thêm.
+Hậu điều kiện | Thông tin đăng ký đề tài được lưu trong hệ thống, trạng thái đăng ký được cập nhật và số lượng sinh viên còn lại của đề tài được điều chỉnh.
+Thuộc tính | Nội dung
+Tên chức năng | Theo dõi tiến độ thực hiện
+Tác nhân | Sinh viên, Giảng viên, Giáo vụ
+Mô tả | Quy trình phối hợp giữa Sinh viên, Giảng viên và Giáo vụ trong việc theo dõi tiến độ khóa luận.
+Tiền điều kiện | Các tác nhân (Sinh viên, Giảng viên, Giáo vụ) đã đăng nhập vào hệ thống.Đề tài khóa luận đã được phân công và đang trong giai đoạn thực hiện.
+Luồng chính | Sinh viên thực hiện nghiên cứu và triển khai nội dung khóa luận theo kế hoạch.Sinh viên cập nhật báo cáo tiến độ lên hệ thống bằng cách tải tệp báo cáo và nhập các thông tin cần thiết.Hệ thống tiếp nhận báo cáo, lưu trữ dữ liệu và tự động tạo bản tóm tắt nội dung báo cáo để hỗ trợ giảng viên theo dõi.Giảng viên xem nội dung báo cáo, xem bản tóm tắt và đánh giá tiến độ thực hiện của sinh viên.Giảng viên nhập nhận xét, góp ý và cập nhật kết quả đánh giá.Nếu báo cáo đạt yêu cầu, Giảng viên xác nhận sinh viên đủ điều kiện tiếp tục hoặc hoàn thành giai đoạn theo quy định.Giáo vụ theo dõi tình trạng thực hiện khóa luận của các nhóm thông qua kết quả báo cáo và đánh giá của giảng viên.Hệ thống ghi nhận, lưu trữ báo cáo tiến độ, nhận xét của giảng viên và cập nhật trạng thái thực hiện của khóa luận.
+Luồng phụ | A1: Nếu chưa đạt, Giảng viên yêu cầu chỉnh sửaA2: Nếu giảng viên yêu cầu chỉnh sửa, sinh viên tiến hành thực hiện nghiên cứu và cập nhật lại báo cáo
+Hậu điều kiện | Tiến độ thực hiện khóa luận của sinh viên được cập nhật, đánh giá, và đối tượng Báo cáo tiến độ được lưu trữ thành công trên hệ thống để Giáo vụ quản lý.
+Mục | Nội dung
+Tên chức năng | Quản lý hồ sơ bảo vệ khóa luận
+Mục tiêu | Tiếp nhận, kiểm tra và quản lý hồ sơ bảo vệ khóa luận của sinh viên trên hệ thống.
+Tác nhân | Sinh viên, Giáo vụ
+Tiền điều kiện | Sinh viên và Giáo vụ đã đăng nhập hệ thống. Đợt nộp hồ sơ bảo vệ đang mở.
+Luồng chính | Sinh viên chọn chức năng "Nộp hồ sơ bảo vệ" trên hệ thống.  Hệ thống hiển thị biểu mẫu nộp hồ sơ.  Sinh viên tải lên tệp báo cáo, kết quả kiểm tra đạo văn và nhấn "Nộp hồ sơ". Hệ thống kiểm tra định dạng tệp, ghi nhận thời gian nộp và lưu hồ sơ ở trạng thái "Chờ duyệt".  Giáo vụ truy cập chức năng "Quản lý hồ sơ bảo vệ" để xem danh sách hồ sơ đã nộp. Giáo vụ kiểm tra tính đầy đủ, hợp lệ và chọn "Phê duyệt" hoặc "Yêu cầu chỉnh sửa". Hệ thống cập nhật trạng thái và gửi thông báo kết quả duyệt đến Sinh viên.
+Luồng ngoại lệ | A1: Tệp đính kèm không đúng định dạng hoặc vượt dung lượng thì cảnh báo lỗi và yêu cầu tải lại. A2: Hồ sơ bị từ chối thì Giáo vụ nhập lý do, hệ thống cập nhật trạng thái "Cần bổ sung" và thông báo cho Sinh viên.
+Hậu điều kiện | Hồ sơ bảo vệ được lưu trữ trên hệ thống, trạng thái hồ sơ được cập nhật sẵn sàng cho việc phân công hội đồng.
+Mục | Nội dung
+Tên chức năng | Tổ chức bảo vệ và tổng hợp kết quả khóa luận
+Mục tiêu | Hệ thống hỗ trợ Giáo vụ lập hội đồng, phân công GVPB, lên lịch bảo vệ; hỗ trợ Giảng viên chấm điểm trên phiếu chấm điện tử và tự động tổng hợp kết quả.
+Tác nhân | Giáo vụ, Giảng viên hướng dẫn, Hội đồng chấm khóa luận, Sinh viên
+Tiền điều kiện | Giáo vụ và Giảng viên đã đăng nhập hệ thống. Danh sách sinh viên đủ hồ sơ bảo vệ đã được xác nhận.
+Luồng chính | Giáo vụ truy cập chức năng "Lập hội đồng bảo vệ" trên hệ thống. Hệ thống hiển thị danh sách sinh viên đủ điều kiện và danh sách giảng viên khả dụng. Giáo vụ nhập thông tin hội đồng (tên, thời gian, địa điểm), gán vai trò thành viên (Chủ tịch, Thư ký, GVPB, Ủy viên) và phân công danh sách nhóm sinh viên vào hội đồng. Hệ thống kiểm tra trùng lịch, lưu hội đồng và gửi thông báo lịch bảo vệ đến Giảng viên và Sinh viên. Sinh viên tiến hành trình bày bảo vệ trước hội đồng. Giảng viên hướng dẫn và các thành viên hội đồng truy cập chức năng "Chấm điểm bảo vệ". Hệ thống hiển thị phiếu chấm điểm điện tử theo tiêu chí và thang điểm quy định. Giảng viên nhập điểm số, nhận xét chi tiết cho từng sinh viên và nhấn "Lưu phiếu chấm". Giáo vụ truy cập chức năng "Tổng hợp kết quả". Hệ thống tự động tính toán điểm trung bình và điểm tổng kết theo quy định. Giáo vụ kiểm tra, xác nhận kết quả và lưu trữ vào hệ thống.
+Luồng ngoại lệ | A1: Giảng viên bị trùng lịch thì hệ thống cảnh báo và yêu cầu Giáo vụ chọn giảng viên khác. A2: Thiếu phiếu chấm điểm của thành viên hội đồng hoặc GVHD thì hệ thống hiển thị danh sách giảng viên chưa chấm và gửi nhắc nhở.
+Hậu điều kiện | Hội đồng được thành lập, điểm cuối cùng và kết quả khóa luận được xác nhận, lưu trữ trên hệ thống.
+Mục | Nội dung
+Tên chức năng | Thống kê và báo cáo kết quả khóa luận
+Mục tiêu | Hệ thống tổng hợp số liệu và lập báo cáo thống kê về công tác khóa luận theo học kỳ.
+Tác nhân | Giáo vụ
+Tiền điều kiện | Giáo vụ đã đăng nhập hệ thống. Dữ liệu khóa luận của học kỳ đã được tổng hợp.
+Luồng chính | Giáo vụ truy cập chức năng "Thống kê & Báo cáo" trên hệ thống.  Hệ thống hiển thị bộ lọc thống kê (theo học kỳ, ngành học, giảng viên, kết quả đạt/không đạt). Giáo vụ chọn các tiêu chí thống kê cần xuất báo cáo. Hệ thống xử lý dữ liệu, hiển thị bảng tổng hợp số liệu (số lượng đề tài, sinh viên, giảng viên hướng dẫn, kết quả bảo vệ) cùng biểu đồ trực quan. Giáo vụ chọn "Xuất báo cáo" (dạng Excel hoặc PDF).  Hệ thống tạo tệp báo cáo theo mẫu quy định và cho phép tải về. Giáo vụ lưu trữ báo cáo trên hệ thống.
+Luồng ngoại lệ | A1: Thiếu dữ liệu thống kê thì hệ thống thông báo .
+Hậu điều kiện | Báo cáo thống kê khóa luận được hoàn thành, lưu trữ trên hệ thống và sẵn sàng cung cấp theo yêu cầu của Khoa hoặc Nhà trường.
+Nhóm dữ liệu | Các bảng
+Nhóm danh mục và hệ thống | VaiTro, TaiKhoan, Khoa, BoMon, Nganh, Lop, HocKy
+Nhóm người dùng | GiaoVu, GiangVien, SinhVien
+Nhóm điều kiện và chỉ tiêu học kỳ | DanhSachSVDuDieuKien, ChiTieuHuongDan
+Nhóm kế hoạch và đề tài | KeHoachKhoaLuan, MocThoiGianKhoaLuan, QuyDinhKhoaLuan, BieuMau, DeTai
+Nhóm phân bổ nhóm và đăng ký | Nhom, ThanhVienNhom, DangKyDeTai
+Nhóm tiến độ và báo cáo | BaoCaoTienDo, TomTatBaoCao, NhanXet, TienDo
+Nhóm hồ sơ bảo vệ và hội đồng | HoiDong, ThanhVienHoiDong, HoSoBaoVe
+Nhóm kết quả đánh giá | ChiTietDiemHoiDong, KetQuaSinhVien
+Nhóm thông báo | ThongBao, NguoiNhanThongBao
+STT | Tên bảng | Khóa chính | Khóa ngoại
+1 | VaiTro |  | —
+2 | TaiKhoan |  | MaVaiTro
+3 | Khoa |  | —
+4 | BoMon |  | MaKhoa
+5 | Nganh |  | MaKhoa
+6 | Lop |  | MaNganh
+7 | HocKy |  | —
+8 | GiaoVu |  | MaTK , MaKhoa
+9 | GiangVien |  | MaTK , MaBoMon
+10 | SinhVien |  | MaTK , MaLop
+11 | DanhSachSVDuDieuKien | MaSV, MaHocKy | MaSV , MaHocKy
+12 | ChiTieuHuongDan | MaGV, MaHocKy | MaGV , MaHocKy
+13 | KeHoachKhoaLuan |  | MaHocKy , MaGVu
+14 | MocThoiGianKhoaLuan |  | MaKeHoach
+15 | QuyDinhKhoaLuan |  | MaKeHoach
+16 | BieuMau |  | MaKeHoach
+17 | DeTai |  | —
+18 | Nhom |  | MaDeTai, MaTruongNhom
+19 | ThanhVienNhom | MaNhom, MaSV | MaNhom → Nhom.MaNhom, MaSV → SinhVien.MaSV
+20 | DangKyDeTai |  | MaNhom , MaDeTai , MaGVHuongDan
+21 | BaoCaoTienDo |  | MaNhom
+22 | TomTatBaoCao |  | MaBaoCao
+23 | NhanXet |  | MaBaoCao , MaGV
+24 | TienDo |  | MaNhom,  MaMoc
+25 | HoiDong |  | —
+26 | ThanhVienHoiDong | MaHoiDong, MaGV | MaHoiDong , MaGV
+27 | HoSoBaoVe |  | MaNhom , MaGVPhanBien , NguoiXacNhan, MaHoiDong
+28 | ChiTietDiemHoiDong | MaHoiDong, MaGV, MaSV | MaHoiDong, MaGV , MaSV
+29 | KetQuaSinhVien |  | MaSV , MaHocKy
+30 | ThongBao |  | MaGVu
+31 | NguoiNhanThongBao | MaThongBao, MaTK | MaThongBao, MaTK
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL
+1 | MaVaiTro | VARCHAR(10) | MaVaiTro |  | NULL
+2 | TenVaiTro | NVARCHAR(50) |  |  | NOT NULL
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL
+1 | MaTK | VARCHAR(10) | MaTK |  | NULL
+2 | MaVaiTro | VARCHAR(10) |  | MaVaiTro | NOT NULL
+3 | TenDangNhap | VARCHAR(50) |  |  | NOT NULL
+4 | MatKhau | VARCHAR(255) |  |  | NOT NULL
+5 | TrangThai | BIT |  |  | NOT NULL
+6 | SoLanDangNhapSai | INT |  |  | NULL
+7 | BatBuocDoiMatKhau | BIT |  |  | NULL
+8 | NgayTao | DATETIME |  |  | NULL
+9 | NgayCapNhat | DATETIME |  |  | NULL
+10 | LanDangNhapCuoi | DATETIME |  |  | NULL
+11 | NgayKhoa | DATETIME |  |  | NULL
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaKhoa | VARCHAR(10) |  |  | NULL | —
+2 | TenKhoa | NVARCHAR(100) |  |  | NOT NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaBoMon | VARCHAR(10) |  |  | NULL | —
+2 | TenBoMon | NVARCHAR(100) |  |  | NOT NULL | —
+3 | MaKhoa | VARCHAR(10) |  | Khoa.MaKhoa | NOT NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaNganh | VARCHAR(10) |  |  | NULL | —
+2 | TenNganh | NVARCHAR(100) |  |  | NOT NULL | —
+3 | MaKhoa | VARCHAR(10) |  | Khoa.MaKhoa | NOT NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaLop | VARCHAR(10) |  |  | NULL | —
+2 | TenLop | NVARCHAR(100) |  |  | NOT NULL | —
+3 | MaNganh | VARCHAR(10) |  | Nganh.MaNganh | NOT NULL | —
+4 | KhoaHoc | VARCHAR(20) |  |  | NOT NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaHocKy | VARCHAR(10) |  |  | NULL | —
+2 | TenHocKy | NVARCHAR(50) |  |  | NOT NULL | —
+3 | NamHoc | VARCHAR(20) |  |  | NOT NULL | —
+4 | NgayBatDau | DATE |  |  | NOT NULL | —
+5 | NgayKetThuc | DATE |  |  | NOT NULL | —
+6 | TrangThai | BIT |  |  | NULL | 1
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaGVu | VARCHAR(10) |  |  | NULL | —
+2 | MaTK | VARCHAR(10) |  | TaiKhoan.MaTK | NOT NULL | —
+3 | MaKhoa | VARCHAR(10) |  | Khoa.MaKhoa | NOT NULL | —
+4 | HoTen | NVARCHAR(100) |  |  | NOT NULL | —
+5 | Email | VARCHAR(100) |  |  | NULL | —
+6 | SoDienThoai | VARCHAR(15) |  |  | NULL | —
+7 | ChucVu | NVARCHAR(50) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaGV | VARCHAR(10) |  |  | NULL | —
+2 | MaTK | VARCHAR(10) |  | TaiKhoan.MaTK | NOT NULL | —
+3 | MaBoMon | VARCHAR(10) |  | BoMon.MaBoMon | NOT NULL | —
+4 | MaSoCanBo | VARCHAR(20) |  |  | NULL | —
+5 | HoTen | NVARCHAR(100) |  |  | NOT NULL | —
+6 | NgaySinh | DATE |  |  | NULL | —
+7 | GioiTinh | BIT |  |  | NULL | —
+8 | Email | VARCHAR(100) |  |  | NULL | —
+9 | SoDienThoai | VARCHAR(15) |  |  | NULL | —
+10 | HocHam | NVARCHAR(50) |  |  | NULL | —
+11 | HocVi | NVARCHAR(50) |  |  | NULL | —
+12 | ChuyenNganh | NVARCHAR(100) |  |  | NULL | —
+13 | TrangThai | BIT |  |  | NULL | 1
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaSV | VARCHAR(10) |  |  | NULL | —
+2 | MaTK | VARCHAR(10) |  | TaiKhoan.MaTK | NOT NULL | —
+3 | MaLop | VARCHAR(10) |  | Lop.MaLop | NOT NULL | —
+4 | MaSoSinhVien | VARCHAR(20) |  |  | NULL | —
+5 | HoTen | NVARCHAR(100) |  |  | NOT NULL | —
+6 | NgaySinh | DATE |  |  | NULL | —
+7 | GioiTinh | BIT |  |  | NULL | —
+8 | Email | VARCHAR(100) |  |  | NULL | —
+9 | SoDienThoai | VARCHAR(15) |  |  | NULL | —
+10 | NgayNhapHoc | DATE |  |  | NULL | —
+11 | KhoaHoc | VARCHAR(20) |  |  | NULL | —
+12 | SoTinChiTichLuy | INT |  |  | NULL | 0
+13 | DiemTichLuy | DECIMAL(3,2) |  |  | NULL | 0.00
+14 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đang học'
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaSV | VARCHAR(10) | Có | SinhVien.MaSV | NOT NULL | —
+2 | MaHocKy | VARCHAR(10) | Có | HocKy.MaHocKy | NOT NULL | —
+3 | NgayXetDuyet | DATE |  |  | NULL | GETDATE()
+4 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đủ điều kiện'
+5 | GhiChu | NVARCHAR(255) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaGV | VARCHAR(10) | Có | GiangVien.MaGV | NOT NULL | —
+2 | MaHocKy | VARCHAR(10) | Có | HocKy.MaHocKy | NOT NULL | —
+3 | SoNhomToiDa | INT |  |  | NULL | 3
+4 | NgayPhanBo | DATE |  |  | NULL | GETDATE()
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaKeHoach | VARCHAR(10) |  |  | NULL | —
+2 | MaHocKy | VARCHAR(10) |  | HocKy.MaHocKy | NOT NULL | —
+3 | MaGVu | VARCHAR(10) |  | GiaoVu.MaGVu | NOT NULL | —
+4 | TenKeHoach | NVARCHAR(200) |  |  | NOT NULL | —
+5 | NoiDung | NVARCHAR(MAX) |  |  | NULL | —
+6 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Nháp'
+7 | NgayTao | DATE |  |  | NULL | GETDATE()
+8 | NgayCongBo | DATE |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaMoc | VARCHAR(10) |  |  | NULL | —
+2 | MaKeHoach | VARCHAR(10) |  | KeHoachKhoaLuan.MaKeHoach | NOT NULL | —
+3 | TenMoc | NVARCHAR(100) |  |  | NOT NULL | —
+4 | NgayBatDau | DATE |  |  | NOT NULL | —
+5 | NgayKetThuc | DATE |  |  | NOT NULL | —
+6 | MoTa | NVARCHAR(255) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaQuyDinh | VARCHAR(10) |  |  | NULL | —
+2 | MaKeHoach | VARCHAR(10) |  | KeHoachKhoaLuan.MaKeHoach | NOT NULL | —
+3 | TenQuyDinh | NVARCHAR(200) |  |  | NOT NULL | —
+4 | GiaTri | NVARCHAR(100) |  |  | NOT NULL | —
+5 | MoTa | NVARCHAR(MAX) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaBieuMau | VARCHAR(10) |  |  | NULL | —
+2 | MaKeHoach | VARCHAR(10) |  | KeHoachKhoaLuan.MaKeHoach | NOT NULL | —
+3 | TenBieuMau | NVARCHAR(200) |  |  | NOT NULL | —
+4 | DuongDanFile | VARCHAR(255) |  |  | NOT NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaDeTai | VARCHAR(10) |  |  | NULL | —
+2 | MaGV | VARCHAR(10) |  |  | NOT NULL | —
+3 | TenDeTai | NVARCHAR(200) |  |  | NOT NULL | —
+4 | MoTa | NVARCHAR(MAX) |  |  | NULL | —
+5 | YeuCau | NVARCHAR(MAX) |  |  | NULL | —
+6 | LinhVuc | NVARCHAR(100) |  |  | NULL | —
+7 | SoLuongSinhVienToiDa | INT |  |  | NULL | 1
+8 | MaHocKy | VARCHAR(10) |  |  | NOT NULL | —
+9 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Chờ duyệt'
+10 | NgayDeXuat | DATE |  |  | NULL | GETDATE()
+11 | NgayDuyet | DATE |  |  | NULL | —
+12 | LyDoTuChoi | NVARCHAR(255) |  |  | NULL | —
+13 | FOREIGN | KEY |  |  | NULL | —
+14 | FOREIGN | KEY |  |  | NULL | —
+15 | TrangThai | IN |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaNhom | VARCHAR(10) |  |  | NULL | —
+2 | MaDeTai | VARCHAR(10) |  | DeTai.MaDeTai | NULL | —
+3 | MaTruongNhom | VARCHAR(10) |  | SinhVien.MaSV | NOT NULL | —
+4 | TenNhom | NVARCHAR(100) |  |  | NULL | —
+5 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đang tạo'
+6 | NgayTao | DATE |  |  | NULL | GETDATE()
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaNhom | VARCHAR(10) | Có | Nhom.MaNhom | NOT NULL | —
+2 | MaSV | VARCHAR(10) | Có | SinhVien.MaSV | NOT NULL | —
+3 | VaiTro | NVARCHAR(50) |  |  | NULL | N'Thành viên'
+4 | NgayThamGia | DATE |  |  | NULL | GETDATE()
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaDangKy | VARCHAR(10) |  |  | NULL | —
+2 | MaNhom | VARCHAR(10) |  | Nhom.MaNhom | NOT NULL | —
+3 | MaDeTai | VARCHAR(10) |  | DeTai.MaDeTai | NOT NULL | —
+4 | MaGVHuongDan | VARCHAR(10) |  | GiangVien.MaGV | NOT NULL | —
+5 | NgayDangKy | DATE |  |  | NULL | GETDATE()
+6 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Chờ duyệt'
+7 | NgayDuyet | DATE |  |  | NULL | —
+8 | GhiChu | NVARCHAR(255) |  |  | NULL | —
+9 | LyDoTuChoi | NVARCHAR(255) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaBaoCao | VARCHAR(10) |  |  | NULL | —
+2 | MaNhom | VARCHAR(10) |  | Nhom.MaNhom | NOT NULL | —
+3 | LanBaoCao | INT |  |  | NOT NULL | —
+4 | TieuDe | NVARCHAR(200) |  |  | NOT NULL | —
+5 | NoiDungBaoCao | NVARCHAR(MAX) |  |  | NULL | —
+6 | NgayNop | DATE |  |  | NULL | GETDATE()
+7 | TenFile | NVARCHAR(255) |  |  | NULL | —
+8 | DuongDanFile | VARCHAR(500) |  |  | NULL | —
+9 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Chờ duyệt'
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaTomTat | VARCHAR(10) |  |  | NULL | —
+2 | MaBaoCao | VARCHAR(10) |  | BaoCaoTienDo.MaBaoCao | NOT NULL | —
+3 | CongViecDaHoanThanh | NVARCHAR(MAX) |  |  | NULL | —
+4 | KhoKhan | NVARCHAR(MAX) |  |  | NULL | —
+5 | KeHoachTuanToi | NVARCHAR(MAX) |  |  | NULL | —
+6 | NoiDungAI | NVARCHAR(MAX) |  |  | NULL | —
+7 | DoTinCayAI | DECIMAL(5,2) |  |  | NULL | —
+8 | NgayTomTat | DATETIME |  |  | NULL | GETDATE()
+9 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đã tạo'
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaNhanXet | VARCHAR(10) |  |  | NULL | —
+2 | MaBaoCao | VARCHAR(10) |  | BaoCaoTienDo.MaBaoCao | NOT NULL | —
+3 | MaGV | VARCHAR(10) |  | GiangVien.MaGV | NOT NULL | —
+4 | NoiDung | NVARCHAR(MAX) |  |  | NOT NULL | —
+5 | LoaiNhanXet | NVARCHAR(50) |  |  | NULL | —
+6 | NgayNhanXet | DATETIME |  |  | NULL | GETDATE()
+7 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đã nhận xét'
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaTienDo | VARCHAR(10) |  |  | NULL | —
+2 | MaNhom | VARCHAR(10) |  | Nhom.MaNhom | NOT NULL | —
+3 | MaMoc | VARCHAR(10) |  | MocThoiGianKhoaLuan.MaMoc | NOT NULL | —
+4 | TyLeHoanThanh | INT |  |  | NULL | 0
+5 | TrangThai | NVARCHAR(50) |  |  | NULL | —
+6 | NgayCapNhat | DATETIME |  |  | NULL | GETDATE()
+7 | GhiChu | NVARCHAR(MAX) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaHoiDong | VARCHAR(10) |  |  | NULL | —
+2 | TenHoiDong | NVARCHAR(200) |  |  | NOT NULL | —
+3 | ThoiGianBatDau | DATETIME |  |  | NOT NULL | —
+4 | ThoiGianKetThuc | DATETIME |  |  | NOT NULL | —
+5 | DiaDiem | NVARCHAR(200) |  |  | NULL | —
+6 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Chưa diễn ra'
+7 | GhiChu | NVARCHAR(255) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaHoiDong | VARCHAR(10) | Có | HoiDong.MaHoiDong | NOT NULL | —
+2 | MaGV | VARCHAR(10) | Có | GiangVien.MaGV | NOT NULL | —
+3 | VaiTro | NVARCHAR(50) |  |  | NOT NULL | —
+4 | VaiTro | IN |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaHoSo | VARCHAR(10) |  |  | NULL | —
+2 | MaNhom | VARCHAR(10) |  | Nhom.MaNhom | NOT NULL | —
+3 | MaHoiDong | VARCHAR(10) |  | HoiDong.MaHoiDong | NULL | —
+4 | MaGVPhanBien | VARCHAR(10) |  | GiangVien.MaGV | NULL | —
+5 | XacNhanGVHD | BIT |  |  | NULL | 0
+6 | NgayXacNhanGVHD | DATE |  |  | NULL | —
+7 | TyLeTrungLap | DECIMAL(5,2) |  |  | NULL | —
+8 | MinhChungDaoVan | VARCHAR(255) |  |  | NULL | —
+9 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Chờ xác nhận'
+10 | NgayNop | DATE |  |  | NULL | GETDATE()
+11 | NgayXacNhan | DATE |  |  | NULL | —
+12 | NguoiXacNhan | VARCHAR(10) |  | GiaoVu.MaGVu | NULL | —
+13 | GhiChu | NVARCHAR(255) |  |  | NULL | —
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaHoiDong | VARCHAR(10) | Có | ThanhVienHoiDong.MaHoiDong, MaGV | NOT NULL | —
+2 | MaGV | VARCHAR(10) | Có | ThanhVienHoiDong.MaHoiDong, MaGV | NOT NULL | —
+3 | MaSV | VARCHAR(10) | Có | SinhVien.MaSV | NOT NULL | —
+4 | Diem | DECIMAL(4,2) |  |  | NOT NULL | —
+5 | NhanXet | NVARCHAR(MAX) |  |  | NULL | —
+6 | NgayCham | DATETIME |  |  | NULL | GETDATE()
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaKetQua | VARCHAR(10) |  |  | NULL | —
+2 | MaSV | VARCHAR(10) |  | SinhVien.MaSV | NOT NULL | —
+3 | MaHocKy | VARCHAR(10) |  | HocKy.MaHocKy | NOT NULL | —
+4 | DiemHuongDan | DECIMAL(4,2) |  |  | NULL | —
+5 | DiemPhanBien | DECIMAL(4,2) |  |  | NULL | —
+6 | DiemHoiDongTB | DECIMAL(4,2) |  |  | NULL | —
+7 | DiemTongKet | DECIMAL(4,2) |  |  | NULL | —
+8 | KetQua | NVARCHAR(50) |  |  | NULL | —
+9 | NhanXetChung | NVARCHAR(MAX) |  |  | NULL | —
+10 | NgayCham | DATE |  |  | NULL | GETDATE()
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaThongBao | VARCHAR(10) |  |  | NULL | —
+2 | MaGVu | VARCHAR(10) |  | GiaoVu.MaGVu | NULL | —
+3 | TieuDe | NVARCHAR(200) |  |  | NOT NULL | —
+4 | NoiDung | NVARCHAR(MAX) |  |  | NOT NULL | —
+5 | LoaiThongBao | NVARCHAR(50) |  |  | NULL | —
+6 | DoiTuongNhan | NVARCHAR(50) |  |  | NULL | N'Tất cả'
+7 | NgayTao | DATETIME |  |  | NULL | GETDATE()
+8 | TrangThai | NVARCHAR(50) |  |  | NULL | N'Đã tạo'
+STT | Tên thuộc tính | Kiểu dữ liệu | PK | FK | NULL | Mặc định
+1 | MaThongBao | VARCHAR(10) | Có | ThongBao.MaThongBao | NOT NULL | —
+2 | MaTK | VARCHAR(10) | Có | TaiKhoan.MaTK | NOT NULL | —
+3 | DaDoc | BIT |  |  | NULL | 0
+4 | NgayDoc | DATETIME |  |  | NULL | —

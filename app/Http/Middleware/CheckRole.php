@@ -24,14 +24,17 @@ class CheckRole
 
         /** @var \App\Models\TaiKhoan $user */
         $user = Auth::user();
-        // Load relationship vaiTro to get the role name
         $user->loadMissing('vaiTro');
         $roleName = $user->vaiTro->TenVaiTro ?? '';
 
-        // If user role is not in the allowed roles array
-        if (!in_array($roleName, $roles)) {
-            \Illuminate\Support\Facades\Log::error('CheckRole Failed', ['roleName' => $roleName, 'roles' => $roles, 'user' => $user->toArray(), 'vaiTro' => $user->vaiTro]);
-            abort(403, 'Bạn không có quyền truy cập trang này. Vui lòng liên hệ Admin. (' . $roleName . ' vs ' . implode(',', $roles) . ')');
+        // Map "Giáo vụ" → "Admin" để tương thích với route cũ role:Admin
+        $checkRoles = $roles;
+        if (in_array('Admin', $roles)) {
+            $checkRoles[] = 'Giáo vụ';
+        }
+
+        if (!in_array($roleName, $checkRoles)) {
+            abort(403, 'Bạn không có quyền truy cập trang này.');
         }
 
         return $next($request);
