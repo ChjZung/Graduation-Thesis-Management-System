@@ -1,197 +1,268 @@
 @extends('layouts.sinhvien')
-@section('title', 'Nộp Báo Cáo Tiến Độ')
+
+@section('page_title', 'Nộp Báo Cáo Tiến Độ')
+
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="mb-1 text-primary-custom"><i class="fa-solid fa-file-invoice me-2"></i>Báo Cáo Tiến Độ - {{ $nhom->TenNhom ?? '' }}</h4>
-        <small class="text-muted"><i class="fa-solid fa-book me-1"></i>Môn: {{ $nhom->monHoc->TenMon ?? 'N/A' }}</small>
-    </div>
-
-    <div class="d-flex gap-2 align-items-center">
-        @if(isset($allNhoms) && $allNhoms->count() > 1)
-        <form method="GET" action="{{ route('sinhvien.baocao.index') }}" class="d-flex gap-2 align-items-center me-2">
-            <select name="maNhom" class="form-select form-select-sm" onchange="this.form.submit()">
-                @foreach($allNhoms as $n)
-                    <option value="{{ $n->MaNhom }}" {{ $nhom->MaNhom == $n->MaNhom ? 'selected' : '' }}>
-                        {{ $n->TenNhom }} ({{ $n->monHoc->TenMon ?? '' }})
-                    </option>
-                @endforeach
-            </select>
-        </form>
-        @endif
-
-        @php
-            $dangKy = $nhom->dangKyDeTai ?? null;
-            $isApprovedTopic = $dangKy && $dangKy->TrangThai == 'Đã duyệt';
-            $deTai = $dangKy->deTai ?? null;
-            $isHetHanBaoCao = $deTai && $deTai->HanBaoCao && date('Y-m-d') > $deTai->HanBaoCao;
-        @endphp
-
-        @if($nhom->TruongNhom == $sv->MaSV)
-            @if(!$isApprovedTopic)
-                <button class="btn btn-secondary rounded-pill px-4" disabled title="Nhóm chưa có đề tài được duyệt">
-                    <i class="fa-solid fa-lock me-2"></i>Chưa Được Nộp Báo Cáo
-                </button>
-            @elseif($isHetHanBaoCao)
-                <button class="btn btn-secondary rounded-pill px-4" disabled title="Đã quá hạn nộp báo cáo tiến độ">
-                    <i class="fa-solid fa-lock me-2"></i>Đã Khóa Nộp Báo Cáo
-                </button>
-            @else
-                <button class="btn btn-primary-custom rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addModal">
-                    <i class="fa-solid fa-upload me-2"></i>Nộp Báo Cáo
-                </button>
-            @endif
-        @endif
-    </div>
-</div>
-
-@if(!$isApprovedTopic)
-<div class="alert alert-info border-info d-flex align-items-center gap-2 rounded-3 mb-3" role="alert">
-    <i class="fa-solid fa-circle-info fa-lg text-info"></i>
-    <div>
-        <strong>Chưa thể nộp báo cáo tiến độ!</strong> Nhóm của bạn cần đăng ký đề tài và được Giảng viên phê duyệt trước khi có thể nộp báo cáo.
-    </div>
-</div>
-@elseif($isHetHanBaoCao)
-<div class="alert alert-warning border-warning d-flex align-items-center gap-2 rounded-3 mb-3" role="alert">
-    <i class="fa-solid fa-clock-rotate-left fa-lg text-warning"></i>
-    <div>
-        <strong>Đã hết hạn nộp báo cáo tiến độ!</strong> Hạn chót nộp báo cáo là {{ date('d/m/Y', strtotime($deTai->HanBaoCao)) }}. Chức năng nộp báo cáo tiến độ đã bị khóa hoàn toàn.
-    </div>
-</div>
-@endif
 
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <ul class="mb-0">
-        @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
+<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 
-<div class="card card-premium">
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="px-4">Lần nộp</th>
-                    <th>Nội dung</th>
-                    <th>File đính kèm</th>
-                    <th>Ngày nộp</th>
-                    <th>Trạng thái</th>
-                    <th class="text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($baocaos as $bc)
-                <tr>
-                    <td class="px-4 fw-bold text-muted">Lần {{ $bc->LanBaoCao }}</td>
-                    <td>{{ $bc->NoiDung }}</td>
-                    <td>
-                        @if($bc->FileBaoCao)
-                            @if(Str::startsWith($bc->FileBaoCao, '/storage') || Str::contains($bc->FileBaoCao, 'storage/'))
-                                <a href="{{ asset(ltrim($bc->FileBaoCao, '/')) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3"><i class="fa-solid fa-download me-1"></i>Tải File</a>
-                            @else
-                                <a href="{{ $bc->FileBaoCao }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="fa-solid fa-link me-1"></i>Mở Link</a>
-                            @endif
-                        @else
-                            <span class="text-muted small">Không có</span>
-                        @endif
-                    </td>
-                    <td>{{ date('d/m/Y', strtotime($bc->NgayNop)) }}</td>
-                    <td>
-                        <span class="badge {{ $bc->TrangThai == 'Đã nhận xét' ? 'bg-success' : 'bg-warning text-dark' }}">{{ $bc->TrangThai }}</span>
-                    </td>
-                    <td class="text-center">
-                        @if($bc->TrangThai == 'Đã nhận xét')
-                            @php
-                                $allNhanXet = '';
-                                if ($bc->nhanXets->count() > 0) {
-                                    foreach($bc->nhanXets as $nx) {
-                                        $date = date('d/m/Y', strtotime($nx->NgayNhanXet));
-                                        $noiDung = nl2br(htmlspecialchars($nx->NoiDung));
-                                        $allNhanXet .= "<div class='mb-2 border-bottom border-light pb-2'><strong class='text-primary'>[{$date}]</strong>: {$noiDung}</div>";
-                                    }
-                                } else {
-                                    $allNhanXet = 'Không có nội dung nhận xét.';
-                                }
-                            @endphp
-                            <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3" data-nhanxet="{{ $allNhanXet }}" onclick="showNhanXet(this)">
-                                <i class="fa-solid fa-eye me-1"></i>Xem
-                            </button>
-                        @else
-                            <span class="text-muted small">Chưa có</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">Nhóm chưa nộp báo cáo nào.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+@if(session('error') || isset($error) && $error)
+<div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ session('error') ?? $error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger alert-dismissible fade show mb-3">
+    <ul class="mb-0">@foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach</ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+@if(isset($nhom) && $nhom)
+<!-- Header Nhóm & Đề tài -->
+<div class="card card-premium mb-4">
+    <div class="card-header-premium d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-users me-2 text-primary"></i>{{ $nhom->TenNhom }}</span>
+        <span class="badge bg-success rounded-pill px-3">{{ $nhom->deTai->TrangThai ?? '' }}</span>
+    </div>
+    <div class="card-body py-3">
+        <div class="row">
+            <div class="col-md-8">
+                <strong class="text-primary-custom">📘 Đề tài:</strong> {{ $nhom->deTai->TenDeTai ?? 'Chưa có đề tài' }}<br>
+                <strong>👨‍🏫 GVHD:</strong> {{ $nhom->deTai->giangVien->HoTen ?? '' }}
+                @if($nhom->deTai->giangVien->HocVi ?? false)
+                    <span class="text-muted">({{ $nhom->deTai->giangVien->HocVi }})</span>
+                @endif
+            </div>
+            <div class="col-md-4 text-end">
+                <small class="text-muted">Mốc đang mở: <strong class="text-success fs-5">{{ $mocHienTai <= 5 ? $mocHienTai : '✅ Hoàn tất' }}</strong></small>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal Nộp Báo Cáo -->
-<div class="modal fade" id="addModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Timeline 5 Mốc -->
+<div class="row g-3 mb-4">
+    @foreach($mocs as $soMoc => $info)
+    @php
+        $bc = $baoCaos[$soMoc] ?? null;
+        $trangThai = $bc?->TrangThai ?? null;
+        $coTheMo = ($soMoc == $mocHienTai) || ($bc && $trangThai === 'Yêu cầu nộp lại');
+        $daDat = $trangThai === 'Đạt';
+        $choDuyet = $trangThai === 'Chờ duyệt';
+        $yeuCauNopLai = $trangThai === 'Yêu cầu nộp lại';
+    @endphp
+    <div class="col-md-{{ in_array($soMoc, [1,2,3]) ? '4' : '6' }}">
+        <div class="card h-100 border-0 shadow-sm {{ $daDat ? 'border-success border-2' : ($coTheMo ? 'border-primary border-2' : '') }}"
+             style="{{ $daDat ? 'border-left: 4px solid #28a745 !important;' : ($coTheMo ? 'border-left: 4px solid #0d6efd !important;' : 'opacity: 0.6;') }}">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0 {{ $daDat ? 'text-success' : ($coTheMo ? 'text-primary' : 'text-muted') }}">
+                        @if($daDat) ✅
+                        @elseif($choDuyet) ⏳
+                        @elseif($yeuCauNopLai) 🔄
+                        @elseif($coTheMo) 🔓
+                        @else 🔒
+                        @endif
+                        Mốc {{ $soMoc }}
+                    </h6>
+                    @if($trangThai)
+                        <span class="badge rounded-pill px-2
+                            {{ $daDat ? 'bg-success' : ($choDuyet ? 'bg-warning text-dark' : ($yeuCauNopLai ? 'bg-info' : 'bg-secondary')) }}"
+                            style="font-size: 0.7rem;">{{ $trangThai }}</span>
+                    @endif
+                </div>
+                <div class="small fw-semibold mb-1">{{ $info['ten'] }}</div>
+                <div class="text-muted" style="font-size: 0.78rem;">{{ $info['mo_ta'] }}</div>
+
+                @if($bc)
+                    <div class="mt-2 small text-muted">📅 Nộp: {{ $bc->NgayNop }}</div>
+                    @if($bc->TenFile)
+                        <div class="mt-1">
+                            <a href="{{ asset('storage/' . $bc->DuongDanFile) }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill">
+                                <i class="fa-solid fa-file-pdf me-1 text-danger"></i>Xem PDF
+                            </a>
+                        </div>
+                    @endif
+                    @if($bc->LinkCode)
+                        <div class="mt-1">
+                            <a href="{{ $bc->LinkCode }}" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill">
+                                <i class="fa-brands fa-github me-1"></i>Mở Code
+                            </a>
+                        </div>
+                    @endif
+                    @if($bc->tomTat)
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill w-100"
+                            data-bs-toggle="modal" data-bs-target="#aiModal{{ $soMoc }}">
+                            <i class="fa-solid fa-robot me-1"></i>Xem Tóm Tắt AI
+                        </button>
+                    </div>
+                    @endif
+
+                    @if($bc->nhanXets && $bc->nhanXets->count())
+                    <div class="mt-2 p-2 rounded" style="background: #f8f9fa; font-size: 0.78rem;">
+                        <strong>Nhận xét GV:</strong> {{ $bc->nhanXets->last()->NoiDung }}
+                    </div>
+                    @endif
+                @endif
+
+                <!-- Nút Nộp bài nếu được phép -->
+                @if($coTheMo && !$daDat && !$choDuyet)
+                <div class="mt-3">
+                    <button class="btn btn-primary btn-sm rounded-pill w-100 fw-bold"
+                        data-bs-toggle="modal" data-bs-target="#nopModal{{ $soMoc }}">
+                        <i class="fa-solid fa-upload me-1"></i>Nộp Bài Mốc {{ $soMoc }}
+                    </button>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+<!-- Modals Nộp Bài -->
+@foreach($mocs as $soMoc => $info)
+@php
+    $bc = $baoCaos[$soMoc] ?? null;
+    $trangThai = $bc?->TrangThai ?? null;
+    $coTheMo = ($soMoc == $mocHienTai) || ($bc && $trangThai === 'Yêu cầu nộp lại');
+    $daDat = $trangThai === 'Đạt';
+    $choDuyet = $trangThai === 'Chờ duyệt';
+@endphp
+@if($coTheMo && !$daDat && !$choDuyet)
+<div class="modal fade" id="nopModal{{ $soMoc }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <form action="{{ route('sinhvien.baocao.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
+            <input type="hidden" name="LanBaoCao" value="{{ $soMoc }}">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fa-solid fa-file-arrow-up me-2"></i>Nộp Báo Cáo Mới</h5>
+                    <h5 class="modal-title">
+                        <i class="fa-solid fa-upload me-2"></i>Nộp Báo Cáo — {{ $info['ten'] }}
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Nội dung báo cáo <span class="text-danger">*</span></label>
-                        <textarea name="NoiDung" class="form-control" rows="4" required placeholder="Tóm tắt công việc tiến độ đã làm..."></textarea>
+                    <div class="alert alert-info rounded-3 py-2 mb-3" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle-info me-2"></i><strong>Yêu cầu:</strong> {{ $info['mo_ta'] }}
                     </div>
+
+                    <!-- File PDF -->
+                    @if(in_array($info['loai'], ['pdf', 'pdf_git']))
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Tải Lên File Đính Kèm (.ZIP, .RAR, .PDF, .DOCX)</label>
-                        <input type="file" name="FileUpLoad" class="form-control" accept=".zip,.rar,.pdf,.docx,.doc">
-                        <div class="form-text text-muted">Dung lượng tối đa 20MB.</div>
+                        <label class="form-label fw-bold">File Báo Cáo (PDF) <span class="text-danger">*</span></label>
+                        <input type="file" name="FileBaoCao" class="form-control" accept=".pdf" required>
+                        <div class="form-text text-muted">Tối đa 20MB. Chỉ chấp nhận định dạng PDF.</div>
                     </div>
+                    @endif
+
+                    <!-- Link Git -->
+                    @if(in_array($info['loai'], ['git', 'pdf_git']))
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Hoặc Dán Link File (Google Drive, GitHub...)</label>
-                        <input type="url" name="FileBaoCao" class="form-control" placeholder="https://drive.google.com/...">
+                        <label class="form-label fw-bold">Link Repository (GitHub/GitLab) <span class="text-danger">*</span></label>
+                        <input type="url" name="LinkCode" class="form-control"
+                            placeholder="https://github.com/username/repo-name"
+                            {{ in_array($info['loai'], ['git', 'pdf_git']) ? 'required' : '' }}>
+                        <div class="form-text text-muted">Đảm bảo repository ở chế độ Public.</div>
+                    </div>
+                    @endif
+
+                    <!-- Ghi chú -->
+                    <div class="mb-1">
+                        <label class="form-label fw-bold">Ghi Chú Thêm <span class="text-muted">(tùy chọn)</span></label>
+                        <textarea name="NoiDungBaoCao" class="form-control" rows="3"
+                            placeholder="Mô tả ngắn về công việc đã thực hiện, khó khăn gặp phải..."></textarea>
+                        <div class="form-text text-muted">
+                            <i class="fa-solid fa-robot me-1 text-primary"></i>
+                            Hệ thống sẽ tự động sinh <strong>Bản Tóm Tắt AI</strong> dựa trên thông tin bài nộp.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary-custom rounded-pill px-4">Nộp Báo Cáo</button>
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold px-4">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Xác Nhận Nộp Bài
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
+@endif
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function showNhanXet(btn) {
-        let noiDung = btn.getAttribute('data-nhanxet') || 'Không có nội dung nhận xét.';
-        
-        Swal.fire({
-            title: '<h4 class="text-primary-custom mb-0"><i class="fa-solid fa-comment-dots me-2"></i>Nhận Xét Của Giảng Viên</h4>',
-            html: '<div class="text-start bg-light p-3 rounded border text-dark mt-3" style="font-size: 1.1rem; line-height: 1.6;">' + noiDung + '</div>',
-            confirmButtonText: '<i class="fa-solid fa-check me-1"></i>Đã Hiểu',
-            confirmButtonColor: '#3699ff',
-            background: '#fff',
-            borderRadius: '1rem',
-            width: '600px'
-        });
-    }
-</script>
+<!-- Modal Tóm Tắt AI -->
+@if(isset($baoCaos[$soMoc]) && $baoCaos[$soMoc]->tomTat)
+@php $tomTat = $baoCaos[$soMoc]->tomTat; @endphp
+<div class="modal fade" id="aiModal{{ $soMoc }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color:white;">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-robot me-2"></i>Tóm Tắt AI — Mốc {{ $soMoc }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-end mb-2">
+                    <span class="badge rounded-pill px-3"
+                        style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 0.8rem;">
+                        <i class="fa-solid fa-gauge me-1"></i>Độ tin cậy: {{ number_format($tomTat->DoTinCayAI, 0) }}%
+                    </span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border-start border-success border-3" style="background: #f0fff4;">
+                            <div class="fw-bold text-success mb-1"><i class="fa-solid fa-check-circle me-2"></i>✅ Đã hoàn thành</div>
+                            <div style="font-size: 0.88rem;">{{ $tomTat->CongViecDaHoanThanh }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border-start border-warning border-3" style="background: #fffbeb;">
+                            <div class="fw-bold text-warning mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>⚠️ Khó khăn</div>
+                            <div style="font-size: 0.88rem;">{{ $tomTat->KhoKhan }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border-start border-primary border-3" style="background: #eff6ff;">
+                            <div class="fw-bold text-primary mb-1"><i class="fa-solid fa-calendar-check me-2"></i>📅 Kế hoạch tiếp theo</div>
+                            <div style="font-size: 0.88rem;">{{ $tomTat->KeHoachTuanToi }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted mt-3" style="font-size: 0.75rem;">
+                    <i class="fa-solid fa-clock me-1"></i>Được tạo lúc: {{ \Carbon\Carbon::parse($tomTat->NgayTomTat)->format('d/m/Y H:i') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+@endforeach
+
+@else
+<!-- Chưa có nhóm / đề tài -->
+<div class="card card-premium">
+    <div class="card-body text-center py-5">
+        <i class="fa-solid fa-lock fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">Chưa thể nộp báo cáo</h5>
+        <p class="text-muted mb-4">{{ $error ?? 'Bạn cần có nhóm và đề tài được duyệt trước khi nộp báo cáo.' }}</p>
+        <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary rounded-pill px-4">
+            <i class="fa-solid fa-users me-2"></i>Đến Nhóm của tôi
+        </a>
+    </div>
+</div>
+@endif
+
 @endsection

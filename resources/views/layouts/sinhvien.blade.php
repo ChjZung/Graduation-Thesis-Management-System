@@ -58,6 +58,16 @@
                     <i class="fa-solid fa-file-invoice"></i> Báo cáo tiến độ
                 </a>
             </li>
+            <li class="{{ request()->routeIs('sinhvien.hoso.*') ? 'active' : '' }}">
+                <a href="{{ route('sinhvien.hoso.index') }}">
+                    <i class="fa-solid fa-folder-check"></i> Hồ Sơ Bảo Vệ
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('sinhvien.ketqua.*') ? 'active' : '' }}">
+                <a href="{{ route('sinhvien.ketqua.index') }}">
+                    <i class="fa-solid fa-award"></i> Kết Quả Khóa Luận
+                </a>
+            </li>
 
             @php
                 $user = Auth::user();

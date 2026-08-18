@@ -10,13 +10,23 @@ class ThanhVienHoiDong extends Model
     use HasFactory;
 
     protected $table = 'thanh_vien_hoi_dongs';
-    protected $primaryKey = 'MaHoiDong';
+    protected $primaryKey = null;
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaHoiDong', 'MaGV', 'VaiTro'
+        'MaHoiDong', 'MaGV', 'VaiTro',
     ];
 
     public $timestamps = true;
+
+    public function hoiDong()
+    {
+        return $this->belongsTo(HoiDong::class, 'MaHoiDong', 'MaHoiDong');
+    }
+
+    public function giangVien()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
 }

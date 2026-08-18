@@ -15,8 +15,31 @@ class HoSoBaoVe extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaHoSo', 'MaNhom', 'MaHoiDong', 'MaGVPhanBien', 'XacNhanGVHD', 'NgayXacNhanGVHD', 'TyLeTrungLap', 'MinhChungDaoVan', 'TrangThai', 'NgayNop', 'NgayXacNhan', 'NguoiXacNhan', 'GhiChu'
+        'MaHoSo', 'MaNhom', 'MaHoiDong', 'MaGVPhanBien',
+        'XacNhanGVHD', 'NgayXacNhanGVHD', 'TyLeTrungLap',
+        'MinhChungDaoVan', 'TrangThai', 'NgayNop', 'NgayXacNhan',
+        'NguoiXacNhan', 'GhiChu',
+    ];
+
+    protected $casts = [
+        'XacNhanGVHD' => 'boolean',
     ];
 
     public $timestamps = true;
+
+    public function nhom()
+    {
+        return $this->belongsTo(Nhom::class, 'MaNhom', 'MaNhom');
+    }
+
+    public function hoiDong()
+    {
+        return $this->belongsTo(HoiDong::class, 'MaHoiDong', 'MaHoiDong');
+    }
+
+    public function giangVienPhanBien()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGVPhanBien', 'MaGV');
+    }
 }
+

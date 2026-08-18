@@ -15,8 +15,39 @@ class HoiDong extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaHoiDong', 'TenHoiDong', 'ThoiGianBatDau', 'ThoiGianKetThuc', 'DiaDiem', 'TrangThai', 'GhiChu'
+        'MaHoiDong', 'TenHoiDong', 'ThoiGianBatDau', 'ThoiGianKetThuc',
+        'DiaDiem', 'TrangThai', 'GhiChu',
+    ];
+
+    protected $casts = [
+        'ThoiGianBatDau' => 'datetime',
+        'ThoiGianKetThuc' => 'datetime',
     ];
 
     public $timestamps = true;
+
+    public function thanhViens()
+    {
+        return $this->hasMany(ThanhVienHoiDong::class, 'MaHoiDong', 'MaHoiDong');
+    }
+
+    public function giangViens()
+    {
+        return $this->belongsToMany(
+            GiangVien::class,
+            'thanh_vien_hoi_dongs',
+            'MaHoiDong',
+            'MaGV'
+        )->withPivot('VaiTro');
+    }
+
+    public function hoSoBaoVes()
+    {
+        return $this->hasMany(HoSoBaoVe::class, 'MaHoiDong', 'MaHoiDong');
+    }
+
+    public function chiTietDiems()
+    {
+        return $this->hasMany(ChiTietDiemHoiDong::class, 'MaHoiDong', 'MaHoiDong');
+    }
 }

@@ -62,6 +62,25 @@
                     <i class="fa-solid fa-file-signature"></i> Xét Duyệt Đề Tài GV
                 </a>
             </li>
+            <li class="{{ request()->routeIs('admin.duyet_dangky.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.duyet_dangky.index') }}">
+                    <i class="fa-solid fa-user-check"></i> Duyệt Đăng Ký Đề Tài SV
+                </a>
+            </li>
+
+            <!-- Giai đoạn 6 -->
+            <li class="nav-section-label">Bảo Vệ Khóa Luận</li>
+            <li class="{{ request()->routeIs('admin.hosoBaoVe.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.hosoBaoVe.index') }}">
+                    <i class="fa-solid fa-folder-check"></i> Hồ Sơ Bảo Vệ (Turnitin)
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.hoidong.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.hoidong.index') }}">
+                    <i class="fa-solid fa-landmark"></i> Hội Đồng Bảo Vệ
+                </a>
+            </li>
+
 
             <!-- Quản Lý Tài Khoản -->
             <li class="nav-section-label">Quản Lý Tài Khoản</li>

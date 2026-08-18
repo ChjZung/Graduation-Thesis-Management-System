@@ -4,55 +4,73 @@ namespace App\Http\Controllers\GiangVien;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaoCaoTienDo;
+use App\Models\GiangVien;
 use App\Models\NhanXet;
-use App\Models\HuongDan;
-use App\Models\NhomDoAn;
+use App\Models\Nhom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DuyetBaoCaoController extends Controller
 {
-    public function index() {
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
-        if (!$gv) abort(403);
+    public function index()
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        // Lấy danh sách các nhóm do giảng viên này hướng dẫn hoặc thuộc Lớp Học Phần của giảng viên
-        $nhomIds1 = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom')->toArray();
-        $nhomIds2 = NhomDoAn::whereHas('lopHocPhan', function($q) use ($gv) {
-            $q->where('MaGV', $gv->MaGV);
-        })->pluck('MaNhom')->toArray();
+        // Lấy danh sách nhóm do GV này hướng dẫn
+        $nhoms = Nhom::whereHas('dangKyDeTai', function ($q) use ($giangVien) {
+                $q->where('MaGVHuongDan', $giangVien->MaGV)
+                  ->where('TrangThai', 'Đã duyệt');
+            })
+            ->with([
+                'deTai',
+                'truongNhom',
+                'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien'),
+                'baoCaos' => fn($q) => $q->with(['tomTat', 'nhanXets.giangVien'])->orderBy('LanBaoCao'),
+            ])
+            ->get();
 
-        $allNhomIds = array_unique(array_merge($nhomIds1, $nhomIds2));
-
-        $baocaos = BaoCaoTienDo::whereIn('MaNhom', $allNhomIds)
-                               ->with(['nhomDoAn', 'nhanXets'])
-                               ->orderBy('NgayNop', 'desc')
-                               ->paginate(10);
-                               
-        return view('giangvien.baocao.index', compact('baocaos'));
+        return view('giangvien.baocao.index', compact('giangVien', 'nhoms'));
     }
 
-    public function storeNhanXet(Request $request, $maBaoCao) {
-        $request->validate(['NoiDung' => 'required']);
-        
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
-        $baocao = BaoCaoTienDo::findOrFail($maBaoCao);
-
-        NhanXet::create([
-            'MaBaoCao' => $baocao->MaBaoCao,
-            'MaGV' => $gv->MaGV,
-            'NoiDung' => $request->NoiDung,
-            'NgayNhanXet' => date('Y-m-d')
+    public function storeNhanXet(Request $request, $maBaoCao)
+    {
+        $request->validate([
+            'NoiDung'   => 'required|string|max:2000',
+            'LoaiNhanXet' => 'required|in:Đạt,Yêu cầu nộp lại',
+        ], [
+            'NoiDung.required'       => 'Vui lòng nhập nhận xét.',
+            'LoaiNhanXet.required'   => 'Vui lòng chọn kết quả đánh giá.',
+            'LoaiNhanXet.in'         => 'Kết quả phải là "Đạt" hoặc "Yêu cầu nộp lại".',
         ]);
 
-        $baocao->update(['TrangThai' => 'Đã nhận xét']);
+        $user = Auth::user();
+        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $baoCao = BaoCaoTienDo::findOrFail($maBaoCao);
 
-        // Gửi thông báo đến nhóm
-        $notiService = new \App\Services\NotificationService();
-        $notiService->guiNhanXetMoi($baocao->nhomDoAn, $baocao);
+        DB::transaction(function () use ($request, $baoCao, $giangVien) {
+            // Tạo nhận xét
+            $maNhanXet = 'NX' . str_pad(NhanXet::count() + 1, 3, '0', STR_PAD_LEFT);
+            NhanXet::create([
+                'MaNhanXet'   => $maNhanXet,
+                'MaBaoCao'    => $baoCao->MaBaoCao,
+                'MaGV'        => $giangVien->MaGV,
+                'NoiDung'     => $request->NoiDung,
+                'LoaiNhanXet' => $request->LoaiNhanXet,
+                'NgayNhanXet' => now(),
+                'TrangThai'   => 'Đã nhận xét',
+            ]);
 
-        \App\Models\AuditLog::log('nhan_xet_bao_cao', 'BaoCaoTienDo', $baocao->MaBaoCao, ['MaNhom' => $baocao->MaNhom]);
+            // Cập nhật trạng thái báo cáo
+            $baoCao->update(['TrangThai' => $request->LoaiNhanXet]);
+        });
 
-        return redirect()->back()->with('success', 'Thêm nhận xét thành công!');
+        $msg = $request->LoaiNhanXet === 'Đạt'
+            ? "✅ Đã đánh giá \"Đạt\" cho Mốc {$baoCao->LanBaoCao}. Sinh viên có thể nộp Mốc tiếp theo!"
+            : "🔄 Đã yêu cầu nhóm nộp lại Mốc {$baoCao->LanBaoCao}.";
+
+        return redirect()->route('giangvien.baocao.index')->with('success', $msg);
     }
 }

@@ -53,6 +53,11 @@
                     <i class="fa-solid fa-clipboard-check"></i> Duyệt báo cáo tiến độ
                 </a>
             </li>
+            <li class="{{ request()->routeIs('giangvien.chamdiem.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.chamdiem.index') }}">
+                    <i class="fa-solid fa-star-half-stroke"></i> Chấm Điểm Hội Đồng
+                </a>
+            </li>
 
             @php
                 $user = Auth::user();

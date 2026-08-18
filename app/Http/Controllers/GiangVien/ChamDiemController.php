@@ -3,81 +3,133 @@
 namespace App\Http\Controllers\GiangVien;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChamDiem;
-use App\Models\HuongDan;
-use App\Models\NhomDoAn;
+use App\Models\ChiTietDiemHoiDong;
+use App\Models\HoiDong;
+use App\Models\HoSoBaoVe;
+use App\Models\GiangVien;
+use App\Models\KetQuaSinhVien;
+use App\Models\ThanhVienHoiDong;
+use App\Models\ThanhVienNhom;
+use App\Models\HocKy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ChamDiemController extends Controller
 {
-    public function index() {
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
-        if (!$gv) abort(403);
+    public function index()
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        $nhomIds1 = HuongDan::where('MaGV', $gv->MaGV)->pluck('MaNhom')->toArray();
-        $nhomIds2 = NhomDoAn::whereHas('lopHocPhan', function($q) use ($gv) {
-            $q->where('MaGV', $gv->MaGV);
-        })->pluck('MaNhom')->toArray();
+        // Hội đồng mà GV này là thành viên
+        $hoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
+            ->with([
+                'thanhViens.giangVien',
+                'hoSoBaoVes.nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien'),
+                'hoSoBaoVes.nhom.deTai',
+                'hoSoBaoVes.nhom.truongNhom',
+            ])
+            ->get();
 
-        $nhomIds = array_unique(array_merge($nhomIds1, $nhomIds2));
-        
-        // Lấy các nhóm do Giảng viên này hướng dẫn đã nộp sản phẩm hoặc đã được chấm điểm
-        $nhoms = NhomDoAn::whereIn('MaNhom', $nhomIds)
-                         ->where(function($q) {
-                             $q->where('TrangThai', 'Đã nộp sản phẩm')
-                               ->orWhereHas('chamDiem');
-                         })
-                         ->with(['sanPhams', 'chamDiem'])
-                         ->get();
+        // Điểm GV đã chấm
+        $diemDaCham = ChiTietDiemHoiDong::where('MaGV', $giangVien->MaGV)->get()
+            ->keyBy(fn($d) => $d->MaHoiDong . '_' . $d->MaSV);
 
-        return view('giangvien.chamdiem.index', compact('nhoms'));
+        return view('giangvien.chamdiem.index', compact('giangVien', 'hoiDongs', 'diemDaCham'));
     }
 
-    public function store(Request $request, $maNhom) {
+    public function store(Request $request)
+    {
         $request->validate([
-            'DiemBaoCao' => 'required|numeric|min:0|max:10',
-            'DiemBaoVe' => 'required|numeric|min:0|max:10',
-            'NhanXet' => 'nullable|string'
+            'MaHoiDong' => 'required|exists:hoi_dongs,MaHoiDong',
+            'diems'     => 'required|array|min:1',
+            'diems.*.MaSV' => 'required|exists:sinh_viens,MaSV',
+            'diems.*.Diem' => 'required|numeric|min:0|max:10',
+            'diems.*.NhanXet' => 'nullable|string|max:500',
+        ], [
+            'diems.*.Diem.required' => 'Vui lòng nhập điểm cho tất cả Sinh viên.',
+            'diems.*.Diem.min'      => 'Điểm tối thiểu là 0.',
+            'diems.*.Diem.max'      => 'Điểm tối đa là 10.',
         ]);
 
-        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
+        $user = Auth::user();
+        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        // Tính điểm tổng trọng số 50 - 50
-        $diemTong = ($request->DiemBaoCao * 0.5) + ($request->DiemBaoVe * 0.5);
+        DB::transaction(function () use ($request, $giangVien) {
+            foreach ($request->diems as $diemData) {
+                ChiTietDiemHoiDong::updateOrCreate(
+                    [
+                        'MaHoiDong' => $request->MaHoiDong,
+                        'MaGV'      => $giangVien->MaGV,
+                        'MaSV'      => $diemData['MaSV'],
+                    ],
+                    [
+                        'Diem'     => $diemData['Diem'],
+                        'NhanXet'  => $diemData['NhanXet'] ?? null,
+                        'NgayCham' => now(),
+                    ]
+                );
+            }
 
-        try {
-            DB::beginTransaction();
+            // Kiểm tra đủ điểm để tổng hợp KetQuaSinhVien
+            $this->tongHopKetQua($request->MaHoiDong);
+        });
 
-            $cd = ChamDiem::updateOrCreate(
-                ['MaNhom' => $maNhom, 'MaGV' => $gv->MaGV],
-                [
-                    'LoaiCham' => 'Cuối kỳ',
-                    'DiemBaoCao' => $request->DiemBaoCao,
-                    'DiemBaoVe' => $request->DiemBaoVe,
-                    'DiemTong' => $diemTong,
-                    'NhanXet' => $request->NhanXet,
-                    'NgayCham' => date('Y-m-d')
-                ]
-            );
+        return redirect()->route('giangvien.chamdiem.index')
+            ->with('success', 'Đã lưu điểm chấm thành công!');
+    }
 
-            $nhom = NhomDoAn::find($maNhom);
-            $nhom->update(['TrangThai' => 'Đã có điểm']);
+    private function tongHopKetQua(string $maHoiDong): void
+    {
+        $hoiDong = HoiDong::with(['hoSoBaoVes.nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')])->find($maHoiDong);
+        if (!$hoiDong) return;
 
-            DB::commit();
+        $hocKy = HocKy::where('TrangThai', true)->first();
+        if (!$hocKy) return;
 
-            // Gửi thông báo đến nhóm
-            $notiService = new \App\Services\NotificationService();
-            $notiService->guiDiemMoi($nhom, $cd);
+        foreach ($hoiDong->hoSoBaoVes as $hoSo) {
+            if (!$hoSo->nhom) continue;
 
-            \App\Models\AuditLog::log('cham_diem', 'ChamDiem', $cd->id ?? null, ['MaNhom' => $maNhom, 'DiemTong' => $diemTong]);
+            foreach ($hoSo->nhom->thanhViens as $tv) {
+                $maSV = $tv->MaSV;
 
-            return redirect()->back()->with('success', 'Chấm điểm thành công!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Illuminate\Support\Facades\Log::error('Lỗi khi chấm điểm: ' . $e->getMessage());
-            return redirect()->back()->withErrors('Có lỗi khi chấm điểm, vui lòng thử lại.');
+                // Điểm trung bình từ tất cả GV trong HĐ
+                $allDiems = ChiTietDiemHoiDong::where('MaHoiDong', $maHoiDong)
+                    ->where('MaSV', $maSV)->get();
+
+                if ($allDiems->isEmpty()) continue;
+
+                $diemHoiDongTB = round($allDiems->avg('Diem'), 2);
+
+                // Điểm GVHD (lấy từ ChamDiem hoặc mặc định 8 nếu chưa có)
+                $diemGVHD = \App\Models\ChamDiem::where('MaSV', $maSV)->value('DiemHuongDan') ?? 0;
+
+                // Điểm Phản biện (GV có vai trò "Phản biện" trong HĐ)
+                $maGVPB = ThanhVienHoiDong::where('MaHoiDong', $maHoiDong)
+                    ->where('VaiTro', 'Phản biện')->value('MaGV');
+                $diemPB = $maGVPB
+                    ? ChiTietDiemHoiDong::where('MaHoiDong', $maHoiDong)
+                        ->where('MaGV', $maGVPB)->where('MaSV', $maSV)->value('Diem') ?? 0
+                    : 0;
+
+                $diemTongKet = KetQuaSinhVien::tinhDiemTongKet(
+                    (float)$diemGVHD, (float)$diemPB, (float)$diemHoiDongTB
+                );
+
+                KetQuaSinhVien::updateOrCreate(
+                    ['MaSV' => $maSV, 'MaHocKy' => $hocKy->MaHocKy],
+                    [
+                        'MaKetQua'      => 'KQ' . str_pad(KetQuaSinhVien::count() + 1, 3, '0', STR_PAD_LEFT),
+                        'DiemHuongDan'  => $diemGVHD,
+                        'DiemPhanBien'  => $diemPB,
+                        'DiemHoiDongTB' => $diemHoiDongTB,
+                        'DiemTongKet'   => $diemTongKet,
+                        'KetQua'        => KetQuaSinhVien::xepLoai($diemTongKet),
+                        'NgayCham'      => now()->toDateString(),
+                    ]
+                );
+            }
         }
     }
 }

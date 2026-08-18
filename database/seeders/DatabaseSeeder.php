@@ -339,10 +339,11 @@ class DatabaseSeeder extends Seeder
 
         // 19. ThanhVienNhom
         DB::table('thanh_vien_nhoms')->insertOrIgnore([
-            ['MaNhom' => 'N01', 'MaSV' => 'SV01', 'VaiTro' => 'Trưởng nhóm', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
-            ['MaNhom' => 'N01', 'MaSV' => 'SV02', 'VaiTro' => 'Thành viên', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
-            ['MaNhom' => 'N01', 'MaSV' => 'SV03', 'VaiTro' => 'Thành viên', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => 'SV01', 'VaiTro' => 'Trưởng nhóm', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => 'SV02', 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => 'SV03', 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
         ]);
+
 
         // 20. DangKyDeTai
         DB::table('dang_ky_de_tais')->insertOrIgnore([

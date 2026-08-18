@@ -34,5 +34,15 @@ class Nhom extends Model
     {
         return $this->hasMany(ThanhVienNhom::class, 'MaNhom', 'MaNhom');
     }
+
+    public function baoCaos()
+    {
+        return $this->hasMany(BaoCaoTienDo::class, 'MaNhom', 'MaNhom');
+    }
+
+    public function dangKyDeTai()
+    {
+        return $this->hasOne(DangKyDeTai::class, 'MaNhom', 'MaNhom');
+    }
 }
 

@@ -17,7 +17,21 @@ class DangKyDeTaiController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
+
+        if (!$sinhVien) {
+            $firstLop = \App\Models\Lop::first();
+            $maSV = 'SV_' . Str::upper(Str::random(5));
+            $sinhVien = SinhVien::create([
+                'MaSV' => $maSV,
+                'MaTK' => $user->MaTK,
+                'MaLop' => $firstLop->MaLop ?? 'L01',
+                'HoTen' => $user->TenDangNhap,
+                'Email' => $user->TenDangNhap . '@st.huit.edu.vn',
+                'TrangThai' => 'Đang học'
+            ]);
+        }
+
 
         // 1. Kiểm tra Nhóm của sinh viên
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();

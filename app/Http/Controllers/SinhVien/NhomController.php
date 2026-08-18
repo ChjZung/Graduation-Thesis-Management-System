@@ -17,7 +17,21 @@ class NhomController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $sinhVien = SinhVien::with('lop')->where('MaTK', $user->MaTK)->firstOrFail();
+        $sinhVien = SinhVien::with('lop')->where('MaTK', $user->MaTK)->first();
+
+        if (!$sinhVien) {
+            $firstLop = \App\Models\Lop::first();
+            $maSV = 'SV_' . Str::upper(Str::random(5));
+            $sinhVien = SinhVien::create([
+                'MaSV' => $maSV,
+                'MaTK' => $user->MaTK,
+                'MaLop' => $firstLop->MaLop ?? 'L01',
+                'HoTen' => $user->TenDangNhap,
+                'Email' => $user->TenDangNhap . '@st.huit.edu.vn',
+                'TrangThai' => 'Đang học'
+            ]);
+        }
+
 
         // 1. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia')
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
@@ -69,7 +83,13 @@ class NhomController extends Controller
         }
 
         DB::transaction(function () use ($request, $sinhVien) {
-            $maNhom = 'NHOM_' . Str::upper(Str::random(6));
+            $count = Nhom::count() + 1;
+            $maNhom = 'N' . sprintf('%02d', $count);
+            while (Nhom::where('MaNhom', $maNhom)->exists()) {
+                $count++;
+                $maNhom = 'N' . sprintf('%02d', $count);
+            }
+
 
             Nhom::create([
                 'MaNhom' => $maNhom,

@@ -4,124 +4,193 @@ namespace App\Http\Controllers\SinhVien;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaoCaoTienDo;
-use App\Models\NhomDoAn;
+use App\Models\TomTatBaoCao;
+use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
-use App\Models\AuditLog;
-use App\Services\FileUploadService;
-use App\Services\NotificationService;
+use App\Services\AiSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BaoCaoController extends Controller
 {
-    public function index(Request $request)
+    // Danh sách 5 mốc cố định
+    const MOCS = [
+        1 => ['ten' => 'Mốc 1: Đề cương & Phân tích', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF đề cương nghiên cứu'],
+        2 => ['ten' => 'Mốc 2: Nghiên cứu & Thiết kế', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF báo cáo thiết kế hệ thống'],
+        3 => ['ten' => 'Mốc 3: Lập trình & Kiểm thử', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF báo cáo tiến độ lập trình'],
+        4 => ['ten' => 'Mốc 4: Hoàn thiện & Code', 'loai' => 'git', 'mo_ta' => 'Nộp link GitHub/GitLab (repository cuối)'],
+        5 => ['ten' => 'Mốc 5: Báo cáo & Bảo vệ', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp file PDF báo cáo hoàn chỉnh + link repository'],
+    ];
+
+    public function index()
     {
-        $sv = SinhVien::where('MaTK', Auth::user()->MaTK)->first();
-        if (!$sv) abort(403);
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
 
-        $nhomIds = ThanhVienNhom::where('MaSV', $sv->MaSV)->whereIn('TrangThai', ['da_chap_nhan', 'da_tham_gia'])->pluck('MaNhom')->toArray();
-        if (empty($nhomIds)) {
-            return redirect()->route('sinhvien.nhom.index')->withErrors('Bạn chưa tham gia nhóm nào.');
+        if (!$sinhVien) {
+            return redirect()->route('sinhvien.nhom.index')
+                ->with('error', 'Bạn chưa có hồ sơ sinh viên. Vui lòng liên hệ Giáo vụ.');
         }
 
-        $selectedNhomId = $request->get('maNhom', $nhomIds[0] ?? null);
-        $nhom = NhomDoAn::with(['dangKyDeTai.deTai', 'monHoc', 'hocKy'])->whereIn('MaNhom', $nhomIds)->where('MaNhom', $selectedNhomId)->first();
-        if (!$nhom) {
-            $nhom = NhomDoAn::with(['dangKyDeTai.deTai', 'monHoc', 'hocKy'])->find($nhomIds[0]);
+        // Kiểm tra có nhóm & đề tài đã duyệt chưa
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')->first();
+
+        if (!$thanhVienRecord) {
+            return view('sinhvien.baocao.index', [
+                'error'    => 'Bạn chưa có nhóm. Vui lòng tạo hoặc gia nhập nhóm trước.',
+                'sinhVien' => $sinhVien,
+                'nhom'     => null,
+                'mocs'     => self::MOCS,
+                'baoCaos'  => collect(),
+                'mocHienTai' => 1,
+            ]);
         }
 
-        $allNhoms = NhomDoAn::whereIn('MaNhom', $nhomIds)->get();
-        $baocaos = BaoCaoTienDo::with('nhanXets')->where('MaNhom', $nhom->MaNhom)->orderBy('LanBaoCao', 'desc')->get();
+        $nhom = Nhom::with(['deTai.giangVien'])->find($thanhVienRecord->MaNhom);
 
-        return view('sinhvien.baocao.index', compact('nhom', 'allNhoms', 'baocaos', 'sv'));
+        if (!$nhom || !$nhom->MaDeTai) {
+            return view('sinhvien.baocao.index', [
+                'error'    => 'Nhóm của bạn chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
+                'sinhVien' => $sinhVien,
+                'nhom'     => $nhom,
+                'mocs'     => self::MOCS,
+                'baoCaos'  => collect(),
+                'mocHienTai' => 1,
+            ]);
+        }
+
+        // Lấy tất cả báo cáo của nhóm
+        $baoCaos = BaoCaoTienDo::with('tomTat')
+            ->where('MaNhom', $nhom->MaNhom)
+            ->orderBy('LanBaoCao')
+            ->get()
+            ->keyBy('LanBaoCao');
+
+        // Xác định mốc hiện tại (mốc tiếp theo có thể nộp)
+        $mocHienTai = 1;
+        for ($i = 1; $i <= 5; $i++) {
+            if (!isset($baoCaos[$i])) {
+                $mocHienTai = $i;
+                break;
+            }
+            // Nếu mốc i chưa "Đạt" thì chưa được mở mốc i+1
+            if ($baoCaos[$i]->TrangThai !== 'Đạt') {
+                $mocHienTai = $i;
+                break;
+            }
+            $mocHienTai = $i + 1;
+        }
+        if ($mocHienTai > 5) $mocHienTai = 5; // đã xong cả 5
+
+        return view('sinhvien.baocao.index', compact(
+            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai'
+        ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'NoiDung' => 'required|string',
-            'FileUpLoad' => 'nullable|file|max:20480',
-            'FileBaoCao' => 'nullable|string',
-            'MaNhom' => 'nullable|exists:nhom_do_ans,MaNhom'
-        ], [
-            'NoiDung.required' => 'Vui lòng nhập tóm tắt nội dung báo cáo tiến độ.'
-        ]);
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        $sv = SinhVien::where('MaTK', Auth::user()->MaTK)->first();
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')->firstOrFail();
+        $nhom = Nhom::findOrFail($thanhVienRecord->MaNhom);
 
-        // Đọc MaNhom từ form truyền lên (nếu không có, lấy nhóm đầu tiên)
-        $maNhom = $request->input('MaNhom');
-        if (!$maNhom) {
-            $thanhVien = ThanhVienNhom::where('MaSV', $sv->MaSV)->whereIn('TrangThai', ['da_tham_gia', 'da_chap_nhan'])->first();
-            $maNhom = $thanhVien->MaNhom ?? null;
+        $lan = (int) $request->input('LanBaoCao');
+        $mocInfo = self::MOCS[$lan] ?? null;
+
+        if (!$mocInfo) {
+            return back()->with('error', 'Mốc báo cáo không hợp lệ.');
         }
 
-        if (!$maNhom) {
-            return redirect()->back()->withErrors('Bạn chưa tham gia nhóm nào!');
+        // Validate theo loại mốc
+        $rules = ['LanBaoCao' => 'required|integer|min:1|max:5'];
+        $messages = [];
+
+        if (in_array($mocInfo['loai'], ['pdf', 'pdf_git'])) {
+            $rules['FileBaoCao'] = 'required|file|mimes:pdf|max:20480';
+            $messages['FileBaoCao.required'] = 'Vui lòng đính kèm file PDF.';
+            $messages['FileBaoCao.mimes'] = 'Chỉ chấp nhận file PDF.';
+            $messages['FileBaoCao.max'] = 'File PDF tối đa 20MB.';
+        }
+        if (in_array($mocInfo['loai'], ['git', 'pdf_git'])) {
+            $rules['LinkCode'] = 'required|url';
+            $messages['LinkCode.required'] = 'Vui lòng nhập link GitHub/GitLab.';
+            $messages['LinkCode.url'] = 'Link Code phải là URL hợp lệ (bắt đầu https://).';
         }
 
-        // Kiểm tra sinh viên có thuộc nhóm này không
-        $isMember = ThanhVienNhom::where('MaSV', $sv->MaSV)->where('MaNhom', $maNhom)->whereIn('TrangThai', ['da_tham_gia', 'da_chap_nhan'])->exists();
-        if (!$isMember) {
-            return redirect()->back()->withErrors('Bạn không thuộc nhóm này!');
+        $request->validate($rules, $messages);
+
+        // Kiểm tra thứ tự: phải có mốc trước đã "Đạt"
+        if ($lan > 1) {
+            $mocTruoc = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)
+                ->where('LanBaoCao', $lan - 1)
+                ->where('TrangThai', 'Đạt')
+                ->first();
+            if (!$mocTruoc) {
+                return back()->with('error', "Bạn cần hoàn thành Mốc " . ($lan - 1) . " và được Giảng viên đánh giá \"Đạt\" trước khi nộp Mốc {$lan}.");
+            }
         }
 
-        $nhom = NhomDoAn::with('dangKyDeTai.deTai')->findOrFail($maNhom);
-
-        if ($nhom->TruongNhom != $sv->MaSV) {
-            return redirect()->back()->withErrors('Chỉ trưởng nhóm mới được phép nộp báo cáo!');
+        // Không cho nộp lại nếu đã có bài "Chờ duyệt" hoặc "Đạt"
+        $existing = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)
+            ->where('LanBaoCao', $lan)
+            ->whereIn('TrangThai', ['Chờ duyệt', 'Đạt'])
+            ->first();
+        if ($existing) {
+            return back()->with('error', "Mốc {$lan} đã có bài nộp đang chờ xử lý hoặc đã đạt.");
         }
 
-        // 1. Kiểm tra đề tài được duyệt & hạn nộp báo cáo (HanBaoCao)
-        $dangKy = $nhom->dangKyDeTai ?? null;
-        if (!$dangKy || $dangKy->TrangThai != 'Đã duyệt') {
-            return redirect()->back()->withErrors('Nhóm chưa có đề tài được duyệt! Vui lòng đăng ký và chờ duyệt đề tài trước khi nộp báo cáo.');
-        }
+        DB::transaction(function () use ($request, $nhom, $lan, $mocInfo) {
+            // Upload file PDF nếu có
+            $tenFile = null;
+            $duongDanFile = null;
+            if ($request->hasFile('FileBaoCao')) {
+                $file = $request->file('FileBaoCao');
+                $tenFile = $file->getClientOriginalName();
+                $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$lan}", 'public');
+            }
 
-        $deTai = $dangKy->deTai ?? null;
-        if ($deTai && $deTai->HanBaoCao && date('Y-m-d') > $deTai->HanBaoCao) {
-            return redirect()->back()->withErrors('Đã quá hạn nộp báo cáo tiến độ! (Hạn chót: ' . date('d/m/Y', strtotime($deTai->HanBaoCao)) . ')');
-        }
+            // Tạo mã báo cáo
+            $maBaoCao = 'BC' . str_pad(
+                BaoCaoTienDo::count() + 1,
+                3, '0', STR_PAD_LEFT
+            );
 
-        // 2. Upload file / link - Không cho nộp thiếu file/link
-        $fileService = new FileUploadService();
-        $fileOrLink = $fileService->handleUploadOrLink($request, 'FileUpLoad', 'FileBaoCao', 'baocao');
+            $baoCao = BaoCaoTienDo::create([
+                'MaBaoCao'      => $maBaoCao,
+                'MaNhom'        => $nhom->MaNhom,
+                'LanBaoCao'     => $lan,
+                'TieuDe'        => $mocInfo['ten'],
+                'NoiDungBaoCao' => $request->input('NoiDungBaoCao'),
+                'NgayNop'       => now()->toDateString(),
+                'TenFile'       => $tenFile,
+                'DuongDanFile'  => $duongDanFile,
+                'LinkCode'      => $request->input('LinkCode'),
+                'TrangThai'     => 'Chờ duyệt',
+            ]);
 
-        if (!$fileOrLink) {
-            return redirect()->back()->withErrors('Không cho nộp báo cáo thiếu file hoặc link đính kèm!');
-        }
+            // Sinh bản tóm tắt AI ngay sau khi nộp
+            $aiService = new \App\Services\AiSummaryService();
+            $aiData = $aiService->generate($baoCao);
 
-        // 3. Tính số lần báo cáo và kiểm tra giới hạn 5 lần
-        $lanCuoi = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)->max('LanBaoCao');
-        $lanBaoCao = $lanCuoi ? $lanCuoi + 1 : 1;
+            $maTomTat = 'TT' . str_pad(
+                \App\Models\TomTatBaoCao::count() + 1,
+                3, '0', STR_PAD_LEFT
+            );
 
-        if ($lanBaoCao > 5) {
-            return redirect()->back()->withErrors('Nhóm đã đạt giới hạn tối đa 5 lần nộp báo cáo tiến độ!');
-        }
+            TomTatBaoCao::create(array_merge(
+                ['MaTomTat' => $maTomTat, 'MaBaoCao' => $baoCao->MaBaoCao],
+                $aiData
+            ));
+        });
 
-        // 4. Kiểm tra trùng lần báo cáo
-        if (BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)->where('LanBaoCao', $lanBaoCao)->exists()) {
-            return redirect()->back()->withErrors("Báo cáo lần {$lanBaoCao} đã tồn tại trong hệ thống!");
-        }
-
-        $bc = BaoCaoTienDo::create([
-            'MaNhom' => $nhom->MaNhom,
-            'LanBaoCao' => $lanBaoCao,
-            'NoiDung' => $request->NoiDung,
-            'FileBaoCao' => $fileOrLink,
-            'TrangThai' => 'Chờ nhận xét',
-            'NgayNop' => date('Y-m-d')
-        ]);
-
-        // Gửi thông báo cho Giảng viên hướng dẫn
-        if ($deTai && $deTai->MaTK) {
-            $notiService = new NotificationService();
-            $notiService->guiBaoCaoMoiChoGV($nhom, $deTai->MaTK, $bc);
-        }
-
-        AuditLog::log('nop_bao_cao', 'BaoCaoTienDo', $bc->MaBaoCao, ['MaNhom' => $nhom->MaNhom, 'LanBaoCao' => $lanBaoCao]);
-
-        return redirect()->route('sinhvien.baocao.index', ['maNhom' => $nhom->MaNhom])->with('success', "Nộp báo cáo tiến độ lần {$lanBaoCao} thành công!");
+        return redirect()->route('sinhvien.baocao.index')
+            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đã tự động sinh bản tóm tắt AI để Giảng viên xem xét.");
     }
 }
