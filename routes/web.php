@@ -85,6 +85,11 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('kehoach', \App\Http\Controllers\Admin\KeHoachKhoaLuanController::class)->names('admin.kehoach');
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adminCalendar'])->name('admin.calendar');
 
+    // Phê duyệt Đề tài
+    Route::get('/duyet-detai', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'index'])->name('admin.duyet_detai.index');
+    Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'approve'])->name('admin.duyet_detai.approve');
+    Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'reject'])->name('admin.duyet_detai.reject');
+
     // Thông báo
     Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->only(['index', 'store', 'destroy']);
 });
@@ -125,6 +130,9 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     // Nhóm & Đăng ký đề tài
     Route::get('nhom', [\App\Http\Controllers\SinhVien\NhomController::class, 'index'])->name('sinhvien.nhom.index');
     Route::post('nhom', [\App\Http\Controllers\SinhVien\NhomController::class, 'store'])->name('sinhvien.nhom.store');
+    Route::post('nhom/moi', [\App\Http\Controllers\SinhVien\NhomController::class, 'moiThanhVien'])->name('sinhvien.nhom.moiThanhVien');
+    Route::post('nhom/loi-moi/{id}/chap-nhan', [\App\Http\Controllers\SinhVien\NhomController::class, 'xacNhanLoiMoi'])->name('sinhvien.nhom.xacNhanLoiMoi');
+    Route::post('nhom/loi-moi/{id}/tu-choi', [\App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiLoiMoi'])->name('sinhvien.nhom.tuChoiLoiMoi');
     Route::resource('dangky', \App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store', 'destroy']);
 
     // Báo cáo tiến độ
@@ -136,3 +144,4 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('/thongbao/{id}/read', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'markRead'])->name('sinhvien.thongbao.read');
     Route::post('/thongbao/read-all', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'markAllRead'])->name('sinhvien.thongbao.readAll');
 });
+

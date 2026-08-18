@@ -19,4 +19,20 @@ class Nhom extends Model
     ];
 
     public $timestamps = true;
+
+    public function deTai()
+    {
+        return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function truongNhom()
+    {
+        return $this->belongsTo(SinhVien::class, 'MaTruongNhom', 'MaSV');
+    }
+
+    public function thanhViens()
+    {
+        return $this->hasMany(ThanhVienNhom::class, 'MaNhom', 'MaNhom');
+    }
 }
+

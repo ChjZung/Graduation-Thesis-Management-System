@@ -1,137 +1,73 @@
 @extends('layouts.giangvien')
-@section('page_title', 'Thêm Đề Tài Mới')
+
+@section('page_title', 'Đề Xuất Đề Tài Mới')
+
 @section('content')
 <div class="row justify-content-center">
-<div class="col-lg-8">
-
-{{-- Template download --}}
-<div class="alert alert-info d-flex align-items-center gap-3 mb-3 rounded-3">
-    <i class="fa-solid fa-file-excel fa-lg text-success"></i>
-    <div>
-        <strong>Import hàng loạt?</strong>
-        Tải file mẫu Excel rồi dùng nút <em>Import Excel/CSV</em> ở trang danh sách.
-        <a href="{{ route('admin.import.template', 'detais') }}" class="btn btn-sm btn-outline-success ms-2 rounded-pill px-3">
-            <i class="fa-solid fa-download me-1"></i>Tải file mẫu .xlsx
-        </a>
-    </div>
-</div>
-
-<div class="card card-premium">
-    <div class="card-header-premium">
-        <i class="fa-solid fa-plus-circle me-2 text-primary"></i>Tạo Đề Tài Mới
-    </div>
-    <div class="card-body p-4">
-        <form action="{{ route('giangvien.detai.store') }}" method="POST">
-            @csrf
-
-            {{-- Tên đề tài --}}
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Tên Đề Tài <span class="text-danger">*</span></label>
-                <input type="text" name="TenDeTai" class="form-control @error('TenDeTai') is-invalid @enderror"
-                       value="{{ old('TenDeTai') }}" required placeholder="Nhập tên đề tài...">
-                @error('TenDeTai')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    <div class="col-lg-9">
+        <div class="card card-premium">
+            <div class="card-header-premium d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-plus-circle text-success me-2"></i>Đề Xuất Đề Tài Khóa Luận Mới</span>
+                <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border btn-sm rounded-pill px-3">Quay Lại</a>
             </div>
-
-            {{-- Lớp học phần, Môn học, Học kỳ --}}
-            <div class="mb-3 p-3 bg-light rounded border border-primary-subtle">
-                <label class="form-label fw-bold text-primary"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp Học Phần (Lớp Tín Chỉ) <span class="text-danger">*</span></label>
-                <select name="MaLopHP" id="select_MaLopHP" class="form-select border-primary @error('MaLopHP') is-invalid @enderror" required onchange="onLopHPSelectChange(this)">
-                    <option value="">— Chọn Lớp Học Phần —</option>
-                    @foreach($lopHocPhans as $lhp)
-                        <option value="{{ $lhp->MaLopHP }}" data-mamon="{{ $lhp->MaMon }}" data-mahocky="{{ $lhp->MaHocKy }}" {{ old('MaLopHP') == $lhp->MaLopHP ? 'selected' : '' }}>
-                            {{ $lhp->TenLopHP }} — {{ $lhp->monHoc->TenMon ?? '' }} ({{ $lhp->hocKy->TenHocKy ?? '' }} - GV: {{ $lhp->giangVien->HoTen ?? 'Chưa gán' }})
-                        </option>
-                    @endforeach
-                </select>
-                @error('MaLopHP')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                <div class="form-text text-muted small">Chọn Lớp Học Phần để tự động xác định đúng Môn học và Học kỳ tương ứng.</div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Môn Học</label>
-                    <select name="MaMon" id="select_MaMon" class="form-select @error('MaMon') is-invalid @enderror">
-                        <option value="">— Tự động điền theo Lớp HP —</option>
-                        @foreach($monhocs as $m)
-                            <option value="{{ $m->MaMon }}" {{ old('MaMon') == $m->MaMon ? 'selected' : '' }}>
-                                {{ $m->TenMon }}
-                            </option>
-                        @endforeach
-                    </select>
+            <div class="card-body p-4">
+                @if($errors->any())
+                <div class="alert alert-danger mb-4">
+                    <ul class="mb-0">@foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach</ul>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Học Kỳ</label>
-                    <select name="MaHocKy" id="select_MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror">
-                        <option value="">— Tự động điền theo Lớp HP —</option>
-                        @foreach($hockys as $hk)
-                            <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+                @endif
 
-            <script>
-            function onLopHPSelectChange(selectEl) {
-                const opt = selectEl.options[selectEl.selectedIndex];
-                const maMon = opt.getAttribute('data-mamon');
-                const maHocKy = opt.getAttribute('data-mahocky');
-                if (maMon) {
-                    const mSel = document.getElementById('select_MaMon');
-                    if (mSel) mSel.value = maMon;
-                }
-                if (maHocKy) {
-                    const hkSel = document.getElementById('select_MaHocKy');
-                    if (hkSel) hkSel.value = maHocKy;
-                }
-            }
-            </script>
+                <form action="{{ route('giangvien.detai.store') }}" method="POST">
+                    @csrf
 
-            {{-- Deadlines --}}
-            <div class="p-3 bg-light rounded-3 border mb-3">
-                <p class="fw-semibold mb-2"><i class="fa-solid fa-calendar-days me-2 text-primary"></i>Cài đặt Thời hạn</p>
-                <div class="row">
-                    <div class="col-md-4 mb-2">
-                        <label class="form-label small fw-semibold">Hạn Đăng Ký <span class="text-danger">*</span></label>
-                        <input type="date" name="HanDangKy" class="form-control @error('HanDangKy') is-invalid @enderror"
-                               value="{{ old('HanDangKy') }}" required>
-                        @error('HanDangKy')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="mb-3">
+                        <label for="TenDeTai" class="form-label fw-bold">Tên Đề Tài (Tiếng Việt) <span class="text-danger">*</span></label>
+                        <input type="text" name="TenDeTai" id="TenDeTai" class="form-control" value="{{ old('TenDeTai') }}" placeholder="Nhập tên đề tài khóa luận..." required>
                     </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="form-label small fw-semibold">Hạn Nộp Báo Cáo <span class="text-danger">*</span></label>
-                        <input type="date" name="HanBaoCao" class="form-control @error('HanBaoCao') is-invalid @enderror"
-                               value="{{ old('HanBaoCao') }}" required>
-                        @error('HanBaoCao')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="form-label small fw-semibold">Hạn Nộp Sản Phẩm <span class="text-danger">*</span></label>
-                        <input type="date" name="HanNopSanPham" class="form-control @error('HanNopSanPham') is-invalid @enderror"
-                               value="{{ old('HanNopSanPham') }}" required>
-                        @error('HanNopSanPham')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                </div>
-            </div>
 
-            {{-- Mô tả & Yêu cầu --}}
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Mô Tả</label>
-                <textarea name="MoTa" rows="3" class="form-control" placeholder="Mô tả nội dung đề tài...">{{ old('MoTa') }}</textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Yêu Cầu Cụ Thể</label>
-                <textarea name="YeuCau" rows="3" class="form-control" placeholder="Các yêu cầu kỹ thuật, công nghệ...">{{ old('YeuCau') }}</textarea>
-            </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
+                            <select name="MaHocKy" id="MaHocKy" class="form-select" required>
+                                <option value="">-- Chọn học kỳ --</option>
+                                @foreach($hocKies as $hk)
+                                <option value="{{ $hk->MaHocKy }}">{{ $hk->TenHocKy }} ({{ $hk->NamHoc }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="SoLuongSinhVienToiDa" class="form-label fw-bold">Số SV Tối Đa <span class="text-danger">*</span></label>
+                            <select name="SoLuongSinhVienToiDa" id="SoLuongSinhVienToiDa" class="form-select" required>
+                                <option value="1">1 Sinh viên</option>
+                                <option value="2" selected>2 Sinh viên</option>
+                                <option value="3">3 Sinh viên</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="LinhVuc" class="form-label fw-bold">Lĩnh Vực Chuyên Môn</label>
+                            <input type="text" name="LinhVuc" id="LinhVuc" class="form-control" value="{{ old('LinhVuc', 'Công Nghệ Phần Mềm') }}" placeholder="Ví dụ: AI, Web, Mobile...">
+                        </div>
+                    </div>
 
-            <div class="text-end mt-4 d-flex gap-2 justify-content-end">
-                <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light rounded-pill px-4">Huỷ</a>
-                <button type="submit" class="btn btn-primary-custom rounded-pill px-4">
-                    <i class="fa-solid fa-check me-1"></i>Tạo Đề Tài
-                </button>
+                    <div class="mb-3">
+                        <label for="MoTa" class="form-label fw-bold">Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu</label>
+                        <textarea name="MoTa" id="MoTa" class="form-control" rows="3" placeholder="Nhập mô tả chi tiết bài toán, phạm vi nghiên cứu...">{{ old('MoTa') }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Kỹ Thuật & Công Nghệ</label>
+                        <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3" placeholder="Ví dụ: Sử dụng Laravel 11, MySQL, Vue.js / ReactJS, RESTful API...">{{ old('YeuCau') }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success px-5 rounded-pill shadow-sm">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Gửi Đề Xuất Cho Giáo Vụ Duyệt
+                        </button>
+                        <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 rounded-pill">Hủy Bỏ</a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
-</div>
-</div>
 </div>
 @endsection

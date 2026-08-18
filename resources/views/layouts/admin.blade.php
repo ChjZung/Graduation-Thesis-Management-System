@@ -57,6 +57,11 @@
                     <i class="fa-regular fa-calendar-days"></i> Lịch Calendar Tổng Quan
                 </a>
             </li>
+            <li class="{{ request()->routeIs('admin.duyet_detai.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.duyet_detai.index') }}">
+                    <i class="fa-solid fa-file-signature"></i> Xét Duyệt Đề Tài GV
+                </a>
+            </li>
 
             <!-- Quản Lý Tài Khoản -->
             <li class="nav-section-label">Quản Lý Tài Khoản</li>

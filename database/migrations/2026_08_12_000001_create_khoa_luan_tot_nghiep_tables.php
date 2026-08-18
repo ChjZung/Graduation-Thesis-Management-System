@@ -259,6 +259,7 @@ return new class extends Migration {
             $table->string('MaNhom', 10);
             $table->string('MaSV', 10);
             $table->string('VaiTro', 50)->default('Thành viên');
+            $table->string('TrangThai', 50)->default('da_tham_gia');
             $table->date('NgayThamGia')->nullable();
             $table->timestamps();
 
@@ -266,6 +267,7 @@ return new class extends Migration {
             $table->foreign('MaNhom')->references('MaNhom')->on('nhoms')->onDelete('cascade');
             $table->foreign('MaSV')->references('MaSV')->on('sinh_viens')->onDelete('cascade');
         });
+
 
         // 20. Bảng DangKyDeTai
         Schema::create('dang_ky_de_tais', function (Blueprint $table) {
@@ -463,6 +465,8 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('nguoi_nhan_thong_baos');
+
+
         Schema::dropIfExists('thong_baos');
         Schema::dropIfExists('ket_qua_sinh_viens');
         Schema::dropIfExists('chi_tiet_diem_hoi_dongs');

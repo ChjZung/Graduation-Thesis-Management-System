@@ -15,8 +15,20 @@ class ThanhVienNhom extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaNhom', 'MaSV', 'VaiTro', 'NgayThamGia'
+        'MaNhom', 'MaSV', 'VaiTro', 'TrangThai', 'NgayThamGia'
     ];
 
+
     public $timestamps = true;
+
+    public function sinhVien()
+    {
+        return $this->belongsTo(SinhVien::class, 'MaSV', 'MaSV');
+    }
+
+    public function nhom()
+    {
+        return $this->belongsTo(Nhom::class, 'MaNhom', 'MaNhom');
+    }
 }
+

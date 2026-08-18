@@ -19,4 +19,20 @@ class DangKyDeTai extends Model
     ];
 
     public $timestamps = true;
+
+    public function nhom()
+    {
+        return $this->belongsTo(Nhom::class, 'MaNhom', 'MaNhom');
+    }
+
+    public function deTai()
+    {
+        return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function giangVienHuongDan()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGVHuongDan', 'MaGV');
+    }
 }
+
