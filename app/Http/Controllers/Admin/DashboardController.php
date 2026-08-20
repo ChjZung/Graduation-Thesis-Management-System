@@ -9,6 +9,11 @@ use App\Models\GiangVien;
 use App\Models\DeTai;
 use App\Models\Nhom;
 use App\Models\TaiKhoan;
+use App\Models\HoiDong;
+use App\Models\KetQuaSinhVien;
+use App\Models\BaoCaoTienDo;
+use App\Models\HoSoBaoVe;
+use App\Models\DangKyDeTai;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,26 +21,64 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $soSinhVien = Cache::remember('dashboard_soSinhVien', 60, function () { return SinhVien::count(); });
-        $soGiangVien = Cache::remember('dashboard_soGiangVien', 60, function () { return GiangVien::count(); });
-        $soDeTai = Cache::remember('dashboard_soDeTai', 60, function () { return DeTai::count(); });
-        $soNhom = Cache::remember('dashboard_soNhom', 60, function () { return Nhom::count(); });
+        // ── Thống kê tổng quan ──
+        $soSinhVien  = SinhVien::count();
+        $soGiangVien = GiangVien::count();
+        $soDeTai     = DeTai::count();
+        $soNhom      = Nhom::count();
+        $soHoiDong   = HoiDong::count();
 
-        // Thống kê trạng thái nhóm
-        $trangThaiNhom = Cache::remember('dashboard_trangThaiNhom', 60, function () {
-            return Nhom::select('TrangThai', DB::raw('count(*) as total'))
-                                 ->groupBy('TrangThai')
-                                 ->pluck('total', 'TrangThai')
-                                 ->toArray();
-        });
+        // ── Thống kê đề tài theo trạng thái ──
+        $deTaiTheoTrangThai = DeTai::select('TrangThai', DB::raw('count(*) as total'))
+            ->groupBy('TrangThai')
+            ->pluck('total', 'TrangThai')
+            ->toArray();
 
-        // Chuẩn bị dữ liệu cho Chart.js
-        $chartLabels = array_keys($trangThaiNhom);
-        $chartData = array_values($trangThaiNhom);
+        // ── Thống kê đăng ký đề tài ──
+        $dkDaDuyet  = DangKyDeTai::where('TrangThai', 'Đã duyệt')->count();
+        $dkChoDuyet = DangKyDeTai::where('TrangThai', 'Chờ duyệt')->count();
+        $dkTuChoi   = DangKyDeTai::where('TrangThai', 'Từ chối')->count();
+
+        // ── Thống kê kết quả xếp loại sinh viên ──
+        $ketQuaXepLoai = KetQuaSinhVien::select('KetQua', DB::raw('count(*) as total'))
+            ->whereNotNull('KetQua')
+            ->groupBy('KetQua')
+            ->pluck('total', 'KetQua')
+            ->toArray();
+
+        // Đảm bảo đủ các nhãn xếp loại (kể cả khi = 0)
+        $allXepLoai = ['Xuất sắc', 'Giỏi', 'Khá', 'Trung bình', 'Trung bình yếu', 'Không đạt'];
+        $xepLoaiData = [];
+        foreach ($allXepLoai as $xl) {
+            $xepLoaiData[$xl] = $ketQuaXepLoai[$xl] ?? 0;
+        }
+
+        // ── Tiến độ 5 mốc (bao nhiêu nhóm đã đạt từng mốc) ──
+        $mocProgress = [];
+        for ($moc = 1; $moc <= 5; $moc++) {
+            $mocProgress[$moc] = BaoCaoTienDo::where('LanBaoCao', $moc)
+                ->where('TrangThai', 'Đạt')->count();
+        }
+
+        // ── Hồ sơ bảo vệ ──
+        $hoSoCho      = HoSoBaoVe::where('TrangThai', 'Chờ xác nhận')->count();
+        $hoSoPhanCong = HoSoBaoVe::where('TrangThai', 'Đã phân công')->count();
+        $hoSoTong     = HoSoBaoVe::count();
+
+        // ── 5 nhóm mới nhất ──
+        $nhomMoiNhat = Nhom::with(['truongNhom', 'deTai'])
+            ->orderBy('created_at', 'desc')->limit(5)->get();
+
+        // ── Biểu đồ trạng thái nhóm ──
+        $trangThaiNhom = Nhom::select('TrangThai', DB::raw('count(*) as total'))
+            ->groupBy('TrangThai')->pluck('total', 'TrangThai')->toArray();
 
         return view('admin.dashboard', compact(
-            'soSinhVien', 'soGiangVien', 'soDeTai', 'soNhom',
-            'chartLabels', 'chartData'
+            'soSinhVien', 'soGiangVien', 'soDeTai', 'soNhom', 'soHoiDong',
+            'deTaiTheoTrangThai', 'dkDaDuyet', 'dkChoDuyet', 'dkTuChoi',
+            'xepLoaiData', 'mocProgress',
+            'hoSoCho', 'hoSoPhanCong', 'hoSoTong',
+            'nhomMoiNhat', 'trangThaiNhom'
         ));
     }
 
@@ -45,10 +88,8 @@ class DashboardController extends Controller
         if ($tk->MaVaiTro == 1 && $tk->MaTK == auth()->user()->MaTK) {
             return redirect()->back()->withErrors('Không thể tự khóa tài khoản Admin đang sử dụng!');
         }
-
         $tk->TrangThai = !$tk->TrangThai;
         $tk->save();
-
         $msg = $tk->TrangThai ? 'Mở khóa tài khoản thành công!' : 'Đã khóa tài khoản thành công!';
         return redirect()->back()->with('success', $msg);
     }

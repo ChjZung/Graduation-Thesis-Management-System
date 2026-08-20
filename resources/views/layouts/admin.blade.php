@@ -156,8 +156,39 @@
                     @yield('page_title', 'Dashboard')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
+                    <!-- Notification Bell Admin -->
+                    @php
+                        $adminUnread = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->where('DaDoc', false)->count();
+                    @endphp
+                    <div class="dropdown">
+                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
+                            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
+                            @if($adminUnread > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:3px 5px;">{{ $adminUnread }}</span>
+                            @endif
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
+                            <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;">Thông Báo</strong></div>
+                            @php $adminRecentNoti = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->orderBy('created_at','desc')->limit(6)->get(); @endphp
+                            @forelse($adminRecentNoti as $noti)
+                            <div class="dropdown-item px-3 py-2 border-bottom" style="{{ !$noti->DaDoc ? 'background:#f0f7ff;' : '' }}">
+                                <div class="d-flex gap-2 align-items-start">
+                                    <i class="fa-solid {{ $noti->icon }} mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at)->diffForHumans() }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
                     <!-- User Dropdown -->
                     <div class="dropdown">
+
                         <a class="user-avatar-btn dropdown-toggle text-decoration-none"
                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
                            id="adminUserDropdown">

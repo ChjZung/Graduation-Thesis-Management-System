@@ -107,15 +107,45 @@
                     @yield('page_title', 'Dashboard')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification bell -->
-                    @if($unreadNotiCount > 0)
-                    <a href="{{ route('sinhvien.thongbao.index') }}" class="position-relative text-decoration-none"
-                       title="{{ $unreadNotiCount }} thông báo chưa đọc">
-                        <i class="fa-solid fa-bell" style="font-size: 1.1rem; color: var(--huit-blue);"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                              style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadNotiCount }}</span>
-                    </a>
-                    @endif
+                    <!-- Notification Bell Dropdown -->
+                    <div class="dropdown">
+                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
+                            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
+                            @if($unreadNotiCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadNotiCount }}</span>
+                            @endif
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px; max-height:420px; overflow-y:auto; border-radius:12px;">
+                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                <strong style="font-size:.85rem;">Thông Báo</strong>
+                                @if($unreadNotiCount > 0)
+                                <form action="{{ route('sinhvien.thongbao.readAll') }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-xs btn-link p-0 text-muted" style="font-size:.72rem;">Đánh dấu đã đọc</button>
+                                </form>
+                                @endif
+                            </div>
+                            @php
+                                $recentNoti = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->orderBy('created_at','desc')->limit(6)->get();
+                            @endphp
+                            @forelse($recentNoti as $noti)
+                            <a href="{{ route('sinhvien.thongbao.index') }}" class="dropdown-item px-3 py-2 border-bottom {{ !$noti->DaDoc ? '' : '' }}" style="{{ !$noti->DaDoc ? 'background:#f0f7ff;' : '' }}">
+                                <div class="d-flex gap-2 align-items-start">
+                                    <i class="fa-solid {{ $noti->icon }} mt-1 flex-shrink-0" style="font-size:.85rem;"></i>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:.82rem; line-height:1.3;">{{ $noti->TieuDe }}</div>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at)->diffForHumans() }}</div>
+                                    </div>
+                                    @if(!$noti->DaDoc)<span class="ms-auto flex-shrink-0 badge bg-primary rounded-circle p-1" style="width:8px;height:8px;"></span>@endif
+                                </div>
+                            </a>
+                            @empty
+                            <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
+                            @endforelse
+                            <a href="{{ route('sinhvien.thongbao.index') }}" class="dropdown-item text-center text-primary py-2" style="font-size:.8rem;">Xem tất cả thông báo</a>
+                        </div>
+                    </div>
+
 
                     <!-- User Dropdown -->
                     <div class="dropdown">
