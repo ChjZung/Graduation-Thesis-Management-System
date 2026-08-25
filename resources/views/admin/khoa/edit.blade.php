@@ -7,10 +7,10 @@
     <div class="col-md-8">
         <div class="card card-premium">
             <div class="card-header-premium">
-                <i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Chỉnh Sửa Khoa
+                <i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Chỉnh Sửa Khoa: {{ $khoa->TenKhoa }}
             </div>
             <div class="card-body p-4">
-                @if($errors->any())
+                @if(isset($errors) && $errors->any())
                     <div class="alert alert-danger mb-4">
                         <ul class="mb-0">@foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach</ul>
                     </div>
@@ -20,8 +20,8 @@
                     @csrf
                     @method('PUT')
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Mã Khoa</label>
-                        <input type="text" class="form-control bg-light" value="{{ $khoa->MaKhoa }}" disabled>
+                        <label for="MaKhoa" class="form-label fw-bold">Mã Khoa</label>
+                        <input type="text" class="form-control bg-light" value="{{ $khoa->MaKhoa }}" readonly>
                     </div>
 
                     <div class="mb-4">
@@ -29,11 +29,11 @@
                         <input type="text" name="TenKhoa" id="TenKhoa" class="form-control" value="{{ old('TenKhoa', $khoa->TenKhoa) }}" required>
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary px-4 rounded-pill">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('khoa.index') }}" class="btn btn-light border px-4 rounded-pill">Quay Lại</a>
+                        <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold">
                             <i class="fa-solid fa-save me-1"></i> Cập Nhật
                         </button>
-                        <a href="{{ route('khoa.index') }}" class="btn btn-light border px-4 rounded-pill">Hủy Bỏ</a>
                     </div>
                 </form>
             </div>

@@ -233,7 +233,8 @@
         <!-- Alerts + Content -->
         <div class="content-body">
 
-            @if ($errors->any())
+            @if (isset($errors) && $errors->any())
+
                 <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
                      style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
                     <i class="fa-solid fa-circle-xmark me-2"></i>

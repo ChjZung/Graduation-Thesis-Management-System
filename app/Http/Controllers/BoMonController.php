@@ -2,43 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\IdGenerator;
 use App\Models\BoMon;
+use App\Models\Khoa;
 use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
 
 class BoMonController extends Controller
 {
     use HandlesExcelImport;
+
     public function index()
     {
-        $bomons = BoMon::paginate(10);
+        $bomons = BoMon::with('khoa')->withCount('giangViens')->paginate(10);
         return view('admin.bomon.index', compact('bomons'));
     }
 
     public function create()
     {
-        return view('admin.bomon.create');
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.bomon.create', compact('khoas'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'MaBoMon' => 'nullable|string|max:10|unique:bo_mons,MaBoMon',
             'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon',
-            'MoTa' => 'nullable|string|max:500'
+            'MaKhoa' => 'required|exists:khoas,MaKhoa',
         ], [
+            'MaBoMon.unique' => 'Mã bộ môn đã tồn tại.',
             'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
             'TenBoMon.unique' => 'Tên bộ môn này đã tồn tại trong hệ thống.',
-            'TenBoMon.max' => 'Tên bộ môn không được vượt quá 100 ký tự.'
+            'MaKhoa.required' => 'Vui lòng chọn Khoa trực thuộc.',
+            'MaKhoa.exists' => 'Khoa đã chọn không tồn tại.',
         ]);
 
-        BoMon::create($request->only(['TenBoMon', 'MoTa']));
-        return redirect()->route('bomon.index')->with('success', 'Thêm bộ môn thành công!');
+        $maBoMon = $request->filled('MaBoMon') ? strtoupper(trim($request->MaBoMon)) : IdGenerator::nextBoMon();
+
+        BoMon::create([
+            'MaBoMon' => $maBoMon,
+            'TenBoMon' => trim($request->TenBoMon),
+            'MaKhoa' => $request->MaKhoa,
+        ]);
+
+        return redirect()->route('bomon.index')->with('success', "Thêm bộ môn '{$request->TenBoMon}' thành công!");
     }
 
     public function edit($id)
     {
         $bomon = BoMon::findOrFail($id);
-        return view('admin.bomon.edit', compact('bomon'));
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.bomon.edit', compact('bomon', 'khoas'));
     }
 
     public function update(Request $request, $id)
@@ -47,24 +62,29 @@ class BoMonController extends Controller
 
         $request->validate([
             'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon,' . $id . ',MaBoMon',
-            'MoTa' => 'nullable|string|max:500'
+            'MaKhoa' => 'required|exists:khoas,MaKhoa',
         ], [
             'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
             'TenBoMon.unique' => 'Tên bộ môn này đã tồn tại trong hệ thống.',
-            'TenBoMon.max' => 'Tên bộ môn không được vượt quá 100 ký tự.'
+            'MaKhoa.required' => 'Vui lòng chọn Khoa trực thuộc.',
         ]);
 
-        $bomon->update($request->only(['TenBoMon', 'MoTa']));
+        $bomon->update([
+            'TenBoMon' => trim($request->TenBoMon),
+            'MaKhoa' => $request->MaKhoa,
+        ]);
+
         return redirect()->route('bomon.index')->with('success', 'Cập nhật bộ môn thành công!');
     }
 
     public function destroy($id)
     {
+        $bomon = BoMon::findOrFail($id);
         try {
             BoMon::destroy($id);
-            return redirect()->route('bomon.index')->with('success', 'Xóa thành công!');
+            return redirect()->route('bomon.index')->with('success', "Xóa bộ môn '{$bomon->TenBoMon}' thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors('Không thể xóa bộ môn này do đang có ngành học hoặc môn học liên quan.');
+            return redirect()->back()->withErrors("Không thể xóa bộ môn '{$bomon->TenBoMon}' do đang có giảng viên thuộc bộ môn.");
         }
     }
 

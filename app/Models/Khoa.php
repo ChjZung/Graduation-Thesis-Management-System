@@ -19,4 +19,14 @@ class Khoa extends Model
     ];
 
     public $timestamps = true;
+
+    public function boMons()
+    {
+        return $this->hasMany(BoMon::class, 'MaKhoa', 'MaKhoa');
+    }
+
+    public function nganhs()
+    {
+        return $this->hasMany(Nganh::class, 'MaKhoa', 'MaKhoa');
+    }
 }

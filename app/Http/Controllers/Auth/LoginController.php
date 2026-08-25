@@ -125,12 +125,18 @@ class LoginController extends Controller implements HasMiddleware
             'LanDangNhapCuoi'  => now(),
         ]);
 
-        // Nếu bị bắt buộc đổi mật khẩu → chuyển hướng sang trang đổi MK
-        if ($user->BatBuocDoiMatKhau) {
+        // Nếu là lần đầu đăng nhập (INITIAL) → Chuyển hướng sang trang Thiết lập mật khẩu cá nhân
+        if ($user->isPasswordInitial()) {
+            return redirect()->route('password.setup');
+        }
+
+        // Nếu mật khẩu hết hạn (EXPIRED) → Chuyển hướng sang trang Đổi mật khẩu
+        if ($user->isPasswordExpired()) {
             return redirect()->route('password.change')
-                ->with('warning', 'Vui lòng đổi mật khẩu trước khi sử dụng hệ thống.');
+                ->with('warning', 'Mật khẩu của bạn đã hết hạn, vui lòng đổi mật khẩu mới để tiếp tục.');
         }
     }
+
 
     /**
      * Override sendFailedLoginResponse để thêm thông tin khóa TK

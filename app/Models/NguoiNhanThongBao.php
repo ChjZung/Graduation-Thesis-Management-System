@@ -11,12 +11,13 @@ class NguoiNhanThongBao extends Model
 
     protected $table = 'nguoi_nhan_thong_baos';
     protected $primaryKey = 'MaThongBao';
-    public $incrementing = true;
-    protected $keyType = 'int';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'MaTK', 'TieuDe', 'NoiDung', 'Loai', 'DuongDan', 'DaDoc', 'NgayDoc',
+        'MaThongBao', 'MaTK', 'TieuDe', 'NoiDung', 'Loai', 'DuongDan', 'DaDoc', 'NgayDoc',
     ];
+
 
     protected $casts = [
         'DaDoc' => 'boolean',

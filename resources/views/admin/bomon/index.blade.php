@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('page_title', 'Danh Sách Bộ Môn')
+@section('page_title', 'Quản Lý Bộ Môn')
 
 @section('content')
     @if(session('success'))
@@ -15,7 +15,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
         <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
             <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -24,7 +24,7 @@
 
     <div class="card card-premium">
         <div class="card-header-premium d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-list text-primary me-2"></i> Quản Lý Bộ Môn</span>
+            <span><i class="fa-solid fa-building text-primary me-2"></i> Quản Lý Bộ Môn</span>
             <div class="d-flex gap-2">
                 <a href="{{ route('admin.import.template', 'bomon') }}"
                     class="btn btn-outline-secondary btn-sm rounded-pill px-3">
@@ -34,28 +34,32 @@
                     data-bs-target="#importModal">
                     <i class="fa-solid fa-file-excel me-1"></i>Import Excel
                 </button>
-                <a href="{{ route('bomon.create') }}" class="btn btn-success btn-sm rounded-pill px-3">
+                <a href="{{ route('bomon.create') }}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
                     <i class="fa-solid fa-plus me-1"></i> Thêm Mới
                 </a>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-custom table-hover mb-0">
+                <table class="table table-custom table-hover mb-0 align-middle">
                     <thead>
                         <tr>
-                            <th width="10%">Mã</th>
-                            <th width="30%">Tên Bộ Môn</th>
-                            <th width="40%">Mô Tả</th>
-                            <th width="20%" class="text-center">Thao Tác</th>
+                            <th width="15%">Mã Bộ Môn</th>
+                            <th width="40%">Tên Bộ Môn</th>
+                            <th width="30%">Khoa Trực Thuộc</th>
+                            <th width="15%" class="text-center">Thao Tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($bomons as $bomon)
                             <tr>
                                 <td><span class="badge bg-light text-dark fw-bold border">{{ $bomon->MaBoMon }}</span></td>
-                                <td class="fw-medium">{{ $bomon->TenBoMon }}</td>
-                                <td class="text-muted">{{ $bomon->MoTa ?? 'Không có mô tả' }}</td>
+                                <td class="fw-bold text-primary-custom">{{ $bomon->TenBoMon }}</td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+                                        <i class="fa-solid fa-university me-1"></i>{{ $bomon->khoa->TenKhoa ?? 'Chưa gán Khoa' }}
+                                    </span>
+                                </td>
                                 <td class="text-center">
                                     <a href="{{ route('bomon.edit', $bomon->MaBoMon) }}"
                                         class="btn btn-sm btn-light text-primary me-1 rounded-circle" title="Sửa">
@@ -109,7 +113,7 @@
                         <div class="alert alert-light border small text-muted mb-0">
                             <i class="fa-solid fa-circle-info me-1"></i> Tải <a
                                 href="{{ route('admin.import.template', 'bomon') }}" class="fw-bold">File mẫu .xlsx</a> để
-                            nhập đúng định dạng dữ liệu.
+                                nhập đúng định dạng dữ liệu.
                         </div>
                     </div>
                     <div class="modal-footer">

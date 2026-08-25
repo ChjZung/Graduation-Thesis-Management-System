@@ -19,9 +19,16 @@ Route::get('/', function () {
 
 Auth::routes(['register' => false]);
 
-// Custom: Quên mật khẩu (gửi yêu cầu thay vì email trực tiếp)
+// Custom: Quên mật khẩu
 Route::get('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'showForm'])->name('password.request');
 Route::post('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'sendRequest'])->name('password.send_request');
+
+// Thiết lập mật khẩu lần đầu (Onboarding cho tài khoản INITIAL)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/setup-password', [\App\Http\Controllers\Auth\PasswordSetupController::class, 'showSetupForm'])->name('password.setup');
+    Route::post('/setup-password', [\App\Http\Controllers\Auth\PasswordSetupController::class, 'setupPassword'])->name('password.setup.post');
+});
+
 
 // ==========================================
 // API ENDPOINTS (RESTful JSON)
@@ -107,9 +114,21 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/ho-so-bao-ve/{id}/phan-cong', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'phanCong'])->name('admin.hosoBaoVe.phanCong');
     Route::post('/ho-so-bao-ve/{id}/xac-nhan', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'xacNhan'])->name('admin.hosoBaoVe.xacNhan');
 
+    // Excel Import & Templates
+    Route::get('/import/template/{type}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadTemplate'])->name('admin.import.template');
+    Route::get('/import/error-log/{filename}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadErrorLog'])->name('admin.import.errorLog');
+
+    Route::post('/sinhvien/import', [\App\Http\Controllers\SinhVienController::class, 'importExcel'])->name('admin.sinhvien.import');
+    Route::post('/giangvien/import', [\App\Http\Controllers\GiangVienController::class, 'importExcel'])->name('admin.giangvien.import');
+    Route::post('/bomon/import', [\App\Http\Controllers\BoMonController::class, 'importExcel'])->name('admin.bomon.import');
+    Route::post('/nganh/import', [\App\Http\Controllers\NganhController::class, 'importExcel'])->name('admin.nganh.import');
+    Route::post('/lop/import', [\App\Http\Controllers\LopController::class, 'importExcel'])->name('admin.lop.import');
+    Route::post('/hocky/import', [\App\Http\Controllers\HocKyController::class, 'importExcel'])->name('admin.hocky.import');
+
     // Thông báo
     Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->only(['index', 'store', 'destroy']);
 });
+
 
 
 // ==========================================
@@ -125,6 +144,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Đề tài
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
+    Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 
     // Báo cáo tiến độ
     Route::get('/baocao', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'index'])->name('giangvien.baocao.index');
@@ -153,10 +173,21 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     // Nhóm & Đăng ký đề tài
     Route::get('nhom', [\App\Http\Controllers\SinhVien\NhomController::class, 'index'])->name('sinhvien.nhom.index');
     Route::post('nhom', [\App\Http\Controllers\SinhVien\NhomController::class, 'store'])->name('sinhvien.nhom.store');
+    Route::get('nhom/tra-cuu-sinh-vien', [\App\Http\Controllers\SinhVien\NhomController::class, 'traCuuSinhVien'])->name('sinhvien.nhom.traCuuSinhVien');
+    Route::get('nhom/{id}/chi-tiet', [\App\Http\Controllers\SinhVien\NhomController::class, 'chiTietNhom'])->name('sinhvien.nhom.chiTiet');
     Route::post('nhom/moi', [\App\Http\Controllers\SinhVien\NhomController::class, 'moiThanhVien'])->name('sinhvien.nhom.moiThanhVien');
+
     Route::post('nhom/loi-moi/{id}/chap-nhan', [\App\Http\Controllers\SinhVien\NhomController::class, 'xacNhanLoiMoi'])->name('sinhvien.nhom.xacNhanLoiMoi');
     Route::post('nhom/loi-moi/{id}/tu-choi', [\App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiLoiMoi'])->name('sinhvien.nhom.tuChoiLoiMoi');
+    Route::post('nhom/{id}/loi-moi/{maSV}/thu-hoi', [\App\Http\Controllers\SinhVien\NhomController::class, 'huyLoiMoiDaGui'])->name('sinhvien.nhom.huyLoiMoiDaGui');
+    Route::post('nhom/{id}/khai-tru/{maSV}', [\App\Http\Controllers\SinhVien\NhomController::class, 'khaiTruThanhVien'])->name('sinhvien.nhom.khaiTru');
+    Route::post('nhom/{id}/xin-gia-nhap', [\App\Http\Controllers\SinhVien\NhomController::class, 'xinGiaNhap'])->name('sinhvien.nhom.xinGiaNhap');
+
+    Route::post('nhom/{id}/huy-xin-gia-nhap', [\App\Http\Controllers\SinhVien\NhomController::class, 'huyXinGiaNhap'])->name('sinhvien.nhom.huyXinGiaNhap');
+    Route::post('nhom/{id}/yeu-cau/{maSV}/duyet', [\App\Http\Controllers\SinhVien\NhomController::class, 'duyetYeuCauXinVao'])->name('sinhvien.nhom.duyetYeuCau');
+    Route::post('nhom/{id}/yeu-cau/{maSV}/tu-choi', [\App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiYeuCauXinVao'])->name('sinhvien.nhom.tuChoiYeuCau');
     Route::resource('dangky', \App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store', 'destroy']);
+
 
     // Báo cáo tiến độ
     Route::get('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'index'])->name('sinhvien.baocao.index');

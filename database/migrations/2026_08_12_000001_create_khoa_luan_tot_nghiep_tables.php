@@ -26,10 +26,14 @@ return new class extends Migration {
             $table->boolean('TrangThai')->default(true);
             $table->integer('SoLanDangNhapSai')->default(0);
             $table->boolean('BatBuocDoiMatKhau')->default(true);
+            $table->string('password_status', 20)->default('INITIAL');
+            $table->timestamp('first_login_at')->nullable();
+            $table->timestamp('password_changed_at')->nullable();
             $table->timestamp('LanDangNhapCuoi')->nullable();
             $table->timestamp('NgayKhoa')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
 
             $table->foreign('MaVaiTro')->references('MaVaiTro')->on('vai_tros')->onUpdate('cascade')->onDelete('restrict');
         });

@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\ThongBao;
 use App\Models\NguoiNhanThongBao;
 use App\Models\ThanhVienNhom;
 use App\Models\GiangVien;
 use App\Models\TaiKhoan;
+use Illuminate\Support\Str;
 
 class ThongBaoService
 {
@@ -14,14 +16,32 @@ class ThongBaoService
      */
     public static function guiDen(string $maTK, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null): void
     {
+        $maTB = 'TB_' . Str::upper(Str::random(7));
+        while (ThongBao::where('MaThongBao', $maTB)->exists()) {
+            $maTB = 'TB_' . Str::upper(Str::random(7));
+        }
+
+        // Tạo bản ghi cha trong thong_baos
+        ThongBao::create([
+            'MaThongBao'   => $maTB,
+            'TieuDe'       => $tieuDe,
+            'NoiDung'      => $noiDung,
+            'LoaiThongBao' => $loai,
+            'DoiTuongNhan' => 'Cá nhân',
+            'NgayTao'      => now(),
+            'TrangThai'    => 'Đã tạo',
+        ]);
+
+        // Tạo bản ghi người nhận
         NguoiNhanThongBao::create([
-            'MaTK'      => $maTK,
-            'TieuDe'    => $tieuDe,
-            'NoiDung'   => $noiDung,
-            'Loai'      => $loai,
-            'DuongDan'  => $duongDan,
-            'DaDoc'     => false,
-            'NgayGui'   => now(),
+            'MaThongBao' => $maTB,
+            'MaTK'       => $maTK,
+            'TieuDe'     => $tieuDe,
+            'NoiDung'    => $noiDung,
+            'Loai'       => $loai,
+            'DuongDan'   => $duongDan,
+            'DaDoc'      => false,
+            'NgayDoc'    => null,
         ]);
     }
 

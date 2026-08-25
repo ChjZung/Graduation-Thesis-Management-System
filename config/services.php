@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Google Gemini API — Thêm GEMINI_API_KEY vào .env để bật AI thật
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model'   => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    ],
+
 ];

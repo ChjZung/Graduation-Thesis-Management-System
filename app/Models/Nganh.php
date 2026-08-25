@@ -19,4 +19,14 @@ class Nganh extends Model
     ];
 
     public $timestamps = true;
+
+    public function khoa()
+    {
+        return $this->belongsTo(Khoa::class, 'MaKhoa', 'MaKhoa');
+    }
+
+    public function lops()
+    {
+        return $this->hasMany(Lop::class, 'MaNganh', 'MaNganh');
+    }
 }

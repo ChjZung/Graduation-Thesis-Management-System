@@ -549,7 +549,7 @@
                 <label for="password">
                     <i class="fa-solid fa-lock me-1"></i>Mật Khẩu
                 </label>
-                <div class="input-icon-wrap">
+                <div class="input-icon-wrap" style="position: relative;">
                     <i class="fa-solid fa-key field-icon"></i>
                     <input
                         id="password"
@@ -558,8 +558,12 @@
                         placeholder="Nhập mật khẩu..."
                         required
                         autocomplete="current-password"
+                        style="padding-right: 50px;"
                         class="{{ $errors->has('password') ? 'is-invalid' : '' }}"
                     >
+                    <button type="button" id="btnToggleLoginPassword" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748B; cursor: pointer; font-size: 1.15rem; padding: 0;" title="Hiện/Ẩn mật khẩu">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
                 </div>
                 @error('password')
                     <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
@@ -593,4 +597,26 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('btnToggleLoginPassword');
+    const pwdInput = document.getElementById('password');
+    if (toggleBtn && pwdInput) {
+        toggleBtn.addEventListener('click', function () {
+            const icon = this.querySelector('i');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    }
+});
+</script>
 @endsection
+

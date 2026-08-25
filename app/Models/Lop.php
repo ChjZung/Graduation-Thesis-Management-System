@@ -24,5 +24,9 @@ class Lop extends Model
     {
         return $this->belongsTo(Nganh::class, 'MaNganh', 'MaNganh');
     }
-}
 
+    public function sinhViens()
+    {
+        return $this->hasMany(SinhVien::class, 'MaLop', 'MaLop');
+    }
+}

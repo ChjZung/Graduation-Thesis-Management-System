@@ -16,7 +16,19 @@ class TaiKhoan extends Authenticatable
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaTK', 'MaVaiTro', 'TenDangNhap', 'MatKhau', 'TrangThai', 'SoLanDangNhapSai', 'BatBuocDoiMatKhau', 'LanDangNhapCuoi', 'NgayKhoa', 'remember_token'
+        'MaTK',
+        'MaVaiTro',
+        'TenDangNhap',
+        'MatKhau',
+        'TrangThai',
+        'SoLanDangNhapSai',
+        'BatBuocDoiMatKhau',
+        'password_status',
+        'first_login_at',
+        'password_changed_at',
+        'LanDangNhapCuoi',
+        'NgayKhoa',
+        'remember_token'
     ];
 
     protected $hidden = [
@@ -26,6 +38,18 @@ class TaiKhoan extends Authenticatable
 
     public $timestamps = true;
 
+    protected function casts(): array
+    {
+        return [
+            'first_login_at'     => 'datetime',
+            'password_changed_at'=> 'datetime',
+            'LanDangNhapCuoi'    => 'datetime',
+            'NgayKhoa'           => 'datetime',
+            'TrangThai'          => 'boolean',
+            'BatBuocDoiMatKhau'  => 'boolean',
+        ];
+    }
+
     public function getAuthPasswordName()
     {
         return 'MatKhau';
@@ -34,6 +58,21 @@ class TaiKhoan extends Authenticatable
     public function getAuthPassword()
     {
         return $this->MatKhau;
+    }
+
+    public function isPasswordInitial(): bool
+    {
+        return ($this->password_status === 'INITIAL' || $this->BatBuocDoiMatKhau === true);
+    }
+
+    public function isPasswordActive(): bool
+    {
+        return ($this->password_status === 'ACTIVE' && !$this->BatBuocDoiMatKhau);
+    }
+
+    public function isPasswordExpired(): bool
+    {
+        return ($this->password_status === 'EXPIRED');
     }
 
     public function vaiTro()
@@ -56,4 +95,3 @@ class TaiKhoan extends Authenticatable
         return $this->hasOne(SinhVien::class, 'MaTK', 'MaTK');
     }
 }
-

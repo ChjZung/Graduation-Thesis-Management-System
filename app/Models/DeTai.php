@@ -24,5 +24,16 @@ class DeTai extends Model
     {
         return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
     }
+
+    public function dangKyDeTais()
+    {
+        return $this->hasMany(DangKyDeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function nhoms()
+    {
+        return $this->hasMany(Nhom::class, 'MaDeTai', 'MaDeTai');
+    }
 }
+
 

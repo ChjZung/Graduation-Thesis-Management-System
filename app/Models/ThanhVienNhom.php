@@ -18,8 +18,18 @@ class ThanhVienNhom extends Model
         'MaNhom', 'MaSV', 'VaiTro', 'TrangThai', 'NgayThamGia'
     ];
 
-
     public $timestamps = true;
+
+    /**
+     * Hỗ trợ Composite Primary Key (MaNhom, MaSV) cho Eloquent update/save query
+     */
+    protected function setKeysForSaveQuery($query)
+    {
+        $query->where('MaNhom', '=', $this->getAttribute('MaNhom'))
+              ->where('MaSV', '=', $this->getAttribute('MaSV'));
+
+        return $query;
+    }
 
     public function sinhVien()
     {
@@ -31,4 +41,3 @@ class ThanhVienNhom extends Model
         return $this->belongsTo(Nhom::class, 'MaNhom', 'MaNhom');
     }
 }
-

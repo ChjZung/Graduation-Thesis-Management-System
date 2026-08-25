@@ -24,5 +24,11 @@ class GiangVien extends Model
     {
         return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon');
     }
+
+    public function taiKhoan()
+    {
+        return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK');
+    }
 }
+
 

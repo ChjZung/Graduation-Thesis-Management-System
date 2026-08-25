@@ -4,16 +4,18 @@ namespace App\Http\Controllers\SinhVien;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaoCaoTienDo;
-use App\Models\TomTatBaoCao;
+use App\Models\MocThoiGianKhoaLuan;
+use App\Models\KeHoachKhoaLuan;
 use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
-use App\Services\AiSummaryService;
+use App\Helpers\IdGenerator;
+use App\Jobs\GenerateAiSummaryJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class BaoCaoController extends Controller
 {
@@ -36,18 +38,18 @@ class BaoCaoController extends Controller
                 ->with('error', 'Bạn chưa có hồ sơ sinh viên. Vui lòng liên hệ Giáo vụ.');
         }
 
-        // Kiểm tra có nhóm & đề tài đã duyệt chưa
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')->first();
 
         if (!$thanhVienRecord) {
             return view('sinhvien.baocao.index', [
-                'error'    => 'Bạn chưa có nhóm. Vui lòng tạo hoặc gia nhập nhóm trước.',
-                'sinhVien' => $sinhVien,
-                'nhom'     => null,
-                'mocs'     => self::MOCS,
-                'baoCaos'  => collect(),
+                'error'      => 'Bạn chưa có nhóm. Vui lòng tạo hoặc gia nhập nhóm trước.',
+                'sinhVien'   => $sinhVien,
+                'nhom'       => null,
+                'mocs'       => self::MOCS,
+                'baoCaos'    => collect(),
                 'mocHienTai' => 1,
+                'mocDeadlines' => [],
             ]);
         }
 
@@ -55,40 +57,41 @@ class BaoCaoController extends Controller
 
         if (!$nhom || !$nhom->MaDeTai) {
             return view('sinhvien.baocao.index', [
-                'error'    => 'Nhóm của bạn chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
-                'sinhVien' => $sinhVien,
-                'nhom'     => $nhom,
-                'mocs'     => self::MOCS,
-                'baoCaos'  => collect(),
+                'error'      => 'Nhóm của bạn chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
+                'sinhVien'   => $sinhVien,
+                'nhom'       => $nhom,
+                'mocs'       => self::MOCS,
+                'baoCaos'    => collect(),
                 'mocHienTai' => 1,
+                'mocDeadlines' => [],
             ]);
         }
 
-        // Lấy tất cả báo cáo của nhóm
         $baoCaos = BaoCaoTienDo::with('tomTat')
             ->where('MaNhom', $nhom->MaNhom)
             ->orderBy('LanBaoCao')
             ->get()
             ->keyBy('LanBaoCao');
 
-        // Xác định mốc hiện tại (mốc tiếp theo có thể nộp)
         $mocHienTai = 1;
         for ($i = 1; $i <= 5; $i++) {
             if (!isset($baoCaos[$i])) {
                 $mocHienTai = $i;
                 break;
             }
-            // Nếu mốc i chưa "Đạt" thì chưa được mở mốc i+1
             if ($baoCaos[$i]->TrangThai !== 'Đạt') {
                 $mocHienTai = $i;
                 break;
             }
             $mocHienTai = $i + 1;
         }
-        if ($mocHienTai > 5) $mocHienTai = 5; // đã xong cả 5
+        if ($mocHienTai > 5) $mocHienTai = 5;
+
+        // BƯỚC 4: Lấy deadline các mốc từ KeHoach để hiển thị cảnh báo
+        $mocDeadlines = $this->getMocDeadlines();
 
         return view('sinhvien.baocao.index', compact(
-            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai'
+            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines'
         ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
@@ -126,7 +129,13 @@ class BaoCaoController extends Controller
 
         $request->validate($rules, $messages);
 
-        // Kiểm tra thứ tự: phải có mốc trước đã "Đạt"
+        // BƯỚC 4 FIX: Kiểm tra Deadline từ MocThoiGian
+        $deadlineError = $this->checkDeadline($lan);
+        if ($deadlineError) {
+            return back()->with('error', $deadlineError);
+        }
+
+        // Kiểm tra thứ tự mốc
         if ($lan > 1) {
             $mocTruoc = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)
                 ->where('LanBaoCao', $lan - 1)
@@ -146,8 +155,9 @@ class BaoCaoController extends Controller
             return back()->with('error', "Mốc {$lan} đã có bài nộp đang chờ xử lý hoặc đã đạt.");
         }
 
-        DB::transaction(function () use ($request, $nhom, $lan, $mocInfo) {
-            // Upload file PDF nếu có
+        $maBaoCao = null;
+
+        DB::transaction(function () use ($request, $nhom, $lan, $mocInfo, &$maBaoCao) {
             $tenFile = null;
             $duongDanFile = null;
             if ($request->hasFile('FileBaoCao')) {
@@ -156,13 +166,10 @@ class BaoCaoController extends Controller
                 $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$lan}", 'public');
             }
 
-            // Tạo mã báo cáo
-            $maBaoCao = 'BC' . str_pad(
-                BaoCaoTienDo::count() + 1,
-                3, '0', STR_PAD_LEFT
-            );
+            // BƯỚC 1 FIX: Dùng IdGenerator an toàn thay count()+1
+            $maBaoCao = IdGenerator::nextBaoCao();
 
-            $baoCao = BaoCaoTienDo::create([
+            BaoCaoTienDo::create([
                 'MaBaoCao'      => $maBaoCao,
                 'MaNhom'        => $nhom->MaNhom,
                 'LanBaoCao'     => $lan,
@@ -174,23 +181,58 @@ class BaoCaoController extends Controller
                 'LinkCode'      => $request->input('LinkCode'),
                 'TrangThai'     => 'Chờ duyệt',
             ]);
-
-            // Sinh bản tóm tắt AI ngay sau khi nộp
-            $aiService = new \App\Services\AiSummaryService();
-            $aiData = $aiService->generate($baoCao);
-
-            $maTomTat = 'TT' . str_pad(
-                \App\Models\TomTatBaoCao::count() + 1,
-                3, '0', STR_PAD_LEFT
-            );
-
-            TomTatBaoCao::create(array_merge(
-                ['MaTomTat' => $maTomTat, 'MaBaoCao' => $baoCao->MaBaoCao],
-                $aiData
-            ));
         });
 
+        // BƯỚC 5: Dispatch Queue Job bất đồng bộ — không block request
+        GenerateAiSummaryJob::dispatch($maBaoCao);
+
         return redirect()->route('sinhvien.baocao.index')
-            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đã tự động sinh bản tóm tắt AI để Giảng viên xem xét.");
+            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đang tạo tóm tắt AI (sẽ hiển thị sau ít phút).");
+    }
+
+    /**
+     * BƯỚC 4: Kiểm tra deadline nộp bài theo MocThoiGian.
+     * Trả về null nếu còn hạn, trả về chuỗi lỗi nếu quá hạn.
+     */
+    private function checkDeadline(int $lan): ?string
+    {
+        // Lấy kế hoạch khóa luận đang hiện hành
+        $keHoach = KeHoachKhoaLuan::where('TrangThai', 'Đang thực hiện')->first();
+        if (!$keHoach) return null; // Không có kế hoạch → bỏ qua kiểm tra
+
+        $moc = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)
+            ->where('TenMoc', 'LIKE', "%Mốc {$lan}%")
+            ->orWhere('TenMoc', 'LIKE', "%Moc {$lan}%")
+            ->first();
+
+        if (!$moc) return null; // Chưa cấu hình mốc → bỏ qua
+
+        $ngayKetThuc = Carbon::parse($moc->NgayKetThuc)->endOfDay();
+
+        if (now()->greaterThan($ngayKetThuc)) {
+            return "Đã quá hạn nộp Mốc {$lan}! Hạn cuối là " . $ngayKetThuc->format('d/m/Y H:i') . ". Vui lòng liên hệ Giáo vụ Khoa nếu cần gia hạn.";
+        }
+
+        return null;
+    }
+
+    /**
+     * Lấy map deadline các mốc để hiển thị trên UI.
+     */
+    private function getMocDeadlines(): array
+    {
+        $keHoach = KeHoachKhoaLuan::where('TrangThai', 'Đang thực hiện')->first();
+        if (!$keHoach) return [];
+
+        $mocs = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)->get();
+        $map = [];
+        foreach ($mocs as $moc) {
+            foreach (range(1, 5) as $lan) {
+                if (str_contains($moc->TenMoc, "Mốc {$lan}") || str_contains($moc->TenMoc, "Moc {$lan}")) {
+                    $map[$lan] = $moc->NgayKetThuc;
+                }
+            }
+        }
+        return $map;
     }
 }

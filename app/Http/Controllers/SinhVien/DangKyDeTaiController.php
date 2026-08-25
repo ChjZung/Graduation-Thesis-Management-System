@@ -20,27 +20,22 @@ class DangKyDeTaiController extends Controller
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
 
         if (!$sinhVien) {
-            $firstLop = \App\Models\Lop::first();
-            $maSV = 'SV_' . Str::upper(Str::random(5));
-            $sinhVien = SinhVien::create([
-                'MaSV' => $maSV,
-                'MaTK' => $user->MaTK,
-                'MaLop' => $firstLop->MaLop ?? 'L01',
-                'HoTen' => $user->TenDangNhap,
-                'Email' => $user->TenDangNhap . '@st.huit.edu.vn',
-                'TrangThai' => 'Đang học'
-            ]);
+            return redirect()->route('sinhvien.nhom.index')
+                ->with('error', 'Hồ sơ sinh viên chưa được thiết lập. Vui lòng liên hệ Giáo vụ Khoa.');
         }
 
-
-        // 1. Kiểm tra Nhóm của sinh viên
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
+        // 1. Kiểm tra Nhóm của sinh viên (chỉ lấy nhóm đã tham gia chính thức)
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')
+            ->first();
         $nhom = null;
         $dangKyCurrent = null;
+        $soThanhVien = 0;
 
         if ($thanhVienRecord) {
-            $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->first();
+            $nhom = Nhom::with('thanhViens')->where('MaNhom', $thanhVienRecord->MaNhom)->first();
             if ($nhom) {
+                $soThanhVien = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
                 $dangKyCurrent = DangKyDeTai::with('deTai.giangVien')
                     ->where('MaNhom', $nhom->MaNhom)
                     ->orderBy('created_at', 'desc')
@@ -48,7 +43,7 @@ class DangKyDeTaiController extends Controller
             }
         }
 
-        // 2. Lấy danh sách Đề tài ĐÃ ĐƯỢC GIÁO VỤ PHÊ DUYỆT ('Đã duyệt')
+        // 2. Lấy danh sách Đề tài đã duyệt
         $query = DeTai::with('giangVien')->where('TrangThai', 'Đã duyệt');
 
         if ($request->filled('search')) {
@@ -57,7 +52,13 @@ class DangKyDeTaiController extends Controller
 
         $detais = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien'));
+        // 3. Lấy map các đề tài đã có nhóm đăng ký ('Chờ duyệt' hoặc 'Đã duyệt')
+        $deTaiDaDangKys = DangKyDeTai::whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
+            ->with('nhom')
+            ->get()
+            ->keyBy('MaDeTai');
+
+        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys'));
     }
 
     public function store(Request $request)
@@ -72,8 +73,10 @@ class DangKyDeTaiController extends Controller
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
         $deTai = DeTai::findOrFail($request->MaDeTai);
 
-        // 1. Kiểm tra sinh viên có thuộc nhóm nào không
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
+        // 1. Kiểm tra sinh viên có thuộc nhóm chính thức không
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')
+            ->first();
 
         if (!$thanhVienRecord) {
             return redirect()->back()->withErrors('Bạn chưa có nhóm khóa luận! Vui lòng tạo nhóm hoặc gia nhập nhóm trước khi đăng ký đề tài.');
@@ -81,21 +84,30 @@ class DangKyDeTaiController extends Controller
 
         $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->firstOrFail();
 
-        // 2. Kiểm tra chỉ Trưởng nhóm được đại diện đăng ký
+        // 2. Chỉ Trưởng nhóm được đăng ký
         if ($nhom->MaTruongNhom != $sinhVien->MaSV) {
             return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài khóa luận!');
         }
 
-        // 3. Kiểm tra xem đề tài đã được nhóm khác đăng ký được duyệt chưa
+        // 3. QUY ĐỊNH BẮT BUỘC: Nhóm phải có ĐỦ 3 thành viên chính thức mới được đăng ký đề tài
+        $countMembers = ThanhVienNhom::where('MaNhom', $nhom->MaNhom)
+            ->where('TrangThai', 'da_tham_gia')
+            ->count();
+
+        if ($countMembers < 3) {
+            return redirect()->back()->withErrors("Quy định bắt buộc: Nhóm phải có ĐỦ 3 thành viên chính thức mới được phép đăng ký đề tài! Hiện tại nhóm của bạn chỉ có {$countMembers}/3 thành viên. Hãy vào mục 'Nhóm Khóa Luận' để mời thêm thành viên.");
+        }
+
+        // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (Chờ duyệt hoặc Đã duyệt)
         $alreadyTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
-            ->where('TrangThai', 'Đã duyệt')
+            ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
             ->exists();
 
         if ($alreadyTaken) {
-            return redirect()->back()->withErrors('Đề tài này đã được một nhóm khác đăng ký và duyệt chính thức!');
+            return redirect()->back()->withErrors('Đề tài này đã có nhóm khác đăng ký. Vui lòng chọn đề tài khác!');
         }
 
-        // 4. Kiểm tra nhóm đã đăng ký đề tài nào chưa
+        // 5. Kiểm tra nhóm đã đăng ký đề tài nào chưa
         $existingRegistration = DangKyDeTai::where('MaNhom', $nhom->MaNhom)
             ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
             ->first();
@@ -107,12 +119,12 @@ class DangKyDeTaiController extends Controller
         $maDK = 'DK_' . Str::upper(Str::random(6));
 
         DangKyDeTai::create([
-            'MaDangKy' => $maDK,
-            'MaNhom' => $nhom->MaNhom,
-            'MaDeTai' => $deTai->MaDeTai,
+            'MaDangKy'     => $maDK,
+            'MaNhom'       => $nhom->MaNhom,
+            'MaDeTai'      => $deTai->MaDeTai,
             'MaGVHuongDan' => $deTai->MaGV,
-            'NgayDangKy' => now(),
-            'TrangThai' => 'Chờ duyệt',
+            'NgayDangKy'   => now(),
+            'TrangThai'    => 'Chờ duyệt',
         ]);
 
         $nhom->update(['MaDeTai' => $deTai->MaDeTai]);

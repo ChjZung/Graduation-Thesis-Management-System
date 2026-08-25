@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\IdGenerator;
 use App\Models\HocKy;
 use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ class HocKyController extends Controller
 
     public function index()
     {
-        $hockys = HocKy::paginate(10);
+        $hockys = HocKy::orderBy('created_at', 'desc')->paginate(10);
         return view('admin.hocky.index', compact('hockys'));
     }
 
@@ -24,18 +25,32 @@ class HocKyController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'MaHocKy' => 'nullable|string|max:10|unique:hoc_kies,MaHocKy',
             'TenHocKy' => 'required|string|max:50',
             'NamHoc' => 'required|string|max:20',
-            'NgayBatDau' => 'nullable|date',
-            'NgayKetThuc' => 'nullable|date|after_or_equal:NgayBatDau'
+            'NgayBatDau' => 'required|date',
+            'NgayKetThuc' => 'required|date|after_or_equal:NgayBatDau'
         ], [
+            'MaHocKy.unique' => 'Mã học kỳ đã tồn tại.',
             'TenHocKy.required' => 'Vui lòng nhập tên học kỳ.',
             'NamHoc.required' => 'Vui lòng nhập năm học.',
+            'NgayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
+            'NgayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
             'NgayKetThuc.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.'
         ]);
 
-        HocKy::create($request->only(['TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc']));
-        return redirect()->route('hocky.index')->with('success', 'Thêm học kỳ thành công!');
+        $maHK = $request->filled('MaHocKy') ? strtoupper(trim($request->MaHocKy)) : IdGenerator::nextHocKy();
+
+        HocKy::create([
+            'MaHocKy' => $maHK,
+            'TenHocKy' => trim($request->TenHocKy),
+            'NamHoc' => trim($request->NamHoc),
+            'NgayBatDau' => $request->NgayBatDau,
+            'NgayKetThuc' => $request->NgayKetThuc,
+            'TrangThai' => true,
+        ]);
+
+        return redirect()->route('hocky.index')->with('success', "Thêm học kỳ '{$request->TenHocKy}' thành công!");
     }
 
     public function edit($id)
@@ -51,15 +66,24 @@ class HocKyController extends Controller
         $request->validate([
             'TenHocKy' => 'required|string|max:50',
             'NamHoc' => 'required|string|max:20',
-            'NgayBatDau' => 'nullable|date',
-            'NgayKetThuc' => 'nullable|date|after_or_equal:NgayBatDau'
+            'NgayBatDau' => 'required|date',
+            'NgayKetThuc' => 'required|date|after_or_equal:NgayBatDau'
         ], [
             'TenHocKy.required' => 'Vui lòng nhập tên học kỳ.',
             'NamHoc.required' => 'Vui lòng nhập năm học.',
+            'NgayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
+            'NgayKetThuc.required' => 'Vui lòng chọn ngày kết thúc.',
             'NgayKetThuc.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.'
         ]);
 
-        $hocky->update($request->only(['TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc']));
+        $hocky->update([
+            'TenHocKy' => trim($request->TenHocKy),
+            'NamHoc' => trim($request->NamHoc),
+            'NgayBatDau' => $request->NgayBatDau,
+            'NgayKetThuc' => $request->NgayKetThuc,
+            'TrangThai' => $request->has('TrangThai') ? (bool)$request->TrangThai : $hocky->TrangThai,
+        ]);
+
         return redirect()->route('hocky.index')->with('success', 'Cập nhật học kỳ thành công!');
     }
 
@@ -68,9 +92,9 @@ class HocKyController extends Controller
         $hocky = HocKy::findOrFail($id);
         try {
             HocKy::destroy($id);
-            return redirect()->route('hocky.index')->with('success', 'Xóa học kỳ thành công!');
+            return redirect()->route('hocky.index')->with('success', "Xóa học kỳ '{$hocky->TenHocKy}' thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors("Không thể xóa học kỳ '{$hocky->TenHocKy}' do đang có đề tài, nhóm đồ án hoặc phân công liên quan.");
+            return redirect()->back()->withErrors("Không thể xóa học kỳ '{$hocky->TenHocKy}' do đang có đề tài hoặc kế hoạch khóa luận liên quan.");
         }
     }
 

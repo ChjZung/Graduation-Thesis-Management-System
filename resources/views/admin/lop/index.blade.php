@@ -1,91 +1,133 @@
 @extends('layouts.admin')
-@section('page_title', 'Danh Sách Lớp')
-@section('content')
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('import_result'))
-<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-circle-info me-2"></i>{!! session('import_result') !!}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-    <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
-<div class="card card-premium">
-    <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-list text-primary me-2"></i>Quản Lý Lớp</span>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.import.template', 'lop') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
-            </a>
-            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-excel me-1"></i>Import Excel
-            </button>
-            <a href="{{ route('lop.create') }}" class="btn btn-success btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i>Thêm Mới</a>
+@section('page_title', 'Quản Lý Lớp Học')
+
+@section('content')
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+            <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('import_result'))
+        <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+            <i class="fa-solid fa-circle-info me-2"></i>{!! session('import_result') !!}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(isset($errors) && $errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+            <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <div class="card card-premium">
+        <div class="card-header-premium d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-users-rectangle text-primary me-2"></i> Quản Lý Lớp Học</span>
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.import.template', 'lop') }}"
+                    class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
+                </a>
+                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal"
+                    data-bs-target="#importModal">
+                    <i class="fa-solid fa-file-excel me-1"></i>Import Excel
+                </button>
+                <a href="{{ route('lop.create') }}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm Mới
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-custom table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th width="15%">Mã Lớp</th>
+                            <th width="25%">Tên Lớp</th>
+                            <th width="25%">Ngành / Khoa</th>
+                            <th width="15%">Khóa Học</th>
+                            <th width="10%" class="text-center">Số SV</th>
+                            <th width="10%" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($lops as $lop)
+                            <tr>
+                                <td><span class="badge bg-light text-dark fw-bold border">{{ $lop->MaLop }}</span></td>
+                                <td class="fw-bold text-primary-custom">{{ $lop->TenLop }}</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ $lop->nganh->TenNganh ?? 'Chưa gán ngành' }}</div>
+                                    <div class="small text-muted">{{ $lop->nganh->khoa->TenKhoa ?? '' }}</div>
+                                </td>
+                                <td><span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ $lop->KhoaHoc }}</span></td>
+                                <td class="text-center">
+                                    <span class="badge bg-info-subtle text-info-emphasis rounded-pill px-3">{{ $lop->sinh_viens_count ?? 0 }} SV</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ route('lop.edit', $lop->MaLop) }}"
+                                        class="btn btn-sm btn-light text-primary me-1 rounded-circle" title="Sửa">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <form action="{{ route('lop.destroy', $lop->MaLop) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Bạn có chắc chắn muốn xóa lớp này?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle"
+                                            title="Xóa">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="fa-solid fa-folder-open fs-1 text-light mb-3 d-block"></i>
+                                    Chưa có dữ liệu lớp học
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if($lops->hasPages())
+            <div class="card-footer bg-white border-0 py-3">
+                {{ $lops->links('pagination::bootstrap-5') }}
+            </div>
+        @endif
+    </div>
+
+    <!-- MODAL IMPORT -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ route('admin.lop.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fa-solid fa-file-excel me-2"></i>Import Danh Sách Lớp</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Chọn file (.xlsx, .csv)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
+                        </div>
+                        <div class="alert alert-light border small text-muted mb-0">
+                            <i class="fa-solid fa-circle-info me-1"></i> Tải <a
+                                href="{{ route('admin.import.template', 'lop') }}" class="fw-bold">File mẫu .xlsx</a> để
+                                nhập đúng định dạng dữ liệu.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4"><i
+                                class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-custom mb-0">
-            <thead><tr><th>Mã Lớp</th><th>Tên Lớp</th><th>Mã Ngành</th><th>Khóa Học</th><th class="text-center">Thao Tác</th></tr></thead>
-            <tbody>
-                @foreach($lops as $item)
-                <tr>
-                    <td><span class="badge bg-light text-dark fw-bold border">{{ $item->MaLop }}</span></td>
-                    <td class="fw-medium">{{ $item->TenLop }}</td>
-                    <td>{{ $item->MaNganh }}</td>
-                    <td>{{ $item->KhoaHoc }}</td>
-                    <td class="text-center">
-                        <a href="{{ route('lop.edit', $item->MaLop) }}" class="btn btn-sm btn-light text-primary rounded-circle"><i class="fa-solid fa-pen"></i></a>
-                        <form action="{{ route('lop.destroy', $item->MaLop) }}" method="POST" class="d-inline" onsubmit="return confirm('Xóa lớp này?');">
-                            @csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-light text-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-    @if(method_exists($lops, 'hasPages') && $lops->hasPages())
-    <div class="card-footer bg-white border-0 py-3">
-        {{ $lops->links('pagination::bootstrap-5') }}
-    </div>
-    @endif
-</div>
-
-<!-- MODAL IMPORT -->
-<div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form action="{{ route('admin.lop.import') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="fa-solid fa-file-excel me-2"></i>Import Danh Sách Lớp</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">Chọn file (.xlsx, .csv)</label>
-                        <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
-                    </div>
-                    <div class="alert alert-light border small text-muted mb-0">
-                        <i class="fa-solid fa-circle-info me-1"></i> Tải <a href="{{ route('admin.import.template', 'lop') }}" class="fw-bold">File mẫu .xlsx</a> để nhập đúng định dạng dữ liệu.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 @endsection
