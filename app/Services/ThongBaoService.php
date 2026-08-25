@@ -95,4 +95,68 @@ class ThongBaoService
             self::guiDen($maTK, $tieuDe, $noiDung, $loai);
         }
     }
+
+    /**
+     * Gửi thông báo deadline có chống gửi trùng lặp cùng 1 tiêu đề cho 1 tài khoản trong ngày
+     */
+    public static function guiThongBaoDeadline(string $maTK, string $tieuDe, string $noiDung, string $loai = 'Báo cáo', ?string $duongDan = null): bool
+    {
+        $today = date('Y-m-d');
+        $alreadySent = NguoiNhanThongBao::where('MaTK', $maTK)
+            ->where('TieuDe', $tieuDe)
+            ->whereDate('created_at', $today)
+            ->exists();
+
+        if ($alreadySent) {
+            return false;
+        }
+
+        self::guiDen($maTK, $tieuDe, $noiDung, $loai, $duongDan);
+        return true;
+    }
+
+    /**
+     * Gửi thông báo đính kèm file văn bản gốc kế hoạch cho Sinh viên / Giảng viên
+     */
+    public static function guiThongBaoKemFileGoc(string $tieuDe, string $noiDung, string $fileUrl, string $loai = 'Kế hoạch'): int
+    {
+        $maTB = 'TB_' . Str::upper(Str::random(7));
+        while (ThongBao::where('MaThongBao', $maTB)->exists()) {
+            $maTB = 'TB_' . Str::upper(Str::random(7));
+        }
+
+        // Tạo bản ghi cha
+        ThongBao::create([
+            'MaThongBao'   => $maTB,
+            'TieuDe'       => $tieuDe,
+            'NoiDung'      => $noiDung,
+            'LoaiThongBao' => $loai,
+            'DoiTuongNhan' => 'Toàn thể',
+            'FileDinhKem'  => $fileUrl,
+            'NgayTao'      => now(),
+            'TrangThai'    => 'Đã phát hành',
+        ]);
+
+        // Phân phối tới tất cả Sinh viên và Giảng viên
+        $taiKhoans = TaiKhoan::whereHas('vaiTro', function($q) {
+            $q->whereIn('TenVaiTro', ['Sinh viên', 'Giảng viên']);
+        })->get();
+
+        $count = 0;
+        foreach ($taiKhoans as $tk) {
+            NguoiNhanThongBao::create([
+                'MaThongBao' => $maTB,
+                'MaTK'       => $tk->MaTK,
+                'TieuDe'     => $tieuDe,
+                'NoiDung'    => $noiDung,
+                'Loai'       => $loai,
+                'DuongDan'   => asset($fileUrl),
+                'DaDoc'      => false,
+                'NgayDoc'    => null,
+            ]);
+            $count++;
+        }
+
+        return $count;
+    }
 }
