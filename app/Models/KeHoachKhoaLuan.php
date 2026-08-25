@@ -15,7 +15,9 @@ class KeHoachKhoaLuan extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaKeHoach', 'MaHocKy', 'MaGVu', 'TenKeHoach', 'NoiDung', 'TrangThai', 'NgayTao', 'NgayCongBo'
+        'MaKeHoach', 'MaKhoa', 'MaBoMon', 'MaHocKy', 'NamHoc', 'MaGVu', 'NguoiLap',
+        'TenKeHoach', 'NoiDung', 'NgayBatDau', 'NgayKetThuc', 'TrangThai',
+        'NgayTao', 'NgayCongBo'
     ];
 
     public $timestamps = true;
@@ -25,9 +27,19 @@ class KeHoachKhoaLuan extends Model
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
     }
 
+    public function khoa()
+    {
+        return $this->belongsTo(Khoa::class, 'MaKhoa', 'MaKhoa');
+    }
+
+    public function boMon()
+    {
+        return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon');
+    }
+
     public function mocThoiGians()
     {
-        return $this->hasMany(MocThoiGianKhoaLuan::class, 'MaKeHoach', 'MaKeHoach')->orderBy('NgayBatDau', 'asc');
+        return $this->hasMany(MocThoiGianKhoaLuan::class, 'MaKeHoach', 'MaKeHoach')->orderBy('ThuTu', 'asc');
     }
 
     public function svDuDieuKien()
@@ -35,4 +47,3 @@ class KeHoachKhoaLuan extends Model
         return $this->hasMany(DanhSachSVDuDieuKien::class, 'MaKeHoach', 'MaKeHoach');
     }
 }
-

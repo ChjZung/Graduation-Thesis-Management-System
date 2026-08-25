@@ -15,7 +15,12 @@ class MocThoiGianKhoaLuan extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaMoc', 'MaKeHoach', 'TenMoc', 'NgayBatDau', 'NgayKetThuc', 'MoTa'
+        'MaMoc', 'MaKeHoach', 'LoaiGiaiDoan', 'ThuTu', 'TenMoc', 'DoiTuongThucHien',
+        'NgayBatDau', 'NgayKetThuc', 'MoTa', 'BatBuoc'
+    ];
+
+    protected $casts = [
+        'BatBuoc' => 'boolean',
     ];
 
     public $timestamps = true;
@@ -25,4 +30,3 @@ class MocThoiGianKhoaLuan extends Model
         return $this->belongsTo(KeHoachKhoaLuan::class, 'MaKeHoach', 'MaKeHoach');
     }
 }
-
