@@ -49,32 +49,31 @@ class GiangVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap',
+            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap|unique:giang_viens,MaGV',
             'HoTen' => 'required|string|max:100',
             'HocVi' => 'required|string|max:50',
             'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
             'Email' => 'required|email|max:100|unique:giang_viens,Email',
             'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:giang_viens,SoDienThoai']
         ], [
-            'TenDangNhap.required' => 'Vui lòng nhập tên đăng nhập (Mã GV).',
-            'TenDangNhap.unique' => 'Tên đăng nhập đã tồn tại trong hệ thống.',
-            'HoTen.required' => 'Vui lòng nhập họ tên giảng viên.',
-            'HocVi.required' => 'Vui lòng chọn hoặc nhập học vị.',
-            'MaBoMon.required' => 'Vui lòng chọn bộ môn.',
-            'Email.required' => 'Vui lòng nhập email.',
-            'Email.email' => 'Định dạng email không hợp lệ.',
-            'Email.unique' => 'Email đã được sử dụng bởi giảng viên khác.',
-            'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
+            'TenDangNhap.required' => 'Vui lòng nhập Mã giảng viên (MaGV).',
+            'TenDangNhap.unique'   => 'Mã giảng viên / Tên đăng nhập đã tồn tại trong hệ thống.',
+            'HoTen.required'       => 'Vui lòng nhập họ tên giảng viên.',
+            'HocVi.required'       => 'Vui lòng chọn hoặc nhập học vị.',
+            'MaBoMon.required'     => 'Vui lòng chọn bộ môn.',
+            'Email.required'       => 'Vui lòng nhập email.',
+            'Email.email'          => 'Định dạng email không hợp lệ.',
+            'Email.unique'         => 'Email đã được sử dụng bởi giảng viên khác.',
+            'SoDienThoai.unique'   => 'Số điện thoại đã được sử dụng.',
+            'SoDienThoai.regex'    => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
-        DB::transaction(function () use ($request) {
-            $maGV = IdGenerator::nextGiangVien();
-            $maTK = 'TK_' . $maGV;
+        $maGV = trim($request->TenDangNhap);
 
+        DB::transaction(function () use ($request, $maGV) {
             $tk = TaiKhoan::create([
-                'MaTK'              => $maTK,
-                'TenDangNhap'       => trim($request->TenDangNhap),
+                'MaTK'              => $maGV,
+                'TenDangNhap'       => $maGV,
                 'MatKhau'           => Hash::make('123456'),
                 'MaVaiTro'          => 'VT02',
                 'TrangThai'         => true,
@@ -87,7 +86,7 @@ class GiangVienController extends Controller
                 'MaGV'        => $maGV,
                 'MaTK'        => $tk->MaTK,
                 'MaBoMon'     => $request->MaBoMon,
-                'MaSoCanBo'   => trim($request->TenDangNhap),
+                'MaSoCanBo'   => $maGV,
                 'HoTen'       => trim($request->HoTen),
                 'Email'       => trim($request->Email),
                 'SoDienThoai' => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
@@ -96,7 +95,7 @@ class GiangVienController extends Controller
             ]);
         });
 
-        return redirect()->route('giangvien.index')->with('success', "Thêm giảng viên '{$request->HoTen}' thành công! (Mật khẩu mặc định: 123456)");
+        return redirect()->route('giangvien.index')->with('success', "Thêm giảng viên '{$request->HoTen}' (Mã GV: {$maGV}) thành công! (Mật khẩu mặc định: 123456)");
     }
 
     public function edit($id)
@@ -111,22 +110,20 @@ class GiangVienController extends Controller
         $giangvien = GiangVien::with('taiKhoan')->findOrFail($id);
 
         $request->validate([
-            'TenDangNhap' => 'nullable|string|max:50|unique:tai_khoans,TenDangNhap,' . $giangvien->MaTK . ',MaTK',
             'HoTen' => 'required|string|max:100',
             'HocVi' => 'required|string|max:50',
             'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
             'Email' => 'required|email|max:100|unique:giang_viens,Email,' . $id . ',MaGV',
             'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:giang_viens,SoDienThoai,' . $id . ',MaGV']
         ], [
-            'TenDangNhap.unique' => 'Tên đăng nhập đã tồn tại.',
-            'HoTen.required' => 'Vui lòng nhập họ tên.',
-            'HocVi.required' => 'Vui lòng nhập học vị.',
+            'HoTen.required'   => 'Vui lòng nhập họ tên.',
+            'HocVi.required'   => 'Vui lòng nhập học vị.',
             'MaBoMon.required' => 'Vui lòng chọn bộ môn.',
-            'Email.required' => 'Vui lòng nhập email.',
-            'Email.email' => 'Định dạng email không hợp lệ.',
-            'Email.unique' => 'Email đã được sử dụng.',
+            'Email.required'   => 'Vui lòng nhập email.',
+            'Email.email'      => 'Định dạng email không hợp lệ.',
+            'Email.unique'     => 'Email đã được sử dụng.',
             'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
+            'SoDienThoai.regex'  => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
         $giangvien->update([
@@ -136,10 +133,6 @@ class GiangVienController extends Controller
             'SoDienThoai' => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
             'HocVi'       => trim($request->HocVi),
         ]);
-
-        if ($request->filled('TenDangNhap') && $giangvien->taiKhoan) {
-            $giangvien->taiKhoan->update(['TenDangNhap' => trim($request->TenDangNhap)]);
-        }
 
         return redirect()->route('giangvien.index')->with('success', 'Cập nhật thông tin giảng viên thành công!');
     }

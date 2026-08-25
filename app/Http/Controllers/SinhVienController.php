@@ -49,30 +49,29 @@ class SinhVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap',
+            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap|unique:sinh_viens,MaSV',
             'HoTen' => 'required|string|max:100',
             'MaLop' => 'required|exists:lops,MaLop',
             'Email' => 'required|email|max:100|unique:sinh_viens,Email',
             'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:sinh_viens,SoDienThoai']
         ], [
-            'TenDangNhap.required' => 'Vui lòng nhập tên đăng nhập (MSSV).',
-            'TenDangNhap.unique' => 'Tên đăng nhập / MSSV đã tồn tại.',
-            'HoTen.required' => 'Vui lòng nhập họ tên sinh viên.',
-            'MaLop.required' => 'Vui lòng chọn lớp học.',
-            'Email.required' => 'Vui lòng nhập email.',
-            'Email.email' => 'Định dạng email không hợp lệ.',
-            'Email.unique' => 'Email đã được sử dụng.',
-            'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
+            'TenDangNhap.required' => 'Vui lòng nhập MSSV.',
+            'TenDangNhap.unique'   => 'MSSV / Tên đăng nhập đã tồn tại trong hệ thống.',
+            'HoTen.required'       => 'Vui lòng nhập họ tên sinh viên.',
+            'MaLop.required'       => 'Vui lòng chọn lớp học.',
+            'Email.required'       => 'Vui lòng nhập email.',
+            'Email.email'          => 'Định dạng email không hợp lệ.',
+            'Email.unique'         => 'Email đã được sử dụng.',
+            'SoDienThoai.unique'   => 'Số điện thoại đã được sử dụng.',
+            'SoDienThoai.regex'    => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
-        DB::transaction(function () use ($request) {
-            $maSV = IdGenerator::nextSinhVien();
-            $maTK = 'TK_' . $maSV;
+        $mssv = trim($request->TenDangNhap);
 
+        DB::transaction(function () use ($request, $mssv) {
             $tk = TaiKhoan::create([
-                'MaTK'              => $maTK,
-                'TenDangNhap'       => trim($request->TenDangNhap),
+                'MaTK'              => $mssv,
+                'TenDangNhap'       => $mssv,
                 'MatKhau'           => Hash::make('123456'),
                 'MaVaiTro'          => 'VT03',
                 'TrangThai'         => true,
@@ -82,10 +81,10 @@ class SinhVienController extends Controller
             ]);
 
             SinhVien::create([
-                'MaSV'          => $maSV,
+                'MaSV'          => $mssv,
                 'MaTK'          => $tk->MaTK,
                 'MaLop'         => $request->MaLop,
-                'MaSoSinhVien'  => trim($request->TenDangNhap),
+                'MaSoSinhVien'  => $mssv,
                 'HoTen'         => trim($request->HoTen),
                 'Email'         => trim($request->Email),
                 'SoDienThoai'   => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
@@ -93,7 +92,7 @@ class SinhVienController extends Controller
             ]);
         });
 
-        return redirect()->route('sinhvien.index')->with('success', "Thêm sinh viên '{$request->HoTen}' thành công! (Mật khẩu mặc định: 123456)");
+        return redirect()->route('sinhvien.index')->with('success', "Thêm sinh viên '{$request->HoTen}' (MSSV: {$mssv}) thành công! (Mật khẩu mặc định: 123456)");
     }
 
     public function edit($id)
@@ -108,20 +107,18 @@ class SinhVienController extends Controller
         $sinhvien = SinhVien::with('taiKhoan')->findOrFail($id);
 
         $request->validate([
-            'TenDangNhap' => 'nullable|string|max:50|unique:tai_khoans,TenDangNhap,' . $sinhvien->MaTK . ',MaTK',
             'HoTen' => 'required|string|max:100',
             'MaLop' => 'required|exists:lops,MaLop',
             'Email' => 'required|email|max:100|unique:sinh_viens,Email,' . $id . ',MaSV',
             'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:sinh_viens,SoDienThoai,' . $id . ',MaSV']
         ], [
-            'TenDangNhap.unique' => 'Tên đăng nhập đã tồn tại.',
             'HoTen.required' => 'Vui lòng nhập họ tên.',
             'MaLop.required' => 'Vui lòng chọn lớp.',
             'Email.required' => 'Vui lòng nhập email.',
-            'Email.email' => 'Định dạng email không hợp lệ.',
-            'Email.unique' => 'Email đã được sử dụng.',
+            'Email.email'    => 'Định dạng email không hợp lệ.',
+            'Email.unique'   => 'Email đã được sử dụng.',
             'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
+            'SoDienThoai.regex'  => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
         $sinhvien->update([
@@ -130,10 +127,6 @@ class SinhVienController extends Controller
             'Email'       => trim($request->Email),
             'SoDienThoai' => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
         ]);
-
-        if ($request->filled('TenDangNhap') && $sinhvien->taiKhoan) {
-            $sinhvien->taiKhoan->update(['TenDangNhap' => trim($request->TenDangNhap)]);
-        }
 
         return redirect()->route('sinhvien.index')->with('success', 'Cập nhật thông tin sinh viên thành công!');
     }

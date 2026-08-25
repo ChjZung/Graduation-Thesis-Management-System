@@ -6,8 +6,12 @@ use App\Helpers\IdGenerator;
 use App\Models\Khoa;
 use Illuminate\Http\Request;
 
+use App\Http\Traits\HandlesExcelImport;
+
 class KhoaController extends Controller
 {
+    use HandlesExcelImport;
+
     public function index()
     {
         $khoas = Khoa::withCount(['boMons', 'nganhs'])->paginate(10);
@@ -73,5 +77,10 @@ class KhoaController extends Controller
         } catch (\Throwable $e) {
             return redirect()->back()->withErrors("Không thể xóa Khoa '{$khoa->TenKhoa}' do đang có Bộ môn hoặc Ngành học trực thuộc.");
         }
+    }
+
+    public function importExcel(Request $request)
+    {
+        return $this->runImport($request, 'importKhoa', [], 'Khoa');
     }
 }

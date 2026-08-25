@@ -21,12 +21,14 @@
                     @method('PUT')
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Mã SV</label>
-                            <input type="text" class="form-control bg-light" value="{{ $sinhvien->MaSV }}" readonly>
+                            <label class="form-label fw-bold">MSSV (Mã số sinh viên)</label>
+                            <input type="text" class="form-control bg-light" value="{{ $sinhvien->MaSV }}" readonly disabled>
+                            <div class="form-text small">MSSV cố định, không thể chỉnh sửa.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">MSSV / Tên Đăng Nhập</label>
-                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap', $sinhvien->taiKhoan->TenDangNhap ?? '') }}" required>
+                            <label class="form-label fw-bold">Mã Tài Khoản / Tên Đăng Nhập</label>
+                            <input type="text" class="form-control bg-light" value="{{ $sinhvien->taiKhoan->TenDangNhap ?? $sinhvien->MaSV }}" readonly disabled>
+                            <div class="form-text small">Tài khoản gắn liền với MSSV.</div>
                         </div>
                     </div>
                     <div class="row mb-3">

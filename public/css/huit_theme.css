@@ -1320,3 +1320,130 @@ body {
     .login-left, .login-right { width: 100%; }
     .login-left { min-height: 200px; }
 }
+
+/* ═══════════════════════════════════════════════
+   ADMIN CONTENT AREA DESIGN SYSTEM EXTENSIONS
+   (Keeps Header, Sidebar & Footer untouched)
+═══════════════════════════════════════════════ */
+
+/* Unified Premium Card System */
+.card-premium {
+    background: var(--white);
+    border: 1px solid var(--uranian-blue);
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(0, 74, 143, 0.06);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.card-header-premium {
+    background: linear-gradient(135deg, #F0F7FF 0%, #E5F0FA 100%);
+    border-bottom: 1px solid var(--uranian-blue);
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--huit-navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header-premium i {
+    color: var(--huit-blue);
+}
+
+/* Standardized Custom Table */
+.table-custom {
+    margin-bottom: 0;
+    font-size: 0.88rem;
+}
+
+.table-custom thead th {
+    background-color: #F4F8FC;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--uranian-blue);
+    white-space: nowrap;
+}
+
+.table-custom tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    color: var(--text-dark);
+    border-bottom: 1px solid #EBF3FC;
+}
+
+.table-custom tbody tr:hover {
+    background-color: #F8FBFE;
+}
+
+/* Primary Code Badges (MSSV, MaGV, MaTK, MaDeTai, MaNhom) */
+.badge-code {
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 4px 10px;
+    background-color: #F0F7FF;
+    color: var(--huit-blue);
+    border: 1px solid var(--columbia-blue);
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+/* Action Icon Buttons */
+.btn-action-circle {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: var(--transition);
+}
+
+.btn-action-circle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+/* Filter Card Panel */
+.filter-card {
+    background: var(--white);
+    border: 1px solid var(--uranian-blue);
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 10px rgba(0,74,143,0.04);
+}
+
+.form-control-sm, .form-select-sm {
+    border-radius: 8px;
+    border-color: var(--border-color);
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.form-control-sm:focus, .form-select-sm:focus {
+    border-color: var(--huit-blue);
+    box-shadow: 0 0 0 3px rgba(0, 114, 206, 0.15);
+}
+
+/* Empty State Container */
+.empty-state-box {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state-box i {
+    font-size: 2.5rem;
+    color: var(--uranian-blue);
+    margin-bottom: 12px;
+}
+

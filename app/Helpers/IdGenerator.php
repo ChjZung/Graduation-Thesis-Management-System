@@ -173,4 +173,18 @@ class IdGenerator
             return 'HD' . str_pad($next, 2, '0', STR_PAD_LEFT);
         });
     }
+
+    /**
+     * Sinh mã Thông báo: TB01, TB02, ...
+     */
+    public static function nextThongBao(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('thong_baos')
+                ->where('MaThongBao', 'LIKE', 'TB%')
+                ->max(DB::raw("CAST(SUBSTRING(MaThongBao, 3) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            return 'TB' . str_pad($next, 2, '0', STR_PAD_LEFT);
+        });
+    }
 }

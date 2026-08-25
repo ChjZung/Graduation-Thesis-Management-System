@@ -19,12 +19,9 @@
                 <form method="POST" action="{{ route('lop.store') }}">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Mã Lớp <span class="text-muted small">(để trống để tự động sinh)</span></label>
-                        <input type="text" name="MaLop" class="form-control" value="{{ old('MaLop') }}" placeholder="VD: L01, 12DHTH01...">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Tên Lớp <span class="text-danger">*</span></label>
-                        <input type="text" name="TenLop" class="form-control" value="{{ old('TenLop') }}" required placeholder="VD: 12DHTH01...">
+                        <label class="form-label fw-bold">Tên Lớp / Mã Lớp <span class="text-danger">*</span></label>
+                        <input type="text" name="TenLop" class="form-control" value="{{ old('TenLop') }}" required placeholder="VD: 14DHTH05, 14DHTH11...">
+                        <div class="form-text small">Tên Lớp cũng sẽ được dùng làm Mã Lớp hệ thống.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Ngành Học <span class="text-danger">*</span></label>

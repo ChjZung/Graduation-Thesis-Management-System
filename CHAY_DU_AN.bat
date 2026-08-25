@@ -7,20 +7,28 @@ echo   HE THONG QUAN LY DO AN & KHOA LUAN TOT NGHIEP - HUIT
 echo ============================================================
 echo.
 
+set PHP_EXE=php
+where php >nul 2>nul
+if %errorlevel% neq 0 (
+    if exist "C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe" (
+        set PHP_EXE="C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe"
+    )
+)
+
 if not exist .env (
     echo [*] Dang tao file cau hinh .env...
     copy .env.example .env > nul
-    php artisan key:generate > nul
+    %PHP_EXE% artisan key:generate > nul
 )
 
 echo [*] Dang tao va nap du lieu mau vao CSDL MySQL (quanly_doan)...
-php artisan migrate:fresh --seed --force
+%PHP_EXE% artisan migrate:fresh --seed --force
 
 echo [*] Dang tao thiet lap storage link...
-php artisan storage:link > nul 2>&1
+%PHP_EXE% artisan storage:link > nul 2>&1
 
 echo [*] Dang xoa cache giao dien...
-php artisan view:clear > nul 2>&1
+%PHP_EXE% artisan view:clear > nul 2>&1
 
 echo.
 echo ============================================================
@@ -37,5 +45,5 @@ echo  (Vui long KHONG TAT cua so nay trong khi dang dung web)
 echo ============================================================
 echo.
 
-php artisan serve
+%PHP_EXE% artisan serve
 pause

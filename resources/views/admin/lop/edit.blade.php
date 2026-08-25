@@ -20,11 +20,7 @@
                     @csrf
                     @method('PUT')
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Mã Lớp</label>
-                        <input type="text" class="form-control bg-light" value="{{ $lop->MaLop }}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Tên Lớp <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Tên Lớp / Mã Lớp <span class="text-danger">*</span></label>
                         <input type="text" name="TenLop" class="form-control" value="{{ old('TenLop', $lop->TenLop) }}" required>
                     </div>
                     <div class="mb-3">

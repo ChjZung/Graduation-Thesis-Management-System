@@ -20,9 +20,9 @@
                     @csrf
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Mã GV / Tên Đăng Nhập <span class="text-danger">*</span></label>
-                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap') }}" required placeholder="VD: gv11, gv_nguyenvana...">
-                            <div class="form-text small">Mật khẩu khởi tạo mặc định là <code>123456</code>.</div>
+                            <label class="form-label fw-bold">Mã Giảng Viên (MaGV) <span class="text-danger">*</span></label>
+                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap') }}" required placeholder="VD: GV001, GV002...">
+                            <div class="form-text small">MaGV sẽ tự động làm Mã tài khoản & Tên đăng nhập. Mật khẩu mặc định là <code>123456</code>.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Họ Và Tên <span class="text-danger">*</span></label>

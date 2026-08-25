@@ -261,7 +261,7 @@ class ExcelImportService
 
             fclose($handle);
 
-            return route('import.error.download', ['filename' => $fileName]);
+            return route('admin.import.errorLog', ['filename' => $fileName]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('generateErrorFile failed: ' . $e->getMessage());
             return null;
@@ -284,70 +284,166 @@ class ExcelImportService
         return preg_match('/^0[0-9]{9}$/', $phone) === 1;
     }
 
-    private function resolveBoMonId($val): ?int
-    {
-        if (empty($val)) return 1;
-        if (is_numeric($val) && BoMon::where('MaBoMon', $val)->exists()) return (int)$val;
-        return BoMon::where('TenBoMon', 'LIKE', '%' . trim($val) . '%')->value('MaBoMon') ?? 1;
-    }
-
-    private function resolveNganhId($val): ?int
-    {
-        if (empty($val)) return 1;
-        if (is_numeric($val) && Nganh::where('MaNganh', $val)->exists()) return (int)$val;
-        return Nganh::where('TenNganh', 'LIKE', '%' . trim($val) . '%')->value('MaNganh') ?? 1;
-    }
-
-    private function resolveLopId($val): ?int
+    private function resolveBoMonId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && Lop::where('MaLop', $val)->exists()) return (int)$val;
-        return Lop::where('TenLop', 'LIKE', '%' . trim($val) . '%')->value('MaLop');
+        $valStr = trim((string)$val);
+        if (BoMon::where('MaBoMon', $valStr)->exists()) return $valStr;
+        return BoMon::where('TenBoMon', 'LIKE', '%' . $valStr . '%')->value('MaBoMon')
+            ?? BoMon::value('MaBoMon');
     }
 
-    private function resolveMonHocId($val): ?int
+    private function resolveNganhId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && MonHoc::where('MaMon', $val)->exists()) return (int)$val;
-        return MonHoc::where('TenMon', 'LIKE', '%' . trim($val) . '%')->value('MaMon');
+        $valStr = trim((string)$val);
+        if (Nganh::where('MaNganh', $valStr)->exists()) return $valStr;
+        return Nganh::where('TenNganh', 'LIKE', '%' . $valStr . '%')->value('MaNganh')
+            ?? Nganh::value('MaNganh');
     }
 
-    private function resolveHocKyId($val): ?int
+    private function resolveLopId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && HocKy::where('MaHocKy', $val)->exists()) return (int)$val;
-        return HocKy::where('TenHocKy', 'LIKE', '%' . trim($val) . '%')->value('MaHocKy');
+        $valStr = trim((string)$val);
+        if (Lop::where('MaLop', $valStr)->exists()) return $valStr;
+        return Lop::where('TenLop', 'LIKE', '%' . $valStr . '%')->value('MaLop');
     }
 
-    private function resolveGiangVienId($val): ?int
+    private function resolveMonHocId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && GiangVien::where('MaGV', $val)->exists()) return (int)$val;
-        $tk = TaiKhoan::where('TenDangNhap', trim($val))->first();
+        $valStr = trim((string)$val);
+        if (MonHoc::where('MaMon', $valStr)->exists()) return $valStr;
+        return MonHoc::where('TenMon', 'LIKE', '%' . $valStr . '%')->value('MaMon');
+    }
+
+    private function resolveHocKyId($val)
+    {
+        if (empty($val)) return null;
+        $valStr = trim((string)$val);
+        if (HocKy::where('MaHocKy', $valStr)->exists()) return $valStr;
+        return HocKy::where('TenHocKy', 'LIKE', '%' . $valStr . '%')->value('MaHocKy');
+    }
+
+    private function resolveGiangVienId($val)
+    {
+        if (empty($val)) return null;
+        $valStr = trim((string)$val);
+        if (GiangVien::where('MaGV', $valStr)->exists()) return $valStr;
+        $tk = TaiKhoan::where('TenDangNhap', $valStr)->first();
         if ($tk) {
             $gv = GiangVien::where('MaTK', $tk->MaTK)->first();
             if ($gv) return $gv->MaGV;
         }
-        return GiangVien::where('HoTen', 'LIKE', '%' . trim($val) . '%')->value('MaGV');
+        return GiangVien::where('HoTen', 'LIKE', '%' . $valStr . '%')->value('MaGV');
     }
 
-    private function resolveSinhVienId($val): ?int
+    private function resolveSinhVienId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && SinhVien::where('MaSV', $val)->exists()) return (int)$val;
-        $tk = TaiKhoan::where('TenDangNhap', trim($val))->first();
+        $valStr = trim((string)$val);
+        if (SinhVien::where('MaSV', $valStr)->exists()) return $valStr;
+        $tk = TaiKhoan::where('TenDangNhap', $valStr)->first();
         if ($tk) {
             $sv = SinhVien::where('MaTK', $tk->MaTK)->first();
             if ($sv) return $sv->MaSV;
         }
-        return SinhVien::where('HoTen', 'LIKE', '%' . trim($val) . '%')->value('MaSV');
+        return SinhVien::where('HoTen', 'LIKE', '%' . $valStr . '%')->value('MaSV');
     }
 
-    private function resolveLopHocPhanId($val): ?int
+    private function resolveLopHocPhanId($val)
     {
         if (empty($val)) return null;
-        if (is_numeric($val) && \App\Models\LopHocPhan::where('MaLopHP', $val)->exists()) return (int)$val;
-        return \App\Models\LopHocPhan::where('TenLopHP', 'LIKE', '%' . trim($val) . '%')->value('MaLopHP');
+        $valStr = trim((string)$val);
+        if (\App\Models\LopHocPhan::where('MaLopHP', $valStr)->exists()) return $valStr;
+        return \App\Models\LopHocPhan::where('TenLopHP', 'LIKE', '%' . $valStr . '%')->value('MaLopHP');
+    }
+
+    private function resolveKhoaId($val)
+    {
+        if (empty($val)) return null;
+        $valStr = trim((string)$val);
+        if (\App\Models\Khoa::where('MaKhoa', $valStr)->exists()) return $valStr;
+        return \App\Models\Khoa::where('TenKhoa', 'LIKE', '%' . $valStr . '%')->value('MaKhoa')
+            ?? \App\Models\Khoa::value('MaKhoa');
+    }
+
+    private function validateTemplateHeaders(array $rows, array $expectedHeaders, string $entityName): void
+    {
+        if (empty($rows)) {
+            throw new Exception("File Excel không chứa bản ghi dữ liệu nào.");
+        }
+        $firstRow = $rows[0];
+        $headers = array_values(array_filter(array_keys($firstRow), fn($k) => $k !== '_row_num'));
+
+        $missing = array_diff($expectedHeaders, $headers);
+        if (!empty($missing)) {
+            throw new Exception("File Excel {$entityName} sai định dạng tiêu đề, đang thiếu các cột bắt buộc: " . implode(', ', $missing) . ". Vui lòng sử dụng đúng file mẫu.");
+        }
+
+        $extra = array_diff($headers, $expectedHeaders);
+        if (!empty($extra)) {
+            throw new Exception("File Excel {$entityName} chứa các cột không hợp lệ (dư thừa): " . implode(', ', $extra) . ". Vui lòng không thêm các cột ngoài mẫu quy định.");
+        }
+    }
+
+    // ==========================================
+    // 0. IMPORT KHOA
+    // ==========================================
+    public function importKhoa($file): array
+    {
+        $rows = $this->parseFile($file);
+        $this->validateTemplateHeaders($rows, ['TenKhoa', 'MoTa'], 'Khoa');
+
+        $errors = [];
+        $seenKhoa = [];
+        $validItems = [];
+
+        foreach ($rows as $row) {
+            $rNum = $row['_row_num'];
+            $tenKhoa = trim($row['TenKhoa'] ?? '');
+
+            if (empty($tenKhoa)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Tên Khoa không được để trống', 'data' => $row];
+                continue;
+            }
+
+            if (in_array(mb_strtolower($tenKhoa), $seenKhoa)) {
+                $errors[] = ['row' => $rNum, 'reason' => "Tên Khoa '{$tenKhoa}' bị trùng lặp trong file Excel", 'data' => $row];
+                continue;
+            }
+            $seenKhoa[] = mb_strtolower($tenKhoa);
+
+            if (\App\Models\Khoa::where('TenKhoa', $tenKhoa)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Khoa '{$tenKhoa}' đã tồn tại trong CSDL", 'data' => $row];
+                continue;
+            }
+
+            $validItems[] = [
+                'MaKhoa'  => \App\Helpers\IdGenerator::nextKhoa(),
+                'TenKhoa' => $tenKhoa,
+                'MoTa'    => trim($row['MoTa'] ?? ''),
+            ];
+        }
+
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    \App\Models\Khoa::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_khoa', 'Khoa', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
+        return [
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
+        ];
     }
 
     // ==========================================
@@ -356,17 +452,30 @@ class ExcelImportService
     public function importNganh($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['TenNganh', 'MoTa', 'MaBoMon'], 'Ngành');
+
         $errors = [];
         $seenNganh = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
-            $tenNganh = $row['TenNganh'] ?? '';
-            $maBoMon = $row['MaBoMon'] ?? 1;
+            $tenNganh = trim($row['TenNganh'] ?? '');
+            $maBoMonVal = trim($row['MaBoMon'] ?? '');
 
             if (empty($tenNganh)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên Ngành không được để trống', 'data' => $row];
+                continue;
+            }
+
+            if (empty($maBoMonVal)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Mã/Tên Bộ Môn trực thuộc không được để trống', 'data' => $row];
+                continue;
+            }
+
+            $maBoMon = $this->resolveBoMonId($maBoMonVal);
+            if (!$maBoMon) {
+                $errors[] = ['row' => $rNum, 'reason' => "Bộ môn '{$maBoMonVal}' không tồn tại trong hệ thống", 'data' => $row];
                 continue;
             }
 
@@ -381,25 +490,29 @@ class ExcelImportService
                 continue;
             }
 
-            try {
-                Nganh::create([
-                    'TenNganh' => $tenNganh,
-                    'MoTa'     => $row['MoTa'] ?? '',
-                    'MaBoMon'  => $maBoMon
-                ]);
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+            $validItems[] = [
+                'TenNganh' => $tenNganh,
+                'MoTa'     => trim($row['MoTa'] ?? ''),
+                'MaBoMon'  => $maBoMon
+            ];
         }
 
-        AuditLog::log('import_nganh', 'Nganh', null, ['success' => $success, 'errors' => count($errors)]);
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    Nganh::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_nganh', 'Nganh', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -409,17 +522,30 @@ class ExcelImportService
     public function importLop($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['TenLop', 'MaNganh', 'KhoaHoc'], 'Lớp');
+
         $errors = [];
         $seenLop = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
-            $tenLop = $row['TenLop'] ?? '';
-            $maNganh = $row['MaNganh'] ?? 1;
+            $tenLop = trim($row['TenLop'] ?? '');
+            $maNganhVal = trim($row['MaNganh'] ?? '');
 
             if (empty($tenLop)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên Lớp không được để trống', 'data' => $row];
+                continue;
+            }
+
+            if (empty($maNganhVal)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Mã/Tên Ngành không được để trống', 'data' => $row];
+                continue;
+            }
+
+            $maNganh = $this->resolveNganhId($maNganhVal);
+            if (!$maNganh) {
+                $errors[] = ['row' => $rNum, 'reason' => "Ngành '{$maNganhVal}' không tồn tại trong hệ thống", 'data' => $row];
                 continue;
             }
 
@@ -434,25 +560,34 @@ class ExcelImportService
                 continue;
             }
 
-            try {
-                Lop::create([
-                    'TenLop' => $tenLop,
-                    'MaNganh' => $maNganh,
-                    'KhoaHoc' => $row['KhoaHoc'] ?? '2021-2025'
-                ]);
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+            $validItems[] = [
+                'TenLop'  => $tenLop,
+                'MaNganh' => $maNganh,
+                'KhoaHoc' => !empty($row['KhoaHoc']) ? trim($row['KhoaHoc']) : '2021-2025'
+            ];
         }
 
-        AuditLog::log('import_lop', 'Lop', null, ['success' => $success, 'errors' => count($errors)]);
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    Lop::create([
+                        'MaLop'   => $item['TenLop'],
+                        'TenLop'  => $item['TenLop'],
+                        'MaNganh' => $item['MaNganh'],
+                        'KhoaHoc' => $item['KhoaHoc'],
+                    ]);
+                }
+            });
+        }
+
+        AuditLog::log('import_lop', 'Lop', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -462,17 +597,25 @@ class ExcelImportService
     public function importMonHoc($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['TenMon', 'SoTinChi', 'MaBoMon'], 'Môn học');
+
         $errors = [];
         $seenMon = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
-            $tenMon = $row['TenMon'] ?? '';
-            $maBoMon = $row['MaBoMon'] ?? 1;
+            $tenMon = trim($row['TenMon'] ?? '');
+            $maBoMonVal = trim($row['MaBoMon'] ?? '');
 
             if (empty($tenMon)) {
-                $errors[] = ['row' => $rNum, 'reason' => 'Tên Môn không được để trống', 'data' => $row];
+                $errors[] = ['row' => $rNum, 'reason' => 'Tên Môn học không được để trống', 'data' => $row];
+                continue;
+            }
+
+            $maBoMon = $this->resolveBoMonId($maBoMonVal);
+            if (!$maBoMon) {
+                $errors[] = ['row' => $rNum, 'reason' => "Bộ môn '{$maBoMonVal}' không tồn tại", 'data' => $row];
                 continue;
             }
 
@@ -487,25 +630,29 @@ class ExcelImportService
                 continue;
             }
 
-            try {
-                MonHoc::create([
-                    'TenMon' => $tenMon,
-                    'SoTinChi' => $row['SoTinChi'] ?? 3,
-                    'MaBoMon' => $maBoMon
-                ]);
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+            $validItems[] = [
+                'TenMon'   => $tenMon,
+                'SoTinChi' => !empty($row['SoTinChi']) ? (int)$row['SoTinChi'] : 3,
+                'MaBoMon'  => $maBoMon
+            ];
         }
 
-        AuditLog::log('import_mon_hoc', 'MonHoc', null, ['success' => $success, 'errors' => count($errors)]);
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    MonHoc::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_mon_hoc', 'MonHoc', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -515,29 +662,37 @@ class ExcelImportService
     public function importGiangVien($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'HocVi', 'MaBoMon'], 'Giảng viên');
+
         $errors = [];
-        $seenUsernames = [];
+        $seenMaGVs = [];
         $seenEmails = [];
         $seenPhones = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
-            $username = trim($row['TenDangNhap'] ?? '');
+            $maGV = trim($row['MaGV'] ?? '');
             $hoTen = trim($row['HoTen'] ?? '');
             $email = trim($row['Email'] ?? '');
             $phone = trim($row['SoDienThoai'] ?? '');
+            $maBoMonVal = trim($row['MaBoMon'] ?? '');
 
-            if (empty($username) || empty($hoTen)) {
-                $errors[] = ['row' => $rNum, 'reason' => 'Tên đăng nhập / Mã GV và Họ tên không được để trống', 'data' => $row];
+            if (empty($maGV)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Mã giảng viên (MaGV) không được để trống', 'data' => $row];
                 continue;
             }
 
-            if (in_array(mb_strtolower($username), $seenUsernames)) {
-                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên / Tên đăng nhập '{$username}' bị trùng lặp trong file Excel", 'data' => $row];
+            if (empty($hoTen)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Họ tên giảng viên không được để trống', 'data' => $row];
                 continue;
             }
-            $seenUsernames[] = mb_strtolower($username);
+
+            if (in_array(mb_strtolower($maGV), $seenMaGVs)) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên '{$maGV}' bị trùng lặp trong file Excel", 'data' => $row];
+                continue;
+            }
+            $seenMaGVs[] = mb_strtolower($maGV);
 
             if (!empty($email)) {
                 if (!$this->isValidEmail($email)) {
@@ -553,7 +708,7 @@ class ExcelImportService
 
             if (!empty($phone)) {
                 if (!$this->isValidPhone($phone)) {
-                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' không đúng 10 chữ số (ví dụ: 0912345678)", 'data' => $row];
+                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' phải gồm 10 chữ số bắt đầu bằng 0", 'data' => $row];
                     continue;
                 }
                 if (in_array($phone, $seenPhones)) {
@@ -563,47 +718,74 @@ class ExcelImportService
                 $seenPhones[] = $phone;
             }
 
-            if (TaiKhoan::where('TenDangNhap', $username)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên / Tên đăng nhập '{$username}' đã tồn tại trong hệ thống", 'data' => $row];
+            $maBoMon = $this->resolveBoMonId($maBoMonVal);
+            if (!$maBoMon) {
+                $errors[] = ['row' => $rNum, 'reason' => "Bộ môn '{$maBoMonVal}' không tồn tại trong hệ thống", 'data' => $row];
+                continue;
+            }
+
+            if (TaiKhoan::where('TenDangNhap', $maGV)->orWhere('MaTK', $maGV)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên / Tài khoản '{$maGV}' đã tồn tại trong CSDL", 'data' => $row];
+                continue;
+            }
+
+            if (GiangVien::where('MaGV', $maGV)->orWhere('MaSoCanBo', $maGV)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên '{$maGV}' đã tồn tại trong CSDL", 'data' => $row];
                 continue;
             }
 
             if (!empty($email) && GiangVien::where('Email', $email)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong cơ sở dữ liệu", 'data' => $row];
+                $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong CSDL", 'data' => $row];
                 continue;
             }
 
-            try {
-                DB::transaction(function () use ($username, $hoTen, $email, $phone, $row) {
+            $validItems[] = [
+                'maGV'     => $maGV,
+                'hoTen'    => $hoTen,
+                'email'    => !empty($email) ? $email : ($maGV . '@huit.edu.vn'),
+                'phone'    => !empty($phone) ? $phone : null,
+                'hocVi'    => !empty($row['HocVi']) ? trim($row['HocVi']) : 'Thạc sĩ',
+                'maBoMon'  => $maBoMon,
+            ];
+        }
+
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
                     $tk = TaiKhoan::create([
-                        'TenDangNhap' => $username,
-                        'MatKhau' => Hash::make('123456'),
-                        'MaVaiTro' => 2, // Giảng viên
-                        'TrangThai' => true
+                        'MaTK'              => $item['maGV'],
+                        'TenDangNhap'       => $item['maGV'],
+                        'MatKhau'           => Hash::make('123456'),
+                        'MaVaiTro'          => 'VT02',
+                        'TrangThai'         => true,
+                        'password_status'   => 'INITIAL',
+                        'BatBuocDoiMatKhau' => true,
+                        'SoLanDangNhapSai'  => 0,
                     ]);
 
                     GiangVien::create([
-                        'MaTK' => $tk->MaTK,
-                        'MaBoMon' => $row['MaBoMon'] ?? 1,
-                        'HoTen' => $hoTen,
-                        'Email' => !empty($email) ? $email : ($username . '@fe.edu.vn'),
-                        'SoDienThoai' => !empty($phone) ? $phone : ('090' . rand(1000000, 9999999)),
-                        'HocVi' => $row['HocVi'] ?? 'Thạc sĩ'
+                        'MaGV'        => $item['maGV'],
+                        'MaTK'        => $tk->MaTK,
+                        'MaBoMon'     => $item['maBoMon'],
+                        'MaSoCanBo'   => $item['maGV'],
+                        'HoTen'       => $item['hoTen'],
+                        'Email'       => $item['email'],
+                        'SoDienThoai' => $item['phone'],
+                        'HocVi'       => $item['hocVi'],
+                        'TrangThai'   => true,
                     ]);
-                });
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+                }
+            });
         }
 
-        AuditLog::log('import_giang_vien', 'GiangVien', null, ['success' => $success, 'errors' => count($errors)]);
+        AuditLog::log('import_giang_vien', 'GiangVien', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -613,33 +795,41 @@ class ExcelImportService
     public function importSinhVien($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['MSSV', 'HoTen', 'Email', 'SoDienThoai', 'MaLop'], 'Sinh viên');
+
         $errors = [];
         $seenMSSVs = [];
         $seenEmails = [];
         $seenPhones = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
-            $username = trim($row['TenDangNhap'] ?? '');
+            $mssv = trim($row['MSSV'] ?? '');
             $hoTen = trim($row['HoTen'] ?? '');
             $email = trim($row['Email'] ?? '');
             $phone = trim($row['SoDienThoai'] ?? '');
+            $maLopVal = trim($row['MaLop'] ?? '');
 
-            if (empty($username) || empty($hoTen)) {
-                $errors[] = ['row' => $rNum, 'reason' => 'Tên đăng nhập (MSSV) và Họ tên không được để trống', 'data' => $row];
+            if (empty($mssv)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Mã số sinh viên (MSSV) không được để trống', 'data' => $row];
                 continue;
             }
 
-            if (in_array(mb_strtolower($username), $seenMSSVs)) {
-                $errors[] = ['row' => $rNum, 'reason' => "MSSV '{$username}' bị trùng lặp trong file Excel", 'data' => $row];
+            if (empty($hoTen)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Họ tên sinh viên không được để trống', 'data' => $row];
                 continue;
             }
-            $seenMSSVs[] = mb_strtolower($username);
+
+            if (in_array(mb_strtolower($mssv), $seenMSSVs)) {
+                $errors[] = ['row' => $rNum, 'reason' => "MSSV '{$mssv}' bị trùng lặp trong file Excel", 'data' => $row];
+                continue;
+            }
+            $seenMSSVs[] = mb_strtolower($mssv);
 
             if (!empty($email)) {
                 if (!$this->isValidEmail($email)) {
-                    $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' không hợp lệ", 'data' => $row];
+                    $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' không đúng định dạng", 'data' => $row];
                     continue;
                 }
                 if (in_array(mb_strtolower($email), $seenEmails)) {
@@ -651,7 +841,7 @@ class ExcelImportService
 
             if (!empty($phone)) {
                 if (!$this->isValidPhone($phone)) {
-                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' không đúng 10 chữ số (bắt đầu bằng 0)", 'data' => $row];
+                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' phải gồm 10 chữ số bắt đầu bằng 0", 'data' => $row];
                     continue;
                 }
                 if (in_array($phone, $seenPhones)) {
@@ -661,46 +851,72 @@ class ExcelImportService
                 $seenPhones[] = $phone;
             }
 
-            if (TaiKhoan::where('TenDangNhap', $username)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "MSSV / Tài khoản '{$username}' đã tồn tại trong cơ sở dữ liệu", 'data' => $row];
+            $maLop = $this->resolveLopId($maLopVal);
+            if (!$maLop) {
+                $errors[] = ['row' => $rNum, 'reason' => "Lớp học '{$maLopVal}' không tồn tại trong hệ thống", 'data' => $row];
+                continue;
+            }
+
+            if (TaiKhoan::where('TenDangNhap', $mssv)->orWhere('MaTK', $mssv)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "MSSV / Tài khoản '{$mssv}' đã tồn tại trong CSDL", 'data' => $row];
+                continue;
+            }
+
+            if (SinhVien::where('MaSV', $mssv)->orWhere('MaSoSinhVien', $mssv)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "MSSV '{$mssv}' đã tồn tại trong CSDL", 'data' => $row];
                 continue;
             }
 
             if (!empty($email) && SinhVien::where('Email', $email)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong cơ sở dữ liệu", 'data' => $row];
+                $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong CSDL", 'data' => $row];
                 continue;
             }
 
-            try {
-                DB::transaction(function () use ($username, $hoTen, $email, $phone, $row) {
+            $validItems[] = [
+                'mssv'        => $mssv,
+                'hoTen'       => $hoTen,
+                'email'       => !empty($email) ? $email : ($mssv . '@st.huit.edu.vn'),
+                'phone'       => !empty($phone) ? $phone : null,
+                'maLop'       => $maLop,
+            ];
+        }
+
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
                     $tk = TaiKhoan::create([
-                        'TenDangNhap' => $username,
-                        'MatKhau' => Hash::make('123456'),
-                        'MaVaiTro' => 3, // Sinh viên
-                        'TrangThai' => true
+                        'MaTK'              => $item['mssv'],
+                        'TenDangNhap'       => $item['mssv'],
+                        'MatKhau'           => Hash::make('123456'),
+                        'MaVaiTro'          => 'VT03',
+                        'TrangThai'         => true,
+                        'password_status'   => 'INITIAL',
+                        'BatBuocDoiMatKhau' => true,
+                        'SoLanDangNhapSai'  => 0,
                     ]);
 
                     SinhVien::create([
-                        'MaTK' => $tk->MaTK,
-                        'MaLop' => $row['MaLop'] ?? 1,
-                        'HoTen' => $hoTen,
-                        'Email' => !empty($email) ? $email : ($username . '@st.fe.edu.vn'),
-                        'SoDienThoai' => !empty($phone) ? $phone : ('098' . rand(1000000, 9999999))
+                        'MaSV'         => $item['mssv'],
+                        'MaTK'         => $tk->MaTK,
+                        'MaLop'        => $item['maLop'],
+                        'MaSoSinhVien' => $item['mssv'],
+                        'HoTen'        => $item['hoTen'],
+                        'Email'        => $item['email'],
+                        'SoDienThoai'  => $item['phone'],
+                        'TrangThai'    => 'Đang học',
                     ]);
-                });
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+                }
+            });
         }
 
-        AuditLog::log('import_sinh_vien', 'SinhVien', null, ['success' => $success, 'errors' => count($errors)]);
+        AuditLog::log('import_sinh_vien', 'SinhVien', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -788,16 +1004,25 @@ class ExcelImportService
     public function importBoMon($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['TenBoMon', 'MoTa', 'MaKhoa'], 'Bộ môn');
+
         $errors = [];
         $seenBoMon = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
             $tenBoMon = trim($row['TenBoMon'] ?? '');
+            $maKhoaVal = trim($row['MaKhoa'] ?? '');
 
             if (empty($tenBoMon)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên Bộ Môn không được để trống', 'data' => $row];
+                continue;
+            }
+
+            $maKhoa = $this->resolveKhoaId($maKhoaVal);
+            if (!$maKhoa) {
+                $errors[] = ['row' => $rNum, 'reason' => "Khoa '{$maKhoaVal}' không tồn tại trong hệ thống", 'data' => $row];
                 continue;
             }
 
@@ -808,28 +1033,33 @@ class ExcelImportService
             $seenBoMon[] = mb_strtolower($tenBoMon);
 
             if (BoMon::where('TenBoMon', $tenBoMon)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Bộ Môn '{$tenBoMon}' đã tồn tại trong cơ sở dữ liệu", 'data' => $row];
+                $errors[] = ['row' => $rNum, 'reason' => "Bộ Môn '{$tenBoMon}' đã tồn tại trong CSDL", 'data' => $row];
                 continue;
             }
 
-            try {
-                BoMon::create([
-                    'TenBoMon' => $tenBoMon,
-                    'MoTa' => $row['MoTa'] ?? ''
-                ]);
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+            $validItems[] = [
+                'TenBoMon' => $tenBoMon,
+                'MoTa'     => trim($row['MoTa'] ?? ''),
+                'MaKhoa'   => $maKhoa
+            ];
         }
 
-        AuditLog::log('import_bo_mon', 'BoMon', null, ['success' => $success, 'errors' => count($errors)]);
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    BoMon::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_bo_mon', 'BoMon', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -839,9 +1069,11 @@ class ExcelImportService
     public function importHocKy($file): array
     {
         $rows = $this->parseFile($file);
-        $success = 0;
+        $this->validateTemplateHeaders($rows, ['TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc'], 'Học kỳ');
+
         $errors = [];
         $seenHocKy = [];
+        $validItems = [];
 
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
@@ -861,30 +1093,34 @@ class ExcelImportService
             $seenHocKy[] = $key;
 
             if (HocKy::where('TenHocKy', $tenHocKy)->where('NamHoc', $namHoc)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Học kỳ '{$tenHocKy}' năm học '{$namHoc}' đã tồn tại trong cơ sở dữ liệu", 'data' => $row];
+                $errors[] = ['row' => $rNum, 'reason' => "Học kỳ '{$tenHocKy}' năm học '{$namHoc}' đã tồn tại trong CSDL", 'data' => $row];
                 continue;
             }
 
-            try {
-                HocKy::create([
-                    'TenHocKy' => $tenHocKy,
-                    'NamHoc' => $namHoc,
-                    'NgayBatDau' => !empty($row['NgayBatDau']) ? $row['NgayBatDau'] : null,
-                    'NgayKetThuc' => !empty($row['NgayKetThuc']) ? $row['NgayKetThuc'] : null,
-                ]);
-                $success++;
-            } catch (Exception $e) {
-                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
-            }
+            $validItems[] = [
+                'TenHocKy'    => $tenHocKy,
+                'NamHoc'      => $namHoc,
+                'NgayBatDau'  => !empty($row['NgayBatDau']) ? trim($row['NgayBatDau']) : null,
+                'NgayKetThuc' => !empty($row['NgayKetThuc']) ? trim($row['NgayKetThuc']) : null,
+            ];
         }
 
-        AuditLog::log('import_hoc_ky', 'HocKy', null, ['success' => $success, 'errors' => count($errors)]);
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    HocKy::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_hoc_ky', 'HocKy', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
         return [
-            'total_count' => count($rows),
-            'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 

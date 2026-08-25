@@ -27,29 +27,27 @@ class LopController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'MaLop' => 'nullable|string|max:10|unique:lops,MaLop',
-            'TenLop' => 'required|string|max:100|unique:lops,TenLop',
+            'TenLop' => 'required|string|max:100|unique:lops,TenLop|unique:lops,MaLop',
             'MaNganh' => 'required|exists:nganhs,MaNganh',
             'KhoaHoc' => 'required|string|max:20'
         ], [
-            'MaLop.unique' => 'Mã lớp đã tồn tại.',
             'TenLop.required' => 'Vui lòng nhập tên lớp.',
-            'TenLop.unique' => 'Tên lớp này đã tồn tại.',
-            'MaNganh.required' => 'Vui lòng chọn ngành.',
-            'MaNganh.exists' => 'Ngành đã chọn không tồn tại.',
-            'KhoaHoc.required' => 'Vui lòng nhập khóa học.'
+            'TenLop.unique'   => 'Lớp này đã tồn tại trong hệ thống.',
+            'MaNganh.required'=> 'Vui lòng chọn ngành.',
+            'MaNganh.exists'  => 'Ngành đã chọn không tồn tại.',
+            'KhoaHoc.required'=> 'Vui lòng nhập khóa học.'
         ]);
 
-        $maLop = $request->filled('MaLop') ? strtoupper(trim($request->MaLop)) : IdGenerator::nextLop();
+        $tenLop = trim($request->TenLop);
 
         Lop::create([
-            'MaLop' => $maLop,
-            'TenLop' => trim($request->TenLop),
+            'MaLop'   => $tenLop,
+            'TenLop'  => $tenLop,
             'MaNganh' => $request->MaNganh,
             'KhoaHoc' => trim($request->KhoaHoc),
         ]);
 
-        return redirect()->route('lop.index')->with('success', "Thêm lớp '{$request->TenLop}' thành công!");
+        return redirect()->route('lop.index')->with('success', "Thêm lớp '{$tenLop}' thành công!");
     }
 
     public function edit($id)

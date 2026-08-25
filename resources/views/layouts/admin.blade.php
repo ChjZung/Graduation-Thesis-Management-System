@@ -39,6 +39,7 @@
 
         <ul class="list-unstyled components">
             <!-- Dashboard -->
+            <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('admin.dashboard') }}">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard
@@ -46,93 +47,105 @@
             </li>
 
             <!-- Kế Hoạch & Lịch -->
-            <li class="nav-section-label">Kế Hoạch & Lịch Timeline</li>
+            <li class="nav-section-label">Kế Hoạch & Tiến Độ</li>
             <li class="{{ request()->routeIs('admin.kehoach.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.kehoach.index') }}">
-                    <i class="fa-solid fa-calendar-check"></i> Kế hoạch 5 Mốc Báo Cáo
+                    <i class="fa-solid fa-calendar-check"></i> Quản lý kế hoạch
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.theodoi.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.theodoi.index') }}">
+                    <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.calendar') ? 'active' : '' }}">
                 <a href="{{ route('admin.calendar') }}">
-                    <i class="fa-regular fa-calendar-days"></i> Lịch Calendar Tổng Quan
+                    <i class="fa-regular fa-calendar-days"></i> Lịch quy trình
                 </a>
             </li>
+
+            <!-- Xét Duyệt -->
+            <li class="nav-section-label">Xét Duyệt Đề Tài</li>
             <li class="{{ request()->routeIs('admin.duyet_detai.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.duyet_detai.index') }}">
-                    <i class="fa-solid fa-file-signature"></i> Xét Duyệt Đề Tài GV
+                    <i class="fa-solid fa-file-signature"></i> Duyệt đề tài GV
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.duyet_dangky.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.duyet_dangky.index') }}">
-                    <i class="fa-solid fa-user-check"></i> Duyệt Đăng Ký Đề Tài SV
+                    <i class="fa-solid fa-user-check"></i> Duyệt đăng ký SV
                 </a>
             </li>
 
-            <!-- Giai đoạn 6 -->
-            <li class="nav-section-label">Bảo Vệ Khóa Luận</li>
+            <!-- Bảo Vệ & Hội Đồng -->
+            <li class="nav-section-label">Bảo Vệ & Hội Đồng</li>
             <li class="{{ request()->routeIs('admin.hosoBaoVe.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.hosoBaoVe.index') }}">
-                    <i class="fa-solid fa-folder-check"></i> Hồ Sơ Bảo Vệ (Turnitin)
+                    <i class="fa-solid fa-folder-check"></i> Hồ sơ bảo vệ
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.hoidong.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.hoidong.index') }}">
-                    <i class="fa-solid fa-landmark"></i> Hội Đồng Bảo Vệ
+                    <i class="fa-solid fa-landmark"></i> Hội đồng bảo vệ
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.ketqua.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.ketqua.index') }}">
+                    <i class="fa-solid fa-square-poll-vertical"></i> Bảng điểm &amp; Kết quả
                 </a>
             </li>
 
-
             <!-- Quản Lý Tài Khoản -->
-            <li class="nav-section-label">Quản Lý Tài Khoản</li>
+            <li class="nav-section-label">Quản Lý Người Dùng</li>
             <li class="{{ request()->routeIs('sinhvien.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.index') }}">
-                    <i class="fa-solid fa-user-graduate"></i> Quản lý Sinh viên
+                    <i class="fa-solid fa-user-graduate"></i> Sinh viên
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.index') }}">
-                    <i class="fa-solid fa-chalkboard-user"></i> Quản lý Giảng viên
+                    <i class="fa-solid fa-chalkboard-user"></i> Giảng viên
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.yeucau.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.yeucau.index') }}">
-                    <i class="fa-solid fa-key"></i> Duyệt Quên Mật Khẩu
+                    <i class="fa-solid fa-key"></i> Đổi mật khẩu
                 </a>
             </li>
 
             <!-- Quản Lý Danh Mục -->
-            <li class="nav-section-label">Quản Lý Danh Mục</li>
+            <li class="nav-section-label">Danh Mục Hệ Thống</li>
             <li class="{{ request()->routeIs('khoa.*') ? 'active' : '' }}">
                 <a href="{{ route('khoa.index') }}">
-                    <i class="fa-solid fa-university"></i> Quản lý Khoa
+                    <i class="fa-solid fa-university"></i> Khoa
                 </a>
             </li>
             <li class="{{ request()->routeIs('bomon.*') ? 'active' : '' }}">
                 <a href="{{ route('bomon.index') }}">
-                    <i class="fa-solid fa-building"></i> Quản lý Bộ môn
+                    <i class="fa-solid fa-building"></i> Bộ môn
                 </a>
             </li>
             <li class="{{ request()->routeIs('nganh.*') ? 'active' : '' }}">
                 <a href="{{ route('nganh.index') }}">
-                    <i class="fa-solid fa-book-open"></i> Quản lý Ngành
+                    <i class="fa-solid fa-book-open"></i> Ngành
                 </a>
             </li>
             <li class="{{ request()->routeIs('lop.*') ? 'active' : '' }}">
                 <a href="{{ route('lop.index') }}">
-                    <i class="fa-solid fa-users-rectangle"></i> Quản lý Lớp
+                    <i class="fa-solid fa-users-rectangle"></i> Lớp
                 </a>
             </li>
             <li class="{{ request()->routeIs('hocky.*') ? 'active' : '' }}">
                 <a href="{{ route('hocky.index') }}">
-                    <i class="fa-solid fa-calendar-days"></i> Quản lý Học kỳ
+                    <i class="fa-solid fa-clock"></i> Học kỳ
                 </a>
             </li>
 
             <!-- Thông Tin Hệ Thống -->
-            <li class="nav-section-label">Thông Tin Hệ Thống</li>
+            <li class="nav-section-label">Thông Báo</li>
             <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('thongbao.index') }}">
-                    <i class="fa-solid fa-bell"></i> Quản lý Thông Báo
+                    <i class="fa-solid fa-bell"></i> Thông báo hệ thống
                 </a>
             </li>
         </ul>

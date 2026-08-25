@@ -38,9 +38,19 @@
         </div>
 
         <ul class="list-unstyled components">
+            <li class="{{ request()->routeIs('giangvien.my_tasks') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.my_tasks') }}">
+                    <i class="fa-solid fa-list-check"></i> Công việc hướng dẫn
+                </a>
+            </li>
             <li class="{{ request()->routeIs('giangvien.calendar') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.calendar') }}">
                     <i class="fa-regular fa-calendar-days"></i> Lịch Báo Cáo & Timeline
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('calendar.matrix') ? 'active' : '' }}">
+                <a href="{{ route('calendar.matrix') }}">
+                    <i class="fa-solid fa-table-cells"></i> Lịch Quy Trình Kế Hoạch
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.detai.*') ? 'active' : '' }}">

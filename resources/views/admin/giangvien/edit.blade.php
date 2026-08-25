@@ -21,12 +21,14 @@
                     @method('PUT')
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Mã GV</label>
-                            <input type="text" class="form-control bg-light" value="{{ $giangvien->MaGV }}" readonly>
+                            <label class="form-label fw-bold">Mã Giảng Viên (MaGV)</label>
+                            <input type="text" class="form-control bg-light" value="{{ $giangvien->MaGV }}" readonly disabled>
+                            <div class="form-text small">MaGV cố định, không thể chỉnh sửa.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Tên Đăng Nhập</label>
-                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap', $giangvien->taiKhoan->TenDangNhap ?? '') }}" required>
+                            <label class="form-label fw-bold">Mã Tài Khoản / Tên Đăng Nhập</label>
+                            <input type="text" class="form-control bg-light" value="{{ $giangvien->taiKhoan->TenDangNhap ?? $giangvien->MaGV }}" readonly disabled>
+                            <div class="form-text small">Tài khoản gắn liền với MaGV.</div>
                         </div>
                     </div>
                     <div class="row mb-3">

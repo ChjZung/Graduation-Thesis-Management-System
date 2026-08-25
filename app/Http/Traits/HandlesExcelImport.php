@@ -38,17 +38,50 @@ trait HandlesExcelImport
             $service = new \App\Services\ExcelImportService();
             $res = call_user_func_array([$service, $serviceMethod], array_merge([$request->file('file')], $extraArgs));
 
-            $msg = "Import hoàn tất! Tổng dòng: <strong>{$res['total_count']}</strong> | "
-                 . "Thành công: <strong class='text-success'>{$res['success_count']}</strong> | "
-                 . "Thất bại: <strong class='text-danger'>{$res['error_count']}</strong>.";
+            $hasErrors = ($res['error_count'] > 0);
+            $icon = $hasErrors ? 'fa-triangle-exclamation' : 'fa-circle-check';
 
-            if ($res['error_count'] > 0 && !empty($res['error_file'])) {
-                $msg .= " <br><a href='{$res['error_file']}' target='_blank' "
-                      . "class='fw-bold text-danger text-decoration-underline'>"
-                      . "<i class='fa-solid fa-download me-1'></i>Tải file danh sách lỗi chi tiết tại đây</a>.";
+            $msg = "<div class='d-flex align-items-center mb-1'>"
+                 . "<i class='fa-solid {$icon} me-2 fs-5'></i>"
+                 . "<div><strong>Kết quả Import {$entityLabel}:</strong> "
+                 . "Tổng số bản ghi: <strong>{$res['total_count']}</strong> | "
+                 . "Thành công: <span class='badge bg-success px-2 py-1'>{$res['success_count']}</span> | "
+                 . "Thất bại: <span class='badge bg-danger px-2 py-1'>{$res['error_count']}</span>"
+                 . "</div></div>";
+
+            if ($hasErrors && !empty($res['errors'])) {
+                $msg .= "<div class='mt-2 pt-2 border-top border-secondary border-opacity-25'>"
+                      . "<strong class='text-dark small d-block mb-1'><i class='fa-solid fa-list-check me-1'></i>Danh sách lỗi phát hiện:</strong>"
+                      . "<ul class='mb-1 ps-3 small text-danger'>";
+                
+                $showCount = 0;
+                foreach ($res['errors'] as $err) {
+                    $rowNum = $err['row'] ?? '?';
+                    $reason = e($err['reason'] ?? 'Lỗi không xác định');
+                    $msg .= "<li><strong>Dòng {$rowNum}:</strong> {$reason}</li>";
+                    $showCount++;
+                    if ($showCount >= 10) {
+                        $remaining = count($res['errors']) - 10;
+                        if ($remaining > 0) {
+                            $msg .= "<li><em>...và còn {$remaining} lỗi khác.</em></li>";
+                        }
+                        break;
+                    }
+                }
+                $msg .= "</ul></div>";
             }
 
-            return redirect()->back()->with('import_result', $msg);
+            if ($hasErrors && !empty($res['error_file'])) {
+                $msg .= "<div class='mt-2'>"
+                      . "<a href='{$res['error_file']}' target='_blank' "
+                      . "class='btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm fw-bold me-2'>"
+                      . "<i class='fa-solid fa-file-csv me-1'></i>Tải file báo lỗi chi tiết (.CSV)</a>"
+                      . "</div>";
+            }
+
+            $alertType = $hasErrors ? ($res['success_count'] > 0 ? 'import_warning' : 'import_danger') : 'import_result';
+
+            return redirect()->back()->with($alertType, $msg);
         } catch (\Throwable $e) {
             Log::error("Import {$entityLabel} error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return redirect()->back()->withErrors(

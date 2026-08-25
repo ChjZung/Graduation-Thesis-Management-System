@@ -13,14 +13,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. VaiTrố
+        // 1. VaiTrò
         DB::table('vai_tros')->insertOrIgnore([
             ['MaVaiTro' => 'VT01', 'TenVaiTro' => 'Giáo vụ', 'created_at' => now(), 'updated_at' => now()],
             ['MaVaiTro' => 'VT02', 'TenVaiTro' => 'Giảng viên', 'created_at' => now(), 'updated_at' => now()],
             ['MaVaiTro' => 'VT03', 'TenVaiTro' => 'Sinh viên', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        // 2. TaiKhoan (Giáo vụ: giaovu01, Giảng viên: gv01 - gv10, Sinh viên: sv01 - sv50)
+        // 2. TaiKhoan Base (Giáo vụ & Admin)
         $accounts = [
             [
                 'MaTK' => 'TK01',
@@ -42,13 +42,13 @@ class DatabaseSeeder extends Seeder
             ]
         ];
 
-        // 10 Giảng viên
+        // 10 Giảng viên Accounts (MaTK = TenDangNhap = MaGV)
         for ($i = 1; $i <= 10; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+            $maGV = 'GV' . str_pad($i, 2, '0', STR_PAD_LEFT);
             $accounts[] = [
-                'MaTK' => 'TK_GV' . $idStr,
+                'MaTK' => $maGV,
                 'MaVaiTro' => 'VT02',
-                'TenDangNhap' => 'gv' . $idStr,
+                'TenDangNhap' => $maGV,
                 'MatKhau' => Hash::make('123456'),
                 'TrangThai' => true,
                 'created_at' => now(),
@@ -56,19 +56,28 @@ class DatabaseSeeder extends Seeder
             ];
         }
 
-        // 50 Sinh viên
-        for ($i = 1; $i <= 50; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+        // 50 Sinh viên Accounts (MaTK = TenDangNhap = MSSV)
+        $mssvList = [
+            1 => '2001230106',
+            2 => '2001230136',
+            3 => '2001230634',
+        ];
+        for ($i = 4; $i <= 50; $i++) {
+            $mssvList[$i] = '200123' . str_pad($i + 100, 4, '0', STR_PAD_LEFT);
+        }
+
+        foreach ($mssvList as $i => $mssv) {
             $accounts[] = [
-                'MaTK' => 'TK_SV' . $idStr,
+                'MaTK' => $mssv,
                 'MaVaiTro' => 'VT03',
-                'TenDangNhap' => 'sv' . $idStr,
+                'TenDangNhap' => $mssv,
                 'MatKhau' => Hash::make('123456'),
                 'TrangThai' => true,
                 'created_at' => now(),
                 'updated_at' => now()
             ];
         }
+
         DB::table('tai_khoans')->insertOrIgnore($accounts);
 
         // 3. Khoa
@@ -91,8 +100,8 @@ class DatabaseSeeder extends Seeder
 
         // 6. Lop
         DB::table('lops')->insertOrIgnore([
-            ['MaLop' => 'L01', 'TenLop' => '14DHTH05', 'MaNganh' => 'NG01', 'KhoaHoc' => '2023-2027', 'created_at' => now(), 'updated_at' => now()],
-            ['MaLop' => 'L02', 'TenLop' => '14DHTH11', 'MaNganh' => 'NG01', 'KhoaHoc' => '2023-2027', 'created_at' => now(), 'updated_at' => now()],
+            ['MaLop' => '14DHTH05', 'TenLop' => '14DHTH05', 'MaNganh' => 'NG01', 'KhoaHoc' => '2023-2027', 'created_at' => now(), 'updated_at' => now()],
+            ['MaLop' => '14DHTH11', 'TenLop' => '14DHTH11', 'MaNganh' => 'NG01', 'KhoaHoc' => '2023-2027', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // 7. HocKy
@@ -124,19 +133,19 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        // 9. GiangVien (10 Giảng viên)
+        // 9. GiangVien (10 Giảng viên: MaGV = MaTK = GV01..GV10)
         $giangViens = [];
         $names = ['Nguyễn Thanh Truyền', 'Trần Văn Hùng', 'Lê Thị Mai', 'Phạm Hoàng Nam', 'Đặng Quốc Bảo', 'Vũ Thị Hồng', 'Bùi Anh Tuấn', 'Hoàng Minh Trí', 'Đỗ Ngọc Trinh', 'Ngô Quốc Cường'];
         for ($i = 1; $i <= 10; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+            $maGV = 'GV' . str_pad($i, 2, '0', STR_PAD_LEFT);
             $giangViens[] = [
-                'MaGV' => 'GV' . $idStr,
-                'MaTK' => 'TK_GV' . $idStr,
+                'MaGV' => $maGV,
+                'MaTK' => $maGV,
                 'MaBoMon' => ($i % 3 == 1) ? 'BM01' : (($i % 3 == 2) ? 'BM02' : 'BM03'),
-                'MaSoCanBo' => 'CB' . $idStr,
+                'MaSoCanBo' => $maGV,
                 'HoTen' => 'ThS. ' . $names[$i - 1],
-                'Email' => 'gv' . $idStr . '@huit.edu.vn',
-                'SoDienThoai' => '09030000' . $idStr,
+                'Email' => strtolower($maGV) . '@huit.edu.vn',
+                'SoDienThoai' => '09030000' . str_pad($i, 2, '0', STR_PAD_LEFT),
                 'HocHam' => ($i == 1) ? 'Phó Giáo sư' : 'Không',
                 'HocVi' => ($i <= 3) ? 'Tiến sĩ' : 'Thạc sĩ',
                 'ChuyenNganh' => 'Công Nghệ Phần Mềm',
@@ -147,15 +156,15 @@ class DatabaseSeeder extends Seeder
         }
         DB::table('giang_viens')->insertOrIgnore($giangViens);
 
-        // 10. SinhVien (50 Sinh viên)
+        // 10. SinhVien (50 Sinh viên: MaSV = MaTK = MaSoSinhVien = MSSV)
         $sinhViens = [
             [
-                'MaSV' => 'SV01',
-                'MaTK' => 'TK_SV01',
-                'MaLop' => 'L01',
-                'MaSoSinhVien' => '2001230106',
+                'MaSV' => $mssvList[1],
+                'MaTK' => $mssvList[1],
+                'MaLop' => '14DHTH05',
+                'MaSoSinhVien' => $mssvList[1],
                 'HoTen' => 'Hồ Chí Dũng',
-                'Email' => 'sv01@st.huit.edu.vn',
+                'Email' => $mssvList[1] . '@st.huit.edu.vn',
                 'SoDienThoai' => '0987654321',
                 'KhoaHoc' => '14DHTH',
                 'SoTinChiTichLuy' => 130,
@@ -165,12 +174,12 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'MaSV' => 'SV02',
-                'MaTK' => 'TK_SV02',
-                'MaLop' => 'L01',
-                'MaSoSinhVien' => '2001230136',
+                'MaSV' => $mssvList[2],
+                'MaTK' => $mssvList[2],
+                'MaLop' => '14DHTH05',
+                'MaSoSinhVien' => $mssvList[2],
                 'HoTen' => 'Nguyễn Thị Thùy Dương',
-                'Email' => 'sv02@st.huit.edu.vn',
+                'Email' => $mssvList[2] . '@st.huit.edu.vn',
                 'SoDienThoai' => '0987654322',
                 'KhoaHoc' => '14DHTH',
                 'SoTinChiTichLuy' => 132,
@@ -180,12 +189,12 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'MaSV' => 'SV03',
-                'MaTK' => 'TK_SV03',
-                'MaLop' => 'L02',
-                'MaSoSinhVien' => '2001230634',
+                'MaSV' => $mssvList[3],
+                'MaTK' => $mssvList[3],
+                'MaLop' => '14DHTH11',
+                'MaSoSinhVien' => $mssvList[3],
                 'HoTen' => 'La Thuận Phát',
-                'Email' => 'sv03@st.huit.edu.vn',
+                'Email' => $mssvList[3] . '@st.huit.edu.vn',
                 'SoDienThoai' => '0987654323',
                 'KhoaHoc' => '14DHTH',
                 'SoTinChiTichLuy' => 128,
@@ -197,15 +206,15 @@ class DatabaseSeeder extends Seeder
         ];
 
         for ($i = 4; $i <= 50; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+            $mssv = $mssvList[$i];
             $sinhViens[] = [
-                'MaSV' => 'SV' . $idStr,
-                'MaTK' => 'TK_SV' . $idStr,
-                'MaLop' => ($i % 2 == 0) ? 'L01' : 'L02',
-                'MaSoSinhVien' => '200123' . str_pad($i + 100, 4, '0', STR_PAD_LEFT),
+                'MaSV' => $mssv,
+                'MaTK' => $mssv,
+                'MaLop' => ($i % 2 == 0) ? '14DHTH05' : '14DHTH11',
+                'MaSoSinhVien' => $mssv,
                 'HoTen' => 'Sinh Viên ' . $i,
-                'Email' => 'sv' . $idStr . '@st.huit.edu.vn',
-                'SoDienThoai' => '09870000' . $idStr,
+                'Email' => $mssv . '@st.huit.edu.vn',
+                'SoDienThoai' => '09870000' . str_pad($i, 2, '0', STR_PAD_LEFT),
                 'KhoaHoc' => '14DHTH',
                 'SoTinChiTichLuy' => 125 + ($i % 10),
                 'DiemTichLuy' => 3.0 + (($i % 10) * 0.08),
@@ -218,10 +227,9 @@ class DatabaseSeeder extends Seeder
 
         // 11. DanhSachSVDuDieuKien
         $duDieuKien = [];
-        for ($i = 1; $i <= 50; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+        foreach ($mssvList as $mssv) {
             $duDieuKien[] = [
-                'MaSV' => 'SV' . $idStr,
+                'MaSV' => $mssv,
                 'MaHocKy' => 'HK01',
                 'NgayXetDuyet' => '2025-09-05',
                 'TrangThai' => 'Đủ điều kiện',
@@ -235,9 +243,9 @@ class DatabaseSeeder extends Seeder
         // 12. ChiTieuHuongDan
         $chiTieu = [];
         for ($i = 1; $i <= 10; $i++) {
-            $idStr = str_pad($i, 2, '0', STR_PAD_LEFT);
+            $maGV = 'GV' . str_pad($i, 2, '0', STR_PAD_LEFT);
             $chiTieu[] = [
-                'MaGV' => 'GV' . $idStr,
+                'MaGV' => $maGV,
                 'MaHocKy' => 'HK01',
                 'SoNhomToiDa' => 4,
                 'NgayPhanBo' => '2025-09-05',
@@ -328,7 +336,7 @@ class DatabaseSeeder extends Seeder
             [
                 'MaNhom' => 'N01',
                 'MaDeTai' => 'DT01',
-                'MaTruongNhom' => 'SV01',
+                'MaTruongNhom' => $mssvList[1],
                 'TenNhom' => 'Nhóm Khóa Luận CNTT HUIT - N01',
                 'TrangThai' => 'Đã duyệt',
                 'NgayTao' => '2025-09-17',
@@ -339,11 +347,10 @@ class DatabaseSeeder extends Seeder
 
         // 19. ThanhVienNhom
         DB::table('thanh_vien_nhoms')->insertOrIgnore([
-            ['MaNhom' => 'N01', 'MaSV' => 'SV01', 'VaiTro' => 'Trưởng nhóm', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
-            ['MaNhom' => 'N01', 'MaSV' => 'SV02', 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
-            ['MaNhom' => 'N01', 'MaSV' => 'SV03', 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => $mssvList[1], 'VaiTro' => 'Trưởng nhóm', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => $mssvList[2], 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
+            ['MaNhom' => 'N01', 'MaSV' => $mssvList[3], 'VaiTro' => 'Thành viên', 'TrangThai' => 'da_tham_gia', 'NgayThamGia' => '2025-09-17', 'created_at' => now(), 'updated_at' => now()],
         ]);
-
 
         // 20. DangKyDeTai
         DB::table('dang_ky_de_tais')->insertOrIgnore([
@@ -472,16 +479,16 @@ class DatabaseSeeder extends Seeder
 
         // 28. ChiTietDiemHoiDong
         DB::table('chi_tiet_diem_hoi_dongs')->insertOrIgnore([
-            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV01', 'MaSV' => 'SV01', 'Diem' => 9.0, 'NhanXet' => 'Báo cáo thuyết phục, trả lời xuất sắc', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
-            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV02', 'MaSV' => 'SV01', 'Diem' => 8.8, 'NhanXet' => 'Mô hình CSDL 31 bảng rất chuẩn', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
-            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV03', 'MaSV' => 'SV01', 'Diem' => 9.2, 'NhanXet' => 'Đáp ứng đầy đủ yêu cầu bài toán HUIT', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV01', 'MaSV' => $mssvList[1], 'Diem' => 9.0, 'NhanXet' => 'Báo cáo thuyết phục, trả lời xuất sắc', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV02', 'MaSV' => $mssvList[1], 'Diem' => 8.8, 'NhanXet' => 'Mô hình CSDL 31 bảng rất chuẩn', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['MaHoiDong' => 'HD01', 'MaGV' => 'GV03', 'MaSV' => $mssvList[1], 'Diem' => 9.2, 'NhanXet' => 'Đáp ứng đầy đủ yêu cầu bài toán HUIT', 'NgayCham' => now(), 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // 29. KetQuaSinhVien
         DB::table('ket_qua_sinh_viens')->insertOrIgnore([
             [
                 'MaKetQua' => 'KQ01',
-                'MaSV' => 'SV01',
+                'MaSV' => $mssvList[1],
                 'MaHocKy' => 'HK01',
                 'DiemHuongDan' => 9.0,
                 'DiemPhanBien' => 8.5,
@@ -495,7 +502,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'MaKetQua' => 'KQ02',
-                'MaSV' => 'SV02',
+                'MaSV' => $mssvList[2],
                 'MaHocKy' => 'HK01',
                 'DiemHuongDan' => 9.2,
                 'DiemPhanBien' => 9.0,
@@ -509,7 +516,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'MaKetQua' => 'KQ03',
-                'MaSV' => 'SV03',
+                'MaSV' => $mssvList[3],
                 'MaHocKy' => 'HK01',
                 'DiemHuongDan' => 8.5,
                 'DiemPhanBien' => 8.5,
@@ -541,8 +548,8 @@ class DatabaseSeeder extends Seeder
 
         // 31. NguoiNhanThongBao
         DB::table('nguoi_nhan_thong_baos')->insertOrIgnore([
-            ['MaThongBao' => 'TB01', 'MaTK' => 'TK_SV01', 'DaDoc' => true, 'NgayDoc' => now(), 'created_at' => now(), 'updated_at' => now()],
-            ['MaThongBao' => 'TB01', 'MaTK' => 'TK_SV02', 'DaDoc' => true, 'NgayDoc' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['MaThongBao' => 'TB01', 'MaTK' => $mssvList[1], 'DaDoc' => true, 'NgayDoc' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['MaThongBao' => 'TB01', 'MaTK' => $mssvList[2], 'DaDoc' => true, 'NgayDoc' => now(), 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }
