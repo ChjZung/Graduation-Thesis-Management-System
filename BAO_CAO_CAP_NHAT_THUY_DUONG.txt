@@ -1,0 +1,758 @@
+==================================================
+BÁO CÁO TỔNG HỢP CẬP NHẬT PROJECT - BRANCH THUY-DUONG
+==================================================
+Hệ thống Quản lý Đồ án / Khóa luận Tốt nghiệp HUIT
+Repository: https://github.com/ChjZung/Graduation-Thesis-Management-System.git
+Branch: thuy-duong
+Tác giả: ntthuyduong2801@gmail.com
+Ngày cập nhật: 25/08/2026
+
+==================================================
+CHI TIẾT THAY ĐỔI THEO TỪNG FILE
+==================================================
+
+------------------------------------------
+FILE:
+app/Console/Commands/SendDeadlineReminders.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Khởi tạo Artisan Command app:send-deadline-reminders tự động chạy hàng ngày.
+- Quét các mốc thời gian kế hoạch sắp đến hạn (trong 3 ngày) hoặc quá hạn (dưới 7 ngày).
+- Tự động gọi ThongBaoService phát hành notification tới toàn bộ Sinh viên & GVHD liên quan.
+
+ẢNH HƯỞNG:
+- Module Kế hoạch, Tiến độ & Thông báo deadline tự động.
+
+COMMIT:
+938011c
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/Admin/DocumentPlanController.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Xử lý nạp file văn bản thông báo chính thức (PDF/Word) và trích xuất 8 mốc kế hoạch bằng DocumentParserService.
+- Cung cấp tính năng Preview so sánh diffs mốc thời gian, xác nhận DB Transaction và lưu phiên bản thong_bao_van_ban_versions.
+- Bổ sung phương thức rollbackVersion khôi phục mốc thời gian kế hoạch về phiên bản cũ.
+
+ẢNH HƯỞNG:
+- Module Kế hoạch Khóa luận Document-Driven & Quản lý phiên bản văn bản.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/Admin/KeHoachKhoaLuanController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật luồng xử lý danh sách kế hoạch khóa luận, liên kết với văn bản thông báo gốc.
+- Chuẩn hóa phân trang và tìm kiếm kế hoạch theo học kỳ.
+- Bổ sung kiểm tra dữ liệu mốc thời gian liên kết với Calendar.
+
+ẢNH HƯỞNG:
+- Module Quản lý Kế hoạch Admin.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/Admin/KetQuaController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật hiển thị điểm tổng kết khóa luận kèm bộ lọc theo Học kỳ.
+- Tích hợp phương thức exportExcel xuất file Bảng Điểm Bảo Vệ Khóa Luận Tốt Nghiệp dạng CSV/Excel UTF-8 tiếng Việt.
+- Tính toán đầy đủ trọng số Điểm GVHD (30%), Điểm Phản Biện (30%), Điểm Hội Đồng (40%) và Xếp loại.
+
+ẢNH HƯỞNG:
+- Module Quản lý Kết quả & Bảng điểm bảo vệ khóa luận.
+
+COMMIT:
+e6af3d0
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/Admin/TheoDoiDoAnController.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Xây dựng Controller Theo dõi tiến độ đồ án ưu tiên đẩy nhóm QUÁ HẠN và SẮP ĐẾN HẠN lên đầu bảng.
+- Tích hợp ô Tìm kiếm nhanh theo tên nhóm, mã nhóm, tên đề tài, MSSV trưởng nhóm.
+- Bổ sung phương thức remindGroup phát hành notification nhắc deadline trực tiếp cho nhóm.
+
+ẢNH HƯỞNG:
+- Module Theo dõi Tiến độ Đồ án Admin.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/CalendarController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật hiển thị Lịch quy trình khóa luận dạng Ma trận Sơ đồ Tiến độ (Schedule Matrix).
+- Kết nối hiển thị mốc thời gian thực tế từ bảng moc_thoi_gian_khoa_luans.
+- Phân quyền hiển thị lịch quy trình riêng cho Admin, Giảng viên và Sinh viên.
+
+ẢNH HƯỞNG:
+- Module Lịch quy trình Khóa luận toàn hệ thống.
+
+COMMIT:
+f3a384d
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/GiangVien/DeTaiController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật giao diện quản lý đề tài của Giảng viên.
+- Bổ sung kiểm tra danh sách nhiệm vụ hướng dẫn myTasks.
+- Chuẩn hóa form đề xuất và gán nhóm đề tài.
+
+ẢNH HƯỞNG:
+- Module Đề tài Portal Giảng viên.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/GiangVienController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Chuẩn hóa quản lý danh sách Giảng viên Admin kèm lọc theo Bộ môn/Khoa.
+- Bảo đảm giữ nguyên cố định trường MaGV không cho chỉnh sửa ở form update.
+- Tích hợp Import Excel Giảng viên chuẩn mẫu.
+
+ẢNH HƯỞNG:
+- Module Quản lý Giảng viên Admin.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/KhoaController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Chuẩn hóa giao diện Quản lý Khoa Admin.
+- Tích hợp Import Excel danh mục Khoa.
+
+ẢNH HƯỞNG:
+- Module Danh mục Khoa Admin.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/LopController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Chuẩn hóa giao diện Quản lý Lớp học Admin.
+- Tích hợp Import Excel danh mục Lớp.
+
+ẢNH HƯỞNG:
+- Module Danh mục Lớp Admin.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/SinhVien/NhomController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật luồng tạo nhóm, mời thành viên và đăng ký đề tài Sinh viên.
+- Đồng bộ dữ liệu tiến độ thực hiện của Nhóm.
+
+ẢNH HƯỞNG:
+- Module Quản lý Nhóm Sinh viên.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/SinhVienController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Chuẩn hóa quản lý Sinh viên Admin kèm lọc theo Lớp.
+- Bảo đảm giữ nguyên cố định trường MaSV không cho chỉnh sửa ở form update.
+- Tích hợp Import Excel Sinh viên chuẩn mẫu.
+
+ẢNH HƯỞNG:
+- Module Quản lý Sinh viên Admin.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Controllers/ThongBaoController.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Nâng cấp xử lý Full CRUD cho Thông báo Hệ thống (Danh sách, Chi tiết, Tạo mới, Sửa nháp, Xóa/Hủy).
+- Quản lý vòng đời trạng thái NHÁP, ĐÃ LÊN LỊCH, ĐÃ GỬI, ĐÃ HỦY.
+- Phân phối bản ghi người nhận chính xác và bảo tồn lịch sử cho thông báo đã gửi.
+
+ẢNH HƯỞNG:
+- Module Quản lý Thông báo Hệ thống Admin.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Http/Traits/HandlesExcelImport.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật Trait xử lý Import Excel dùng chung cho danh mục Admin.
+- Bổ sung validate dữ liệu trùng lặp và bắt lỗi hàng lỗi chi tiết.
+
+ẢNH HƯỞNG:
+- Excel Import toàn hệ thống.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/KeHoachKhoaLuan.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Bổ sung các mối quan hệ Eloquent thongBaoVanBan, mocThoiGians.
+- Cập nhật fillable các thuộc tính kế hoạch mới.
+
+ẢNH HƯỞNG:
+- Model KeHoachKhoaLuan.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/MocThoiGianKhoaLuan.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật fillable các thuộc tính mốc thời gian quy trình.
+- Thêm liên kết với KeHoachKhoaLuan.
+
+ẢNH HƯỞNG:
+- Model MocThoiGianKhoaLuan.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/Nhom.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Thêm thuộc tính tính toán tiến độ thực tế và liên kết hoSoBaoVe, baoCaos.
+
+ẢNH HƯỞNG:
+- Model Nhom.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/ThongBao.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Tích hợp SoftDeletes.
+- Thêm fillable FileDinhKem, MaKeHoach, MaMoc, NgayGui và các Eloquent relationships.
+
+ẢNH HƯỞNG:
+- Model ThongBao.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/ThongBaoVanBan.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Model lưu thông tin văn bản thông báo gốc (file path, số thông báo, phiên bản hiện tại).
+
+ẢNH HƯỞNG:
+- Model ThongBaoVanBan.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Models/ThongBaoVanBanVersion.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Model lưu vết phiên bản lịch sử thay đổi mốc thời gian kế hoạch từ file thông báo.
+
+ẢNH HƯỞNG:
+- Model ThongBaoVanBanVersion.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Services/DocumentParserService.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Service phân tích file văn bản DOCX (ZipArchive XML) và PDF.
+- Tự động trích xuất tiêu đề văn bản và matrix 8 mốc thời gian quy trình.
+
+ẢNH HƯỞNG:
+- Document-Driven Plan Import Service.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Services/ExcelImportService.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật logic import dữ liệu từ Excel cho Sinh viên, Giảng viên, Danh mục.
+
+ẢNH HƯỞNG:
+- Excel Import Service.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Services/ExcelTemplateService.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Chuẩn hóa xuất template mẫu Import Excel chuẩn định dạng.
+
+ẢNH HƯỞNG:
+- Excel Template Service.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Services/PlanPhaseService.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Service xác định kế hoạch đang hoạt động và giai đoạn hiện tại.
+
+ẢNH HƯỞNG:
+- Plan Phase Service.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+app/Services/ThongBaoService.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Bổ sung phương thức guiThongBaoKemFileGoc đính kèm đường dẫn file văn bản gốc.
+
+ẢNH HƯỞNG:
+- Notification Dispatch Service.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+database/migrations/2026_08_25_150000_update_ke_hoach_and_moc_thoi_gian_tables.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Migration bổ sung các thuộc tính mốc thời gian quy trình khóa luận.
+
+ẢNH HƯỞNG:
+- Database Schema.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+database/migrations/2026_08_25_160000_create_thong_bao_van_bans_and_versions_tables.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Migration tạo bảng thong_bao_van_bans và thong_bao_van_ban_versions.
+
+ẢNH HƯỞNG:
+- Database Schema.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+database/migrations/2026_08_25_170000_upgrade_thong_baos_table_for_full_management.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Migration nâng cấp bảng thong_baos với FileDinhKem, MaKeHoach, NgayGui và SoftDeletes.
+
+ẢNH HƯỞNG:
+- Database Schema.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+public/css/huit_theme.css
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Bổ sung bộ Design Tokens Content UI thống nhất (.card-premium, .card-header-premium, .table-custom, .badge-code, .btn-action-circle, .empty-state-box).
+
+ẢNH HƯỞNG:
+- Style CSS toàn hệ thống.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/kehoach/document_history.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Trang xem lịch sử phiên bản văn bản thông báo kế hoạch.
+- Tích hợp nút bấm Khôi phục phiên bản vX (Rollback).
+
+ẢNH HƯỞNG:
+- View Admin Kế hoạch.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/kehoach/import_document.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Giao diện Upload văn bản thông báo kế hoạch PDF/Word.
+
+ẢNH HƯỞNG:
+- View Admin Kế hoạch.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/kehoach/preview_document.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Giao diện Preview bóc tách 8 mốc thời gian và so sánh diffs trước khi lưu DB.
+
+ẢNH HƯỞNG:
+- View Admin Kế hoạch.
+
+COMMIT:
+8693c92
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/ketqua/index.blade.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật giao diện Bảng điểm bảo vệ khóa luận tổng hợp.
+- Tích hợp nút Xuất Bảng Điểm Excel.
+
+ẢNH HƯỞNG:
+- View Admin Kết quả.
+
+COMMIT:
+e6af3d0
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/theodoi/index.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Màn hình Theo dõi tiến độ đồ án ưu tiên đẩy nhóm Quá hạn lên đầu.
+- 5 thẻ lọc nhanh 1-click và nút Nhắc nhóm.
+
+ẢNH HƯỞNG:
+- View Admin Theo dõi tiến độ.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/admin/theodoi/show.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Màn hình xem chi tiết tiến độ nhóm và timeline 9 mốc quy trình.
+
+ẢNH HƯEXPL:
+- View Admin Theo dõi tiến độ.
+
+COMMIT:
+2563bfc
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/layouts/admin.blade.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Cập nhật menu điều hướng Admin Sidebar (giữ nguyên Header, Sidebar, Footer).
+- Bổ sung đường dẫn Bảng điểm & Kết quả và Trích xuất Kế hoạch.
+
+ẢNH HƯỞNG:
+- Layout Admin.
+
+COMMIT:
+1168df2
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/sinhvien/my_tasks.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Giao diện danh sách mốc thời gian và nhiệm vụ nộp báo cáo của Sinh viên.
+
+ẢNH HƯỞNG:
+- View Portal Sinh viên.
+
+COMMIT:
+f3a384d
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/thongbao/create.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Giao diện tạo mới thông báo độc lập với 3 chế độ phát hành.
+
+ẢNH HƯỞNG:
+- View Thông báo.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/thongbao/edit.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Giao diện chỉnh sửa thông báo nháp / lên lịch.
+
+ẢNH HƯỞNG:
+- View Thông báo.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+resources/views/thongbao/show.blade.php
+
+TRẠNG THÁI:
+Đã thêm
+
+NỘI DUNG CHÍNH:
+- Màn hình xem chi tiết thông báo, file đính kèm gốc và thống kê số người đã đọc.
+
+ẢNH HƯỞNG:
+- View Thông báo.
+
+COMMIT:
+c23f429
+------------------------------------------
+
+------------------------------------------
+FILE:
+routes/console.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Đăng ký lịch chạy hàng ngày 08:00 AM cho Artisan Command app:send-deadline-reminders.
+
+ẢNH HƯỞNG:
+- Console Routes Scheduler.
+
+COMMIT:
+938011c
+------------------------------------------
+
+------------------------------------------
+FILE:
+routes/web.php
+
+TRẠNG THÁI:
+Đã sửa
+
+NỘI DUNG CHÍNH:
+- Đăng ký đầy đủ resource routes cho thongbao, theo-doi-do-an, document-plan, ketqua export và rollback version.
+
+ẢNH HƯỞNG:
+- Web Routes toàn hệ thống.
+
+COMMIT:
+f3a384d
+------------------------------------------
