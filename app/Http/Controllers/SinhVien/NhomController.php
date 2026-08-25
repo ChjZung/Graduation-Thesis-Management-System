@@ -720,4 +720,74 @@ class NhomController extends Controller
 
         return redirect()->back()->with('success', 'Đã thu hồi lời mời thành viên.');
     }
+
+    public function myTasks()
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
+        if (!$sinhVien) {
+            return redirect()->route('sinhvien.dashboard');
+        }
+
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+        $nhom = $thanhVien ? Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai.giangVienHuongDan', 'baoCaos', 'hoSoBaoVe'])->find($thanhVien->MaNhom) : null;
+
+        $activePlan = \App\Services\PlanPhaseService::getActivePlan();
+        $taskList = [];
+        $today = \Carbon\Carbon::today();
+
+        if ($activePlan && $nhom) {
+            foreach ($activePlan->mocThoiGians as $moc) {
+                $statusLabel = 'Chưa bắt đầu';
+                $badgeClass = 'bg-secondary';
+                $warning = null;
+
+                $startDate = \Carbon\Carbon::parse($moc->NgayBatDau);
+                $endDate = \Carbon\Carbon::parse($moc->NgayKetThuc);
+                $daysLeft = (int) $today->diffInDays($endDate, false);
+
+                if (str_contains($moc->LoaiGiaiDoan, 'BAO_CAO_TIEN_DO')) {
+                    $lan = str_contains($moc->LoaiGiaiDoan, '1') ? 1 : (str_contains($moc->LoaiGiaiDoan, '2') ? 2 : 3);
+                    $bc = $nhom->baoCaos->where('LanBaoCao', $lan)->first();
+                    if ($bc) {
+                        $statusLabel = 'Đã nộp (' . date('d/m/Y', strtotime($bc->NgayNop)) . ')';
+                        $badgeClass = 'bg-success';
+                    } else {
+                        if ($daysLeft < 0) {
+                            $statusLabel = 'Quá hạn nộp!';
+                            $badgeClass = 'bg-danger';
+                            $warning = 'Đã quá hạn ' . abs($daysLeft) . ' ngày';
+                        } elseif ($daysLeft <= 7) {
+                            $statusLabel = 'Sắp đến hạn';
+                            $badgeClass = 'bg-warning text-dark';
+                            $warning = 'Còn ' . $daysLeft . ' ngày nữa hết hạn';
+                        } else {
+                            $statusLabel = $today->between($startDate, $endDate) ? 'Đang diễn ra' : 'Chưa đến mốc';
+                            $badgeClass = $today->between($startDate, $endDate) ? 'bg-primary' : 'bg-secondary';
+                        }
+                    }
+                } elseif ($moc->LoaiGiaiDoan === 'DAO_VAN') {
+                    if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TyLeTrungLap !== null) {
+                        $statusLabel = 'Đã hoàn thành (' . $nhom->hoSoBaoVe->TyLeTrungLap . '%)';
+                        $badgeClass = 'bg-success';
+                    } else {
+                        $statusLabel = ($daysLeft < 0) ? 'Quá hạn' : (($daysLeft <= 7) ? 'Sắp đến hạn' : 'Chưa đến mốc');
+                        $badgeClass = ($daysLeft < 0) ? 'bg-danger' : (($daysLeft <= 7) ? 'bg-warning text-dark' : 'bg-secondary');
+                    }
+                } else {
+                    $statusLabel = ($daysLeft < 0) ? 'Đã qua' : ($today->between($startDate, $endDate) ? 'Đang diễn ra' : 'Chưa đến mốc');
+                    $badgeClass = ($daysLeft < 0) ? 'bg-dark' : ($today->between($startDate, $endDate) ? 'bg-primary' : 'bg-secondary');
+                }
+
+                $taskList[] = [
+                    'moc'          => $moc,
+                    'status_label' => $statusLabel,
+                    'badge_class'  => $badgeClass,
+                    'warning'      => $warning,
+                ];
+            }
+        }
+
+        return view('sinhvien.my_tasks', compact('nhom', 'activePlan', 'taskList'));
+    }
 }

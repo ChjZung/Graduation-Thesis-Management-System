@@ -208,4 +208,35 @@ class DeTaiController extends Controller
         return redirect()->route('giangvien.detai.index')
             ->with('success', "Đã gán thành công Nhóm '{$nhom->TenNhom}' vào đề tài '{$detai->TenDeTai}'!");
     }
+
+    public function myTasks()
+    {
+        $user = Auth::user();
+        $gv = GiangVien::where('MaTK', $user->MaTK)->first();
+        if (!$gv) {
+            return redirect()->route('giangvien.dashboard');
+        }
+
+        $nhoms = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
+            ->whereHas('dangKyDeTai', function($q) use ($gv) {
+                $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+            })->get();
+
+        $stats = [
+            'sap_den_han'  => 0,
+            'qua_han'      => 0,
+            'cho_nhan_xet' => 0,
+        ];
+
+        $today = \Carbon\Carbon::today();
+        foreach ($nhoms as $nhom) {
+            foreach ($nhom->baoCaos as $bc) {
+                if (empty($bc->NhanXet)) {
+                    $stats['cho_nhan_xet']++;
+                }
+            }
+        }
+
+        return view('giangvien.my_tasks', compact('nhoms', 'stats'));
+    }
 }

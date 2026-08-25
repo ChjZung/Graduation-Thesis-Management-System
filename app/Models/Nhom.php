@@ -44,5 +44,10 @@ class Nhom extends Model
     {
         return $this->hasOne(DangKyDeTai::class, 'MaNhom', 'MaNhom');
     }
+
+    public function hoSoBaoVe()
+    {
+        return $this->hasOne(HoSoBaoVe::class, 'MaNhom', 'MaNhom');
+    }
 }
 
