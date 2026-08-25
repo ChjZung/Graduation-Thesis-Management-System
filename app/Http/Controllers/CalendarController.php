@@ -81,4 +81,118 @@ class CalendarController extends Controller
             'roleTitle' => 'Sinh Viên',
         ]);
     }
+
+    /**
+     * Lịch Quy Trình Khóa Luận (So Sánh Kế Hoạch vs Thực Tế Chi Tiết)
+     */
+    public function scheduleMatrix(Request $request)
+    {
+        $user = Auth::user();
+        $layout = 'layouts.admin';
+        if ($user && $user->VaiTro === 'Giảng viên') {
+            $layout = 'layouts.giangvien';
+        } elseif ($user && $user->VaiTro === 'Sinh viên') {
+            $layout = 'layouts.sinhvien';
+        }
+
+        $keHoachs = KeHoachKhoaLuan::with(['mocThoiGians', 'hocKy'])->orderBy('created_at', 'desc')->get();
+        
+        $selectedPlanId = $request->input('MaKeHoach');
+        $activePlan = $selectedPlanId 
+            ? KeHoachKhoaLuan::with(['mocThoiGians', 'hocKy'])->find($selectedPlanId) 
+            : \App\Services\PlanPhaseService::getActivePlan();
+
+        if (!$activePlan && $keHoachs->isNotEmpty()) {
+            $activePlan = $keHoachs->first();
+        }
+
+        $nhomsQuery = \App\Models\Nhom::with(['truongNhom', 'thanhViens.sinhVien', 'deTai', 'dangKyDeTai.giangVienHuongDan', 'baoCaos', 'hoSoBaoVe']);
+
+        if ($request->filled('MaGV')) {
+            $nhomsQuery->whereHas('dangKyDeTai', function($q) use ($request) {
+                $q->where('MaGVHuongDan', $request->MaGV);
+            });
+        }
+
+        $nhoms = $nhomsQuery->get();
+        $today = \Carbon\Carbon::today();
+
+        // Biến đổi Ma trận Kế Hoạch vs Thực Tế
+        $matrix = [];
+        if ($activePlan) {
+            foreach ($activePlan->mocThoiGians as $moc) {
+                $mocInfo = [
+                    'moc' => $moc,
+                    'status' => \App\Services\PlanPhaseService::getPhaseStatus($moc),
+                    'teams' => [],
+                ];
+
+                foreach ($nhoms as $nhom) {
+                    $taskStatus = 'CHUA_BAT_DAU';
+                    $actualDate = null;
+                    $warning = null;
+
+                    $startDate = \Carbon\Carbon::parse($moc->NgayBatDau);
+                    $endDate = \Carbon\Carbon::parse($moc->NgayKetThuc);
+                    $daysLeft = (int) $today->diffInDays($endDate, false);
+
+                    if (str_contains($moc->LoaiGiaiDoan, 'BAO_CAO_TIEN_DO')) {
+                        $lan = str_contains($moc->LoaiGiaiDoan, '1') ? 1 : (str_contains($moc->LoaiGiaiDoan, '2') ? 2 : 3);
+                        $bc = $nhom->baoCaos->where('LanBaoCao', $lan)->first();
+                        if ($bc) {
+                            $taskStatus = 'HOAN_THANH';
+                            $actualDate = date('d/m/Y', strtotime($bc->NgayNop));
+                        } else {
+                            if ($daysLeft < 0) {
+                                $taskStatus = 'QUA_HAN';
+                                $warning = "Quá hạn " . abs($daysLeft) . " ngày";
+                            } elseif ($daysLeft <= 7 && $daysLeft >= 0) {
+                                $taskStatus = 'SAP_DEN_HAN';
+                                $warning = "Còn " . $daysLeft . " ngày";
+                            } else {
+                                $taskStatus = $today->between($startDate, $endDate) ? 'DANG_DIEN_RA' : 'CHUA_BAT_DAU';
+                            }
+                        }
+                    } elseif ($moc->LoaiGiaiDoan === 'DAO_VAN') {
+                        if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TyLeTrungLap !== null) {
+                            $taskStatus = 'HOAN_THANH';
+                            $actualDate = "Turnitin: " . $nhom->hoSoBaoVe->TyLeTrungLap . "%";
+                        } else {
+                            $taskStatus = ($daysLeft < 0) ? 'QUA_HAN' : (($daysLeft <= 7) ? 'SAP_DEN_HAN' : 'CHUA_BAT_DAU');
+                        }
+                    } elseif ($moc->LoaiGiaiDoan === 'GVHD_XAC_NHAN') {
+                        if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->XacNhanGVHD) {
+                            $taskStatus = 'HOAN_THANH';
+                            $actualDate = "Đã xác nhận";
+                        } else {
+                            $taskStatus = ($daysLeft < 0) ? 'QUA_HAN' : (($daysLeft <= 7) ? 'SAP_DEN_HAN' : 'CHUA_BAT_DAU');
+                        }
+                    } else {
+                        // Mốc chung (Đăng ký, Phân công, Bảo vệ...)
+                        if ($daysLeft < 0) {
+                            $taskStatus = 'QUA_HAN';
+                        } elseif ($today->between($startDate, $endDate)) {
+                            $taskStatus = 'DANG_DIEN_RA';
+                        } else {
+                            $taskStatus = 'CHUA_BAT_DAU';
+                        }
+                    }
+
+                    $mocInfo['teams'][$nhom->MaNhom] = [
+                        'nhom'        => $nhom,
+                        'status'      => $taskStatus,
+                        'actual_date' => $actualDate,
+                        'warning'     => $warning,
+                    ];
+                }
+
+                $matrix[] = $mocInfo;
+            }
+        }
+
+        $hocKies = \App\Models\HocKy::all();
+        $giangViens = \App\Models\GiangVien::all();
+
+        return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'nhoms', 'hocKies', 'giangViens'));
+    }
 }

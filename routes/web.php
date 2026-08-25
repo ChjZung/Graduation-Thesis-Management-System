@@ -57,9 +57,10 @@ Route::prefix('api')->group(function () {
 });
 
 // ==========================================
-// PROFILE ROUTES (all auth users)
+// PROFILE & SCHEDULE MATRIX ROUTES (all auth users)
 // ==========================================
 Route::middleware(['auth'])->group(function () {
+    Route::get('/lich-quy-trinh-matrix', [\App\Http\Controllers\CalendarController::class, 'scheduleMatrix'])->name('calendar.matrix');
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'showProfile'])->name('profile.show');
     Route::get('/password/change', [\App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/password/change', [\App\Http\Controllers\ProfileController::class, 'changePassword'])->name('password.change.post');
@@ -88,9 +89,22 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('yeu-cau-doi-mat-khau/{id}/duyet', [\App\Http\Controllers\Admin\YeuCauDoiMatKhauController::class, 'approve'])->name('admin.yeucau.approve');
     Route::post('yeu-cau-doi-mat-khau/{id}/tu-choi', [\App\Http\Controllers\Admin\YeuCauDoiMatKhauController::class, 'reject'])->name('admin.yeucau.reject');
 
-    // Kế hoạch Khóa luận & Lịch Calendar
+    // Kế hoạch Khóa luận & Upload Văn bản thông báo
+    Route::get('/kehoach/import-document', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'importForm'])->name('admin.kehoach.importDocument');
+    Route::post('/kehoach/process-parse', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'processParse'])->name('admin.kehoach.processParse');
+    Route::get('/kehoach/preview-document', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'previewDocument'])->name('admin.kehoach.previewDocument');
+    Route::post('/kehoach/confirm-import', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'confirmImport'])->name('admin.kehoach.confirmImport');
+    Route::get('/kehoach/document-history/{maVanBan}', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'history'])->name('admin.kehoach.documentHistory');
+    Route::post('/kehoach/document-rollback/{maVanBan}/{versionId}', [\App\Http\Controllers\Admin\DocumentPlanController::class, 'rollbackVersion'])->name('admin.kehoach.documentRollback');
+
     Route::resource('kehoach', \App\Http\Controllers\Admin\KeHoachKhoaLuanController::class)->names('admin.kehoach');
+    Route::post('/kehoach/{id}/status', [\App\Http\Controllers\Admin\KeHoachKhoaLuanController::class, 'updateStatus'])->name('admin.kehoach.updateStatus');
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adminCalendar'])->name('admin.calendar');
+
+    // Theo dõi Đồ án / Khóa luận
+    Route::get('/theo-doi-do-an', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'index'])->name('admin.theodoi.index');
+    Route::get('/theo-doi-do-an/{id}', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'show'])->name('admin.theodoi.show');
+    Route::post('/theo-doi-do-an/{id}/remind', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'remindGroup'])->name('admin.theodoi.remind');
 
     // Phê duyệt Đề tài do GV đề xuất
     Route::get('/duyet-detai', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'index'])->name('admin.duyet_detai.index');
@@ -114,10 +128,15 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/ho-so-bao-ve/{id}/phan-cong', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'phanCong'])->name('admin.hosoBaoVe.phanCong');
     Route::post('/ho-so-bao-ve/{id}/xac-nhan', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'xacNhan'])->name('admin.hosoBaoVe.xacNhan');
 
+    // Kết quả & Xuất Bảng Điểm Excel
+    Route::get('/ketqua', [\App\Http\Controllers\Admin\KetQuaController::class, 'index'])->name('admin.ketqua.index');
+    Route::get('/ketqua/export', [\App\Http\Controllers\Admin\KetQuaController::class, 'exportExcel'])->name('admin.ketqua.export');
+
     // Excel Import & Templates
     Route::get('/import/template/{type}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadTemplate'])->name('admin.import.template');
     Route::get('/import/error-log/{filename}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadErrorLog'])->name('admin.import.errorLog');
 
+    Route::post('/khoa/import', [\App\Http\Controllers\KhoaController::class, 'importExcel'])->name('admin.khoa.import');
     Route::post('/sinhvien/import', [\App\Http\Controllers\SinhVienController::class, 'importExcel'])->name('admin.sinhvien.import');
     Route::post('/giangvien/import', [\App\Http\Controllers\GiangVienController::class, 'importExcel'])->name('admin.giangvien.import');
     Route::post('/bomon/import', [\App\Http\Controllers\BoMonController::class, 'importExcel'])->name('admin.bomon.import');
@@ -126,7 +145,8 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/hocky/import', [\App\Http\Controllers\HocKyController::class, 'importExcel'])->name('admin.hocky.import');
 
     // Thông báo
-    Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->only(['index', 'store', 'destroy']);
+    Route::post('/thongbao/{id}/send-now', [\App\Http\Controllers\ThongBaoController::class, 'sendNow'])->name('thongbao.sendNow');
+    Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class);
 });
 
 
@@ -141,6 +161,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Lịch Calendar Giảng viên
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'giangVienCalendar'])->name('giangvien.calendar');
+    Route::get('/cong-viec-huong-dan', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'myTasks'])->name('giangvien.my_tasks');
 
     // Đề tài
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
@@ -169,6 +190,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
 
     // Lịch Calendar Sinh viên
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'sinhVienCalendar'])->name('sinhvien.calendar');
+    Route::get('/cong-viec-cua-toi', [\App\Http\Controllers\SinhVien\NhomController::class, 'myTasks'])->name('sinhvien.my_tasks');
 
     // Nhóm & Đăng ký đề tài
     Route::get('nhom', [\App\Http\Controllers\SinhVien\NhomController::class, 'index'])->name('sinhvien.nhom.index');
