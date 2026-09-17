@@ -20,15 +20,15 @@ class LopController extends Controller
 
     public function create()
     {
-        $nganhs = Nganh::with('khoa')->orderBy('TenNganh')->get();
-        return view('admin.lop.create', compact('nganhs'));
+        $Nganh = Nganh::with('khoa')->orderBy('TenNganh')->get();
+        return view('admin.lop.create', compact('Nganh'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'TenLop' => 'required|string|max:100|unique:lops,TenLop|unique:lops,MaLop',
-            'MaNganh' => 'required|exists:nganhs,MaNganh',
+            'TenLop' => 'required|string|max:100|unique:Lop,TenLop|unique:Lop,MaLop',
+            'MaNganh' => 'required|exists:Nganh,MaNganh',
             'KhoaHoc' => 'required|string|max:20'
         ], [
             'TenLop.required' => 'Vui lòng nhập tên lớp.',
@@ -53,8 +53,8 @@ class LopController extends Controller
     public function edit($id)
     {
         $lop = Lop::findOrFail($id);
-        $nganhs = Nganh::with('khoa')->orderBy('TenNganh')->get();
-        return view('admin.lop.edit', compact('lop', 'nganhs'));
+        $Nganh = Nganh::with('khoa')->orderBy('TenNganh')->get();
+        return view('admin.lop.edit', compact('lop', 'Nganh'));
     }
 
     public function update(Request $request, $id)
@@ -62,8 +62,8 @@ class LopController extends Controller
         $lop = Lop::findOrFail($id);
 
         $request->validate([
-            'TenLop' => 'required|string|max:100|unique:lops,TenLop,' . $id . ',MaLop',
-            'MaNganh' => 'required|exists:nganhs,MaNganh',
+            'TenLop' => 'required|string|max:100|unique:Lop,TenLop,' . $id . ',MaLop',
+            'MaNganh' => 'required|exists:Nganh,MaNganh',
             'KhoaHoc' => 'required|string|max:20'
         ], [
             'TenLop.required' => 'Vui lòng nhập tên lớp.',

@@ -10,7 +10,6 @@ use App\Models\TaiKhoan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class GiangVienController extends Controller
 {
@@ -49,12 +48,12 @@ class GiangVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap|unique:giang_viens,MaGV',
+            'TenDangNhap' => 'required|string|max:50|unique:TaiKhoan,TenDangNhap|unique:GiangVien,MaGV',
             'HoTen' => 'required|string|max:100',
             'HocVi' => 'required|string|max:50',
-            'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
-            'Email' => 'required|email|max:100|unique:giang_viens,Email',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:giang_viens,SoDienThoai']
+            'MaBoMon' => 'required|exists:BoMon,MaBoMon',
+            'Email' => 'required|email|max:100|unique:GiangVien,Email',
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:GiangVien,SoDienThoai']
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập Mã giảng viên (MaGV).',
             'TenDangNhap.unique'   => 'Mã giảng viên / Tên đăng nhập đã tồn tại trong hệ thống.',
@@ -77,7 +76,7 @@ class GiangVienController extends Controller
                 'MatKhau'           => Hash::make('123456'),
                 'MaVaiTro'          => 'VT02',
                 'TrangThai'         => true,
-                'password_status'   => 'INITIAL',
+                'TrangThaiMatKhau'  => 'INITIAL',
                 'BatBuocDoiMatKhau' => true,
                 'SoLanDangNhapSai'  => 0,
             ]);
@@ -86,12 +85,11 @@ class GiangVienController extends Controller
                 'MaGV'        => $maGV,
                 'MaTK'        => $tk->MaTK,
                 'MaBoMon'     => $request->MaBoMon,
-                'MaSoCanBo'   => $maGV,
                 'HoTen'       => trim($request->HoTen),
                 'Email'       => trim($request->Email),
                 'SoDienThoai' => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
                 'HocVi'       => trim($request->HocVi),
-                'TrangThai'   => true,
+                'TrangThai'   => 'Đang công tác',
             ]);
         });
 
@@ -112,9 +110,9 @@ class GiangVienController extends Controller
         $request->validate([
             'HoTen' => 'required|string|max:100',
             'HocVi' => 'required|string|max:50',
-            'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
-            'Email' => 'required|email|max:100|unique:giang_viens,Email,' . $id . ',MaGV',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:giang_viens,SoDienThoai,' . $id . ',MaGV']
+            'MaBoMon' => 'required|exists:BoMon,MaBoMon',
+            'Email' => 'required|email|max:100|unique:GiangVien,Email,' . $id . ',MaGV',
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:GiangVien,SoDienThoai,' . $id . ',MaGV']
         ], [
             'HoTen.required'   => 'Vui lòng nhập họ tên.',
             'HocVi.required'   => 'Vui lòng nhập học vị.',
@@ -144,7 +142,6 @@ class GiangVienController extends Controller
 
         try {
             DB::transaction(function () use ($giangvien, $maTK) {
-                \App\Models\PhanCongHuongDanLop::where('MaGV', $giangvien->MaGV)->delete();
                 $giangvien->delete();
                 if ($maTK) {
                     TaiKhoan::destroy($maTK);
@@ -152,7 +149,7 @@ class GiangVienController extends Controller
             });
             return redirect()->route('giangvien.index')->with('success', "Xóa giảng viên '{$giangvien->HoTen}' thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors("Không thể xóa giảng viên '{$giangvien->HoTen}' do đang hướng dẫn hoặc phản biện đề tài.");
+            return redirect()->back()->withErrors("Không thể xóa giảng viên '{$giangvien->HoTen}' do đang có đề tài, hướng dẫn hoặc hội đồng liên quan.");
         }
     }
 

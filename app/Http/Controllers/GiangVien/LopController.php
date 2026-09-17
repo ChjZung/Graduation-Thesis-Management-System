@@ -45,10 +45,10 @@ class LopController extends Controller
             ->get();
 
         // Lấy danh sách nhóm đồ án thuộc Lớp Học Phần này
-        $nhoms = NhomDoAn::with(['sinhVienTruongNhom', 'thanhVienNhoms.sinhVien', 'dangKyDeTai.deTai', 'monHoc', 'hocKy'])
+        $Nhom = NhomDoAn::with(['sinhVienTruongNhom', 'thanhVienNhoms.sinhVien', 'dangKyDeTai.deTai', 'monHoc', 'hocKy'])
             ->where('MaLopHP', $lopHP->MaLopHP)
             ->get();
 
-        return view('giangvien.lop.show', compact('lopHP', 'sinhVienLhps', 'nhoms'));
+        return view('giangvien.lop.show', compact('lopHP', 'sinhVienLhps', 'Nhom'));
     }
 }

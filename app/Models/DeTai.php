@@ -9,13 +9,20 @@ class DeTai extends Model
 {
     use HasFactory;
 
-    protected $table = 'de_tais';
+    protected $table = 'DeTai';
     protected $primaryKey = 'MaDeTai';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaDeTai', 'MaGV', 'TenDeTai', 'MoTa', 'YeuCau', 'LinhVuc', 'SoLuongSinhVienToiDa', 'MaHocKy', 'TrangThai', 'NgayDeXuat', 'NgayDuyet', 'LyDoTuChoi'
+        'MaDeTai',
+        'TenDeTai',
+        'MoTa',
+        'YeuCau',
+        'TrangThai',
+        'NgayDeXuat',
+        'MaGV',
+        'MaHocKy',
     ];
 
     public $timestamps = true;
@@ -25,15 +32,54 @@ class DeTai extends Model
         return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
     }
 
+    public function hocKy()
+    {
+        return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
+
+    public function chiTietDuyets()
+    {
+        return $this->hasMany(ChiTietDuyetDeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function phanCongPhanBiens()
+    {
+        return $this->hasMany(PhanCongPhanBien::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function phieuDangKys()
+    {
+        return $this->hasMany(PhieuDangKy::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    // Alias for backward compatibility
     public function dangKyDeTais()
     {
-        return $this->hasMany(DangKyDeTai::class, 'MaDeTai', 'MaDeTai');
+        return $this->phieuDangKys();
     }
 
-    public function nhoms()
+    public function baoCaoTienDos()
     {
-        return $this->hasMany(Nhom::class, 'MaDeTai', 'MaDeTai');
+        return $this->hasMany(BaoCaoTienDo::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function taiLieuNops()
+    {
+        return $this->hasMany(TaiLieuNop::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function hoiDongs()
+    {
+        return $this->hasMany(HoiDong::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function hoSoBaoVes()
+    {
+        return $this->hasMany(HoSoBaoVe::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function phieuChamDiems()
+    {
+        return $this->hasMany(PhieuChamDiem::class, 'MaDeTai', 'MaDeTai');
     }
 }
-
-

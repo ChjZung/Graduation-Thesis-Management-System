@@ -30,8 +30,8 @@ class DocumentPlanController extends Controller
     public function importForm()
     {
         $hocKies = \App\Models\HocKy::all();
-        $khoas = \App\Models\Khoa::all();
-        return view('admin.kehoach.import_document', compact('hocKies', 'khoas'));
+        $Khoa = \App\Models\Khoa::all();
+        return view('admin.kehoach.import_document', compact('hocKies', 'Khoa'));
     }
 
     /**

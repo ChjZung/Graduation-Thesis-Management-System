@@ -48,15 +48,20 @@ class GenerateAiSummaryJob implements ShouldQueue
 
             $maTomTat = IdGenerator::nextTomTat();
 
-            TomTatBaoCao::create(array_merge(
-                ['MaTomTat' => $maTomTat, 'MaBaoCao' => $baoCao->MaBaoCao],
-                $aiData
-            ));
+            TomTatBaoCao::create([
+                'MaTomTat'            => $maTomTat,
+                'MaBaoCao'            => $baoCao->MaBaoCao,
+                'CongViecDaHoanThanh' => $aiData['CongViecDaHoanThanh'] ?? '',
+                'KhoKhan'             => $aiData['KhoKhan'] ?? '',
+                'KeHoachTuanToi'      => $aiData['KeHoachTuanToi'] ?? '',
+                'NoiDungAI'           => $aiData['NoiDungAI'] ?? '',
+                'TrangThai'           => $aiData['TrangThai'] ?? 'Đã tạo',
+                'NgayTomTat'          => $aiData['NgayTomTat'] ?? now(),
+            ]);
 
             Log::info("GenerateAiSummaryJob: Đã tạo tóm tắt {$maTomTat} cho báo cáo {$this->maBaoCao}.");
         } catch (\Throwable $e) {
             Log::error("GenerateAiSummaryJob: Lỗi khi tạo tóm tắt AI cho {$this->maBaoCao}: " . $e->getMessage());
-            throw $e; // Ném lại để Queue retry
         }
     }
 }

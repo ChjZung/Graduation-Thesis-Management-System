@@ -70,13 +70,13 @@ class PasswordSetupController extends Controller
             'new_password.confirmed' => 'Mật khẩu xác nhận chưa khớp với mật khẩu mới.',
         ]);
 
-        // Cập nhật trạng thái sang ACTIVE và lưu mật khẩu mới đã hash
-        TaiKhoan::where('MaTK', $user->MaTK)->update([
+        $tk = TaiKhoan::findOrFail($user->MaTK);
+        $tk->update([
             'MatKhau'             => Hash::make($request->new_password),
-            'password_status'     => 'ACTIVE',
+            'TrangThaiMatKhau'    => 'ACTIVE',
             'BatBuocDoiMatKhau'   => false,
-            'first_login_at'      => $user->first_login_at ?? now(),
-            'password_changed_at' => now(),
+            'LanDangNhapDau'      => $tk->LanDangNhapDau ?? now(),
+            'NgayDoiMatKhau'      => now(),
             'SoLanDangNhapSai'    => 0,
         ]);
 

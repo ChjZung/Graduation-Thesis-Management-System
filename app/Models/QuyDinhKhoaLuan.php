@@ -9,14 +9,23 @@ class QuyDinhKhoaLuan extends Model
 {
     use HasFactory;
 
-    protected $table = 'quy_dinh_khoa_luans';
+    protected $table = 'QuyDinhKhoaLuan';
     protected $primaryKey = 'MaQuyDinh';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaQuyDinh', 'MaKeHoach', 'TenQuyDinh', 'GiaTri', 'MoTa'
+        'MaQuyDinh',
+        'TenQuyDinh',
+        'GiaTri',
+        'MoTa',
+        'MakeHoach',
     ];
 
     public $timestamps = true;
+
+    public function keHoachKhoaLuan()
+    {
+        return $this->belongsTo(KeHoachKhoaLuan::class, 'MakeHoach', 'MakeHoach');
+    }
 }

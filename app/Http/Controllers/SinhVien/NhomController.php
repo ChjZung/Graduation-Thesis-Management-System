@@ -92,7 +92,7 @@ class NhomController extends Controller
                 'truongNhom.lop.nganh',
                 'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien.lop.nganh', 'sinhVien.taiKhoan')
             ])
-            ->whereDoesntHave('dangKyDeTai', fn($q) => $q->where('TrangThai', 'Đã duyệt'));
+            ->whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'));
 
         if ($request->filled('q')) {
             $search = trim($request->q);
@@ -101,7 +101,12 @@ class NhomController extends Controller
                   ->orWhere('MaNhom', 'LIKE', "%{$search}%")
                   ->orWhereHas('truongNhom', function ($sq) use ($search) {
                       $sq->where('HoTen', 'LIKE', "%{$search}%")
-                         ->orWhere('MaSV', 'LIKE', "%{$search}%")
+                         ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
+                         ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
+                  })
+                  ->orWhereHas('thanhViens.sinhVien', function ($sq) use ($search) {
+                      $sq->where('HoTen', 'LIKE', "%{$search}%")
+                         ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
                          ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
                   });
             });
@@ -109,7 +114,7 @@ class NhomController extends Controller
 
         $nhomsOpen = $queryNhoms->get();
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked'));
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**
@@ -249,9 +254,10 @@ class NhomController extends Controller
 
         // 1. Tìm sinh viên từ database (Exact match qua MSSV/TenDangNhap hoặc MaSV)
         $sinhVien = SinhVien::with(['taiKhoan', 'lop.nganh'])
-            ->whereHas('taiKhoan', fn($q) => $q->where('TenDangNhap', $mssv))
-            ->orWhere('MaSV', $mssv)
-            ->orWhere('MaSoSinhVien', $mssv)
+            ->where(function($q) use ($mssv) {
+                $q->where('MaSV', $mssv)
+                  ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', $mssv));
+            })
             ->first();
 
         if (!$sinhVien) {
@@ -339,8 +345,8 @@ class NhomController extends Controller
     public function moiThanhVien(Request $request)
     {
         $request->validate([
-            'MaNhom' => 'required|exists:nhoms,MaNhom',
-            'MaSV'   => 'required|exists:sinh_viens,MaSV',
+            'MaNhom' => 'required|exists:Nhom,MaNhom',
+            'MaSV'   => 'required|exists:SinhVien,MaSV',
         ], [
             'MaNhom.required' => 'Thiếu thông tin nhóm.',
             'MaSV.required'   => 'Vui lòng tra cứu và chọn sinh viên muốn mời.',

@@ -523,7 +523,7 @@
             {{-- Tên đăng nhập --}}
             <div class="field-group">
                 <label for="TenDangNhap">
-                    <i class="fa-solid fa-id-badge me-1"></i>Tên Đăng Nhập (Mã SV / Mã GV)
+                    <i class="fa-solid fa-id-badge me-1"></i>Tên Đăng Nhập (admin / Mã GV / MSSV)
                 </label>
                 <div class="input-icon-wrap">
                     <i class="fa-solid fa-user field-icon"></i>
@@ -532,7 +532,7 @@
                         type="text"
                         name="TenDangNhap"
                         value="{{ old('TenDangNhap') }}"
-                        placeholder="Nhập tên đăng nhập..."
+                        placeholder="admin / Mã GV (GV01) / MSSV (200123xxxx)..."
                         required
                         autocomplete="username"
                         autofocus

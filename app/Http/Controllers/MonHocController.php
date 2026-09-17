@@ -27,7 +27,7 @@ class MonHocController extends Controller
     {
         $request->validate([
             'TenMon' => 'required|string|max:100|unique:mon_hocs,TenMon',
-            'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
+            'MaBoMon' => 'required|exists:BoMon,MaBoMon',
             'SoTinChi' => 'required|integer|min:1|max:10'
         ], [
             'TenMon.required' => 'Vui lòng nhập tên môn học.',
@@ -53,7 +53,7 @@ class MonHocController extends Controller
 
         $request->validate([
             'TenMon' => 'required|string|max:100|unique:mon_hocs,TenMon,' . $id . ',MaMon',
-            'MaBoMon' => 'required|exists:bo_mons,MaBoMon',
+            'MaBoMon' => 'required|exists:BoMon,MaBoMon',
             'SoTinChi' => 'required|integer|min:1|max:10'
         ], [
             'TenMon.required' => 'Vui lòng nhập tên môn học.',

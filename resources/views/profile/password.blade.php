@@ -49,8 +49,14 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0 text-primary-custom"><i class="fa-solid fa-key me-2"></i>Đổi Mật Khẩu</h4>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1 text-primary-custom fw-bold"><i class="fa-solid fa-key me-2"></i>Đổi Mật Khẩu</h4>
+        <p class="text-muted small mb-0">Cập nhật mật khẩu cá nhân mới để đảm bảo tính an toàn cho tài khoản</p>
+    </div>
+    <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm fw-semibold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại hồ sơ
+    </a>
 </div>
 
 <div class="row justify-content-center">
@@ -64,7 +70,7 @@
                 </div>
                 @endif
 
-                @if($errors->any())
+                @if(isset($errors) && $errors->any())
                 <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
                     <ul class="mb-0 small">
                         @foreach($errors->all() as $error)

@@ -47,8 +47,13 @@ class DuyetDangKyDeTaiController extends Controller
 
             if ($dangKy->nhom) {
                 $dangKy->nhom->update([
-                    'MaDeTai'   => $dangKy->MaDeTai,
                     'TrangThai' => 'Đã duyệt',
+                ]);
+            }
+
+            if ($dangKy->deTai) {
+                $dangKy->deTai->update([
+                    'TrangThai' => 'Đã đăng ký',
                 ]);
             }
 

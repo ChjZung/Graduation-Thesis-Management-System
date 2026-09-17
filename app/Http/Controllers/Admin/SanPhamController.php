@@ -18,7 +18,7 @@ class SanPhamController extends Controller
     {
         $hockys = HocKy::all();
         $monhocs = MonHoc::all();
-        $lops = Lop::all();
+        $Lop = Lop::all();
         $giangviens = GiangVien::all();
 
         $query = SanPham::with([
@@ -81,6 +81,6 @@ class SanPhamController extends Controller
             }
         }
 
-        return view('admin.sanpham.index', compact('sanphams', 'hockys', 'monhocs', 'lops', 'giangviens'));
+        return view('admin.sanpham.index', compact('sanphams', 'hockys', 'monhocs', 'Lop', 'giangviens'));
     }
 }

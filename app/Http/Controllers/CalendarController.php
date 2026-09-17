@@ -106,15 +106,15 @@ class CalendarController extends Controller
             $activePlan = $keHoachs->first();
         }
 
-        $nhomsQuery = \App\Models\Nhom::with(['truongNhom', 'thanhViens.sinhVien', 'deTai', 'dangKyDeTai.giangVienHuongDan', 'baoCaos', 'hoSoBaoVe']);
+        $NhomQuery = \App\Models\Nhom::with(['truongNhom', 'thanhViens.sinhVien', 'deTai', 'dangKyDeTai.giangVienHuongDan', 'baoCaos', 'hoSoBaoVe']);
 
         if ($request->filled('MaGV')) {
-            $nhomsQuery->whereHas('dangKyDeTai', function($q) use ($request) {
+            $NhomQuery->whereHas('dangKyDeTai', function($q) use ($request) {
                 $q->where('MaGVHuongDan', $request->MaGV);
             });
         }
 
-        $nhoms = $nhomsQuery->get();
+        $Nhom = $NhomQuery->get();
         $today = \Carbon\Carbon::today();
 
         // Biến đổi Ma trận Kế Hoạch vs Thực Tế
@@ -127,7 +127,7 @@ class CalendarController extends Controller
                     'teams' => [],
                 ];
 
-                foreach ($nhoms as $nhom) {
+                foreach ($Nhom as $nhom) {
                     $taskStatus = 'CHUA_BAT_DAU';
                     $actualDate = null;
                     $warning = null;
@@ -193,6 +193,6 @@ class CalendarController extends Controller
         $hocKies = \App\Models\HocKy::all();
         $giangViens = \App\Models\GiangVien::all();
 
-        return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'nhoms', 'hocKies', 'giangViens'));
+        return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'Nhom', 'hocKies', 'giangViens'));
     }
 }

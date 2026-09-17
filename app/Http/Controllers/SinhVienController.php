@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\IdGenerator;
 use App\Http\Traits\HandlesExcelImport;
 use App\Models\SinhVien;
 use App\Models\Lop;
@@ -25,7 +24,6 @@ class SinhVienController extends Controller
                 $q->where('HoTen', 'LIKE', "%{$s}%")
                   ->orWhere('Email', 'LIKE', "%{$s}%")
                   ->orWhere('MaSV', 'LIKE', "%{$s}%")
-                  ->orWhere('MaSoSinhVien', 'LIKE', "%{$s}%")
                   ->orWhereHas('taiKhoan', fn($t) => $t->where('TenDangNhap', 'LIKE', "%{$s}%"));
             });
         }
@@ -42,18 +40,18 @@ class SinhVienController extends Controller
 
     public function create()
     {
-        $lops = Lop::with('nganh.khoa')->orderBy('TenLop')->get();
-        return view('admin.sinhvien.create', compact('lops'));
+        $Lop = Lop::with('nganh.khoa')->orderBy('TenLop')->get();
+        return view('admin.sinhvien.create', compact('Lop'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'TenDangNhap' => 'required|string|max:50|unique:tai_khoans,TenDangNhap|unique:sinh_viens,MaSV',
+            'TenDangNhap' => 'required|string|max:50|unique:TaiKhoan,TenDangNhap|unique:SinhVien,MaSV',
             'HoTen' => 'required|string|max:100',
-            'MaLop' => 'required|exists:lops,MaLop',
-            'Email' => 'required|email|max:100|unique:sinh_viens,Email',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:sinh_viens,SoDienThoai']
+            'MaLop' => 'required|exists:Lop,MaLop',
+            'Email' => 'required|email|max:100|unique:SinhVien,Email',
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai']
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập MSSV.',
             'TenDangNhap.unique'   => 'MSSV / Tên đăng nhập đã tồn tại trong hệ thống.',
@@ -67,28 +65,33 @@ class SinhVienController extends Controller
         ]);
 
         $mssv = trim($request->TenDangNhap);
+        $lop = Lop::with('nganh')->findOrFail($request->MaLop);
 
-        DB::transaction(function () use ($request, $mssv) {
+        DB::transaction(function () use ($request, $mssv, $lop) {
             $tk = TaiKhoan::create([
                 'MaTK'              => $mssv,
                 'TenDangNhap'       => $mssv,
                 'MatKhau'           => Hash::make('123456'),
                 'MaVaiTro'          => 'VT03',
                 'TrangThai'         => true,
-                'password_status'   => 'INITIAL',
+                'TrangThaiMatKhau'  => 'INITIAL',
                 'BatBuocDoiMatKhau' => true,
                 'SoLanDangNhapSai'  => 0,
             ]);
 
             SinhVien::create([
-                'MaSV'          => $mssv,
-                'MaTK'          => $tk->MaTK,
-                'MaLop'         => $request->MaLop,
-                'MaSoSinhVien'  => $mssv,
-                'HoTen'         => trim($request->HoTen),
-                'Email'         => trim($request->Email),
-                'SoDienThoai'   => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
-                'TrangThai'     => 'Đang học',
+                'MaSV'            => $mssv,
+                'MaTK'            => $tk->MaTK,
+                'MaLop'           => $request->MaLop,
+                'MaNganh'         => $lop->MaNganh,
+                'MaKhoa'          => $lop->MaKhoa,
+                'HoTen'           => trim($request->HoTen),
+                'Email'           => trim($request->Email),
+                'SoDienThoai'     => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
+                'KhoaHoc'         => $lop->KhoaHoc,
+                'SoTinChiTichLuy' => 0,
+                'DiemTichLuy'     => 0.00,
+                'TrangThai'       => 'Đang học',
             ]);
         });
 
@@ -98,8 +101,8 @@ class SinhVienController extends Controller
     public function edit($id)
     {
         $sinhvien = SinhVien::with('taiKhoan')->findOrFail($id);
-        $lops = Lop::with('nganh.khoa')->orderBy('TenLop')->get();
-        return view('admin.sinhvien.edit', compact('sinhvien', 'lops'));
+        $Lop = Lop::with('nganh.khoa')->orderBy('TenLop')->get();
+        return view('admin.sinhvien.edit', compact('sinhvien', 'Lop'));
     }
 
     public function update(Request $request, $id)
@@ -108,9 +111,9 @@ class SinhVienController extends Controller
 
         $request->validate([
             'HoTen' => 'required|string|max:100',
-            'MaLop' => 'required|exists:lops,MaLop',
-            'Email' => 'required|email|max:100|unique:sinh_viens,Email,' . $id . ',MaSV',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:sinh_viens,SoDienThoai,' . $id . ',MaSV']
+            'MaLop' => 'required|exists:Lop,MaLop',
+            'Email' => 'required|email|max:100|unique:SinhVien,Email,' . $id . ',MaSV',
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai,' . $id . ',MaSV']
         ], [
             'HoTen.required' => 'Vui lòng nhập họ tên.',
             'MaLop.required' => 'Vui lòng chọn lớp.',
@@ -121,8 +124,12 @@ class SinhVienController extends Controller
             'SoDienThoai.regex'  => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
+        $lop = Lop::findOrFail($request->MaLop);
+
         $sinhvien->update([
             'MaLop'       => $request->MaLop,
+            'MaNganh'     => $lop->MaNganh,
+            'MaKhoa'      => $lop->MaKhoa,
             'HoTen'       => trim($request->HoTen),
             'Email'       => trim($request->Email),
             'SoDienThoai' => $request->SoDienThoai ? trim($request->SoDienThoai) : null,

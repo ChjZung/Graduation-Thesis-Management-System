@@ -38,8 +38,7 @@ class BaoCaoController extends Controller
                 ->with('error', 'Bạn chưa có hồ sơ sinh viên. Vui lòng liên hệ Giáo vụ.');
         }
 
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia')->first();
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
 
         if (!$thanhVienRecord) {
             return view('sinhvien.baocao.index', [
@@ -55,7 +54,7 @@ class BaoCaoController extends Controller
 
         $nhom = Nhom::with(['deTai.giangVien'])->find($thanhVienRecord->MaNhom);
 
-        if (!$nhom || !$nhom->MaDeTai) {
+        if (!$nhom || !$nhom->deTai) {
             return view('sinhvien.baocao.index', [
                 'error'      => 'Nhóm của bạn chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
                 'sinhVien'   => $sinhVien,
@@ -67,8 +66,8 @@ class BaoCaoController extends Controller
             ]);
         }
 
-        $baoCaos = BaoCaoTienDo::with('tomTat')
-            ->where('MaNhom', $nhom->MaNhom)
+        $baoCaos = BaoCaoTienDo::with('tomTatBaoCao')
+            ->where('MaDeTai', $nhom->deTai->MaDeTai)
             ->orderBy('LanBaoCao')
             ->get()
             ->keyBy('LanBaoCao');
@@ -100,9 +99,13 @@ class BaoCaoController extends Controller
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia')->firstOrFail();
-        $nhom = Nhom::findOrFail($thanhVienRecord->MaNhom);
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::with('deTai')->findOrFail($thanhVienRecord->MaNhom);
+        $deTai = $nhom->deTai;
+
+        if (!$deTai) {
+            return back()->with('error', 'Nhóm của bạn chưa có đề tài được duyệt.');
+        }
 
         $lan = (int) $request->input('LanBaoCao');
         $mocInfo = self::MOCS[$lan] ?? null;
@@ -137,7 +140,7 @@ class BaoCaoController extends Controller
 
         // Kiểm tra thứ tự mốc
         if ($lan > 1) {
-            $mocTruoc = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)
+            $mocTruoc = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
                 ->where('LanBaoCao', $lan - 1)
                 ->where('TrangThai', 'Đạt')
                 ->first();
@@ -147,47 +150,67 @@ class BaoCaoController extends Controller
         }
 
         // Không cho nộp lại nếu đã có bài "Chờ duyệt" hoặc "Đạt"
-        $existing = BaoCaoTienDo::where('MaNhom', $nhom->MaNhom)
+        $existing = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
             ->where('LanBaoCao', $lan)
-            ->whereIn('TrangThai', ['Chờ duyệt', 'Đạt'])
             ->first();
         if ($existing) {
-            return back()->with('error', "Mốc {$lan} đã có bài nộp đang chờ xử lý hoặc đã đạt.");
+            if ($existing->TrangThai === 'Đạt') {
+                return back()->with('error', "Mốc {$lan} đã được Giảng viên đánh giá Đạt, không cần nộp lại.");
+            }
+            if ($existing->TrangThai === 'Chờ duyệt') {
+                return back()->with('error', "Mốc {$lan} đã có bài nộp đang chờ Giảng viên đánh giá.");
+            }
         }
 
         $maBaoCao = null;
 
-        DB::transaction(function () use ($request, $nhom, $lan, $mocInfo, &$maBaoCao) {
-            $tenFile = null;
-            $duongDanFile = null;
+        DB::transaction(function () use ($request, $nhom, $deTai, $lan, $mocInfo, $existing, &$maBaoCao) {
+            $tenFile = $existing?->TenFile;
+            $duongDanFile = $existing?->DuongDanFile;
             if ($request->hasFile('FileBaoCao')) {
                 $file = $request->file('FileBaoCao');
                 $tenFile = $file->getClientOriginalName();
                 $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$lan}", 'public');
             }
 
-            // BƯỚC 1 FIX: Dùng IdGenerator an toàn thay count()+1
-            $maBaoCao = IdGenerator::nextBaoCao();
+            $tieuDe = $request->input('TieuDe') ?: $mocInfo['ten'];
+            $noiDung = $request->input('NoiDungBaoCao') . ($request->input('LinkCode') ? "\nLink Code: " . $request->input('LinkCode') : '');
 
-            BaoCaoTienDo::create([
-                'MaBaoCao'      => $maBaoCao,
-                'MaNhom'        => $nhom->MaNhom,
-                'LanBaoCao'     => $lan,
-                'TieuDe'        => $mocInfo['ten'],
-                'NoiDungBaoCao' => $request->input('NoiDungBaoCao'),
-                'NgayNop'       => now()->toDateString(),
-                'TenFile'       => $tenFile,
-                'DuongDanFile'  => $duongDanFile,
-                'LinkCode'      => $request->input('LinkCode'),
-                'TrangThai'     => 'Chờ duyệt',
-            ]);
+            if ($existing) {
+                // Xóa tóm tắt AI cũ nếu có
+                $existing->tomTatBaoCao()?->delete();
+
+                $existing->update([
+                    'TieuDe'        => $tieuDe,
+                    'NoiDungBaoCao' => $noiDung,
+                    'NgayNop'       => now()->toDateString(),
+                    'TenFile'       => $tenFile,
+                    'DuongDanFile'  => $duongDanFile,
+                    'TrangThai'     => 'Chờ duyệt',
+                    'NhanXet'       => null,
+                ]);
+                $maBaoCao = $existing->MaBaoCao;
+            } else {
+                $maBaoCao = IdGenerator::nextBaoCao();
+                BaoCaoTienDo::create([
+                    'MaBaoCao'      => $maBaoCao,
+                    'MaDeTai'       => $deTai->MaDeTai,
+                    'LanBaoCao'     => $lan,
+                    'TieuDe'        => $tieuDe,
+                    'NoiDungBaoCao' => $noiDung,
+                    'NgayNop'       => now()->toDateString(),
+                    'TenFile'       => $tenFile,
+                    'DuongDanFile'  => $duongDanFile,
+                    'TrangThai'     => 'Chờ duyệt',
+                ]);
+            }
         });
 
-        // BƯỚC 5: Dispatch Queue Job bất đồng bộ — không block request
+        // BƯỚC 5: Dispatch Queue Job bất đồng bộ
         GenerateAiSummaryJob::dispatch($maBaoCao);
 
         return redirect()->route('sinhvien.baocao.index')
-            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đang tạo tóm tắt AI (sẽ hiển thị sau ít phút).");
+            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đã kích hoạt trợ lý AI phân tích và tóm tắt nội dung báo cáo.");
     }
 
     /**

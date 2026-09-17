@@ -21,13 +21,13 @@
     <!-- ═══ SIDEBAR ═══ -->
     <nav id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-brand">
+            <a href="{{ route('sinhvien.dashboard') }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
                 <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
                 <div>
                     <div class="sidebar-title">ĐH Công Thương<br>TP. Hồ Chí Minh</div>
                     <span class="sidebar-subtitle">HUIT – Cổng Sinh Viên</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="px-3 pb-2">
@@ -38,6 +38,11 @@
         </div>
 
         <ul class="list-unstyled components">
+            <li class="{{ request()->routeIs('sinhvien.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('sinhvien.dashboard') }}">
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
+                </a>
+            </li>
             <li class="{{ request()->routeIs('sinhvien.my_tasks') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.my_tasks') }}">
                     <i class="fa-solid fa-list-check"></i> Công việc của tôi
@@ -80,13 +85,7 @@
             </li>
 
             @php
-                $user = Auth::user();
-                $unreadNotiCount = 0;
-                if ($user) {
-                    $unreadNotiCount = \App\Models\NguoiNhanThongBao::where('MaTK', $user->MaTK)
-                        ->where('DaDoc', false)
-                        ->count();
-                }
+                $unreadNotiCount = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
             @endphp
             <li class="{{ request()->routeIs('sinhvien.thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">
@@ -136,19 +135,18 @@
                                 @endif
                             </div>
                             @php
-                                $recentNoti = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->orderBy('created_at','desc')->limit(6)->get();
+                                $recentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at','desc')->limit(6)->get();
                             @endphp
                             @forelse($recentNoti as $noti)
-                            <a href="{{ route('sinhvien.thongbao.index') }}" class="dropdown-item px-3 py-2 border-bottom {{ !$noti->DaDoc ? '' : '' }}" style="{{ !$noti->DaDoc ? 'background:#f0f7ff;' : '' }}">
+                            <div class="dropdown-item px-3 py-2 border-bottom">
                                 <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid {{ $noti->icon }} mt-1 flex-shrink-0" style="font-size:.85rem;"></i>
+                                    <i class="fa-solid fa-bullhorn text-primary mt-1 flex-shrink-0" style="font-size:.85rem;"></i>
                                     <div>
-                                        <div class="fw-semibold" style="font-size:.82rem; line-height:1.3;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at)->diffForHumans() }}</div>
+                                        <div class="fw-semibold text-wrap" style="font-size:.82rem; line-height:1.3;">{{ $noti->TieuDe }}</div>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
                                     </div>
-                                    @if(!$noti->DaDoc)<span class="ms-auto flex-shrink-0 badge bg-primary rounded-circle p-1" style="width:8px;height:8px;"></span>@endif
                                 </div>
-                            </a>
+                            </div>
                             @empty
                             <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
                             @endforelse
@@ -203,7 +201,7 @@
         <!-- Alerts + Content -->
         <div class="content-body">
 
-            @if ($errors->any())
+            @if (isset($errors) && $errors->any())
                 <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
                      style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
                     <i class="fa-solid fa-circle-xmark me-2"></i>

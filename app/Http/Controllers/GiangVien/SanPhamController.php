@@ -50,17 +50,17 @@ class SanPhamController extends Controller
             $query->where('MaNhom', $selectedNhomId);
         }
 
-        $nhoms = $query->paginate(10);
+        $Nhom = $query->paginate(10);
 
         // Nạp báo cáo tiến độ và nhận xét của từng nhóm
-        foreach ($nhoms as $nhom) {
+        foreach ($Nhom as $nhom) {
             $nhom->baoCaos = \App\Models\BaoCaoTienDo::with('nhanXets')
                                 ->where('MaNhom', $nhom->MaNhom)
                                 ->orderBy('LanBaoCao', 'desc')
                                 ->get();
         }
 
-        return view('giangvien.sanpham.index', compact('nhoms', 'allNhoms', 'selectedNhomId'));
+        return view('giangvien.sanpham.index', compact('Nhom', 'allNhoms', 'selectedNhomId'));
     }
 }
 

@@ -21,7 +21,7 @@ class ThongBaoService
             $maTB = 'TB_' . Str::upper(Str::random(7));
         }
 
-        // Tạo bản ghi cha trong thong_baos
+        // Tạo bản ghi cha trong ThongBao
         ThongBao::create([
             'MaThongBao'   => $maTB,
             'TieuDe'       => $tieuDe,
@@ -32,17 +32,19 @@ class ThongBaoService
             'TrangThai'    => 'Đã tạo',
         ]);
 
-        // Tạo bản ghi người nhận
-        NguoiNhanThongBao::create([
-            'MaThongBao' => $maTB,
-            'MaTK'       => $maTK,
-            'TieuDe'     => $tieuDe,
-            'NoiDung'    => $noiDung,
-            'Loai'       => $loai,
-            'DuongDan'   => $duongDan,
-            'DaDoc'      => false,
-            'NgayDoc'    => null,
-        ]);
+        // Tạo bản ghi người nhận nếu bảng tồn tại
+        if (class_exists(\App\Models\NguoiNhanThongBao::class) && \Illuminate\Support\Facades\Schema::hasTable('nguoi_nhan_thong_baos')) {
+            \App\Models\NguoiNhanThongBao::create([
+                'MaThongBao' => $maTB,
+                'MaTK'       => $maTK,
+                'TieuDe'     => $tieuDe,
+                'NoiDung'    => $noiDung,
+                'Loai'       => $loai,
+                'DuongDan'   => $duongDan,
+                'DaDoc'      => false,
+                'NgayDoc'    => null,
+            ]);
+        }
     }
 
     /**

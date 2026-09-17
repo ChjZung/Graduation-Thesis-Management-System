@@ -20,16 +20,16 @@ class NganhController extends Controller
 
     public function create()
     {
-        $khoas = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.nganh.create', compact('khoas'));
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.nganh.create', compact('Khoa'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'MaNganh' => 'nullable|string|max:10|unique:nganhs,MaNganh',
-            'TenNganh' => 'required|string|max:100|unique:nganhs,TenNganh',
-            'MaKhoa' => 'required|exists:khoas,MaKhoa',
+            'MaNganh' => 'nullable|string|max:10|unique:Nganh,MaNganh',
+            'TenNganh' => 'required|string|max:100|unique:Nganh,TenNganh',
+            'MaKhoa' => 'required|exists:Khoa,MaKhoa',
         ], [
             'MaNganh.unique' => 'Mã ngành đã tồn tại.',
             'TenNganh.required' => 'Vui lòng nhập tên ngành.',
@@ -52,8 +52,8 @@ class NganhController extends Controller
     public function edit($id)
     {
         $nganh = Nganh::findOrFail($id);
-        $khoas = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.nganh.edit', compact('nganh', 'khoas'));
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.nganh.edit', compact('nganh', 'Khoa'));
     }
 
     public function update(Request $request, $id)
@@ -61,8 +61,8 @@ class NganhController extends Controller
         $nganh = Nganh::findOrFail($id);
 
         $request->validate([
-            'TenNganh' => 'required|string|max:100|unique:nganhs,TenNganh,' . $id . ',MaNganh',
-            'MaKhoa' => 'required|exists:khoas,MaKhoa',
+            'TenNganh' => 'required|string|max:100|unique:Nganh,TenNganh,' . $id . ',MaNganh',
+            'MaKhoa' => 'required|exists:Khoa,MaKhoa',
         ], [
             'TenNganh.required' => 'Vui lòng nhập tên ngành.',
             'TenNganh.unique' => 'Tên ngành này đã tồn tại trong hệ thống.',

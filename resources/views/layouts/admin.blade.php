@@ -171,7 +171,8 @@
                 <div class="ms-auto d-flex align-items-center gap-3">
                     <!-- Notification Bell Admin -->
                     @php
-                        $adminUnread = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->where('DaDoc', false)->count();
+                        $adminRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
+                        $adminUnread = $adminRecentNoti->count();
                     @endphp
                     <div class="dropdown">
                         <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
@@ -181,15 +182,14 @@
                             @endif
                         </a>
                         <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
-                            <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;">Thông Báo</strong></div>
-                            @php $adminRecentNoti = \App\Models\NguoiNhanThongBao::where('MaTK', Auth::user()->MaTK)->orderBy('created_at','desc')->limit(6)->get(); @endphp
+                            <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;">Thông Báo Hệ Thống</strong></div>
                             @forelse($adminRecentNoti as $noti)
-                            <div class="dropdown-item px-3 py-2 border-bottom" style="{{ !$noti->DaDoc ? 'background:#f0f7ff;' : '' }}">
+                            <div class="dropdown-item px-3 py-2 border-bottom">
                                 <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid {{ $noti->icon }} mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
+                                    <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
                                     <div>
-                                        <div class="fw-semibold" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at)->diffForHumans() }}</div>
+                                        <div class="fw-semibold text-wrap" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
                                     </div>
                                 </div>
                             </div>

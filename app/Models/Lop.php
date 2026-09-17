@@ -9,24 +9,36 @@ class Lop extends Model
 {
     use HasFactory;
 
-    protected $table = 'lops';
+    protected $table = 'Lop';
     protected $primaryKey = 'MaLop';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaLop', 'TenLop', 'MaNganh', 'KhoaHoc'
+        'MaLop',
+        'TenLop',
+        'KhoaHoc',
+        'MaNganh',
+        'MaKhoa',
     ];
-
-    public $timestamps = true;
 
     public function nganh()
     {
         return $this->belongsTo(Nganh::class, 'MaNganh', 'MaNganh');
     }
 
+    public function khoa()
+    {
+        return $this->belongsTo(Khoa::class, 'MaKhoa', 'MaKhoa');
+    }
+
     public function sinhViens()
     {
         return $this->hasMany(SinhVien::class, 'MaLop', 'MaLop');
+    }
+
+    public function SinhVien()
+    {
+        return $this->sinhViens();
     }
 }

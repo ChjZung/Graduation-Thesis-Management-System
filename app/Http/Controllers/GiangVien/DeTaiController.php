@@ -39,14 +39,12 @@ class DeTaiController extends Controller
         $detais = $query->orderBy('created_at', 'desc')->paginate(10);
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        // Danh sách các nhóm đủ 3 thành viên và chưa có đề tài đã duyệt (để GV có thể chọn gán)
-        $nhomsChuaCoDeTai = Nhom::with(['truongNhom', 'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien')])
-            ->whereNull('MaDeTai')
-            ->orWhereDoesntHave('dangKyDeTai', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
-            ->get()
-            ->filter(fn($n) => $n->thanhViens->where('TrangThai', 'da_tham_gia')->count() >= 3);
+        // Danh sách các nhóm chưa có đề tài đã duyệt
+        $NhomChuaCoDeTai = Nhom::with(['truongNhom', 'thanhViens.sinhVien'])
+            ->whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
+            ->get();
 
-        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'nhomsChuaCoDeTai'));
+        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'NhomChuaCoDeTai'));
     }
 
     public function create()
@@ -65,7 +63,7 @@ class DeTaiController extends Controller
 
         $request->validate([
             'TenDeTai' => 'required|string|max:200',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
@@ -119,7 +117,7 @@ class DeTaiController extends Controller
 
         $request->validate([
             'TenDeTai' => 'required|string|max:200',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
         ]);
 
@@ -153,7 +151,7 @@ class DeTaiController extends Controller
     public function ganNhom(Request $request, $id)
     {
         $request->validate([
-            'MaNhom' => 'required|exists:nhoms,MaNhom',
+            'MaNhom' => 'required|exists:Nhom,MaNhom',
         ], [
             'MaNhom.required' => 'Vui lòng chọn nhóm sinh viên cần gán.',
         ]);
@@ -217,7 +215,7 @@ class DeTaiController extends Controller
             return redirect()->route('giangvien.dashboard');
         }
 
-        $nhoms = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
+        $Nhom = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
             ->whereHas('dangKyDeTai', function($q) use ($gv) {
                 $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
             })->get();
@@ -229,7 +227,7 @@ class DeTaiController extends Controller
         ];
 
         $today = \Carbon\Carbon::today();
-        foreach ($nhoms as $nhom) {
+        foreach ($Nhom as $nhom) {
             foreach ($nhom->baoCaos as $bc) {
                 if (empty($bc->NhanXet)) {
                     $stats['cho_nhan_xet']++;
@@ -237,6 +235,6 @@ class DeTaiController extends Controller
             }
         }
 
-        return view('giangvien.my_tasks', compact('nhoms', 'stats'));
+        return view('giangvien.my_tasks', compact('Nhom', 'stats'));
     }
 }

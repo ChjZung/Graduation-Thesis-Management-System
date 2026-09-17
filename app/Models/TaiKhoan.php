@@ -10,7 +10,7 @@ class TaiKhoan extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'tai_khoans';
+    protected $table = 'TaiKhoan';
     protected $primaryKey = 'MaTK';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -23,12 +23,16 @@ class TaiKhoan extends Authenticatable
         'TrangThai',
         'SoLanDangNhapSai',
         'BatBuocDoiMatKhau',
-        'password_status',
-        'first_login_at',
-        'password_changed_at',
+        'TrangThaiMatKhau',
+        'LanDangNhapDau',
+        'NgayDoiMatKhau',
         'LanDangNhapCuoi',
         'NgayKhoa',
-        'remember_token'
+        'remember_token',
+        // Compatibility aliases
+        'password_status',
+        'password_changed_at',
+        'first_login_at',
     ];
 
     protected $hidden = [
@@ -41,13 +45,44 @@ class TaiKhoan extends Authenticatable
     protected function casts(): array
     {
         return [
-            'first_login_at'     => 'datetime',
-            'password_changed_at'=> 'datetime',
-            'LanDangNhapCuoi'    => 'datetime',
-            'NgayKhoa'           => 'datetime',
-            'TrangThai'          => 'boolean',
-            'BatBuocDoiMatKhau'  => 'boolean',
+            'LanDangNhapDau'    => 'datetime',
+            'NgayDoiMatKhau'    => 'datetime',
+            'LanDangNhapCuoi'   => 'datetime',
+            'NgayKhoa'          => 'datetime',
+            'TrangThai'         => 'boolean',
+            'BatBuocDoiMatKhau' => 'boolean',
         ];
+    }
+
+    // Backward compatibility accessors/mutators for existing code
+    public function getPasswordStatusAttribute()
+    {
+        return $this->attributes['TrangThaiMatKhau'] ?? 'INITIAL';
+    }
+
+    public function setPasswordStatusAttribute($value)
+    {
+        $this->attributes['TrangThaiMatKhau'] = $value;
+    }
+
+    public function getFirstLoginAtAttribute()
+    {
+        return $this->attributes['LanDangNhapDau'] ?? null;
+    }
+
+    public function setFirstLoginAtAttribute($value)
+    {
+        $this->attributes['LanDangNhapDau'] = $value;
+    }
+
+    public function getPasswordChangedAtAttribute()
+    {
+        return $this->attributes['NgayDoiMatKhau'] ?? null;
+    }
+
+    public function setPasswordChangedAtAttribute($value)
+    {
+        $this->attributes['NgayDoiMatKhau'] = $value;
     }
 
     public function getAuthPasswordName()
@@ -62,17 +97,17 @@ class TaiKhoan extends Authenticatable
 
     public function isPasswordInitial(): bool
     {
-        return ($this->password_status === 'INITIAL' || $this->BatBuocDoiMatKhau === true);
+        return ($this->TrangThaiMatKhau === 'INITIAL' || $this->BatBuocDoiMatKhau === true);
     }
 
     public function isPasswordActive(): bool
     {
-        return ($this->password_status === 'ACTIVE' && !$this->BatBuocDoiMatKhau);
+        return ($this->TrangThaiMatKhau === 'ACTIVE' && !$this->BatBuocDoiMatKhau);
     }
 
     public function isPasswordExpired(): bool
     {
-        return ($this->password_status === 'EXPIRED');
+        return ($this->TrangThaiMatKhau === 'EXPIRED');
     }
 
     public function vaiTro()

@@ -20,16 +20,16 @@ class BoMonController extends Controller
 
     public function create()
     {
-        $khoas = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.bomon.create', compact('khoas'));
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.bomon.create', compact('Khoa'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'MaBoMon' => 'nullable|string|max:10|unique:bo_mons,MaBoMon',
-            'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon',
-            'MaKhoa' => 'required|exists:khoas,MaKhoa',
+            'MaBoMon' => 'nullable|string|max:10|unique:BoMon,MaBoMon',
+            'TenBoMon' => 'required|string|max:100|unique:BoMon,TenBoMon',
+            'MaKhoa' => 'required|exists:Khoa,MaKhoa',
         ], [
             'MaBoMon.unique' => 'Mã bộ môn đã tồn tại.',
             'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
@@ -52,8 +52,8 @@ class BoMonController extends Controller
     public function edit($id)
     {
         $bomon = BoMon::findOrFail($id);
-        $khoas = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.bomon.edit', compact('bomon', 'khoas'));
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.bomon.edit', compact('bomon', 'Khoa'));
     }
 
     public function update(Request $request, $id)
@@ -61,8 +61,8 @@ class BoMonController extends Controller
         $bomon = BoMon::findOrFail($id);
 
         $request->validate([
-            'TenBoMon' => 'required|string|max:100|unique:bo_mons,TenBoMon,' . $id . ',MaBoMon',
-            'MaKhoa' => 'required|exists:khoas,MaKhoa',
+            'TenBoMon' => 'required|string|max:100|unique:BoMon,TenBoMon,' . $id . ',MaBoMon',
+            'MaKhoa' => 'required|exists:Khoa,MaKhoa',
         ], [
             'TenBoMon.required' => 'Vui lòng nhập tên bộ môn.',
             'TenBoMon.unique' => 'Tên bộ môn này đã tồn tại trong hệ thống.',

@@ -9,14 +9,18 @@ class VaiTro extends Model
 {
     use HasFactory;
 
-    protected $table = 'vai_tros';
+    protected $table = 'VaiTro';
     protected $primaryKey = 'MaVaiTro';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaVaiTro', 'TenVaiTro'
+        'MaVaiTro',
+        'TenVaiTro',
     ];
 
-    public $timestamps = true;
+    public function taiKhoans()
+    {
+        return $this->hasMany(TaiKhoan::class, 'MaVaiTro', 'MaVaiTro');
+    }
 }

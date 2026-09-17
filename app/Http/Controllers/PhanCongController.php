@@ -19,10 +19,10 @@ class PhanCongController extends Controller
         $lophocphans = LopHocPhan::with(['giangVien.boMon', 'monHoc', 'hocKy', 'sinhVienLopHocPhans'])->orderBy('MaLopHP', 'desc')->paginate(10, ['*'], 'page_hp');
         
         $giangviens = GiangVien::with('boMon')->get();
-        $lops = Lop::all();
+        $Lop = Lop::all();
         $hockys = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        return view('admin.phancong.index', compact('phancongs', 'lophocphans', 'giangviens', 'lops', 'hockys'));
+        return view('admin.phancong.index', compact('phancongs', 'lophocphans', 'giangviens', 'Lop', 'hockys'));
     }
 
     public function store(Request $request) {
@@ -30,7 +30,7 @@ class PhanCongController extends Controller
 
         if ($loai === 'lop_hoc_phan') {
             $request->validate([
-                'MaGV' => 'required|exists:giang_viens,MaGV',
+                'MaGV' => 'required|exists:GiangVien,MaGV',
                 'MaLopHP' => 'required|exists:lop_hoc_phans,MaLopHP',
             ], [
                 'MaGV.required' => 'Vui lòng chọn Giảng viên.',
@@ -55,9 +55,9 @@ class PhanCongController extends Controller
 
         // Lớp Hành Chính
         $request->validate([
-            'MaGV' => 'required|exists:giang_viens,MaGV',
-            'MaLop' => 'required|exists:lops,MaLop',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy'
+            'MaGV' => 'required|exists:GiangVien,MaGV',
+            'MaLop' => 'required|exists:Lop,MaLop',
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy'
         ], [
             'MaGV.required' => 'Vui lòng chọn Giảng viên.',
             'MaLop.required' => 'Vui lòng chọn Lớp Hành chính.',

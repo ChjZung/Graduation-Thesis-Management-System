@@ -25,7 +25,7 @@ class HocKyController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'MaHocKy' => 'nullable|string|max:10|unique:hoc_kies,MaHocKy',
+            'MaHocKy' => 'nullable|string|max:10|unique:HocKy,MaHocKy',
             'TenHocKy' => 'required|string|max:50',
             'NamHoc' => 'required|string|max:20',
             'NgayBatDau' => 'required|date',

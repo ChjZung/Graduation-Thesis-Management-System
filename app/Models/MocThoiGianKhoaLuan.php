@@ -9,24 +9,29 @@ class MocThoiGianKhoaLuan extends Model
 {
     use HasFactory;
 
-    protected $table = 'moc_thoi_gian_khoa_luans';
+    protected $table = 'MocThoiGianKhoaLuan';
     protected $primaryKey = 'MaMoc';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaMoc', 'MaKeHoach', 'LoaiGiaiDoan', 'ThuTu', 'TenMoc', 'DoiTuongThucHien',
-        'NgayBatDau', 'NgayKetThuc', 'MoTa', 'BatBuoc'
-    ];
-
-    protected $casts = [
-        'BatBuoc' => 'boolean',
+        'MaMoc',
+        'TenMoc',
+        'NgayBatDau',
+        'NgayKetThuc',
+        'MoTa',
+        'MakeHoach',
     ];
 
     public $timestamps = true;
 
-    public function keHoach()
+    public function keHoachKhoaLuan()
     {
-        return $this->belongsTo(KeHoachKhoaLuan::class, 'MaKeHoach', 'MaKeHoach');
+        return $this->belongsTo(KeHoachKhoaLuan::class, 'MakeHoach', 'MakeHoach');
+    }
+
+    public function baoCaoTienDos()
+    {
+        return $this->hasMany(BaoCaoTienDo::class, 'MaMoc', 'MaMoc');
     }
 }

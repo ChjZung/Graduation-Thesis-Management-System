@@ -9,16 +9,16 @@ class BoMon extends Model
 {
     use HasFactory;
 
-    protected $table = 'bo_mons';
+    protected $table = 'BoMon';
     protected $primaryKey = 'MaBoMon';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaBoMon', 'TenBoMon', 'MaKhoa'
+        'MaBoMon',
+        'TenBoMon',
+        'MaKhoa',
     ];
-
-    public $timestamps = true;
 
     public function khoa()
     {

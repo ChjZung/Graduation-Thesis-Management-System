@@ -26,8 +26,8 @@ class KhoaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'MaKhoa' => 'nullable|string|max:10|unique:khoas,MaKhoa',
-            'TenKhoa' => 'required|string|max:100|unique:khoas,TenKhoa',
+            'MaKhoa' => 'nullable|string|max:10|unique:Khoa,MaKhoa',
+            'TenKhoa' => 'required|string|max:100|unique:Khoa,TenKhoa',
         ], [
             'MaKhoa.unique' => 'Mã khoa này đã tồn tại.',
             'TenKhoa.required' => 'Vui lòng nhập tên khoa.',
@@ -55,7 +55,7 @@ class KhoaController extends Controller
         $khoa = Khoa::findOrFail($id);
 
         $request->validate([
-            'TenKhoa' => 'required|string|max:100|unique:khoas,TenKhoa,' . $id . ',MaKhoa',
+            'TenKhoa' => 'required|string|max:100|unique:Khoa,TenKhoa,' . $id . ',MaKhoa',
         ], [
             'TenKhoa.required' => 'Vui lòng nhập tên khoa.',
             'TenKhoa.unique' => 'Tên khoa này đã tồn tại.',

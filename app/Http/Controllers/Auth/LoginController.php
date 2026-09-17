@@ -76,26 +76,51 @@ class LoginController extends Controller implements HasMiddleware
     }
 
     /**
+     * Đồng bộ kiểm tra giới hạn đăng nhập với dữ liệu CSDL (BR01)
+     */
+    protected function hasTooManyLoginAttempts(\Illuminate\Http\Request $request)
+    {
+        $inputUsername = trim($request->TenDangNhap);
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
+            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
+            ->first();
+
+        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Override attemptLogin để xử lý khóa tài khoản trước
      */
     protected function attemptLogin(\Illuminate\Http\Request $request)
     {
-        // Tìm tài khoản theo username
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $request->TenDangNhap)->first();
+        $inputUsername = trim($request->TenDangNhap);
+        // Tìm tài khoản theo username (hỗ trợ không phân biệt chữ hoa / thường)
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
+            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
+            ->first();
 
         // Nếu tài khoản bị khóa → từ chối ngay
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             return false;
         }
 
+        $credentials = [
+            'TenDangNhap' => $taiKhoan ? $taiKhoan->TenDangNhap : $inputUsername,
+            'password'    => $request->get('password'),
+        ];
+
         $attempt = $this->guard()->attempt(
-            $this->credentials($request), $request->boolean('remember')
+            $credentials, $request->boolean('remember')
         );
 
         if (!$attempt && $taiKhoan) {
             // Sai mật khẩu → tăng đếm
             $taiKhoan->increment('SoLanDangNhapSai');
-            // Nếu đủ 5 lần → tự động khóa
+            // Nếu đủ 5 lần → tự động khóa (BR01)
             if ($taiKhoan->SoLanDangNhapSai >= 5) {
                 $taiKhoan->update([
                     'TrangThai' => false,
@@ -125,7 +150,7 @@ class LoginController extends Controller implements HasMiddleware
             'LanDangNhapCuoi'  => now(),
         ]);
 
-        // Nếu là lần đầu đăng nhập (INITIAL) → Chuyển hướng sang trang Thiết lập mật khẩu cá nhân
+        // Nếu là lần đầu đăng nhập (INITIAL) → Chuyển hướng sang trang Thiết lập mật khẩu cá nhân (BR02)
         if ($user->isPasswordInitial()) {
             return redirect()->route('password.setup');
         }
@@ -143,11 +168,14 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
     {
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $request->TenDangNhap)->first();
+        $inputUsername = trim($request->TenDangNhap);
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
+            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
+            ->first();
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                $this->username() => ['Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ khôi phục.'],
+                $this->username() => ['Tài khoản của bạn đã bị khóa do nhập sai mật khẩu quá 5 lần liên tiếp. Vui lòng liên hệ Giáo vụ Khoa để mở khóa.'],
             ]);
         }
 

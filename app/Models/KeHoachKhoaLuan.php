@@ -9,41 +9,56 @@ class KeHoachKhoaLuan extends Model
 {
     use HasFactory;
 
-    protected $table = 'ke_hoach_khoa_luans';
-    protected $primaryKey = 'MaKeHoach';
+    protected $table = 'KeHoachKhoaLuan';
+    protected $primaryKey = 'MakeHoach';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaKeHoach', 'MaKhoa', 'MaBoMon', 'MaHocKy', 'NamHoc', 'MaGVu', 'NguoiLap',
-        'TenKeHoach', 'NoiDung', 'NgayBatDau', 'NgayKetThuc', 'TrangThai',
-        'NgayTao', 'NgayCongBo'
+        'MakeHoach',
+        'TenKeHoach',
+        'NoiDung',
+        'TrangThai',
+        'NgayTao',
+        'MaHocKy',
+        'MaGVu',
     ];
 
     public $timestamps = true;
+
+    // Backward compatibility for MaKeHoach
+    public function getMaKeHoachAttribute()
+    {
+        return $this->attributes['MakeHoach'] ?? null;
+    }
+
+    public function setMaKeHoachAttribute($value)
+    {
+        $this->attributes['MakeHoach'] = $value;
+    }
 
     public function hocKy()
     {
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
     }
 
-    public function khoa()
+    public function giaoVu()
     {
-        return $this->belongsTo(Khoa::class, 'MaKhoa', 'MaKhoa');
-    }
-
-    public function boMon()
-    {
-        return $this->belongsTo(BoMon::class, 'MaBoMon', 'MaBoMon');
+        return $this->belongsTo(GiaoVu::class, 'MaGVu', 'MaGVu');
     }
 
     public function mocThoiGians()
     {
-        return $this->hasMany(MocThoiGianKhoaLuan::class, 'MaKeHoach', 'MaKeHoach')->orderBy('ThuTu', 'asc');
+        return $this->hasMany(MocThoiGianKhoaLuan::class, 'MakeHoach', 'MakeHoach');
     }
 
-    public function svDuDieuKien()
+    public function quyDinhs()
     {
-        return $this->hasMany(DanhSachSVDuDieuKien::class, 'MaKeHoach', 'MaKeHoach');
+        return $this->hasMany(QuyDinhKhoaLuan::class, 'MakeHoach', 'MakeHoach');
+    }
+
+    public function bieuMaus()
+    {
+        return $this->hasMany(BieuMau::class, 'MakeHoach', 'MakeHoach');
     }
 }

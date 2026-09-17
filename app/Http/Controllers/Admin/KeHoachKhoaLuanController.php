@@ -44,18 +44,18 @@ class KeHoachKhoaLuanController extends Controller
     public function create()
     {
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $khoas = Khoa::orderBy('TenKhoa')->get();
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
         $defaultPhases = PlanPhaseService::getDefaultPhases('2026-09-01');
 
-        return view('admin.kehoach.create', compact('hocKies', 'khoas', 'boMons', 'defaultPhases'));
+        return view('admin.kehoach.create', compact('hocKies', 'Khoa', 'boMons', 'defaultPhases'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'TenKeHoach'  => 'required|string|max:200',
-            'MaHocKy'     => 'required|exists:hoc_kies,MaHocKy',
+            'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
             'NamHoc'      => 'required|string',
             'NgayBatDau'  => 'required|date',
             'NgayKetThuc' => 'required|date|after:NgayBatDau',
@@ -146,10 +146,10 @@ class KeHoachKhoaLuanController extends Controller
         }
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $khoas = Khoa::orderBy('TenKhoa')->get();
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
 
-        return view('admin.kehoach.edit', compact('keHoach', 'hocKies', 'khoas', 'boMons'));
+        return view('admin.kehoach.edit', compact('keHoach', 'hocKies', 'Khoa', 'boMons'));
     }
 
     public function update(Request $request, $id)
@@ -162,7 +162,7 @@ class KeHoachKhoaLuanController extends Controller
 
         $request->validate([
             'TenKeHoach'  => 'required|string|max:200',
-            'MaHocKy'     => 'required|exists:hoc_kies,MaHocKy',
+            'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
             'NgayBatDau'  => 'required|date',
             'NgayKetThuc' => 'required|date|after:NgayBatDau',
         ]);

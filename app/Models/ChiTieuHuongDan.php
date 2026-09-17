@@ -9,14 +9,28 @@ class ChiTieuHuongDan extends Model
 {
     use HasFactory;
 
-    protected $table = 'chi_tieu_huong_dans';
-    protected $primaryKey = 'MaGV';
+    protected $table = 'ChiTieuHuongDan';
+    protected $primaryKey = 'MaChiTieu';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaGV', 'MaHocKy', 'SoNhomToiDa', 'NgayPhanBo'
+        'MaChiTieu',
+        'SoNhomToiDa',
+        'NgayPhanBo',
+        'MaHocKy',
+        'MaGV',
     ];
 
     public $timestamps = true;
+
+    public function giangVien()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
+
+    public function hocKy()
+    {
+        return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
 }

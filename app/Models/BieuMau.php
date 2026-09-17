@@ -9,14 +9,22 @@ class BieuMau extends Model
 {
     use HasFactory;
 
-    protected $table = 'bieu_maus';
+    protected $table = 'BieuMau';
     protected $primaryKey = 'MaBieuMau';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaBieuMau', 'MaKeHoach', 'TenBieuMau', 'DuongDanFile'
+        'MaBieuMau',
+        'TenBieuMau',
+        'DuongDanFile',
+        'MakeHoach',
     ];
 
     public $timestamps = true;
+
+    public function keHoachKhoaLuan()
+    {
+        return $this->belongsTo(KeHoachKhoaLuan::class, 'MakeHoach', 'MakeHoach');
+    }
 }

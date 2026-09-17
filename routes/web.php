@@ -62,6 +62,7 @@ Route::prefix('api')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/lich-quy-trinh-matrix', [\App\Http\Controllers\CalendarController::class, 'scheduleMatrix'])->name('calendar.matrix');
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'showProfile'])->name('profile.show');
+    Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::get('/password/change', [\App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/password/change', [\App\Http\Controllers\ProfileController::class, 'changePassword'])->name('password.change.post');
 });
@@ -123,6 +124,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::get('/hoi-dong/{id}', [\App\Http\Controllers\Admin\HoiDongController::class, 'show'])->name('admin.hoidong.show');
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\Admin\HoiDongController::class, 'updateTrangThai'])->name('admin.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\Admin\HoiDongController::class, 'phanCongNhom'])->name('admin.hoidong.phanCongNhom');
+    Route::post('/hoi-dong/{id}/huy-phan-cong/{maHoSo}', [\App\Http\Controllers\Admin\HoiDongController::class, 'huyPhanCongNhom'])->name('admin.hoidong.huyPhanCongNhom');
 
     Route::get('/ho-so-bao-ve', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'index'])->name('admin.hosoBaoVe.index');
     Route::post('/ho-so-bao-ve/{id}/phan-cong', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'phanCong'])->name('admin.hosoBaoVe.phanCong');
@@ -155,9 +157,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 // GIẢNG VIÊN ROUTES
 // ==========================================
 Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('giangvien.calendar');
-    })->name('giangvien.dashboard');
+    Route::get('/', [\App\Http\Controllers\GiangVien\DashboardController::class, 'index'])->name('giangvien.dashboard');
 
     // Lịch Calendar Giảng viên
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'giangVienCalendar'])->name('giangvien.calendar');
@@ -169,6 +169,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Báo cáo tiến độ
     Route::get('/baocao', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'index'])->name('giangvien.baocao.index');
+    Route::get('/baocao/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'show'])->name('giangvien.baocao.show');
     Route::post('/baocao/{maBaoCao}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXet'])->name('giangvien.baocao.nhanxet');
 
     // ── GĐ6: Chấm Điểm Hội Đồng ──
@@ -184,9 +185,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 // SINH VIÊN ROUTES
 // ==========================================
 Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('sinhvien.calendar');
-    })->name('sinhvien.dashboard');
+    Route::get('/', [\App\Http\Controllers\SinhVien\DashboardController::class, 'index'])->name('sinhvien.dashboard');
 
     // Lịch Calendar Sinh viên
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'sinhVienCalendar'])->name('sinhvien.calendar');

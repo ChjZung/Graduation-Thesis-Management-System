@@ -9,16 +9,23 @@ class ThanhVienHoiDong extends Model
 {
     use HasFactory;
 
-    protected $table = 'thanh_vien_hoi_dongs';
-    protected $primaryKey = null;
+    protected $table = 'ThanhVienHoiDong';
     public $incrementing = false;
-    protected $keyType = 'string';
+    protected $primaryKey = ['MaHoiDong', 'MaGV'];
 
     protected $fillable = [
-        'MaHoiDong', 'MaGV', 'VaiTro',
+        'MaHoiDong',
+        'MaGV',
+        'VaiTro',
     ];
 
     public $timestamps = true;
+
+    protected function setKeysForSaveQuery($query)
+    {
+        return $query->where('MaHoiDong', $this->getAttribute('MaHoiDong'))
+                     ->where('MaGV', $this->getAttribute('MaGV'));
+    }
 
     public function hoiDong()
     {

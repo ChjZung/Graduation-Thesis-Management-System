@@ -123,12 +123,12 @@ class TheoDoiDoAnController extends Controller
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $giangViens = GiangVien::orderBy('HoTen')->get();
-        $khoas = Khoa::orderBy('TenKhoa')->get();
+        $Khoa = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
 
         return view('admin.theodoi.index', compact(
             'processedNhoms', 'stats', 'activePlan', 'currentPhase',
-            'hocKies', 'giangViens', 'khoas', 'boMons'
+            'hocKies', 'giangViens', 'Khoa', 'boMons'
         ));
     }
 

@@ -59,8 +59,8 @@ class LopHocPhanController extends Controller
         $request->validate([
             'TenLopHP' => 'required|string|max:100|unique:lop_hoc_phans,TenLopHP',
             'MaMon' => 'required|exists:mon_hocs,MaMon',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
-            'MaGV' => 'required|exists:giang_viens,MaGV',
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'MaGV' => 'required|exists:GiangVien,MaGV',
             'SiSoToiDa' => 'required|integer|min:1|max:200',
             'TrangThai' => 'required|in:Đang mở,Đã đóng',
         ], [
@@ -112,8 +112,8 @@ class LopHocPhanController extends Controller
         $request->validate([
             'TenLopHP' => 'required|string|max:100|unique:lop_hoc_phans,TenLopHP,' . $id . ',MaLopHP',
             'MaMon' => 'required|exists:mon_hocs,MaMon',
-            'MaHocKy' => 'required|exists:hoc_kies,MaHocKy',
-            'MaGV' => 'required|exists:giang_viens,MaGV',
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'MaGV' => 'required|exists:GiangVien,MaGV',
             'SiSoToiDa' => 'required|integer|min:1|max:200',
             'TrangThai' => 'required|in:Đang mở,Đã đóng',
         ]);
@@ -138,7 +138,7 @@ class LopHocPhanController extends Controller
         $lopHocPhan = LopHocPhan::findOrFail($id);
 
         $request->validate([
-            'MaSV' => 'required|exists:sinh_viens,MaSV',
+            'MaSV' => 'required|exists:SinhVien,MaSV',
         ], [
             'MaSV.required' => 'Vui lòng chọn sinh viên.',
         ]);

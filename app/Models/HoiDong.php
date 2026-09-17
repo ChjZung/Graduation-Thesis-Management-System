@@ -9,36 +9,66 @@ class HoiDong extends Model
 {
     use HasFactory;
 
-    protected $table = 'hoi_dongs';
+    protected $table = 'HoiDong';
     protected $primaryKey = 'MaHoiDong';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'MaHoiDong', 'TenHoiDong', 'ThoiGianBatDau', 'ThoiGianKetThuc',
-        'DiaDiem', 'TrangThai', 'GhiChu',
-    ];
-
-    protected $casts = [
-        'ThoiGianBatDau' => 'datetime',
-        'ThoiGianKetThuc' => 'datetime',
+        'MaHoiDong',
+        'TenHoiDong',
+        'ThoiGianBatDau',
+        'ThoiGianKetThuc',
+        'DiaDiem',
+        'TrangThai',
+        'GhiChu',
+        'NgayBaoVe',
+        'MaDeTai',
+        'MaGV',
+        'MaHocKy',
     ];
 
     public $timestamps = true;
 
-    public function thanhViens()
+    protected function casts(): array
+    {
+        return [
+            'ThoiGianBatDau' => 'datetime',
+            'ThoiGianKetThuc' => 'datetime',
+            'NgayBaoVe' => 'date',
+        ];
+    }
+
+    public function deTai()
+    {
+        return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function giangVien()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
+
+    public function hocKy()
+    {
+        return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
+
+    public function thanhVienHoiDongs()
     {
         return $this->hasMany(ThanhVienHoiDong::class, 'MaHoiDong', 'MaHoiDong');
     }
 
+    public function thanhViens()
+    {
+        return $this->thanhVienHoiDongs();
+    }
+
     public function giangViens()
     {
-        return $this->belongsToMany(
-            GiangVien::class,
-            'thanh_vien_hoi_dongs',
-            'MaHoiDong',
-            'MaGV'
-        )->withPivot('VaiTro');
+        return $this->belongsToMany(GiangVien::class, 'ThanhVienHoiDong', 'MaHoiDong', 'MaGV')
+                    ->withPivot('VaiTro')
+                    ->withTimestamps();
     }
 
     public function hoSoBaoVes()
@@ -46,8 +76,8 @@ class HoiDong extends Model
         return $this->hasMany(HoSoBaoVe::class, 'MaHoiDong', 'MaHoiDong');
     }
 
-    public function chiTietDiems()
+    public function phieuChamDiems()
     {
-        return $this->hasMany(ChiTietDiemHoiDong::class, 'MaHoiDong', 'MaHoiDong');
+        return $this->hasMany(PhieuChamDiem::class, 'MaHoiDong', 'MaHoiDong');
     }
 }

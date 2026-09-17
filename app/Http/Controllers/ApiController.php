@@ -24,14 +24,14 @@ use Illuminate\Support\Facades\Validator;
  * Danh sách endpoints:
  *   GET  /api/detais          - Danh sách đề tài
  *   GET  /api/detais/{id}     - Chi tiết 1 đề tài
- *   GET  /api/nhoms           - Danh sách nhóm đồ án
- *   GET  /api/nhoms/{id}      - Chi tiết 1 nhóm đồ án
+ *   GET  /api/Nhom           - Danh sách nhóm đồ án
+ *   GET  /api/Nhom/{id}      - Chi tiết 1 nhóm đồ án
  *   GET  /api/sinhviens       - Danh sách sinh viên
  *   GET  /api/giangviens      - Danh sách giảng viên
- *   GET  /api/lops            - Danh sách lớp
+ *   GET  /api/Lop            - Danh sách lớp
  *   GET  /api/hockys          - Danh sách học kỳ
  *   GET  /api/bomons          - Danh sách bộ môn
- *   GET  /api/nganhs          - Danh sách ngành
+ *   GET  /api/Nganh          - Danh sách ngành
  *   GET  /api/thongbaos       - Danh sách thông báo
  *   GET  /api/thongke         - Thống kê tổng quan hệ thống
  *   POST /api/detais          - Tạo đề tài mới
@@ -103,8 +103,8 @@ class ApiController extends Controller
         $validator = Validator::make($request->all(), [
             'TenDeTai' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
-            'MaGV' => 'required|string|exists:giang_viens,MaGV',
-            'MaHocKy' => 'required|string|exists:hoc_kies,MaHocKy',
+            'MaGV' => 'required|string|exists:GiangVien,MaGV',
+            'MaHocKy' => 'required|string|exists:HocKy,MaHocKy',
         ]);
 
         if ($validator->fails()) {
@@ -195,22 +195,22 @@ class ApiController extends Controller
     // =========================================================
 
     /**
-     * GET /api/nhoms
+     * GET /api/Nhom
      * Lấy danh sách nhóm đồ án.
      */
     public function getNhoms()
     {
-        $nhoms = Nhom::all();
+        $Nhom = Nhom::all();
 
         return response()->json([
             'status' => 'success',
-            'count' => $nhoms->count(),
-            'data' => $nhoms
+            'count' => $Nhom->count(),
+            'data' => $Nhom
         ], 200);
     }
 
     /**
-     * GET /api/nhoms/{id}
+     * GET /api/Nhom/{id}
      * Lấy chi tiết 1 nhóm đồ án.
      */
     public function getNhomDetail($id)
@@ -253,7 +253,7 @@ class ApiController extends Controller
     }
 
     /**
-     * GET /api/lops
+     * GET /api/Lop
      */
     public function getLops()
     {
@@ -280,7 +280,7 @@ class ApiController extends Controller
     }
 
     /**
-     * GET /api/nganhs
+     * GET /api/Nganh
      */
     public function getNganhs()
     {

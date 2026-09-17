@@ -24,14 +24,14 @@ class ChamDiemController extends Controller
         $hoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
             ->with([
                 'thanhViens.giangVien',
-                'hoSoBaoVes.nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien'),
+                'hoSoBaoVes.nhom.thanhViens.sinhVien',
                 'hoSoBaoVes.nhom.deTai',
                 'hoSoBaoVes.nhom.truongNhom',
             ])
             ->get();
 
         $diemDaCham = ChiTietDiemHoiDong::where('MaGV', $giangVien->MaGV)->get()
-            ->keyBy(fn($d) => $d->MaHoiDong . '_' . $d->MaSV);
+            ->keyBy(fn($d) => $d->MaHoiDong . '_' . ($d->MaSV ?? ''));
 
         return view('giangvien.chamdiem.index', compact('giangVien', 'hoiDongs', 'diemDaCham'));
     }
@@ -39,9 +39,9 @@ class ChamDiemController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'MaHoiDong'       => 'required|exists:hoi_dongs,MaHoiDong',
+            'MaHoiDong'       => 'required|exists:HoiDong,MaHoiDong',
             'diems'           => 'required|array|min:1',
-            'diems.*.MaSV'    => 'required|exists:sinh_viens,MaSV',
+            'diems.*.MaSV'    => 'required|exists:SinhVien,MaSV',
             'diems.*.Diem'    => 'required|numeric|min:0|max:10',
             'diems.*.NhanXet' => 'nullable|string|max:500',
         ], [

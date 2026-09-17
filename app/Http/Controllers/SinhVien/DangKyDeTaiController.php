@@ -64,7 +64,7 @@ class DangKyDeTaiController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'MaDeTai' => 'required|exists:de_tais,MaDeTai',
+            'MaDeTai' => 'required|exists:DeTai,MaDeTai',
         ], [
             'MaDeTai.required' => 'Vui lòng chọn đề tài muốn đăng ký.',
         ]);
@@ -89,13 +89,13 @@ class DangKyDeTaiController extends Controller
             return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài khóa luận!');
         }
 
-        // 3. QUY ĐỊNH BẮT BUỘC: Nhóm phải có ĐỦ 3 thành viên chính thức mới được đăng ký đề tài
+        // 3. QUY ĐỊNH: Nhóm phải có từ 1 đến 3 thành viên chính thức (tối đa 3 SV theo QD01)
         $countMembers = ThanhVienNhom::where('MaNhom', $nhom->MaNhom)
             ->where('TrangThai', 'da_tham_gia')
             ->count();
 
-        if ($countMembers < 3) {
-            return redirect()->back()->withErrors("Quy định bắt buộc: Nhóm phải có ĐỦ 3 thành viên chính thức mới được phép đăng ký đề tài! Hiện tại nhóm của bạn chỉ có {$countMembers}/3 thành viên. Hãy vào mục 'Nhóm Khóa Luận' để mời thêm thành viên.");
+        if ($countMembers < 1 || $countMembers > 3) {
+            return redirect()->back()->withErrors("Quy định: Nhóm phải có từ 1 đến tối đa 3 thành viên để đăng ký đề tài! Hiện tại nhóm của bạn có {$countMembers} thành viên.");
         }
 
         // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (Chờ duyệt hoặc Đã duyệt)
