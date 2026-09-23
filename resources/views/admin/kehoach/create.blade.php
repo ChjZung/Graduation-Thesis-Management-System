@@ -9,9 +9,12 @@
     </a>
 </div>
 
-<div class="card card-premium">
-    <div class="card-header-premium">
-        <span><i class="fa-solid fa-calendar-plus text-primary me-2"></i> Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới & Thiết Lập 12 Giai Đoạn</span>
+<div class="admin-table-card">
+    <div class="admin-table-header">
+        <h5 class="admin-table-header-title">
+            <i class="fa-solid fa-calendar-plus text-primary"></i>
+            Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới &amp; Thiết Lập 12 Giai Đoạn
+        </h5>
     </div>
     <div class="card-body p-4">
         <form method="POST" action="{{ route('admin.kehoach.store') }}">

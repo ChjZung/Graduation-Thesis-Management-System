@@ -12,10 +12,38 @@ class NganhController extends Controller
 {
     use HandlesExcelImport;
 
-    public function index()
+    public function index(Request $request)
     {
-        $nganhs = Nganh::with('khoa')->withCount('lops')->paginate(10);
-        return view('admin.nganh.index', compact('nganhs'));
+        $query = Nganh::with('khoa')->withCount('lops');
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('MaNganh', 'like', "%{$s}%")
+                  ->orWhere('TenNganh', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('ma_khoa')) {
+            $query->where('MaKhoa', $request->ma_khoa);
+        }
+
+        $nganhs = $query->paginate(10)->withQueryString();
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+
+        $totalNganh = Nganh::count();
+        $cnttKhoa = Khoa::where('TenKhoa', 'like', '%Công nghệ thông tin%')->orWhere('MaKhoa', 'like', '%CNTT%')->first();
+        $nganhCntt = $cnttKhoa ? Nganh::where('MaKhoa', $cnttKhoa->MaKhoa)->count() : 0;
+        $totalSv = \App\Models\SinhVien::count();
+
+        $stats = [
+            'total_nganh' => $totalNganh,
+            'nganh_cntt' => $nganhCntt,
+            'total_sv' => $totalSv,
+            'status' => '100%',
+        ];
+
+        return view('admin.nganh.index', compact('nganhs', 'khoas', 'stats'));
     }
 
     public function create()
@@ -47,6 +75,30 @@ class NganhController extends Controller
         ]);
 
         return redirect()->route('nganh.index')->with('success', "Thêm ngành '{$request->TenNganh}' thành công!");
+    }
+
+    public function show($id)
+    {
+        $nganh = Nganh::with([
+            'khoa',
+            'lops' => function($q) {
+                $q->withCount('sinhViens');
+            },
+            'chuyenNganhs',
+        ])->withCount(['lops', 'sinhViens'])->findOrFail($id);
+
+        $totalSv = $nganh->sinh_viens_count;
+        $svDuDk = \App\Models\SinhVien::where('MaNganh', $id)->where('SoTinChiTichLuy', '>=', 115)->count();
+        $pctDuDk = $totalSv > 0 ? round(($svDuDk / $totalSv) * 100, 1) : 0;
+
+        $stats = [
+            'total_lop'  => $nganh->lops_count,
+            'total_sv'   => $totalSv,
+            'sv_du_dk'   => $svDuDk,
+            'pct_du_dk'  => $pctDuDk,
+        ];
+
+        return view('admin.nganh.show', compact('nganh', 'stats'));
     }
 
     public function edit($id)

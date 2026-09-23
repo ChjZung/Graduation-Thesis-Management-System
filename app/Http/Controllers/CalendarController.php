@@ -50,10 +50,17 @@ class CalendarController extends Controller
     {
         $events = $this->getCalendarEvents();
         $nextMilestone = $this->getNextUpcomingMilestone();
+        $allMilestones = MocThoiGianKhoaLuan::with('keHoach')->orderBy('NgayBatDau', 'asc')->get();
+        $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
+        $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
+
         return view('calendar.index', [
             'layout' => 'layouts.admin',
             'events' => $events,
             'nextMilestone' => $nextMilestone,
+            'allMilestones' => $allMilestones,
+            'plans' => $plans,
+            'activePlan' => $activePlan,
             'roleTitle' => 'Giáo Vụ Khoa',
         ]);
     }

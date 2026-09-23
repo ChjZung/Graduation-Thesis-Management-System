@@ -16,18 +16,21 @@
 </div>
 @endif
 
-<div class="card card-premium">
-    <div class="card-header-premium">
-        <span><i class="fa-solid fa-file-pdf text-danger me-2"></i> Lập Kế Hoạch Tự Động Từ File Thông Báo Chính Thức (PDF / Word)</span>
+<div class="admin-table-card">
+    <div class="admin-table-header">
+        <h5 class="admin-table-header-title">
+            <i class="fa-solid fa-file-pdf text-danger"></i>
+            Lập Kế Hoạch Tự Động Từ File Thông Báo Chính Thức (PDF / Word)
+        </h5>
     </div>
     <div class="card-body p-4">
-        <!-- 8-Step Wizard Progress -->
+        <!-- 4-Step Wizard Progress -->
         <div class="mb-4 p-3 bg-light rounded-3 border">
             <div class="row text-center small fw-bold text-muted g-2">
                 <div class="col-md-3 text-primary"><i class="fa-solid fa-circle-1 me-1"></i>1. Upload Văn bản</div>
                 <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Phân tích AI/OCR</div>
                 <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Preview Đối chiếu</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận & Sinh lịch</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Sinh lịch</div>
             </div>
         </div>
 

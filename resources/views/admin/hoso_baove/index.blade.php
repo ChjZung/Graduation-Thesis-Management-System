@@ -35,80 +35,110 @@
 </div>
 @endif
 
-<!-- 4 KPI Stats Cards -->
+{{-- ── TIÊU ĐỀ TRANG ── --}}
+<div class="page-header-flex mb-3">
+    <div>
+        <h4 class="page-main-title">
+            <i class="fa-solid fa-folder-tree text-primary"></i>
+            Quản Lý Hồ Sơ Bảo Vệ &amp; Thẩm Định Turnitin
+        </h4>
+        <p class="page-main-subtitle">
+            Kiểm tra báo cáo toàn văn, kết quả quét trùng lặp Turnitin và phân bổ nhóm đủ điều kiện sang Hội đồng chấm bảo vệ.
+        </p>
+    </div>
+</div>
+
+{{-- ── 4 KPI STATS CARDS CHUẨN FIGMA ── --}}
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="card card-premium border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card border-accent-blue">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="text-muted small fw-semibold text-uppercase">Tổng số hồ sơ</div>
-                    <div class="fs-3 fw-bold text-dark mt-1">{{ $tongSoHoSo }}</div>
+                    <div class="kpi-title">Tổng Số Hồ Sơ</div>
+                    <div class="kpi-value">{{ $tongSoHoSo }}</div>
+                    <div class="kpi-subtext text-muted">Hồ sơ đã nộp</div>
                 </div>
-                <div class="rounded-circle bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="fa-solid fa-folder-open fs-4"></i>
+                <div class="kpi-icon-wrap" style="background: #e0f2fe; color: #0284c7;">
+                    <i class="fa-solid fa-folder-open"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card card-premium border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card border-accent-amber">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="text-muted small fw-semibold text-uppercase">Chờ thẩm định</div>
-                    <div class="fs-3 fw-bold text-warning mt-1">{{ $choThamDinh }}</div>
+                    <div class="kpi-title">Chờ Thẩm Định</div>
+                    <div class="kpi-value">{{ $choThamDinh }}</div>
+                    <div class="kpi-subtext" style="color: #d97706;">Cần xét duyệt</div>
                 </div>
-                <div class="rounded-circle bg-warning-subtle text-warning p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="fa-solid fa-hourglass-half fs-4"></i>
+                <div class="kpi-icon-wrap" style="background: #fef3c7; color: #d97706;">
+                    <i class="fa-solid fa-hourglass-half"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card card-premium border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card border-accent-green">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="text-muted small fw-semibold text-uppercase">Đủ điều kiện bảo vệ</div>
-                    <div class="fs-3 fw-bold text-info mt-1">{{ $duDieuKien }}</div>
+                    <div class="kpi-title">Đủ Điều Kiện Bảo Vệ</div>
+                    <div class="kpi-value">{{ $duDieuKien }}</div>
+                    <div class="kpi-subtext text-success">Turnitin &le; 20%</div>
                 </div>
-                <div class="rounded-circle bg-info-subtle text-info p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="fa-solid fa-clipboard-check fs-4"></i>
+                <div class="kpi-icon-wrap" style="background: #dcfce7; color: #16a34a;">
+                    <i class="fa-solid fa-clipboard-check"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card card-premium border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card border-accent-purple">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="text-muted small fw-semibold text-uppercase">Đã xếp Hội đồng</div>
-                    <div class="fs-3 fw-bold text-success mt-1">{{ $daPhanCong }}</div>
+                    <div class="kpi-title">Đã Xếp Hội Đồng</div>
+                    <div class="kpi-value">{{ $daPhanCong }}</div>
+                    <div class="kpi-subtext" style="color: #6366f1;">Sẵn sàng bảo vệ</div>
                 </div>
-                <div class="rounded-circle bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="fa-solid fa-landmark fs-4"></i>
+                <div class="kpi-icon-wrap" style="background: #ede9fe; color: #7c3aed;">
+                    <i class="fa-solid fa-landmark"></i>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bộ lọc và Bảng danh sách -->
-<div class="card card-premium border-0 shadow-sm">
-    <div class="card-header-premium d-flex flex-wrap justify-content-between align-items-center gap-3 py-3">
-        <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-folder-tree text-primary fs-5"></i>
-            <h5 class="mb-0 fw-bold">Danh Sách Hồ Sơ Khóa Luận & Thẩm Định Turnitin</h5>
-        </div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <!-- Filter Tabs -->
-            <div class="btn-group btn-group-sm" role="group">
-                <a href="{{ route('admin.hosoBaoVe.index') }}" class="btn {{ !request('TrangThai') ? 'btn-primary fw-bold' : 'btn-outline-secondary' }}">Tất cả</a>
-                <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Chờ thẩm định']) }}" class="btn {{ request('TrangThai') === 'Chờ thẩm định' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary' }}">Chờ thẩm định</a>
-                <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Đủ điều kiện bảo vệ']) }}" class="btn {{ request('TrangThai') === 'Đủ điều kiện bảo vệ' ? 'btn-info text-white fw-bold' : 'btn-outline-secondary' }}">Đủ ĐK bảo vệ</a>
-                <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Đã phân công']) }}" class="btn {{ request('TrangThai') === 'Đã phân công' ? 'btn-success fw-bold' : 'btn-outline-secondary' }}">Đã phân công HĐ</a>
-                <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Không đủ điều kiện']) }}" class="btn {{ request('TrangThai') === 'Không đủ điều kiện' ? 'btn-danger fw-bold' : 'btn-outline-secondary' }}">Không đủ ĐK</a>
-            </div>
+{{-- ── 4 PILL TABS TRẠNG THÁI & TÌM KIẾM ── --}}
+<div class="admin-pill-tabs">
+    <a href="{{ route('admin.hosoBaoVe.index') }}" 
+       class="admin-pill-tab {{ !request('TrangThai') ? 'active' : '' }}">
+        <span class="fw-bold">{{ $tongSoHoSo }}</span> Tất Cả Hồ Sơ
+    </a>
+    <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Chờ thẩm định']) }}" 
+       class="admin-pill-tab {{ request('TrangThai') === 'Chờ thẩm định' ? 'active' : '' }}">
+        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#f59e0b;"></span>
+        <span class="fw-bold">{{ $choThamDinh }}</span> Chờ Thẩm Định
+    </a>
+    <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Đủ điều kiện bảo vệ']) }}" 
+       class="admin-pill-tab {{ request('TrangThai') === 'Đủ điều kiện bảo vệ' ? 'active' : '' }}">
+        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#10b981;"></span>
+        <span class="fw-bold">{{ $duDieuKien }}</span> Đủ ĐK Bảo Vệ
+    </a>
+    <a href="{{ route('admin.hosoBaoVe.index', ['TrangThai' => 'Đã phân công']) }}" 
+       class="admin-pill-tab {{ request('TrangThai') === 'Đã phân công' ? 'active' : '' }}">
+        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#6366f1;"></span>
+        <span class="fw-bold">{{ $daPhanCong }}</span> Đã Phân Công HĐ
+    </a>
+</div>
 
-            <!-- Form tìm kiếm -->
+{{-- ── BẢNG DANH SÁCH HỒ SƠ BẢO VỆ ── --}}
+<div class="admin-table-card">
+    <div class="admin-table-header">
+        <h5 class="admin-table-header-title">
+            <i class="fa-regular fa-folder-closed text-primary"></i>
+            Danh Sách Hồ Sơ Khóa Luận &amp; Thẩm Định Turnitin
+        </h5>
+        <div class="d-flex align-items-center gap-2">
             <form action="{{ route('admin.hosoBaoVe.index') }}" method="GET" class="d-flex align-items-center gap-1">
                 @if(request('TrangThai'))
                     <input type="hidden" name="TrangThai" value="{{ request('TrangThai') }}">

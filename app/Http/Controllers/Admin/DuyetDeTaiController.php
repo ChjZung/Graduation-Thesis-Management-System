@@ -10,21 +10,35 @@ class DuyetDeTaiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DeTai::with('giangVien');
+        $counts = [
+            'cho_duyet' => DeTai::where('TrangThai', 'Chờ duyệt')->count(),
+            'da_duyet'  => DeTai::where('TrangThai', 'Đã duyệt')->count(),
+            'tu_choi'   => DeTai::where('TrangThai', 'Từ chối')->count(),
+            'total'     => DeTai::count(),
+        ];
 
-        if ($request->filled('TrangThai')) {
+        $query = DeTai::with(['giangVien.boMon']);
+
+        if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $query->where('TrangThai', $request->TrangThai);
-        } else {
+        } elseif (!$request->filled('TrangThai')) {
             $query->where('TrangThai', 'Chờ duyệt');
         }
 
         if ($request->filled('search')) {
-            $query->where('TenDeTai', 'LIKE', '%' . trim($request->search) . '%');
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('TenDeTai', 'LIKE', "%{$search}%")
+                  ->orWhere('MaDeTai', 'LIKE', "%{$search}%")
+                  ->orWhereHas('giangVien', function($gq) use ($search) {
+                      $gq->where('HoTen', 'LIKE', "%{$search}%");
+                  });
+            });
         }
 
         $detais = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return view('admin.duyet_detai.index', compact('detais'));
+        return view('admin.duyet_detai.index', compact('detais', 'counts'));
     }
 
     public function approve($id)

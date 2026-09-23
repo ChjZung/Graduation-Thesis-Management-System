@@ -53,6 +53,11 @@
                     <i class="fa-solid fa-calendar-check"></i> Quản lý kế hoạch
                 </a>
             </li>
+            <li class="{{ request()->routeIs('admin.quydinh.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.quydinh.index') }}">
+                    <i class="fa-solid fa-scale-balanced"></i> Quy định khóa luận
+                </a>
+            </li>
             <li class="{{ request()->routeIs('admin.theodoi.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.theodoi.index') }}">
                     <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
@@ -97,6 +102,11 @@
 
             <!-- Quản Lý Tài Khoản -->
             <li class="nav-section-label">Quản Lý Người Dùng</li>
+            <li class="{{ request()->routeIs('admin.taikhoan.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.taikhoan.index') }}">
+                    <i class="fa-solid fa-users-gear"></i> Tài khoản hệ thống
+                </a>
+            </li>
             <li class="{{ request()->routeIs('sinhvien.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.index') }}">
                     <i class="fa-solid fa-user-graduate"></i> Sinh viên
@@ -161,87 +171,88 @@
             <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
         </div>
 
-        <!-- Topbar -->
-        <nav class="navbar navbar-expand-lg navbar-custom">
-            <div class="container-fluid">
-                <div class="page-title-text">
-                    <i class="fa-solid fa-angle-right"></i>
-                    @yield('page_title', 'Dashboard')
-                </div>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Admin -->
-                    @php
-                        $adminRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
-                        $adminUnread = $adminRecentNoti->count();
-                    @endphp
-                    <div class="dropdown">
-                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
-                            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
-                            @if($adminUnread > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:3px 5px;">{{ $adminUnread }}</span>
-                            @endif
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
-                            <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;">Thông Báo Hệ Thống</strong></div>
-                            @forelse($adminRecentNoti as $noti)
-                            <div class="dropdown-item px-3 py-2 border-bottom">
-                                <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
-                                    <div>
-                                        <div class="fw-semibold text-wrap" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
-                                    </div>
+        <!-- Topbar / Breadcrumb Bar -->
+        <div class="admin-top-bar">
+            <div class="admin-breadcrumb">
+                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 0.75rem;"></i>
+                <a href="{{ route('admin.dashboard') }}">Trang chủ</a>
+                <span class="separator">&gt;</span>
+                <span>Khóa luận tốt nghiệp</span>
+                <span class="separator">&gt;</span>
+                <span class="current-page">@yield('page_title', 'Dashboard')</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notification Bell Admin -->
+                @php
+                    $adminRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
+                    $adminUnread = $adminRecentNoti->count();
+                @endphp
+                <div class="dropdown">
+                    <a href="#" class="position-relative text-decoration-none dropdown-toggle no-caret" data-bs-toggle="dropdown" aria-expanded="false" style="color: #0072ce;">
+                        <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
+                        @if($adminUnread > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:3px 5px;">{{ $adminUnread }}</span>
+                        @endif
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
+                        <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;color:#003b73;">Thông Báo Hệ Thống</strong></div>
+                        @forelse($adminRecentNoti as $noti)
+                        <div class="dropdown-item px-3 py-2 border-bottom">
+                            <div class="d-flex gap-2 align-items-start">
+                                <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
+                                <div>
+                                    <div class="fw-semibold text-wrap" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
+                                    <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
                                 </div>
                             </div>
-                            @empty
-                            <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
-                            @endforelse
                         </div>
-                    </div>
-
-                    <!-- User Dropdown -->
-                    <div class="dropdown">
-
-                        <a class="user-avatar-btn dropdown-toggle text-decoration-none"
-                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           id="adminUserDropdown">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->TenDangNhap ?? 'Admin') }}&background=E5F0FA&color=0072CE&bold=true&size=64"
-                                 alt="Avatar" class="rounded-circle">
-                            <span class="user-name d-none d-sm-inline">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminUserDropdown">
-                            <li>
-                                <div class="px-3 py-2 mb-1" style="border-bottom: 1px solid var(--columbia-blue);">
-                                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--huit-blue-dark);">Xin chào!</div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
-                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;"><i class="fa-solid fa-shield-halved me-1" style="color: var(--huit-blue);"></i>Quản trị viên</div>
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="fa-solid fa-user text-huit-blue"></i> Hồ sơ cá nhân
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('password.change') }}">
-                                    <i class="fa-solid fa-key text-huit-blue"></i> Đổi mật khẩu
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form-admin').submit();">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </a>
-                            </li>
-                            <form id="logout-form-admin" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </ul>
+                        @empty
+                        <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
+                        @endforelse
                     </div>
                 </div>
+
+                <!-- Admin Profile Pill -->
+                <div class="dropdown">
+                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                       id="adminUserDropdown">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->TenDangNhap ?? 'Admin') }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                             alt="Avatar">
+                        <span>{{ Auth::user()->TenDangNhap ?? 'Admin' }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; min-width: 220px;" aria-labelledby="adminUserDropdown">
+                        <li>
+                            <div class="px-3 py-2 mb-1 border-bottom">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: #003b73;">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
+                                <div style="font-size: 0.72rem; color: #10b981; margin-top: 1px;"><i class="fa-solid fa-shield-halved me-1"></i>Quản trị viên</div>
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-admin').submit();">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                            </a>
+                        </li>
+                        <form id="logout-form-admin" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    </ul>
+                </div>
             </div>
-        </nav>
+        </div>
 
         <!-- Alerts + Content -->
         <div class="content-body">

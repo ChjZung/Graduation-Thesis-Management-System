@@ -13,17 +13,24 @@ class DuyetDangKyDeTaiController extends Controller
 {
     public function index(Request $request)
     {
+        $counts = [
+            'cho_duyet' => DangKyDeTai::where('TrangThai', 'Chờ duyệt')->count(),
+            'da_duyet'  => DangKyDeTai::where('TrangThai', 'Đã duyệt')->count(),
+            'tu_choi'   => DangKyDeTai::where('TrangThai', 'Từ chối')->count(),
+            'total'     => DangKyDeTai::count(),
+        ];
+
         $query = DangKyDeTai::with(['nhom.truongNhom', 'nhom.thanhViens.sinhVien', 'deTai.giangVien']);
 
-        if ($request->filled('TrangThai')) {
+        if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $query->where('TrangThai', $request->TrangThai);
-        } else {
+        } elseif (!$request->filled('TrangThai')) {
             $query->where('TrangThai', 'Chờ duyệt');
         }
 
         $dangKys = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return view('admin.duyet_dangky.index', compact('dangKys'));
+        return view('admin.duyet_dangky.index', compact('dangKys', 'counts'));
     }
 
     public function approve($id)

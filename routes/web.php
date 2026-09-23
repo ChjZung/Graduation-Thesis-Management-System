@@ -74,7 +74,10 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     // Dashboard
     Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::post('/taikhoan/{id}/toggle-lock', [\App\Http\Controllers\Admin\DashboardController::class, 'toggleLockAccount'])->name('admin.taikhoan.toggleLock');
+    Route::post('/taikhoan/{id}/toggle-lock', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'toggleLock'])->name('admin.taikhoan.toggleLock');
+    Route::post('/taikhoan/{id}/reset-password', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'resetPassword'])->name('admin.taikhoan.resetPassword');
+    Route::post('/taikhoan/import', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'importExcel'])->name('admin.taikhoan.import');
+    Route::resource('taikhoan', \App\Http\Controllers\Admin\TaiKhoanController::class)->names('admin.taikhoan');
 
     // Danh mục cơ bản
     Route::resource('khoa', \App\Http\Controllers\KhoaController::class);
@@ -100,6 +103,11 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     Route::resource('kehoach', \App\Http\Controllers\Admin\KeHoachKhoaLuanController::class)->names('admin.kehoach');
     Route::post('/kehoach/{id}/status', [\App\Http\Controllers\Admin\KeHoachKhoaLuanController::class, 'updateStatus'])->name('admin.kehoach.updateStatus');
+
+    // Quy định Khóa luận tốt nghiệp
+    Route::post('/quydinh/init-defaults', [\App\Http\Controllers\Admin\QuyDinhKhoaLuanController::class, 'initDefaults'])->name('admin.quydinh.initDefaults');
+    Route::resource('quydinh', \App\Http\Controllers\Admin\QuyDinhKhoaLuanController::class)->names('admin.quydinh');
+
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adminCalendar'])->name('admin.calendar');
 
     // Theo dõi Đồ án / Khóa luận

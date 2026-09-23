@@ -107,6 +107,16 @@ class ExcelTemplateService
                 ],
                 'note'     => 'Lưu ý: MSSV (Mã số sinh viên) là duy nhất và không trùng lặp. Email nên dùng đuôi @st.huit.edu.vn. MaLop có thể nhập Mã Lớp (L01) hoặc Tên Lớp (14DHTH05). Hệ thống tự động xác định Mã tài khoản & Tên đăng nhập từ MSSV.'
             ],
+            'taikhoan' => [
+                'filename' => 'Template_TaiKhoan.xlsx',
+                'title'    => 'MẪU NHẬP LIỆU TÀI KHOẢN NGƯỜI DÙNG',
+                'headers'  => ['TenDangNhap', 'HoTen', 'Email', 'MaVaiTro', 'MatKhau'],
+                'examples' => [
+                    ['giaovu_cntt', 'Nguyễn Thị Giáo Vụ', 'giaovu_cntt@huit.edu.vn', 'VT01', '123456'],
+                    ['gv_hoangnam', 'ThS. Hoàng Nam', 'namh@huit.edu.vn', 'VT02', '123456'],
+                ],
+                'note'     => 'Lưu ý: TenDangNhap là bắt buộc và duy nhất. MaVaiTro: VT01 (Admin/Giáo vụ), VT02 (Giảng viên), VT03 (Sinh viên). Mật khẩu để trống sẽ lấy mặc định 123456.'
+            ],
             'lophocphan' => [
                 'filename' => 'Template_LopHocPhan.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU LỚP HỌC PHẦN (LỚP TÍN CHỈ)',

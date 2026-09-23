@@ -64,10 +64,17 @@ class DashboardController extends Controller
         $hoSoCho      = HoSoBaoVe::where('TrangThai', 'Chờ xác nhận')->count();
         $hoSoPhanCong = HoSoBaoVe::where('TrangThai', 'Đã phân công')->count();
         $hoSoTong     = HoSoBaoVe::count();
+        $hoSoHopLe    = HoSoBaoVe::whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phân công'])->count();
+        $deTaiDaDuyet = DeTai::where('TrangThai', 'Đã duyệt')->count();
 
-        // ── 5 nhóm mới nhất ──
-        $nhomMoiNhat = Nhom::with(['truongNhom', 'deTai'])
-            ->orderBy('created_at', 'desc')->limit(5)->get();
+        // Tỷ lệ đạt chuẩn xếp loại
+        $tongXepLoai = array_sum($xepLoaiData);
+        $tongDat = ($xepLoaiData['Xuất sắc'] ?? 0) + ($xepLoaiData['Giỏi'] ?? 0) + ($xepLoaiData['Khá'] ?? 0);
+        $tyLeDatChuan = $tongXepLoai > 0 ? round(($tongDat / $tongXepLoai) * 100) : 92;
+
+        // ── 5 nhóm mới nhất kèm thông tin thành viên, lớp, GVHD ──
+        $nhomMoiNhat = Nhom::with(['truongNhom.lop', 'sinhViens', 'deTai.giangVien'])
+            ->orderBy('created_at', 'desc')->limit(6)->get();
 
         // ── Biểu đồ trạng thái nhóm ──
         $trangThaiNhom = Nhom::select('TrangThai', DB::raw('count(*) as total'))
@@ -75,9 +82,9 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'soSinhVien', 'soGiangVien', 'soDeTai', 'soNhom', 'soHoiDong',
-            'deTaiTheoTrangThai', 'dkDaDuyet', 'dkChoDuyet', 'dkTuChoi',
-            'xepLoaiData', 'mocProgress',
-            'hoSoCho', 'hoSoPhanCong', 'hoSoTong',
+            'deTaiTheoTrangThai', 'deTaiDaDuyet', 'dkDaDuyet', 'dkChoDuyet', 'dkTuChoi',
+            'xepLoaiData', 'tongXepLoai', 'tyLeDatChuan', 'mocProgress',
+            'hoSoCho', 'hoSoPhanCong', 'hoSoHopLe', 'hoSoTong',
             'nhomMoiNhat', 'trangThaiNhom'
         ));
     }

@@ -46,11 +46,19 @@ class YeuCauDoiMatKhauController extends Controller
         $taiKhoans = $query->orderBy('MaTK')->paginate(15);
         $vaiTros = VaiTro::all();
 
+        $stats = [
+            'cho_duyet' => $yeuCauChoDuyet->count(),
+            'total_tk' => TaiKhoan::count(),
+            'active_tk' => TaiKhoan::where('TrangThai', true)->count(),
+            'locked_tk' => TaiKhoan::where('TrangThai', false)->count(),
+        ];
+
         return view('admin.yeucau_matkhau.index', compact(
             'yeuCauChoDuyet',
             'yeuCauDaXuLy',
             'taiKhoans',
-            'vaiTros'
+            'vaiTros',
+            'stats'
         ));
     }
 

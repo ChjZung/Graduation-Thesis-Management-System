@@ -44,9 +44,16 @@ class ThongBaoController extends Controller
 
         $thongbaos = $query->paginate(10)->withQueryString();
 
+        $stats = [
+            'total_thongbao' => ThongBao::count(),
+            'active_count' => ThongBao::whereIn('TrangThai', ['ĐÃ GỬI', 'ACTIVE'])->count(),
+            'target_all_count' => ThongBao::where('DoiTuongNhan', 'Tất cả')->count(),
+            'draft_schedule_count' => ThongBao::whereIn('TrangThai', ['NHÁP', 'ĐÃ LÊN LỊCH'])->count(),
+        ];
+
         $layout = ($role === 'Admin' || $role === 'Giáo vụ') ? 'layouts.admin' : (($role === 'Giảng viên') ? 'layouts.giangvien' : 'layouts.sinhvien');
 
-        return view('thongbao.index', compact('layout', 'thongbaos'));
+        return view('thongbao.index', compact('layout', 'thongbaos', 'stats'));
     }
 
     /**

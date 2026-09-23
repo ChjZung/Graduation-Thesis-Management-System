@@ -1500,6 +1500,58 @@ class ExcelImportService
             'error_file' => $this->generateErrorFile($errors)
         ];
     }
+
+    public function importTaiKhoan($file): array
+    {
+        $rows = $this->parseFile($file);
+        $this->validateTemplateHeaders($rows, ['TenDangNhap', 'HoTen', 'MaVaiTro'], 'Tài khoản');
+
+        $errors = [];
+        $success = 0;
+
+        foreach ($rows as $row) {
+            $rNum = $row['_row_num'];
+            $username = trim($row['TenDangNhap'] ?? '');
+            $hoTen = trim($row['HoTen'] ?? '');
+            $email = trim($row['Email'] ?? '');
+            $vaiTro = trim($row['MaVaiTro'] ?? 'VT01');
+            $password = !empty($row['MatKhau']) ? trim($row['MatKhau']) : '123456';
+
+            if (empty($username)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Tên đăng nhập không được để trống', 'data' => $row];
+                continue;
+            }
+
+            if (\App\Models\TaiKhoan::where('TenDangNhap', $username)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Tên đăng nhập '{$username}' đã tồn tại", 'data' => $row];
+                continue;
+            }
+
+            try {
+                \App\Models\TaiKhoan::create([
+                    'MaTK'              => $username,
+                    'TenDangNhap'       => $username,
+                    'MatKhau'           => \Illuminate\Support\Facades\Hash::make($password),
+                    'MaVaiTro'          => $vaiTro,
+                    'TrangThai'         => true,
+                    'TrangThaiMatKhau'  => 'INITIAL',
+                    'BatBuocDoiMatKhau' => true,
+                    'SoLanDangNhapSai'  => 0,
+                ]);
+                $success++;
+            } catch (\Exception $e) {
+                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
+            }
+        }
+
+        return [
+            'total_count'   => count($rows),
+            'success_count' => $success,
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
+        ];
+    }
 }
 
 

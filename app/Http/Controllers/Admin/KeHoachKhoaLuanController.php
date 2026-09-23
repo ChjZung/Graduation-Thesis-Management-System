@@ -17,7 +17,7 @@ class KeHoachKhoaLuanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = KeHoachKhoaLuan::with(['hocKy', 'khoa', 'boMon', 'mocThoiGians']);
+        $query = KeHoachKhoaLuan::with(['hocKy', 'mocThoiGians']);
 
         if ($request->filled('TrangThai')) {
             $query->where('TrangThai', $request->TrangThai);
@@ -44,11 +44,11 @@ class KeHoachKhoaLuanController extends Controller
     public function create()
     {
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        $khoas = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
         $defaultPhases = PlanPhaseService::getDefaultPhases('2026-09-01');
 
-        return view('admin.kehoach.create', compact('hocKies', 'Khoa', 'boMons', 'defaultPhases'));
+        return view('admin.kehoach.create', compact('hocKies', 'khoas', 'boMons', 'defaultPhases'));
     }
 
     public function store(Request $request)
@@ -131,7 +131,7 @@ class KeHoachKhoaLuanController extends Controller
 
     public function show($id)
     {
-        $keHoach = KeHoachKhoaLuan::with(['hocKy', 'khoa', 'boMon', 'mocThoiGians'])->findOrFail($id);
+        $keHoach = KeHoachKhoaLuan::with(['hocKy', 'khoa', 'boMon', 'mocThoiGians', 'quyDinhs'])->findOrFail($id);
         $currentPhase = PlanPhaseService::getCurrentPhase($keHoach);
 
         return view('admin.kehoach.show', compact('keHoach', 'currentPhase'));

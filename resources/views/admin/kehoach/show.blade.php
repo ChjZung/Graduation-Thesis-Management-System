@@ -135,4 +135,54 @@
         </div>
     </div>
 </div>
+
+<!-- Khối Tiêu Chuẩn & Quy Định Kế Hoạch -->
+<div class="card border-0 shadow-sm rounded-3 mt-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-primary"></i>
+            <span>Quy Định &amp; Tiêu Chuẩn Áp Dụng Cho Kế Hoạch Này</span>
+        </h6>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.quydinh.create') }}?make_hoach={{ $keHoach->MakeHoach }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                <i class="fa-solid fa-plus me-1"></i> Thêm Quy Định
+            </a>
+            <a href="{{ route('admin.quydinh.index', ['make_hoach' => $keHoach->MakeHoach]) }}" class="btn btn-sm btn-light border rounded-pill">
+                Xem Tất Cả Quy Định
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-3">
+        @if($keHoach->quyDinhs && $keHoach->quyDinhs->count() > 0)
+            <div class="row g-3">
+                @foreach($keHoach->quyDinhs as $qd)
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 rounded bg-light border h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge-code">{{ $qd->MaQuyDinh }}</span>
+                                    <span class="badge bg-primary rounded-pill px-2 py-1">{{ $qd->GiaTri }}</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">{{ $qd->TenQuyDinh }}</h6>
+                                <p class="small text-muted mb-0" style="line-height: 1.5;">{{ $qd->MoTa ?? 'Không có mô tả chi tiết.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-4 text-muted">
+                <i class="fa-solid fa-scale-unbalanced fs-3 mb-2 opacity-50"></i>
+                <div>Chưa thiết lập tiêu chuẩn quy chế riêng cho kế hoạch này.</div>
+                <form action="{{ route('admin.quydinh.initDefaults') }}" method="POST" class="d-inline mt-2">
+                    @csrf
+                    <input type="hidden" name="MakeHoach" value="{{ $keHoach->MakeHoach }}">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 mt-2">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Nhanh Bộ 6 Chuẩn HUIT
+                    </button>
+                </form>
+            </div>
+        @endif
+    </div>
+</div>
 @endsection

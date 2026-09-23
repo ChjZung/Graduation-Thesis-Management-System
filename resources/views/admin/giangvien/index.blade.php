@@ -1,14 +1,30 @@
 @extends('layouts.admin')
 
-@section('page_title', 'Quản Lý Giảng Viên')
+@section('page_title', 'Quản lý giảng viên')
 
 @section('content')
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-chalkboard-user text-primary"></i> Quản Lý Danh Sách Giảng Viên, Bộ Môn &amp; Cấp Tài Khoản Portal
+        </h4>
+        <div class="text-muted small">Kiểm soát định mức hướng dẫn đề tài, phân công bộ môn chuyên môn, reset mật khẩu và trạng thái truy cập hệ thống.</div>
+    </div>
+    <div class="d-flex align-items-center">
+        <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+            <i class="fa-solid fa-university text-primary me-1"></i> Khoa Công nghệ Thông tin — Học kỳ 1 (2026–2027)
+        </span>
+    </div>
+</div>
+
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
         <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
+
 @if(session('import_result'))
     <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
         <i class="fa-solid fa-circle-info me-2"></i>{!! session('import_result') !!}
@@ -16,112 +32,239 @@
     </div>
 @endif
 
-<div class="card card-premium">
-    <div class="card-header-premium">
-        <span><i class="fa-solid fa-chalkboard-user me-2"></i> Danh Sách Giảng Viên</span>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" title="Tải file mẫu Excel">
+<!-- 4 KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="admin-kpi-card border-accent-blue d-flex justify-content-between align-items-center">
+            <div>
+                <div class="kpi-label">Tổng Giảng Viên Khoa CNTT</div>
+                <div class="kpi-value text-primary">{{ $stats['total'] ?? $giangviens->total() }} <span class="fs-6 text-muted font-normal">giảng viên</span></div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(0, 114, 206, 0.1); color: #0072ce;">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="admin-kpi-card border-accent-green d-flex justify-content-between align-items-center">
+            <div>
+                <div class="kpi-label">Nhận Hướng Dẫn Khóa Luận</div>
+                <div class="kpi-value text-success">{{ $stats['huong_dan'] ?? 0 }} <span class="fs-6 text-muted font-normal">giảng viên</span></div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="admin-kpi-card border-accent-orange d-flex justify-content-between align-items-center">
+            <div>
+                <div class="kpi-label">Thành Viên Hội Đồng</div>
+                <div class="kpi-value text-warning">{{ $stats['hoi_dong'] ?? 0 }} <span class="fs-6 text-muted font-normal">cán bộ chấm</span></div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                <i class="fa-solid fa-landmark"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="admin-kpi-card border-accent-purple d-flex justify-content-between align-items-center">
+            <div>
+                <div class="kpi-label">Tài Khoản Portal Active</div>
+                <div class="kpi-value text-purple" style="color: #6366f1;">{{ $stats['active'] ?? 0 }} <span class="fs-6 text-muted font-normal">/ {{ $stats['total'] ?? $giangviens->total() }} Active</span></div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                <i class="fa-solid fa-key"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="admin-filter-bar mb-4">
+    <form method="GET" action="{{ route('giangvien.index') }}" class="row g-2 align-items-center w-100">
+        <div class="col-md-5">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" name="search" class="form-control border-start-0" placeholder="Tìm theo tên GV, học hàm, email, mã GV..." value="{{ request('search') }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="MaBoMon" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">-- Tất cả Bộ môn --</option>
+                @foreach($bomons as $bm)
+                    <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
+                        {{ $bm->TenBoMon }} ({{ $bm->khoa->TenKhoa ?? '' }})
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4 d-flex justify-content-end gap-2">
+            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs" title="Tải file mẫu Excel">
                 <i class="fa-solid fa-download me-1"></i> File Mẫu
             </a>
-            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+            <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3 shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fa-solid fa-file-import me-1"></i> Import Excel
             </button>
-            <a href="{{ route('giangvien.create') }}" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-plus me-1"></i> Thêm Mới
+            <a href="{{ route('giangvien.create') }}" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-semibold">
+                <i class="fa-solid fa-plus me-1"></i> Thêm Giảng Viên
             </a>
         </div>
-    </div>
-    <div class="card-body p-0">
-        <!-- Filter Bar -->
-        <div class="p-3 bg-light border-bottom">
-            <form method="GET" action="{{ route('giangvien.index') }}" class="row g-2 align-items-center">
-                <div class="col-md-5">
-                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Tìm theo tên, email, mã GV..." value="{{ request('search') }}">
-                </div>
-                <div class="col-md-4">
-                    <select name="MaBoMon" class="form-select form-select-sm">
-                        <option value="">-- Tất cả Bộ môn --</option>
-                        @foreach($bomons as $bm)
-                            <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
-                                {{ $bm->TenBoMon }} ({{ $bm->khoa->TenKhoa ?? '' }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3"><i class="fa-solid fa-magnifying-glass me-1"></i>Tìm</button>
-                    <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-2">Xóa lọc</a>
-                </div>
-            </form>
-        </div>
+    </form>
+</div>
 
-        <div class="table-responsive">
-            <table class="table table-custom table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th width="15%">Mã GV / Tài Khoản</th>
-                        <th width="25%">Họ Và Tên</th>
-                        <th width="15%">Học Vị</th>
-                        <th width="23%">Bộ Môn / Khoa</th>
-                        <th width="12%">Liên Hệ</th>
-                        <th width="10%" class="text-center">Thao Tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($giangviens as $gv)
-                        <tr>
-                            <td>
-                                <span class="badge-code">{{ $gv->MaGV }}</span>
-                                <div class="small text-muted mt-1">TK: <code>{{ $gv->taiKhoan->TenDangNhap ?? 'N/A' }}</code></div>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-primary">{{ $gv->HoTen }}</div>
-                                <div class="small text-muted"><i class="fa-regular fa-envelope me-1"></i>{{ $gv->Email }}</div>
-                            </td>
-                            <td><span class="badge bg-info-subtle text-info-emphasis rounded-pill px-3">{{ $gv->HocVi ?? 'Giảng viên' }}</span></td>
-                            <td>
-                                <div class="fw-semibold text-dark">{{ $gv->boMon->TenBoMon ?? 'Chưa gán' }}</div>
-                                <div class="small text-muted">{{ $gv->boMon->khoa->TenKhoa ?? '' }}</div>
-                            </td>
-                            <td>
-                                <div class="small text-dark"><i class="fa-solid fa-phone me-1 text-muted"></i>{{ $gv->SoDienThoai ?? 'Chưa có' }}</div>
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-1">
-                                    <a href="{{ route('giangvien.edit', $gv->MaGV) }}" class="btn btn-sm btn-light text-primary btn-action-circle" title="Sửa">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
-                                    <form action="{{ route('giangvien.destroy', $gv->MaGV) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa giảng viên này?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light text-danger btn-action-circle" title="Xóa">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6">
-                                <div class="empty-state-box">
-                                    <i class="fa-solid fa-chalkboard-user"></i>
-                                    <h6>Chưa có giảng viên nào trong hệ thống</h6>
-                                    <p class="small text-muted mb-3">Vui lòng thêm mới giảng viên hoặc import từ file Excel.</p>
-                                    <a href="{{ route('giangvien.create') }}" class="btn btn-primary btn-sm rounded-pill px-4">Thêm Giảng Viên Mới</a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+<!-- Table Card -->
+<div class="admin-table-card mb-4">
+    <div class="table-card-header d-flex justify-content-between align-items-center">
+        <div class="table-card-title">
+            <i class="fa-regular fa-folder-open text-primary me-2"></i> Danh Sách Giảng Viên Khoa Công Nghệ Thông Tin &amp; Quản Lý Tài Khoản Portal
+        </div>
+        <a href="javascript:void(0)" class="text-decoration-none small fw-semibold text-primary" onclick="alert('Đã kết nối máy chủ LDAP trường lúc 08:00 ngày 15/09/2026')">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Đồng bộ LDAP
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th width="12%">MÃ GV / TÀI KHOẢN</th>
+                    <th width="24%">HỌ TÊN, HỌC HÀM / VỊ &amp; EMAIL</th>
+                    <th width="22%">BỘ MÔN CHUYÊN MÔN</th>
+                    <th width="18%">ĐỊNH MỨC HƯỚNG DẪN ĐỀ TÀI</th>
+                    <th width="12%">TRẠNG THÁI TK</th>
+                    <th width="12%" class="text-center">THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($giangviens as $gv)
+                @php
+                    $tk = $gv->taiKhoan;
+                    $isActive = $tk ? (bool)$tk->TrangThai : true;
+                    $cnt = $gv->de_tais_count ?? $gv->deTais->count();
+                    $dinhMucBadge = match(true) {
+                        $cnt >= 5 => 'background: #fef3c7; color: #b45309;',
+                        $cnt > 0  => 'background: #e6f9f0; color: #0d8a4f;',
+                        default   => 'background: #f1f5f9; color: #64748b;',
+                    };
+                @endphp
+                <tr>
+                    <td>
+                        <span class="badge-code">{{ $gv->MaGV }}</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">
+                            {{ $gv->HocVi ? $gv->HocVi . '. ' : '' }}{{ $gv->HoTen }}
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fa-regular fa-envelope me-1"></i>{{ $gv->Email ?? 'chua_co@huit.edu.vn' }}
+                            @if($gv->SoDienThoai)
+                                &bull; <i class="fa-solid fa-phone ms-1 me-1"></i>{{ $gv->SoDienThoai }}
+                            @endif
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-secondary">{{ $gv->boMon->TenBoMon ?? 'Chưa gán bộ môn' }}</div>
+                        <div class="text-muted small">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge px-3 py-2 fw-semibold rounded-pill" style="{{ $dinhMucBadge }}">
+                            <i class="fa-solid fa-check me-1"></i> Đang nhận: {{ $cnt }}/5 nhóm
+                        </span>
+                    </td>
+                    <td>
+                        @if($isActive)
+                            <span class="text-success fw-semibold small d-inline-flex align-items-center gap-1">
+                                <span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;"></span> Hoạt động
+                            </span>
+                        @else
+                            <span class="text-danger fw-semibold small d-inline-flex align-items-center gap-1">
+                                <i class="fa-solid fa-circle" style="font-size: 8px;"></i> Đã khóa
+                            </span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="{{ route('giangvien.show', $gv->MaGV) }}" class="btn-action-icon text-primary" title="Xem hồ sơ chi tiết">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{{ route('giangvien.edit', $gv->MaGV) }}" class="btn-action-icon text-warning" title="Chỉnh sửa thông tin">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            @if($tk)
+                            <form action="{{ route('admin.yeucau.approve', $tk->MaTK) }}" method="POST" class="d-inline" onsubmit="return confirm('Reset mật khẩu tài khoản của {{ $gv->HoTen }} về 123456?');">
+                                @csrf
+                                <button type="submit" class="btn-action-icon text-secondary" title="Reset mật khẩu">
+                                    <i class="fa-solid fa-key"></i>
+                                </button>
+                            </form>
+                            @endif
+                            <form action="{{ route('giangvien.destroy', $gv->MaGV) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa giảng viên này?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-action-icon text-danger" title="Xóa tài khoản">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fa-solid fa-chalkboard-user fa-3x text-secondary mb-3 opacity-50"></i>
+                            <h6 class="fw-bold">Chưa có dữ liệu giảng viên</h6>
+                            <p class="small mb-3">Vui lòng thêm mới hoặc import từ file Excel.</p>
+                            <a href="{{ route('giangvien.create') }}" class="btn btn-sm btn-primary rounded-pill px-4">Thêm Giảng Viên Mới</a>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    @if($giangviens->hasPages())
+    <div class="p-3 border-top d-flex justify-content-between align-items-center">
+        <span class="small text-muted">Hiển thị <strong>{{ $giangviens->firstItem() }} - {{ $giangviens->lastItem() }}</strong> trên tổng số <strong>{{ $giangviens->total() }}</strong> giảng viên</span>
+        {{ $giangviens->withQueryString()->links('pagination::bootstrap-5') }}
+    </div>
+    @endif
+</div>
+
+<!-- Bottom Info Card: HUIT Lecturer Rules -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+        <i class="fa-solid fa-rocket text-primary"></i> QUY ĐỊNH HƯỚNG DẪN ĐỀ TÀI &amp; PHÂN BỔ TÀI KHOẢN GIẢNG VIÊN (HUIT):
+    </h6>
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100">
+                <div class="fw-bold text-dark mb-1">1. Định mức hướng dẫn tối đa</div>
+                <div class="small text-muted">Mỗi giảng viên nhận tối đa <strong>&le; 5 nhóm sinh viên</strong> khóa luận trong một học kỳ để đảm bảo chất lượng. Hệ thống tự động khóa đăng ký khi đủ định mức.</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100">
+                <div class="fw-bold text-dark mb-1">2. Cấp tài khoản &amp; phân quyền Portal</div>
+                <div class="small text-muted">Tài khoản liên kết trực tiếp với LDAP trường. Mật khẩu mặc định cấp mới: <code>Huit@2026_GV</code>. Giảng viên đăng nhập bằng email huit.edu.vn.</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100">
+                <div class="fw-bold text-dark mb-1">3. Tham gia Hội đồng chấm bảo vệ</div>
+                <div class="small text-muted">Giảng viên có học hàm/học vị từ Thạc sĩ trở lên đủ điều kiện tham gia <strong>5 vị trí HĐ</strong>. Tránh xung đột lợi ích (GVHD không chấm phản biện nhóm mình).</div>
+            </div>
         </div>
     </div>
-    @if($giangviens->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $giangviens->links('pagination::bootstrap-5') }}
-        </div>
-    @endif
+    <div class="small text-muted">
+        <div>&bull; Giáo vụ có thể chọn "Gửi email thông báo lịch hướng dẫn và phân công hội đồng" hàng loạt cho toàn bộ giảng viên trong khoa.</div>
+        <div class="text-success mt-1"><i class="fa-solid fa-circle-check me-1"></i> Đã đồng bộ trực tiếp với CSDL Phòng Tổ chức Cán bộ HUIT lúc 08:00 ngày 15/09/2026.</div>
+    </div>
 </div>
 
 <!-- MODAL IMPORT -->

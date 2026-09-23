@@ -32,10 +32,34 @@ class SinhVienController extends Controller
             $query->where('MaLop', $request->MaLop);
         }
 
-        $sinhviens = $query->orderBy('MaSV')->paginate(10);
+        if ($request->filled('dieu_kien')) {
+            if ($request->dieu_kien === 'du') {
+                $query->where('SoTinChiTichLuy', '>=', 115);
+            } elseif ($request->dieu_kien === 'chua') {
+                $query->where(function($q) {
+                    $q->where('SoTinChiTichLuy', '<', 115)
+                      ->orWhereNull('SoTinChiTichLuy');
+                });
+            }
+        }
+
+        $totalSV = SinhVien::count();
+        $duDkSV = SinhVien::where('SoTinChiTichLuy', '>=', 115)->count();
+        $thieuDkSV = SinhVien::where('SoTinChiTichLuy', '<', 115)->orWhereNull('SoTinChiTichLuy')->count();
+        $activeSV = SinhVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
+
+        $stats = [
+            'total' => $totalSV,
+            'du_dk' => $duDkSV,
+            'pct_du_dk' => $totalSV > 0 ? round(($duDkSV / $totalSV) * 100, 1) : 0,
+            'thieu_dk' => $thieuDkSV,
+            'active' => $activeSV,
+        ];
+
+        $sinhviens = $query->with('nhoms')->orderBy('MaSV')->paginate(10);
         $lops = Lop::with('nganh')->orderBy('TenLop')->get();
 
-        return view('admin.sinhvien.index', compact('sinhviens', 'lops'));
+        return view('admin.sinhvien.index', compact('sinhviens', 'lops', 'stats'));
     }
 
     public function create()
@@ -96,6 +120,39 @@ class SinhVienController extends Controller
         });
 
         return redirect()->route('sinhvien.index')->with('success', "Thêm sinh viên '{$request->HoTen}' (MSSV: {$mssv}) thành công! (Mật khẩu mặc định: 123456)");
+    }
+
+    public function show($id)
+    {
+        $sinhvien = SinhVien::with([
+            'lop.nganh.khoa',
+            'taiKhoan.vaiTro',
+            'nhoms' => function($q) {
+                $q->with([
+                    'sinhViens',
+                    'dangKyDeTai.deTai.giangVien',
+                    'baoCaos.mocThoiGian',
+                    'hoSoBaoVe.hoiDong',
+                ]);
+            },
+            'ketQuaSinhViens.hocKy',
+        ])->findOrFail($id);
+
+        $tinChi = $sinhvien->SoTinChiTichLuy ?? 0;
+        $isDuDieuKien = $tinChi >= 115;
+        $gpa = $sinhvien->DiemTichLuy ?? 0.0;
+        $nhomHienTai = $sinhvien->nhoms->first();
+        $ketQua = $sinhvien->ketQuaSinhViens->first();
+
+        $stats = [
+            'tin_chi'       => $tinChi,
+            'is_du_dk'      => $isDuDieuKien,
+            'gpa'           => $gpa,
+            'has_nhom'      => $nhomHienTai ? true : false,
+            'trang_thai_tk' => $sinhvien->taiKhoan ? $sinhvien->taiKhoan->TrangThai : false,
+        ];
+
+        return view('admin.sinhvien.show', compact('sinhvien', 'stats', 'nhomHienTai', 'ketQua'));
     }
 
     public function edit($id)

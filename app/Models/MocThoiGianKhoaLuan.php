@@ -30,6 +30,11 @@ class MocThoiGianKhoaLuan extends Model
         return $this->belongsTo(KeHoachKhoaLuan::class, 'MakeHoach', 'MakeHoach');
     }
 
+    public function keHoach()
+    {
+        return $this->keHoachKhoaLuan();
+    }
+
     public function baoCaoTienDos()
     {
         return $this->hasMany(BaoCaoTienDo::class, 'MaMoc', 'MaMoc');

@@ -12,10 +12,41 @@ class BoMonController extends Controller
 {
     use HandlesExcelImport;
 
-    public function index()
+    public function index(Request $request)
     {
-        $bomons = BoMon::with('khoa')->withCount('giangViens')->paginate(10);
-        return view('admin.bomon.index', compact('bomons'));
+        $query = BoMon::with('khoa')->withCount('giangViens');
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('MaBoMon', 'like', "%{$s}%")
+                  ->orWhere('TenBoMon', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('ma_khoa')) {
+            $query->where('MaKhoa', $request->ma_khoa);
+        }
+
+        $bomons = $query->paginate(10)->withQueryString();
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+
+        $totalBoMon = BoMon::count();
+        $cnttKhoa = Khoa::where('TenKhoa', 'like', '%Công nghệ thông tin%')->orWhere('MaKhoa', 'like', '%CNTT%')->first();
+        $bomonCntt = $cnttKhoa ? BoMon::where('MaKhoa', $cnttKhoa->MaKhoa)->count() : 0;
+        
+        $totalGvCntt = $cnttKhoa ? \App\Models\GiangVien::whereHas('boMon', function($q) use ($cnttKhoa) {
+            $q->where('MaKhoa', $cnttKhoa->MaKhoa);
+        })->count() : \App\Models\GiangVien::count();
+
+        $stats = [
+            'total_bomon' => $totalBoMon,
+            'bomon_cntt' => $bomonCntt,
+            'total_gv' => $totalGvCntt,
+            'status' => '100%',
+        ];
+
+        return view('admin.bomon.index', compact('bomons', 'khoas', 'stats'));
     }
 
     public function create()
@@ -47,6 +78,30 @@ class BoMonController extends Controller
         ]);
 
         return redirect()->route('bomon.index')->with('success', "Thêm bộ môn '{$request->TenBoMon}' thành công!");
+    }
+
+    public function show($id)
+    {
+        $bomon = BoMon::with([
+            'khoa',
+            'giangViens' => function($q) {
+                $q->withCount('deTais');
+            },
+        ])->withCount('giangViens')->findOrFail($id);
+
+        $totalDeTai = \App\Models\DeTai::whereHas('giangVien', function($q) use ($id) {
+            $q->where('MaBoMon', $id);
+        })->count();
+
+        $gvHuongDan = \App\Models\GiangVien::where('MaBoMon', $id)->has('deTais')->count();
+
+        $stats = [
+            'total_gv'     => $bomon->giang_viens_count,
+            'gv_huong_dan' => $gvHuongDan,
+            'total_detai'  => $totalDeTai,
+        ];
+
+        return view('admin.bomon.show', compact('bomon', 'stats'));
     }
 
     public function edit($id)

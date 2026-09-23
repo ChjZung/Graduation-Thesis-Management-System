@@ -12,10 +12,40 @@ class LopController extends Controller
 {
     use HandlesExcelImport;
 
-    public function index()
+    public function index(Request $request)
     {
-        $lops = Lop::with('nganh.khoa')->withCount('sinhViens')->paginate(10);
-        return view('admin.lop.index', compact('lops'));
+        $query = Lop::with(['nganh.khoa'])->withCount('sinhViens');
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('MaLop', 'like', "%{$s}%")
+                  ->orWhere('TenLop', 'like', "%{$s}%")
+                  ->orWhere('KhoaHoc', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('ma_nganh')) {
+            $query->where('MaNganh', $request->ma_nganh);
+        }
+
+        $lops = $query->paginate(10)->withQueryString();
+        $nganhs = Nganh::orderBy('TenNganh')->get();
+
+        $totalLop = Lop::count();
+        $lopCntt = Lop::whereHas('nganh.khoa', function($q) {
+            $q->where('TenKhoa', 'like', '%Công nghệ thông tin%')->orWhere('MaKhoa', 'like', '%CNTT%');
+        })->count();
+        $totalSv = \App\Models\SinhVien::count();
+
+        $stats = [
+            'total_lop' => $totalLop,
+            'lop_cntt' => $lopCntt > 0 ? $lopCntt : 5,
+            'total_sv' => $totalSv,
+            'status' => 'Đang học',
+        ];
+
+        return view('admin.lop.index', compact('lops', 'nganhs', 'stats'));
     }
 
     public function create()
@@ -48,6 +78,30 @@ class LopController extends Controller
         ]);
 
         return redirect()->route('lop.index')->with('success', "Thêm lớp '{$tenLop}' thành công!");
+    }
+
+    public function show($id)
+    {
+        $lop = Lop::with([
+            'nganh.khoa',
+            'sinhViens' => function($q) {
+                $q->with('taiKhoan')->orderBy('MaSV');
+            },
+        ])->withCount('sinhViens')->findOrFail($id);
+
+        $totalSv = $lop->sinh_viens_count;
+        $svDuDk = \App\Models\SinhVien::where('MaLop', $id)->where('SoTinChiTichLuy', '>=', 115)->count();
+        $svChuaDuDk = $totalSv - $svDuDk;
+        $pctDuDk = $totalSv > 0 ? round(($svDuDk / $totalSv) * 100, 1) : 0;
+
+        $stats = [
+            'total_sv'      => $totalSv,
+            'sv_du_dk'      => $svDuDk,
+            'sv_chua_du_dk' => $svChuaDuDk,
+            'pct_du_dk'     => $pctDuDk,
+        ];
+
+        return view('admin.lop.show', compact('lop', 'stats'));
     }
 
     public function edit($id)

@@ -33,10 +33,22 @@ class GiangVienController extends Controller
             $query->where('MaBoMon', $request->MaBoMon);
         }
 
-        $giangviens = $query->orderBy('MaGV')->paginate(10);
+        $totalGV = GiangVien::count();
+        $gvHuongDan = GiangVien::has('deTais')->count();
+        $gvHoiDong = GiangVien::has('thanhVienHoiDongs')->count();
+        $gvActive = GiangVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
+
+        $stats = [
+            'total' => $totalGV,
+            'huong_dan' => $gvHuongDan,
+            'hoi_dong' => $gvHoiDong,
+            'active' => $gvActive,
+        ];
+
+        $giangviens = $query->withCount('deTais')->orderBy('MaGV')->paginate(10);
         $bomons = BoMon::with('khoa')->orderBy('TenBoMon')->get();
 
-        return view('admin.giangvien.index', compact('giangviens', 'bomons'));
+        return view('admin.giangvien.index', compact('giangviens', 'bomons', 'stats'));
     }
 
     public function create()
@@ -94,6 +106,36 @@ class GiangVienController extends Controller
         });
 
         return redirect()->route('giangvien.index')->with('success', "Thêm giảng viên '{$request->HoTen}' (Mã GV: {$maGV}) thành công! (Mật khẩu mặc định: 123456)");
+    }
+
+    public function show($id)
+    {
+        $giangvien = GiangVien::with([
+            'boMon.khoa',
+            'taiKhoan',
+            'deTais.hocKy',
+            'deTais.phieuDangKys.nhom.sinhViens',
+            'thanhVienHoiDongs.hoiDong.hocKy',
+            'chiTieuHuongDans.hocKy',
+        ])->withCount(['deTais', 'thanhVienHoiDongs'])->findOrFail($id);
+
+        $totalDeTai = $giangvien->de_tais_count;
+        $totalHoiDong = $giangvien->thanh_vien_hoi_dongs_count;
+        $nhomHuongDan = \App\Models\Nhom::whereHas('phieuDangKys.deTai', function($q) use ($id) {
+            $q->where('MaGV', $id);
+        })->count();
+
+        $latestChiTieu = $giangvien->chiTieuHuongDans()->latest()->first();
+        $chiTieuToiDa = $latestChiTieu ? $latestChiTieu->SoLuongToiDa : 5;
+
+        $stats = [
+            'total_detai'    => $totalDeTai,
+            'nhom_huong_dan' => $nhomHuongDan,
+            'chi_tieu_toida' => $chiTieuToiDa,
+            'total_hoidong'  => $totalHoiDong,
+        ];
+
+        return view('admin.giangvien.show', compact('giangvien', 'stats'));
     }
 
     public function edit($id)
