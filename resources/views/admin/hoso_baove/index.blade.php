@@ -2,12 +2,7 @@
 @section('page_title', 'Quản Lý Hồ Sơ Bảo Vệ Khóa Luận')
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-circle-check me-2 fs-5"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
+
 
 @if(session('warning'))
 <div class="alert alert-warning alert-dismissible fade show mb-4 shadow-sm" role="alert">

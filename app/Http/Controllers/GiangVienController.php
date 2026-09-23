@@ -45,7 +45,7 @@ class GiangVienController extends Controller
             'active' => $gvActive,
         ];
 
-        $giangviens = $query->withCount('deTais')->orderBy('MaGV')->paginate(10);
+        $giangviens = $query->withCount('deTais')->orderBy('MaGV')->paginate(5);
         $bomons = BoMon::with('khoa')->orderBy('TenBoMon')->get();
 
         return view('admin.giangvien.index', compact('giangviens', 'bomons', 'stats'));

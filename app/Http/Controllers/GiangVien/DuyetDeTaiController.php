@@ -9,23 +9,31 @@ use Illuminate\Support\Facades\Auth;
 class DuyetDeTaiController extends Controller
 {
     public function index() {
-        $maTK = Auth::user()->MaTK;
+        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
+        $maGV = $gv ? $gv->MaGV : null;
+
         // Lấy các đăng ký thuộc về đề tài của Giảng viên này
-        $dangkys = DangKyDeTai::whereHas('deTai', function($query) use ($maTK) {
-            $query->where('MaTK', $maTK);
+        $dangkys = DangKyDeTai::whereHas('deTai', function($query) use ($maGV) {
+            $query->where('MaGV', $maGV);
         })->with(['nhomDoAn', 'deTai'])->paginate(10);
         return view('giangvien.duyet.index', compact('dangkys'));
     }
     
     public function update(Request $request, $id) {
         $dangky = DangKyDeTai::findOrFail($id);
+        $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
+        $maGV = $gv ? $gv->MaGV : null;
+
         // Xác minh quyền
-        if ($dangky->deTai->MaTK != Auth::user()->MaTK) {
+        if ($dangky->deTai && $dangky->deTai->MaGV != $maGV) {
             abort(403);
         }
         
         $trangThai = $request->input('TrangThai');
-        $lyDoTuChoi = $request->input('LyDoTuChoi');
+        if (empty($trangThai) && $request->has('HanhDong')) {
+            $trangThai = ($request->input('HanhDong') === 'DUYET') ? 'Đã duyệt' : 'Từ chối';
+        }
+        $lyDoTuChoi = $request->input('LyDoTuChoi') ?? $request->input('LyDo');
 
         if (in_array($trangThai, ['Đã duyệt', 'Từ chối'])) {
             $dangky->update([

@@ -1,24 +1,7 @@
 @extends('layouts.admin')
 @section('page_title', 'Danh Sách Môn Học')
 @section('content')
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('import_result'))
-<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-circle-info me-2"></i>{!! session('import_result') !!}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-    <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+
 
 <div class="card card-premium">
     <div class="card-header-premium d-flex justify-content-between align-items-center">

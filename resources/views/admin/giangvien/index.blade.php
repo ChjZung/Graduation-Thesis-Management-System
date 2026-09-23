@@ -18,12 +18,7 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-        <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
+
 
 @if(session('import_result'))
     <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
@@ -34,50 +29,62 @@
 
 <!-- 4 KPI Cards -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="admin-kpi-card border-accent-blue d-flex justify-content-between align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
             <div>
-                <div class="kpi-label">Tổng Giảng Viên Khoa CNTT</div>
-                <div class="kpi-value text-primary">{{ $stats['total'] ?? $giangviens->total() }} <span class="fs-6 text-muted font-normal">giảng viên</span></div>
+                <div class="text-muted small fw-medium mb-1">Tổng Giảng Viên Khoa CNTT</div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fs-3 fw-bold text-dark">{{ $stats['total'] ?? $giangviens->total() }}</span>
+                    <span class="small text-muted fw-medium">giảng viên</span>
+                </div>
             </div>
-            <div class="kpi-icon" style="background: rgba(0, 114, 206, 0.1); color: #0072ce;">
-                <i class="fa-solid fa-graduation-cap"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
+                <i class="fa-solid fa-chalkboard-user fs-5"></i>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="admin-kpi-card border-accent-green d-flex justify-content-between align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
             <div>
-                <div class="kpi-label">Nhận Hướng Dẫn Khóa Luận</div>
-                <div class="kpi-value text-success">{{ $stats['huong_dan'] ?? 0 }} <span class="fs-6 text-muted font-normal">giảng viên</span></div>
+                <div class="text-muted small fw-medium mb-1">Nhận Hướng Dẫn Khóa Luận</div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fs-3 fw-bold text-success">{{ $stats['huong_dan'] ?? 0 }}</span>
+                    <span class="small text-muted fw-medium">giảng viên</span>
+                </div>
             </div>
-            <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
-                <i class="fa-solid fa-circle-check"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
+                <i class="fa-solid fa-person-chalkboard fs-5"></i>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="admin-kpi-card border-accent-orange d-flex justify-content-between align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
             <div>
-                <div class="kpi-label">Thành Viên Hội Đồng</div>
-                <div class="kpi-value text-warning">{{ $stats['hoi_dong'] ?? 0 }} <span class="fs-6 text-muted font-normal">cán bộ chấm</span></div>
+                <div class="text-muted small fw-medium mb-1">Thành Viên Hội Đồng</div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fs-3 fw-bold text-warning">{{ $stats['hoi_dong'] ?? 0 }}</span>
+                    <span class="small text-muted fw-medium">cán bộ chấm</span>
+                </div>
             </div>
-            <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-                <i class="fa-solid fa-landmark"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
+                <i class="fa-solid fa-award fs-5"></i>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="admin-kpi-card border-accent-purple d-flex justify-content-between align-items-center">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
             <div>
-                <div class="kpi-label">Tài Khoản Portal Active</div>
-                <div class="kpi-value text-purple" style="color: #6366f1;">{{ $stats['active'] ?? 0 }} <span class="fs-6 text-muted font-normal">/ {{ $stats['total'] ?? $giangviens->total() }} Active</span></div>
+                <div class="text-muted small fw-medium mb-1">Tài Khoản Portal Active</div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fs-3 fw-bold text-info">{{ $stats['active'] ?? 0 }}</span>
+                    <span class="small text-muted fw-medium">/ {{ $stats['total'] ?? $giangviens->total() }} tài khoản</span>
+                </div>
             </div>
-            <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
-                <i class="fa-solid fa-key"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
+                <i class="fa-solid fa-user-shield fs-5"></i>
             </div>
         </div>
     </div>
@@ -85,15 +92,13 @@
 
 <!-- Filter Bar -->
 <div class="admin-filter-bar mb-4">
-    <form method="GET" action="{{ route('giangvien.index') }}" class="row g-2 align-items-center w-100">
-        <div class="col-md-5">
-            <div class="input-group input-group-sm">
+    <form method="GET" action="{{ route('giangvien.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
+        <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
+            <div class="input-group" style="min-width: 260px; flex: 1;">
                 <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                 <input type="text" name="search" class="form-control border-start-0" placeholder="Tìm theo tên GV, học hàm, email, mã GV..." value="{{ request('search') }}">
             </div>
-        </div>
-        <div class="col-md-3">
-            <select name="MaBoMon" class="form-select form-select-sm" onchange="this.form.submit()">
+            <select name="MaBoMon" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
                 <option value="">-- Tất cả Bộ môn --</option>
                 @foreach($bomons as $bm)
                     <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
@@ -102,16 +107,16 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-4 d-flex justify-content-end gap-2">
-            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs" title="Tải file mẫu Excel">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
+            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary shadow-xs" title="Tải file mẫu Excel">
                 <i class="fa-solid fa-download me-1"></i> File Mẫu
             </a>
-            <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3 shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
+            <button type="button" class="btn btn-info text-white shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fa-solid fa-file-import me-1"></i> Import Excel
             </button>
-            <a href="{{ route('giangvien.create') }}" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-semibold">
+            <button type="button" class="btn btn-success shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="fa-solid fa-plus me-1"></i> Thêm Giảng Viên
-            </a>
+            </button>
         </div>
     </form>
 </div>
@@ -129,17 +134,17 @@
 
     <div class="table-responsive">
         <table class="table admin-table align-middle mb-0">
-            <thead>
+            <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
                 <tr>
-                    <th width="12%">MÃ GV / TÀI KHOẢN</th>
-                    <th width="24%">HỌ TÊN, HỌC HÀM / VỊ &amp; EMAIL</th>
-                    <th width="22%">BỘ MÔN CHUYÊN MÔN</th>
-                    <th width="18%">ĐỊNH MỨC HƯỚNG DẪN ĐỀ TÀI</th>
-                    <th width="12%">TRẠNG THÁI TK</th>
-                    <th width="12%" class="text-center">THAO TÁC</th>
+                    <th class="ps-4 py-3" width="14%">MÃ GV</th>
+                    <th class="py-3" width="30%">HỌ TÊN, HỌC HÀM / VỊ &amp; EMAIL</th>
+                    <th class="py-3" width="24%">BỘ MÔN CHUYÊN MÔN</th>
+                    <th class="py-3 text-center" width="14%">ĐỊNH MỨC HƯỚNG DẪN</th>
+                    <th class="py-3 text-center" width="10%">TRẠNG THÁI</th>
+                    <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="border-top-0">
                 @forelse($giangviens as $gv)
                 @php
                     $tk = $gv->taiKhoan;
@@ -152,11 +157,11 @@
                     };
                 @endphp
                 <tr>
-                    <td>
+                    <td class="ps-4 py-3">
                         <span class="badge-code">{{ $gv->MaGV }}</span>
                     </td>
-                    <td>
-                        <div class="fw-bold text-dark">
+                    <td class="py-3">
+                        <div class="fw-bold text-dark fs-6">
                             {{ $gv->HocVi ? $gv->HocVi . '. ' : '' }}{{ $gv->HoTen }}
                         </div>
                         <div class="text-muted small">
@@ -166,23 +171,23 @@
                             @endif
                         </div>
                     </td>
-                    <td>
-                        <div class="fw-semibold text-secondary">{{ $gv->boMon->TenBoMon ?? 'Chưa gán bộ môn' }}</div>
+                    <td class="py-3">
+                        <div class="fw-semibold text-dark">{{ $gv->boMon->TenBoMon ?? 'Chưa gán bộ môn' }}</div>
                         <div class="text-muted small">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
                     </td>
-                    <td>
-                        <span class="badge px-3 py-2 fw-semibold rounded-pill" style="{{ $dinhMucBadge }}">
+                    <td class="text-center py-3">
+                        <span class="badge px-3 py-1.5 fw-semibold rounded-pill" style="{{ $dinhMucBadge }}">
                             <i class="fa-solid fa-check me-1"></i> Đang nhận: {{ $cnt }}/5 nhóm
                         </span>
                     </td>
-                    <td>
+                    <td class="text-center py-3">
                         @if($isActive)
-                            <span class="text-success fw-semibold small d-inline-flex align-items-center gap-1">
-                                <span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;"></span> Hoạt động
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                                <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
                             </span>
                         @else
-                            <span class="text-danger fw-semibold small d-inline-flex align-items-center gap-1">
-                                <i class="fa-solid fa-circle" style="font-size: 8px;"></i> Đã khóa
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                                <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #dc2626;"></i> Đã khóa
                             </span>
                         @endif
                     </td>
@@ -292,6 +297,78 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Thêm Mới Giảng Viên (Standardized HUIT Modal) -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-huit">
+        <div class="modal-content modal-content-huit">
+            <div class="modal-header-huit">
+                <div class="modal-title-huit">
+                    + Thêm Mới Giảng Viên Hướng Dẫn & Phản Biện
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('giangvien.store') }}">
+                @csrf
+                <div class="modal-body modal-create-body p-4 p-md-5">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label-huit">Mã Giảng Viên (MaGV) <span class="text-danger">*</span></label>
+                            <input type="text" name="TenDangNhap" class="form-control form-control-huit" placeholder="GV001" required>
+                            <div class="form-text small text-muted">MaGV dùng làm tài khoản đăng nhập. Mật khẩu mặc định: <code>123456</code></div>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label-huit">Họ Và Tên Giảng Viên <span class="text-danger">*</span></label>
+                            <input type="text" name="HoTen" class="form-control form-control-huit" placeholder="TS. Nguyễn Văn A" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label-huit">Học Vị <span class="text-danger">*</span></label>
+                            <select name="HocVi" class="form-select form-select-huit" required>
+                                <option value="Thạc sĩ">Thạc sĩ</option>
+                                <option value="Tiến sĩ" selected>Tiến sĩ</option>
+                                <option value="Phó Giáo sư">Phó Giáo sư</option>
+                                <option value="Giáo sư">Giáo sư</option>
+                                <option value="Kỹ sư">Kỹ sư</option>
+                                <option value="Cử nhân">Cử nhân</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-huit">Bộ Môn Trực Thuộc <span class="text-danger">*</span></label>
+                            <select name="MaBoMon" class="form-select form-select-huit" required>
+                                <option value="">-- Chọn Bộ môn --</option>
+                                @foreach($bomons as $bm)
+                                    <option value="{{ $bm->MaBoMon }}" {{ $loop->first ? 'selected' : '' }}>
+                                        {{ $bm->TenBoMon }} ({{ $bm->khoa->TenKhoa ?? 'Khoa CNTT' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label-huit">Email Liên Lạc <span class="text-danger">*</span></label>
+                            <input type="email" name="Email" class="form-control form-control-huit" placeholder="email@huit.edu.vn" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-huit">Số Điện Thoại</label>
+                            <input type="text" name="SoDienThoai" class="form-control form-control-huit" placeholder="0912345678">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer-huit">
+                    <button type="submit" class="btn btn-save-huit">
+                        <i class="fa-solid fa-check me-1"></i> Lưu & Thêm Giảng Viên
+                    </button>
+                    <button type="button" class="btn btn-cancel-huit" data-bs-dismiss="modal">Hủy Bỏ</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

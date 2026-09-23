@@ -152,4 +152,9 @@ class DangKyDeTaiController extends Controller
 
         return redirect()->back()->with('success', 'Đã hủy đơn đăng ký đề tài thành công.');
     }
+
+    public function deXuatRieng(Request $request)
+    {
+        return redirect()->back()->withErrors('Quy định hiện tại: Sinh viên chỉ được đăng ký các đề tài đã công bố của Giảng viên / Khoa, không được phép tự đề xuất đề tài riêng.');
+    }
 }

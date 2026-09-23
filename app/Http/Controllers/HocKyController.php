@@ -28,7 +28,7 @@ class HocKyController extends Controller
             $query->where('TrangThai', $request->trang_thai);
         }
 
-        $hockys = $query->paginate(10)->withQueryString();
+        $hockys = $query->paginate(5)->withQueryString();
 
         $totalHocky = HocKy::count();
         $activeHk = HocKy::where('TrangThai', 1)->latest('created_at')->first();
@@ -52,9 +52,22 @@ class HocKyController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->filled('NamHoc')) {
+            if ($request->filled('TenHocKy') && preg_match('/\b(20\d{2}[–\-]\d{2,4})\b/u', $request->TenHocKy, $m)) {
+                $request->merge(['NamHoc' => str_replace('–', '-', $m[1])]);
+            } elseif ($request->filled('NgayBatDau')) {
+                $startYear = (int)date('Y', strtotime($request->NgayBatDau));
+                $startMonth = (int)date('m', strtotime($request->NgayBatDau));
+                $y1 = $startMonth >= 8 ? $startYear : ($startYear - 1);
+                $request->merge(['NamHoc' => $y1 . '-' . ($y1 + 1)]);
+            } else {
+                $request->merge(['NamHoc' => '2026-2027']);
+            }
+        }
+
         $request->validate([
             'MaHocKy' => 'nullable|string|max:10|unique:HocKy,MaHocKy',
-            'TenHocKy' => 'required|string|max:50',
+            'TenHocKy' => 'required|string|max:100',
             'NamHoc' => 'required|string|max:20',
             'NgayBatDau' => 'required|date',
             'NgayKetThuc' => 'required|date|after_or_equal:NgayBatDau'

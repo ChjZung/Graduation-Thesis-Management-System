@@ -19,10 +19,10 @@ class PhanCongController extends Controller
         $lophocphans = LopHocPhan::with(['giangVien.boMon', 'monHoc', 'hocKy', 'sinhVienLopHocPhans'])->orderBy('MaLopHP', 'desc')->paginate(10, ['*'], 'page_hp');
         
         $giangviens = GiangVien::with('boMon')->get();
-        $Lop = Lop::all();
+        $lops = Lop::all();
         $hockys = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        return view('admin.phancong.index', compact('phancongs', 'lophocphans', 'giangviens', 'Lop', 'hockys'));
+        return view('admin.phancong.index', compact('phancongs', 'lophocphans', 'giangviens', 'lops', 'hockys') + ['Lop' => $lops]);
     }
 
     public function store(Request $request) {

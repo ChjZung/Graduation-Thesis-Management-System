@@ -19,12 +19,7 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+
 
 @if(session('import_result'))
 <div class="alert alert-info alert-dismissible fade show" role="alert">

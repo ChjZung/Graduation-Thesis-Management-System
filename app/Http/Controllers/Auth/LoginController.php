@@ -160,6 +160,19 @@ class LoginController extends Controller implements HasMiddleware
             return redirect()->route('password.change')
                 ->with('warning', 'Mật khẩu của bạn đã hết hạn, vui lòng đổi mật khẩu mới để tiếp tục.');
         }
+
+        $user->loadMissing('vaiTro');
+        $role = $user->vaiTro->TenVaiTro ?? '';
+
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($role === 'Giảng viên') {
+            return redirect()->route('giangvien.dashboard');
+        } elseif ($role === 'Sinh viên') {
+            return redirect()->route('sinhvien.dashboard');
+        }
+
+        return redirect()->route('admin.dashboard');
     }
 
 

@@ -64,9 +64,40 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::findOrFail($id);
         $detai->update([
             'TrangThai' => 'Từ chối',
-            'LyDoTuChoi' => $request->LyDoTuChoi,
+            'LyDoTuChoi' => trim($request->LyDoTuChoi),
         ]);
 
         return redirect()->back()->with('success', "Đã từ chối đề tài '{$detai->TenDeTai}'.");
+    }
+
+    public function requestEdit(Request $request, $id)
+    {
+        $request->validate([
+            'YeuCauSua' => 'required|string|max:500',
+        ], [
+            'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu điều chỉnh, bổ sung.',
+        ]);
+
+        $detai = DeTai::findOrFail($id);
+        $detai->update([
+            'TrangThai' => 'Yêu cầu điều chỉnh',
+            'LyDoTuChoi' => trim($request->YeuCauSua),
+        ]);
+
+        return redirect()->back()->with('success', "Đã gửi yêu cầu điều chỉnh đề tài '{$detai->TenDeTai}' tới Giảng viên!");
+    }
+
+    public function publish(Request $request)
+    {
+        $maHocKy = $request->input('MaHocKy');
+        $query = DeTai::where('TrangThai', 'Đã duyệt');
+
+        if ($maHocKy) {
+            $query->where('MaHocKy', $maHocKy);
+        }
+
+        $count = $query->count();
+
+        return redirect()->back()->with('success', "Đã công bố chính thức {$count} đề tài đã được phê duyệt cho sinh viên đăng ký trong học kỳ!");
     }
 }

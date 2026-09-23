@@ -2,19 +2,7 @@
 @section('page_title', 'Chi Tiết Hội Đồng — ' . $hoiDong->TenHoiDong)
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-circle-check me-2 fs-5"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-triangle-exclamation me-2 fs-5"></i>{{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
 <div class="row g-4">
     <!-- Cột trái: Thông tin Hội đồng & Thành viên -->

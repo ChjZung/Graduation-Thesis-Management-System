@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('page_title', 'Admin') – Hệ Thống QLĐA | HUIT</title>
-    <meta name="description" content="Hệ thống quản lý đồ án  – Trường Đại Học Công Thương TP.HCM">
+    <title>@yield('page_title', 'Admin') – Quản Lý Khóa Luận Tốt Nghiệp | HUIT</title>
+    <meta name="description" content="Hệ thống quản lý công tác khóa luận tốt nghiệp – Trường Đại Học Công Thương TP.HCM">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -25,7 +25,7 @@
                 <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
                 <div>
                     <div class="sidebar-title">ĐH Công Thương<br>TP. Hồ Chí Minh</div>
-                    <span class="sidebar-subtitle">HUIT – Hệ Thống QLĐA</span>
+                    <span class="sidebar-subtitle">HUIT – Quản Lý Khóa Luận</span>
                 </div>
             </div>
         </div>
@@ -107,9 +107,14 @@
                     <i class="fa-solid fa-users-gear"></i> Tài khoản hệ thống
                 </a>
             </li>
-            <li class="{{ request()->routeIs('sinhvien.*') ? 'active' : '' }}">
+            <li class="{{ request()->routeIs('sinhvien.index') || request()->routeIs('sinhvien.create') || request()->routeIs('sinhvien.edit') || request()->routeIs('sinhvien.show') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.index') }}">
-                    <i class="fa-solid fa-user-graduate"></i> Sinh viên
+                    <i class="fa-solid fa-user-graduate"></i> Quản lý Sinh viên
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.sinhvien.dieu_kien') ? 'active' : '' }}">
+                <a href="{{ route('admin.sinhvien.dieu_kien') }}">
+                    <i class="fa-solid fa-user-check"></i> SV Đủ điều kiện KL
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.*') ? 'active' : '' }}">

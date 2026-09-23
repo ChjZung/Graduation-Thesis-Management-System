@@ -216,8 +216,12 @@ class DeTaiController extends Controller
         }
 
         $Nhom = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
-            ->whereHas('dangKyDeTai', function($q) use ($gv) {
-                $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+            ->where(function($query) use ($gv) {
+                $query->whereHas('dangKyDeTai', function($q) use ($gv) {
+                    $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+                })->orWhereHas('deTai', function($q) use ($gv) {
+                    $q->where('MaGV', $gv->MaGV);
+                });
             })->get();
 
         $stats = [
