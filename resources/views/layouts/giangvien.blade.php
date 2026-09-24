@@ -135,17 +135,6 @@
                         </div>
                     </div>
 
-                    <!-- User Dropdown -->
-
-                    <!-- Notification bell -->
-                    @if($unreadGvNoti > 0)
-                    <a href="{{ route('giangvien.thongbao.index') }}" class="position-relative text-decoration-none"
-                       style="color: var(--eight-blue);" title="{{ $unreadGvNoti }} thông báo chưa đọc">
-                        <i class="fa-solid fa-bell" style="font-size: 1.1rem; color: var(--huit-blue);"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                              style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadGvNoti }}</span>
-                    </a>
-                    @endif
 
                     <!-- User Dropdown -->
                     <div class="dropdown">
