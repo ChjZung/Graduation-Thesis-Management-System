@@ -225,6 +225,15 @@
                 </div>
             @endif
 
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
+                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    {{ session('warning') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             @yield('content')
         </div>
 

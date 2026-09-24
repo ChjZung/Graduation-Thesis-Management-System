@@ -136,28 +136,28 @@ body {
 
 /* Section labels */
 #sidebar .nav-section-label {
-    padding: 16px 18px 6px;
+    padding: 13px 16px 4px;
     font-size: 0.65rem;
     font-weight: 700;
     color: rgba(255,255,255,0.45);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
 }
 
 /* Nav links */
 #sidebar ul li a {
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding: 11px 18px;
-    font-size: 0.88rem;
+    gap: 10px;
+    padding: 8.5px 14px;
+    font-size: 0.84rem;
     font-weight: 500;
     color: rgba(255,255,255,0.78);
     text-decoration: none;
     transition: var(--transition);
     border-left: 3px solid transparent;
     margin: 1px 8px;
-    border-radius: 9px;
+    border-radius: 8px;
 }
 
 #sidebar ul li a i {

@@ -125,6 +125,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/theo-doi-do-an/{id}/remind', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'remindGroup'])->name('admin.theodoi.remind');
 
     // Phê duyệt Đề tài do GV đề xuất
+    Route::get('/duyet-detai/export', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'export'])->name('admin.duyet_detai.export');
     Route::get('/duyet-detai', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'index'])->name('admin.duyet_detai.index');
     Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'approve'])->name('admin.duyet_detai.approve');
     Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'reject'])->name('admin.duyet_detai.reject');
@@ -183,6 +184,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/cong-viec-huong-dan', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'myTasks'])->name('giangvien.my_tasks');
 
     // Đề tài
+    Route::get('detai/bieu-mau-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'downloadTemplate'])->name('giangvien.detai.download_template');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 

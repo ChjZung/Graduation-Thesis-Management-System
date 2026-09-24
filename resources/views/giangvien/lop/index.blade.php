@@ -9,12 +9,7 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
-        <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
+
 
 <div class="row">
     <div class="col-12 mb-4">

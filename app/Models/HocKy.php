@@ -19,6 +19,7 @@ class HocKy extends Model
         'TenHocKy',
         'NamHoc',
         'NgayDiHoc',
+        'NgayBatDau',
         'NgayKetThuc',
         'TrangThai',
     ];

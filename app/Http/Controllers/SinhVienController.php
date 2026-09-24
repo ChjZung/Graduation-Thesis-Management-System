@@ -9,6 +9,7 @@ use App\Models\TaiKhoan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class SinhVienController extends Controller
 {
@@ -16,50 +17,110 @@ class SinhVienController extends Controller
 
     public function index(Request $request)
     {
-        $query = SinhVien::with(['lop.nganh.khoa', 'taiKhoan']);
+        $activeTab = $request->get('tab', 'danh_muc');
+        $lops = Lop::with('nganh.khoa')->orderBy('TenLop')->get();
+        $hocKys = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $selectedHocKy = $request->get('MaHocKy', $hocKys->first()->MaHocKy ?? '');
+
+        // ══════════════════════════════════════════════════════════════
+        // 1. DATA CHO TAB 1: QUẢN LÝ DANH MỤC SINH VIÊN
+        // ══════════════════════════════════════════════════════════════
+        $querySv = SinhVien::with(['lop.nganh.khoa', 'taiKhoan', 'nhoms']);
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
+            $querySv->where(function ($q) use ($s) {
                 $q->where('HoTen', 'LIKE', "%{$s}%")
                   ->orWhere('Email', 'LIKE', "%{$s}%")
                   ->orWhere('MaSV', 'LIKE', "%{$s}%")
+                  ->orWhere('SoDienThoai', 'LIKE', "%{$s}%")
                   ->orWhereHas('taiKhoan', fn($t) => $t->where('TenDangNhap', 'LIKE', "%{$s}%"));
             });
         }
 
         if ($request->filled('MaLop')) {
-            $query->where('MaLop', $request->MaLop);
+            $querySv->where('MaLop', $request->MaLop);
+        }
+
+        if ($request->filled('trang_thai_hoc_tap')) {
+            $querySv->where('TrangThai', $request->trang_thai_hoc_tap);
         }
 
         if ($request->filled('dieu_kien')) {
             if ($request->dieu_kien === 'du') {
-                $query->where('SoTinChiTichLuy', '>=', 115);
+                $querySv->where('SoTinChiTichLuy', '>=', 115)->where('DiemTichLuy', '>=', 2.0);
             } elseif ($request->dieu_kien === 'chua') {
-                $query->where(function($q) {
+                $querySv->where(function($q) {
                     $q->where('SoTinChiTichLuy', '<', 115)
-                      ->orWhereNull('SoTinChiTichLuy');
+                      ->orWhereNull('SoTinChiTichLuy')
+                      ->orWhere('DiemTichLuy', '<', 2.0)
+                      ->orWhereNull('DiemTichLuy');
                 });
             }
         }
 
         $totalSV = SinhVien::count();
-        $duDkSV = SinhVien::where('SoTinChiTichLuy', '>=', 115)->count();
-        $thieuDkSV = SinhVien::where('SoTinChiTichLuy', '<', 115)->orWhereNull('SoTinChiTichLuy')->count();
+        $duDkSV = SinhVien::where('SoTinChiTichLuy', '>=', 115)->where('DiemTichLuy', '>=', 2.0)->count();
+        $thieuDkSV = $totalSV - $duDkSV;
         $activeSV = SinhVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
 
-        $stats = [
-            'total' => $totalSV,
-            'du_dk' => $duDkSV,
+        $statsSv = [
+            'total'     => $totalSV,
+            'du_dk'     => $duDkSV,
             'pct_du_dk' => $totalSV > 0 ? round(($duDkSV / $totalSV) * 100, 1) : 0,
-            'thieu_dk' => $thieuDkSV,
-            'active' => $activeSV,
+            'thieu_dk'  => $thieuDkSV,
+            'active'    => $activeSV,
         ];
 
-        $sinhviens = $query->with('nhoms')->orderBy('MaSV')->paginate(5);
-        $lops = Lop::with('nganh')->orderBy('TenLop')->get();
+        $sinhviens = $querySv->orderBy('MaSV')->paginate(15, ['*'], 'page_sv')->withQueryString();
 
-        return view('admin.sinhvien.index', compact('sinhviens', 'lops', 'stats'));
+        // ══════════════════════════════════════════════════════════════
+        // 2. DATA CHO TAB 2: DANH SÁCH SV ĐỦ ĐIỀU KIỆN (THEO HỌC KỲ)
+        // ══════════════════════════════════════════════════════════════
+        $queryDk = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh.khoa', 'sinhVien.nhoms', 'hocKy'])
+            ->where('MaHocKy', $selectedHocKy);
+
+        if ($request->filled('search_dk')) {
+            $s = trim($request->search_dk);
+            $queryDk->whereHas('sinhVien', function ($q) use ($s) {
+                $q->where('HoTen', 'LIKE', "%{$s}%")
+                  ->orWhere('MaSV', 'LIKE', "%{$s}%")
+                  ->orWhere('Email', 'LIKE', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('MaLop_dk')) {
+            $queryDk->whereHas('sinhVien', fn($q) => $q->where('MaLop', $request->MaLop_dk));
+        }
+
+        if ($request->filled('trang_thai_dk')) {
+            $queryDk->where('TrangThai', $request->trang_thai_dk);
+        }
+
+        $dsDuDieuKien = $queryDk->paginate(15, ['*'], 'page_dk')->withQueryString();
+
+        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->count();
+        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Đủ điều kiện')->count();
+        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->count();
+        $publishedCount = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('GhiChu', 'LIKE', '%Công bố%')->count();
+
+        $statsDk = [
+            'total_evaluated' => $totalEvaluated,
+            'total_eligible'  => $totalEligible,
+            'total_ineligible'=> $totalIneligible,
+            'is_published'    => $publishedCount > 0,
+        ];
+
+        return view('admin.sinhvien.index', compact(
+            'activeTab',
+            'sinhviens',
+            'lops',
+            'statsSv',
+            'hocKys',
+            'selectedHocKy',
+            'dsDuDieuKien',
+            'statsDk'
+        ));
     }
 
     public function create()
@@ -75,7 +136,10 @@ class SinhVienController extends Controller
             'HoTen' => 'required|string|max:100',
             'MaLop' => 'required|exists:Lop,MaLop',
             'Email' => 'required|email|max:100|unique:SinhVien,Email',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai']
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai'],
+            'SoTinChiTichLuy' => 'nullable|integer|min:0',
+            'DiemTichLuy' => 'nullable|numeric|min:0|max:4',
+            'TrangThai' => 'nullable|string',
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập MSSV.',
             'TenDangNhap.unique'   => 'MSSV / Tên đăng nhập đã tồn tại trong hệ thống.',
@@ -103,6 +167,10 @@ class SinhVienController extends Controller
                 'SoLanDangNhapSai'  => 0,
             ]);
 
+            $soTinChi = $request->filled('SoTinChiTichLuy') ? (int)$request->SoTinChiTichLuy : 0;
+            $diemTichLuy = $request->filled('DiemTichLuy') ? (float)$request->DiemTichLuy : 0.00;
+            $trangThai = $request->filled('TrangThai') ? $request->TrangThai : 'Đang học';
+
             SinhVien::create([
                 'MaSV'            => $mssv,
                 'MaTK'            => $tk->MaTK,
@@ -113,9 +181,9 @@ class SinhVienController extends Controller
                 'Email'           => trim($request->Email),
                 'SoDienThoai'     => $request->SoDienThoai ? trim($request->SoDienThoai) : null,
                 'KhoaHoc'         => $lop->KhoaHoc,
-                'SoTinChiTichLuy' => 0,
-                'DiemTichLuy'     => 0.00,
-                'TrangThai'       => 'Đang học',
+                'SoTinChiTichLuy' => $soTinChi,
+                'DiemTichLuy'     => $diemTichLuy,
+                'TrangThai'       => $trangThai,
             ]);
         });
 
@@ -228,46 +296,7 @@ class SinhVienController extends Controller
 
     public function dieuKienIndex(Request $request)
     {
-        $hocKys = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
-        $selectedHocKy = $request->get('MaHocKy', $hocKys->first()->MaHocKy ?? '');
-
-        $query = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh.khoa', 'hocKy'])
-            ->where('MaHocKy', $selectedHocKy);
-
-        if ($request->filled('search')) {
-            $s = trim($request->search);
-            $query->whereHas('sinhVien', function ($q) use ($s) {
-                $q->where('HoTen', 'LIKE', "%{$s}%")
-                  ->orWhere('MaSV', 'LIKE', "%{$s}%")
-                  ->orWhere('Email', 'LIKE', "%{$s}%");
-            });
-        }
-
-        if ($request->filled('MaLop')) {
-            $query->whereHas('sinhVien', fn($q) => $q->where('MaLop', $request->MaLop));
-        }
-
-        if ($request->filled('trang_thai')) {
-            $query->where('TrangThai', $request->trang_thai);
-        }
-
-        $dsDuDieuKien = $query->paginate(15)->withQueryString();
-
-        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->count();
-        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Đủ điều kiện')->count();
-        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->count();
-        $publishedCount = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('GhiChu', 'LIKE', '%Công bố%')->count();
-
-        $stats = [
-            'total_evaluated' => $totalEvaluated,
-            'total_eligible'  => $totalEligible,
-            'total_ineligible'=> $totalIneligible,
-            'is_published'    => $publishedCount > 0,
-        ];
-
-        $lops = Lop::with('nganh')->orderBy('TenLop')->get();
-
-        return view('admin.sinhvien.du_dieu_kien', compact('dsDuDieuKien', 'hocKys', 'selectedHocKy', 'lops', 'stats'));
+        return redirect()->route('sinhvien.index', array_merge($request->except('tab'), ['tab' => 'du_dieu_kien']));
     }
 
     public function dieuKienRaSoat(Request $request)
@@ -279,17 +308,41 @@ class SinhVienController extends Controller
         ]);
 
         $maHocKy = $request->MaHocKy;
-        $minTinChi = $request->get('MinTinChi', 115);
-        $minGpa = $request->get('MinGPA', 2.0);
+        $minTinChi = (int)$request->get('MinTinChi', 115);
+        $minGpa = (float)$request->get('MinGPA', 2.0);
 
-        $sinhViens = SinhVien::where('TrangThai', 'Đang học')->get();
+        // Lấy tất cả sinh viên chưa tốt nghiệp để xét duyệt
+        $sinhViens = SinhVien::where('TrangThai', '!=', 'Đã tốt nghiệp')->get();
         $countEligible = 0;
         $countIneligible = 0;
 
         foreach ($sinhViens as $sv) {
-            $isEligible = ($sv->SoTinChiTichLuy >= $minTinChi) && ($sv->DiemTichLuy >= $minGpa);
+            $lyDoKhongDat = [];
+
+            // 1. Kiểm tra số tín chỉ tích lũy (>= X)
+            $tc = (int)($sv->SoTinChiTichLuy ?? 0);
+            if ($tc < $minTinChi) {
+                $lyDoKhongDat[] = "Thiếu " . ($minTinChi - $tc) . " TC ({$tc}/{$minTinChi})";
+            }
+
+            // 2. Kiểm tra điểm trung bình tích lũy GPA (>= Y)
+            $gpa = (float)($sv->DiemTichLuy ?? 0.0);
+            if ($gpa < $minGpa) {
+                $lyDoKhongDat[] = "ĐTB chưa đạt (" . number_format($gpa, 2) . "/{$minGpa})";
+            }
+
+            // 3. Kiểm tra không bị hạn chế học tập
+            if (!in_array($sv->TrangThai, ['Đang học', 'Đủ điều kiện'])) {
+                $lyDoKhongDat[] = "Bị hạn chế học tập (Trạng thái: {$sv->TrangThai})";
+            }
+
+            $isEligible = count($lyDoKhongDat) === 0;
             $trangThai = $isEligible ? 'Đủ điều kiện' : 'Chưa đủ điều kiện';
-            $dieuKienText = "Tín chỉ: {$sv->SoTinChiTichLuy}/{$minTinChi} | ĐTB: {$sv->DiemTichLuy}/{$minGpa}";
+            $dieuKienText = "Tín chỉ: {$tc}/{$minTinChi} | ĐTB: " . number_format($gpa, 2) . "/{$minGpa}";
+
+            $ghiChu = $isEligible 
+                ? 'Đủ điều kiện làm khóa luận tốt nghiệp' 
+                : 'Không đủ điều kiện: ' . implode('; ', $lyDoKhongDat);
 
             $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
             $maDsdk = substr('DK_' . $sv->MaSV . '_' . $shortHk, 0, 20);
@@ -304,7 +357,7 @@ class SinhVienController extends Controller
                     'NgayXetDuyet' => now(),
                     'TrangThai' => $trangThai,
                     'DieuKien' => $dieuKienText,
-                    'GhiChu' => $isEligible ? 'Rà soát tự động: Đủ điều kiện làm khóa luận' : 'Chưa đủ điều kiện tín chỉ/GPA',
+                    'GhiChu' => $ghiChu,
                 ]
             );
 
@@ -312,8 +365,8 @@ class SinhVienController extends Controller
             else $countIneligible++;
         }
 
-        return redirect()->route('admin.sinhvien.dieu_kien', ['MaHocKy' => $maHocKy])
-            ->with('success', "Đã rà soát tự động thành công cho {$sinhViens->count()} sinh viên! ({$countEligible} Đủ điều kiện, {$countIneligible} Chưa đủ điều kiện)");
+        return redirect()->route('sinhvien.index', ['tab' => 'du_dieu_kien', 'MaHocKy' => $maHocKy])
+            ->with('success', "Đã hoàn tất rà soát tự động cho {$sinhViens->count()} sinh viên! ({$countEligible} Đủ điều kiện, {$countIneligible} Không đủ điều kiện)");
     }
 
     public function dieuKienCapNhat(Request $request)
@@ -331,7 +384,8 @@ class SinhVienController extends Controller
             'NgayXetDuyet' => now(),
         ]);
 
-        return redirect()->back()->with('success', "Đã cập nhật trạng thái xét duyệt cho sinh viên {$ds->MaSV} thành '{$request->TrangThai}'!");
+        return redirect()->route('sinhvien.index', ['tab' => 'du_dieu_kien', 'MaHocKy' => $ds->MaHocKy])
+            ->with('success', "Đã cập nhật trạng thái xét duyệt cho sinh viên {$ds->MaSV} thành '{$request->TrangThai}'!");
     }
 
     public function dieuKienCongBo(Request $request)
@@ -340,12 +394,52 @@ class SinhVienController extends Controller
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
         ]);
 
-        \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $request->MaHocKy)
+        $maHocKy = $request->MaHocKy;
+        $hocKy = \App\Models\HocKy::find($maHocKy);
+        $tenHocKy = $hocKy ? "{$hocKy->TenHocKy} ({$hocKy->NamHoc})" : $maHocKy;
+
+        // 1. Cập nhật ghi chú đã công bố nếu chưa có
+        \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)
+            ->where(function($q) {
+                $q->whereNull('GhiChu')
+                  ->orWhere('GhiChu', 'NOT LIKE', '%Đã công bố%');
+            })
             ->update([
                 'GhiChu' => DB::raw("CONCAT(COALESCE(GhiChu, ''), ' - Đã công bố')")
             ]);
 
-        return redirect()->back()->with('success', "Đã công bố danh sách sinh viên đủ điều kiện làm khóa luận cho học kỳ {$request->MaHocKy}!");
+        // 2. Thống kê số lượng sinh viên
+        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->count();
+        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Đủ điều kiện')->count();
+        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->count();
+
+        // 3. Tạo thông báo chính thức gửi đến toàn thể sinh viên
+        $maGVu = Auth::user()->giaoVu->MaGVu ?? 'GVU01';
+        $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
+        $maTB = substr('TB_DK_' . $shortHk, 0, 20);
+
+        $noiDungThongBao = "Khoa CNTT và Ban Giáo vụ trân trọng thông báo kết quả rà soát danh sách sinh viên đủ điều kiện thực hiện Khóa luận tốt nghiệp trong {$tenHocKy}:\n\n"
+            . "• Tổng số sinh viên được rà soát: {$totalEvaluated} sinh viên\n"
+            . "• Số lượng sinh viên ĐỦ ĐIỀU KIỆN: {$totalEligible} sinh viên (Đạt tích lũy >= 115 tín chỉ và ĐTB >= 2.0)\n"
+            . "• Số lượng sinh viên CHƯA ĐỦ ĐIỀU KIỆN: {$totalIneligible} sinh viên\n\n"
+            . "Sinh viên đủ điều kiện vui lòng chủ động tìm kiếm thành viên và tiến hành ghép nhóm (tối đa 3 SV/nhóm) tại phân hệ \"Nhóm Khóa Luận\", sau đó thực hiện đăng ký đề tài theo kế hoạch thời gian của Khoa.\n"
+            . "Mọi thắc mắc hoặc khiếu nại về điều kiện khóa luận, sinh viên vui lòng liên hệ Văn phòng Giáo vụ Khoa trước thời hạn quy định.";
+
+        \App\Models\ThongBao::updateOrCreate(
+            ['MaThongBao' => $maTB],
+            [
+                'TieuDe'       => "Công bố Danh sách Sinh viên Đủ điều kiện làm Khóa luận Tốt nghiệp - {$tenHocKy}",
+                'NoiDung'      => $noiDungThongBao,
+                'LoaiThongBao' => 'Khóa luận',
+                'DoiTuongNhan' => 'Sinh viên',
+                'NgayTao'      => now(),
+                'TrangThai'    => 'Đã phát hành',
+                'MaGVu'        => $maGVu,
+            ]
+        );
+
+        return redirect()->route('sinhvien.index', ['tab' => 'du_dieu_kien', 'MaHocKy' => $maHocKy])
+            ->with('success', "Đã công bố danh sách chính thức ({$totalEligible} SV đủ điều kiện) và phát hành thông báo tới toàn thể sinh viên cho học kỳ {$tenHocKy}!");
     }
 
     public function dieuKienExport(Request $request)

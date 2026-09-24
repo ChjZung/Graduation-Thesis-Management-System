@@ -19,23 +19,23 @@ class ExcelTemplateService
         return [
             'khoa' => [
                 'filename' => 'Template_Khoa.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU KHOA',
-                'headers'  => ['TenKhoa', 'MoTa'],
+                'title'    => 'MẪU DỮ LIỆU KHOA',
+                'headers'  => ['MaKhoa', 'TenKhoa', 'TruongKhoa', 'MoTa'],
                 'examples' => [
-                    ['Khoa Công Nghệ Thông Tin', 'Khoa Công Nghệ Thông Tin HUIT'],
-                    ['Khoa Lý Luận Chính Trị', 'Khoa Lý Luận Chính Trị HUIT'],
+                    ['NN', 'Khoa Ngoại Ngữ', 'TS. Lê Thị Mai', 'Khoa Ngoại ngữ trường Đại học Công Thương'],
+                    ['QTKD', 'Khoa Quản Trị Kinh Doanh', 'PGS.TS Hoàng Đình Tuấn', 'Khoa Quản trị kinh doanh trường Đại học Công Thương'],
                 ],
-                'note'     => 'Lưu ý: TenKhoa là bắt buộc và không được trùng lặp.'
+                'note'     => 'Lưu ý: TenKhoa là bắt buộc và không trùng lặp. MaKhoa tùy chọn (để trống hệ thống tự sinh K01, K02...). TruongKhoa và MoTa là tùy chọn.'
             ],
             'bomon' => [
                 'filename' => 'Template_BoMon.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU BỘ MÔN',
-                'headers'  => ['TenBoMon', 'MoTa', 'MaKhoa'],
+                'title'    => 'MẪU DỮ LIỆU BỘ MÔN',
+                'headers'  => ['MaBoMon', 'TenBoMon', 'MaKhoa', 'TruongBoMon', 'MoTa'],
                 'examples' => [
-                    ['Công Nghệ Phần Mềm', 'Bộ môn phụ trách đào tạo phần mềm', 'Khoa Công Nghệ Thông Tin'],
-                    ['Khoa Học Máy Tính', 'Bộ môn máy tính', 'K01'],
+                    ['BMANH', 'Bộ Môn Tiếng Anh', 'NN', 'TS. Vũ Minh', 'Bộ môn tiếng Anh chuyên ngành & cơ bản'],
+                    ['BMQTKD', 'Bộ Môn Quản Trị Tổng Hợp', 'QTKD', 'ThS. Nguyễn Lan', 'Bộ môn phụ trách các chuyên ngành QTKD'],
                 ],
-                'note'     => 'Lưu ý: TenBoMon là bắt buộc không trùng. MaKhoa có thể điền Mã Khoa (K01) hoặc Tên Khoa.'
+                'note'     => 'Lưu ý: TenBoMon và MaKhoa là bắt buộc. MaBoMon tùy chọn (để trống hệ thống tự sinh BM01, BM02...). MaKhoa có thể điền Mã Khoa (NN, QTKD, CNTT...) hoặc Tên Khoa. TruongBoMon và MoTa là tùy chọn.'
             ],
             'sinhvien_lophocphan' => [
                 'filename' => 'Template_SinhVien_LopHocPhan.xlsx',
@@ -49,23 +49,23 @@ class ExcelTemplateService
             ],
             'nganh' => [
                 'filename' => 'Template_Nganh.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU NGÀNH HỌC',
-                'headers'  => ['TenNganh', 'MoTa', 'MaBoMon'],
+                'title'    => 'MẪU DỮ LIỆU NGÀNH HỌC',
+                'headers'  => ['MaNganh', 'TenNganh', 'MaKhoa'],
                 'examples' => [
-                    ['Công Nghệ Thông Tin', 'Đào tạo kỹ sư CNTT toàn diện', 'Công Nghệ Phần Mềm'],
-                    ['Khoa Học Máy Tính', 'Chuyên ngành khoa học máy tính', 'BM01'],
+                    ['7220201', 'Ngôn Ngữ Anh', 'NN'],
+                    ['7340101', 'Quản Trị Kinh Doanh', 'QTKD'],
                 ],
-                'note'     => 'Lưu ý: TenNganh bắt buộc không trùng. MaBoMon có thể điền Mã Bộ Môn (BM01) hoặc Tên Bộ Môn.'
+                'note'     => 'Lưu ý: TenNganh và MaKhoa là bắt buộc. MaNganh tùy chọn (để trống hệ thống tự sinh NG01, NG02...). MaKhoa có thể điền Mã Khoa hoặc Tên Khoa trực thuộc.'
             ],
             'lop' => [
                 'filename' => 'Template_Lop.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU LỚP HỌC HÀNH CHÍNH',
-                'headers'  => ['TenLop', 'MaNganh', 'KhoaHoc'],
+                'title'    => 'MẪU DỮ LIỆU LỚP HỌC',
+                'headers'  => ['MaLop', 'TenLop', 'MaNganh', 'KhoaHoc', 'MaKhoa'],
                 'examples' => [
-                    ['14DHTH05', 'Công Nghệ Thông Tin', '2023-2027'],
-                    ['14DHTH11', 'NG01', '2023-2027'],
+                    ['15DHNNA01', '15DHNNA01', '7220201', '2024-2028', 'NN'],
+                    ['15DHQTKD01', '15DHQTKD01', '7340101', '2024-2028', 'QTKD'],
                 ],
-                'note'     => 'Lưu ý: TenLop bắt buộc không trùng. MaNganh có thể nhập Mã Ngành (NG01) hoặc Tên Ngành.'
+                'note'     => 'Lưu ý: TenLop và MaNganh là bắt buộc. MaLop tùy chọn (để trống sẽ lấy theo TenLop). KhoaHoc tùy chọn (mặc định 2024-2028). MaKhoa tùy chọn (để trống hệ thống tự động suy ra từ Ngành).'
             ],
             'monhoc' => [
                 'filename' => 'Template_MonHoc.xlsx',
@@ -79,33 +79,33 @@ class ExcelTemplateService
             ],
             'hocky' => [
                 'filename' => 'Template_HocKy.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU HỌC KỲ',
-                'headers'  => ['TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc'],
+                'title'    => 'MẪU DỮ LIỆU HỌC KỲ',
+                'headers'  => ['MaHocKy', 'TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'],
                 'examples' => [
-                    ['Học kỳ 1', '2025-2026', '2025-09-01', '2026-01-15'],
-                    ['Học kỳ 2', '2025-2026', '2026-01-20', '2026-06-01'],
+                    ['HK2425_1', 'Học kỳ 1 (2024-2025)', '2024-2025', '2024-09-02', '2025-01-15', 'Đã kết thúc'],
+                    ['HK2425_2', 'Học kỳ 2 (2024-2025)', '2024-2025', '2025-01-20', '2025-06-15', 'Đã kết thúc'],
                 ],
-                'note'     => 'Lưu ý: TenHocKy và NamHoc không trùng. Định dạng ngày YYYY-MM-DD (ví dụ 2025-09-01).'
+                'note'     => 'Lưu ý: TenHocKy và NamHoc là bắt buộc (không được trùng cặp Học kỳ - Năm học). MaHocKy tùy chọn (để trống hệ thống tự sinh HK01, HK02...). NgayBatDau và NgayKetThuc định dạng YYYY-MM-DD. TrangThai tùy chọn (Đang diễn ra, Chưa bắt đầu, Đã kết thúc).'
             ],
             'giangvien' => [
                 'filename' => 'Template_GiangVien.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU GIẢNG VIÊN',
-                'headers'  => ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'HocVi', 'MaBoMon'],
+                'title'    => 'MẪU DỮ LIỆU GIẢNG VIÊN',
+                'headers'  => ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai'],
                 'examples' => [
-                    ['GV001', 'Nguyễn Văn A', 'gv001@huit.edu.vn', '0901234567', 'Thạc sĩ', 'Công Nghệ Phần Mềm'],
-                    ['GV002', 'Trần Thị B', 'gv002@huit.edu.vn', '0912345678', 'Tiến sĩ', 'BM01'],
+                    ['GV91', 'Vũ Thị Thanh Mai', 'gv91_test@huit.edu.vn', '0981112233', '1982-04-12', 'Nữ', '', 'Tiến sĩ', 'BMANH', 'Đang công tác'],
+                    ['GV92', 'Đỗ Quốc Bảo', 'gv92_test@huit.edu.vn', '0982223344', '1979-09-25', 'Nam', 'Phó Giáo sư', 'Tiến sĩ', 'BMQTKD', 'Đang công tác'],
                 ],
-                'note'     => 'Lưu ý: MaGV (Mã Giảng viên) là duy nhất và không trùng lặp. Email nên dùng đuôi @huit.edu.vn. MaBoMon có thể điền Mã Bộ Môn (BM01) hoặc Tên Bộ Môn. Hệ thống tự động xác định Mã tài khoản & Tên đăng nhập từ MaGV.'
+                'note'     => 'Lưu ý: MaGV, HoTen và MaBoMon là bắt buộc. MaGV là duy nhất. Email nên dùng đuôi @huit.edu.vn. MaBoMon có thể điền Mã Bộ Môn (BMANH...) hoặc Tên Bộ Môn. Định dạng ngày YYYY-MM-DD. Hệ thống tự động tạo Tài khoản đăng nhập từ MaGV (Mật khẩu mặc định: 123456).'
             ],
             'sinhvien' => [
                 'filename' => 'Template_SinhVien.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU SINH VIÊN',
-                'headers'  => ['MSSV', 'HoTen', 'Email', 'SoDienThoai', 'MaLop'],
+                'title'    => 'MẪU DỮ LIỆU SINH VIÊN',
+                'headers'  => ['MSSV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'MaLop', 'KhoaHoc', 'SoTinChiTichLuy', 'DiemTichLuy', 'TrangThai'],
                 'examples' => [
-                    ['2001230104', 'Nguyễn Văn B', '2001230104@st.huit.edu.vn', '0987654321', '14DHTH05'],
-                    ['2001230105', 'Lê Thị C', '2001230105@st.huit.edu.vn', '0976543210', '14DHTH11'],
+                    ['2001240001', 'Nguyễn Hoàng Long', '2001240001@st.huit.edu.vn', '0971234567', '2003-05-10', 'Nam', '15DHNNA01', '2024-2028', 95, 3.25, 'Đang học'],
+                    ['2001240002', 'Trần Khánh Linh', '2001240002@st.huit.edu.vn', '0972345678', '2003-11-28', 'Nữ', '15DHQTKD01', '2024-2028', 90, 3.40, 'Đang học'],
                 ],
-                'note'     => 'Lưu ý: MSSV (Mã số sinh viên) là duy nhất và không trùng lặp. Email nên dùng đuôi @st.huit.edu.vn. MaLop có thể nhập Mã Lớp (L01) hoặc Tên Lớp (14DHTH05). Hệ thống tự động xác định Mã tài khoản & Tên đăng nhập từ MSSV.'
+                'note'     => 'Lưu ý: MSSV, HoTen và MaLop là bắt buộc. MSSV là duy nhất. Email dùng đuôi @st.huit.edu.vn. MaLop có thể điền Mã Lớp hoặc Tên Lớp. Hệ thống tự động liên kết Khoa và Ngành từ Lớp học và tạo Tài khoản sinh viên (Mật khẩu mặc định: 123456).'
             ],
             'taikhoan' => [
                 'filename' => 'Template_TaiKhoan.xlsx',
@@ -178,6 +178,8 @@ class ExcelTemplateService
         
         // Normalize alias
         $aliasMap = [
+            'khoa'                => 'khoa',
+            'khoas'               => 'khoa',
             'detais'              => 'detai',
             'bomons'              => 'bomon',
             'Nganh'              => 'nganh',
@@ -204,79 +206,60 @@ class ExcelTemplateService
         }
 
         $cfg = $configs[$key];
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Template');
-
-        // Row 1: Instruction Note (Merged across headers to avoid wide column A)
         $headers = $cfg['headers'];
+        $examples = $cfg['examples'];
+        $title = $cfg['title'];
         $colCount = count($headers);
         $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colCount);
-        if ($colCount > 1) {
-            $sheet->mergeCells("A1:{$lastColLetter}1");
-        }
 
-        $sheet->setCellValue('A1', '💡 ' . $cfg['note']);
-        $sheet->getStyle('A1')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('DuLieuMau');
+        $sheet->setShowGridLines(true);
 
-        // Row 3: Header Row
-        $startRow = 3;
-        $headers = $cfg['headers'];
-        $colCount = count($headers);
+        // Row 1: Title Header (Merged across all columns)
+        $sheet->mergeCells("A1:{$lastColLetter}1");
+        $sheet->setCellValue('A1', $title);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF1E3A8A'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
 
-        foreach ($headers as $index => $header) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
-            $cell = $colLetter . $startRow;
-            $sheet->setCellValue($cell, $header);
-            
-            // Header Styling
-            $sheet->getStyle($cell)->applyFromArray([
-                'font' => [
-                    'bold' => true,
-                    'color' => ['rgb' => 'FFFFFF'],
-                    'size' => 11,
+        // Row 2: Header Row
+        $sheet->fromArray($headers, null, 'A2');
+        $headerRange = "A2:{$lastColLetter}2";
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => [
+                'fillType'   => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1E40AF'], // Deep Blue
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical'   => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color'       => ['rgb' => '93C5FD'],
                 ],
-                'fill' => [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '1E40AF'], // Deep Blue
-                ],
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                ],
+            ],
+        ]);
+        $sheet->getRowDimension(2)->setRowHeight(24);
+
+        // Row 3+: Data Rows (Data Examples)
+        $rowIdx = 3;
+        foreach ($examples as $data) {
+            $sheet->fromArray($data, null, "A{$rowIdx}");
+            $bg = ($rowIdx % 2 === 0) ? 'F8FAFC' : 'FFFFFF';
+            $sheet->getStyle("A{$rowIdx}:{$lastColLetter}{$rowIdx}")->applyFromArray([
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $bg]],
                 'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
+                    'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']],
                 ],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
             ]);
-        }
-        $sheet->getRowDimension($startRow)->setRowHeight(26);
-
-        // Row 4+: Data Examples
-        $dataRowIndex = $startRow + 1;
-        foreach ($cfg['examples'] as $exampleRow) {
-            foreach ($exampleRow as $index => $val) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
-                $cell = $colLetter . $dataRowIndex;
-                $sheet->setCellValue($cell, $val);
-
-                // Data Styling
-                $sheet->getStyle($cell)->applyFromArray([
-                    'alignment' => [
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'E5E7EB'],
-                        ],
-                    ],
-                ]);
-            }
-            $sheet->getRowDimension($dataRowIndex)->setRowHeight(22);
-            $dataRowIndex++;
+            $sheet->getRowDimension($rowIdx)->setRowHeight(20);
+            $rowIdx++;
         }
 
         // Auto-fit Column Widths
