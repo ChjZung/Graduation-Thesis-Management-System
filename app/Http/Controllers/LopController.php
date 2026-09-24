@@ -29,7 +29,7 @@ class LopController extends Controller
             $query->where('MaNganh', $request->ma_nganh);
         }
 
-        $lops = $query->paginate(10)->withQueryString();
+        $lops = $query->paginate(5)->withQueryString();
         $nganhs = Nganh::orderBy('TenNganh')->get();
 
         $totalLop = Lop::count();
@@ -50,8 +50,8 @@ class LopController extends Controller
 
     public function create()
     {
-        $Nganh = Nganh::with('khoa')->orderBy('TenNganh')->get();
-        return view('admin.lop.create', compact('Nganh'));
+        $nganhs = Nganh::with('khoa')->orderBy('TenNganh')->get();
+        return view('admin.lop.create', compact('nganhs') + ['Nganh' => $nganhs]);
     }
 
     public function store(Request $request)
@@ -107,8 +107,8 @@ class LopController extends Controller
     public function edit($id)
     {
         $lop = Lop::findOrFail($id);
-        $Nganh = Nganh::with('khoa')->orderBy('TenNganh')->get();
-        return view('admin.lop.edit', compact('lop', 'Nganh'));
+        $nganhs = Nganh::with('khoa')->orderBy('TenNganh')->get();
+        return view('admin.lop.edit', compact('lop', 'nganhs') + ['Nganh' => $nganhs]);
     }
 
     public function update(Request $request, $id)

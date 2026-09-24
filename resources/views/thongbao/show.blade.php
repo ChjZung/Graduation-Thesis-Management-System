@@ -71,7 +71,7 @@
             <div class="card-body p-4 fs-6 text-dark leading-relaxed" style="white-space: pre-line;">
                 {{ $thongBao->NoiDung }}
             </div>
-            @if($thongBao->keHoach->TenKeHoach)
+            @if(!empty($thongBao->keHoach?->TenKeHoach))
             <div class="card-footer bg-light p-3">
                 <div class="small fw-bold text-muted mb-1"><i class="fa-solid fa-link me-1 text-primary"></i> Kế Hoạch Liên Kết:</div>
                 <div class="fw-bold text-primary">{{ $thongBao->keHoach->TenKeHoach }} ({{ $thongBao->keHoach->MaHocKy }})</div>

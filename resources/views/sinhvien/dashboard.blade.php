@@ -8,24 +8,52 @@
      style="background: linear-gradient(145deg, #0b1329 0%, #1e293b 100%); border: 1px solid rgba(255,255,255,0.1) !important;">
     <div class="card-body p-4 p-md-5">
         <!-- Badge trạng thái điều kiện & duyệt đề tài -->
-        <div class="mb-3">
-            <span class="badge bg-success bg-opacity-20 text-success border border-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">
-                <i class="fa-solid fa-circle me-1" style="font-size: 8px;"></i> ĐÃ ĐỦ ĐIỀU KIỆN & ĐÃ ĐƯỢC DUYỆT ĐỀ TÀI
-            </span>
+        <!-- Badge trạng thái điều kiện & duyệt đề tài -->
+        <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            @if($isDuDieuKien)
+                <span class="badge bg-success bg-opacity-20 text-success border border-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-circle-check me-1"></i> ĐỦ ĐIỀU KIỆN LÀM KHÓA LUẬN ({{ $sinhVien->SoTinChiTichLuy ?? 0 }} TC &bull; GPA: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }})
+                </span>
+            @else
+                <span class="badge bg-danger bg-opacity-20 text-danger border border-danger px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-circle-xmark me-1"></i> CHƯA ĐỦ ĐIỀU KIỆN ({{ $sinhVien->SoTinChiTichLuy ?? 0 }}/115 TC &bull; GPA: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }}/2.0)
+                </span>
+            @endif
+
+            @if($deTai)
+                <span class="badge bg-info bg-opacity-20 text-info border border-info px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-check me-1"></i> ĐÃ DUYỆT ĐỀ TÀI
+                </span>
+            @elseif($nhom)
+                <span class="badge bg-warning bg-opacity-20 text-warning border border-warning px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-users me-1"></i> ĐÃ CÓ NHÓM - CHỜ ĐĂNG KÝ ĐỀ TÀI
+                </span>
+            @else
+                <span class="badge bg-secondary bg-opacity-20 text-light border border-secondary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-user me-1"></i> CHƯA CÓ NHÓM KHÓA LUẬN
+                </span>
+            @endif
         </div>
 
         <!-- Tên Đề Tài Lớn -->
         <h2 class="fw-bold text-white mb-3" style="line-height: 1.3;">
-            {{ $deTai->TenDeTai ?? 'Xây dựng hệ thống thương mại điện tử đa nền tảng tích hợp AI gợi ý sản phẩm' }}
+            {{ $deTai->TenDeTai ?? ($nhom ? 'Chưa đăng ký đề tài khóa luận' : 'Chưa tham gia nhóm khóa luận') }}
         </h2>
 
         <!-- Metadata tags -->
         <div class="d-flex flex-wrap gap-2 mb-4">
+            @if($deTai)
             <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-1 rounded-pill small">
-                <i class="fa-solid fa-hashtag me-1 text-info"></i>Mã đề tài: <strong>{{ $deTai->MaDeTai ?? 'DT01' }}</strong>
+                <i class="fa-solid fa-hashtag me-1 text-info"></i>Mã đề tài: <strong>{{ $deTai->MaDeTai }}</strong>
             </span>
+            @endif
+            @if($nhom)
             <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-1 rounded-pill small">
-                <i class="fa-solid fa-users me-1 text-info"></i>Mã nhóm: <strong>{{ $nhom->MaNhom ?? 'NHOM01' }}</strong>
+                <i class="fa-solid fa-users me-1 text-info"></i>Mã nhóm: <strong>{{ $nhom->MaNhom }} ({{ $nhom->TenNhom }})</strong>
+            </span>
+            @endif
+            <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-1 rounded-pill small">
+                <i class="fa-solid fa-graduation-cap me-1 text-info"></i>Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
             </span>
             <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-1 rounded-pill small">
                 <i class="fa-regular fa-calendar me-1 text-info"></i>Học kỳ: <strong>{{ $hocKyHienTai->TenHocKy ?? 'HK2' }} ({{ $hocKyHienTai->NamHoc ?? '2025-2026' }})</strong>

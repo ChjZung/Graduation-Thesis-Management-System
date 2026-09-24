@@ -2,38 +2,9 @@
 @section('page_title', 'Quản Lý Hồ Sơ Bảo Vệ Khóa Luận')
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-circle-check me-2 fs-5"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
 
-@if(session('warning'))
-<div class="alert alert-warning alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-circle-exclamation me-2 fs-5"></i>{{ session('warning') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
 
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm" role="alert">
-    <i class="fa-solid fa-triangle-exclamation me-2 fs-5"></i>{{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
 
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm">
-    <div class="fw-bold mb-1"><i class="fa-solid fa-circle-xmark me-2"></i>Có lỗi xảy ra:</div>
-    <ul class="mb-0 ps-3">
-        @foreach($errors->all() as $err)
-            <li>{{ $err }}</li>
-        @endforeach
-    </ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
 
 {{-- ── TIÊU ĐỀ TRANG ── --}}
 <div class="page-header-flex mb-3">

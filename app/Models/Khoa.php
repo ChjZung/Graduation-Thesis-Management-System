@@ -17,6 +17,7 @@ class Khoa extends Model
     protected $fillable = [
         'MaKhoa',
         'TenKhoa',
+        'TruongKhoa',
     ];
 
     public function boMons()

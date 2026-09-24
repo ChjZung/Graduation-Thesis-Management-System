@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('page_title', 'Sinh Viên') – Hệ Thống QLĐA | HUIT</title>
-    <meta name="description" content="Cổng Sinh Viên – Hệ thống quản lý đồ án  HUIT">
+    <title>@yield('page_title', 'Sinh Viên') – Quản Lý Khóa Luận Tốt Nghiệp | HUIT</title>
+    <meta name="description" content="Cổng Sinh Viên – Hệ thống Quản lý Công tác Khóa luận Tốt nghiệp HUIT">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -85,7 +85,10 @@
             </li>
 
             @php
-                $unreadNotiCount = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
+                $readNotiIds = session()->get('read_thong_bao_ids', []);
+                $unreadNotiCount = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])
+                    ->whereNotIn('MaThongBao', $readNotiIds)
+                    ->count();
             @endphp
             <li class="{{ request()->routeIs('sinhvien.thongbao.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">
@@ -135,7 +138,7 @@
                                 @endif
                             </div>
                             @php
-                                $recentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at','desc')->limit(6)->get();
+                                $recentNoti = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])->orderBy('created_at','desc')->limit(6)->get();
                             @endphp
                             @forelse($recentNoti as $noti)
                             <div class="dropdown-item px-3 py-2 border-bottom">
@@ -229,6 +232,15 @@
                      style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
                     <i class="fa-solid fa-circle-xmark me-2"></i>
                     {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
+                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    {{ session('warning') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif

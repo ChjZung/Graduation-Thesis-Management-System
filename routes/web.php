@@ -86,6 +86,12 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('lop', \App\Http\Controllers\LopController::class);
     Route::resource('hocky', \App\Http\Controllers\HocKyController::class);
     Route::resource('giangvien', \App\Http\Controllers\GiangVienController::class);
+    Route::get('sinhvien/du-dieu-kien', [\App\Http\Controllers\SinhVienController::class, 'dieuKienIndex'])->name('admin.sinhvien.dieu_kien');
+    Route::post('sinhvien/du-dieu-kien/ra-soat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienRaSoat'])->name('admin.sinhvien.ra_soat');
+    Route::post('sinhvien/du-dieu-kien/cap-nhat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienCapNhat'])->name('admin.sinhvien.cap_nhat');
+    Route::post('sinhvien/du-dieu-kien/cong-bo', [\App\Http\Controllers\SinhVienController::class, 'dieuKienCongBo'])->name('admin.sinhvien.cong_bo');
+    Route::get('sinhvien/du-dieu-kien/export', [\App\Http\Controllers\SinhVienController::class, 'dieuKienExport'])->name('admin.sinhvien.export_du_dk');
+
     Route::resource('sinhvien', \App\Http\Controllers\SinhVienController::class);
 
     // Yêu cầu đổi mật khẩu
@@ -108,6 +114,9 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/quydinh/init-defaults', [\App\Http\Controllers\Admin\QuyDinhKhoaLuanController::class, 'initDefaults'])->name('admin.quydinh.initDefaults');
     Route::resource('quydinh', \App\Http\Controllers\Admin\QuyDinhKhoaLuanController::class)->names('admin.quydinh');
 
+    // Biểu mẫu Khóa luận
+    Route::resource('bieumau', \App\Http\Controllers\Admin\BieuMauController::class)->names('admin.bieumau');
+
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adminCalendar'])->name('admin.calendar');
 
     // Theo dõi Đồ án / Khóa luận
@@ -116,9 +125,12 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/theo-doi-do-an/{id}/remind', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'remindGroup'])->name('admin.theodoi.remind');
 
     // Phê duyệt Đề tài do GV đề xuất
+    Route::get('/duyet-detai/export', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'export'])->name('admin.duyet_detai.export');
     Route::get('/duyet-detai', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'index'])->name('admin.duyet_detai.index');
     Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'approve'])->name('admin.duyet_detai.approve');
     Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'reject'])->name('admin.duyet_detai.reject');
+    Route::post('/duyet-detai/{id}/yeu-cau-sua', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'requestEdit'])->name('admin.duyet_detai.request_edit');
+    Route::post('/duyet-detai/cong-bo', [\App\Http\Controllers\Admin\DuyetDeTaiController::class, 'publish'])->name('admin.duyet_detai.publish');
 
     // Phê duyệt Đơn đăng ký Đề tài của Nhóm Sinh viên
     Route::get('/duyet-dangky-detai', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'index'])->name('admin.duyet_dangky.index');
@@ -172,6 +184,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/cong-viec-huong-dan', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'myTasks'])->name('giangvien.my_tasks');
 
     // Đề tài
+    Route::get('detai/bieu-mau-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'downloadTemplate'])->name('giangvien.detai.download_template');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 
@@ -183,6 +196,12 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
     Route::post('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store'])->name('giangvien.chamdiem.store');
+
+    // Phê duyệt đăng ký đề tài của Sinh viên / Nhóm
+    Route::get('/duyet-dangky-detai', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'index'])->name('giangvien.duyet_dangky.index');
+    Route::post('/duyet-dangky-detai/{id}', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'update'])->name('giangvien.duyet_dangky.update');
+    Route::get('/duyet-detai', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'index']);
+    Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'update']);
 
     // Thông báo
     Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('giangvien.thongbao.index');
@@ -216,6 +235,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('nhom/{id}/yeu-cau/{maSV}/duyet', [\App\Http\Controllers\SinhVien\NhomController::class, 'duyetYeuCauXinVao'])->name('sinhvien.nhom.duyetYeuCau');
     Route::post('nhom/{id}/yeu-cau/{maSV}/tu-choi', [\App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiYeuCauXinVao'])->name('sinhvien.nhom.tuChoiYeuCau');
     Route::resource('dangky', \App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store', 'destroy']);
+    Route::post('dangky/de-xuat-rieng', [\App\Http\Controllers\SinhVien\DangKyDeTaiController::class, 'deXuatRieng'])->name('sinhvien.dangky.de_xuat_rieng');
 
 
     // Báo cáo tiến độ

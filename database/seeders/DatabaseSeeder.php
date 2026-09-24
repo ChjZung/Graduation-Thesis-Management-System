@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
 
         // 1. VaiTrò
         DB::table('VaiTro')->insertOrIgnore([
-            ['MaVaiTro' => 'VT01', 'TenVaiTro' => 'Giáo vụ', 'created_at' => $now, 'updated_at' => $now],
+            ['MaVaiTro' => 'VT01', 'TenVaiTro' => 'Admin', 'created_at' => $now, 'updated_at' => $now],
             ['MaVaiTro' => 'VT02', 'TenVaiTro' => 'Giảng viên', 'created_at' => $now, 'updated_at' => $now],
             ['MaVaiTro' => 'VT03', 'TenVaiTro' => 'Sinh viên', 'created_at' => $now, 'updated_at' => $now],
         ]);
@@ -122,15 +122,15 @@ class DatabaseSeeder extends Seeder
             ['MaLop' => '12DATTT01', 'TenLop' => '12DATTT01', 'KhoaHoc' => '2022-2026', 'MaNganh' => '7480202', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        // 8. Giáo Vụ
+        // 8. Giáo Vụ / Admin
         DB::table('GiaoVu')->insertOrIgnore([
             [
                 'MaGVu' => 'GVU01',
                 'MaTK' => 'TK_ADMIN',
-                'HoTen' => 'Nguyễn Thị Thu Hà',
+                'HoTen' => 'Quản trị viên Admin',
                 'Email' => 'admin@huit.edu.vn',
                 'SoDienThoai' => '0908123456',
-                'ChucVu' => 'Giáo vụ Khoa CNTT',
+                'ChucVu' => 'Quản trị viên Hệ thống (Admin)',
                 'MaKhoa' => 'CNTT',
                 'created_at' => $now,
                 'updated_at' => $now

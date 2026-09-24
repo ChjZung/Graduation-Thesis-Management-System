@@ -20,9 +20,6 @@
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#initDefaultsModal">
-                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Chuẩn HUIT
-            </button>
             <a href="{{ route('admin.quydinh.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
                 <i class="fa-solid fa-plus me-1"></i> Thêm Quy Định Mới
             </a>
@@ -188,10 +185,10 @@
                                 <div class="empty-state-box">
                                     <i class="fa-solid fa-scale-unbalanced text-muted mb-3" style="font-size: 2.5rem;"></i>
                                     <h6 class="fw-bold text-secondary">Chưa có quy định nào cho kế hoạch này</h6>
-                                    <p class="small text-muted mb-3">Bạn có thể tạo mới hoặc bấm nút Khởi tạo nhanh bộ 6 quy định chuẩn của HUIT.</p>
-                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#initDefaultsModal">
-                                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Chuẩn HUIT Ngay
-                                    </button>
+                                    <p class="small text-muted mb-3">Bạn có thể tạo mới quy định cho kế hoạch khóa luận này.</p>
+                                    <a href="{{ route('admin.quydinh.create') }}" class="btn btn-primary btn-sm rounded-pill px-4">
+                                        <i class="fa-solid fa-plus me-1"></i> Thêm Quy Định Mới
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -206,72 +203,6 @@
             @if($quyDinhs->hasPages())
                 <div>{{ $quyDinhs->links('pagination::bootstrap-5') }}</div>
             @endif
-        </div>
-    </div>
-</div>
-
-<!-- Modal Khởi Tạo Chuẩn HUIT -->
-<div class="modal fade" id="initDefaultsModal" tabindex="-1" aria-labelledby="initDefaultsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <form action="{{ route('admin.quydinh.initDefaults') }}" method="POST">
-                @csrf
-                <div class="modal-header border-bottom">
-                    <h6 class="modal-title fw-bold text-dark" id="initDefaultsModalLabel">
-                        <i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>Khởi Tạo 6 Tiêu Chuẩn Khóa Luận HUIT
-                    </h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="small text-muted mb-3">
-                        Hệ thống sẽ tự động thêm bộ 6 thông số quy chế chính thức của trường Đại học Công Thương TP.HCM vào kế hoạch được chọn:
-                    </p>
-                    <ul class="list-group list-group-flush small mb-3">
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>1. Tín chỉ tối thiểu làm KLTN</span>
-                            <span class="badge bg-primary-subtle text-primary">115 Tín chỉ</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>2. Điểm tích lũy tối thiểu (GPA)</span>
-                            <span class="badge bg-primary-subtle text-primary">2.0 GPA</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>3. Sinh viên tối đa một nhóm</span>
-                            <span class="badge bg-primary-subtle text-primary">2 Sinh viên</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>4. Định mức hướng dẫn tối đa/GV</span>
-                            <span class="badge bg-primary-subtle text-primary">5 Đề tài</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>5. Ngưỡng Turnitin tối đa</span>
-                            <span class="badge bg-primary-subtle text-primary">&le; 20%</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0 py-2">
-                            <span>6. Điểm tổng kết tối thiểu đạt</span>
-                            <span class="badge bg-primary-subtle text-primary">&ge; 5.0 Điểm</span>
-                        </li>
-                    </ul>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-dark">Chọn Kế Hoạch Khóa Luận Áp Dụng <span class="text-danger">*</span></label>
-                        <select name="MakeHoach" class="form-select form-select-sm" required>
-                            <option value="">-- Chọn Kế hoạch khóa luận --</option>
-                            @foreach($keHoachs as $kh)
-                                <option value="{{ $kh->MakeHoach }}" {{ request('make_hoach') == $kh->MakeHoach ? 'selected' : '' }}>
-                                    {{ $kh->TenKeHoach }} ({{ $kh->hocKy->TenHocKy ?? $kh->MakeHoach }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-top bg-light">
-                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-check me-1"></i> Áp Dụng Bộ Quy Định Ngay
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

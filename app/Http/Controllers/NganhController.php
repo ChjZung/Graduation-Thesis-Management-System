@@ -28,7 +28,7 @@ class NganhController extends Controller
             $query->where('MaKhoa', $request->ma_khoa);
         }
 
-        $nganhs = $query->paginate(10)->withQueryString();
+        $nganhs = $query->paginate(5)->withQueryString();
         $khoas = Khoa::orderBy('TenKhoa')->get();
 
         $totalNganh = Nganh::count();
@@ -48,29 +48,36 @@ class NganhController extends Controller
 
     public function create()
     {
-        $Khoa = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.nganh.create', compact('Khoa'));
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.nganh.create', compact('khoas') + ['Khoa' => $khoas]);
     }
 
     public function store(Request $request)
     {
+        if ($request->filled('TenNganh')) {
+            $request->merge(['TenNganh' => trim($request->TenNganh)]);
+        }
+        if ($request->filled('MaNganh')) {
+            $request->merge(['MaNganh' => strtoupper(trim($request->MaNganh))]);
+        }
+
         $request->validate([
             'MaNganh' => 'nullable|string|max:10|unique:Nganh,MaNganh',
             'TenNganh' => 'required|string|max:100|unique:Nganh,TenNganh',
             'MaKhoa' => 'required|exists:Khoa,MaKhoa',
         ], [
-            'MaNganh.unique' => 'Mã ngành đã tồn tại.',
+            'MaNganh.unique' => 'Mã ngành đã tồn tại trong hệ thống.',
             'TenNganh.required' => 'Vui lòng nhập tên ngành.',
             'TenNganh.unique' => 'Tên ngành này đã tồn tại trong hệ thống.',
             'MaKhoa.required' => 'Vui lòng chọn Khoa trực thuộc.',
             'MaKhoa.exists' => 'Khoa đã chọn không tồn tại.',
         ]);
 
-        $maNganh = $request->filled('MaNganh') ? strtoupper(trim($request->MaNganh)) : IdGenerator::nextNganh();
+        $maNganh = $request->filled('MaNganh') ? $request->MaNganh : IdGenerator::nextNganh();
 
         Nganh::create([
             'MaNganh' => $maNganh,
-            'TenNganh' => trim($request->TenNganh),
+            'TenNganh' => $request->TenNganh,
             'MaKhoa' => $request->MaKhoa,
         ]);
 
@@ -104,13 +111,17 @@ class NganhController extends Controller
     public function edit($id)
     {
         $nganh = Nganh::findOrFail($id);
-        $Khoa = Khoa::orderBy('TenKhoa')->get();
-        return view('admin.nganh.edit', compact('nganh', 'Khoa'));
+        $khoas = Khoa::orderBy('TenKhoa')->get();
+        return view('admin.nganh.edit', compact('nganh', 'khoas') + ['Khoa' => $khoas]);
     }
 
     public function update(Request $request, $id)
     {
         $nganh = Nganh::findOrFail($id);
+
+        if ($request->filled('TenNganh')) {
+            $request->merge(['TenNganh' => trim($request->TenNganh)]);
+        }
 
         $request->validate([
             'TenNganh' => 'required|string|max:100|unique:Nganh,TenNganh,' . $id . ',MaNganh',
@@ -122,7 +133,7 @@ class NganhController extends Controller
         ]);
 
         $nganh->update([
-            'TenNganh' => trim($request->TenNganh),
+            'TenNganh' => $request->TenNganh,
             'MaKhoa' => $request->MaKhoa,
         ]);
 
@@ -131,12 +142,18 @@ class NganhController extends Controller
 
     public function destroy($id)
     {
-        $nganh = Nganh::findOrFail($id);
+        $nganh = Nganh::withCount(['lops', 'sinhViens'])->findOrFail($id);
+
+        $totalRelated = $nganh->lops_count + $nganh->sinh_viens_count;
+        if ($totalRelated > 0) {
+            return redirect()->back()->withErrors("Không thể xóa ngành '{$nganh->TenNganh}' do đang có dữ liệu liên quan ({$nganh->lops_count} lớp, {$nganh->sinh_viens_count} sinh viên). Vui lòng di chuyển các dữ liệu thuộc ngành trước.");
+        }
+
         try {
-            Nganh::destroy($id);
+            $nganh->delete();
             return redirect()->route('nganh.index')->with('success', "Xóa ngành '{$nganh->TenNganh}' thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors("Không thể xóa ngành '{$nganh->TenNganh}' do đang có các lớp học trực thuộc.");
+            return redirect()->back()->withErrors("Không thể xóa ngành '{$nganh->TenNganh}': " . $e->getMessage());
         }
     }
 

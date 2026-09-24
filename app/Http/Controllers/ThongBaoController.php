@@ -23,7 +23,7 @@ class ThongBaoController extends Controller
         $user->loadMissing('vaiTro');
         $role = $user->vaiTro->TenVaiTro ?? '';
 
-        $query = ThongBao::with(['keHoach', 'nguoiNhans'])->orderBy('created_at', 'desc');
+        $query = ThongBao::orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -133,11 +133,18 @@ class ThongBaoController extends Controller
      */
     public function show($id)
     {
-        $thongBao = ThongBao::with(['keHoach', 'nguoiNhans'])->where('MaThongBao', $id)->firstOrFail();
+        $thongBao = ThongBao::where('MaThongBao', $id)->firstOrFail();
 
-        $totalSent = $thongBao->nguoiNhans->count();
-        $readCount = $thongBao->nguoiNhans->where('DaDoc', true)->count();
-        $unreadCount = $totalSent - $readCount;
+        $target = $thongBao->DoiTuongNhan;
+        if ($target === 'Sinh viên') {
+            $totalSent = \App\Models\SinhVien::count();
+        } elseif ($target === 'Giảng viên') {
+            $totalSent = \App\Models\GiangVien::count();
+        } else {
+            $totalSent = \App\Models\TaiKhoan::count();
+        }
+        $readCount = 0;
+        $unreadCount = $totalSent;
 
         return view('thongbao.show', compact('thongBao', 'totalSent', 'readCount', 'unreadCount'));
     }
@@ -268,21 +275,23 @@ class ThongBaoController extends Controller
         $taiKhoans = $query->get();
         $fileUrl = $thongBao->FileDinhKem ? asset($thongBao->FileDinhKem) : null;
 
-        foreach ($taiKhoans as $tk) {
-            NguoiNhanThongBao::updateOrCreate(
-                [
-                    'MaThongBao' => $thongBao->MaThongBao,
-                    'MaTK'       => $tk->MaTK,
-                ],
-                [
-                    'TieuDe'     => $thongBao->TieuDe,
-                    'NoiDung'    => $thongBao->NoiDung,
-                    'Loai'       => $thongBao->LoaiThongBao,
-                    'DuongDan'   => $fileUrl,
-                    'DaDoc'      => false,
-                    'NgayDoc'    => null,
-                ]
-            );
+        if (class_exists(\App\Models\NguoiNhanThongBao::class) && \Illuminate\Support\Facades\Schema::hasTable('nguoi_nhan_thong_baos')) {
+            foreach ($taiKhoans as $tk) {
+                \App\Models\NguoiNhanThongBao::updateOrCreate(
+                    [
+                        'MaThongBao' => $thongBao->MaThongBao,
+                        'MaTK'       => $tk->MaTK,
+                    ],
+                    [
+                        'TieuDe'     => $thongBao->TieuDe,
+                        'NoiDung'    => $thongBao->NoiDung,
+                        'Loai'       => $thongBao->LoaiThongBao,
+                        'DuongDan'   => $fileUrl,
+                        'DaDoc'      => false,
+                        'NgayDoc'    => null,
+                    ]
+                );
+            }
         }
     }
 }

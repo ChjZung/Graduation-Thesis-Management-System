@@ -47,13 +47,23 @@ class DeTaiController extends Controller
         return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'NhomChuaCoDeTai'));
     }
 
+    public function downloadTemplate()
+    {
+        $filePath = public_path('templates/Mau_De_Cuong_Khoa_Luan.docx');
+        if (!file_exists($filePath)) {
+            return redirect()->back()->withErrors('Không tìm thấy file biểu mẫu đề cương.');
+        }
+        return response()->download($filePath, 'Mau_De_Cuong_Chi_Tiet_KLTN_HUIT.docx');
+    }
+
     public function create()
     {
         $user = Auth::user();
         $gv = GiangVien::where('MaTK', $user->MaTK)->first();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+        $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
 
-        return view('giangvien.detai.create', compact('hocKies', 'gv'));
+        return view('giangvien.detai.create', compact('hocKies', 'gv', 'nganhs'));
     }
 
     public function store(Request $request)
@@ -62,19 +72,32 @@ class DeTaiController extends Controller
         $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
 
         $request->validate([
-            'TenDeTai' => 'required|string|max:200',
+            'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'HocPhan' => 'nullable|string|max:150',
+            'MaNganh' => 'nullable|exists:Nganh,MaNganh',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
-            'LinhVuc' => 'nullable|string|max:100',
+            'LinhVuc' => 'nullable|string|max:150',
+            'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ], [
             'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
             'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
             'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
             'SoLuongSinhVienToiDa.min' => 'Số sinh viên tối đa ít nhất là 1.',
             'SoLuongSinhVienToiDa.max' => 'Số sinh viên tối đa không vượt quá 3.',
+            'FileDeCuong.mimes' => 'Đề cương phải có định dạng .pdf, .doc hoặc .docx.',
+            'FileDeCuong.max' => 'Dung lượng file đề cương không được vượt quá 10MB.',
         ]);
+
+        $fileDeCuongPath = null;
+        if ($request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
+            $file = $request->file('FileDeCuong');
+            $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('de_cuong', $filename, 'public');
+            $fileDeCuongPath = 'storage/' . $path;
+        }
 
         $count = DeTai::count() + 1;
         $maDT = 'DT' . sprintf('%02d', $count);
@@ -90,7 +113,10 @@ class DeTaiController extends Controller
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
-            'SoLuongSinhVienToiDa' => $request->SoLuongSinhVienToiDa,
+            'HocPhan' => $request->HocPhan ?? 'Khóa luận tốt nghiệp',
+            'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
+            'FileDeCuong' => $fileDeCuongPath,
+            'MaNganh' => $request->MaNganh,
             'MaHocKy' => $request->MaHocKy,
             'TrangThai' => 'Chờ duyệt',
             'NgayDeXuat' => now(),
@@ -105,8 +131,9 @@ class DeTaiController extends Controller
         $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+        $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
 
-        return view('giangvien.detai.edit', compact('detai', 'hocKies'));
+        return view('giangvien.detai.edit', compact('detai', 'hocKies', 'nganhs'));
     }
 
     public function update(Request $request, $id)
@@ -116,22 +143,43 @@ class DeTaiController extends Controller
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
         $request->validate([
-            'TenDeTai' => 'required|string|max:200',
+            'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'HocPhan' => 'nullable|string|max:150',
+            'MaNganh' => 'nullable|exists:Nganh,MaNganh',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
+            'MoTa' => 'nullable|string',
+            'YeuCau' => 'nullable|string',
+            'LinhVuc' => 'nullable|string|max:150',
+            'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
-        $detai->update([
+        $data = [
             'TenDeTai' => $request->TenDeTai,
             'MaHocKy' => $request->MaHocKy,
-            'SoLuongSinhVienToiDa' => $request->SoLuongSinhVienToiDa,
+            'HocPhan' => $request->HocPhan ?? $detai->HocPhan ?? 'Khóa luận tốt nghiệp',
+            'MaNganh' => $request->MaNganh,
+            'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
             'LinhVuc' => $request->LinhVuc,
-            'TrangThai' => 'Chờ duyệt', // Khi sửa đổi -> Chuyển về Chờ duyệt để Giáo vụ duyệt lại
-        ]);
+        ];
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Cập nhật đề tài thành công!');
+        if ($request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
+            $file = $request->file('FileDeCuong');
+            $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('de_cuong', $filename, 'public');
+            $data['FileDeCuong'] = 'storage/' . $path;
+        }
+
+        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Từ chối'])) {
+            $data['TrangThai'] = 'Chờ duyệt';
+            $data['NgayDeXuat'] = now();
+        }
+
+        $detai->update($data);
+
+        return redirect()->route('giangvien.detai.index')->with('success', 'Cập nhật đề tài thành công!' . ($detai->wasChanged('TrangThai') ? ' Đề tài đã được nộp lại cho Giáo vụ rà soát.' : ''));
     }
 
     public function destroy($id)
@@ -216,8 +264,12 @@ class DeTaiController extends Controller
         }
 
         $Nhom = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
-            ->whereHas('dangKyDeTai', function($q) use ($gv) {
-                $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+            ->where(function($query) use ($gv) {
+                $query->whereHas('dangKyDeTai', function($q) use ($gv) {
+                    $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+                })->orWhereHas('deTai', function($q) use ($gv) {
+                    $q->where('MaGV', $gv->MaGV);
+                });
             })->get();
 
         $stats = [

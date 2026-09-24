@@ -95,8 +95,12 @@ class DashboardController extends Controller
             }
         }
 
+        // Kiểm tra điều kiện làm khóa luận
+        $isDuDieuKien = $sinhVien->isDuDieuKien();
+
         return view('sinhvien.dashboard', compact(
             'sinhVien',
+            'isDuDieuKien',
             'hocKyHienTai',
             'nhom',
             'phieuDangKy',

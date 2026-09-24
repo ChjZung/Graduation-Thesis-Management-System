@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('page_title', 'Giảng Viên') – Hệ Thống QLĐA | HUIT</title>
-    <meta name="description" content="Cổng Giảng Viên – Hệ thống quản lý đồ án  HUIT">
+    <title>@yield('page_title', 'Giảng Viên') – Quản Lý Khóa Luận Tốt Nghiệp | HUIT</title>
+    <meta name="description" content="Cổng Giảng Viên – Hệ thống Quản lý Công tác Khóa luận Tốt nghiệp HUIT">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -221,6 +221,15 @@
                      style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
                     <i class="fa-solid fa-circle-xmark me-2"></i>
                     {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
+                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    {{ session('warning') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif

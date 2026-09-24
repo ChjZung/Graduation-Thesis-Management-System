@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('page_title', 'Admin') – Hệ Thống QLĐA | HUIT</title>
-    <meta name="description" content="Hệ thống quản lý đồ án  – Trường Đại Học Công Thương TP.HCM">
+    <title>@yield('page_title', 'Admin') – Quản Lý Khóa Luận Tốt Nghiệp | HUIT</title>
+    <meta name="description" content="Hệ thống quản lý công tác khóa luận tốt nghiệp – Trường Đại Học Công Thương TP.HCM">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -25,7 +25,7 @@
                 <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
                 <div>
                     <div class="sidebar-title">ĐH Công Thương<br>TP. Hồ Chí Minh</div>
-                    <span class="sidebar-subtitle">HUIT – Hệ Thống QLĐA</span>
+                    <span class="sidebar-subtitle">HUIT – Quản Lý Khóa Luận</span>
                 </div>
             </div>
         </div>
@@ -38,19 +38,24 @@
         </div>
 
         <ul class="list-unstyled components">
-            <!-- Dashboard -->
+            <!-- Tổng Quan -->
             <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('admin.dashboard') }}">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard
                 </a>
             </li>
+            <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
+                <a href="{{ route('thongbao.index') }}">
+                    <i class="fa-solid fa-bell"></i> Thông báo hệ thống
+                </a>
+            </li>
 
-            <!-- Kế Hoạch & Lịch -->
-            <li class="nav-section-label">Kế Hoạch & Tiến Độ</li>
+            <!-- Quản Lý Khóa Luận -->
+            <li class="nav-section-label">Quản Lý Khóa Luận</li>
             <li class="{{ request()->routeIs('admin.kehoach.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.kehoach.index') }}">
-                    <i class="fa-solid fa-calendar-check"></i> Quản lý kế hoạch
+                    <i class="fa-solid fa-calendar-check"></i> Kế hoạch khóa luận
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.quydinh.*') ? 'active' : '' }}">
@@ -58,19 +63,16 @@
                     <i class="fa-solid fa-scale-balanced"></i> Quy định khóa luận
                 </a>
             </li>
-            <li class="{{ request()->routeIs('admin.theodoi.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.theodoi.index') }}">
-                    <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
-                </a>
-            </li>
             <li class="{{ request()->routeIs('admin.calendar') ? 'active' : '' }}">
                 <a href="{{ route('admin.calendar') }}">
                     <i class="fa-regular fa-calendar-days"></i> Lịch quy trình
                 </a>
             </li>
-
-            <!-- Xét Duyệt -->
-            <li class="nav-section-label">Xét Duyệt Đề Tài</li>
+            <li class="{{ request()->routeIs('admin.theodoi.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.theodoi.index') }}">
+                    <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
+                </a>
+            </li>
             <li class="{{ request()->routeIs('admin.duyet_detai.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.duyet_detai.index') }}">
                     <i class="fa-solid fa-file-signature"></i> Duyệt đề tài GV
@@ -83,15 +85,15 @@
             </li>
 
             <!-- Bảo Vệ & Hội Đồng -->
-            <li class="nav-section-label">Bảo Vệ & Hội Đồng</li>
-            <li class="{{ request()->routeIs('admin.hosoBaoVe.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.hosoBaoVe.index') }}">
-                    <i class="fa-solid fa-folder-check"></i> Hồ sơ bảo vệ
-                </a>
-            </li>
+            <li class="nav-section-label">Bảo Vệ &amp; Hội Đồng</li>
             <li class="{{ request()->routeIs('admin.hoidong.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.hoidong.index') }}">
                     <i class="fa-solid fa-landmark"></i> Hội đồng bảo vệ
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.hosoBaoVe.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.hosoBaoVe.index') }}">
+                    <i class="fa-solid fa-folder-check"></i> Hồ sơ bảo vệ
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.ketqua.*') ? 'active' : '' }}">
@@ -100,21 +102,21 @@
                 </a>
             </li>
 
-            <!-- Quản Lý Tài Khoản -->
-            <li class="nav-section-label">Quản Lý Người Dùng</li>
-            <li class="{{ request()->routeIs('admin.taikhoan.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.taikhoan.index') }}">
-                    <i class="fa-solid fa-users-gear"></i> Tài khoản hệ thống
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.*') ? 'active' : '' }}">
+            <!-- Quản Lý Người Dùng & Hồ Sơ -->
+            <li class="nav-section-label">Người Dùng &amp; Hồ Sơ</li>
+            <li class="{{ request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.index') }}">
-                    <i class="fa-solid fa-user-graduate"></i> Sinh viên
+                    <i class="fa-solid fa-user-graduate"></i> Quản lý Sinh viên
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.index') }}">
                     <i class="fa-solid fa-chalkboard-user"></i> Giảng viên
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.taikhoan.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.taikhoan.index') }}">
+                    <i class="fa-solid fa-users-gear"></i> Tài khoản hệ thống
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.yeucau.*') ? 'active' : '' }}">
@@ -123,8 +125,13 @@
                 </a>
             </li>
 
-            <!-- Quản Lý Danh Mục -->
-            <li class="nav-section-label">Danh Mục Hệ Thống</li>
+            <!-- Danh Mục Học Vụ -->
+            <li class="nav-section-label">Danh Mục Học Vụ</li>
+            <li class="{{ request()->routeIs('hocky.*') ? 'active' : '' }}">
+                <a href="{{ route('hocky.index') }}">
+                    <i class="fa-solid fa-clock"></i> Học kỳ
+                </a>
+            </li>
             <li class="{{ request()->routeIs('khoa.*') ? 'active' : '' }}">
                 <a href="{{ route('khoa.index') }}">
                     <i class="fa-solid fa-university"></i> Khoa
@@ -143,19 +150,6 @@
             <li class="{{ request()->routeIs('lop.*') ? 'active' : '' }}">
                 <a href="{{ route('lop.index') }}">
                     <i class="fa-solid fa-users-rectangle"></i> Lớp
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('hocky.*') ? 'active' : '' }}">
-                <a href="{{ route('hocky.index') }}">
-                    <i class="fa-solid fa-clock"></i> Học kỳ
-                </a>
-            </li>
-
-            <!-- Thông Tin Hệ Thống -->
-            <li class="nav-section-label">Thông Báo</li>
-            <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
-                <a href="{{ route('thongbao.index') }}">
-                    <i class="fa-solid fa-bell"></i> Thông báo hệ thống
                 </a>
             </li>
         </ul>
@@ -286,6 +280,15 @@
                      style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
                     <i class="fa-solid fa-circle-xmark me-2"></i>
                     {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
+                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    {{ session('warning') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif

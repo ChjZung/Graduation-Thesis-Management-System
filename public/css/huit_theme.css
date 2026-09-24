@@ -136,28 +136,28 @@ body {
 
 /* Section labels */
 #sidebar .nav-section-label {
-    padding: 16px 18px 6px;
+    padding: 13px 16px 4px;
     font-size: 0.65rem;
     font-weight: 700;
     color: rgba(255,255,255,0.45);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
 }
 
 /* Nav links */
 #sidebar ul li a {
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding: 11px 18px;
-    font-size: 0.88rem;
+    gap: 10px;
+    padding: 8.5px 14px;
+    font-size: 0.84rem;
     font-weight: 500;
     color: rgba(255,255,255,0.78);
     text-decoration: none;
     transition: var(--transition);
     border-left: 3px solid transparent;
     margin: 1px 8px;
-    border-radius: 9px;
+    border-radius: 8px;
 }
 
 #sidebar ul li a i {
@@ -1576,11 +1576,33 @@ body {
 /* Filter bar */
 .admin-filter-bar {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.admin-filter-bar .form-control,
+.admin-filter-bar .form-select,
+.admin-filter-bar .input-group-text {
+    height: 40px;
+    font-size: 0.85rem;
+    border-color: #cbd5e1;
+}
+
+.admin-filter-bar .btn {
+    height: 40px;
+    font-size: 0.85rem;
+    white-space: nowrap !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    flex-shrink: 0;
 }
 
 /* Status Pill Tabs */
@@ -1805,5 +1827,125 @@ body {
     font-size: 0.82rem;
     color: #64748b;
     margin: 0;
+}
+
+/* ============================================================
+   HUIT CREATE MODAL & FORM SYSTEM (MATCHING REFERENCE UI)
+   ============================================================ */
+.modal-dialog-huit {
+    max-width: 840px;
+}
+.modal-content-huit, .card-create-huit {
+    border-radius: 20px !important;
+    border: none !important;
+    overflow: hidden !important;
+    box-shadow: 0 15px 35px rgba(0, 59, 115, 0.15) !important;
+    background: #ffffff !important;
+}
+
+.modal-header-huit, .card-header-huit {
+    background: linear-gradient(135deg, #004b9c 0%, #00305a 100%) !important;
+    color: #ffffff !important;
+    padding: 16px 24px !important;
+    border-bottom: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.modal-title-huit, .card-title-huit {
+    font-size: 1.12rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.form-label-huit {
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    color: #1e293b !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+
+.form-label-huit .text-danger {
+    color: #ef4444 !important;
+}
+
+.form-control-huit, .form-select-huit {
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    font-size: 0.95rem !important;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    min-height: 48px !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-control-huit:focus, .form-select-huit:focus {
+    border-color: #0052cc !important;
+    box-shadow: 0 0 0 4px rgba(0, 82, 204, 0.15) !important;
+    outline: none !important;
+}
+
+.modal-footer-huit, .card-footer-huit {
+    background: #f8fafc !important;
+    padding: 20px 28px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    justify-content: flex-start !important;
+}
+
+.btn-save-huit {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    padding: 12px 28px !important;
+    border-radius: 12px !important;
+    font-size: 0.95rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: background 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+}
+
+.btn-save-huit:hover {
+    background: #15803d !important;
+    color: #ffffff !important;
+}
+
+.btn-cancel-huit {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 12px 28px !important;
+    border-radius: 12px !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.btn-cancel-huit:hover {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.alert-info-huit {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+    border-radius: 12px !important;
+    padding: 14px 18px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
 }
 

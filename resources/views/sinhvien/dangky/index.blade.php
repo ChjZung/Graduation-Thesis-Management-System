@@ -3,18 +3,7 @@
 @section('page_title', 'Đăng Ký Đề Tài Khóa Luận')
 
 @section('content')
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-    <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+
 
 <!-- CẢNH BÁO NẾU NHÓM CHƯA ĐỦ 3 THÀNH VIÊN -->
 @if(isset($nhom) && $nhom && $soThanhVien < 3)
@@ -77,9 +66,34 @@
 </div>
 @endif
 
+<!-- BƯỚC 1: CHỌN MÔN / HỌC PHẦN -->
+<div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-light">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-book-open text-primary me-2"></i>Bước 1: Chọn Môn / Học Phần:</span>
+            <div class="small text-muted">Lọc danh sách đề tài chính thức theo học phần bạn đang học</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('sinhvien.dangky.index') }}" 
+               class="btn btn-sm {{ !$selectedHocPhan ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
+                Tất Cả Học Phần
+            </a>
+            @foreach($hocPhans ?? ['Khóa luận tốt nghiệp', 'Đồ án tốt nghiệp', 'Đồ án chuyên ngành'] as $hp)
+            <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hp]) }}" 
+               class="btn btn-sm {{ $selectedHocPhan === $hp ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
+                {{ $hp }}
+            </a>
+            @endforeach
+        </div>
+    </div>
+</div>
+
 <div class="card card-premium">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Danh Sách Đề Tài Đã Công Bố Đăng Ký</span>
+        <span><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Bước 2: Danh Sách Đề Tài Đã Công Bố ({{ $detais->total() }} đề tài)</span>
+        @if($selectedHocPhan)
+            <span class="badge bg-primary rounded-pill px-3 py-1">{{ $selectedHocPhan }}</span>
+        @endif
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -87,10 +101,10 @@
                 <thead>
                     <tr>
                         <th width="12%">Mã Đề Tài</th>
-                        <th width="35%">Tên Đề Tài Khóa Luận</th>
+                        <th width="38%">Tên Đề Tài & Học Phần</th>
                         <th width="20%">Giảng Viên Đề Xuất</th>
-                        <th width="15%" class="text-center">Số SV Tối Đa</th>
-                        <th width="18%" class="text-center">Trạng Thái / Thao Tác</th>
+                        <th width="13%" class="text-center">Số SV Tối Đa</th>
+                        <th width="17%" class="text-center">Trạng Thái / Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -109,7 +123,23 @@
                         <td><span class="badge bg-light text-dark fw-bold border">{{ $dt->MaDeTai }}</span></td>
                         <td>
                             <div class="fw-bold text-primary-custom">{{ $dt->TenDeTai }}</div>
-                            <div class="small text-muted">{{ Str::limit($dt->MoTa, 90) }}</div>
+                            <div class="small text-muted mb-1">{{ Str::limit($dt->MoTa, 90) }}</div>
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+                                <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">
+                                    {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
+                                </span>
+                                @if($dt->LinhVuc)
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">{{ $dt->LinhVuc }}</span>
+                                @endif
+                                @if($dt->nganh)
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">{{ $dt->nganh->TenNganh }}</span>
+                                @endif
+                                @if($dt->FileDeCuong)
+                                    <a href="{{ asset($dt->FileDeCuong) }}" target="_blank" class="badge bg-success-subtle text-success border text-decoration-none" style="font-size: 0.72rem;">
+                                        <i class="fa-solid fa-file-lines me-1"></i> Xem đề cương
+                                    </a>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <div class="fw-bold">{{ $dt->giangVien->HoTen ?? 'Chưa rõ' }}</div>

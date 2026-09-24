@@ -19,8 +19,15 @@ class DeTai extends Model
         'TenDeTai',
         'MoTa',
         'YeuCau',
+        'LinhVuc',
+        'SoLuongSinhVienToiDa',
+        'FileDeCuong',
+        'MaNganh',
+        'HocPhan',
         'TrangThai',
+        'LyDoTuChoi',
         'NgayDeXuat',
+        'NgayDuyet',
         'MaGV',
         'MaHocKy',
     ];
@@ -35,6 +42,11 @@ class DeTai extends Model
     public function hocKy()
     {
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
+
+    public function nganh()
+    {
+        return $this->belongsTo(Nganh::class, 'MaNganh', 'MaNganh');
     }
 
     public function chiTietDuyets()

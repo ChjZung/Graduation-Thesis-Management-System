@@ -17,32 +17,7 @@
     </div>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-    <div class="d-flex align-items-center">
-        <i class="fa-solid fa-circle-check fs-5 me-2"></i>
-        <div>{{ session('success') }}</div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
-@if(isset($errors) && $errors->any())
-<div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-    <div class="d-flex align-items-start">
-        <i class="fa-solid fa-circle-exclamation fs-5 me-2 mt-1"></i>
-        <div>
-            <div class="fw-bold mb-1">Đã có lỗi xảy ra khi xử lý:</div>
-            <ul class="mb-0 ps-3 small">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
 <!-- Hero Header Card -->
 <div class="card card-premium shadow-sm mb-4 border-0" style="background: linear-gradient(135deg, #0072CE 0%, #003B73 100%); color: #fff;">

@@ -63,23 +63,7 @@
     <div class="col-lg-6 col-md-8">
         <div class="card card-premium shadow-sm">
             <div class="card-body p-4">
-                @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-                    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                @endif
 
-                @if(isset($errors) && $errors->any())
-                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                    <ul class="mb-0 small">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                @endif
 
                 <form method="POST" action="{{ route('password.change.post') }}" id="formChangePassword">
                     @csrf

@@ -47,6 +47,11 @@ class PhieuDangKy extends Model
         return $this->belongsTo(Nhom::class, 'MaNhom', 'MaNhom');
     }
 
+    public function nhomDoAn()
+    {
+        return $this->nhom();
+    }
+
     public function deTai()
     {
         return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai');

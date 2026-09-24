@@ -3,24 +3,9 @@
 @section('page_title', 'Lộ Trình & Tiến Độ Khóa Luận Tốt Nghiệp')
 
 @section('content')
-<!-- Alerts -->
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
-@if(session('error') || (isset($error) && $error))
+@if(isset($error) && $error)
 <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ session('error') ?? $error }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
-@if(isset($errors) && $errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-3">
-    <ul class="mb-0">@foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach</ul>
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ $error }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif

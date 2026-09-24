@@ -17,6 +17,7 @@ class BoMon extends Model
     protected $fillable = [
         'MaBoMon',
         'TenBoMon',
+        'TruongBoMon',
         'MaKhoa',
     ];
 

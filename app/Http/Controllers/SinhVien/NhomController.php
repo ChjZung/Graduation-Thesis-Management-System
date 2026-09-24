@@ -124,6 +124,11 @@ class NhomController extends Controller
     {
         $sinhVien = SinhVien::with('taiKhoan')->where('MaTK', Auth::user()->MaTK)->firstOrFail();
 
+        // Kiểm tra điều kiện làm khóa luận
+        if (!$sinhVien->isDuDieuKien()) {
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp (Yêu cầu: Tích lũy tối thiểu 115 tín chỉ, ĐTB >= 2.0 và được Giáo vụ xét duyệt).');
+        }
+
         // Kiểm tra SV đã ở trong nhóm nào chính thức chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
@@ -276,8 +281,16 @@ class NhomController extends Controller
         $badgeClass = 'bg-success';
         $isJoinRequest = false;
 
+        // 2.0 Kiểm tra sinh viên có đủ điều kiện làm khóa luận không
+        if (!$sinhVien->isDuDieuKien()) {
+            $canInvite = false;
+            $tc = $sinhVien->SoTinChiTichLuy ?? 0;
+            $gpa = number_format($sinhVien->DiemTichLuy ?? 0.0, 2);
+            $statusText = "🔴 Chưa đủ điều kiện làm khóa luận (Tín chỉ: {$tc}/115, ĐTB: {$gpa}/2.0).";
+            $badgeClass = 'bg-danger';
+        }
         // 2.1 Có phải chính người đang đăng nhập không?
-        if ($currentUserSV && $sinhVien->MaSV === $currentUserSV->MaSV) {
+        elseif ($currentUserSV && $sinhVien->MaSV === $currentUserSV->MaSV) {
             $canInvite = false;
             $statusText = '⚠️ Bạn không thể gửi lời mời cho chính mình.';
             $badgeClass = 'bg-warning text-dark';
@@ -380,6 +393,11 @@ class NhomController extends Controller
 
         if ($svThem->MaSV === $sinhVien->MaSV) {
             return redirect()->back()->withErrors('Bạn không thể tự mời chính mình!');
+        }
+
+        // 4.1 Kiểm tra sinh viên được mời có đủ điều kiện làm khóa luận không
+        if (!$svThem->isDuDieuKien()) {
+            return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} chưa đủ điều kiện làm khóa luận tốt nghiệp!");
         }
 
         // 5. Tái kiểm tra sinh viên được mời đã có nhóm chưa (Chống Race Condition)
@@ -511,6 +529,11 @@ class NhomController extends Controller
     {
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
 
+        // Kiểm tra điều kiện làm khóa luận
+        if (!$sinhVien->isDuDieuKien()) {
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp để xin gia nhập nhóm!');
+        }
+
         // Kiểm tra SV đã có nhóm chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
@@ -599,6 +622,12 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Nhóm đã đủ 3 thành viên, không thể thêm thành viên mới!');
         }
 
+        // Kiểm tra sinh viên xin vào có đủ điều kiện làm khóa luận không
+        $svXinVao = SinhVien::find($maSV);
+        if (!$svXinVao || !$svXinVao->isDuDieuKien()) {
+            return redirect()->back()->withErrors('Sinh viên này chưa đủ điều kiện làm khóa luận tốt nghiệp!');
+        }
+
         // Kiểm tra sinh viên xin vào đã có nhóm khác chưa
         $alreadyInAnother = ThanhVienNhom::where('MaSV', $maSV)
             ->where('TrangThai', 'da_tham_gia')
@@ -645,6 +674,11 @@ class NhomController extends Controller
     public function xacNhanLoiMoi($maNhom)
     {
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+
+        // Kiểm tra điều kiện làm khóa luận
+        if (!$sinhVien->isDuDieuKien()) {
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp để tham gia nhóm!');
+        }
 
         // 1. Kiểm tra lời mời có tồn tại cho sinh viên này không
         $hasInvite = ThanhVienNhom::where('MaNhom', $maNhom)

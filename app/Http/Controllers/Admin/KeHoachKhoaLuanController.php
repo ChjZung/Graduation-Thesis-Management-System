@@ -70,15 +70,13 @@ class KeHoachKhoaLuanController extends Controller
             'mocs.*.NgayKetThuc.after_or_equal' => 'Ngày kết thúc của từng mốc phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
-        // Kiểm tra kế hoạch trùng lặp phạm vi trong cùng học kỳ
+        // Kiểm tra kế hoạch trùng lặp trong cùng học kỳ
         $exists = KeHoachKhoaLuan::where('MaHocKy', $request->MaHocKy)
-            ->where('NamHoc', $request->NamHoc)
-            ->where('MaKhoa', $request->MaKhoa)
             ->where('TrangThai', '!=', 'HỦY')
             ->exists();
 
         if ($exists) {
-            return redirect()->back()->withInput()->withErrors('Đã tồn tại kế hoạch khóa luận trong cùng Học kỳ & Phạm vi nghiệp vụ.');
+            return redirect()->back()->withInput()->withErrors('Đã tồn tại kế hoạch khóa luận trong cùng Học kỳ.');
         }
 
         // Kiểm tra các mốc phải nằm trong khoảng ngày bắt đầu và kết thúc của kế hoạch
@@ -92,18 +90,16 @@ class KeHoachKhoaLuanController extends Controller
             $maKH = 'KH_' . Str::upper(Str::random(6));
             $user = auth()->user();
 
+            $giaoVu = \App\Models\GiaoVu::where('MaGVu', $user ? $user->MaTK : '')->first() ?: \App\Models\GiaoVu::first();
+            $maGVu = $giaoVu ? $giaoVu->MaGVu : null;
+
             $keHoach = KeHoachKhoaLuan::create([
+                'MakeHoach'   => $maKH,
                 'MaKeHoach'   => $maKH,
-                'MaKhoa'      => $request->MaKhoa ?: null,
-                'MaBoMon'     => $request->MaBoMon ?: null,
                 'MaHocKy'     => $request->MaHocKy,
-                'NamHoc'      => $request->NamHoc,
-                'MaGVu'       => $user ? $user->MaTK : 'GVU01',
-                'NguoiLap'    => $user ? $user->MaTK : 'GVU01',
-                'TenKeHoach'  => $request->TenKeHoach,
+                'MaGVu'       => $maGVu,
+                'TenKeHoach'  => trim($request->TenKeHoach),
                 'NoiDung'     => $request->NoiDung,
-                'NgayBatDau'  => $request->NgayBatDau,
-                'NgayKetThuc' => $request->NgayKetThuc,
                 'TrangThai'   => $request->action === 'publish' ? 'ĐÃ CÔNG BỐ' : 'NHÁP',
                 'NgayTao'     => now(),
                 'NgayCongBo'  => $request->action === 'publish' ? now() : null,
@@ -113,6 +109,7 @@ class KeHoachKhoaLuanController extends Controller
                 $maMoc = 'MOC_' . ($index + 1) . '_' . Str::upper(Str::random(4));
                 MocThoiGianKhoaLuan::create([
                     'MaMoc'           => $maMoc,
+                    'MakeHoach'       => $maKH,
                     'MaKeHoach'       => $maKH,
                     'LoaiGiaiDoan'    => $mocData['LoaiGiaiDoan'] ?? 'THUC_HIEN',
                     'ThuTu'           => $index + 1,
@@ -131,7 +128,7 @@ class KeHoachKhoaLuanController extends Controller
 
     public function show($id)
     {
-        $keHoach = KeHoachKhoaLuan::with(['hocKy', 'khoa', 'boMon', 'mocThoiGians', 'quyDinhs'])->findOrFail($id);
+        $keHoach = KeHoachKhoaLuan::with(['hocKy', 'giaoVu', 'mocThoiGians', 'quyDinhs', 'bieuMaus'])->findOrFail($id);
         $currentPhase = PlanPhaseService::getCurrentPhase($keHoach);
 
         return view('admin.kehoach.show', compact('keHoach', 'currentPhase'));
@@ -146,10 +143,10 @@ class KeHoachKhoaLuanController extends Controller
         }
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $Khoa = Khoa::orderBy('TenKhoa')->get();
+        $khoas = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
 
-        return view('admin.kehoach.edit', compact('keHoach', 'hocKies', 'Khoa', 'boMons'));
+        return view('admin.kehoach.edit', compact('keHoach', 'hocKies', 'khoas', 'boMons') + ['Khoa' => $khoas]);
     }
 
     public function update(Request $request, $id)
@@ -198,9 +195,6 @@ class KeHoachKhoaLuanController extends Controller
         }
 
         $keHoach->TrangThai = $status;
-        if ($status === 'ĐÃ CÔNG BỐ' && empty($keHoach->NgayCongBo)) {
-            $keHoach->NgayCongBo = now();
-        }
         $keHoach->save();
 
         return redirect()->back()->with('success', "Đã chuyển trạng thái kế hoạch thành: {$status}");

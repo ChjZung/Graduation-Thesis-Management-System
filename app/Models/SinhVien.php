@@ -81,4 +81,29 @@ class SinhVien extends Model
     {
         return $this->hasMany(KetQuaSinhVien::class, 'MaSV', 'MaSV');
     }
+
+    /**
+     * Kiểm tra sinh viên có đủ điều kiện làm khóa luận tốt nghiệp không
+     * Tiêu chí:
+     * - Có trong DanhSachSVDuDieuKien với TrangThai = 'Đủ điều kiện' HOẶC
+     * - Đạt tiêu chuẩn Khoa: Tích lũy >= 115 tín chỉ, GPA >= 2.0 và đang học
+     */
+    public function isDuDieuKien(): bool
+    {
+        $daDuyet = $this->danhSachSVDuDieuKiens()->where('TrangThai', 'Đủ điều kiện')->exists();
+        if ($daDuyet) {
+            return true;
+        }
+
+        $tinChi = (int)($this->SoTinChiTichLuy ?? 0);
+        $gpa = (float)($this->DiemTichLuy ?? 0.0);
+        $trangThai = $this->TrangThai ?? 'Đang học';
+
+        return ($tinChi >= 115) && ($gpa >= 2.0) && in_array($trangThai, ['Đang học', 'Đủ điều kiện']);
+    }
+
+    public function getIsDuDieuKienAttribute(): bool
+    {
+        return $this->isDuDieuKien();
+    }
 }

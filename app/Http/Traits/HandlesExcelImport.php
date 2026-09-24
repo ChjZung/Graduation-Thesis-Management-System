@@ -81,13 +81,23 @@ trait HandlesExcelImport
 
             $alertType = $hasErrors ? ($res['success_count'] > 0 ? 'import_warning' : 'import_danger') : 'import_result';
 
-            return redirect()->back()->with($alertType, $msg);
+            return redirect()->back()
+                ->with('import_result', $msg)
+                ->with('import_alert_type', $alertType)
+                ->with($alertType, $msg);
         } catch (\Throwable $e) {
             Log::error("Import {$entityLabel} error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return redirect()->back()->withErrors(
-                'Lỗi khi đọc file: ' . $e->getMessage()
-                . '. Vui lòng đảm bảo file đúng định dạng (.xlsx, .xls, .csv) và thử lại.'
-            );
+            $errHtml = "<div class='d-flex align-items-center mb-1'>"
+                     . "<i class='fa-solid fa-triangle-exclamation me-2 fs-5 text-danger'></i>"
+                     . "<div><strong>Lỗi Import {$entityLabel}:</strong> " . e($e->getMessage()) . "</div></div>"
+                     . "<div class='small text-muted'>Vui lòng kiểm tra lại cấu trúc file (.xlsx, .xls, .csv) theo đúng file mẫu chuẩn và thử lại.</div>";
+            return redirect()->back()
+                ->with('import_danger', $errHtml)
+                ->with('import_result', $errHtml)
+                ->withErrors(
+                    'Lỗi khi đọc file: ' . $e->getMessage()
+                    . '. Vui lòng đảm bảo file đúng định dạng (.xlsx, .xls, .csv) và thử lại.'
+                );
         }
     }
 }

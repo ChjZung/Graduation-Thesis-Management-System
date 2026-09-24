@@ -24,12 +24,14 @@ class KhoaController extends Controller
             });
         }
 
-        $khoas = $query->paginate(10)->withQueryString();
+        $khoas = $query->paginate(5)->withQueryString();
 
         $totalKhoa = Khoa::count();
         $cnttKhoa = Khoa::where('TenKhoa', 'like', '%Công nghệ thông tin%')->orWhere('MaKhoa', 'like', '%CNTT%')->first();
         $bomonCntt = $cnttKhoa ? $cnttKhoa->boMons()->count() : 0;
         $totalGv = \App\Models\GiangVien::count();
+
+        $giangViens = \App\Models\GiangVien::orderBy('HoTen')->get();
 
         $stats = [
             'total_khoa' => $totalKhoa,
@@ -38,30 +40,39 @@ class KhoaController extends Controller
             'status' => '100%',
         ];
 
-        return view('admin.khoa.index', compact('khoas', 'stats'));
+        return view('admin.khoa.index', compact('khoas', 'stats', 'giangViens'));
     }
 
     public function create()
     {
-        return view('admin.khoa.create');
+        $giangViens = \App\Models\GiangVien::orderBy('HoTen')->get();
+        return view('admin.khoa.create', compact('giangViens'));
     }
 
     public function store(Request $request)
     {
+        if ($request->filled('TenKhoa')) {
+            $request->merge(['TenKhoa' => trim($request->TenKhoa)]);
+        }
+        if ($request->filled('MaKhoa')) {
+            $request->merge(['MaKhoa' => strtoupper(trim($request->MaKhoa))]);
+        }
+
         $request->validate([
             'MaKhoa' => 'nullable|string|max:10|unique:Khoa,MaKhoa',
             'TenKhoa' => 'required|string|max:100|unique:Khoa,TenKhoa',
         ], [
-            'MaKhoa.unique' => 'Mã khoa này đã tồn tại.',
+            'MaKhoa.unique' => 'Mã khoa này đã tồn tại trong hệ thống.',
             'TenKhoa.required' => 'Vui lòng nhập tên khoa.',
-            'TenKhoa.unique' => 'Tên khoa này đã tồn tại.',
+            'TenKhoa.unique' => 'Tên khoa này đã tồn tại trong hệ thống.',
         ]);
 
-        $maKhoa = $request->filled('MaKhoa') ? strtoupper(trim($request->MaKhoa)) : IdGenerator::nextKhoa();
+        $maKhoa = $request->filled('MaKhoa') ? $request->MaKhoa : IdGenerator::nextKhoa();
 
         Khoa::create([
             'MaKhoa' => $maKhoa,
-            'TenKhoa' => trim($request->TenKhoa),
+            'TenKhoa' => $request->TenKhoa,
+            'TruongKhoa' => $request->TruongKhoa,
         ]);
 
         return redirect()->route('khoa.index')->with('success', "Thêm Khoa '{$request->TenKhoa}' thành công!");
@@ -97,22 +108,28 @@ class KhoaController extends Controller
     public function edit($id)
     {
         $khoa = Khoa::findOrFail($id);
-        return view('admin.khoa.edit', compact('khoa'));
+        $giangViens = \App\Models\GiangVien::orderBy('HoTen')->get();
+        return view('admin.khoa.edit', compact('khoa', 'giangViens'));
     }
 
     public function update(Request $request, $id)
     {
         $khoa = Khoa::findOrFail($id);
 
+        if ($request->filled('TenKhoa')) {
+            $request->merge(['TenKhoa' => trim($request->TenKhoa)]);
+        }
+
         $request->validate([
             'TenKhoa' => 'required|string|max:100|unique:Khoa,TenKhoa,' . $id . ',MaKhoa',
         ], [
             'TenKhoa.required' => 'Vui lòng nhập tên khoa.',
-            'TenKhoa.unique' => 'Tên khoa này đã tồn tại.',
+            'TenKhoa.unique' => 'Tên khoa này đã tồn tại trong hệ thống.',
         ]);
 
         $khoa->update([
-            'TenKhoa' => trim($request->TenKhoa),
+            'TenKhoa' => $request->TenKhoa,
+            'TruongKhoa' => $request->TruongKhoa,
         ]);
 
         return redirect()->route('khoa.index')->with('success', 'Cập nhật Khoa thành công!');
@@ -120,12 +137,19 @@ class KhoaController extends Controller
 
     public function destroy($id)
     {
-        $khoa = Khoa::findOrFail($id);
+        $khoa = Khoa::withCount(['boMons', 'nganhs', 'lops', 'sinhViens', 'giaoVus'])->findOrFail($id);
+
+        $totalRelated = $khoa->bo_mons_count + $khoa->nganhs_count + $khoa->lops_count + $khoa->sinh_viens_count + $khoa->giao_vus_count;
+
+        if ($totalRelated > 0) {
+            return redirect()->back()->withErrors("Không thể xóa Khoa '{$khoa->TenKhoa}' do đang có dữ liệu liên quan ({$khoa->bo_mons_count} bộ môn, {$khoa->nganhs_count} ngành, {$khoa->sinh_viens_count} sinh viên). Vui lòng di chuyển hoặc xóa các dữ liệu thuộc khoa trước.");
+        }
+
         try {
-            Khoa::destroy($id);
+            $khoa->delete();
             return redirect()->route('khoa.index')->with('success', "Xóa Khoa '{$khoa->TenKhoa}' thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors("Không thể xóa Khoa '{$khoa->TenKhoa}' do đang có Bộ môn hoặc Ngành học trực thuộc.");
+            return redirect()->back()->withErrors("Không thể xóa Khoa '{$khoa->TenKhoa}': " . $e->getMessage());
         }
     }
 

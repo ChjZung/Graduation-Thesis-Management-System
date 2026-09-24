@@ -64,7 +64,7 @@
 
                 {{-- Cột 3: Hệ thống --}}
               <div class="col-lg-3 col-md-6">
-                    <div class="footer-col-title">Hệ Thống QLĐA</div>
+                    <div class="footer-col-title">Hệ Thống Khóa Luận</div>
                     <ul class="footer-link-list">
                         <li>
                             <a href="{{ route('login') }}">
