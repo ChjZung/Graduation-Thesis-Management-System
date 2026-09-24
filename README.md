@@ -110,9 +110,9 @@ graph TD
 | **Giáo vụ Khoa (Admin)** | `giaovu01` | `123456` | Quyền Quản trị viên |
 | **Giảng viên** | `gv01` | `123456` | GV Hướng dẫn & Chủ tịch Hội đồng |
 | **Giảng viên** | `gv02` / `gv03` | `123456` | Thư ký & GV Phản biện |
-| **Sinh viên (Nhóm N01)** | `sv01` | `123456` | Trưởng nhóm N01 |
-| **Sinh viên (Nhóm N01)** | `sv02` / `sv03` | `123456` | Thành viên nhóm N01 |
-| **Sinh viên (Chưa nhóm)** | `sv04` / `sv05` / `sv06` | `123456` | Dùng để test tạo nhóm mới |
+| **Sinh viên (Nhóm NH01)** | `2001230101` | `123456` | Trưởng nhóm NH01 |
+| **Sinh viên (Nhóm NH01)** | `2001230102` / `2001230103` | `123456` | Thành viên nhóm NH01 |
+| **Sinh viên (Chưa nhóm)** | `2001230120` / `2001230121` | `123456` | Dùng để test tạo nhóm mới |
 
 ---
 
