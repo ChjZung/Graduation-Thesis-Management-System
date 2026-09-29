@@ -20,7 +20,7 @@ class DeTaiController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->first();
+        $gv = GiangVien::getLoggedInGiangVien($user);
 
         if (!$gv) {
             return redirect()->back()->withErrors('Không tìm thấy thông tin Giảng viên liên kết với tài khoản này.');
@@ -36,7 +36,7 @@ class DeTaiController extends Controller
             $query->where('TrangThai', $request->TrangThai);
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10);
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // Danh sách các nhóm chưa có đề tài đã duyệt
@@ -59,7 +59,7 @@ class DeTaiController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->first();
+        $gv = GiangVien::getLoggedInGiangVien($user);
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
 
@@ -69,7 +69,10 @@ class DeTaiController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) {
+            return redirect()->back()->withErrors('Không tìm thấy thông tin Giảng viên của tài khoản này.');
+        }
 
         $request->validate([
             'TenDeTai' => 'required|string|max:300',
@@ -118,17 +121,18 @@ class DeTaiController extends Controller
             'FileDeCuong' => $fileDeCuongPath,
             'MaNganh' => $request->MaNganh,
             'MaHocKy' => $request->MaHocKy,
-            'TrangThai' => 'Chờ duyệt',
+            'TrangThai' => 'Chờ duyệt cấp Bộ môn',
             'NgayDeXuat' => now(),
         ]);
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Đề xuất đề tài mới thành công! Vui lòng chờ Giáo vụ Khoa phê duyệt.');
+        return redirect()->route('giangvien.detai.index')->with('success', 'Đề xuất đề tài mới thành công! Đề tài đã được chuyển tới Trưởng bộ môn để kiểm tra và phân công phản biện đề cương.');
     }
 
     public function edit($id)
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
@@ -139,7 +143,8 @@ class DeTaiController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
         $request->validate([
@@ -172,20 +177,21 @@ class DeTaiController extends Controller
             $data['FileDeCuong'] = 'storage/' . $path;
         }
 
-        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Từ chối'])) {
-            $data['TrangThai'] = 'Chờ duyệt';
+        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Từ chối', 'Không đạt phản biện'])) {
+            $data['TrangThai'] = 'Chờ duyệt cấp Bộ môn';
             $data['NgayDeXuat'] = now();
         }
 
         $detai->update($data);
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Cập nhật đề tài thành công!' . ($detai->wasChanged('TrangThai') ? ' Đề tài đã được nộp lại cho Giáo vụ rà soát.' : ''));
+        return redirect()->route('giangvien.detai.index')->with('success', 'Cập nhật đề tài thành công!' . ($detai->wasChanged('TrangThai') ? ' Đề tài đã được nộp lại cho Trưởng bộ môn xem xét.' : ''));
     }
 
     public function destroy($id)
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
         try {
@@ -205,19 +211,24 @@ class DeTaiController extends Controller
         ]);
 
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
-        if ($detai->TrangThai !== 'Đã duyệt') {
-            return redirect()->back()->withErrors('Chỉ đề tài đã được Giáo vụ phê duyệt mới có thể gán nhóm thực hiện!');
+        if (!in_array($detai->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố'])) {
+            return redirect()->back()->withErrors('Chỉ đề tài đã được Trưởng khoa phê duyệt hoặc Giáo vụ công bố mới có thể gán nhóm thực hiện!');
         }
 
         $nhom = Nhom::with('thanhViens')->findOrFail($request->MaNhom);
 
-        // Kiểm tra nhóm phải đủ 3 thành viên chính thức
+        // Quy định: Nhóm từ 1 đến 3 thành viên
         $countMembers = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
-        if ($countMembers < 3) {
-            return redirect()->back()->withErrors("Nhóm '{$nhom->TenNhom}' hiện chỉ có {$countMembers}/3 thành viên. Nhóm cần đủ 3 thành viên mới được gán đề tài!");
+        if ($countMembers < 1 || $countMembers > 3) {
+            return redirect()->back()->withErrors("Quy định: Nhóm phải có từ 1 đến 3 thành viên. Nhóm '{$nhom->TenNhom}' hiện có {$countMembers} thành viên!");
+        }
+        $maxSV = $detai->SoLuongSinhVienToiDa ?? 3;
+        if ($countMembers > $maxSV) {
+            return redirect()->back()->withErrors("Đề tài chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm hiện có {$countMembers} thành viên!");
         }
 
         DB::transaction(function () use ($detai, $nhom, $gv) {
@@ -258,7 +269,7 @@ class DeTaiController extends Controller
     public function myTasks()
     {
         $user = Auth::user();
-        $gv = GiangVien::where('MaTK', $user->MaTK)->first();
+        $gv = GiangVien::getLoggedInGiangVien($user);
         if (!$gv) {
             return redirect()->route('giangvien.dashboard');
         }

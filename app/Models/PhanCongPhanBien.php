@@ -19,6 +19,9 @@ class PhanCongPhanBien extends Model
         'VaiTro',
         'NgayPhanCong',
         'TrangThai',
+        'NhanXet',
+        'KetQua',
+        'NgayDanhGia',
         'MaGV',
         'MaDeTai',
     ];

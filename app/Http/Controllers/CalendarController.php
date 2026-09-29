@@ -24,12 +24,24 @@ class CalendarController extends Controller
         ];
 
         foreach ($mocs as $i => $moc) {
+            $color = match($moc->LoaiGiaiDoan) {
+                'TAO_NHOM', 'DANG_KY_DE_TAI', 'XU_LY_NGOAI_LE' => '#0072CE',
+                'CONG_BO_GVHD', 'LIEN_HE_GVHD' => '#0D6EFD',
+                'THUC_HIEN' => '#6F42C1',
+                'BAO_CAO_TIEN_DO_1', 'BAO_CAO_TIEN_DO_2', 'BAO_CAO_TIEN_DO_3' => '#FD7E14',
+                'DAO_VAN' => '#DC3545',
+                'GVHD_XAC_NHAN' => '#20C997',
+                'NOP_BAO_CAO' => '#0D6EFD',
+                'BAO_VE' => '#198754',
+                default => $colors[$i % count($colors)],
+            };
+
             $events[] = [
                 'id' => $moc->MaMoc,
                 'title' => $moc->TenMoc,
                 'start' => $moc->NgayBatDau,
                 'end' => date('Y-m-d', strtotime($moc->NgayKetThuc . ' +1 day')),
-                'color' => $colors[$i % count($colors)],
+                'color' => $color,
                 'description' => $moc->MoTa ?? 'Hạn nộp báo cáo theo quy định',
                 'keHoach' => $moc->keHoach->TenKeHoach ?? '',
             ];
@@ -69,10 +81,17 @@ class CalendarController extends Controller
     {
         $events = $this->getCalendarEvents();
         $nextMilestone = $this->getNextUpcomingMilestone();
+        $allMilestones = MocThoiGianKhoaLuan::with('keHoach')->orderBy('NgayBatDau', 'asc')->get();
+        $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
+        $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
+
         return view('calendar.index', [
             'layout' => 'layouts.giangvien',
             'events' => $events,
             'nextMilestone' => $nextMilestone,
+            'allMilestones' => $allMilestones,
+            'plans' => $plans,
+            'activePlan' => $activePlan,
             'roleTitle' => 'Giảng Viên',
         ]);
     }
@@ -81,10 +100,17 @@ class CalendarController extends Controller
     {
         $events = $this->getCalendarEvents();
         $nextMilestone = $this->getNextUpcomingMilestone();
+        $allMilestones = MocThoiGianKhoaLuan::with('keHoach')->orderBy('NgayBatDau', 'asc')->get();
+        $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
+        $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
+
         return view('calendar.index', [
             'layout' => 'layouts.sinhvien',
             'events' => $events,
             'nextMilestone' => $nextMilestone,
+            'allMilestones' => $allMilestones,
+            'plans' => $plans,
+            'activePlan' => $activePlan,
             'roleTitle' => 'Sinh Viên',
         ]);
     }
@@ -199,7 +225,8 @@ class CalendarController extends Controller
 
         $hocKies = \App\Models\HocKy::all();
         $giangViens = \App\Models\GiangVien::all();
+        $nhoms = $Nhom;
 
-        return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'Nhom', 'hocKies', 'giangViens'));
+        return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'Nhom', 'nhoms', 'hocKies', 'giangViens'));
     }
 }

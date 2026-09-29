@@ -127,36 +127,39 @@ class ThongBaoService
             $maTB = 'TB_' . Str::upper(Str::random(7));
         }
 
-        // Tạo bản ghi cha
+        // Tạo bản ghi cha (nối link file vào nội dung)
+        $fullContent = $noiDung . "\n\nFile đính kèm: " . asset($fileUrl);
+
         ThongBao::create([
             'MaThongBao'   => $maTB,
             'TieuDe'       => $tieuDe,
-            'NoiDung'      => $noiDung,
+            'NoiDung'      => $fullContent,
             'LoaiThongBao' => $loai,
             'DoiTuongNhan' => 'Toàn thể',
-            'FileDinhKem'  => $fileUrl,
             'NgayTao'      => now(),
             'TrangThai'    => 'Đã phát hành',
         ]);
 
-        // Phân phối tới tất cả Sinh viên và Giảng viên
-        $taiKhoans = TaiKhoan::whereHas('vaiTro', function($q) {
-            $q->whereIn('TenVaiTro', ['Sinh viên', 'Giảng viên']);
-        })->get();
-
+        // Phân phối tới tất cả Sinh viên và Giảng viên nếu bảng nhận thông báo tồn tại
         $count = 0;
-        foreach ($taiKhoans as $tk) {
-            NguoiNhanThongBao::create([
-                'MaThongBao' => $maTB,
-                'MaTK'       => $tk->MaTK,
-                'TieuDe'     => $tieuDe,
-                'NoiDung'    => $noiDung,
-                'Loai'       => $loai,
-                'DuongDan'   => asset($fileUrl),
-                'DaDoc'      => false,
-                'NgayDoc'    => null,
-            ]);
-            $count++;
+        if (class_exists(\App\Models\NguoiNhanThongBao::class) && \Illuminate\Support\Facades\Schema::hasTable('nguoi_nhan_thong_baos')) {
+            $taiKhoans = TaiKhoan::whereHas('vaiTro', function($q) {
+                $q->whereIn('TenVaiTro', ['Sinh viên', 'Giảng viên']);
+            })->get();
+
+            foreach ($taiKhoans as $tk) {
+                \App\Models\NguoiNhanThongBao::create([
+                    'MaThongBao' => $maTB,
+                    'MaTK'       => $tk->MaTK,
+                    'TieuDe'     => $tieuDe,
+                    'NoiDung'    => $fullContent,
+                    'Loai'       => $loai,
+                    'DuongDan'   => asset($fileUrl),
+                    'DaDoc'      => false,
+                    'NgayDoc'    => null,
+                ]);
+                $count++;
+            }
         }
 
         return $count;

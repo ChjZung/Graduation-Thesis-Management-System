@@ -199,4 +199,84 @@ class GiangVienController extends Controller
     {
         return $this->runImport($request, 'importGiangVien', [], 'Giảng viên');
     }
+
+    /**
+     * Bổ nhiệm Giảng viên làm Trưởng khoa hoặc Trưởng bộ môn
+     * Sinh tài khoản chuẩn quy tắc:
+     * - Trưởng khoa: TK_{MaKhoa}_001 (VT05)
+     * - Trưởng bộ môn: TBM_{MaKhoa}_{MaBoMon}_001 (VT04)
+     */
+    public function boNhiem(Request $request, $id)
+    {
+        $gv = GiangVien::with('boMon.khoa', 'taiKhoan')->findOrFail($id);
+
+        $request->validate([
+            'chuc_vu' => 'required|in:TK,TBM',
+            'ma_khoa' => 'required_if:chuc_vu,TK|nullable|exists:Khoa,MaKhoa',
+            'ma_bomon' => 'required_if:chuc_vu,TBM|nullable|exists:BoMon,MaBoMon',
+        ], [
+            'chuc_vu.required' => 'Vui lòng chọn chức vụ bổ nhiệm.',
+            'ma_khoa.required_if' => 'Vui lòng chọn Khoa bổ nhiệm.',
+            'ma_bomon.required_if' => 'Vui lòng chọn Bộ môn bổ nhiệm.',
+        ]);
+
+        $chucVu = $request->chuc_vu;
+        $now = \Carbon\Carbon::now();
+
+        try {
+            DB::transaction(function() use ($gv, $chucVu, $request, $now, &$roleName) {
+                // Đảm bảo giảng viên có tài khoản liên kết
+                $tk = TaiKhoan::where('TenDangNhap', $gv->MaGV)->orWhere('MaTK', $gv->MaTK)->first();
+                if (!$tk) {
+                    $tk = TaiKhoan::create([
+                        'MaTK'              => $gv->MaGV,
+                        'TenDangNhap'       => $gv->MaGV,
+                        'MatKhau'           => Hash::make('123456'),
+                        'MaVaiTro'          => $chucVu === 'TK' ? 'VT05' : 'VT04',
+                        'TrangThai'         => true,
+                        'TrangThaiMatKhau'  => 'ACTIVE',
+                        'BatBuocDoiMatKhau' => false,
+                        'SoLanDangNhapSai'  => 0,
+                    ]);
+                }
+
+                if ($chucVu === 'TK') {
+                    $maKhoa = $request->ma_khoa;
+                    $roleName = 'Trưởng khoa';
+                    
+                    // Gán vai trò Trưởng khoa (VT05) trực tiếp vào tài khoản giảng viên
+                    $tk->update(['MaVaiTro' => 'VT05']);
+                    $gv->update(['MaTK' => $tk->MaTK]);
+                    \App\Models\Khoa::where('MaKhoa', $maKhoa)->update(['TruongKhoa' => $gv->HoTen]);
+                } else {
+                    $maBM = $request->ma_bomon;
+                    $bm = BoMon::findOrFail($maBM);
+                    $roleName = 'Trưởng bộ môn';
+
+                    // Gán vai trò Trưởng bộ môn (VT04) trực tiếp vào tài khoản giảng viên
+                    $tk->update(['MaVaiTro' => 'VT04']);
+                    $gv->update([
+                        'MaTK' => $tk->MaTK,
+                        'MaBoMon' => $maBM
+                    ]);
+                    $bm->update(['TruongBoMon' => $gv->HoTen]);
+                }
+            });
+
+            return redirect()->route('giangvien.index')->with(
+                'success',
+                "Đã bổ nhiệm giảng viên '{$gv->HoTen}' làm {$roleName} thành công! Tài khoản đăng nhập: [{$gv->MaGV}]."
+            );
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors("Lỗi khi bổ nhiệm chức vụ: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Import danh sách tài khoản Trưởng khoa & Trưởng bộ môn từ file Excel/CSV
+     */
+    public function importTaiKhoanTBM_TK(Request $request)
+    {
+        return $this->runImport($request, 'importTaiKhoanTBM_TK', [], 'Tài khoản Trưởng khoa / Trưởng bộ môn');
+    }
 }

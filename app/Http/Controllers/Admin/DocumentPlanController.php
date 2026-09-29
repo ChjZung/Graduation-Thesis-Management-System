@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KeHoachKhoaLuan;
 use App\Models\MocThoiGianKhoaLuan;
-use App\Models\ThongBaoVanBan;
-use App\Models\ThongBaoVanBanVersion;
+use App\Models\QuyDinhKhoaLuan;
+use App\Models\HocKy;
+use App\Models\Khoa;
+use App\Models\GiaoVu;
+use App\Models\ThongBao;
 use App\Services\DocumentParserService;
-use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,13 +31,13 @@ class DocumentPlanController extends Controller
      */
     public function importForm()
     {
-        $hocKies = \App\Models\HocKy::all();
-        $khoas = \App\Models\Khoa::all();
+        $hocKies = HocKy::all();
+        $khoas = Khoa::all();
         return view('admin.kehoach.import_document', compact('hocKies', 'khoas') + ['Khoa' => $khoas]);
     }
 
     /**
-     * Xử lý Phân Tích File Upload (PDF/Word) $\rightarrow$ Trích xuất & Chuyển sang Preview
+     * Xử lý Phân Tích File Upload (PDF/Word) -> Trích xuất & Chuyển sang Preview
      */
     public function processParse(Request $request)
     {
@@ -57,7 +59,7 @@ class DocumentPlanController extends Controller
         $parsed = $this->parserService->parseDocument($fullPath, $ext);
 
         // Tự động tìm kế hoạch đang có của Khoa để tính diff version
-        $existingPlan = KeHoachKhoaLuan::with(['mocThoiGians', 'thongBaoVanBan.versions'])
+        $existingPlan = KeHoachKhoaLuan::with(['mocThoiGians'])
             ->where('TrangThai', 'Đang thực hiện')
             ->orderBy('created_at', 'desc')
             ->first();
@@ -66,22 +68,31 @@ class DocumentPlanController extends Controller
         $isVersionUpdate = false;
         $nextVersionNumber = 1;
 
-        if ($existingPlan && $existingPlan->mocThoiGians->count() > 0) {
+        if ($existingPlan && $existingPlan->mocThoiGians && $existingPlan->mocThoiGians->count() > 0) {
             $isVersionUpdate = true;
-            $existingVanBan = ThongBaoVanBan::where('MaKeHoach', $existingPlan->MaKeHoach)->first();
-            $nextVersionNumber = $existingVanBan ? ($existingVanBan->PhienBanHienTai + 1) : 2;
+            $nextVersionNumber = 2;
 
             foreach ($parsed['milestones'] as $phaseIndex => $newPhase) {
-                $oldPhase = $existingPlan->mocThoiGians->where('LoaiGiaiDoan', $newPhase['LoaiGiaiDoan'])->first();
+                $oldPhase = $existingPlan->mocThoiGians->first(function ($m) use ($newPhase) {
+                    return $m->TenMoc === ($newPhase['TenMoc'] ?? '');
+                });
+
                 if ($oldPhase) {
                     $oldStart = $oldPhase->NgayBatDau ? date('Y-m-d', strtotime($oldPhase->NgayBatDau)) : null;
                     $oldEnd = $oldPhase->NgayKetThuc ? date('Y-m-d', strtotime($oldPhase->NgayKetThuc)) : null;
 
-                    if ($oldStart !== $newPhase['NgayBatDau'] || $oldEnd !== $newPhase['NgayKetThuc']) {
+                    $newStart = $newPhase['NgayBatDau'] ?? null;
+                    $newEnd = $newPhase['NgayKetThuc'] ?? null;
+
+                    if ($oldStart !== $newStart || $oldEnd !== $newEnd) {
                         $diffs[] = [
-                            'phase_name' => $newPhase['TenMoc'],
+                            'TenMoc'     => $newPhase['TenMoc'] ?? '',
+                            'phase_name' => $newPhase['TenMoc'] ?? '',
+                            'Truoc'      => ($oldStart && $oldEnd) ? date('d/m/Y', strtotime($oldStart)) . " - " . date('d/m/Y', strtotime($oldEnd)) : 'Chưa có',
                             'old_range'  => ($oldStart && $oldEnd) ? date('d/m/Y', strtotime($oldStart)) . " - " . date('d/m/Y', strtotime($oldEnd)) : 'Chưa có',
-                            'new_range'  => date('d/m/Y', strtotime($newPhase['NgayBatDau'])) . " - " . date('d/m/Y', strtotime($newPhase['NgayKetThuc'])),
+                            'Sau'        => ($newStart && $newEnd) ? date('d/m/Y', strtotime($newStart)) . " - " . date('d/m/Y', strtotime($newEnd)) : 'Chưa có',
+                            'new_range'  => ($newStart && $newEnd) ? date('d/m/Y', strtotime($newStart)) . " - " . date('d/m/Y', strtotime($newEnd)) : 'Chưa có',
+                            'Loai'       => 'Dời lịch',
                         ];
                     }
                 }
@@ -97,6 +108,7 @@ class DocumentPlanController extends Controller
                 'size'                => $file->getSize(),
                 'header'              => $parsed['header'],
                 'milestones'          => $parsed['milestones'],
+                'regulations'         => $parsed['regulations'] ?? [],
                 'is_version_update'   => $isVersionUpdate,
                 'next_version_number' => $nextVersionNumber,
                 'diffs'               => $diffs,
@@ -112,120 +124,139 @@ class DocumentPlanController extends Controller
      */
     public function previewDocument()
     {
-        $data = session('parsed_doc_data');
-        if (!$data) {
+        $previewData = session('parsed_doc_data');
+        if (empty($previewData)) {
             return redirect()->route('admin.kehoach.importDocument')
-                ->withErrors('Dữ liệu phân tích đã hết hạn. Vui lòng upload lại văn bản thông báo.');
+                ->with('error', 'Dữ liệu phân tích đã hết hạn. Vui lòng upload lại văn bản thông báo.');
         }
 
-        return view('admin.kehoach.preview_document', compact('data'));
+        return view('admin.kehoach.preview_document', [
+            'previewData' => $previewData,
+            'data'        => $previewData,
+        ]);
     }
 
     /**
-     * Xác Nhận Import $\rightarrow$ Cập Nhật DB Transaction, Sinh Lịch & Gửi Notification Đính Kèm File Gốc
+     * Xác Nhận Import -> Cập Nhật DB Transaction, Sinh Lịch & Gửi Notification Đính Kèm File Gốc
      */
     public function confirmImport(Request $request)
     {
         $previewData = session('parsed_doc_data');
         if (!$previewData) {
             return redirect()->route('admin.kehoach.importDocument')
-                ->withErrors('Phiên làm việc đã hết hạn.');
+                ->with('error', 'Phiên làm việc đã hết hạn. Vui lòng upload lại văn bản thông báo.');
         }
 
         $user = Auth::user();
 
         DB::transaction(function () use ($previewData, $user) {
-            $header = $previewData['header'];
-            $milestones = $previewData['milestones'];
+            $header = $previewData['header'] ?? [];
+            $milestones = $previewData['milestones'] ?? [];
 
             // 1. Chuyển File từ Temp sang Lưu Trữ Vĩnh Viễn
-            $permanentFilename = 'Official_Plan_' . time() . '_' . Str::random(6) . '.' . $previewData['ext'];
+            $permanentFilename = 'Official_Plan_' . time() . '_' . Str::random(6) . '.' . ($previewData['ext'] ?? 'pdf');
             $permanentPath = 'official_documents/' . $permanentFilename;
-            Storage::disk('public')->copy($previewData['temp_file_path'], $permanentPath);
+            if (!empty($previewData['temp_file_path']) && Storage::disk('public')->exists($previewData['temp_file_path'])) {
+                Storage::disk('public')->copy($previewData['temp_file_path'], $permanentPath);
+            }
 
-            // 2. Tạo hoặc Cập nhật Kế Hoạch Khóa Luận
-            $maKeHoach = $previewData['existing_plan']->MaKeHoach ?? ('KH_' . date('Y') . '_' . Str::upper(Str::random(4)));
+            // 2. Đảm bảo Học kỳ hợp lệ
+            $hocKy = HocKy::first();
+            if (!$hocKy) {
+                $maHocKy = 'HK2425_1';
+                HocKy::create([
+                    'MaHocKy'    => $maHocKy,
+                    'TenHocKy'   => 'Học kỳ 1 (2024-2025)',
+                    'NamHoc'     => '2024-2025',
+                    'NgayBatDau' => now()->toDateString(),
+                    'NgayKetThuc'=> now()->addMonths(5)->toDateString(),
+                    'TrangThai'  => 'Đang diễn ra',
+                ]);
+            } else {
+                $maHocKy = $hocKy->MaHocKy;
+            }
+
+            // 3. Lấy mã giáo vụ
+            $maGVu = GiaoVu::first()?->MaGVu ?? 'GVU01';
+
+            // 4. Tạo hoặc Cập nhật Kế Hoạch Khóa Luận
+            $maKeHoach = $previewData['existing_plan']->MakeHoach 
+                ?? $previewData['existing_plan']->MaKeHoach 
+                ?? ('KH_' . date('Y') . '_' . Str::upper(Str::random(4)));
 
             $keHoach = KeHoachKhoaLuan::updateOrCreate(
-                ['MaKeHoach' => $maKeHoach],
+                ['MakeHoach' => $maKeHoach],
                 [
-                    'TenKeHoach'  => "Kế hoạch Khóa luận " . ($header['NamHoc'] ?? date('Y')),
-                    'MaHocKy'     => $header['MaHocKy'] ?? 'HK1-2026-2027',
-                    'MoTa'        => "Văn bản thông báo chính thức số " . ($header['SoThongBao'] ?? 'TB-KCNTT'),
-                    'NgayBatDau'  => $milestones[1]['NgayBatDau'] ?? now()->toDateString(),
-                    'NgayKetThuc' => $milestones[count($milestones)]['NgayKetThuc'] ?? now()->addMonths(4)->toDateString(),
-                    'TrangThai'   => 'Đang thực hiện',
+                    'TenKeHoach' => $header['TenKeHoach'] ?? ("Kế hoạch Khóa luận " . ($header['NamHoc'] ?? date('Y'))),
+                    'MaHocKy'    => $maHocKy,
+                    'NoiDung'    => "Văn bản thông báo chính thức số " . ($header['SoThongBao'] ?? 'TB-KCNTT'),
+                    'TrangThai'  => 'Đang thực hiện',
+                    'NgayTao'    => now()->toDateString(),
+                    'MaGVu'      => $maGVu,
                 ]
             );
 
-            // 3. Tự Động Cập Nhật / Sinh 12 Mốc Thời Gian Quy Trình
+            // 5. Cập nhật / Sinh các mốc thời gian quy trình (Xóa các mốc cũ của kế hoạch để tránh mốc rác/gộp còn tồn tại)
+            MocThoiGianKhoaLuan::where('MakeHoach', $keHoach->MakeHoach)->delete();
+
             foreach ($milestones as $idx => $m) {
-                MocThoiGianKhoaLuan::updateOrCreate(
+                $maMoc = 'MOC_' . substr($keHoach->MakeHoach, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                MocThoiGianKhoaLuan::create([
+                    'MaMoc'       => $maMoc,
+                    'TenMoc'      => $m['TenMoc'] ?? ('Mốc quy trình ' . ($idx + 1)),
+                    'NgayBatDau'  => !empty($m['NgayBatDau']) ? date('Y-m-d', strtotime($m['NgayBatDau'])) : now()->toDateString(),
+                    'NgayKetThuc' => !empty($m['NgayKetThuc']) ? date('Y-m-d', strtotime($m['NgayKetThuc'])) : now()->addDays(7)->toDateString(),
+                    'MoTa'        => "Trích xuất tự động từ văn bản " . ($header['SoThongBao'] ?? '') . (!empty($m['LoaiGiaiDoan']) ? " [{$m['LoaiGiaiDoan']}]" : ''),
+                    'MakeHoach'   => $keHoach->MakeHoach,
+                ]);
+            }
+
+            // 5b. Tự động lưu Quy định Khóa luận trích xuất từ văn bản kế hoạch vào CSDL
+            $regulations = $previewData['regulations'] ?? [];
+            foreach ($regulations as $idx => $r) {
+                $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $keHoach->MakeHoach);
+                $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                $maQD = substr($maQD, 0, 20);
+
+                QuyDinhKhoaLuan::updateOrCreate(
                     [
-                        'MaKeHoach'     => $keHoach->MaKeHoach,
-                        'LoaiGiaiDoan'  => $m['LoaiGiaiDoan'],
+                        'MakeHoach'  => $keHoach->MakeHoach,
+                        'TenQuyDinh' => $r['TenQuyDinh'],
                     ],
                     [
-                        'MaMoc'        => 'MOC_' . str_pad($idx, 2, '0', STR_PAD_LEFT),
-                        'TenMoc'       => $m['TenMoc'],
-                        'NgayBatDau'   => $m['NgayBatDau'],
-                        'NgayKetThuc'  => $m['NgayKetThuc'],
-                        'TrangThai'    => 'Đã lên lịch',
-                        'MoTa'         => "Trích xuất tự động từ văn bản " . ($header['SoThongBao'] ?? ''),
+                        'MaQuyDinh'  => $maQD,
+                        'GiaTri'     => $r['GiaTri'] ?? 'Theo quy định',
+                        'MoTa'       => $r['MoTa'] ?? null,
                     ]
                 );
             }
 
-            // 4. Lưu Bản Ghi Văn Bản Thông Báo Gốc & Quản Lý Phiên Bản
-            $vanBan = ThongBaoVanBan::where('MaKeHoach', $keHoach->MaKeHoach)->first();
+            // 6. Gửi Thông Báo Tự Động cho Sinh viên & Giảng viên
+            $title = "[Khóa luận] " . ($previewData['is_version_update'] ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
+            $content = "Khoa đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp. File gốc đính kèm: /storage/" . $permanentPath;
 
-            if ($vanBan) {
-                $vanBan->update([
-                    'TenVanBan'       => $previewData['original_name'],
-                    'SoThongBao'      => $header['SoThongBao'] ?? $vanBan->SoThongBao,
-                    'NgayBanHanh'     => now(),
-                    'FileGocPath'     => 'storage/' . $permanentPath,
-                    'PhienBanHienTai' => $previewData['next_version_number'],
-                    'NguoiUpload'     => $user->MaTK ?? 'ADMIN',
-                ]);
-            } else {
-                $vanBan = ThongBaoVanBan::create([
-                    'MaVanBan'        => 'VB_' . Str::upper(Str::random(7)),
-                    'MaKeHoach'       => $keHoach->MaKeHoach,
-                    'TenVanBan'       => $previewData['original_name'],
-                    'SoThongBao'      => $header['SoThongBao'] ?? 'TB-KCNTT',
-                    'NgayBanHanh'     => now(),
-                    'FileGocPath'     => 'storage/' . $permanentPath,
-                    'FileType'        => $previewData['ext'],
-                    'FileSize'        => $previewData['size'],
-                    'PhienBanHienTai' => 1,
-                    'NguoiUpload'     => $user->MaTK ?? 'ADMIN',
-                ]);
+            $maTB = 'TB_' . Str::upper(Str::random(7));
+            while (ThongBao::where('MaThongBao', $maTB)->exists()) {
+                $maTB = 'TB_' . Str::upper(Str::random(7));
             }
 
-            ThongBaoVanBanVersion::create([
-                'MaVanBan'              => $vanBan->MaVanBan,
-                'PhienBan'              => $previewData['next_version_number'],
-                'FileGocPath'           => 'storage/' . $permanentPath,
-                'NoiDungTrichXuatJson'  => $header,
-                'MocThoiGianJson'        => $milestones,
-                'ThayDoiSoVoiTruocJson'  => $previewData['diffs'],
-                'LyDoThayDoi'           => $previewData['is_version_update'] ? "Cập nhật thông báo điều chỉnh mốc thời gian" : "Ban hành thông báo đợt 1",
-                'NguoiThayDoi'          => $user->MaTK ?? 'ADMIN',
+            ThongBao::create([
+                'MaThongBao'   => $maTB,
+                'TieuDe'       => $title,
+                'NoiDung'      => $content,
+                'LoaiThongBao' => 'Kế hoạch',
+                'DoiTuongNhan' => 'Toàn thể',
+                'NgayTao'      => now(),
+                'TrangThai'    => 'Đã phát hành',
+                'MaGVu'        => $maGVu,
             ]);
-
-            // 5. Gửi Thông Báo Tự Động ĐÍNH KÈM FILE VĂN BẢN GỐC cho Sinh viên & Giảng viên
-            $title = "[Khóa luận] " . ($previewData['is_version_update'] ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . $header['NamHoc']);
-            $content = "Khoa Công nghệ Thông tin đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp. Các mốc quan trọng: Đăng ký đề tài (" . date('d/m/Y', strtotime($milestones[1]['NgayKetThuc'] ?? '2026-08-11')) . "), Nộp báo cáo (" . date('d/m/Y', strtotime($milestones[6]['NgayKetThuc'] ?? '2026-11-11')) . "). Vui lòng bấm để xem file thông báo gốc.";
-
-            ThongBaoService::guiThongBaoKemFileGoc($title, $content, 'storage/' . $permanentPath, 'Kế hoạch');
         });
 
         // Xóa dữ liệu tạm session
         session()->forget('parsed_doc_data');
 
         return redirect()->route('admin.kehoach.index')
-            ->with('success', '🎉 Đã import văn bản thông báo thành công! Kế hoạch 12 mốc, Lịch quy trình và Thông báo đính kèm file gốc đã được sinh tự động.');
+            ->with('success', '🎉 Đã import văn bản thông báo thành công! Kế hoạch các mốc, Lịch quy trình và Thông báo đính kèm file gốc đã được sinh tự động.');
     }
 
     /**
@@ -233,8 +264,7 @@ class DocumentPlanController extends Controller
      */
     public function history($maVanBan)
     {
-        $vanBan = ThongBaoVanBan::with(['versions', 'keHoach'])->findOrFail($maVanBan);
-        return view('admin.kehoach.document_history', compact('vanBan'));
+        return redirect()->route('admin.kehoach.index');
     }
 
     /**
@@ -242,35 +272,6 @@ class DocumentPlanController extends Controller
      */
     public function rollbackVersion($maVanBan, $versionId)
     {
-        $vanBan = ThongBaoVanBan::findOrFail($maVanBan);
-        $version = ThongBaoVanBanVersion::where('MaVanBan', $maVanBan)->where('id', $versionId)->firstOrFail();
-
-        DB::transaction(function () use ($vanBan, $version) {
-            $milestones = $version->MocThoiGianJson;
-
-            if ($milestones && is_array($milestones)) {
-                foreach ($milestones as $idx => $m) {
-                    MocThoiGianKhoaLuan::updateOrCreate(
-                        [
-                            'MaKeHoach'    => $vanBan->MaKeHoach,
-                            'LoaiGiaiDoan' => $m['LoaiGiaiDoan'],
-                        ],
-                        [
-                            'TenMoc'      => $m['TenMoc'],
-                            'NgayBatDau'  => $m['NgayBatDau'],
-                            'NgayKetThuc' => $m['NgayKetThuc'],
-                        ]
-                    );
-                }
-            }
-
-            $vanBan->update([
-                'PhienBanHienTai' => $version->PhienBan,
-                'FileGocPath'     => $version->FileGocPath,
-            ]);
-        });
-
-        return redirect()->route('admin.kehoach.documentHistory', $maVanBan)
-            ->with('success', "↺ Đã khôi phục thành công mốc thời gian kế hoạch về phiên bản v{$version->PhienBan}!");
+        return redirect()->route('admin.kehoach.index');
     }
 }

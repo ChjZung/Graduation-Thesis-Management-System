@@ -138,13 +138,12 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Bạn đã thuộc một nhóm khóa luận rồi!');
         }
 
-        // Tên nhóm gán cứng mặc định là: "Nhóm " + MSSV
+        // Mã nhóm và Tên nhóm chuẩn hóa theo quy định: NHOM + MSSV trưởng nhóm
         $mssv = $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV;
-        $tenNhom = "Nhóm " . $mssv;
+        $maNhom = 'NHOM' . $sinhVien->MaSV;
+        $tenNhom = 'NHOM' . $sinhVien->MaSV;
 
-        DB::transaction(function () use ($tenNhom, $sinhVien) {
-            $maNhom = IdGenerator::nextNhom();
-
+        DB::transaction(function () use ($maNhom, $tenNhom, $sinhVien) {
             Nhom::create([
                 'MaNhom'       => $maNhom,
                 'TenNhom'      => $tenNhom,

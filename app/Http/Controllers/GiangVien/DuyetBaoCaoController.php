@@ -15,7 +15,10 @@ class DuyetBaoCaoController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
+        }
 
         $nhoms = Nhom::whereHas('phieuDangKys', function ($q) use ($giangVien) {
                 $q->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])
@@ -46,7 +49,10 @@ class DuyetBaoCaoController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
+        }
 
         $baoCao = BaoCaoTienDo::with([
             'deTai.giangVien',
@@ -109,7 +115,10 @@ class DuyetBaoCaoController extends Controller
         ]);
 
         $user = Auth::user();
-        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
+        }
         $baoCao = BaoCaoTienDo::with('deTai')->findOrFail($maBaoCao);
 
         // Policy: Chỉ GV hướng dẫn của đề tài mới được đánh giá

@@ -58,9 +58,9 @@
                                 @endif
                             </div>
 
-                            @if(in_array($dt->TrangThai, ['Yêu cầu điều chỉnh', 'Từ chối']) && $dt->LyDoTuChoi)
+                            @if(in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Từ chối']) && $dt->LyDoTuChoi)
                                 <div class="small text-danger mt-1 p-2 bg-danger-subtle rounded border border-danger-subtle">
-                                    <strong><i class="fa-solid fa-circle-exclamation me-1"></i>Ý kiến Giáo vụ:</strong> {{ $dt->LyDoTuChoi }}
+                                    <strong><i class="fa-solid fa-circle-exclamation me-1"></i>Ý kiến phản hồi:</strong> {{ $dt->LyDoTuChoi }}
                                 </div>
                             @endif
                         </td>
@@ -73,7 +73,7 @@
                                 </div>
                             @elseif($dangKyPending && $dangKyPending->nhom)
                                 <div class="fw-semibold text-warning-emphasis"><i class="fa-solid fa-clock me-1"></i>{{ $dangKyPending->nhom->TenNhom }}</div>
-                                <div class="small text-muted">(Đang chờ Giáo vụ duyệt)</div>
+                                <div class="small text-muted">(Đang chờ duyệt)</div>
                             @else
                                 <span class="text-muted small">Chưa có nhóm</span>
                             @endif
@@ -81,19 +81,27 @@
                         <td class="text-center">
                             @if($dt->TrangThai === 'Đã công bố')
                                 <span class="badge bg-primary rounded-pill px-3"><i class="fa-solid fa-bullhorn me-1"></i>Đã công bố</span>
-                            @elseif($dt->TrangThai === 'Đã duyệt')
-                                <span class="badge bg-success rounded-pill px-3"><i class="fa-solid fa-check me-1"></i>Đã duyệt</span>
-                            @elseif($dt->TrangThai === 'Yêu cầu điều chỉnh')
+                            @elseif($dt->TrangThai === 'Trưởng khoa đã duyệt' || $dt->TrangThai === 'Đã duyệt')
+                                <span class="badge bg-success rounded-pill px-3"><i class="fa-solid fa-stamp me-1"></i>TK đã duyệt</span>
+                            @elseif($dt->TrangThai === 'Chờ duyệt cấp Khoa')
+                                <span class="badge bg-danger rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i>Chờ Khoa duyệt</span>
+                            @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
+                                <span class="badge bg-info text-white rounded-pill px-3"><i class="fa-solid fa-check-double me-1"></i>Đã PB - Chờ BM</span>
+                            @elseif($dt->TrangThai === 'Đang phản biện đề cương')
+                                <span class="badge bg-info-subtle text-info border rounded-pill px-3"><i class="fa-solid fa-spinner me-1"></i>Đang phản biện</span>
+                            @elseif($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
+                                <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-clock me-1"></i>Chờ BM duyệt</span>
+                            @elseif($dt->TrangThai === 'Yêu cầu chỉnh sửa' || $dt->TrangThai === 'Yêu cầu điều chỉnh')
                                 <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-wrench me-1"></i>Cần sửa</span>
                             @elseif($dt->TrangThai === 'Từ chối')
                                 <span class="badge bg-danger rounded-pill px-3"><i class="fa-solid fa-xmark me-1"></i>Từ chối</span>
                             @else
-                                <span class="badge bg-secondary rounded-pill px-3"><i class="fa-solid fa-clock me-1"></i>Chờ duyệt</span>
+                                <span class="badge bg-secondary rounded-pill px-3">{{ $dt->TrangThai }}</span>
                             @endif
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                @if(in_array($dt->TrangThai, ['Đã duyệt', 'Đã công bố']) && !$dangKyApproved)
+                                @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)
                                     <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}" title="Gán nhóm cho đề tài này">
                                         <i class="fa-solid fa-user-check me-1"></i>Gán Nhóm
                                     </button>
@@ -115,7 +123,7 @@
                     </tr>
 
                     <!-- MODAL GÁN NHÓM CHO ĐỀ TÀI NÀY -->
-                    @if($dt->TrangThai === 'Đã duyệt' && !$dangKyApproved)
+                    @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)
                     <div class="modal fade" id="modalGanNhom{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">

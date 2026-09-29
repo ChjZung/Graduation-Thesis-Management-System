@@ -4,15 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DangKyDeTai;
-use App\Models\Nhom;
-use App\Services\ThongBaoService;
+use App\Models\HocKy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DuyetDangKyDeTaiController extends Controller
 {
+    /**
+     * Giáo vụ xem, tra cứu và theo dõi danh sách đăng ký đề tài của các nhóm sinh viên.
+     * Lưu ý: Việc phê duyệt/từ chối đơn đăng ký do Giảng viên hướng dẫn (GVHD) thực hiện.
+     */
     public function index(Request $request)
     {
+        $currentHocKy = HocKy::where('TrangThai', 1)->first() ?? HocKy::orderBy('MaHocKy', 'desc')->first();
+        $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+
         $counts = [
             'cho_duyet' => DangKyDeTai::where('TrangThai', 'Chờ duyệt')->count(),
             'da_duyet'  => DangKyDeTai::where('TrangThai', 'Đã duyệt')->count(),
@@ -20,107 +25,115 @@ class DuyetDangKyDeTaiController extends Controller
             'total'     => DangKyDeTai::count(),
         ];
 
-        $query = DangKyDeTai::with(['nhom.truongNhom', 'nhom.thanhViens.sinhVien', 'deTai.giangVien']);
+        $query = DangKyDeTai::with([
+            'nhom.truongNhom.lop',
+            'nhom.sinhViens.lop',
+            'deTai.giangVien.boMon',
+            'deTai.hocKy',
+        ]);
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $query->where('TrangThai', $request->TrangThai);
-        } elseif (!$request->filled('TrangThai')) {
-            $query->where('TrangThai', 'Chờ duyệt');
         }
 
-        $dangKys = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        return view('admin.duyet_dangky.index', compact('dangKys', 'counts'));
-    }
-
-    public function approve($id)
-    {
-        $dangKy = DangKyDeTai::with(['nhom', 'deTai'])->findOrFail($id);
-
-        if ($dangKy->TrangThai !== 'Chờ duyệt') {
-            return redirect()->back()->withErrors('Đơn đăng ký này đã được xử lý trước đó.');
+        if ($request->filled('MaHocKy')) {
+            $maHK = $request->MaHocKy;
+            $query->whereHas('deTai', function($dq) use ($maHK) {
+                $dq->where('MaHocKy', $maHK);
+            });
         }
 
-        $tenNhom = $dangKy->nhom->TenNhom ?? $dangKy->MaNhom;
-        $tenDeTai = $dangKy->deTai->TenDeTai ?? 'Đề tài khóa luận';
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function($q) use ($search) {
+                $q->where('MaDangKy', 'LIKE', "%{$search}%")
+                  ->orWhere('MaNhom', 'LIKE', "%{$search}%")
+                  ->orWhere('MaDeTai', 'LIKE', "%{$search}%")
+                  ->orWhereHas('nhom', function($nq) use ($search) {
+                      $nq->where('TenNhom', 'LIKE', "%{$search}%")
+                         ->orWhereHas('sinhViens', function($sq) use ($search) {
+                             $sq->where('HoTen', 'LIKE', "%{$search}%")
+                                ->orWhere('MaSV', 'LIKE', "%{$search}%");
+                         });
+                  })
+                  ->orWhereHas('deTai', function($dq) use ($search) {
+                      $dq->where('TenDeTai', 'LIKE', "%{$search}%")
+                         ->orWhereHas('giangVien', function($gq) use ($search) {
+                             $gq->where('HoTen', 'LIKE', "%{$search}%");
+                         });
+                  });
+            });
+        }
 
-        DB::transaction(function () use ($dangKy, $tenNhom) {
-            // Duyệt đơn được chọn
-            $dangKy->update([
-                'TrangThai'   => 'Đã duyệt',
-                'NgayDuyet'   => now(),
-                'LyDoTuChoi'  => null,
-            ]);
+        $dangKys = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-            if ($dangKy->nhom) {
-                $dangKy->nhom->update([
-                    'TrangThai' => 'Đã duyệt',
-                ]);
-            }
-
-            if ($dangKy->deTai) {
-                $dangKy->deTai->update([
-                    'TrangThai' => 'Đã đăng ký',
-                ]);
-            }
-
-            // Tự động Từ chối TẤT CẢ các đơn khác cùng đề tài
-            $otherDangKys = DangKyDeTai::where('MaDeTai', $dangKy->MaDeTai)
-                ->where('MaDangKy', '!=', $dangKy->MaDangKy)
-                ->where('TrangThai', 'Chờ duyệt')
-                ->get();
-
-            foreach ($otherDangKys as $other) {
-                $other->update([
-                    'TrangThai'  => 'Từ chối',
-                    'LyDoTuChoi' => "Đề tài đã được phân công cho nhóm {$tenNhom}.",
-                ]);
-
-                if ($other->nhom) {
-                    $other->nhom->update([
-                        'MaDeTai'   => null,
-                        'TrangThai' => 'Đang hoạt động',
-                    ]);
-                }
-            }
-        });
-
-        // Gửi thông báo cho nhóm được duyệt
-        ThongBaoService::guiDenNhom(
-            $dangKy->MaNhom,
-            '✅ Đăng ký đề tài được duyệt!',
-            "Nhóm bạn đã được duyệt làm đề tài: " . $tenDeTai,
-            'Đăng ký'
-        );
-
-        return redirect()->back()->with('success', "Đã phê duyệt đơn đăng ký đề tài cho Nhóm '{$tenNhom}' thành công! Các đơn trùng đề tài đã bị từ chối tự động.");
+        return view('admin.duyet_dangky.index', compact('dangKys', 'counts', 'hocKies', 'currentHocKy'));
     }
 
-    public function reject(Request $request, $id)
+    /**
+     * Xuất danh sách đăng ký đề tài ra file CSV
+     */
+    public function export(Request $request)
     {
-        $request->validate([
-            'LyDoTuChoi' => 'required|string|max:500',
-        ], [
-            'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối đơn đăng ký.',
+        $query = DangKyDeTai::with([
+            'nhom.truongNhom.lop',
+            'nhom.sinhViens',
+            'deTai.giangVien.boMon',
+            'deTai.hocKy',
         ]);
 
-        $dangKy = DangKyDeTai::with(['nhom', 'deTai'])->findOrFail($id);
-        $tenNhom = $dangKy->nhom->TenNhom ?? $dangKy->MaNhom;
+        if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
+            $query->where('TrangThai', $request->TrangThai);
+        }
 
-        DB::transaction(function () use ($dangKy, $request) {
-            $dangKy->update([
-                'TrangThai'  => 'Từ chối',
-                'LyDoTuChoi' => $request->LyDoTuChoi,
-            ]);
+        if ($request->filled('MaHocKy')) {
+            $maHK = $request->MaHocKy;
+            $query->whereHas('deTai', function($dq) use ($maHK) {
+                $dq->where('MaHocKy', $maHK);
+            });
+        }
 
-            if ($dangKy->nhom) {
-                $dangKy->nhom->update([
-                    'MaDeTai'   => null,
-                    'TrangThai' => 'Đang hoạt động',
+        $dangKys = $query->orderBy('created_at', 'desc')->get();
+
+        $headers = [
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=Danh_Sach_Dang_Ky_De_Tai_" . date('Ymd_His') . ".csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'Mã Đăng Ký', 'Mã Nhóm', 'Tên Nhóm', 'Trưởng Nhóm', 'Số Thành Viên', 
+            'Mã Đề Tài', 'Tên Đề Tài', 'GV Hướng Dẫn', 'Bộ Môn', 
+            'Trạng Thái GVHD', 'Ngày Đăng Ký', 'Ngày Duyệt', 'Lý Do Từ Chối'
+        ];
+
+        $callback = function() use ($dangKys, $columns) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF"); // UTF-8 BOM
+            fputcsv($file, $columns);
+
+            foreach ($dangKys as $dk) {
+                fputcsv($file, [
+                    $dk->MaDangKy,
+                    $dk->MaNhom,
+                    $dk->nhom->TenNhom ?? $dk->MaNhom,
+                    $dk->nhom->truongNhom->HoTen ?? 'Chưa rõ',
+                    $dk->nhom->sinhViens->count() ?: 1,
+                    $dk->MaDeTai,
+                    $dk->deTai->TenDeTai ?? 'Chưa rõ',
+                    $dk->deTai->giangVien->HoTen ?? 'Chưa rõ',
+                    $dk->deTai->giangVien->boMon->TenBoMon ?? '',
+                    $dk->TrangThai,
+                    $dk->created_at ? $dk->created_at->format('d/m/Y H:i') : ($dk->NgayDangKy ?? ''),
+                    $dk->NgayDuyet ?? '',
+                    $dk->LyDoTuChoi ?? '',
                 ]);
             }
-        });
+            fclose($file);
+        };
 
-        return redirect()->back()->with('success', "Đã từ chối đơn đăng ký đề tài của Nhóm '{$tenNhom}'.");
+        return response()->stream($callback, 200, $headers);
     }
 }

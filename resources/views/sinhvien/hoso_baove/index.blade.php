@@ -207,6 +207,43 @@
                 </div>
             </div>
         </div>
+
+        <!-- Phần Nộp Bản Hoàn Chỉnh Sau Khi Bảo Vệ -->
+        <div class="mt-4 pt-3 border-top">
+            <h6 class="fw-bold text-dark mb-2">
+                <i class="fa-solid fa-file-circle-check text-success me-2"></i>
+                Nộp Bản Hoàn Chỉnh Khóa Luận (Sau Khi Bảo Vệ Trước Hội Đồng)
+            </h6>
+            <p class="small text-muted mb-3">
+                Sau buổi bảo vệ trước Hội đồng, nhóm tiếp thu ý kiến đóng góp của Hội đồng, chỉnh sửa và hoàn thiện bản báo cáo khóa luận cuối cùng kèm chữ ký xác nhận để lưu trữ và xét cấp bằng tốt nghiệp.
+            </p>
+
+            @if($hoSo->FileBanChinhSua)
+                <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <i class="fa-solid fa-circle-check me-2"></i>
+                        <strong>Nhóm đã nộp bản hoàn chỉnh sau bảo vệ!</strong>
+                        <div class="small text-muted mt-1">Ngày nộp: {{ $hoSo->NgayNopBanChinhSua ? \Carbon\Carbon::parse($hoSo->NgayNopBanChinhSua)->format('d/m/Y H:i') : '' }}</div>
+                    </div>
+                    <a href="{{ asset('storage/' . $hoSo->FileBanChinhSua) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="fa-solid fa-download me-1"></i> Tải về bản hoàn chỉnh
+                    </a>
+                </div>
+            @endif
+
+            <form action="{{ route('sinhvien.hoso.nopBanHoanChinh') }}" method="POST" enctype="multipart/form-data" class="row g-2 align-items-center">
+                @csrf
+                <div class="col-md-8">
+                    <input type="file" name="FileBanChinhSua" class="form-control" required accept=".pdf,.doc,.docx,.zip,.rar">
+                    <div class="form-text text-muted small">Định dạng file cho phép: .pdf, .docx, .zip, .rar (Tối đa 50MB).</div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Xác nhận nộp bản báo cáo khóa luận hoàn chỉnh sau bảo vệ?');">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> {{ $hoSo->FileBanChinhSua ? 'Cập Nhật Bản Mới' : 'Nộp Bản Hoàn Chỉnh' }}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\HoSoBaoVe;
 use App\Models\HoiDong;
 use App\Models\GiangVien;
-use App\Models\PhanCongPhanBien;
-use App\Helpers\IdGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +20,6 @@ class HoSoBaoVeController extends Controller
             'nhom.deTai.giangVien',
             'hoiDong',
             'tepHoSoBaoVes',
-            'phanCongPhanBien.giangVien'
         ]);
 
         if ($request->filled('TrangThai')) {
@@ -54,12 +51,10 @@ class HoSoBaoVeController extends Controller
 
         $hoSos = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         $hoiDongs = HoiDong::orderBy('TenHoiDong')->get();
-        $giangViens = GiangVien::orderBy('HoTen')->get();
 
         return view('admin.hoso_baove.index', compact(
             'hoSos',
             'hoiDongs',
-            'giangViens',
             'tongSoHoSo',
             'choThamDinh',
             'duDieuKien',
@@ -67,6 +62,9 @@ class HoSoBaoVeController extends Controller
         ));
     }
 
+    /**
+     * Giáo vụ kiểm tra tính hợp lệ & thẩm định hồ sơ
+     */
     public function xacNhan(Request $request, $id)
     {
         $hoSo = HoSoBaoVe::findOrFail($id);
@@ -82,7 +80,7 @@ class HoSoBaoVeController extends Controller
                 'TrangThai'   => 'Không đủ điều kiện',
                 'NgayXacNhan' => now()->toDateString(),
                 'MaGVu'       => $maGVu,
-                'GhiChu'      => $hoSo->GhiChu . ($ghiChuAdmin ? " [Từ chối: {$ghiChuAdmin}]" : " [Từ chối: Tỷ lệ Turnitin không đạt]"),
+                'GhiChu'      => $hoSo->GhiChu . ($ghiChuAdmin ? " [Từ chối: {$ghiChuAdmin}]" : " [Từ chối: Thiếu hồ sơ / Turnitin không đạt]"),
             ]);
             return redirect()->back()->with('warning', 'Đã từ chối hồ sơ bảo vệ (không đủ điều kiện)!');
         }
@@ -94,14 +92,16 @@ class HoSoBaoVeController extends Controller
             'GhiChu'      => $ghiChuAdmin ? ($hoSo->GhiChu . " [GV duyệt: {$ghiChuAdmin}]") : $hoSo->GhiChu,
         ]);
 
-        return redirect()->back()->with('success', 'Đã phê duyệt hồ sơ: Đủ điều kiện bảo vệ!');
+        return redirect()->back()->with('success', 'Đã thẩm định hồ sơ: Đủ điều kiện tham gia Hội đồng bảo vệ!');
     }
 
+    /**
+     * Phân bổ nhóm đủ điều kiện vào Hội đồng bảo vệ (KHÔNG có chức năng phân công GVPB hồ sơ)
+     */
     public function phanCong(Request $request, $id)
     {
         $request->validate([
             'MaHoiDong'     => 'required|exists:HoiDong,MaHoiDong',
-            'MaGVPhanBien'  => 'nullable|exists:GiangVien,MaGV',
             'ThoiGianBaoVe' => 'nullable|date',
             'PhongBaoVe'    => 'nullable|string|max:100',
         ], [
@@ -110,41 +110,32 @@ class HoSoBaoVeController extends Controller
 
         $hoSo = HoSoBaoVe::findOrFail($id);
 
-        DB::transaction(function () use ($request, $hoSo) {
-            $updateData = [
-                'MaHoiDong' => $request->MaHoiDong,
-                'TrangThai' => 'Đã phân công',
-            ];
-            if ($request->filled('ThoiGianBaoVe')) {
-                $updateData['ThoiGianBaoVe'] = $request->ThoiGianBaoVe;
-            }
-            if ($request->filled('PhongBaoVe')) {
-                $updateData['PhongBaoVe'] = $request->PhongBaoVe;
-            }
+        $updateData = [
+            'MaHoiDong' => $request->MaHoiDong,
+            'TrangThai' => 'Đã phân công',
+        ];
+        if ($request->filled('ThoiGianBaoVe')) {
+            $updateData['ThoiGianBaoVe'] = $request->ThoiGianBaoVe;
+        }
+        if ($request->filled('PhongBaoVe')) {
+            $updateData['PhongBaoVe'] = $request->PhongBaoVe;
+        }
 
-            $hoSo->update($updateData);
+        $hoSo->update($updateData);
 
-            if ($request->filled('MaGVPhanBien') && $hoSo->MaDeTai) {
-                $pc = PhanCongPhanBien::where('MaDeTai', $hoSo->MaDeTai)->first();
-                if ($pc) {
-                    $pc->update([
-                        'MaGV'         => $request->MaGVPhanBien,
-                        'NgayPhanCong' => now()->toDateString(),
-                        'TrangThai'    => 'Đã phân công',
-                    ]);
-                } else {
-                    PhanCongPhanBien::create([
-                        'MaPhanCong'   => IdGenerator::nextPhanCong(),
-                        'VaiTro'       => 'Phản biện',
-                        'NgayPhanCong' => now()->toDateString(),
-                        'TrangThai'    => 'Đã phân công',
-                        'MaGV'         => $request->MaGVPhanBien,
-                        'MaDeTai'      => $hoSo->MaDeTai,
-                    ]);
-                }
-            }
-        });
+        return redirect()->back()->with('success', 'Đã phân công nhóm vào Hội đồng bảo vệ thành công!');
+    }
 
-        return redirect()->back()->with('success', 'Đã phân công Hội đồng và Giảng viên phản biện thành công!');
+    /**
+     * Giáo vụ lưu trữ hồ sơ khóa luận sau khi đã bảo vệ và nộp bản hoàn chỉnh
+     */
+    public function luuTru($id)
+    {
+        $hoSo = HoSoBaoVe::findOrFail($id);
+        $hoSo->update([
+            'TrangThai' => 'Đã lưu trữ',
+        ]);
+
+        return redirect()->back()->with('success', "Đã chuyển hồ sơ '{$hoSo->MaHoSo}' sang trạng thái lưu trữ chính thức!");
     }
 }

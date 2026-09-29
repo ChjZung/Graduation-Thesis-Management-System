@@ -93,3 +93,18 @@ Thư mục này chứa toàn bộ các file mẫu chuẩn (`.xlsx` và `.csv` đ
 | `DiemTichLuy`| Không | Số | Điểm trung bình tích lũy hệ 4 (VD: `3.25`). |
 | `TrangThai` | Không | Chuỗi | Trạng thái: `Đang học`, `Tạm dừng`, `Bảo lưu`, `Đã tốt nghiệp`. |
 > **Tính năng tự động**: Khi import Sinh viên, hệ thống tự động suy ra `MaKhoa` và `MaNganh` từ Lớp học, đồng thời tạo Tài khoản sinh viên với `TenDangNhap = MSSV`, mật khẩu mặc định `123456`.
+
+### 8. Tài khoản Trưởng Khoa & Trưởng Bộ Môn (`08_TaiKhoan_TBM_TK_Mau`)
+| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+|---|:---:|---|---|
+| `MaCanBo` | **Có** | Chuỗi | Mã Cán bộ / Giảng viên có sẵn trong danh sách Giảng viên (VD: `GV001`). Hệ thống tự động liên kết hồ sơ giảng viên, không tạo giảng viên mới hay trùng lặp. |
+| `TenDangNhap` | **Có** | Chuỗi | Tên đăng nhập theo quy tắc: Trưởng khoa: `TK_{MaKhoa}_{MaCanBo}`; Trưởng bộ môn: `TBM_{MaKhoa}_{MaBoMon}_{MaCanBo}` |
+| `HoTen` | **Có** | Chuỗi | Họ và tên Cán bộ (lấy theo hồ sơ Giảng viên) |
+| `Email` | Không | Chuỗi | Email liên hệ trường cấp (Duy nhất) |
+| `SoDienThoai`| Không | Chuỗi | Số điện thoại liên hệ (Duy nhất) |
+| `MaVaiTro` | **Có** | Chuỗi | `VT05` (Trưởng khoa) hoặc `VT04` (Trưởng bộ môn) |
+| `MaKhoa` | **Có** | Chuỗi | Mã Khoa quản lý |
+| `MaBoMon` | Tùy chọn | Chuỗi | Mã Bộ Môn quản lý (bắt buộc với Trưởng bộ môn `VT04`, để trống với Trưởng khoa `VT05`) |
+| `MatKhau` | Không | Chuỗi | Mật khẩu ban đầu (mặc định `123456` nếu để trống) |
+
+

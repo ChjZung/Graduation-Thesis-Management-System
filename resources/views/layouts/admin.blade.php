@@ -75,12 +75,12 @@
             </li>
             <li class="{{ request()->routeIs('admin.duyet_detai.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.duyet_detai.index') }}">
-                    <i class="fa-solid fa-file-signature"></i> Duyệt đề tài GV
+                    <i class="fa-solid fa-book-bookmark"></i> Quản lý đề tài
                 </a>
             </li>
             <li class="{{ request()->routeIs('admin.duyet_dangky.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.duyet_dangky.index') }}">
-                    <i class="fa-solid fa-user-check"></i> Duyệt đăng ký SV
+                    <i class="fa-solid fa-clipboard-list"></i> Xem đăng ký đề tài
                 </a>
             </li>
 
@@ -178,7 +178,10 @@
             <div class="d-flex align-items-center gap-3">
                 <!-- Notification Bell Admin -->
                 @php
-                    $adminRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
+                    $adminRecentNoti = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'da_gui', 'ACTIVE'])
+                        ->orderBy('created_at', 'desc')
+                        ->limit(6)
+                        ->get();
                     $adminUnread = $adminRecentNoti->count();
                 @endphp
                 <div class="dropdown">
@@ -189,17 +192,20 @@
                         @endif
                     </a>
                     <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
-                        <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;color:#003b73;">Thông Báo Hệ Thống</strong></div>
+                        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                            <strong style="font-size:.85rem;color:#003b73;">Thông Báo Hệ Thống</strong>
+                            <a href="{{ route('thongbao.index') }}" class="small text-muted text-decoration-none">Tất cả</a>
+                        </div>
                         @forelse($adminRecentNoti as $noti)
-                        <div class="dropdown-item px-3 py-2 border-bottom">
+                        <a href="{{ route('thongbao.show', $noti->MaThongBao) }}" class="dropdown-item px-3 py-2 border-bottom text-wrap">
                             <div class="d-flex gap-2 align-items-start">
                                 <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
                                 <div>
-                                    <div class="fw-semibold text-wrap" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
+                                    <div class="fw-semibold text-dark" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
                                     <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                         @empty
                         <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
                         @endforelse

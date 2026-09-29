@@ -80,4 +80,25 @@ class GiangVien extends Model
     {
         return $this->hasMany(PhieuChamDiem::class, 'MaGV', 'MaGV');
     }
+
+    /**
+     * Tra cứu an toàn hồ sơ giảng viên của tài khoản đang đăng nhập
+     */
+    public static function getLoggedInGiangVien(?TaiKhoan $user = null): ?self
+    {
+        $user = $user ?? \Illuminate\Support\Facades\Auth::user();
+        if (!$user) return null;
+
+        $gv = static::with('boMon.khoa')
+            ->where('MaTK', $user->MaTK)
+            ->orWhere('MaGV', $user->TenDangNhap)
+            ->orWhere('MaGV', $user->MaTK)
+            ->first();
+
+        if (!$gv && preg_match('/(GV\d+)/i', $user->TenDangNhap, $matches)) {
+            $gv = static::with('boMon.khoa')->where('MaGV', strtoupper($matches[1]))->first();
+        }
+
+        return $gv;
+    }
 }

@@ -22,6 +22,8 @@ class HoSoBaoVe extends Model
         'XacNhanGVHD',
         'ThoiGianBaoVe',
         'PhongBaoVe',
+        'FileBanChinhSua',
+        'NgayNopBanChinhSua',
         'TrangThai',
         'GhiChu',
         'MaGVu',

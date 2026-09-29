@@ -27,10 +27,19 @@ class CheckRole
         $user->loadMissing('vaiTro');
         $roleName = $user->vaiTro->TenVaiTro ?? '';
 
-        // Map "Giáo vụ" → "Admin" để tương thích với route cũ role:Admin
+        // Chuẩn hóa danh sách role được phép
         $checkRoles = $roles;
-        if (in_array('Admin', $roles)) {
+
+        // "Giáo vụ" tương thích với "Admin"
+        if (in_array('Admin', $roles) || in_array('Giáo vụ', $roles)) {
+            $checkRoles[] = 'Admin';
             $checkRoles[] = 'Giáo vụ';
+        }
+
+        // Trưởng bộ môn và Trưởng khoa đều xuất thân từ Giảng viên nên có thể truy cập các tính năng Giảng viên (hướng dẫn, phản biện, chấm điểm)
+        if (in_array('Giảng viên', $roles)) {
+            $checkRoles[] = 'Trưởng bộ môn';
+            $checkRoles[] = 'Trưởng khoa';
         }
 
         if (!in_array($roleName, $checkRoles)) {

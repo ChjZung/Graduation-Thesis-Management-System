@@ -145,61 +145,120 @@
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $defaultPhases = [
-                        ['stt' => 1, 'name' => '1. Công bố danh sách đề tài khóa luận', 'target' => 'Khoa / Giáo vụ', 'time' => '01/09/2026 → 05/09/2026', 'code' => 'CONG_BO_DE_TAI', 'status' => 'done'],
-                        ['stt' => 2, 'name' => '2. Sinh viên lập nhóm & đăng ký đề tài', 'target' => 'Sinh viên', 'time' => '06/09/2026 → 07/09/2026', 'code' => 'DANG_KY_DE_TAI', 'status' => 'done'],
-                        ['stt' => 3, 'name' => '3. Khoa xét duyệt đăng ký đề tài', 'target' => 'Khoa / Ban quản trị', 'time' => '08/09/2026 → 09/09/2026', 'code' => 'XET_DUYET', 'status' => 'done'],
-                        ['stt' => 4, 'name' => '4. Phân công Giảng viên hướng dẫn', 'target' => 'Khoa / Bộ môn', 'time' => '09/09/2026 → 09/09/2026', 'code' => 'PHAN_CONG_GVHD', 'status' => 'done'],
-                        ['stt' => 5, 'name' => '5. Bắt đầu thực hiện khóa luận tốt nghiệp', 'target' => 'Sinh viên & GVHD', 'time' => '09/09/2026 → 10/10/2026', 'code' => 'THUC_HIEN', 'status' => 'done'],
-                        ['stt' => 6, 'name' => '6. Báo cáo tiến độ đợt 1 (Đề cương & CSDL)', 'target' => 'Sinh viên & GVHD', 'time' => '15/09/2026 → 18/09/2026', 'code' => 'BAO_CAO_TIEN_DO_1', 'status' => 'active'],
-                        ['stt' => 7, 'name' => '7. Báo cáo tiến độ đợt 2 (Thiết kế hệ thống)', 'target' => 'Sinh viên & GVHD', 'time' => '24/09/2026 → 28/09/2026', 'code' => 'BAO_CAO_TIEN_DO_2', 'status' => 'pending'],
-                        ['stt' => 8, 'name' => '8. Báo cáo tiến độ đợt 3 (Hoàn thiện chức năng)', 'target' => 'Sinh viên & GVHD', 'time' => '01/10/2026 → 10/10/2026', 'code' => 'BAO_CAO_TIEN_DO_3', 'status' => 'pending'],
-                        ['stt' => 9, 'name' => '9. Kiểm tra đạo văn (Turnitin < 20%)', 'target' => 'Sinh viên & Khoa', 'time' => '11/10/2026 → 15/10/2026', 'code' => 'DAO_VAN', 'status' => 'pending'],
-                        ['stt' => 10, 'name' => '10. GVHD xác nhận đủ điều kiện bảo vệ', 'target' => 'GVHD', 'time' => '16/10/2026 → 20/10/2026', 'code' => 'GVHD_XAC_NHAN', 'status' => 'pending'],
-                        ['stt' => 11, 'name' => '11. Nộp khóa luận chính thức & hoàn tất hồ sơ', 'target' => 'Sinh viên & Giáo vụ', 'time' => '21/10/2026 → 02/12/2026', 'code' => 'NOP_DO_AN', 'status' => 'pending'],
-                        ['stt' => 12, 'name' => '12. Lễ bảo vệ chính thức trước Hội đồng', 'target' => 'Hội đồng & Sinh viên', 'time' => '05/12/2026 → 12/10/2026', 'code' => 'BAO_VE', 'status' => 'pending'],
-                    ];
-                @endphp
-                @foreach($defaultPhases as $phase)
-                <tr class="{{ $phase['status'] === 'active' ? 'bg-warning bg-opacity-10' : '' }}">
-                    <td class="text-center fw-bold">{{ $phase['stt'] }}</td>
-                    <td>
-                        <div class="fw-semibold text-dark">{{ $phase['name'] }}</div>
-                        @if($phase['status'] === 'active')
-                            <div class="text-danger fw-bold mt-1" style="font-size: 0.72rem;">
-                                ⚡ Hạn chót: 18/09/2026 (Còn 3 ngày)
+                @if(isset($allMilestones) && $allMilestones->count() > 0)
+                    @foreach($allMilestones as $idx => $m)
+                    @php
+                        $today = now()->format('Y-m-d');
+                        $statusClass = '';
+                        $statusLabel = 'Chưa mở';
+                        $statusBadgeClass = 'text-muted';
+                        $daysLeft = (int) now()->diffInDays(\Carbon\Carbon::parse($m->NgayKetThuc), false);
+                        
+                        if ($m->NgayKetThuc < $today) {
+                            $statusLabel = '✓ Đã xong';
+                            $statusBadgeClass = 'badge-status-green';
+                        } elseif ($today >= $m->NgayBatDau && $today <= $m->NgayKetThuc) {
+                            $statusLabel = '● Đang mở';
+                            $statusBadgeClass = 'badge-status-amber';
+                            $statusClass = 'bg-warning bg-opacity-10';
+                        }
+                    @endphp
+                    <tr class="{{ $statusClass }}">
+                        <td class="text-center fw-bold">{{ $idx + 1 }}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ $m->TenMoc }}</div>
+                            @if($today >= $m->NgayBatDau && $today <= $m->NgayKetThuc)
+                                <div class="text-danger fw-bold mt-1" style="font-size: 0.72rem;">
+                                    ⚡ Hạn chót: {{ date('d/m/Y', strtotime($m->NgayKetThuc)) }} ({{ $daysLeft >= 0 ? "Còn {$daysLeft} ngày" : "Hôm nay" }})
+                                </div>
+                            @endif
+                        </td>
+                        <td class="text-muted" style="font-size: 0.82rem;">
+                            {{ str_contains(strtolower($m->TenMoc), 'sinh viên') ? 'Sinh viên' : (str_contains(strtolower($m->TenMoc), 'giảng viên') || str_contains(strtolower($m->TenMoc), 'gvhd') ? 'Giảng viên & GVHD' : 'Khoa / Giáo vụ') }}
+                        </td>
+                        <td class="fw-semibold text-dark" style="font-size: 0.82rem;">
+                            {{ date('d/m/Y', strtotime($m->NgayBatDau)) }} → {{ date('d/m/Y', strtotime($m->NgayKetThuc)) }}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                {{ $m->MaMoc }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="{{ $statusBadgeClass }}" style="font-size: 0.78rem;">
+                                {{ $statusLabel }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-inline-flex gap-1">
+                                <a href="#" class="btn-action-icon btn-action-edit" title="Chỉnh sửa mốc">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <a href="#" class="btn-action-icon btn-action-view" title="Gửi thông báo nhắc">
+                                    <i class="fa-solid fa-bell"></i>
+                                </a>
                             </div>
-                        @endif
-                    </td>
-                    <td class="text-muted" style="font-size: 0.82rem;">{{ $phase['target'] }}</td>
-                    <td class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $phase['time'] }}</td>
-                    <td>
-                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                            {{ $phase['code'] }}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        @if($phase['status'] === 'done')
-                            <span class="badge-status-green">✓ Đã xong</span>
-                        @elseif($phase['status'] === 'active')
-                            <span class="badge-status-amber">● Đang mở</span>
-                        @else
-                            <span class="text-muted" style="font-size: 0.78rem;">Chưa mở</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        <div class="d-inline-flex gap-1">
-                            <a href="#" class="btn-action-icon btn-action-edit" title="Chỉnh sửa mốc">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-                            <a href="#" class="btn-action-icon btn-action-view" title="Gửi thông báo nhắc">
-                                <i class="fa-solid fa-bell"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
+                        </td>
+                    </tr>
+                    @endforeach
+                @else
+                    @php
+                        $defaultPhases = [
+                            ['stt' => 1, 'name' => '1. Sinh viên tạo nhóm trên phần mềm', 'target' => 'Sinh viên', 'time' => '10/08/2026 → 10/08/2026', 'code' => 'TAO_NHOM', 'status' => 'done'],
+                            ['stt' => 2, 'name' => '2. Nhóm trưởng đăng ký đề tài chính thức', 'target' => 'Sinh viên', 'time' => '11/08/2026 → 11/08/2026', 'code' => 'DANG_KY_DE_TAI', 'status' => 'done'],
+                            ['stt' => 3, 'name' => '3. Xử lý các trường hợp ngoại lệ & duyệt đề tài', 'target' => 'Khoa / Giáo vụ', 'time' => '12/08/2026 → 12/08/2026', 'code' => 'XU_LY_NGOAI_LE', 'status' => 'done'],
+                            ['stt' => 4, 'name' => '4. Công bố danh sách SV & phân công GVHD', 'target' => 'Khoa / Bộ môn', 'time' => '14/08/2026 → 14/08/2026', 'code' => 'CONG_BO_GVHD', 'status' => 'done'],
+                            ['stt' => 5, 'name' => '5. Sinh viên liên hệ GVHD & Họp giao nhiệm vụ', 'target' => 'Sinh viên & GVHD', 'time' => '14/08/2026 → 17/08/2026', 'code' => 'LIEN_HE_GVHD', 'status' => 'done'],
+                            ['stt' => 6, 'name' => '6. Bắt đầu thực hiện & hoàn thiện đề cương chi tiết', 'target' => 'Sinh viên & GVHD', 'time' => '17/08/2026 → 28/08/2026', 'code' => 'THUC_HIEN', 'status' => 'done'],
+                            ['stt' => 7, 'name' => '7. Báo cáo tiến độ đợt 1 (Đề cương & CSDL)', 'target' => 'Sinh viên & GVHD', 'time' => '14/09/2026 → 18/09/2026', 'code' => 'BAO_CAO_TIEN_DO_1', 'status' => 'active'],
+                            ['stt' => 8, 'name' => '8. Báo cáo tiến độ đợt 2 (Thiết kế & Xây dựng hệ thống)', 'target' => 'Sinh viên & GVHD', 'time' => '12/10/2026 → 16/10/2026', 'code' => 'BAO_CAO_TIEN_DO_2', 'status' => 'pending'],
+                            ['stt' => 9, 'name' => '9. Báo cáo tiến độ đợt 3 (Kiểm thử & Dự thảo báo cáo)', 'target' => 'Sinh viên & GVHD', 'time' => '02/11/2026 → 06/11/2026', 'code' => 'BAO_CAO_TIEN_DO_3', 'status' => 'pending'],
+                            ['stt' => 10, 'name' => '10. Kiểm tra đạo văn (Quét Turnitin < 20%)', 'target' => 'Sinh viên & Khoa', 'time' => '09/11/2026 → 12/11/2026', 'code' => 'DAO_VAN', 'status' => 'pending'],
+                            ['stt' => 11, 'name' => '11. GVHD xác nhận đủ điều kiện bảo vệ', 'target' => 'GVHD', 'time' => '13/11/2026 → 16/11/2026', 'code' => 'GVHD_XAC_NHAN', 'status' => 'pending'],
+                            ['stt' => 12, 'name' => '12. Nộp khóa luận chính thức & hoàn tất hồ sơ', 'target' => 'Sinh viên & Giáo vụ', 'time' => '18/11/2026 → 20/11/2026', 'code' => 'NOP_BAO_CAO', 'status' => 'pending'],
+                            ['stt' => 13, 'name' => '13. Lễ bảo vệ chính thức trước Hội đồng', 'target' => 'Hội đồng & Sinh viên', 'time' => '25/11/2026 → 28/11/2026', 'code' => 'BAO_VE', 'status' => 'pending'],
+                        ];
+                    @endphp
+                    @foreach($defaultPhases as $phase)
+                    <tr class="{{ $phase['status'] === 'active' ? 'bg-warning bg-opacity-10' : '' }}">
+                        <td class="text-center fw-bold">{{ $phase['stt'] }}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ $phase['name'] }}</div>
+                            @if($phase['status'] === 'active')
+                                <div class="text-danger fw-bold mt-1" style="font-size: 0.72rem;">
+                                    ⚡ Hạn chót: 18/09/2026 (Còn 3 ngày)
+                                </div>
+                            @endif
+                        </td>
+                        <td class="text-muted" style="font-size: 0.82rem;">{{ $phase['target'] }}</td>
+                        <td class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $phase['time'] }}</td>
+                        <td>
+                            <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                {{ $phase['code'] }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            @if($phase['status'] === 'done')
+                                <span class="badge-status-green">✓ Đã xong</span>
+                            @elseif($phase['status'] === 'active')
+                                <span class="badge-status-amber">● Đang mở</span>
+                            @else
+                                <span class="text-muted" style="font-size: 0.78rem;">Chưa mở</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="d-inline-flex gap-1">
+                                <a href="#" class="btn-action-icon btn-action-edit" title="Chỉnh sửa mốc">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <a href="#" class="btn-action-icon btn-action-view" title="Gửi thông báo nhắc">
+                                    <i class="fa-solid fa-bell"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                @endif
             </tbody>
         </table>
     </div>

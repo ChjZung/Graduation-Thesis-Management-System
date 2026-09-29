@@ -28,6 +28,11 @@ class DeTai extends Model
         'LyDoTuChoi',
         'NgayDeXuat',
         'NgayDuyet',
+        'NgayDuyetBM',
+        'NguoiDuyetBM',
+        'NgayDuyetKhoa',
+        'NguoiDuyetKhoa',
+        'NgayCongBo',
         'MaGV',
         'MaHocKy',
     ];

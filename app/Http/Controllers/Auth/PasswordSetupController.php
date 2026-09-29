@@ -32,6 +32,10 @@ class PasswordSetupController extends Controller
 
         if (in_array($role, ['Admin', 'Giáo vụ'])) {
             $layout = 'layouts.admin';
+        } elseif ($role === 'Trưởng khoa') {
+            $layout = 'layouts.truongkhoa';
+        } elseif ($role === 'Trưởng bộ môn') {
+            $layout = 'layouts.truongbomon';
         } elseif ($role === 'Giảng viên') {
             $layout = 'layouts.giangvien';
         } else {
@@ -94,6 +98,8 @@ class PasswordSetupController extends Controller
         $role = $user->vaiTro->TenVaiTro ?? '';
 
         if (in_array($role, ['Admin', 'Giáo vụ'])) return redirect()->route('admin.dashboard');
+        if ($role === 'Trưởng khoa') return redirect()->route('truongkhoa.dashboard');
+        if ($role === 'Trưởng bộ môn') return redirect()->route('truongbomon.dashboard');
         if ($role === 'Giảng viên') return redirect()->route('giangvien.dashboard');
         if ($role === 'Sinh viên') return redirect()->route('sinhvien.dashboard');
 

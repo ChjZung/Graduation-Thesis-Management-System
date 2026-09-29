@@ -133,10 +133,14 @@ class IdGenerator
     }
 
     /**
-     * Sinh mã Nhóm: N01, N02, ...
+     * Sinh mã Nhóm: NHOM + Mã SV trưởng nhóm (hoặc N01, N02 nếu không truyền)
      */
-    public static function nextNhom(): string
+    public static function nextNhom(?string $maSVLeader = null): string
     {
+        if (!empty($maSVLeader)) {
+            return 'NHOM' . $maSVLeader;
+        }
+
         return DB::transaction(function () {
             $max = DB::table('Nhom')
                 ->where('MaNhom', 'LIKE', 'N%')

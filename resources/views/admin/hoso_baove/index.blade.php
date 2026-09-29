@@ -135,7 +135,7 @@
                         <th width="14%">Khóa Luận</th>
                         <th width="14%" class="text-center">Turnitin %</th>
                         <th width="12%" class="text-center">Trạng Thái</th>
-                        <th width="14%">Hội Đồng & GVPB</th>
+                        <th width="14%">Hội Đồng Bảo Vệ</th>
                         <th width="12%" class="text-center">Thao Tác</th>
                     </tr>
                 </thead>
@@ -163,6 +163,13 @@
                                 </a>
                             @else
                                 <span class="text-muted small">Chưa có tệp</span>
+                            @endif
+                            @if($hs->FileBanChinhSua)
+                                <div class="mt-1">
+                                    <a href="{{ asset('storage/' . $hs->FileBanChinhSua) }}" target="_blank" class="badge bg-info-subtle text-info border text-decoration-none">
+                                        <i class="fa-solid fa-file-circle-check me-1"></i>Bản sau bảo vệ
+                                    </a>
+                                </div>
                             @endif
                         </td>
                         <td class="text-center">
@@ -194,6 +201,7 @@
                                     'Đã phân công', 'Đã phân công hội đồng' => 'bg-success-subtle text-success border border-success-subtle',
                                     'Đủ điều kiện bảo vệ' => 'bg-primary-subtle text-primary border border-primary-subtle',
                                     'Không đủ điều kiện'  => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                    'Đã lưu trữ'          => 'bg-secondary text-white',
                                     default => 'bg-warning-subtle text-warning border border-warning-subtle',
                                 };
                             @endphp
@@ -210,9 +218,6 @@
                                 @if($hs->PhongBaoVe || $hs->hoiDong->DiaDiem)
                                     <div class="small text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ $hs->PhongBaoVe ?? $hs->hoiDong->DiaDiem }}</div>
                                 @endif
-                                <div class="small text-secondary mt-1">
-                                    <strong>GVPB:</strong> {{ $hs->giangVienPhanBien->HoTen ?? 'Chưa phân công' }}
-                                </div>
                             @else
                                 <span class="text-muted small fst-italic">Chưa xếp Hội đồng</span>
                             @endif
@@ -236,11 +241,21 @@
                                     @endif
                                 @endif
 
-                                <!-- Nút Phân công Hội đồng & GVPB (Dành cho hồ sơ Đủ điều kiện hoặc Đã phân công) -->
+                                <!-- Nút Phân công Hội đồng (Dành cho hồ sơ Đủ điều kiện hoặc Đã phân công) -->
                                 @if(in_array($hs->TrangThai, ['Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã phân công hội đồng']))
                                     <button type="button" class="btn btn-xs btn-primary rounded-pill w-100 py-1" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#modalPhanCong{{ $hs->MaHoSo }}">
-                                        <i class="fa-solid fa-user-gear me-1"></i>{{ $hs->hoiDong ? 'Đổi HĐ / PB' : 'Xếp HĐ' }}
+                                        <i class="fa-solid fa-landmark me-1"></i>{{ $hs->hoiDong ? 'Đổi HĐ' : 'Xếp HĐ' }}
                                     </button>
+                                @endif
+
+                                <!-- Nút Lưu Trữ Hồ Sơ Sau Bảo Vệ -->
+                                @if($hs->FileBanChinhSua && $hs->TrangThai !== 'Đã lưu trữ')
+                                    <form action="{{ route('admin.hosoBaoVe.luuTru', $hs->MaHoSo) }}" method="POST" class="d-inline w-100">
+                                        @csrf
+                                        <button type="submit" class="btn btn-xs btn-outline-secondary rounded-pill w-100 py-1" style="font-size: 0.75rem;" onclick="return confirm('Xác nhận hoàn tất và lưu trữ hồ sơ khóa luận này?')">
+                                            <i class="fa-solid fa-box-archive me-1"></i>Lưu trữ
+                                        </button>
+                                    </form>
                                 @endif
                             </div>
 
@@ -271,12 +286,12 @@
                                 </div>
                             </div>
 
-                            <!-- Modal Phân công Hội đồng & GV Phản biện -->
+                            <!-- Modal Phân công Hội đồng Bảo vệ -->
                             <div class="modal fade text-start" id="modalPhanCong{{ $hs->MaHoSo }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
                                         <div class="modal-header bg-primary text-white">
-                                            <h6 class="modal-title fw-bold"><i class="fa-solid fa-landmark me-2"></i>Phân Công Hội Đồng & GVPB — {{ $hs->MaHoSo }}</h6>
+                                            <h6 class="modal-title fw-bold"><i class="fa-solid fa-landmark me-2"></i>Phân Công Hội Đồng Bảo Vệ — {{ $hs->MaHoSo }}</h6>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
                                         <form action="{{ route('admin.hosoBaoVe.phanCong', $hs->MaHoSo) }}" method="POST">
@@ -292,19 +307,6 @@
                                                             </option>
                                                         @endforeach
                                                     </select>
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">Giảng Viên Phản Biện (GVPB)</label>
-                                                    <select name="MaGVPhanBien" class="form-select form-select-sm">
-                                                        <option value="">— Chọn Giảng viên phản biện —</option>
-                                                        @foreach($giangViens as $gv)
-                                                            <option value="{{ $gv->MaGV }}" {{ $hs->MaGVPhanBien === $gv->MaGV ? 'selected' : '' }}>
-                                                                {{ $gv->HoTen }} ({{ $gv->HocVi ?? 'Giảng viên' }})
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="form-text text-muted small">GVPB sẽ chấm nhận xét và cho điểm phản biện đồ án.</div>
                                                 </div>
 
                                                 <div class="row g-2">
