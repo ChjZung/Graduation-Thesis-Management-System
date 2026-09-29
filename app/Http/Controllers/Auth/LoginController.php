@@ -32,8 +32,9 @@ class LoginController extends Controller implements HasMiddleware
         $user->loadMissing('vaiTro');
         $role = $user->vaiTro->TenVaiTro ?? '';
 
-        if ($role === 'Admin') return route('admin.dashboard');
-        if ($role === 'Giáo vụ') return route('admin.dashboard');
+        if (in_array($role, ['Admin', 'Giáo vụ'])) return route('admin.dashboard');
+        if ($role === 'Trưởng khoa') return route('truongkhoa.dashboard');
+        if ($role === 'Trưởng bộ môn') return route('truongbomon.dashboard');
         if ($role === 'Giảng viên') return route('giangvien.dashboard');
         if ($role === 'Sinh viên') return route('sinhvien.dashboard');
 
@@ -166,6 +167,10 @@ class LoginController extends Controller implements HasMiddleware
 
         if (in_array($role, ['Admin', 'Giáo vụ'])) {
             return redirect()->route('admin.dashboard');
+        } elseif ($role === 'Trưởng khoa') {
+            return redirect()->route('truongkhoa.dashboard');
+        } elseif ($role === 'Trưởng bộ môn') {
+            return redirect()->route('truongbomon.dashboard');
         } elseif ($role === 'Giảng viên') {
             return redirect()->route('giangvien.dashboard');
         } elseif ($role === 'Sinh viên') {

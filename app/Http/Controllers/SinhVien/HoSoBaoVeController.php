@@ -164,6 +164,47 @@ class HoSoBaoVeController extends Controller
         });
 
         return redirect()->route('sinhvien.hoso.index')
-            ->with('success', 'Nộp hồ sơ bảo vệ thành công! Giáo vụ Khoa sẽ thẩm định tính hợp lệ của tỷ lệ Turnitin và sắp xếp Hội đồng bảo vệ.');
+            ->with('success', 'Nộp hồ sơ bảo vệ thành công! Vui lòng chờ Giảng viên hướng dẫn kiểm tra và xác nhận đủ điều kiện bảo vệ.');
+    }
+
+    /**
+     * Sinh viên nộp bản khóa luận hoàn chỉnh sau khi bảo vệ tại Hội đồng
+     */
+    public function nopBanHoanChinh(Request $request)
+    {
+        $request->validate([
+            'FileHoanChinh' => 'required|file|mimes:pdf|max:30720',
+            'GhiChu'        => 'nullable|string|max:500',
+        ], [
+            'FileHoanChinh.required' => 'Vui lòng đính kèm tệp Báo cáo toàn văn bản hoàn chỉnh sau bảo vệ (PDF).',
+            'FileHoanChinh.mimes'    => 'Tệp phải có định dạng PDF.',
+        ]);
+
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->firstOrFail();
+        $hoSo = HoSoBaoVe::where('MaNhom', $thanhVienRecord->MaNhom)->firstOrFail();
+
+        $file = $request->file('FileHoanChinh');
+        $path = $file->store("hoso/{$hoSo->MaNhom}", 'public');
+
+        $hoSo->update([
+            'FileBanChinhSua'    => $path,
+            'NgayNopBanChinhSua' => now(),
+            'GhiChu'             => $hoSo->GhiChu . ($request->GhiChu ? ' | Bản hoàn chỉnh: ' . $request->GhiChu : ' | Đã nộp bản hoàn chỉnh sau bảo vệ'),
+        ]);
+
+        TepHoSoBaoVe::create([
+            'MaTep'        => IdGenerator::nextTepHoSoBaoVe(),
+            'TenTep'       => $file->getClientOriginalName(),
+            'LoaiTep'      => 'Bản hoàn chỉnh sau bảo vệ',
+            'DuongDanFile' => $path,
+            'PhienBan'     => 'Final',
+            'NgayNop'      => now()->toDateString(),
+            'TrangThai'    => 'Đã nộp',
+            'MaHoSo'       => $hoSo->MaHoSo,
+        ]);
+
+        return redirect()->back()->with('success', 'Nộp bản khóa luận hoàn chỉnh sau bảo vệ thành công! Hồ sơ đã sẵn sàng để Giáo vụ lưu trữ.');
     }
 }

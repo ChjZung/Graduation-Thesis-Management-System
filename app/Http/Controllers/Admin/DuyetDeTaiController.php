@@ -17,37 +17,217 @@ class DuyetDeTaiController extends Controller
 {
     public function index(Request $request)
     {
-        $currentHocKy = HocKy::where('TrangThai', 1)->first() ?? HocKy::orderBy('MaHocKy', 'desc')->first();
+        $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->orWhere('TrangThai', '1')->first() ?? HocKy::orderBy('MaHocKy', 'desc')->first();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $boMons = BoMon::orderBy('TenBoMon')->get();
+        $khoas = \App\Models\Khoa::orderBy('TenKhoa')->get();
         $nganhs = Nganh::orderBy('TenNganh')->get();
+        $hocPhans = ['Khóa luận tốt nghiệp', 'Đồ án tốt nghiệp', 'Đồ án chuyên ngành'];
+
+        $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy);
+
+        // Danh sách Bộ môn (lọc theo Khoa nếu chọn Khoa)
+        if ($request->filled('MaKhoa')) {
+            $boMons = BoMon::where('MaKhoa', $request->MaKhoa)->orderBy('TenBoMon')->get();
+        } else {
+            $boMons = BoMon::orderBy('TenBoMon')->get();
+        }
+
+        // Danh sách Lĩnh vực duy nhất
+        $linhVucs = DeTai::whereNotNull('LinhVuc')->where('LinhVuc', '!=', '')
+            ->distinct()->pluck('LinhVuc')->sort()->values();
+        if ($linhVucs->isEmpty()) {
+            $linhVucs = collect([
+                'Công nghệ Web & Cloud',
+                'Trí tuệ nhân tạo (AI)',
+                'Ứng dụng Di động (Mobile)',
+                'Hệ thống Thông tin & ERP',
+                'An toàn thông tin & Mạng',
+                'Khoa học dữ liệu (Data Science)',
+                'Khoa học máy tính & Thuật toán',
+                'IoT & Hệ thống nhúng'
+            ]);
+        }
+
+        // Tính toán các chỉ số thống kê (Counts) scoped theo bộ lọc đang chọn
+        $baseCountQuery = DeTai::query();
+        if ($selectedHocKy && $selectedHocKy !== 'ALL') {
+            $baseCountQuery->where('MaHocKy', $selectedHocKy);
+        }
+        if ($request->filled('MaKhoa')) {
+            $baseCountQuery->whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $request->MaKhoa));
+        }
+        if ($request->filled('MaBoMon')) {
+            $baseCountQuery->whereHas('giangVien', fn($q) => $q->where('MaBoMon', $request->MaBoMon));
+        }
+        if ($request->filled('LinhVuc')) {
+            $baseCountQuery->where('LinhVuc', $request->LinhVuc);
+        }
+        if ($request->filled('HocPhan')) {
+            $baseCountQuery->where('HocPhan', $request->HocPhan);
+        }
+
+        $choDuyetBM   = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
+        $dangPB       = (clone $baseCountQuery)->where('TrangThai', 'Đang phản biện đề cương')->count();
+        $choDuyetKhoa = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
+        $tkDaDuyet    = (clone $baseCountQuery)->where('TrangThai', 'Trưởng khoa đã duyệt')->count();
+        $daCongBo     = (clone $baseCountQuery)->where('TrangThai', 'Đã công bố')->count();
+        $daDangKy     = (clone $baseCountQuery)->where('TrangThai', 'Đã đăng ký')->count();
+        $hoanThanh    = (clone $baseCountQuery)->where('TrangThai', 'Hoàn thành')->count();
+        $yeuCauSua    = (clone $baseCountQuery)->where('TrangThai', 'Yêu cầu chỉnh sửa')->count();
+        $tuChoi       = (clone $baseCountQuery)->where('TrangThai', 'Từ chối')->count();
+        $total        = (clone $baseCountQuery)->count();
 
         $counts = [
-            'cho_duyet'    => DeTai::where('TrangThai', 'Chờ duyệt')->count(),
-            'da_duyet'     => DeTai::where('TrangThai', 'Đã duyệt')->count(),
-            'da_cong_bo'   => DeTai::where('TrangThai', 'Đã công bố')->count(),
-            'yeu_cau_sua'  => DeTai::where('TrangThai', 'Yêu cầu điều chỉnh')->count(),
-            'tu_choi'      => DeTai::where('TrangThai', 'Từ chối')->count(),
-            'total'        => DeTai::count(),
+            'cho_duyet_bm'        => $choDuyetBM,
+            'dang_phan_bien'      => $dangPB,
+            'cho_duyet_khoa'      => $choDuyetKhoa,
+            'truong_khoa_da_duyet'=> $tkDaDuyet,
+            'da_duyet'            => $tkDaDuyet,
+            'da_cong_bo'          => $daCongBo,
+            'da_dang_ky'          => $daDangKy,
+            'hoan_thanh'          => $hoanThanh,
+            'cho_duyet'           => ($choDuyetBM + $dangPB + $choDuyetKhoa),
+            'yeu_cau_sua'         => $yeuCauSua,
+            'tu_choi'             => $tuChoi,
+            'total'               => $total,
         ];
 
-        // 1. Query danh sách đề tài xét duyệt
-        $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy', 'dangKyDeTais.nhom']);
+        // ------------------------------------------------------------------
+        // TÍNH TOÁN DỮ LIỆU THỐNG KÊ HỌC THUẬT CHO TAB "THỐNG KÊ ĐỀ TÀI"
+        // ------------------------------------------------------------------
+        $allScopedDeTais = (clone $baseCountQuery)->with([
+            'giangVien.boMon',
+            'phieuDangKys.nhom.thanhVienNhoms'
+        ])->get();
+
+        $statTotal = $allScopedDeTais->count();
+        $statDaCongBo = 0;
+        $statDangDangKy = 0;
+        $statDaDuNhom = 0;
+        $statDangChoDuyet = 0;
+        $statDaHoanThanh = 0;
+
+        $tongMoDangKy = 0;
+        $coNhomDangKy = 0;
+        $conCho = 0;
+        $daDuSV = 0;
+        $chuaCoSVDangKy = 0;
+
+        $statusChartCounts = [
+            'Đã công bố' => 0,
+            'Đang đăng ký / Đủ nhóm' => 0,
+            'Đang chờ duyệt' => 0,
+            'Hoàn thành' => 0,
+            'Khác' => 0,
+        ];
+        $boMonChartCounts = [];
+        $linhVucChartCounts = [];
+        $quyMoNhomChartCounts = [
+            '1 sinh viên' => 0,
+            '2 sinh viên' => 0,
+            '3 sinh viên' => 0,
+        ];
+
+        foreach ($allScopedDeTais as $dt) {
+            $maxSV = $dt->SoLuongSinhVienToiDa ?? 3;
+            $regApproved = $dt->phieuDangKys ? $dt->phieuDangKys->where('TrangThai', 'Đã duyệt') : collect();
+            $cntSV = 0;
+            foreach ($regApproved as $p) {
+                if ($p->nhom && $p->nhom->thanhVienNhoms) {
+                    $cntSV += $p->nhom->thanhVienNhoms->count();
+                } else {
+                    $cntSV += 1;
+                }
+            }
+
+            if ($dt->TrangThai === 'Hoàn thành') {
+                $statDaHoanThanh++;
+                $statusChartCounts['Hoàn thành']++;
+            } elseif (in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Đang phản biện đề cương', 'Yêu cầu chỉnh sửa'])) {
+                $statDangChoDuyet++;
+                $statusChartCounts['Đang chờ duyệt']++;
+            } elseif ($dt->TrangThai === 'Từ chối') {
+                $statusChartCounts['Khác']++;
+            } elseif (in_array($dt->TrangThai, ['Đã công bố', 'Đã đăng ký', 'Trưởng khoa đã duyệt'])) {
+                $tongMoDangKy++;
+                if ($cntSV > 0) {
+                    $coNhomDangKy++;
+                    if ($cntSV >= $maxSV) {
+                        $statDaDuNhom++;
+                        $daDuSV++;
+                    } else {
+                        $statDangDangKy++;
+                        $conCho++;
+                    }
+                    $statusChartCounts['Đang đăng ký / Đủ nhóm']++;
+                } else {
+                    $chuaCoSVDangKy++;
+                    $conCho++;
+                    $statDaCongBo++;
+                    $statusChartCounts['Đã công bố']++;
+                }
+            } else {
+                $statusChartCounts['Khác']++;
+            }
+
+            $bmName = $dt->giangVien?->boMon?->TenBoMon ?? 'Chưa phân bộ môn';
+            $boMonChartCounts[$bmName] = ($boMonChartCounts[$bmName] ?? 0) + 1;
+
+            $lvName = $dt->LinhVuc ?: 'Lĩnh vực khác';
+            $linhVucChartCounts[$lvName] = ($linhVucChartCounts[$lvName] ?? 0) + 1;
+
+            if ($maxSV == 1) {
+                $quyMoNhomChartCounts['1 sinh viên']++;
+            } elseif ($maxSV == 2) {
+                $quyMoNhomChartCounts['2 sinh viên']++;
+            } else {
+                $quyMoNhomChartCounts['3 sinh viên']++;
+            }
+        }
+
+        arsort($linhVucChartCounts);
+        $topLinhVucChartCounts = array_slice($linhVucChartCounts, 0, 8, true);
+        arsort($boMonChartCounts);
+
+        $statsKPIs = [
+            'total'          => $statTotal,
+            'da_cong_bo'     => $statDaCongBo,
+            'dang_dang_ky'   => $statDangDangKy,
+            'da_du_nhom'     => $statDaDuNhom,
+            'dang_cho_duyet' => $statDangChoDuyet,
+            'da_hoan_thanh'  => $statDaHoanThanh,
+        ];
+
+        $dangKyStats = [
+            'tong_cong_bo' => $tongMoDangKy,
+            'co_nhom_dk'   => $coNhomDangKy,
+            'con_cho'      => $conCho,
+            'da_du_sv'     => $daDuSV,
+            'chua_co_sv'   => $chuaCoSVDangKy,
+        ];
+
+        // Query danh sách đề tài
+        $query = DeTai::with([
+            'giangVien.boMon.khoa', 
+            'nganh', 
+            'hocKy', 
+            'phieuDangKys.nhom.thanhVienNhoms.sinhVien.lop', 
+            'phanCongPhanBiens.giangVien'
+        ]);
+
+        if ($selectedHocKy && $selectedHocKy !== 'ALL') {
+            $query->where('MaHocKy', $selectedHocKy);
+        }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $query->where('TrangThai', $request->TrangThai);
-        } elseif (!$request->filled('TrangThai')) {
-            $query->where('TrangThai', 'Chờ duyệt');
         }
 
-        $hocPhans = ['Khóa luận tốt nghiệp', 'Đồ án tốt nghiệp', 'Đồ án chuyên ngành'];
-
-        if ($request->filled('MaHocKy')) {
-            $query->where('MaHocKy', $request->MaHocKy);
-        }
-
-        if ($request->filled('HocPhan')) {
-            $query->where('HocPhan', $request->HocPhan);
+        if ($request->filled('MaKhoa')) {
+            $maKhoa = $request->MaKhoa;
+            $query->whereHas('giangVien.boMon', function($gq) use ($maKhoa) {
+                $gq->where('MaKhoa', $maKhoa);
+            });
         }
 
         if ($request->filled('MaBoMon')) {
@@ -55,6 +235,14 @@ class DuyetDeTaiController extends Controller
             $query->whereHas('giangVien', function($gq) use ($maBM) {
                 $gq->where('MaBoMon', $maBM);
             });
+        }
+
+        if ($request->filled('LinhVuc')) {
+            $query->where('LinhVuc', $request->LinhVuc);
+        }
+
+        if ($request->filled('HocPhan')) {
+            $query->where('HocPhan', $request->HocPhan);
         }
 
         if ($request->filled('MaNganh')) {
@@ -73,116 +261,36 @@ class DuyetDeTaiController extends Controller
             });
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-
-        // 2. Thống kê theo Bộ Môn
-        $thongKeBoMon = BoMon::withCount('giangViens')->get()->map(function($bm) {
-            $gvIds = GiangVien::where('MaBoMon', $bm->MaBoMon)->pluck('MaGV');
-            $dtQuery = DeTai::whereIn('MaGV', $gvIds);
-
-            $bm->tong_detai = (clone $dtQuery)->count();
-            $bm->cho_duyet = (clone $dtQuery)->where('TrangThai', 'Chờ duyệt')->count();
-            $bm->da_duyet = (clone $dtQuery)->where('TrangThai', 'Đã duyệt')->count();
-            $bm->da_cong_bo = (clone $dtQuery)->where('TrangThai', 'Đã công bố')->count();
-            $bm->yeu_cau_sua = (clone $dtQuery)->where('TrangThai', 'Yêu cầu điều chỉnh')->count();
-            $bm->tu_choi = (clone $dtQuery)->where('TrangThai', 'Từ chối')->count();
-            return $bm;
-        });
-
-        // 3. Thống kê theo Giảng Viên
-        $thongKeGiangVien = GiangVien::with(['boMon'])->get()->map(function($gv) {
-            $dtQuery = DeTai::where('MaGV', $gv->MaGV);
-            $gv->tong_detai = (clone $dtQuery)->count();
-            $gv->cho_duyet = (clone $dtQuery)->where('TrangThai', 'Chờ duyệt')->count();
-            $gv->da_duyet = (clone $dtQuery)->where('TrangThai', 'Đã duyệt')->count();
-            $gv->da_cong_bo = (clone $dtQuery)->where('TrangThai', 'Đã công bố')->count();
-            $gv->yeu_cau_sua = (clone $dtQuery)->where('TrangThai', 'Yêu cầu điều chỉnh')->count();
-            $gv->so_nhom_nhan = DangKyDeTai::whereHas('deTai', fn($dq) => $dq->where('MaGV', $gv->MaGV))->where('TrangThai', 'Đã duyệt')->count();
-            return $gv;
-        })->sortByDesc('tong_detai')->values();
-
-        // 4. Thống kê theo Ngành & Chuyên ngành
-        $thongKeNganh = Nganh::with(['chuyenNganhs'])->get()->map(function($ng) {
-            $dtQuery = DeTai::where('MaNganh', $ng->MaNganh);
-            $ng->tong_detai = (clone $dtQuery)->count();
-            $ng->cho_duyet = (clone $dtQuery)->where('TrangThai', 'Chờ duyệt')->count();
-            $ng->da_duyet = (clone $dtQuery)->where('TrangThai', 'Đã duyệt')->count();
-            $ng->da_cong_bo = (clone $dtQuery)->where('TrangThai', 'Đã công bố')->count();
-            $ng->tong_chi_tieu_sv = (clone $dtQuery)->whereIn('TrangThai', ['Đã duyệt', 'Đã công bố'])->sum('SoLuongSinhVienToiDa');
-            return $ng;
-        });
-
-        $deTaiToanKhoa = [
-            'tong' => DeTai::whereNull('MaNganh')->count(),
-            'da_cong_bo' => DeTai::whereNull('MaNganh')->where('TrangThai', 'Đã công bố')->count(),
-            'da_duyet' => DeTai::whereNull('MaNganh')->where('TrangThai', 'Đã duyệt')->count(),
-        ];
+        // Giới hạn 5 đề tài / 1 trang theo chuẩn thống nhất hệ thống
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('admin.duyet_detai.index', compact(
             'detais', 
             'counts', 
+            'statsKPIs',
+            'statusChartCounts',
+            'boMonChartCounts',
+            'topLinhVucChartCounts',
+            'quyMoNhomChartCounts',
+            'dangKyStats',
             'hocKies', 
+            'selectedHocKy',
+            'khoas',
             'boMons', 
+            'linhVucs',
             'nganhs', 
             'currentHocKy',
-            'thongKeBoMon',
-            'thongKeGiangVien',
-            'thongKeNganh',
-            'deTaiToanKhoa',
             'hocPhans'
         ));
     }
 
-    public function approve($id)
-    {
-        $detai = DeTai::findOrFail($id);
-        $detai->update([
-            'TrangThai' => 'Đã duyệt',
-            'NgayDuyet' => now(),
-            'LyDoTuChoi' => null,
-        ]);
-
-        return redirect()->back()->with('success', "Đã phê duyệt đề tài '{$detai->TenDeTai}' thành công!");
-    }
-
-    public function reject(Request $request, $id)
-    {
-        $request->validate([
-            'LyDoTuChoi' => 'required|string|max:500',
-        ], [
-            'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối đề tài.',
-        ]);
-
-        $detai = DeTai::findOrFail($id);
-        $detai->update([
-            'TrangThai' => 'Từ chối',
-            'LyDoTuChoi' => trim($request->LyDoTuChoi),
-        ]);
-
-        return redirect()->back()->with('success', "Đã từ chối đề tài '{$detai->TenDeTai}'.");
-    }
-
-    public function requestEdit(Request $request, $id)
-    {
-        $request->validate([
-            'YeuCauSua' => 'required|string|max:500',
-        ], [
-            'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu điều chỉnh, bổ sung.',
-        ]);
-
-        $detai = DeTai::findOrFail($id);
-        $detai->update([
-            'TrangThai' => 'Yêu cầu điều chỉnh',
-            'LyDoTuChoi' => trim($request->YeuCauSua),
-        ]);
-
-        return redirect()->back()->with('success', "Đã gửi yêu cầu điều chỉnh đề tài '{$detai->TenDeTai}' tới Giảng viên!");
-    }
-
+    /**
+     * Giáo vụ công bố đề tài đã được Trưởng khoa phê duyệt chính thức
+     */
     public function publish(Request $request)
     {
         $maHocKy = $request->input('MaHocKy');
-        $query = DeTai::where('TrangThai', 'Đã duyệt');
+        $query = DeTai::where('TrangThai', 'Trưởng khoa đã duyệt');
 
         if ($maHocKy) {
             $query->where('MaHocKy', $maHocKy);
@@ -190,12 +298,13 @@ class DuyetDeTaiController extends Controller
 
         $count = $query->count();
         if ($count === 0) {
-            return redirect()->back()->with('warning', 'Không có đề tài nào ở trạng thái "Đã duyệt" để công bố.');
+            return redirect()->back()->with('warning', 'Không có đề tài nào ở trạng thái "Trưởng khoa đã duyệt" để công bố.');
         }
 
         // Cập nhật trạng thái thành Đã công bố
         $query->update([
-            'TrangThai' => 'Đã công bố',
+            'TrangThai'   => 'Đã công bố',
+            'NgayCongBo'  => now(),
         ]);
 
         // Tạo thông báo cho sinh viên
@@ -204,7 +313,7 @@ class DuyetDeTaiController extends Controller
             ThongBao::create([
                 'MaThongBao'   => $maTB,
                 'TieuDe'       => 'Công bố danh mục đề tài Khóa luận tốt nghiệp',
-                'NoiDung'      => "Giáo vụ Khoa vừa công bố chính thức {$count} đề tài Khóa luận tốt nghiệp đã được phê duyệt. Các nhóm sinh viên đủ điều kiện có thể xem chi tiết và đăng ký ngay trong thời gian quy định.",
+                'NoiDung'      => "Giáo vụ Khoa vừa công bố chính thức {$count} đề tài Khóa luận tốt nghiệp đã được Trưởng bộ môn và Trưởng khoa phê duyệt. Sinh viên/nhóm đủ điều kiện có thể xem chi tiết và đăng ký theo kế hoạch.",
                 'LoaiThongBao' => 'Thông báo chung',
                 'DoiTuongNhan' => 'Sinh viên',
                 'NgayTao'      => now(),
@@ -212,7 +321,7 @@ class DuyetDeTaiController extends Controller
                 'MaGVu'        => 'GVU01',
             ]);
         } catch (\Throwable $e) {
-            // bỏ qua nếu phát sinh lỗi thông báo phụ
+            // bỏ qua lỗi nếu có
         }
 
         return redirect()->back()->with('success', "Đã công bố chính thức {$count} đề tài Khóa luận cho sinh viên đăng ký!");
@@ -242,7 +351,7 @@ class DuyetDeTaiController extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['Mã ĐT', 'Tên Đề Tài', 'Môn / Học Phần', 'Lĩnh Vực', 'Ngành', 'Giảng Viên Hướng Dẫn', 'Bộ Môn', 'Số SV Tối Đa', 'Học Kỳ', 'Trạng Thái', 'Có Đề Cương'];
+        $columns = ['Mã ĐT', 'Tên Đề Tài', 'Môn / Học Phần', 'Lĩnh Vực', 'Ngành', 'Giảng Viên Hướng Dẫn', 'Bộ Môn', 'Số SV Tối Đa', 'Học Kỳ', 'Trạng Thái', 'Có Đề Cương', 'Ngày Duyệt BM', 'Ngày Duyệt Khoa', 'Ngày Công Bố'];
 
         $callback = function() use ($detais, $columns) {
             $file = fopen('php://output', 'w');
@@ -258,10 +367,13 @@ class DuyetDeTaiController extends Controller
                     $dt->nganh->TenNganh ?? 'Toàn khoa',
                     $dt->giangVien->HoTen ?? '',
                     $dt->giangVien->boMon->TenBoMon ?? '',
-                    $dt->SoLuongSinhVienToiDa ?? 2,
+                    $dt->SoLuongSinhVienToiDa ?? 3,
                     $dt->hocKy->TenHocKy ?? '',
                     $dt->TrangThai,
                     $dt->FileDeCuong ? 'Có' : 'Chưa có',
+                    $dt->NgayDuyetBM ?? '',
+                    $dt->NgayDuyetKhoa ?? '',
+                    $dt->NgayCongBo ?? '',
                 ]);
             }
             fclose($file);

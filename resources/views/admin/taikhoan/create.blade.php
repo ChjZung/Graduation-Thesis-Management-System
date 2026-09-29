@@ -26,8 +26,13 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Tên Đăng Nhập (Username) <span class="text-danger">*</span></label>
-                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap') }}" required placeholder="VD: gv_cntt01, canbogiaovu, 2001230107...">
-                            <div class="form-text small">Tên đăng nhập duy nhất dùng đăng nhập vào hệ thống.</div>
+                            <input type="text" name="TenDangNhap" class="form-control" value="{{ old('TenDangNhap') }}" required placeholder="VD: TK_CNTT_001, TBM_CNTT_CNPM_001...">
+                            <div class="form-text small mt-1">
+                                <strong>Quy tắc đặt tên tài khoản:</strong><br>
+                                &bull; Trưởng khoa: <code>TK_{MaKhoa}_001</code> (VD: <code>TK_CNTT_001</code>)<br>
+                                &bull; Trưởng bộ môn: <code>TBM_{MaKhoa}_{MaBoMon}_001</code> (VD: <code>TBM_CNTT_CNPM_001</code>, <code>TBM_CNTT_HTTT_001</code>)<br>
+                                &bull; Giảng viên: <code>GV_{Mã}</code> | Sinh viên: <code>{MSSV}</code>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Vai Trò Người Dùng <span class="text-danger">*</span></label>

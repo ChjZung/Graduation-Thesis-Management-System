@@ -38,14 +38,18 @@ class ProfileController extends Controller
             $extraData['totalDeTai'] = DeTai::count();
             $extraData['totalGiangVien'] = GiangVien::count();
             $extraData['totalSinhVien'] = SinhVien::count();
-        } elseif ($role === 'Giảng viên') {
-            $layout = 'layouts.giangvien';
-            $profile = GiangVien::with(['boMon.khoa', 'deTais'])->where('MaTK', $user->MaTK)->first();
+        } elseif (in_array($role, ['Giảng viên', 'Trưởng khoa', 'Trưởng bộ môn'])) {
+            $layout = match($role) {
+                'Trưởng khoa'   => 'layouts.truongkhoa',
+                'Trưởng bộ môn' => 'layouts.truongbomon',
+                default         => 'layouts.giangvien',
+            };
+            $profile = GiangVien::getLoggedInGiangVien($user);
 
             if ($profile) {
-                $extraData['deTaiCount'] = $profile->deTais->count();
-                $extraData['deTaiDaDuyet'] = $profile->deTais->where('TrangThai', 'Đã duyệt')->count();
-                $extraData['deTaiDaDangKy'] = $profile->deTais->where('TrangThai', 'Đã đăng ký')->count();
+                $extraData['deTaiCount'] = $profile->deTais()->count();
+                $extraData['deTaiDaDuyet'] = $profile->deTais()->where('TrangThai', 'Đã duyệt')->count();
+                $extraData['deTaiDaDangKy'] = $profile->deTais()->where('TrangThai', 'Đã đăng ký')->count();
             }
         } else {
             $layout = 'layouts.sinhvien';
@@ -158,6 +162,10 @@ class ProfileController extends Controller
 
         if (in_array($role, ['Admin', 'Giáo vụ'])) {
             $layout = 'layouts.admin';
+        } elseif ($role === 'Trưởng khoa') {
+            $layout = 'layouts.truongkhoa';
+        } elseif ($role === 'Trưởng bộ môn') {
+            $layout = 'layouts.truongbomon';
         } elseif ($role === 'Giảng viên') {
             $layout = 'layouts.giangvien';
         } else {

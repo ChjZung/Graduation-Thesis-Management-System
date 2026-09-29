@@ -118,7 +118,10 @@
                 <i class="fa-solid fa-download me-1"></i> File Mẫu
             </a>
             <button type="button" class="btn btn-info text-white shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-import me-1"></i> Import Excel
+                <i class="fa-solid fa-file-import me-1"></i> Import GV
+            </button>
+            <button type="button" class="btn btn-warning text-dark shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#importTBM_TK_Modal">
+                <i class="fa-solid fa-user-shield me-1"></i> Upload DS TK / TBM
             </button>
             <button type="button" class="btn btn-success shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="fa-solid fa-plus me-1"></i> Thêm Giảng Viên
@@ -205,6 +208,11 @@
                             <a href="{{ route('giangvien.edit', $gv->MaGV) }}" class="btn-action-icon text-warning" title="Chỉnh sửa thông tin">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
+                            <button type="button" class="btn-action-icon" style="color: #7c3aed;" 
+                                    onclick="openBoNhiemModal('{{ $gv->MaGV }}', '{{ addslashes($gv->HoTen) }}', '{{ $gv->MaBoMon }}', '{{ $gv->boMon->MaKhoa ?? '' }}')" 
+                                    title="Bổ nhiệm Trưởng khoa / Trưởng bộ môn">
+                                <i class="fa-solid fa-award"></i>
+                            </button>
                             @if($tk)
                             <form action="{{ route('admin.yeucau.approve', $tk->MaTK) }}" method="POST" class="d-inline" onsubmit="return confirm('Reset mật khẩu tài khoản của {{ $gv->HoTen }} về 123456?');">
                                 @csrf
@@ -377,4 +385,151 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL BỔ NHIỆM TRƯỞNG KHOA / TRƯỞNG BỘ MÔN -->
+<div class="modal fade" id="boNhiemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3 px-4">
+                <h5 class="modal-title fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-award text-warning"></i> Bổ Nhiệm Chức Vụ &amp; Cấp Tài Khoản Portal
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="boNhiemForm" action="">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 mb-3">
+                        <div class="small text-muted">Giảng viên được bổ nhiệm:</div>
+                        <div class="fs-6 fw-bold text-dark" id="boNhiemGvName">TS. Nguyễn Văn A</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Chọn chức vụ bổ nhiệm <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-4 mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="chuc_vu" id="cvTruongKhoa" value="TK" onchange="toggleChucVuFields()">
+                                <label class="form-check-label fw-bold text-dark" for="cvTruongKhoa">
+                                    Trưởng Khoa (VT05)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="chuc_vu" id="cvTruongBoMon" value="TBM" checked onchange="toggleChucVuFields()">
+                                <label class="form-check-label fw-bold text-dark" for="cvTruongBoMon">
+                                    Trưởng Bộ Môn (VT04)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trường chọn Khoa khi bổ nhiệm Trưởng khoa -->
+                    <div class="mb-3" id="fieldKhoa" style="display: none;">
+                        <label class="form-label fw-bold small text-muted">Khoa đảm nhiệm <span class="text-danger">*</span></label>
+                        <select name="ma_khoa" id="selectBoNhiemKhoa" class="form-select rounded-3">
+                            <option value="">-- Chọn Khoa --</option>
+                            @php
+                                $allKhoas = \App\Models\Khoa::orderBy('TenKhoa')->get();
+                            @endphp
+                            @foreach($allKhoas as $k)
+                                <option value="{{ $k->MaKhoa }}">{{ $k->TenKhoa }} ({{ $k->MaKhoa }})</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text small text-info mt-1">
+                            <i class="fa-solid fa-circle-info me-1"></i> Tên đăng nhập tự sinh chuẩn: <code>TK_{MaKhoa}_001</code>
+                        </div>
+                    </div>
+
+                    <!-- Trường chọn Bộ môn khi bổ nhiệm Trưởng bộ môn -->
+                    <div class="mb-3" id="fieldBoMon">
+                        <label class="form-label fw-bold small text-muted">Bộ môn đảm nhiệm <span class="text-danger">*</span></label>
+                        <select name="ma_bomon" id="selectBoNhiemBoMon" class="form-select rounded-3">
+                            <option value="">-- Chọn Bộ môn --</option>
+                            @foreach($bomons as $bm)
+                                <option value="{{ $bm->MaBoMon }}">{{ $bm->TenBoMon }} (Khoa {{ $bm->MaKhoa }})</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text small text-info mt-1">
+                            <i class="fa-solid fa-circle-info me-1"></i> Tên đăng nhập tự sinh chuẩn: <code>TBM_{MaKhoa}_{MaBoMon}_001</code>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 px-3 small rounded-3 mb-0">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Mật khẩu mặc định cấp mới: <code>123456</code>. Giảng viên sẽ sử dụng tài khoản chức vụ này để đăng nhập vào đúng Portal phân quyền.
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2 px-4">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-check me-1"></i> Xác Nhận Bổ Nhiệm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL IMPORT TÀI KHOẢN TRƯỞNG KHOA / TRƯỞNG BỘ MÔN (08_TaiKhoan_TBM_TK_Mau) -->
+<div class="modal fade" id="importTBM_TK_Modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('admin.giangvien.import_tbm_tk') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold text-primary">
+                        <i class="fa-solid fa-file-excel me-2 text-warning"></i>Upload DS Trưởng Khoa &amp; Trưởng Bộ Môn
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4 px-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Chọn file (.xlsx, .csv)</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
+                    </div>
+
+                    <div class="alert alert-secondary py-2 px-3 small rounded-3 mb-3">
+                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-question me-1 text-primary"></i>Quy tắc đặt tên đăng nhập:</div>
+                        <div>&bull; Trưởng khoa: <code>TK_{MaKhoa}_001</code> (Role: <code>VT05</code>)</div>
+                        <div>&bull; Trưởng bộ môn: <code>TBM_{MaKhoa}_{MaBoMon}_001</code> (Role: <code>VT04</code>)</div>
+                        <div class="mt-1">Dùng file mẫu: <strong>sample_imports/08_TaiKhoan_TBM_TK_Mau</strong></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2 px-4">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-warning rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-upload me-1"></i> Upload &amp; Khởi Tạo
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function openBoNhiemModal(gvId, gvName, maBoMon, maKhoa) {
+    document.getElementById('boNhiemGvName').textContent = gvName + ' (' + gvId + ')';
+    document.getElementById('boNhiemForm').action = '/admin/giangvien/' + gvId + '/bo-nhiem';
+    
+    // Đặt mặc định bộ môn và khoa nếu có
+    if (maBoMon) {
+        document.getElementById('selectBoNhiemBoMon').value = maBoMon;
+    }
+    if (maKhoa) {
+        document.getElementById('selectBoNhiemKhoa').value = maKhoa;
+    }
+
+    document.getElementById('cvTruongBoMon').checked = true;
+    toggleChucVuFields();
+
+    const modal = new bootstrap.Modal(document.getElementById('boNhiemModal'));
+    modal.show();
+}
+
+function toggleChucVuFields() {
+    const isTK = document.getElementById('cvTruongKhoa').checked;
+    document.getElementById('fieldKhoa').style.display = isTK ? 'block' : 'none';
+    document.getElementById('fieldBoMon').style.display = isTK ? 'none' : 'block';
+}
+</script>
+@endpush
 @endsection

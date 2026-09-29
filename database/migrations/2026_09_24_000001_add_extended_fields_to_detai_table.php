@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->string('LinhVuc', 150)->nullable()->after('YeuCau');
             }
             if (!Schema::hasColumn('DeTai', 'SoLuongSinhVienToiDa')) {
-                $table->unsignedInteger('SoLuongSinhVienToiDa')->default(2)->after('LinhVuc');
+                $table->unsignedInteger('SoLuongSinhVienToiDa')->default(3)->after('LinhVuc');
             }
             if (!Schema::hasColumn('DeTai', 'FileDeCuong')) {
                 $table->string('FileDeCuong', 255)->nullable()->after('SoLuongSinhVienToiDa');

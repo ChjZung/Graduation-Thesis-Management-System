@@ -16,11 +16,13 @@ class DatabaseSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        // 1. VaiTrò
+        // 1. VaiTrò (5 Role cố định)
         DB::table('VaiTro')->insertOrIgnore([
-            ['MaVaiTro' => 'VT01', 'TenVaiTro' => 'Admin', 'created_at' => $now, 'updated_at' => $now],
+            ['MaVaiTro' => 'VT01', 'TenVaiTro' => 'Giáo vụ', 'created_at' => $now, 'updated_at' => $now],
             ['MaVaiTro' => 'VT02', 'TenVaiTro' => 'Giảng viên', 'created_at' => $now, 'updated_at' => $now],
             ['MaVaiTro' => 'VT03', 'TenVaiTro' => 'Sinh viên', 'created_at' => $now, 'updated_at' => $now],
+            ['MaVaiTro' => 'VT04', 'TenVaiTro' => 'Trưởng bộ môn', 'created_at' => $now, 'updated_at' => $now],
+            ['MaVaiTro' => 'VT05', 'TenVaiTro' => 'Trưởng khoa', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // 2. Tài Khoản
@@ -254,13 +256,21 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        // 15. Mốc Thời Gian Khóa Luận
+        // 15. Mốc Thời Gian Khóa Luận (13 mốc chi tiết chuẩn quy trình)
         DB::table('MocThoiGianKhoaLuan')->insertOrIgnore([
-            ['MaMoc' => 'MOC01', 'TenMoc' => 'Đăng ký đề tài & Thành lập nhóm', 'NgayBatDau' => '2026-01-15', 'NgayKetThuc' => '2026-01-30', 'MoTa' => 'Sinh viên lập nhóm 3 thành viên và đăng ký đề tài', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
-            ['MaMoc' => 'MOC02', 'TenMoc' => 'Báo cáo tiến độ lần 1 (Đặc tả & Thiết kế)', 'NgayBatDau' => '2026-02-15', 'NgayKetThuc' => '2026-02-28', 'MoTa' => 'Nộp báo cáo tiến độ tuần 4', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
-            ['MaMoc' => 'MOC03', 'TenMoc' => 'Báo cáo tiến độ lần 2 (Hiện thực hệ thống)', 'NgayBatDau' => '2026-03-25', 'NgayKetThuc' => '2026-04-10', 'MoTa' => 'Nộp báo cáo tiến độ tuần 10', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
-            ['MaMoc' => 'MOC04', 'TenMoc' => 'Nộp hồ sơ bảo vệ & Kiểm tra đạo văn', 'NgayBatDau' => '2026-05-01', 'NgayKetThuc' => '2026-05-15', 'MoTa' => 'Nộp toàn văn báo cáo và chứng nhận Turnitin', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
-            ['MaMoc' => 'MOC05', 'TenMoc' => 'Bảo vệ Khóa luận trước Hội đồng', 'NgayBatDau' => '2026-06-01', 'NgayKetThuc' => '2026-06-15', 'MoTa' => 'Tổ chức các hội đồng chấm bảo vệ khóa luận', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC01', 'TenMoc' => '1. Sinh viên tạo nhóm trên phần mềm', 'NgayBatDau' => '2026-01-10', 'NgayKetThuc' => '2026-01-12', 'MoTa' => 'Sinh viên lập nhóm 3 thành viên trên hệ thống [TAO_NHOM]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC02', 'TenMoc' => '2. Nhóm trưởng đăng ký đề tài chính thức', 'NgayBatDau' => '2026-01-15', 'NgayKetThuc' => '2026-01-20', 'MoTa' => 'Nhóm trưởng đăng ký đề tài & đề xuất GVHD [DANG_KY_DE_TAI]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC03', 'TenMoc' => '3. Xử lý các trường hợp ngoại lệ', 'NgayBatDau' => '2026-01-21', 'NgayKetThuc' => '2026-01-23', 'MoTa' => 'Khoa & Bộ môn giải quyết các đơn ngoại lệ [XU_LY_NGOAI_LE]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC04', 'TenMoc' => '4. Công bố danh sách SV & phân công GVHD', 'NgayBatDau' => '2026-01-25', 'NgayKetThuc' => '2026-01-26', 'MoTa' => 'Công bố danh sách chính thức GVHD [CONG_BO_GVHD]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC05', 'TenMoc' => '5. Sinh viên liên hệ GVHD & Họp giao nhiệm vụ', 'NgayBatDau' => '2026-01-27', 'NgayKetThuc' => '2026-01-30', 'MoTa' => 'Họp với GVHD và thống nhất hướng nghiên cứu [LIEN_HE_GVHD]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC06', 'TenMoc' => '6. Bắt đầu thực hiện & hoàn thiện đề cương chi tiết', 'NgayBatDau' => '2026-02-02', 'NgayKetThuc' => '2026-02-15', 'MoTa' => 'Bắt đầu làm đồ án và hoàn thiện đề cương [THUC_HIEN]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC07', 'TenMoc' => '7. Báo cáo tiến độ đợt 1 (Đề cương & Thiết kế CSDL)', 'NgayBatDau' => '2026-02-23', 'NgayKetThuc' => '2026-02-28', 'MoTa' => 'Nộp báo cáo tiến độ đợt 1 [BAO_CAO_TIEN_DO_1]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC08', 'TenMoc' => '8. Báo cáo tiến độ đợt 2 (Thiết kế hệ thống & Chức năng)', 'NgayBatDau' => '2026-03-25', 'NgayKetThuc' => '2026-03-30', 'MoTa' => 'Nộp báo cáo tiến độ đợt 2 [BAO_CAO_TIEN_DO_2]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC09', 'TenMoc' => '9. Báo cáo tiến độ đợt 3 (Kiểm thử & Dự thảo báo cáo)', 'NgayBatDau' => '2026-04-20', 'NgayKetThuc' => '2026-04-25', 'MoTa' => 'Nộp báo cáo tiến độ đợt 3 [BAO_CAO_TIEN_DO_3]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC10', 'TenMoc' => '10. Kiểm tra đạo văn (Turnitin < 20%)', 'NgayBatDau' => '2026-05-02', 'NgayKetThuc' => '2026-05-06', 'MoTa' => 'Kiểm tra tỷ lệ trùng lặp qua Turnitin [DAO_VAN]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC11', 'TenMoc' => '11. GVHD xác nhận đủ điều kiện bảo vệ', 'NgayBatDau' => '2026-05-08', 'NgayKetThuc' => '2026-05-12', 'MoTa' => 'GVHD chấm điểm và ký xác nhận đủ điều kiện [GVHD_XAC_NHAN]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC12', 'TenMoc' => '12. Nộp khóa luận chính thức & hoàn tất hồ sơ', 'NgayBatDau' => '2026-05-15', 'NgayKetThuc' => '2026-05-18', 'MoTa' => 'Nộp bản thuyết minh và sản phẩm đóng gói [NOP_BAO_CAO]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
+            ['MaMoc' => 'MOC13', 'TenMoc' => '13. Lễ bảo vệ khóa luận trước Hội đồng chấm', 'NgayBatDau' => '2026-05-25', 'NgayKetThuc' => '2026-05-28', 'MoTa' => 'Tổ chức các hội đồng chấm bảo vệ khóa luận [BAO_VE]', 'MakeHoach' => 'KH2526_02', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // 16. Quy Định Khóa Luận
@@ -533,5 +543,7 @@ class DatabaseSeeder extends Seeder
             ['MaKetQua' => 'KQ02', 'DiemPhanBien' => 8.50, 'DiemHoiDongTB' => 9.00, 'DiemTongKet' => 8.85, 'KetQua' => 'Đạt (Xuất sắc)', 'NhanXetChung' => 'Khóa luận xuất sắc, tinh thần làm việc nhóm rất tốt.', 'NgayCham' => '2026-06-05', 'MaSV' => '2001230102', 'MaHoSo' => 'HS01', 'MaHocKy' => 'HK2526_2', 'created_at' => $now, 'updated_at' => $now],
             ['MaKetQua' => 'KQ03', 'DiemPhanBien' => 8.50, 'DiemHoiDongTB' => 9.00, 'DiemTongKet' => 8.85, 'KetQua' => 'Đạt (Xuất sắc)', 'NhanXetChung' => 'Khóa luận xuất sắc, kỹ năng lập trình tốt.', 'NgayCham' => '2026-06-05', 'MaSV' => '2001230103', 'MaHoSo' => 'HS01', 'MaHocKy' => 'HK2526_2', 'created_at' => $now, 'updated_at' => $now],
         ]);
+
+        $this->call(RolesAndAccountsSeeder::class);
     }
 }

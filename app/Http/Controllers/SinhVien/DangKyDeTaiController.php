@@ -57,7 +57,7 @@ class DangKyDeTaiController extends Controller
             $query->where('TenDeTai', 'LIKE', '%' . trim($request->search) . '%');
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // 3. Lấy map các đề tài đã có nhóm đăng ký ('Chờ duyệt' hoặc 'Đã duyệt')
         $deTaiDaDangKys = DangKyDeTai::whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
@@ -146,7 +146,7 @@ class DangKyDeTaiController extends Controller
 
         $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
 
-        return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đơn đăng ký đang chờ Giáo vụ Khoa phê duyệt.");
+        return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đơn đăng ký đang chờ Giảng viên hướng dẫn xác nhận.");
     }
 
     public function destroy($id)
@@ -168,10 +168,5 @@ class DangKyDeTaiController extends Controller
         $dangKy->delete();
 
         return redirect()->back()->with('success', 'Đã hủy đơn đăng ký đề tài thành công.');
-    }
-
-    public function deXuatRieng(Request $request)
-    {
-        return redirect()->back()->withErrors('Quy định hiện tại: Sinh viên chỉ được đăng ký các đề tài đã công bố của Giảng viên / Khoa, không được phép tự đề xuất đề tài riêng.');
     }
 }

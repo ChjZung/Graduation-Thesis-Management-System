@@ -19,7 +19,10 @@ class ChamDiemController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
+        }
 
         $hoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
             ->with([
@@ -51,7 +54,10 @@ class ChamDiemController extends Controller
         ]);
 
         $user = Auth::user();
-        $giangVien = GiangVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
+        }
 
         // BƯỚC 3 (Policy): Chỉ GV thuộc Hội đồng mới được chấm điểm
         $isMember = ThanhVienHoiDong::where('MaHoiDong', $request->MaHoiDong)

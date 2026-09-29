@@ -19,7 +19,10 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $giangVien = GiangVien::with('boMon.khoa')->where('MaTK', $user->MaTK)->firstOrFail();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy thông tin hồ sơ giảng viên của tài khoản này.');
+        }
         
         $hocKyHienTai = HocKy::where('TrangThai', 'Đang mở')
             ->orWhere('TrangThai', 'active')

@@ -63,9 +63,19 @@
                     <i class="fa-solid fa-folder-open"></i> Đề tài của tôi
                 </a>
             </li>
+            <li class="{{ request()->routeIs('giangvien.phanbien.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.phanbien.index') }}">
+                    <i class="fa-solid fa-file-pen"></i> Phản biện đề cương
+                </a>
+            </li>
             <li class="{{ request()->routeIs('giangvien.baocao.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.baocao.index') }}">
                     <i class="fa-solid fa-clipboard-check"></i> Duyệt báo cáo tiến độ
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.xacnhan_baove.index') }}">
+                    <i class="fa-solid fa-user-check"></i> Xác nhận hồ sơ bảo vệ
                 </a>
             </li>
             <li class="{{ request()->routeIs('giangvien.chamdiem.*') ? 'active' : '' }}">

@@ -5,16 +5,18 @@
 @section('content')
 
 
-<!-- CẢNH BÁO NẾU NHÓM CHƯA ĐỦ 3 THÀNH VIÊN -->
-@if(isset($nhom) && $nhom && $soThanhVien < 3)
-<div class="alert alert-warning border-warning shadow-sm mb-4 d-flex justify-content-between align-items-center">
+<!-- THÔNG TIN NHÓM SINH VIÊN -->
+@if(isset($nhom) && $nhom)
+<div class="alert alert-info border-info shadow-sm mb-4 d-flex justify-content-between align-items-center">
     <div>
-        <i class="fa-solid fa-triangle-exclamation fs-5 me-2 text-warning"></i>
-        <strong>Quy định bắt buộc:</strong> Nhóm của bạn hiện có <strong>{{ $soThanhVien }}/3 thành viên chính thức</strong>. Cần tuyển đủ <strong>3 thành viên</strong> để mở khóa chức năng Đăng ký Đề tài!
+        <i class="fa-solid fa-users fs-5 me-2 text-info"></i>
+        <strong>Nhóm của bạn:</strong> <strong>{{ $nhom->TenNhom }}</strong> ({{ $soThanhVien }}/3 thành viên). Nhóm có từ 1 đến 3 thành viên được phép đăng ký đề tài.
     </div>
-    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark text-nowrap">
-        <i class="fa-solid fa-user-plus me-1"></i>Mời Thêm Thành Viên
+    @if($soThanhVien < 3)
+    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-user-plus me-1"></i>Mời thêm thành viên (Tối đa 3)
     </a>
+    @endif
 </div>
 @endif
 
@@ -168,10 +170,6 @@
                             @elseif(isset($nhom) && $nhom)
                                 @if($nhom->MaTruongNhom !== $sinhVien->MaSV)
                                     <span class="text-muted small">Chỉ Trưởng nhóm mới có quyền đăng ký</span>
-                                @elseif($soThanhVien < 3)
-                                    <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm cần đủ 3 thành viên để mở khóa đăng ký">
-                                        <i class="fa-solid fa-lock me-1"></i>Cần 3 Thành Viên
-                                    </button>
                                 @elseif($hasActiveRegistration)
                                     <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm đang có đơn đăng ký đề tài khác chưa xử lý">
                                         <i class="fa-solid fa-lock me-1"></i>Đã Đăng Ký Đề Tài Khác

@@ -13,8 +13,8 @@
                 <div>
                     <div class="kpi-title">Sinh Viên</div>
                     <div class="kpi-value">{{ $soSinhVien }}</div>
-                    <div class="kpi-subtext text-success fw-bold">
-                        <i class="fa-solid fa-arrow-up me-1"></i>100% đủ đ/k
+                    <div class="kpi-subtext text-muted">
+                        Sinh viên tham gia
                     </div>
                 </div>
                 <div class="kpi-icon-wrap" style="background: #e0f2fe; color: #0284c7;">
@@ -31,7 +31,7 @@
                 <div>
                     <div class="kpi-title">Giảng Viên</div>
                     <div class="kpi-value">{{ $soGiangVien }}</div>
-                    <div class="kpi-subtext text-muted">Đã mở hướng dẫn</div>
+                    <div class="kpi-subtext text-muted">Cán bộ hướng dẫn</div>
                 </div>
                 <div class="kpi-icon-wrap" style="background: #dcfce7; color: #16a34a;">
                     <i class="fa-solid fa-chalkboard-user"></i>
@@ -47,7 +47,7 @@
                 <div>
                     <div class="kpi-title">Đề Tài Khóa Luận</div>
                     <div class="kpi-value">{{ $soDeTai }}</div>
-                    <div class="kpi-subtext" style="color: #d97706; font-weight: 600;">
+                    <div class="kpi-subtext text-muted">
                         {{ $deTaiDaDuyet }} đề tài đã duyệt
                     </div>
                 </div>
@@ -65,8 +65,8 @@
                 <div>
                     <div class="kpi-title">Nhóm Khóa Luận</div>
                     <div class="kpi-value">{{ $soNhom }}</div>
-                    <div class="kpi-subtext" style="color: #6366f1; font-weight: 600;">
-                        Đã chốt danh sách
+                    <div class="kpi-subtext text-muted">
+                        Nhóm sinh viên
                     </div>
                 </div>
                 <div class="kpi-icon-wrap" style="background: #ede9fe; color: #7c3aed;">
@@ -148,12 +148,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- Bottom Banner --}}
-            <div class="mt-3 p-2 px-3 rounded-3 d-flex align-items-center gap-2" style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 0.82rem; font-weight: 500;">
-                <i class="fa-solid fa-circle-check text-success"></i>
-                <span>100% sinh viên hoàn thành đúng niên độ</span>
-            </div>
         </div>
     </div>
 
@@ -161,30 +155,30 @@
     <div class="col-12 col-lg-5">
         <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="border: 1px solid #e2e8f0 !important;">
             <h6 class="fw-bold mb-3 text-dark" style="font-size: 0.96rem;">
-                📁 Đăng Ký Đề Tài & Phân Công HĐ
+                📁 Tình Trạng Đăng Ký Đề Tài
             </h6>
 
             {{-- Block 1: Đã duyệt chính thức --}}
             <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-2" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-                <span style="font-size: 0.86rem; font-weight: 600; color: #166534;">Đề tài đã xét duyệt chính thức</span>
+                <span style="font-size: 0.86rem; font-weight: 600; color: #166534;">Đăng ký đã được GVHD duyệt</span>
                 <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.88rem; font-weight: 700;">
-                    {{ $dkDaDuyet }} đề tài
+                    {{ $dkDaDuyet }} đơn
                 </span>
             </div>
 
             {{-- Block 2: Chờ xét duyệt --}}
             <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-2" style="background: #fefce8; border: 1px solid #fef08a;">
-                <span style="font-size: 0.86rem; font-weight: 600; color: #854d0e;">Đề tài chờ Giáo vụ xét duyệt</span>
+                <span style="font-size: 0.86rem; font-weight: 600; color: #854d0e;">Đăng ký chờ GVHD phê duyệt</span>
                 <span class="badge" style="background: #fef9c3; color: #a16207; font-size: 0.88rem; font-weight: 700;">
-                    {{ $dkChoDuyet }} đề tài
+                    {{ $dkChoDuyet }} đơn
                 </span>
             </div>
 
-            {{-- Block 3: Yêu cầu sửa --}}
+            {{-- Block 3: Bị từ chối --}}
             <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-3" style="background: #fef2f2; border: 1px solid #fecaca;">
-                <span style="font-size: 0.86rem; font-weight: 600; color: #991b1b;">Đề tài yêu cầu chỉnh sửa lại</span>
+                <span style="font-size: 0.86rem; font-weight: 600; color: #991b1b;">Đăng ký GVHD đã từ chối</span>
                 <span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.88rem; font-weight: 700;">
-                    {{ $dkTuChoi }} đề tài
+                    {{ $dkTuChoi }} đơn
                 </span>
             </div>
 
@@ -194,15 +188,12 @@
             <div class="mt-2">
                 <div class="fw-bold mb-2" style="font-size: 0.82rem; color: #334155;">Công tác chuẩn bị Hội đồng:</div>
                 <div class="mb-2" style="font-size: 0.82rem; color: #475569;">
-                    <span class="text-muted">•</span> Hồ sơ bảo vệ hợp lệ (Turnitin &lt; 20%): 
+                    <span class="text-muted">•</span> Hồ sơ bảo vệ hợp lệ: 
                     <strong style="color: #0284c7;">{{ $hoSoHopLe }} hồ sơ</strong>
                 </div>
                 <div style="font-size: 0.82rem; color: #475569;">
-                    <span class="text-muted">•</span> Đã phân công Hội đồng chấm: 
+                    <span class="text-muted">•</span> Hội đồng bảo vệ: 
                     <strong style="color: #0f172a;">{{ $soHoiDong }} HĐ</strong>
-                    @if($soHoiDong > 0)
-                        <span class="badge bg-light text-primary border ms-1">HĐ01</span>
-                    @endif
                 </div>
             </div>
         </div>
@@ -246,11 +237,7 @@
                             {{ $nhom->truongNhom->HoTen ?? 'Chưa có nhóm trưởng' }}
                         </div>
                         <div class="text-muted" style="font-size: 0.76rem;">
-                            @if($nhom->truongNhom)
-                                MSSV: {{ $nhom->truongNhom->MaSV }} • Lớp {{ $nhom->truongNhom->lop->TenLop ?? '14DHTH' }}
-                            @else
-                                {{ $nhom->sinhViens->count() }} thành viên
-                            @endif
+                            {{ $nhom->sinhViens->count() ?: 1 }} thành viên
                         </div>
                     </td>
 
@@ -260,17 +247,13 @@
                             <div class="fw-semibold text-dark" style="font-size: 0.86rem;">
                                 {{ Str::limit($nhom->deTai->TenDeTai, 65) }}
                             </div>
-                            <div class="text-muted" style="font-size: 0.76rem;">
-                                @if($nhom->deTai->giangVien)
-                                    GVHD: {{ $nhom->deTai->giangVien->HocHamHocVi ? $nhom->deTai->giangVien->HocHamHocVi . ' ' : '' }}{{ $nhom->deTai->giangVien->HoTen }} • 
-                                @endif
-                                <span class="text-primary fw-medium">Đã đạt Mốc 1</span>
-                            </div>
+                            @if($nhom->deTai->giangVien)
+                                <div class="text-muted" style="font-size: 0.76rem;">
+                                    GVHD: {{ $nhom->deTai->giangVien->HoTen }}
+                                </div>
+                            @endif
                         @else
                             <div class="text-muted fst-italic" style="font-size: 0.84rem;">(Chưa đăng ký đề tài)</div>
-                            <div class="text-warning fw-semibold" style="font-size: 0.76rem;">
-                                Đang mời thành viên ({{ $nhom->sinhViens->count() }}/3 SV)
-                            </div>
                         @endif
                     </td>
 

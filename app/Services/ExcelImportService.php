@@ -1833,6 +1833,154 @@ class ExcelImportService
             'error_file'    => $this->generateErrorFile($errors)
         ];
     }
+
+    /**
+     * Import danh sách tài khoản Trưởng khoa & Trưởng bộ môn (08_TaiKhoan_TBM_TK_Mau)
+     * Quy tắc đặt tên:
+     * - Trưởng khoa: TK_{MaKhoa}_001 (VT05)
+     * - Trưởng bộ môn: TBM_{MaKhoa}_{MaBoMon}_001 (VT04)
+     */
+    public function importTaiKhoanTBM_TK($file): array
+    {
+        $rows = $this->parseFile($file);
+        $this->validateTemplateHeaders(
+            $rows,
+            ['TenDangNhap', 'HoTen', 'MaVaiTro', 'MaKhoa'],
+            ['MaCanBo', 'TenDangNhap', 'HoTen', 'Email', 'SoDienThoai', 'MaVaiTro', 'MaKhoa', 'MaBoMon', 'MatKhau'],
+            'Tài khoản Trưởng khoa / Trưởng bộ môn'
+        );
+
+        $errors = [];
+        $success = 0;
+
+        foreach ($rows as $row) {
+            $rNum = $row['_row_num'];
+            $maCanBo = trim($row['MaCanBo'] ?? ($row['MaGV'] ?? ''));
+            $username = trim($row['TenDangNhap'] ?? '');
+            $hoTen = trim($row['HoTen'] ?? '');
+            $email = trim($row['Email'] ?? '');
+            $sdt = trim($row['SoDienThoai'] ?? '');
+            $vaiTro = strtoupper(trim($row['MaVaiTro'] ?? ''));
+            $maKhoa = trim($row['MaKhoa'] ?? '');
+            $maBoMon = trim($row['MaBoMon'] ?? '');
+            $password = !empty($row['MatKhau']) ? trim($row['MatKhau']) : '123456';
+
+            if (empty($username) || empty($hoTen) || empty($maKhoa) || empty($vaiTro)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Thiếu các thông tin bắt buộc (TenDangNhap, HoTen, MaVaiTro, MaKhoa)', 'data' => $row];
+                continue;
+            }
+
+            if (!in_array($vaiTro, ['VT04', 'VT05'])) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã vai trò phải là VT04 (Trưởng bộ môn) hoặc VT05 (Trưởng khoa)", 'data' => $row];
+                continue;
+            }
+
+            // Kiểm tra tính hợp lệ của Khoa
+            $khoa = \App\Models\Khoa::where('MaKhoa', $maKhoa)->first();
+            if (!$khoa) {
+                // Tạo nhanh nếu chưa có
+                $khoa = \App\Models\Khoa::create([
+                    'MaKhoa' => $maKhoa,
+                    'TenKhoa' => 'Khoa ' . $maKhoa,
+                    'TruongKhoa' => ($vaiTro === 'VT05') ? $hoTen : null,
+                ]);
+            }
+
+            // Nếu là TBM thì kiểm tra Bộ môn
+            if ($vaiTro === 'VT04') {
+                if (empty($maBoMon)) {
+                    $errors[] = ['row' => $rNum, 'reason' => 'Trưởng bộ môn (VT04) bắt buộc phải có MaBoMon', 'data' => $row];
+                    continue;
+                }
+                $bm = \App\Models\BoMon::where('MaBoMon', $maBoMon)->first();
+                if (!$bm) {
+                    $bm = \App\Models\BoMon::create([
+                        'MaBoMon' => $maBoMon,
+                        'TenBoMon' => 'Bộ môn ' . $maBoMon,
+                        'MaKhoa' => $maKhoa,
+                        'TruongBoMon' => $hoTen
+                    ]);
+                }
+            }
+
+            try {
+                \Illuminate\Support\Facades\DB::transaction(function() use ($username, $password, $vaiTro, $hoTen, $email, $sdt, $maKhoa, $maBoMon, $maCanBo) {
+                    // Tạo hoặc update TaiKhoan
+                    $tk = \App\Models\TaiKhoan::updateOrCreate(
+                        ['TenDangNhap' => $username],
+                        [
+                            'MaTK'              => $username,
+                            'MatKhau'           => \Illuminate\Support\Facades\Hash::make($password),
+                            'MaVaiTro'          => $vaiTro,
+                            'TrangThai'         => true,
+                            'TrangThaiMatKhau'  => 'INITIAL',
+                            'BatBuocDoiMatKhau' => true,
+                            'SoLanDangNhapSai'  => 0,
+                        ]
+                    );
+
+                    // Tìm xem Giảng viên đã có chưa (theo MaCanBo, email hoặc MaGV)
+                    $gv = null;
+                    if (!empty($maCanBo)) {
+                        $gv = \App\Models\GiangVien::where('MaGV', $maCanBo)->first();
+                    }
+                    if (!$gv && !empty($email)) {
+                        $gv = \App\Models\GiangVien::where('Email', $email)->first();
+                    }
+                    if (!$gv) {
+                        $gv = \App\Models\GiangVien::where('MaGV', $username)->first();
+                    }
+
+                    // Nếu chưa có bộ môn thì lấy bộ môn đầu tiên của khoa
+                    $targetBM = $maBoMon;
+                    if (empty($targetBM)) {
+                        $firstBM = \App\Models\BoMon::where('MaKhoa', $maKhoa)->first();
+                        $targetBM = $firstBM ? $firstBM->MaBoMon : null;
+                    }
+
+                    if ($gv) {
+                        $gv->update([
+                            'MaTK' => $tk->MaTK,
+                            'HoTen' => $hoTen,
+                            'Email' => $email ?: $gv->Email,
+                            'SoDienThoai' => $sdt ?: $gv->SoDienThoai,
+                            'MaBoMon' => $targetBM ?: $gv->MaBoMon,
+                        ]);
+                    } else {
+                        \App\Models\GiangVien::create([
+                            'MaGV'        => $username,
+                            'MaTK'        => $tk->MaTK,
+                            'HoTen'       => $hoTen,
+                            'Email'       => $email ?: strtolower($username) . '@huit.edu.vn',
+                            'SoDienThoai' => $sdt ?: null,
+                            'HocVi'       => ($vaiTro === 'VT05') ? 'Tiến sĩ' : 'Thạc sĩ',
+                            'MaBoMon'     => $targetBM,
+                            'TrangThai'   => 'Đang công tác',
+                        ]);
+                    }
+
+                    // Cập nhật tên Trưởng khoa / Trưởng bộ môn vào bảng danh mục
+                    if ($vaiTro === 'VT05') {
+                        \App\Models\Khoa::where('MaKhoa', $maKhoa)->update(['TruongKhoa' => $hoTen]);
+                    } elseif ($vaiTro === 'VT04' && !empty($maBoMon)) {
+                        \App\Models\BoMon::where('MaBoMon', $maBoMon)->update(['TruongBoMon' => $hoTen]);
+                    }
+                });
+
+                $success++;
+            } catch (\Exception $e) {
+                $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
+            }
+        }
+
+        return [
+            'total_count'   => count($rows),
+            'success_count' => $success,
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
+        ];
+    }
 }
 
 
