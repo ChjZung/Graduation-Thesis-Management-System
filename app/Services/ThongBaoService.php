@@ -76,7 +76,7 @@ class ThongBaoService
 
         if (!$dk) return;
 
-        $gv = GiangVien::find($dk->MaGVHuongDan);
+        $gv = $dk->deTai?->giangVien ?? GiangVien::find($dk->MaGVHuongDan);
         if (!$gv) return;
 
         $tk = TaiKhoan::find($gv->MaTK);

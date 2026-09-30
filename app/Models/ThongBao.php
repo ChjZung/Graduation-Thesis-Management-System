@@ -23,6 +23,8 @@ class ThongBao extends Model
         'NgayTao',
         'TrangThai',
         'MaGVu',
+        'MaGV',
+        'FileDinhKem',
     ];
 
     public $timestamps = true;
@@ -31,4 +33,10 @@ class ThongBao extends Model
     {
         return $this->belongsTo(GiaoVu::class, 'MaGVu', 'MaGVu');
     }
+
+    public function giangVien()
+    {
+        return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
 }
+

@@ -31,36 +31,70 @@
         </div>
 
         <div class="px-3 pb-2">
-            <div class="role-badge" style="background: rgba(255, 193, 7, 0.2); color: #b78103; border-color: #ffc107;">
+            <div class="role-badge">
                 <i class="fa-solid fa-user-tie"></i>
                 Trưởng Bộ Môn
             </div>
         </div>
 
+        @php
+            $sidebarUser = Auth::user();
+            $sidebarGv = \App\Models\GiangVien::getLoggedInGiangVien($sidebarUser);
+            $sidebarBm = null;
+            if ($sidebarGv && $sidebarGv->MaBoMon) {
+                $sidebarBm = \App\Models\BoMon::where('MaBoMon', $sidebarGv->MaBoMon)->first();
+            } elseif ($sidebarUser && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $sidebarUser->TenDangNhap, $m)) {
+                $sidebarBm = \App\Models\BoMon::where('MaBoMon', $m[1])->first();
+            }
+            $sidebarMaBm = $sidebarBm ? $sidebarBm->MaBoMon : 'CNPM';
+            $sidebarGvIds = \App\Models\GiangVien::where('MaBoMon', $sidebarMaBm)->pluck('MaGV');
+            
+            // Đếm đề tài chưa phân công phản biện
+            $countChuaPhanCong = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
+                ->where('TrangThai', 'Chờ duyệt cấp Bộ môn')
+                ->whereDoesntHave('phanCongPhanBiens', fn($q) => $q->where('VaiTro', 'Phản biện đề cương'))
+                ->count();
+
+            // Đếm đề tài cần duyệt ở cấp Bộ môn
+            $countChoDuyetBM = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
+                ->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM'])
+                ->count();
+        @endphp
+
         <ul class="list-unstyled components">
+            <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('truongbomon.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('truongbomon.dashboard') }}">
                     <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
                 </a>
             </li>
-            <li class="{{ request()->routeIs('truongbomon.duyet_detai.*') ? 'active' : '' }}">
-                <a href="{{ route('truongbomon.duyet_detai.index') }}">
-                    <i class="fa-solid fa-clipboard-check"></i> Duyệt Đề Tài & Phản Biện
+
+            <li class="nav-section-label">Xử Lý Đề Tài</li>
+            <!-- Phân công phản biện -->
+            <li class="{{ request()->routeIs('truongbomon.phancong.*') ? 'active' : '' }}">
+                <a href="{{ route('truongbomon.phancong.index') }}" class="d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-user-plus"></i> Phân công phản biện</span>
+                    @if($countChuaPhanCong > 0)
+                        <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">{{ $countChuaPhanCong }}</span>
+                    @endif
                 </a>
             </li>
+
+            <!-- Duyệt đề tài -->
+            <li class="{{ request()->routeIs('truongbomon.duyet_detai.*') ? 'active' : '' }}">
+                <a href="{{ route('truongbomon.duyet_detai.index') }}" class="d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-clipboard-check"></i> Duyệt đề tài</span>
+                    @if($countChoDuyetBM > 0)
+                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $countChoDuyetBM }}</span>
+                    @endif
+                </a>
+            </li>
+
+            <li class="nav-section-label">Giám Sát</li>
+            <!-- Theo dõi tiến độ -->
             <li class="{{ request()->routeIs('truongbomon.theodoi.*') ? 'active' : '' }}">
                 <a href="{{ route('truongbomon.theodoi.index') }}">
-                    <i class="fa-solid fa-list-check"></i> Theo Dõi Tiến Độ Bộ Môn
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('calendar.matrix') ? 'active' : '' }}">
-                <a href="{{ route('calendar.matrix') }}">
-                    <i class="fa-solid fa-table-cells"></i> Lịch Quy Trình Kế Hoạch
-                </a>
-            </li>
-            <li class="border-top my-2 pt-2">
-                <a href="{{ route('giangvien.dashboard') }}" class="text-info">
-                    <i class="fa-solid fa-chalkboard-user"></i> Cổng Chuyên Môn Giảng Viên
+                    <i class="fa-solid fa-list-check"></i> Theo dõi tiến độ
                 </a>
             </li>
         </ul>
@@ -83,20 +117,54 @@
                     @yield('page_title', 'Dashboard')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
+                    @php
+                        $unreadTbmNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
+                        $tbmGv = \App\Models\GiangVien::getLoggedInGiangVien();
+                        $tbmName = $tbmGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Bộ Môn');
+                    @endphp
+
+                    <!-- Notification Bell Dropdown -->
+                    <div class="dropdown">
+                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
+                            <i class="fa-solid fa-bell" style="font-size: 1.15rem;"></i>
+                            @if($unreadTbmNoti > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadTbmNoti }}</span>
+                            @endif
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow" style="width: 360px; max-height: 420px; overflow-y: auto; border-radius: 12px;">
+                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                <strong style="font-size: .85rem; color: #003b73;">Thông Báo Hệ Thống</strong>
+                                <span class="badge bg-primary rounded-pill small">{{ $unreadTbmNoti }}</span>
+                            </div>
+                            @php
+                                $recentNotifications = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->latest()->limit(5)->get();
+                            @endphp
+                            @forelse($recentNotifications as $nb)
+                            <div class="px-3 py-2 border-bottom">
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $nb->TieuDe }}</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">{{ \Illuminate\Support\Str::limit($nb->NoiDung, 75) }}</div>
+                                <div class="text-secondary mt-1" style="font-size: 0.68rem;"><i class="fa-regular fa-clock me-1"></i>{{ $nb->created_at ? $nb->created_at->diffForHumans() : '' }}</div>
+                            </div>
+                            @empty
+                            <div class="text-center py-4 text-muted small">Không có thông báo mới.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
                     <!-- User Dropdown -->
                     <div class="dropdown">
                         <a class="user-avatar-btn dropdown-toggle text-decoration-none"
                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
                            id="tbmUserDropdown">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap) }}&background=FEF3C7&color=D97706&bold=true&size=64"
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($tbmName) }}&background=E0F2FE&color=0072CE&bold=true&size=64"
                                  alt="Avatar" class="rounded-circle">
-                            <span class="user-name d-none d-sm-inline">{{ Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap }}</span>
+                            <span class="user-name d-none d-sm-inline">{{ $tbmName }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="tbmUserDropdown">
                             <li>
                                 <div class="px-3 py-2 mb-1" style="border-bottom: 1px solid var(--columbia-blue);">
                                     <div style="font-size: 0.78rem; font-weight: 600; color: var(--huit-blue-dark);">Xin chào!</div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap }}</div>
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ $tbmName }}</div>
                                     <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;"><i class="fa-solid fa-user-tie me-1 text-warning"></i>Trưởng Bộ Môn</div>
                                 </div>
                             </li>

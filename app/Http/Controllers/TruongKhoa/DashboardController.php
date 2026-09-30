@@ -20,6 +20,11 @@ class DashboardController extends Controller
     private function getKhoa()
     {
         $user = Auth::user();
+        if ($user && preg_match('/^TK_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $khoa = Khoa::where('MaKhoa', $m[1])->first();
+            if ($khoa) return $khoa;
+        }
+
         $gv = GiangVien::getLoggedInGiangVien($user);
         if ($gv) {
             $gv->loadMissing('boMon.khoa');
@@ -27,7 +32,8 @@ class DashboardController extends Controller
                 return $gv->boMon->khoa;
             }
         }
-        return Khoa::first();
+
+        return Khoa::where('MaKhoa', 'CNTT')->first() ?? Khoa::first();
     }
 
     public function index(Request $request)
@@ -39,26 +45,31 @@ class DashboardController extends Controller
         $soBoMon     = BoMon::where('MaKhoa', $maKhoa)->count();
         $soGiangVien = GiangVien::whereHas('boMon', fn($q) => $q->where('MaKhoa', $maKhoa))->count();
         $soSinhVien  = SinhVien::where('MaKhoa', $maKhoa)->count();
-        $soDeTai     = DeTai::count();
-        $soNhom      = Nhom::count();
+        $soDeTai     = DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))->count();
+        $soNhom      = Nhom::whereHas('sinhViens', fn($q) => $q->where('MaKhoa', $maKhoa))->count();
         $soHoiDong   = HoiDong::count();
 
-        // Đề tài cần Trưởng khoa duyệt
-        $choDuyetKhoa = DeTai::where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
-        $truongKhoaDaDuyet = DeTai::where('TrangThai', 'Trưởng khoa đã duyệt')->count();
-        $daCongBo = DeTai::where('TrangThai', 'Đã công bố')->count();
-        $choDuyetBM = DeTai::where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
-        $dangPhanBien = DeTai::where('TrangThai', 'Đang phản biện đề cương')->count();
+        // Đề tài cần Trưởng khoa duyệt (Phân quyền cấp Khoa)
+        $baseDeTai = DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+        $choDuyetKhoa      = (clone $baseDeTai)->where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
+        $truongKhoaDaDuyet = (clone $baseDeTai)->where('TrangThai', 'Trưởng khoa đã duyệt')->count();
+        $daCongBo          = (clone $baseDeTai)->where('TrangThai', 'Đã công bố')->count();
+        $choDuyetBM        = (clone $baseDeTai)->where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
+        $dangPhanBien      = (clone $baseDeTai)->where('TrangThai', 'Đang phản biện đề cương')->count();
+        $yeuCauSua         = (clone $baseDeTai)->where('TrangThai', 'Yêu cầu chỉnh sửa')->count();
+        $tuChoi            = (clone $baseDeTai)->where('TrangThai', 'Từ chối')->count();
 
         // Danh sách đề tài đang chờ Trưởng khoa duyệt
         $deTaiCanDuyet = DeTai::with(['giangVien.boMon', 'hocKy', 'phanCongPhanBiens.giangVien'])
+            ->whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
             ->where('TrangThai', 'Chờ duyệt cấp Khoa')
             ->orderBy('NgayDuyetBM', 'desc')
             ->limit(6)
             ->get();
 
         // Xếp loại toàn khoa
-        $ketQuaXepLoai = KetQuaSinhVien::selectRaw('KetQua, count(*) as total')
+        $ketQuaXepLoai = KetQuaSinhVien::whereHas('sinhVien', fn($q) => $q->where('MaKhoa', $maKhoa))
+            ->selectRaw('KetQua, count(*) as total')
             ->whereNotNull('KetQua')
             ->groupBy('KetQua')
             ->pluck('total', 'KetQua')
@@ -76,6 +87,8 @@ class DashboardController extends Controller
             'da_cong_bo'          => $daCongBo,
             'cho_duyet_bm'        => $choDuyetBM,
             'dang_phan_bien'      => $dangPhanBien,
+            'yeu_cau_sua'         => $yeuCauSua,
+            'tu_choi'             => $tuChoi,
         ];
 
         return view('truongkhoa.dashboard', compact('khoa', 'stats', 'deTaiCanDuyet', 'ketQuaXepLoai'));

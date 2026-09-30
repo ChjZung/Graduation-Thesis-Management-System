@@ -13,11 +13,21 @@ class ThongBaoController extends Controller
         $user = Auth::user();
         $readIds = session()->get('read_thong_bao_ids', []);
 
-        $query = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])
-            ->where(function($q) use ($user) {
+        $sv = \App\Models\SinhVien::where('MaTK', $user->MaTK)->first();
+        $userNhomCodes = $sv ? \App\Models\ThanhVienNhom::where('MaSV', $sv->MaSV)->pluck('MaNhom')->toArray() : [];
+
+        $query = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE', 'Đã tạo'])
+            ->where(function($q) use ($user, $userNhomCodes) {
                 $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Toàn thể', 'Tất cả'])
                   ->orWhere('DoiTuongNhan', $user->MaTK)
                   ->orWhere('DoiTuongNhan', 'like', "%{$user->MaTK}%");
+
+                if (!empty($userNhomCodes)) {
+                    $q->orWhere('DoiTuongNhan', 'like', '%Tất cả các nhóm%');
+                    foreach ($userNhomCodes as $code) {
+                        $q->orWhere('DoiTuongNhan', 'like', "%{$code}%");
+                    }
+                }
             })
             ->orderBy('created_at', 'desc');
 

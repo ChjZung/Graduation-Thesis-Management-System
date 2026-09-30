@@ -85,8 +85,7 @@ class CalendarController extends Controller
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
 
-        return view('calendar.index', [
-            'layout' => 'layouts.giangvien',
+        return view('giangvien.calendar', [
             'events' => $events,
             'nextMilestone' => $nextMilestone,
             'allMilestones' => $allMilestones,
@@ -142,8 +141,12 @@ class CalendarController extends Controller
         $NhomQuery = \App\Models\Nhom::with(['truongNhom', 'thanhViens.sinhVien', 'deTai', 'dangKyDeTai.giangVienHuongDan', 'baoCaos', 'hoSoBaoVe']);
 
         if ($request->filled('MaGV')) {
-            $NhomQuery->whereHas('dangKyDeTai', function($q) use ($request) {
-                $q->where('MaGVHuongDan', $request->MaGV);
+            $NhomQuery->where(function($q) use ($request) {
+                $q->whereHas('dangKyDeTai.deTai', function($dtQ) use ($request) {
+                    $dtQ->where('MaGV', $request->MaGV);
+                })->orWhereHas('deTai', function($dtQ) use ($request) {
+                    $dtQ->where('MaGV', $request->MaGV);
+                });
             });
         }
 

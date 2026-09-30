@@ -19,8 +19,15 @@ class DashboardController extends Controller
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
         if ($gv && $gv->MaBoMon) {
-            return BoMon::where('MaBoMon', $gv->MaBoMon)->first() ?? BoMon::first();
+            $bm = BoMon::where('MaBoMon', $gv->MaBoMon)->first();
+            if ($bm) return $bm;
         }
+
+        if ($user && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $bm = BoMon::where('MaBoMon', $m[1])->first();
+            if ($bm) return $bm;
+        }
+
         return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
     }
 
@@ -44,12 +51,12 @@ class DashboardController extends Controller
         $yeuCauSua = DeTai::whereIn('MaGV', $gvIds)->where('TrangThai', 'Yêu cầu chỉnh sửa')->count();
         $tuChoi = DeTai::whereIn('MaGV', $gvIds)->where('TrangThai', 'Từ chối')->count();
 
-        // Danh sách đề tài cần xử lý ngay
+        // Danh sách đề tài cần xử lý ngay tại Bộ môn
         $deTaiCanXuLy = DeTai::with(['giangVien', 'hocKy', 'phanCongPhanBiens.giangVien'])
             ->whereIn('MaGV', $gvIds)
             ->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM', 'Đang phản biện đề cương'])
             ->orderBy('updated_at', 'desc')
-            ->limit(8)
+            ->limit(10)
             ->get();
 
         // Thống kê nhóm sinh viên thực hiện đề tài của Bộ môn

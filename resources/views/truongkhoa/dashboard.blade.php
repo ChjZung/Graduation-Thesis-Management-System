@@ -8,19 +8,25 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
-                <i class="fa-solid fa-graduation-cap me-2 text-danger"></i>
-                Bàn Làm Việc Trưởng Khoa {{ $khoa->TenKhoa ?? '' }}
+                <i class="fa-solid fa-graduation-cap me-2 text-primary"></i>
+                Bàn Làm Việc Trưởng Khoa – {{ $khoa->TenKhoa ?? 'Khoa Công Nghệ Thông Tin' }}
             </h4>
             <p class="text-muted mb-0 small">
-                Phê duyệt danh mục đề tài khóa luận cấp Khoa và giám sát chất lượng đào tạo, hội đồng toàn khoa.
+                Phê duyệt danh mục đề tài khóa luận cấp Khoa và giám sát chất lượng đào tạo, tiến độ, kết quả toàn khoa.
             </p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-danger btn-sm">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
                 <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt Đề Tài ({{ $stats['cho_duyet_khoa'] }})
             </a>
-            <a href="{{ route('truongkhoa.theodoi.index') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fa-solid fa-chart-line me-1"></i> Theo Dõi Tiến Độ Toàn Khoa
+            <a href="{{ route('truongkhoa.theodoi.index') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Theo Dõi Tiến Độ
+            </a>
+            <a href="{{ route('truongkhoa.kehoach.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-calendar-check me-1"></i> Kế Hoạch Khóa Luận
+            </a>
+            <a href="{{ route('truongkhoa.ketqua.index') }}" class="btn btn-outline-success btn-sm">
+                <i class="fa-solid fa-award me-1"></i> Kết Quả Toàn Khoa
             </a>
         </div>
     </div>
@@ -85,7 +91,7 @@
                         <div>
                             <div class="text-muted small fw-semibold text-uppercase">Đang Xử Lý Tại Bộ Môn</div>
                             <h3 class="fw-bold my-1 text-warning">{{ $stats['cho_duyet_bm'] + $stats['dang_phan_bien'] }}</h3>
-                            <div class="small text-muted">Chờ phản biện & TBM</div>
+                            <div class="small text-muted">Chờ phản biện & TBM duyệt</div>
                         </div>
                         <div class="p-3 bg-warning-subtle text-warning rounded-circle">
                             <i class="fa-solid fa-clock-rotate-left fa-2x"></i>
@@ -100,19 +106,19 @@
     <div class="row g-3 mb-4">
         <div class="col-md-2 col-sm-4">
             <div class="card border-0 shadow-sm text-center p-3" style="border-radius: 12px;">
-                <div class="text-muted small">Bộ Môn</div>
+                <div class="text-muted small">Bộ Môn Trực Thuộc</div>
                 <h4 class="fw-bold text-dark my-1">{{ $stats['so_bo_mon'] }}</h4>
             </div>
         </div>
         <div class="col-md-2 col-sm-4">
             <div class="card border-0 shadow-sm text-center p-3" style="border-radius: 12px;">
-                <div class="text-muted small">Giảng Viên</div>
+                <div class="text-muted small">Giảng Viên Toàn Khoa</div>
                 <h4 class="fw-bold text-dark my-1">{{ $stats['so_giang_vien'] }}</h4>
             </div>
         </div>
         <div class="col-md-3 col-sm-4">
             <div class="card border-0 shadow-sm text-center p-3" style="border-radius: 12px;">
-                <div class="text-muted small">Sinh Viên Đủ ĐK</div>
+                <div class="text-muted small">Sinh Viên Đủ ĐK Khóa Luận</div>
                 <h4 class="fw-bold text-dark my-1">{{ $stats['so_sinh_vien'] }}</h4>
             </div>
         </div>
@@ -146,6 +152,7 @@
                 <div class="text-center py-5">
                     <i class="fa-solid fa-circle-check text-success fa-3x mb-3"></i>
                     <h6 class="text-muted">Hiện tại không có đề tài nào đang chờ Trưởng khoa phê duyệt!</h6>
+                    <div class="small text-muted mt-1">Tất cả đề tài cấp Bộ môn chuyển lên đã được xử lý.</div>
                 </div>
             @else
                 <div class="table-responsive">
@@ -191,10 +198,10 @@
                                         @endif
                                     </td>
                                     <td class="small text-muted">
-                                        {{ $dt->NgayDuyetBM ? \Carbon\Carbon::parse($dt->NgayDuyetBM)->format('d/m/Y H:i') : 'N/A' }}
+                                        {{ $dt->NgayDuyetBM ? \Carbon\Carbon::parse($dt->NgayDuyetBM)->format('d/m/Y H:i') : 'Đã duyệt' }}
                                     </td>
                                     <td class="text-end">
-                                        <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-danger">
+                                        <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold">
                                             <i class="fa-solid fa-stamp me-1"></i> Xem & Duyệt
                                         </a>
                                     </td>

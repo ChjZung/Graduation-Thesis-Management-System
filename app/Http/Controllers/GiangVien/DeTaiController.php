@@ -242,7 +242,6 @@ class DeTaiController extends Controller
                 'MaDangKy'     => $maDK,
                 'MaNhom'       => $nhom->MaNhom,
                 'MaDeTai'      => $detai->MaDeTai,
-                'MaGVHuongDan' => $gv->MaGV,
                 'NgayDangKy'   => now(),
                 'NgayDuyet'    => now(),
                 'TrangThai'    => 'Đã duyệt',
@@ -274,10 +273,13 @@ class DeTaiController extends Controller
             return redirect()->route('giangvien.dashboard');
         }
 
-        $Nhom = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai', 'baoCaos', 'hoSoBaoVe'])
+        $nhoms = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai.deTai', 'baoCaos', 'hoSoBaoVe'])
             ->where(function($query) use ($gv) {
                 $query->whereHas('dangKyDeTai', function($q) use ($gv) {
-                    $q->where('MaGVHuongDan', $gv->MaGV)->where('TrangThai', 'Đã duyệt');
+                    $q->where('TrangThai', 'Đã duyệt')
+                      ->whereHas('deTai', function($dtQ) use ($gv) {
+                          $dtQ->where('MaGV', $gv->MaGV);
+                      });
                 })->orWhereHas('deTai', function($q) use ($gv) {
                     $q->where('MaGV', $gv->MaGV);
                 });
@@ -290,7 +292,7 @@ class DeTaiController extends Controller
         ];
 
         $today = \Carbon\Carbon::today();
-        foreach ($Nhom as $nhom) {
+        foreach ($nhoms as $nhom) {
             foreach ($nhom->baoCaos as $bc) {
                 if (empty($bc->NhanXet)) {
                     $stats['cho_nhan_xet']++;
@@ -298,6 +300,6 @@ class DeTaiController extends Controller
             }
         }
 
-        return view('giangvien.my_tasks', compact('Nhom', 'stats'));
+        return view('giangvien.my_tasks', compact('nhoms', 'stats'));
     }
 }

@@ -19,8 +19,10 @@ class BaoCaoPolicy
 
         // Kiểm tra GV có phải GVHD của nhóm nộp báo cáo không
         return DangKyDeTai::where('MaNhom', $baoCao->MaNhom)
-            ->where('MaGVHuongDan', $gv->MaGV)
             ->where('TrangThai', 'Đã duyệt')
+            ->whereHas('deTai', function($q) use ($gv) {
+                $q->where('MaGV', $gv->MaGV);
+            })
             ->exists();
     }
 }

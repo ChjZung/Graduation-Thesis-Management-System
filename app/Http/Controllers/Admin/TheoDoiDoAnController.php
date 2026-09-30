@@ -47,8 +47,12 @@ class TheoDoiDoAnController extends Controller
         }
 
         if ($request->filled('MaGV')) {
-            $query->whereHas('dangKyDeTai', function ($q) use ($request) {
-                $q->where('MaGVHuongDan', $request->MaGV);
+            $query->where(function($q) use ($request) {
+                $q->whereHas('dangKyDeTai.deTai', function($dtQ) use ($request) {
+                    $dtQ->where('MaGV', $request->MaGV);
+                })->orWhereHas('deTai', function($dtQ) use ($request) {
+                    $dtQ->where('MaGV', $request->MaGV);
+                });
             });
         }
 

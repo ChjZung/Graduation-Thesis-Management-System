@@ -21,7 +21,7 @@
     <!-- ═══ SIDEBAR ═══ -->
     <nav id="sidebar">
         <div class="sidebar-header">
-            <a href="{{ route('giangvien.dashboard') }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
+            <a href="{{ route('giangvien.my_tasks') }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
                 <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
                 <div>
                     <div class="sidebar-title">ĐH Công Thương<br>TP. Hồ Chí Minh</div>
@@ -38,52 +38,56 @@
         </div>
 
         <ul class="list-unstyled components">
-            <li class="{{ request()->routeIs('giangvien.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
-                </a>
-            </li>
+            <!-- 1. Công việc hướng dẫn -->
             <li class="{{ request()->routeIs('giangvien.my_tasks') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.my_tasks') }}">
-                    <i class="fa-solid fa-list-check"></i> Công việc hướng dẫn
+                    <i class="fa-solid fa-bars-staggered"></i> Công việc hướng dẫn
                 </a>
             </li>
+
+            <!-- 2. Lịch công việc -->
             <li class="{{ request()->routeIs('giangvien.calendar') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.calendar') }}">
-                    <i class="fa-regular fa-calendar-days"></i> Lịch Báo Cáo & Timeline
+                    <i class="fa-regular fa-calendar-days"></i> Lịch công việc
                 </a>
             </li>
-            <li class="{{ request()->routeIs('calendar.matrix') ? 'active' : '' }}">
-                <a href="{{ route('calendar.matrix') }}">
-                    <i class="fa-solid fa-table-cells"></i> Lịch Quy Trình Kế Hoạch
-                </a>
-            </li>
+
+            <!-- 3. Đề tài của tôi -->
             <li class="{{ request()->routeIs('giangvien.detai.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.detai.index') }}">
                     <i class="fa-solid fa-folder-open"></i> Đề tài của tôi
                 </a>
             </li>
-            <li class="{{ request()->routeIs('giangvien.phanbien.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.phanbien.index') }}">
-                    <i class="fa-solid fa-file-pen"></i> Phản biện đề cương
-                </a>
-            </li>
+
+            <!-- 4. Duyệt báo cáo tiến độ -->
             <li class="{{ request()->routeIs('giangvien.baocao.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.baocao.index') }}">
                     <i class="fa-solid fa-clipboard-check"></i> Duyệt báo cáo tiến độ
                 </a>
             </li>
-            <li class="{{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.xacnhan_baove.index') }}">
-                    <i class="fa-solid fa-user-check"></i> Xác nhận hồ sơ bảo vệ
-                </a>
-            </li>
+
+            <!-- 5. Chấm Điểm Hội Đồng -->
             <li class="{{ request()->routeIs('giangvien.chamdiem.*') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.chamdiem.index') }}">
-                    <i class="fa-solid fa-star-half-stroke"></i> Chấm Điểm Hội Đồng
+                    <i class="fa-solid fa-star"></i> Chấm Điểm Hội Đồng
                 </a>
             </li>
 
+            <!-- 6. Phản biện đề cương -->
+            <li class="{{ request()->routeIs('giangvien.phanbien.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.phanbien.index') }}">
+                    <i class="fa-solid fa-file-pen"></i> Phản biện đề cương
+                </a>
+            </li>
+
+            <!-- 7. Xác nhận hồ sơ bảo vệ -->
+            <li class="{{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.xacnhan_baove.index') }}">
+                    <i class="fa-solid fa-user-check"></i> Xác nhận hồ sơ BV
+                </a>
+            </li>
+
+            <!-- 8. Thông báo -->
             @php
                 $unreadGvNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
             @endphp
@@ -95,9 +99,16 @@
                     @endif
                 </a>
             </li>
+
+            <!-- 9. Tổng quan / Dashboard -->
+            <li class="border-top border-white border-opacity-10 my-2 pt-2"></li>
+            <li class="{{ request()->routeIs('giangvien.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.dashboard') }}" style="font-size: 0.82rem !important; opacity: 0.85;">
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
+                </a>
+            </li>
         </ul>
     </nav>
-
     <!-- /SIDEBAR -->
 
     <!-- ═══ MAIN CONTENT ═══ -->
@@ -113,38 +124,40 @@
             <div class="container-fluid">
                 <div class="page-title-text">
                     <i class="fa-solid fa-angle-right"></i>
-                    @yield('page_title', 'Dashboard')
+                    @yield('page_title', 'Giảng Viên')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Dropdown GV -->
+                    <!-- Notification Bell Dropdown -->
                     <div class="dropdown">
                         <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
-                            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
+                            <i class="fa-solid fa-bell" style="font-size: 1.15rem;"></i>
                             @if($unreadGvNoti > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:3px 5px;">{{ $unreadGvNoti }}</span>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadGvNoti }}</span>
                             @endif
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
-                            <div class="px-3 py-2 border-bottom"><strong style="font-size:.85rem;">Thông Báo Hệ Thống</strong></div>
+                        <div class="dropdown-menu dropdown-menu-end shadow" style="width: 360px; max-height: 420px; overflow-y: auto; border-radius: 12px;">
+                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                <strong style="font-size: .85rem; color: #003b73;">Thông Báo Hệ Thống</strong>
+                                <span class="badge bg-danger rounded-pill small">{{ $unreadGvNoti }}</span>
+                            </div>
                             @php
-                                $gvRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at','desc')->limit(6)->get();
+                                $gvRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
                             @endphp
                             @forelse($gvRecentNoti as $noti)
                             <div class="dropdown-item px-3 py-2 border-bottom">
                                 <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
+                                    <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size: .85rem; flex-shrink: 0;"></i>
                                     <div>
-                                        <div class="fw-semibold text-wrap" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
+                                        <div class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $noti->TieuDe }}</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
                                     </div>
                                 </div>
                             </div>
                             @empty
-                            <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
+                            <div class="text-center py-4 text-muted small">Chưa có thông báo nào.</div>
                             @endforelse
                         </div>
                     </div>
-
 
                     <!-- User Dropdown -->
                     <div class="dropdown">
