@@ -226,3 +226,73 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
 });
 
 
+// ==========================================
+// TRƯỞNG BỘ MÔN ROUTES
+// ==========================================
+Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TruongBoMon\DashboardController::class, 'index'])->name('truongbomon.dashboard');
+    Route::get('/duyet-detai/export', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'export'])->name('truongbomon.duyet_detai.export');
+    Route::get('/duyet-detai', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'index'])->name('truongbomon.duyet_detai.index');
+    Route::get('/duyet-detai/{id}', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'show'])->name('truongbomon.duyet_detai.show');
+    Route::post('/duyet-detai/{id}/phan-cong-phan-bien', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'phanCongPhanBien'])->name('truongbomon.duyet_detai.phanCongPhanBien');
+    // Duyệt đề xuất (Bước 1 – xác nhận đề tài đủ điều kiện để phân công PB)
+    Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'approve'])->name('truongbomon.duyet_detai.duyet');
+    // Duyệt chuyển lên BCN Khoa (Bước 2 – sau khi phản biện Đạt)
+    Route::post('/duyet-detai/{id}/duyet-sau-phan-bien', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'approveAfterPhanBien'])->name('truongbomon.duyet_detai.duyetSauPhanBien');
+    // Thay GV phản biện (khi chưa có kết quả)
+    Route::post('/duyet-detai/{id}/thay-gv-phan-bien', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'thayGvPhanBien'])->name('truongbomon.duyet_detai.thayGvPhanBien');
+    // Yêu cầu chỉnh sửa (đề xuất hoặc đề cương)
+    Route::post('/duyet-detai/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'requestEdit'])->name('truongbomon.duyet_detai.yeuCauChinhSua');
+    // Từ chối đề tài
+    Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'reject'])->name('truongbomon.duyet_detai.tuChoi');
+    // Xử lý Không đạt phản biện (dừng hoặc yêu cầu làm lại)
+    Route::post('/duyet-detai/{id}/xu-ly-khong-dat', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'xuLyKhongDat'])->name('truongbomon.duyet_detai.xuLyKhongDat');
+
+    // Phân công phản biện đề cương (trang quản lý riêng)
+    Route::get('/phan-cong-phan-bien', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'index'])->name('truongbomon.phancong.index');
+    Route::post('/phan-cong-phan-bien/{id}', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'store'])->name('truongbomon.phancong.store');
+    Route::get('/theo-doi', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'index'])->name('truongbomon.theodoi.index');
+
+    // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)
+    Route::get('/thongke/detai', fn() => redirect()->route('truongbomon.duyet_detai.index', ['view' => 'thongke']))->name('truongbomon.thongke.detai');
+    Route::get('/thongke/detai/export', [\App\Http\Controllers\ThongKeDeTaiController::class, 'exportExcel'])->name('truongbomon.thongke.detai.export');
+
+    // Đổi mật khẩu alias
+    Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
+    Route::get('/change-password', fn() => redirect()->route('password.change'));
+});
+
+
+// ==========================================
+// TRƯỞNG KHOA ROUTES
+// ==========================================
+Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TruongKhoa\DashboardController::class, 'index'])->name('truongkhoa.dashboard');
+    Route::get('/duyet-detai/export', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'export'])->name('truongkhoa.duyet_detai.export');
+    Route::get('/duyet-detai', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'index'])->name('truongkhoa.duyet_detai.index');
+    Route::get('/duyet-detai/{id}', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'show'])->name('truongkhoa.duyet_detai.show');
+    Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'approve'])->name('truongkhoa.duyet_detai.duyet');
+    Route::post('/duyet-detai/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'requestEdit'])->name('truongkhoa.duyet_detai.yeuCauChinhSua');
+    Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'reject'])->name('truongkhoa.duyet_detai.tuChoi');
+    Route::get('/theo-doi', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'index'])->name('truongkhoa.theodoi.index');
+
+    // Kế hoạch khóa luận cấp Khoa
+    Route::get('/ke-hoach', [\App\Http\Controllers\TruongKhoa\KeHoachController::class, 'index'])->name('truongkhoa.kehoach.index');
+
+    // Kết quả khóa luận & Bảng điểm
+    Route::get('/ket-qua', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'index'])->name('truongkhoa.ketqua.index');
+    Route::get('/ket-qua/export', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'exportExcel'])->name('truongkhoa.ketqua.export');
+
+    // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)
+    Route::get('/thongke/detai', fn() => redirect()->route('truongkhoa.duyet_detai.index', ['view' => 'thongke']))->name('truongkhoa.thongke.detai');
+    Route::get('/thongke/detai/export', [\App\Http\Controllers\ThongKeDeTaiController::class, 'exportExcel'])->name('truongkhoa.thongke.detai.export');
+
+    // Đổi mật khẩu alias
+    Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
+    Route::get('/change-password', fn() => redirect()->route('password.change'));
+});
+
+// ==========================================
+// API ROUTES (AJAX Cascading Dropdowns)
+// ==========================================
+Route::get('/api/khoa/{maKhoa}/bomons', [\App\Http\Controllers\ThongKeDeTaiController::class, 'getBoMonsByKhoa'])->name('api.khoa.bomons');
