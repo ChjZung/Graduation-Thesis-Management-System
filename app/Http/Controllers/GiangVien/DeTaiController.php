@@ -8,6 +8,7 @@ use App\Models\GiangVien;
 use App\Models\HocKy;
 use App\Models\Nhom;
 use App\Models\DangKyDeTai;
+use App\Models\PhanCongPhanBien;
 use App\Models\ThanhVienNhom;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
@@ -47,13 +48,36 @@ class DeTaiController extends Controller
         return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'NhomChuaCoDeTai'));
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
-        $filePath = public_path('templates/Mau_De_Cuong_Khoa_Luan.docx');
+        $type = $request->get('type', 'cu_nhan');
+
+        switch ($type) {
+            case 'ky_su':
+                $file = 'Mau_De_Cuong_Khoa_Luan_Ky_Su.docx';
+                $downloadName = 'Mau_De_Cuong_Khoa_Luan_Ky_Su_HUIT.docx';
+                break;
+            case 'do_an':
+                $file = 'Mau_De_Cuong_Do_An_Tot_Nghiep.docx';
+                $downloadName = 'Mau_De_Cuong_Do_An_Tot_Nghiep_HUIT.docx';
+                break;
+            case 'cu_nhan':
+            default:
+                $file = 'Mau_De_Cuong_Khoa_Luan_Cu_Nhan.docx';
+                $downloadName = 'Mau_De_Cuong_Khoa_Luan_Cu_Nhan_HUIT.docx';
+                break;
+        }
+
+        $filePath = public_path("templates/{$file}");
+        if (!file_exists($filePath)) {
+            $filePath = public_path('templates/Mau_De_Cuong_Khoa_Luan.docx');
+        }
+
         if (!file_exists($filePath)) {
             return redirect()->back()->withErrors('Không tìm thấy file biểu mẫu đề cương.');
         }
-        return response()->download($filePath, 'Mau_De_Cuong_Chi_Tiet_KLTN_HUIT.docx');
+
+        return response()->download($filePath, $downloadName);
     }
 
     public function create()
@@ -83,24 +107,13 @@ class DeTaiController extends Controller
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
             'LinhVuc' => 'nullable|string|max:150',
-            'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ], [
             'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
             'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
             'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
             'SoLuongSinhVienToiDa.min' => 'Số sinh viên tối đa ít nhất là 1.',
             'SoLuongSinhVienToiDa.max' => 'Số sinh viên tối đa không vượt quá 3.',
-            'FileDeCuong.mimes' => 'Đề cương phải có định dạng .pdf, .doc hoặc .docx.',
-            'FileDeCuong.max' => 'Dung lượng file đề cương không được vượt quá 10MB.',
         ]);
-
-        $fileDeCuongPath = null;
-        if ($request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
-            $file = $request->file('FileDeCuong');
-            $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('de_cuong', $filename, 'public');
-            $fileDeCuongPath = 'storage/' . $path;
-        }
 
         $count = DeTai::count() + 1;
         $maDT = 'DT' . sprintf('%02d', $count);
@@ -118,14 +131,128 @@ class DeTaiController extends Controller
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
             'HocPhan' => $request->HocPhan ?? 'Khóa luận tốt nghiệp',
             'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
-            'FileDeCuong' => $fileDeCuongPath,
+            'FileDeCuong' => null,
             'MaNganh' => $request->MaNganh,
             'MaHocKy' => $request->MaHocKy,
             'TrangThai' => 'Chờ duyệt cấp Bộ môn',
             'NgayDeXuat' => now(),
         ]);
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Đề xuất đề tài mới thành công! Đề tài đã được chuyển tới Trưởng bộ môn để kiểm tra và phân công phản biện đề cương.');
+        return redirect()->route('giangvien.detai.index')->with('success', 'Đề xuất đề tài mới thành công! Đề tài đã được chuyển tới Trưởng bộ môn và Trưởng khoa phê duyệt danh mục ban đầu. Đề cương chi tiết sẽ được nộp sau khi đề xuất được phê duyệt.');
+    }
+
+    public function nopDeCuong(Request $request, $id)
+    {
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
+
+        $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        $allowedStates = [
+            'Trưởng khoa đã duyệt - Chờ nộp đề cương', 
+            'Yêu cầu chỉnh sửa đề cương', 
+            'Trưởng khoa đã duyệt', 
+            'Đã duyệt',
+            'Đang phản biện đề cương',
+            'Đã cập nhật đề cương - Chờ phản biện lại'
+        ];
+        if (!in_array($detai->TrangThai, $allowedStates)) {
+            return redirect()->back()->withErrors('Đề tài hiện tại không ở trạng thái được phép nộp đề cương chi tiết.');
+        }
+
+        $request->validate([
+            'FileDeCuong' => 'required|file|mimes:pdf,doc,docx|max:10240',
+        ], [
+            'FileDeCuong.required' => 'Vui lòng chọn file đề cương chi tiết.',
+            'FileDeCuong.mimes'    => 'File đề cương phải có định dạng .pdf, .doc hoặc .docx.',
+            'FileDeCuong.max'      => 'Dung lượng file đề cương tối đa là 10MB.',
+        ]);
+
+        $file = $request->file('FileDeCuong');
+        $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('de_cuong', $filename, 'public');
+
+        // Kiểm tra xem đề tài đã có Giảng viên phản biện chưa
+        $phanCongPB = PhanCongPhanBien::with('giangVien')
+            ->where('MaDeTai', $detai->MaDeTai)
+            ->where('VaiTro', 'Phản biện đề cương')
+            ->first();
+
+        if ($phanCongPB) {
+            // Đã có phân công phản biện trước đó -> Đây là lần nộp lại sau khi chỉnh sửa
+            $detai->update([
+                'FileDeCuong' => 'storage/' . $path,
+                'TrangThai'   => 'Đã cập nhật đề cương - Chờ phản biện lại',
+            ]);
+
+            $phanCongPB->update([
+                'TrangThai'   => 'Đã nộp lại đề cương',
+                'KetQua'      => 'Đã nộp lại',
+                'NgayDanhGia' => null,
+            ]);
+
+            // Gửi thông báo đến GV phản biện
+            if ($phanCongPB->giangVien && $phanCongPB->giangVien->MaTK) {
+                ThongBaoService::guiDen(
+                    $phanCongPB->giangVien->MaTK,
+                    '🔔 Giảng viên đã nộp lại Đề cương chỉnh sửa',
+                    "Giảng viên {$gv->HoTen} đã cập nhật và nộp lại Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' theo góp ý của Thầy/Cô. Vui lòng vào xem và phản biện lại.",
+                    'Đề tài'
+                );
+            }
+
+            // Gửi thông báo đến Trưởng Bộ Môn
+            $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
+            $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                    $q->where('MaVaiTro', 'VT04')
+                      ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+                })
+                ->where(function($q) use ($maBoMon) {
+                    if ($maBoMon) {
+                        $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                    }
+                })->first();
+
+            if ($tbmUser) {
+                ThongBaoService::guiDen(
+                    $tbmUser->MaTK,
+                    '📄 Đề cương đã được nộp lại sau chỉnh sửa',
+                    "Giảng viên {$gv->HoTen} đã nộp lại file Đề cương đã chỉnh sửa cho đề tài '{$detai->TenDeTai}'. Đề cương đã được chuyển lại cho GV phản biện ({$phanCongPB->giangVien->HoTen}) xem xét.",
+                    'Đề tài'
+                );
+            }
+
+            return redirect()->back()->with('success', "Đã nộp lại Đề cương chi tiết đã chỉnh sửa cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
+        } else {
+            // Nộp lần đầu
+            $detai->update([
+                'FileDeCuong' => 'storage/' . $path,
+                'TrangThai'   => 'Đã nộp đề cương - Chờ phân công PB',
+            ]);
+
+            $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
+            $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                    $q->where('MaVaiTro', 'VT04')
+                      ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+                })
+                ->where(function($q) use ($maBoMon) {
+                    if ($maBoMon) {
+                        $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                    }
+                })->first();
+
+            if ($tbmUser) {
+                ThongBaoService::guiDen(
+                    $tbmUser->MaTK,
+                    '📄 Giảng viên đã nộp đề cương chi tiết',
+                    "Giảng viên {$gv->HoTen} vừa nộp file Đề cương chi tiết cho đề tài '{$detai->TenDeTai}'. Vui lòng tiến hành phân công Giảng viên phản biện.",
+                    'Đề tài'
+                );
+            }
+
+            return redirect()->back()->with('success', "Đã nộp Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' thành công! Đề cương đã được chuyển tới Trưởng bộ môn để phân công phản biện.");
+        }
     }
 
     public function edit($id)
@@ -170,11 +297,36 @@ class DeTaiController extends Controller
             'LinhVuc' => $request->LinhVuc,
         ];
 
-        if ($request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
+        $canUploadOutline = $detai->FileDeCuong || in_array($detai->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Yêu cầu chỉnh sửa đề cương', 'Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
+        if ($canUploadOutline && $request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
             $file = $request->file('FileDeCuong');
             $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('de_cuong', $filename, 'public');
             $data['FileDeCuong'] = 'storage/' . $path;
+
+            $phanCongPB = PhanCongPhanBien::with('giangVien')
+                ->where('MaDeTai', $detai->MaDeTai)
+                ->where('VaiTro', 'Phản biện đề cương')
+                ->first();
+            if ($phanCongPB) {
+                $data['TrangThai'] = 'Đã cập nhật đề cương - Chờ phản biện lại';
+                $phanCongPB->update([
+                    'TrangThai'   => 'Đã nộp lại đề cương',
+                    'KetQua'      => 'Đã nộp lại',
+                    'NgayDanhGia' => null,
+                ]);
+
+                if ($phanCongPB->giangVien && $phanCongPB->giangVien->MaTK) {
+                    ThongBaoService::guiDen(
+                        $phanCongPB->giangVien->MaTK,
+                        '🔔 Giảng viên đã nộp lại Đề cương chỉnh sửa',
+                        "Giảng viên {$gv->HoTen} đã cập nhật file Đề cương chi tiết cho đề tài '{$detai->TenDeTai}'. Vui lòng vào xem và phản biện lại.",
+                        'Đề tài'
+                    );
+                }
+            } elseif ($detai->TrangThai === 'Trưởng khoa đã duyệt - Chờ nộp đề cương') {
+                $data['TrangThai'] = 'Đã nộp đề cương - Chờ phân công PB';
+            }
         }
 
         if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Từ chối', 'Không đạt phản biện'])) {

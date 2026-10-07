@@ -200,6 +200,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Đề tài
     Route::get('detai/bieu-mau-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'downloadTemplate'])->name('giangvien.detai.download_template');
+    Route::post('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'nopDeCuong'])->name('giangvien.detai.nopDeCuong');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 
@@ -302,12 +303,20 @@ Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->
     Route::get('/duyet-detai/{id}', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'show'])->name('truongbomon.duyet_detai.show');
     Route::post('/duyet-detai/{id}/phan-cong-phan-bien', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'phanCongPhanBien'])->name('truongbomon.duyet_detai.phanCongPhanBien');
     Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'approve'])->name('truongbomon.duyet_detai.duyet');
+    Route::post('/duyet-detai/{id}/duyet-va-cong-bo', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'duyetVaCongBo'])->name('truongbomon.duyet_detai.duyetVaCongBo');
     Route::post('/duyet-detai/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'requestEdit'])->name('truongbomon.duyet_detai.yeuCauChinhSua');
+    Route::post('/duyet-detai/{id}/request-edit', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'requestEdit'])->name('truongbomon.duyet_detai.requestEdit');
     Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'reject'])->name('truongbomon.duyet_detai.tuChoi');
 
     // Phân công phản biện đề cương riêng
     Route::get('/phan-cong-phan-bien', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'index'])->name('truongbomon.phancong.index');
     Route::post('/phan-cong-phan-bien/{id}', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'store'])->name('truongbomon.phancong.store');
+
+    // Duyệt đề cương riêng biệt
+    Route::get('/duyet-de-cuong', [\App\Http\Controllers\TruongBoMon\DuyetDeCuongController::class, 'index'])->name('truongbomon.duyet_decuong.index');
+    Route::post('/duyet-de-cuong/{id}/duyet-va-cong-bo', [\App\Http\Controllers\TruongBoMon\DuyetDeCuongController::class, 'duyetVaCongBo'])->name('truongbomon.duyet_decuong.duyetVaCongBo');
+    Route::post('/duyet-de-cuong/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongBoMon\DuyetDeCuongController::class, 'requestEdit'])->name('truongbomon.duyet_decuong.yeuCauChinhSua');
+
     Route::get('/theo-doi', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'index'])->name('truongbomon.theodoi.index');
 
     // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)

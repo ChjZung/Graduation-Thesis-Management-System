@@ -42,7 +42,7 @@
             <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('admin.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
                 </a>
             </li>
             <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
@@ -324,6 +324,9 @@
         }, 5000);
     });
 </script>
+
+<!-- Modal Xem Nhanh Đề Cương Chi Tiết -->
+@include('partials.modal_preview_decuong')
 
 @stack('scripts')
 </body>

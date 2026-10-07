@@ -76,15 +76,15 @@ class DuyetDeTaiController extends Controller
         }
 
         $choDuyetBM   = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
-        $dangPB       = (clone $baseCountQuery)->where('TrangThai', 'Đang phản biện đề cương')->count();
-        $daPB         = (clone $baseCountQuery)->where('TrangThai', 'Đã phản biện - Chờ duyệt BM')->count();
+        $dangPB       = (clone $baseCountQuery)->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB'])->count();
+        $daPB         = (clone $baseCountQuery)->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])->count();
         $choDuyetKhoa = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
-        $tkDaDuyet    = (clone $baseCountQuery)->where('TrangThai', 'Trưởng khoa đã duyệt')->count();
+        $tkDaDuyet    = (clone $baseCountQuery)->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương'])->count();
         $daCongBo     = (clone $baseCountQuery)->where('TrangThai', 'Đã công bố')->count();
         $daDangKy     = (clone $baseCountQuery)->where('TrangThai', 'Đã đăng ký')->count();
         $hoanThanh    = (clone $baseCountQuery)->where('TrangThai', 'Hoàn thành')->count();
-        $yeuCauSua    = (clone $baseCountQuery)->where('TrangThai', 'Yêu cầu chỉnh sửa')->count();
-        $tuChoi       = (clone $baseCountQuery)->where('TrangThai', 'Từ chối')->count();
+        $yeuCauSua    = (clone $baseCountQuery)->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương'])->count();
+        $tuChoi       = (clone $baseCountQuery)->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện'])->count();
         $total        = (clone $baseCountQuery)->count();
 
         $counts = [
@@ -235,7 +235,17 @@ class DuyetDeTaiController extends Controller
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             if ($request->TrangThai === 'can_duyet') {
-                $query->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM']);
+                $query->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']);
+            } elseif ($request->TrangThai === 'dang_phan_bien' || $request->TrangThai === 'Đang phản biện đề cương') {
+                $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB']);
+            } elseif ($request->TrangThai === 'da_phan_bien' || $request->TrangThai === 'Đã phản biện - Chờ duyệt BM') {
+                $query->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']);
+            } elseif ($request->TrangThai === 'Trưởng khoa đã duyệt') {
+                $query->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương']);
+            } elseif ($request->TrangThai === 'Yêu cầu chỉnh sửa') {
+                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương']);
+            } elseif ($request->TrangThai === 'Từ chối') {
+                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện']);
             } else {
                 $query->where('TrangThai', $request->TrangThai);
             }
@@ -353,7 +363,12 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->findOrFail($id);
 
-        $allGiangViens = GiangVien::where('MaGV', '!=', $detai->MaGV)->orderBy('HoTen')->get();
+        $maBoMon = $detai->giangVien?->MaBoMon ?? ($boMon?->MaBoMon ?? 'CNPM');
+        $allGiangViens = GiangVien::with('boMon')
+            ->where('MaBoMon', $maBoMon)
+            ->where('MaGV', '!=', $detai->MaGV)
+            ->orderBy('HoTen')
+            ->get();
         $phanBienHienTai = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
 
         return view('truongbomon.duyet_detai.show', compact('boMon', 'detai', 'allGiangViens', 'phanBienHienTai'));
@@ -369,9 +384,19 @@ class DuyetDeTaiController extends Controller
 
         $detai = DeTai::findOrFail($id);
 
+        if (!$detai->FileDeCuong) {
+            return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
+        }
+
         // Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó
         if ($detai->MaGV === $request->MaGVPhanBien) {
             return redirect()->back()->withErrors('Giảng viên đề xuất đề tài không được làm Giảng viên phản biện cho đề tài này!');
+        }
+
+        // Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài
+        $gvPB = GiangVien::find($request->MaGVPhanBien);
+        if ($detai->giangVien && $gvPB && $gvPB->MaBoMon !== $detai->giangVien->MaBoMon) {
+            return redirect()->back()->withErrors('Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài (' . ($detai->giangVien->boMon->TenBoMon ?? '') . ')!');
         }
 
         DB::transaction(function () use ($request, $detai) {
@@ -437,6 +462,41 @@ class DuyetDeTaiController extends Controller
         }
 
         return redirect()->back()->with('success', "Đã duyệt đề tài '{$detai->TenDeTai}' ở cấp Bộ môn thành công! Hồ sơ đã được chuyển tiếp lên Trưởng khoa phê duyệt.");
+    }
+
+    public function duyetVaCongBo(Request $request, $id)
+    {
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        $maGVTBM = $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TBM');
+
+        $detai = DeTai::findOrFail($id);
+
+        $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
+        if (!$phanBien || $phanBien->KetQua !== 'Đạt') {
+            return redirect()->back()->withErrors('Đề cương chưa có kết quả phản biện ĐẠT. Không thể duyệt công bố đề tài.');
+        }
+
+        DB::transaction(function () use ($detai, $maGVTBM) {
+            $detai->update([
+                'TrangThai'    => 'Đã công bố',
+                'NgayCongBo'   => now(),
+                'NgayDuyetBM'  => now(),
+                'NguoiDuyetBM' => $maGVTBM,
+            ]);
+        });
+
+        // Gửi thông báo đến GV đề xuất
+        if ($detai->giangVien && $detai->giangVien->MaTK) {
+            ThongBaoService::guiDen(
+                $detai->giangVien->MaTK,
+                '🎉 Đề tài đã được Trưởng bộ môn duyệt đề cương và CÔNG BỐ',
+                "Đề tài '{$detai->TenDeTai}' đã hoàn tất phản biện đạt yêu cầu và được Trưởng bộ môn phê duyệt chính thức CÔNG BỐ cho sinh viên đăng ký!",
+                'Đề tài'
+            );
+        }
+
+        return redirect()->back()->with('success', "Đã phê duyệt đề cương và CÔNG BỐ đề tài '{$detai->TenDeTai}' thành công! Sinh viên hiện đã có thể xem và đăng ký đề tài này.");
     }
 
     public function requestEdit(Request $request, $id)

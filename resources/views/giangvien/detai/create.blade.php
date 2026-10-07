@@ -77,24 +77,56 @@
                         <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3" placeholder="Ví dụ: Thành thạo Laravel/Vue, kiến thức cơ sở dữ liệu vững vàng, có tinh thần làm việc nhóm...">{{ old('YeuCau') }}</textarea>
                     </div>
 
-                    <div class="mb-4 p-3 bg-light rounded-3 border">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label for="FileDeCuong" class="form-label fw-bold mb-0">
-                                <i class="fa-solid fa-paperclip text-primary me-1"></i> Tệp Đề Cương Chi Tiết (Word / PDF)
-                            </label>
-                            <a href="{{ route('giangvien.detai.download_template') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu Đề Cương (.docx)
-                            </a>
+                    <div class="mb-4 p-3 bg-light rounded-3 border border-dashed">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="fw-bold text-dark">
+                                <i class="fa-solid fa-file-circle-exclamation text-primary me-1"></i> Đề Cương Chi Tiết (Chưa nộp ở bước này)
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu Đề Cương (.docx)
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                    <li><h6 class="dropdown-header small fw-bold text-muted">Chọn biểu mẫu theo môn/học phần</h6></li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'cu_nhan']) }}">
+                                            <i class="fa-solid fa-graduation-cap text-primary me-2 fa-fw"></i>
+                                            <div>
+                                                <div class="fw-semibold">Khóa Luận Cử Nhân</div>
+                                                <small class="text-muted">Biểu mẫu đề cương cử nhân ngành CNTT</small>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'ky_su']) }}">
+                                            <i class="fa-solid fa-gears text-success me-2 fa-fw"></i>
+                                            <div>
+                                                <div class="fw-semibold">Khóa Luận Kỹ Sư</div>
+                                                <small class="text-muted">Biểu mẫu đề cương kỹ sư ngành CNTT</small>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'do_an']) }}">
+                                            <i class="fa-solid fa-folder-open text-warning me-2 fa-fw"></i>
+                                            <div>
+                                                <div class="fw-semibold">Đồ Án Tốt Nghiệp</div>
+                                                <small class="text-muted">Biểu mẫu đề cương đồ án ngành CNTT</small>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                        <input type="file" name="FileDeCuong" id="FileDeCuong" class="form-control" accept=".pdf,.doc,.docx">
-                        <div class="form-text text-muted">
-                            Định dạng hỗ trợ: .pdf, .doc, .docx (Dung lượng tối đa: 10MB). Đề cương giúp Giáo vụ duyệt đề tài nhanh chóng hơn.
+                        <div class="text-muted small">
+                            <i class="fa-solid fa-circle-info text-info me-1"></i>
+                            <strong>Quy trình thực hiện:</strong> Ở bước đề xuất ban đầu, Giảng viên <strong>không nộp file đề cương</strong> mà chỉ khai báo tên, mục tiêu và yêu cầu đề tài. File Đề cương chi tiết sẽ được mở để nộp sau khi đề xuất được <strong>Trưởng Bộ Môn</strong> và <strong>Trưởng Khoa phê duyệt chủ trương</strong>.
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success px-5 rounded-pill shadow-sm fw-semibold">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Gửi Đề Xuất Cho Giáo Vụ Duyệt
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-semibold">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Gửi Đề Xuất Lên Bộ Môn Duyệt
                         </button>
                         <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 rounded-pill">Hủy Bỏ</a>
                     </div>

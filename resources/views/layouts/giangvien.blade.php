@@ -38,6 +38,13 @@
         </div>
 
         <ul class="list-unstyled components">
+            <!-- 0. Tổng quan -->
+            <li class="{{ request()->routeIs('giangvien.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('giangvien.dashboard') }}">
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
+                </a>
+            </li>
+
             <!-- 1. Công việc hướng dẫn -->
             <li class="{{ request()->routeIs('giangvien.my_tasks') ? 'active' : '' }}">
                 <a href="{{ route('giangvien.my_tasks') }}">
@@ -97,14 +104,6 @@
                     @if($unreadGvNoti > 0)
                         <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $unreadGvNoti }}</span>
                     @endif
-                </a>
-            </li>
-
-            <!-- 9. Tổng quan / Dashboard -->
-            <li class="border-top border-white border-opacity-10 my-2 pt-2"></li>
-            <li class="{{ request()->routeIs('giangvien.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.dashboard') }}" style="font-size: 0.82rem !important; opacity: 0.85;">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
                 </a>
             </li>
         </ul>
@@ -270,6 +269,9 @@
         }, 5000);
     });
 </script>
+
+<!-- Modal Xem Nhanh Đề Cương Chi Tiết -->
+@include('partials.modal_preview_decuong')
 
 @stack('scripts')
 </body>

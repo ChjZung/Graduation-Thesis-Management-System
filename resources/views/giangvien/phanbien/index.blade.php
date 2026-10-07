@@ -34,6 +34,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link py-2 px-3 {{ request('KetQua') === 'da_nop_lai' ? 'active bg-primary' : '' }}" 
+                       href="{{ route('giangvien.phanbien.index', ['KetQua' => 'da_nop_lai']) }}">
+                        <i class="fa-solid fa-rotate me-1"></i> Đã nộp lại đề cương 
+                        <span class="badge {{ $counts['da_nop_lai'] > 0 ? 'bg-light text-primary' : 'bg-secondary' }} ms-1">{{ $counts['da_nop_lai'] }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link py-2 px-3 {{ request('KetQua') === 'Đạt' ? 'active bg-success' : '' }}" 
                        href="{{ route('giangvien.phanbien.index', ['KetQua' => 'Đạt']) }}">
                         Đạt <span class="badge bg-secondary ms-1">{{ $counts['dat'] }}</span>
@@ -93,9 +100,15 @@
                                     </td>
                                     <td>
                                         @if($pc->deTai && $pc->deTai->FileDeCuong)
-                                            <a href="{{ asset('storage/' . $pc->deTai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                                <i class="fa-solid fa-file-pdf me-1"></i> Đề cương
-                                            </a>
+                                            @php
+                                                $filePath = Str::startsWith($pc->deTai->FileDeCuong, ['http', 'storage/']) ? asset($pc->deTai->FileDeCuong) : asset('storage/' . $pc->deTai->FileDeCuong);
+                                                $fileName = basename($pc->deTai->FileDeCuong);
+                                            @endphp
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 shadow-sm"
+                                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($pc->deTai->TenDeTai) }}')"
+                                                    title="Xem nhanh đề cương trực tiếp trên web">
+                                                <i class="fa-solid fa-eye me-1"></i> Xem đề cương
+                                            </button>
                                         @else
                                             <span class="text-muted small">Chưa có file</span>
                                         @endif
@@ -104,10 +117,23 @@
                                         {{ $pc->NgayPhanCong ? \Carbon\Carbon::parse($pc->NgayPhanCong)->format('d/m/Y') : 'N/A' }}
                                     </td>
                                     <td>
+                                        @php
+                                            $isNopLai = $pc->KetQua === 'Đã nộp lại' 
+                                                || $pc->TrangThai === 'Đã nộp lại đề cương' 
+                                                || ($pc->deTai && $pc->deTai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại');
+                                        @endphp
                                         @if($pc->KetQua === 'Đạt')
                                             <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                        @elseif($isNopLai)
+                                            <span class="badge bg-primary px-2.5 py-1.5 shadow-sm text-wrap text-start">
+                                                <i class="fa-solid fa-rotate me-1"></i> Đã nộp lại đề cương
+                                            </span>
+                                            <div class="small text-primary fw-bold mt-1">
+                                                <i class="fa-solid fa-bell me-1"></i>Chờ phản biện lại
+                                            </div>
                                         @elseif($pc->KetQua === 'Yêu cầu chỉnh sửa')
                                             <span class="badge bg-warning text-dark"><i class="fa-solid fa-pen me-1"></i> Yêu cầu sửa</span>
+                                            <div class="small text-muted mt-0.5">(Chờ GV sửa)</div>
                                         @elseif($pc->KetQua === 'Không đạt')
                                             <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i> Không đạt</span>
                                         @else
@@ -115,9 +141,19 @@
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i> Đánh giá
-                                        </a>
+                                        @if($isNopLai)
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary fw-bold shadow-sm">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i> Phản biện lại
+                                            </a>
+                                        @elseif($pc->KetQua)
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa-solid fa-eye me-1"></i> Xem lại
+                                            </a>
+                                        @else
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i> Đánh giá
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

@@ -49,15 +49,23 @@
             $sidebarMaBm = $sidebarBm ? $sidebarBm->MaBoMon : 'CNPM';
             $sidebarGvIds = \App\Models\GiangVien::where('MaBoMon', $sidebarMaBm)->pluck('MaGV');
             
-            // Đếm đề tài chưa phân công phản biện
-            $countChuaPhanCong = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
+            // Đếm đề tài đề xuất sơ bộ chờ duyệt cấp Bộ môn
+            $countChoDuyetDeXuat = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
                 ->where('TrangThai', 'Chờ duyệt cấp Bộ môn')
+                ->count();
+
+            // Đếm đề tài đã nộp đề cương chưa phân công phản biện
+            $countChuaPhanCong = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
+                ->whereIn('TrangThai', ['Đã nộp đề cương - Chờ phân công PB', 'Trưởng khoa đã duyệt - Chờ nộp đề cương'])
                 ->whereDoesntHave('phanCongPhanBiens', fn($q) => $q->where('VaiTro', 'Phản biện đề cương'))
                 ->count();
 
-            // Đếm đề tài cần duyệt ở cấp Bộ môn
-            $countChoDuyetBM = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
-                ->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM'])
+            // Đếm đề tài đã phản biện xong đang chờ TBM duyệt công bố
+            $countChoDuyetDeCuong = \App\Models\DeTai::whereIn('MaGV', $sidebarGvIds)
+                ->where(function($q) {
+                    $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])
+                      ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt'));
+                })->where('TrangThai', '!=', 'Đã công bố')
                 ->count();
         @endphp
 
@@ -65,11 +73,21 @@
             <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('truongbomon.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('truongbomon.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
                 </a>
             </li>
 
             <li class="nav-section-label">Xử Lý Đề Tài</li>
+            <!-- Duyệt đề xuất đề tài -->
+            <li class="{{ request()->routeIs('truongbomon.duyet_detai.*') ? 'active' : '' }}">
+                <a href="{{ route('truongbomon.duyet_detai.index') }}" class="d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-list-check"></i> Duyệt đề xuất đề tài</span>
+                    @if($countChoDuyetDeXuat > 0)
+                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $countChoDuyetDeXuat }}</span>
+                    @endif
+                </a>
+            </li>
+
             <!-- Phân công phản biện -->
             <li class="{{ request()->routeIs('truongbomon.phancong.*') ? 'active' : '' }}">
                 <a href="{{ route('truongbomon.phancong.index') }}" class="d-flex justify-content-between align-items-center">
@@ -80,12 +98,12 @@
                 </a>
             </li>
 
-            <!-- Duyệt đề tài -->
-            <li class="{{ request()->routeIs('truongbomon.duyet_detai.*') ? 'active' : '' }}">
-                <a href="{{ route('truongbomon.duyet_detai.index') }}" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-clipboard-check"></i> Duyệt đề tài</span>
-                    @if($countChoDuyetBM > 0)
-                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $countChoDuyetBM }}</span>
+            <!-- Duyệt đề cương -->
+            <li class="{{ request()->routeIs('truongbomon.duyet_decuong.*') ? 'active' : '' }}">
+                <a href="{{ route('truongbomon.duyet_decuong.index') }}" class="d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-file-circle-check"></i> Duyệt đề cương</span>
+                    @if($countChoDuyetDeCuong > 0)
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.65rem;">{{ $countChoDuyetDeCuong }}</span>
                     @endif
                 </a>
             </li>
@@ -262,6 +280,9 @@
         }, 5000);
     });
 </script>
+
+<!-- Modal Xem Nhanh Đề Cương Chi Tiết -->
+@include('partials.modal_preview_decuong')
 
 @stack('scripts')
 </body>

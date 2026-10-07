@@ -1097,9 +1097,19 @@
                         @endif
                     </div>
                     @if($dt->FileDeCuong)
-                        <a href="{{ asset($dt->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3">
-                            <i class="fa-solid fa-download me-1"></i> Tải Đề Cương
-                        </a>
+                        @php
+                            $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                            $fileName = basename($dt->FileDeCuong);
+                        @endphp
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
+                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}')">
+                                <i class="fa-solid fa-eye me-1"></i> Xem Nhanh
+                            </button>
+                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                <i class="fa-solid fa-download me-1"></i> Tải Về
+                            </a>
+                        </div>
                     @endif
                 </div>
 

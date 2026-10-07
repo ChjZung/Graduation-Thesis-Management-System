@@ -28,7 +28,21 @@ class PhanBienDeCuongController extends Controller
 
         if ($request->filled('KetQua')) {
             if ($request->KetQua === 'chua_danh_gia') {
-                $query->whereNull('KetQua');
+                $query->whereNull('KetQua')
+                      ->where(function($q) {
+                          $q->whereNull('TrangThai')
+                            ->orWhere('TrangThai', '!=', 'Đã nộp lại đề cương');
+                      });
+            } elseif ($request->KetQua === 'da_nop_lai') {
+                $query->where(function($q) {
+                    $q->where('KetQua', 'Đã nộp lại')
+                      ->orWhere('TrangThai', 'Đã nộp lại đề cương')
+                      ->orWhereHas('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'));
+                });
+            } elseif ($request->KetQua === 'yeu_cau_sua' || $request->KetQua === 'Yêu cầu chỉnh sửa') {
+                $query->where('KetQua', 'Yêu cầu chỉnh sửa')
+                      ->where('TrangThai', '!=', 'Đã nộp lại đề cương')
+                      ->whereDoesntHave('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'));
             } else {
                 $query->where('KetQua', $request->KetQua);
             }
@@ -37,9 +51,14 @@ class PhanBienDeCuongController extends Controller
         $phanCongs = $query->orderBy('created_at', 'desc')->paginate(10);
 
         $counts = [
-            'chua_danh_gia' => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->whereNull('KetQua')->count(),
+            'chua_danh_gia' => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->whereNull('KetQua')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->count(),
+            'da_nop_lai'    => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where(function($q) {
+                $q->where('KetQua', 'Đã nộp lại')
+                  ->orWhere('TrangThai', 'Đã nộp lại đề cương')
+                  ->orWhereHas('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'));
+            })->count(),
             'dat'           => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt')->count(),
-            'yeu_cau_sua'   => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Yêu cầu chỉnh sửa')->count(),
+            'yeu_cau_sua'   => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Yêu cầu chỉnh sửa')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->whereDoesntHave('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'))->count(),
             'khong_dat'     => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Không đạt')->count(),
             'total'         => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->count(),
         ];
@@ -104,7 +123,7 @@ class PhanBienDeCuongController extends Controller
                 ]);
             } elseif ($request->KetQua === 'Yêu cầu chỉnh sửa') {
                 $detai->update([
-                    'TrangThai'  => 'Yêu cầu chỉnh sửa',
+                    'TrangThai'  => 'Yêu cầu chỉnh sửa đề cương',
                     'LyDoTuChoi' => 'Ý kiến phản biện đề cương: ' . trim($request->NhanXet),
                 ]);
             } else { // Không đạt
@@ -123,6 +142,27 @@ class PhanBienDeCuongController extends Controller
                 "Đề tài '{$detai->TenDeTai}' đã có kết quả phản biện từ {$gv->HoTen}: '{$request->KetQua}'. Vui lòng kiểm tra nhận xét chi tiết.",
                 'Đề tài'
             );
+        }
+
+        // Gửi thông báo cho Trưởng Bộ Môn để duyệt lần 2 & công bố
+        $maBoMon = $detai->giangVien?->MaBoMon;
+        $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                $q->where('MaVaiTro', 'VT04')
+                  ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+            })
+            ->where(function($q) use ($maBoMon) {
+                if ($maBoMon) {
+                    $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                }
+            })->first();
+
+        if ($tbmUser) {
+            $tieuDe = $request->KetQua === 'Đạt' 
+                ? '✅ Đề cương đã phản biện ĐẠT - Chờ duyệt công bố' 
+                : '⚠️ Đề cương có kết quả phản biện: ' . $request->KetQua;
+            $noiDung = "Đề tài '{$detai->TenDeTai}' đã có kết quả phản biện từ GV {$gv->HoTen}: '{$request->KetQua}'. Vui lòng vào xem và phê duyệt công bố.";
+
+            ThongBaoService::guiDen($tbmUser->MaTK, $tieuDe, $noiDung, 'Đề tài');
         }
 
         return redirect()->route('giangvien.phanbien.index')

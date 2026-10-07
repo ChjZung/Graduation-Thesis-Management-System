@@ -41,8 +41,8 @@ class PhanCongPhanBienController extends Controller
         $giangViens = GiangVien::where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
         $gvIds = $giangViens->pluck('MaGV');
 
-        // Toàn bộ GV để chọn làm GV phản biện
-        $allGiangViens = GiangVien::orderBy('HoTen')->get();
+        // Giảng viên thuộc cùng Bộ môn để chọn làm GV phản biện
+        $allGiangViens = GiangVien::with('boMon')->where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
 
         $query = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->whereIn('MaGV', $gvIds);
@@ -51,17 +51,27 @@ class PhanCongPhanBienController extends Controller
         $statusTab = $request->input('tab', 'chua_phan_cong');
 
         if ($statusTab === 'chua_phan_cong') {
-            $query->where('TrangThai', 'Chờ duyệt cấp Bộ môn')
+            $query->whereIn('TrangThai', ['Đã nộp đề cương - Chờ phân công PB', 'Trưởng khoa đã duyệt - Chờ nộp đề cương'])
                   ->whereDoesntHave('phanCongPhanBiens', fn($q) => $q->where('VaiTro', 'Phản biện đề cương'));
         } elseif ($statusTab === 'dang_phan_bien') {
-            $query->where('TrangThai', 'Đang phản biện đề cương');
+            $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
         } elseif ($statusTab === 'da_phan_bien') {
             $query->where(function($q) {
-                $q->where('TrangThai', 'Đã phản biện - Chờ duyệt BM')
+                $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố'])
                   ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->whereNotNull('KetQua'));
             });
         } elseif ($statusTab === 'ALL') {
-            // Không giới hạn
+            $query->whereIn('TrangThai', [
+                'Trưởng khoa đã duyệt - Chờ nộp đề cương',
+                'Đã nộp đề cương - Chờ phân công PB',
+                'Đang phản biện đề cương',
+                'Đã cập nhật đề cương - Chờ phản biện lại',
+                'Đã phản biện - Chờ duyệt BM',
+                'Đã phản biện - Chờ TBM duyệt đề cương',
+                'Đã công bố',
+                'Yêu cầu chỉnh sửa đề cương',
+                'Không đạt phản biện'
+            ]);
         }
 
         // Lọc theo Học kỳ
@@ -90,18 +100,29 @@ class PhanCongPhanBienController extends Controller
         // Đếm số lượng cho các tab
         $counts = [
             'chua_phan_cong' => DeTai::whereIn('MaGV', $gvIds)
-                ->where('TrangThai', 'Chờ duyệt cấp Bộ môn')
+                ->whereIn('TrangThai', ['Đã nộp đề cương - Chờ phân công PB', 'Trưởng khoa đã duyệt - Chờ nộp đề cương'])
                 ->whereDoesntHave('phanCongPhanBiens', fn($q) => $q->where('VaiTro', 'Phản biện đề cương'))
                 ->count(),
             'dang_phan_bien' => DeTai::whereIn('MaGV', $gvIds)
-                ->where('TrangThai', 'Đang phản biện đề cương')
+                ->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương'])
                 ->count(),
             'da_phan_bien'   => DeTai::whereIn('MaGV', $gvIds)
                 ->where(function($q) {
-                    $q->where('TrangThai', 'Đã phản biện - Chờ duyệt BM')
+                    $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố'])
                       ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->whereNotNull('KetQua'));
                 })->count(),
-            'total'          => DeTai::whereIn('MaGV', $gvIds)->count(),
+            'total'          => DeTai::whereIn('MaGV', $gvIds)
+                ->whereIn('TrangThai', [
+                    'Trưởng khoa đã duyệt - Chờ nộp đề cương',
+                    'Đã nộp đề cương - Chờ phân công PB',
+                    'Đang phản biện đề cương',
+                    'Đã cập nhật đề cương - Chờ phản biện lại',
+                    'Đã phản biện - Chờ duyệt BM',
+                    'Đã phản biện - Chờ TBM duyệt đề cương',
+                    'Đã công bố',
+                    'Yêu cầu chỉnh sửa đề cương',
+                    'Không đạt phản biện'
+                ])->count(),
         ];
 
         return view('truongbomon.phancong.index', compact('boMon', 'detais', 'counts', 'hocKies', 'giangViens', 'allGiangViens', 'statusTab'));
@@ -117,9 +138,19 @@ class PhanCongPhanBienController extends Controller
 
         $detai = DeTai::findOrFail($id);
 
+        if (!$detai->FileDeCuong) {
+            return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
+        }
+
         // Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó
         if ($detai->MaGV === $request->MaGVPhanBien) {
             return redirect()->back()->withErrors('Giảng viên đề xuất đề tài không được làm Giảng viên phản biện cho đề tài này!');
+        }
+
+        // Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài
+        $gvPB = GiangVien::find($request->MaGVPhanBien);
+        if ($detai->giangVien && $gvPB && $gvPB->MaBoMon !== $detai->giangVien->MaBoMon) {
+            return redirect()->back()->withErrors('Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài (' . ($detai->giangVien->boMon->TenBoMon ?? '') . ')!');
         }
 
         DB::transaction(function () use ($request, $detai) {

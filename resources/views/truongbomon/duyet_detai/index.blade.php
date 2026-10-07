@@ -272,6 +272,11 @@
             <i class="fa-solid fa-user-plus me-1"></i> Sang Phân Công Phản Biện
         </a>
 
+        {{-- Nút Sang Duyệt Đề Cương --}}
+        <a href="{{ route('truongbomon.duyet_decuong.index') }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
+            <i class="fa-solid fa-file-circle-check me-1"></i> Sang Duyệt Đề Cương
+        </a>
+
         {{-- Nút Xuất Báo Cáo Thống Kê --}}
         <a href="{{ route('truongbomon.thongke.detai.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
             <i class="fa-solid fa-file-excel me-1"></i> Xuất Báo Cáo Thống Kê
@@ -589,17 +594,22 @@
                         @php
                             $pb = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
                             $statusBadgeClass = match($dt->TrangThai) {
-                                'Trưởng khoa đã duyệt'     => 'bg-success-subtle text-success border border-success-subtle',
-                                'Đã công bố'               => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                'Đã đăng ký'               => 'bg-indigo-subtle text-indigo border border-indigo-subtle',
-                                'Chờ duyệt cấp Khoa'       => 'bg-info-subtle text-info border border-info-subtle',
-                                'Chờ duyệt cấp Bộ môn'     => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                'Đã phản biện - Chờ duyệt BM' => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                'Đang phản biện đề cương'  => 'bg-info-subtle text-info border border-info-subtle',
-                                'Hoàn thành'               => 'bg-dark-subtle text-dark border border-dark-subtle',
-                                'Yêu cầu chỉnh sửa'        => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                'Từ chối'                  => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                default                    => 'bg-light text-muted border',
+                                'Trưởng khoa đã duyệt'                     => 'bg-success-subtle text-success border border-success-subtle',
+                                'Trưởng khoa đã duyệt - Chờ nộp đề cương' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                                'Đã nộp đề cương - Chờ phân công PB'      => 'bg-info-subtle text-info border border-info-subtle',
+                                'Đã công bố'                               => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                'Đã đăng ký'                               => 'bg-indigo-subtle text-indigo border border-indigo-subtle',
+                                'Chờ duyệt cấp Khoa'                       => 'bg-info-subtle text-info border border-info-subtle',
+                                'Chờ duyệt cấp Bộ môn'                     => 'bg-warning-subtle text-warning border border-warning-subtle',
+                                'Đã phản biện - Chờ duyệt BM',
+                                'Đã phản biện - Chờ TBM duyệt đề cương'    => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                'Đang phản biện đề cương'                  => 'bg-info-subtle text-info border border-info-subtle',
+                                'Hoàn thành'                               => 'bg-dark-subtle text-dark border border-dark-subtle',
+                                'Yêu cầu chỉnh sửa',
+                                'Yêu cầu chỉnh sửa đề cương'               => 'bg-warning-subtle text-warning border border-warning-subtle',
+                                'Không đạt phản biện',
+                                'Từ chối'                                  => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+                                default                                    => 'bg-light text-muted border',
                             };
                         @endphp
                         <tr>
@@ -653,10 +663,15 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                @if(in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM']))
+                                @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
                                     <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap">
-                                        <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
+                                        class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap">
+                                        <i class="fa-solid fa-stamp me-1"></i> Duyệt Đề Xuất
+                                    </a>
+                                @elseif(in_array($dt->TrangThai, ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']))
+                                    <a href="{{ route('truongbomon.phancong.index', ['tab' => 'da_phan_bien', 'search' => $dt->MaDeTai]) }}" 
+                                        class="btn btn-sm btn-success rounded-3 px-2 py-1 fw-semibold text-nowrap" title="Sang mục Phân công phản biện để duyệt đề cương">
+                                        <i class="fa-solid fa-bullhorn me-1"></i> Duyệt ĐC
                                     </a>
                                 @else
                                     <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" 

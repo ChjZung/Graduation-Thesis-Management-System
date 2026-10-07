@@ -90,14 +90,23 @@
                         <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3">{{ old('YeuCau', $detai->YeuCau) }}</textarea>
                     </div>
 
+                    @if($detai->FileDeCuong || in_array($detai->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Yêu cầu chỉnh sửa đề cương']))
                     <div class="mb-4 p-3 bg-light rounded-3 border">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label for="FileDeCuong" class="form-label fw-bold mb-0">
                                 <i class="fa-solid fa-paperclip text-primary me-1"></i> Tệp Đề Cương Chi Tiết
                             </label>
-                            <a href="{{ route('giangvien.detai.download_template') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu Đề Cương (.docx)
-                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu (.docx)
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                    <li><h6 class="dropdown-header small fw-bold text-muted">Chọn biểu mẫu theo môn/học phần</h6></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'cu_nhan']) }}"><i class="fa-solid fa-graduation-cap text-primary me-2"></i> Khóa Luận Cử Nhân</a></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'ky_su']) }}"><i class="fa-solid fa-gears text-success me-2"></i> Khóa Luận Kỹ Sư</a></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'do_an']) }}"><i class="fa-solid fa-folder-open text-warning me-2"></i> Đồ Án Tốt Nghiệp</a></li>
+                                </ul>
+                            </div>
                         </div>
                         @if($detai->FileDeCuong)
                         <div class="mb-2 p-2 bg-white rounded border d-flex align-items-center justify-content-between">
@@ -115,6 +124,30 @@
                             Chọn tệp mới nếu muốn thay thế đề cương hiện tại (Hỗ trợ: .pdf, .doc, .docx - Tối đa 10MB).
                         </div>
                     </div>
+                    @else
+                    <div class="mb-4 p-3 bg-light rounded-3 border border-dashed">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="fw-bold text-dark">
+                                <i class="fa-solid fa-file-circle-exclamation text-primary me-1"></i> Đề Cương Chi Tiết
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu (.docx)
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                    <li><h6 class="dropdown-header small fw-bold text-muted">Chọn biểu mẫu theo môn/học phần</h6></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'cu_nhan']) }}"><i class="fa-solid fa-graduation-cap text-primary me-2"></i> Khóa Luận Cử Nhân</a></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'ky_su']) }}"><i class="fa-solid fa-gears text-success me-2"></i> Khóa Luận Kỹ Sư</a></li>
+                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'do_an']) }}"><i class="fa-solid fa-folder-open text-warning me-2"></i> Đồ Án Tốt Nghiệp</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fa-solid fa-circle-info text-info me-1"></i>
+                            Đề tài đang ở giai đoạn đề xuất danh mục sơ bộ. Sau khi <strong>Trưởng Bộ Môn</strong> và <strong>Trưởng Khoa phê duyệt</strong>, hệ thống sẽ mở chức năng nộp file Đề cương chi tiết.
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-semibold">

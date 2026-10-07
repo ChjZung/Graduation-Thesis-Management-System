@@ -25,13 +25,19 @@
         <div class="d-flex align-items-center gap-2">
             @if($detai->TrangThai === 'Chờ duyệt cấp Khoa')
                 <span class="badge bg-danger px-3 py-2 fs-6"><i class="fa-solid fa-clock me-1"></i> Chờ Trưởng khoa duyệt</span>
-            @elseif($detai->TrangThai === 'Trưởng khoa đã duyệt')
-                <span class="badge bg-success px-3 py-2 fs-6"><i class="fa-solid fa-stamp me-1"></i> Trưởng khoa đã duyệt</span>
+            @elseif(in_array($detai->TrangThai, ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương']))
+                <span class="badge bg-success px-3 py-2 fs-6"><i class="fa-solid fa-stamp me-1"></i> Trưởng khoa đã duyệt (Chờ nộp đề cương)</span>
+            @elseif($detai->TrangThai === 'Đã nộp đề cương - Chờ phân công PB')
+                <span class="badge bg-info px-3 py-2 fs-6"><i class="fa-solid fa-file-circle-check me-1"></i> Đã nộp ĐC - Chờ phân công PB</span>
+            @elseif($detai->TrangThai === 'Đang phản biện đề cương')
+                <span class="badge bg-info px-3 py-2 fs-6"><i class="fa-solid fa-file-pen me-1"></i> Đang phản biện đề cương</span>
+            @elseif(in_array($detai->TrangThai, ['Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM']))
+                <span class="badge bg-primary px-3 py-2 fs-6"><i class="fa-solid fa-check-double me-1"></i> Đã PB - Chờ TBM duyệt &amp; công bố</span>
             @elseif($detai->TrangThai === 'Đã công bố')
-                <span class="badge bg-primary px-3 py-2 fs-6"><i class="fa-solid fa-bullhorn me-1"></i> Đã công bố</span>
-            @elseif($detai->TrangThai === 'Yêu cầu chỉnh sửa')
+                <span class="badge bg-success px-3 py-2 fs-6"><i class="fa-solid fa-bullhorn me-1"></i> Đã công bố</span>
+            @elseif(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương']))
                 <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="fa-solid fa-triangle-exclamation me-1"></i> Yêu cầu chỉnh sửa</span>
-            @elseif($detai->TrangThai === 'Từ chối')
+            @elseif(in_array($detai->TrangThai, ['Từ chối', 'Không đạt phản biện']))
                 <span class="badge bg-secondary px-3 py-2 fs-6"><i class="fa-solid fa-circle-xmark me-1"></i> Từ chối</span>
             @else
                 <span class="badge bg-light text-muted border px-3 py-2 fs-6">{{ $detai->TrangThai }}</span>
@@ -43,7 +49,15 @@
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
         <div class="card-body py-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 text-center" style="font-size: 0.8rem;">
-                <!-- Bước 1 -->
+                @php
+                    $isBmApproved1 = in_array($detai->TrangThai, ['Chờ duyệt cấp Khoa', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Trưởng khoa đã duyệt', 'Đã nộp đề cương - Chờ phân công PB', 'Đang phản biện đề cương', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố']);
+                    $isKhoaApproved = in_array($detai->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Trưởng khoa đã duyệt', 'Đã nộp đề cương - Chờ phân công PB', 'Đang phản biện đề cương', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố']);
+                    $isOutlineSubmitted = (bool)$detai->FileDeCuong;
+                    $isReviewed = $phanBienHienTai && $phanBienHienTai->KetQua;
+                    $isPublished = $detai->TrangThai === 'Đã công bố';
+                @endphp
+
+                <!-- Bước 1: GV Đề Xuất -->
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-success rounded-circle p-2"><i class="fa-solid fa-check"></i></span>
                     <div class="text-start">
@@ -53,75 +67,55 @@
                 </div>
                 <i class="fa-solid fa-chevron-right text-muted d-none d-md-block"></i>
 
-                <!-- Bước 2 -->
+                <!-- Bước 2: TBM Duyệt Đề Xuất -->
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge {{ $phanBienHienTai ? 'bg-success' : 'bg-secondary' }} rounded-circle p-2">
-                        <i class="fa-solid {{ $phanBienHienTai ? 'fa-check' : 'fa-user-plus' }}"></i>
+                    <span class="badge {{ $isBmApproved1 ? 'bg-success' : 'bg-warning' }} rounded-circle p-2">
+                        <i class="fa-solid {{ $isBmApproved1 ? 'fa-check' : 'fa-building-columns' }}"></i>
                     </span>
                     <div class="text-start">
-                        <div class="fw-bold {{ $phanBienHienTai ? 'text-success' : 'text-muted' }}">2. TBM Phân Công PB</div>
-                        <div class="text-muted small">{{ $phanBienHienTai ? 'Đã phân công' : 'Chưa phân công' }}</div>
+                        <div class="fw-bold {{ $isBmApproved1 ? 'text-success' : 'text-warning' }}">2. BM Duyệt Đề Xuất</div>
+                        <div class="text-muted small">{{ $detai->NgayDuyetBM ? \Carbon\Carbon::parse($detai->NgayDuyetBM)->format('d/m/Y') : 'Chờ TBM' }}</div>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-muted d-none d-md-block"></i>
 
-                <!-- Bước 3 -->
+                <!-- Bước 3: Khoa Phê Duyệt -->
                 <div class="d-flex align-items-center gap-2">
-                    @php
-                        $isPbDone = $phanBienHienTai && in_array($phanBienHienTai->KetQua, ['Đạt', 'Yêu cầu chỉnh sửa', 'Không đạt']);
-                    @endphp
-                    <span class="badge {{ $isPbDone ? 'bg-success' : 'bg-secondary' }} rounded-circle p-2">
-                        <i class="fa-solid {{ $isPbDone ? 'fa-check' : 'fa-file-pen' }}"></i>
+                    <span class="badge {{ $isKhoaApproved ? 'bg-success' : ($detai->TrangThai === 'Chờ duyệt cấp Khoa' ? 'bg-danger' : 'bg-secondary') }} rounded-circle p-2">
+                        <i class="fa-solid {{ $isKhoaApproved ? 'fa-check' : 'fa-stamp' }}"></i>
                     </span>
                     <div class="text-start">
-                        <div class="fw-bold {{ $isPbDone ? 'text-success' : 'text-muted' }}">3. Phản Biện Đề Cương</div>
-                        <div class="text-muted small">{{ $isPbDone ? ($phanBienHienTai->KetQua ?? 'Đã xong') : 'Đang xử lý' }}</div>
+                        <div class="fw-bold {{ $isKhoaApproved ? 'text-success' : ($detai->TrangThai === 'Chờ duyệt cấp Khoa' ? 'text-danger' : 'text-muted') }}">3. Khoa Phê Duyệt</div>
+                        <div class="small {{ $isKhoaApproved ? 'text-muted' : ($detai->TrangThai === 'Chờ duyệt cấp Khoa' ? 'text-danger fw-semibold' : 'text-muted') }}">
+                            {{ $detai->NgayDuyetKhoa ? \Carbon\Carbon::parse($detai->NgayDuyetKhoa)->format('d/m/Y') : ($detai->TrangThai === 'Chờ duyệt cấp Khoa' ? 'Chờ Khoa duyệt' : 'Chưa đến lượt') }}
+                        </div>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-muted d-none d-md-block"></i>
 
-                <!-- Bước 4 -->
+                <!-- Bước 4: Phản Biện Đề Cương -->
                 <div class="d-flex align-items-center gap-2">
-                    @php
-                        $isBmDone = $detai->NgayDuyetBM || in_array($detai->TrangThai, ['Chờ duyệt cấp Khoa', 'Trưởng khoa đã duyệt', 'Đã công bố']);
-                    @endphp
-                    <span class="badge {{ $isBmDone ? 'bg-success' : 'bg-secondary' }} rounded-circle p-2">
-                        <i class="fa-solid {{ $isBmDone ? 'fa-check' : 'fa-clipboard-check' }}"></i>
+                    <span class="badge {{ $isReviewed ? 'bg-success' : ($isOutlineSubmitted ? 'bg-info' : 'bg-secondary') }} rounded-circle p-2">
+                        <i class="fa-solid {{ $isReviewed ? 'fa-check' : 'fa-file-signature' }}"></i>
                     </span>
                     <div class="text-start">
-                        <div class="fw-bold {{ $isBmDone ? 'text-success' : 'text-muted' }}">4. TBM Phê Duyệt</div>
-                        <div class="text-muted small">{{ $isBmDone ? 'Đã thông qua' : 'Chờ duyệt' }}</div>
+                        <div class="fw-bold {{ $isReviewed ? 'text-success' : ($isOutlineSubmitted ? 'text-info' : 'text-muted') }}">4. Phản Biện Đề Cương</div>
+                        <div class="text-muted small">
+                            {{ $isReviewed ? $phanBienHienTai->KetQua : ($phanBienHienTai ? 'Đang phản biện' : ($isOutlineSubmitted ? 'Đã nộp ĐC' : 'Chờ nộp ĐC')) }}
+                        </div>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-muted d-none d-md-block"></i>
 
-                <!-- Bước 5: Trưởng Khoa -->
+                <!-- Bước 5: BM Duyệt & Công Bố -->
                 <div class="d-flex align-items-center gap-2">
-                    @if(in_array($detai->TrangThai, ['Trưởng khoa đã duyệt', 'Đã công bố']))
-                        <span class="badge bg-success rounded-circle p-2"><i class="fa-solid fa-stamp"></i></span>
-                        <div class="text-start">
-                            <div class="fw-bold text-success">5. Trưởng Khoa Duyệt</div>
-                            <div class="text-muted small">Đã phê duyệt</div>
-                        </div>
-                    @elseif($detai->TrangThai === 'Yêu cầu chỉnh sửa')
-                        <span class="badge bg-warning rounded-circle p-2"><i class="fa-solid fa-pen"></i></span>
-                        <div class="text-start">
-                            <div class="fw-bold text-warning">5. Trưởng Khoa</div>
-                            <div class="text-muted small">Yêu cầu chỉnh sửa</div>
-                        </div>
-                    @elseif($detai->TrangThai === 'Từ chối')
-                        <span class="badge bg-danger rounded-circle p-2"><i class="fa-solid fa-xmark"></i></span>
-                        <div class="text-start">
-                            <div class="fw-bold text-danger">5. Trưởng Khoa</div>
-                            <div class="text-muted small">Đã từ chối</div>
-                        </div>
-                    @else
-                        <span class="badge bg-danger rounded-circle p-2"><i class="fa-solid fa-stamp"></i></span>
-                        <div class="text-start">
-                            <div class="fw-bold text-danger">5. Trưởng Khoa Phê Duyệt</div>
-                            <div class="text-danger small fw-semibold">Đang chờ xử lý</div>
-                        </div>
-                    @endif
+                    <span class="badge {{ $isPublished ? 'bg-success' : 'bg-secondary' }} rounded-circle p-2">
+                        <i class="fa-solid {{ $isPublished ? 'fa-check' : 'fa-bullhorn' }}"></i>
+                    </span>
+                    <div class="text-start">
+                        <div class="fw-bold {{ $isPublished ? 'text-success' : 'text-muted' }}">5. BM Duyệt &amp; Công Bố</div>
+                        <div class="text-muted small">{{ $detai->NgayCongBo ? \Carbon\Carbon::parse($detai->NgayCongBo)->format('d/m/Y') : 'Chờ công bố' }}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -184,11 +178,29 @@
                         <label class="form-label text-muted small fw-bold">File Đề Cương Chi Tiết:</label>
                         <div>
                             @if($detai->FileDeCuong)
-                                <a href="{{ asset('storage/' . $detai->FileDeCuong) }}" target="_blank" class="btn btn-outline-danger">
-                                    <i class="fa-solid fa-file-pdf me-2"></i> Xem Đề Cương Chi Tiết (.pdf / .docx)
-                                </a>
+                                @php
+                                    $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $fileName = basename($detai->FileDeCuong);
+                                @endphp
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <button type="button" class="btn btn-primary shadow-sm" 
+                                            onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        <i class="fa-solid fa-eye me-2"></i> Xem Nhanh Đề Cương
+                                    </button>
+                                    <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                                    </a>
+                                    <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary">
+                                        <i class="fa-solid fa-download me-1"></i> Tải file
+                                    </a>
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    <i class="fa-solid fa-paperclip me-1 text-primary"></i> Tệp: <strong>{{ $fileName }}</strong>
+                                </div>
                             @else
-                                <span class="text-muted small fst-italic">Không có file đề cương đính kèm.</span>
+                                <span class="badge bg-light text-muted border px-3 py-2 fw-normal">
+                                    <i class="fa-solid fa-clock me-1 text-secondary"></i> Chưa nộp đề cương (Giảng viên sẽ nộp sau khi Trưởng khoa phê duyệt chủ trương)
+                                </span>
                             @endif
                         </div>
                     </div>
@@ -237,53 +249,7 @@
                 </div>
             </div>
 
-            <!-- 2. Kết Quả Đánh Giá Phản Biện Đề Cương -->
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                <div class="card-header bg-white py-3">
-                    <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fa-solid fa-file-pen text-info me-2"></i>
-                        Kết Quả Phản Biện Đề Cương
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if($phanBienHienTai)
-                        <div class="mb-2">
-                            <div class="small text-muted fw-bold">Giảng viên phản biện:</div>
-                            <div class="fw-bold text-dark">{{ $phanBienHienTai->giangVien->HoTen ?? 'N/A' }}</div>
-                            <div class="small text-muted">{{ $phanBienHienTai->giangVien->HocVi ?? '' }} ({{ $phanBienHienTai->giangVien->boMon->TenBoMon ?? '' }})</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="small text-muted fw-bold">Kết luận đánh giá chuyên môn:</div>
-                            <div class="mt-1">
-                                @if($phanBienHienTai->KetQua === 'Đạt')
-                                    <span class="badge bg-success px-3 py-2 fs-6"><i class="fa-solid fa-check me-1"></i> ĐẠT YÊU CẦU</span>
-                                @elseif($phanBienHienTai->KetQua === 'Yêu cầu chỉnh sửa')
-                                    <span class="badge bg-warning text-dark px-3 py-2"><i class="fa-solid fa-pen me-1"></i> Yêu cầu chỉnh sửa</span>
-                                @elseif($phanBienHienTai->KetQua === 'Không đạt')
-                                    <span class="badge bg-danger px-3 py-2"><i class="fa-solid fa-xmark me-1"></i> Không đạt</span>
-                                @else
-                                    <span class="badge bg-light text-muted border">Đang phản biện</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if($phanBienHienTai->NhanXet)
-                            <div class="mb-2">
-                                <div class="small text-muted fw-bold">Nhận xét chi tiết của GV phản biện:</div>
-                                <div class="p-3 bg-light rounded mt-1 small" style="white-space: pre-line;">{{ $phanBienHienTai->NhanXet }}</div>
-                            </div>
-                        @endif
-                    @else
-                        <div class="text-center py-3 text-muted small">
-                            <i class="fa-solid fa-circle-question fa-2x mb-2 text-secondary"></i>
-                            <div>Đề tài này chưa có thông tin phân công phản biện đề cương.</div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- 3. Quyết Định Của Trưởng Khoa -->
+            <!-- 2. Quyết Định Của Trưởng Khoa -->
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-header bg-white py-3 border-bottom">
                     <h6 class="fw-bold mb-0 text-dark">
@@ -295,9 +261,9 @@
                     <div class="d-grid gap-2">
                         <!-- Nút 1: Phê Duyệt Cấp Khoa -->
                         <form action="{{ route('truongkhoa.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
-                              onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nĐề tài sẽ sẵn sàng để Giáo vụ Khoa công bố cho sinh viên.');">
+                              onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề xuất đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nSau khi phê duyệt, hệ thống sẽ gửi thông báo yêu cầu Giảng viên nộp Đề cương chi tiết để Bộ môn phân công phản biện.');">
                             @csrf
-                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold" {{ $detai->TrangThai !== 'Chờ duyệt cấp Khoa' ? 'disabled' : '' }}>
                                 <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt Cấp Khoa
                             </button>
                         </form>

@@ -593,15 +593,17 @@
                             $percent = min(100, round(($regSV / max(1, $maxSV)) * 100));
 
                             $statusBadgeClass = match($dt->TrangThai) {
-                                'Trưởng khoa đã duyệt'     => 'bg-success-subtle text-success border border-success-subtle',
-                                'Đã công bố'               => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                                'Đã nộp đề cương - Chờ phân công PB' => 'bg-info-subtle text-info-emphasis border border-info-subtle',
+                                'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                'Đã công bố'               => 'bg-success-subtle text-success border border-success-subtle',
                                 'Đã đăng ký'               => 'bg-indigo-subtle text-indigo border border-indigo-subtle',
                                 'Chờ duyệt cấp Khoa'       => 'bg-danger-subtle text-danger border border-danger-subtle',
                                 'Chờ duyệt cấp Bộ môn'     => 'bg-warning-subtle text-warning border border-warning-subtle',
                                 'Đang phản biện đề cương'  => 'bg-info-subtle text-info border border-info-subtle',
                                 'Hoàn thành'               => 'bg-dark-subtle text-dark border border-dark-subtle',
-                                'Yêu cầu chỉnh sửa'        => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                'Từ chối'                  => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+                                'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương' => 'bg-warning-subtle text-warning border border-warning-subtle',
+                                'Từ chối', 'Không đạt phản biện' => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
                                 default                    => 'bg-light text-muted border',
                             };
                         @endphp

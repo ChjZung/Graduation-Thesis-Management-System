@@ -56,7 +56,7 @@
             <li class="nav-section-label">Tổng Quan</li>
             <li class="{{ request()->routeIs('truongkhoa.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('truongkhoa.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
                 </a>
             </li>
 
@@ -251,6 +251,9 @@
         }, 5000);
     });
 </script>
+
+<!-- Modal Xem Nhanh Đề Cương Chi Tiết -->
+@include('partials.modal_preview_decuong')
 
 @stack('scripts')
 </body>

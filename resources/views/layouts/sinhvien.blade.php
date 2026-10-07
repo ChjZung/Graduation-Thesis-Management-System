@@ -40,7 +40,7 @@
         <ul class="list-unstyled components">
             <li class="{{ request()->routeIs('sinhvien.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('sinhvien.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan / Dashboard
+                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
                 </a>
             </li>
             <li class="{{ request()->routeIs('sinhvien.my_tasks') ? 'active' : '' }}">

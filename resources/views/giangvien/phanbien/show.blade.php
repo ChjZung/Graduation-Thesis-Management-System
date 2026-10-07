@@ -22,8 +22,15 @@
             </div>
         </div>
         <div>
+            @php
+                $isNopLai = $phanCong->KetQua === 'Đã nộp lại' 
+                    || $phanCong->TrangThai === 'Đã nộp lại đề cương' 
+                    || ($detai && $detai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại');
+            @endphp
             @if($phanCong->KetQua === 'Đạt')
                 <span class="badge bg-success px-3 py-2 fs-6"><i class="fa-solid fa-check me-1"></i> ĐÃ ĐÁNH GIÁ: ĐẠT</span>
+            @elseif($isNopLai)
+                <span class="badge bg-primary px-3 py-2 fs-6 shadow-sm"><i class="fa-solid fa-rotate me-1"></i> ĐÃ NỘP LẠI ĐỀ CƯƠNG (CHỜ CHẤM LẠI)</span>
             @elseif($phanCong->KetQua === 'Yêu cầu chỉnh sửa')
                 <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="fa-solid fa-pen me-1"></i> ĐÃ ĐÁNH GIÁ: YÊU CẦU SỬA</span>
             @elseif($phanCong->KetQua === 'Không đạt')
@@ -33,6 +40,20 @@
             @endif
         </div>
     </div>
+
+    @if($isNopLai)
+    <div class="alert alert-primary border-0 shadow-sm d-flex align-items-center gap-3 mb-4 rounded-3 p-3">
+        <div class="fs-3 text-primary">
+            <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-1 text-primary">Giảng viên đề xuất đã cập nhật và nộp lại Đề cương mới!</h6>
+            <div class="small text-dark">
+                Giảng viên đề xuất đã tiếp thu ý kiến chỉnh sửa và tải lên bản đề cương chi tiết mới. Thầy/Cô vui lòng nhấn <strong>Xem Nhanh Đề Cương</strong> để kiểm tra lại các nội dung đã chỉnh sửa, sau đó nhập nhận xét và cập nhật kết luận đánh giá vào phiếu bên phải.
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="row g-4">
         <!-- Topic Content -->
@@ -76,9 +97,25 @@
                         <label class="form-label text-muted small fw-bold">File Đề Cương Đính Kèm Của GVHD:</label>
                         <div>
                             @if($detai->FileDeCuong)
-                                <a href="{{ asset('storage/' . $detai->FileDeCuong) }}" target="_blank" class="btn btn-primary">
-                                    <i class="fa-solid fa-file-pdf me-2"></i> Tải / Xem Đề Cương Chi Tiết (.pdf / .docx)
-                                </a>
+                                @php
+                                    $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $fileName = basename($detai->FileDeCuong);
+                                @endphp
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <button type="button" class="btn btn-primary shadow-sm" 
+                                            onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        <i class="fa-solid fa-eye me-2"></i> Xem Nhanh Đề Cương
+                                    </button>
+                                    <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                                    </a>
+                                    <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary">
+                                        <i class="fa-solid fa-download me-1"></i> Tải về máy
+                                    </a>
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    <i class="fa-solid fa-paperclip me-1 text-primary"></i> Tệp: <strong>{{ $fileName }}</strong>
+                                </div>
                             @else
                                 <span class="text-danger small"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa có file đề cương đính kèm.</span>
                             @endif

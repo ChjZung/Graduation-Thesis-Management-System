@@ -52,9 +52,14 @@
                                 @endif
 
                                 @if($dt->FileDeCuong)
-                                    <a href="{{ asset($dt->FileDeCuong) }}" target="_blank" class="badge bg-success-subtle text-success border text-decoration-none" title="Xem đề cương chi tiết">
+                                    @php
+                                        $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                                    @endphp
+                                    <button type="button" class="badge bg-success-subtle text-success border text-decoration-none btn p-1" 
+                                            onclick="quickPreviewOutline('{{ $filePath }}', '{{ basename($dt->FileDeCuong) }}', '{{ addslashes($dt->TenDeTai) }}')"
+                                            title="Xem nhanh đề cương chi tiết">
                                         <i class="fa-solid fa-paperclip me-1"></i>Đề cương
-                                    </a>
+                                    </button>
                                 @endif
                             </div>
 
@@ -81,26 +86,35 @@
                         <td class="text-center">
                             @if($dt->TrangThai === 'Đã công bố')
                                 <span class="badge bg-primary rounded-pill px-3"><i class="fa-solid fa-bullhorn me-1"></i>Đã công bố</span>
-                            @elseif($dt->TrangThai === 'Trưởng khoa đã duyệt' || $dt->TrangThai === 'Đã duyệt')
-                                <span class="badge bg-success rounded-pill px-3"><i class="fa-solid fa-stamp me-1"></i>TK đã duyệt</span>
-                            @elseif($dt->TrangThai === 'Chờ duyệt cấp Khoa')
-                                <span class="badge bg-danger rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i>Chờ Khoa duyệt</span>
-                            @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
-                                <span class="badge bg-info text-white rounded-pill px-3"><i class="fa-solid fa-check-double me-1"></i>Đã PB - Chờ BM</span>
+                            @elseif($dt->TrangThai === 'Trưởng khoa đã duyệt - Chờ nộp đề cương')
+                                <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-file-arrow-up me-1"></i>Khoa duyệt - Chờ nộp ĐC</span>
+                            @elseif($dt->TrangThai === 'Đã nộp đề cương - Chờ phân công PB')
+                                <span class="badge bg-info text-white rounded-pill px-3"><i class="fa-solid fa-file-circle-check me-1"></i>Đã nộp ĐC - Chờ PB</span>
+                            @elseif($dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại')
+                                <span class="badge bg-primary text-white rounded-pill px-3"><i class="fa-solid fa-rotate me-1"></i>Đã nộp lại ĐC - Chờ PB</span>
                             @elseif($dt->TrangThai === 'Đang phản biện đề cương')
                                 <span class="badge bg-info-subtle text-info border rounded-pill px-3"><i class="fa-solid fa-spinner me-1"></i>Đang phản biện</span>
+                            @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM' || $dt->TrangThai === 'Đã phản biện - Chờ TBM duyệt đề cương')
+                                <span class="badge bg-primary-subtle text-primary border rounded-pill px-3"><i class="fa-solid fa-check-double me-1"></i>Đã PB - Chờ TBM</span>
+                            @elseif($dt->TrangThai === 'Chờ duyệt cấp Khoa')
+                                <span class="badge bg-danger rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i>Chờ Khoa duyệt</span>
                             @elseif($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
-                                <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-clock me-1"></i>Chờ BM duyệt</span>
-                            @elseif($dt->TrangThai === 'Yêu cầu chỉnh sửa' || $dt->TrangThai === 'Yêu cầu điều chỉnh')
+                                <span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-3"><i class="fa-solid fa-clock me-1"></i>Chờ BM duyệt</span>
+                            @elseif($dt->TrangThai === 'Yêu cầu chỉnh sửa đề cương' || $dt->TrangThai === 'Yêu cầu chỉnh sửa' || $dt->TrangThai === 'Yêu cầu điều chỉnh')
                                 <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-wrench me-1"></i>Cần sửa</span>
-                            @elseif($dt->TrangThai === 'Từ chối')
+                            @elseif($dt->TrangThai === 'Không đạt phản biện' || $dt->TrangThai === 'Từ chối')
                                 <span class="badge bg-danger rounded-pill px-3"><i class="fa-solid fa-xmark me-1"></i>Từ chối</span>
                             @else
                                 <span class="badge bg-secondary rounded-pill px-3">{{ $dt->TrangThai }}</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <div class="d-flex justify-content-center gap-1">
+                            <div class="d-flex justify-content-center gap-1 flex-wrap">
+                                @if(in_array($dt->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Yêu cầu chỉnh sửa đề cương', 'Trưởng khoa đã duyệt', 'Đã cập nhật đề cương - Chờ phản biện lại']))
+                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-2 py-1 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNopDeCuong{{ $dt->MaDeTai }}" title="Nộp Đề Cương Chi Tiết">
+                                        <i class="fa-solid fa-file-arrow-up me-1"></i>{{ $dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại' ? 'Nộp lại ĐC' : 'Nộp Đề Cương' }}
+                                    </button>
+                                @endif
                                 @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)
                                     <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}" title="Gán nhóm cho đề tài này">
                                         <i class="fa-solid fa-user-check me-1"></i>Gán Nhóm
@@ -121,6 +135,82 @@
                             </div>
                         </td>
                     </tr>
+
+                    <!-- MODAL NỘP ĐỀ CƯƠNG CHI TIẾT -->
+                    @if(in_array($dt->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Yêu cầu chỉnh sửa đề cương', 'Trưởng khoa đã duyệt', 'Đã cập nhật đề cương - Chờ phản biện lại']))
+                    <div class="modal fade" id="modalNopDeCuong{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form action="{{ route('giangvien.detai.nopDeCuong', $dt->MaDeTai) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="modal-header">
+                                        <h6 class="modal-title fw-bold text-primary">
+                                            <i class="fa-solid fa-file-arrow-up me-2"></i>Nộp Đề Cương Chi Tiết
+                                        </h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-2">
+                                            <label class="form-label text-muted small mb-0">Tên đề tài:</label>
+                                            <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
+                                        </div>
+                                        <div class="alert alert-info py-2 small my-3">
+                                            <i class="fa-solid fa-circle-info me-1"></i>
+                                            Đề tài đã được Trưởng khoa phê duyệt danh mục ban đầu. Vui lòng tải lên file Đề cương chi tiết (.pdf, .doc, .docx) để Trưởng bộ môn tiến hành phân công Giảng viên phản biện.
+                                        </div>
+
+                                        <div class="p-2 mb-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div class="small text-muted">
+                                                <i class="fa-solid fa-file-word text-primary me-1"></i> Chưa có biểu mẫu đề cương chuẩn?
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fa-solid fa-download me-1"></i> Tải file mẫu (.docx)
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 small">
+                                                    <li><h6 class="dropdown-header small fw-bold text-muted">Chọn biểu mẫu theo môn/học phần</h6></li>
+                                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'cu_nhan']) }}"><i class="fa-solid fa-graduation-cap text-primary me-2"></i> Khóa Luận Cử Nhân</a></li>
+                                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'ky_su']) }}"><i class="fa-solid fa-gears text-success me-2"></i> Khóa Luận Kỹ Sư</a></li>
+                                                    <li><a class="dropdown-item py-1.5" href="{{ route('giangvien.detai.download_template', ['type' => 'do_an']) }}"><i class="fa-solid fa-folder-open text-warning me-2"></i> Đồ Án Tốt Nghiệp</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        @if($dt->FileDeCuong)
+                                        @php
+                                            $filePathModal = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                                        @endphp
+                                        <div class="mb-3 p-2 bg-light rounded border d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="small text-muted d-block">File đề cương đã nộp:</span>
+                                                <strong class="small text-dark">{{ basename($dt->FileDeCuong) }}</strong>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                                    onclick="quickPreviewOutline('{{ $filePathModal }}', '{{ basename($dt->FileDeCuong) }}', '{{ addslashes($dt->TenDeTai) }}')">
+                                                <i class="fa-solid fa-eye me-1"></i>Xem nhanh
+                                            </button>
+                                        </div>
+                                        @endif
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold small">Chọn File Đề Cương Chi Tiết <span class="text-danger">*</span>:</label>
+                                            <input type="file" name="FileDeCuong" class="form-control" accept=".pdf,.doc,.docx" required>
+                                            <div class="form-text text-muted small">
+                                                Định dạng chấp nhận: .pdf, .doc, .docx (Dung lượng tối đa 10MB).
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-sm">
+                                            <i class="fa-solid fa-paper-plane me-1"></i>Xác Nhận Nộp Đề Cương
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- MODAL GÁN NHÓM CHO ĐỀ TÀI NÀY -->
                     @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)

@@ -74,14 +74,14 @@ class DuyetDeTaiController extends Controller
         }
 
         $choDuyetBM   = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
-        $dangPB       = (clone $baseCountQuery)->where('TrangThai', 'Đang phản biện đề cương')->count();
+        $dangPB       = (clone $baseCountQuery)->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM'])->count();
         $choDuyetKhoa = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
-        $tkDaDuyet    = (clone $baseCountQuery)->where('TrangThai', 'Trưởng khoa đã duyệt')->count();
+        $tkDaDuyet    = (clone $baseCountQuery)->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương'])->count();
         $daCongBo     = (clone $baseCountQuery)->where('TrangThai', 'Đã công bố')->count();
         $daDangKy     = (clone $baseCountQuery)->where('TrangThai', 'Đã đăng ký')->count();
         $hoanThanh    = (clone $baseCountQuery)->where('TrangThai', 'Hoàn thành')->count();
-        $yeuCauSua    = (clone $baseCountQuery)->where('TrangThai', 'Yêu cầu chỉnh sửa')->count();
-        $tuChoi       = (clone $baseCountQuery)->where('TrangThai', 'Từ chối')->count();
+        $yeuCauSua    = (clone $baseCountQuery)->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương'])->count();
+        $tuChoi       = (clone $baseCountQuery)->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện'])->count();
         $total        = (clone $baseCountQuery)->count();
 
         $counts = [
@@ -229,7 +229,17 @@ class DuyetDeTaiController extends Controller
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            $query->where('TrangThai', $request->TrangThai);
+            if ($request->TrangThai === 'Trưởng khoa đã duyệt') {
+                $query->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương']);
+            } elseif ($request->TrangThai === 'Đang phản biện đề cương') {
+                $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM']);
+            } elseif ($request->TrangThai === 'Yêu cầu chỉnh sửa') {
+                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương']);
+            } elseif ($request->TrangThai === 'Từ chối') {
+                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện']);
+            } else {
+                $query->where('TrangThai', $request->TrangThai);
+            }
         }
 
         if ($request->filled('MaBoMon')) {
@@ -357,23 +367,23 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::findOrFail($id);
 
         $detai->update([
-            'TrangThai'       => 'Trưởng khoa đã duyệt',
+            'TrangThai'       => 'Trưởng khoa đã duyệt - Chờ nộp đề cương',
             'NgayDuyetKhoa'   => now(),
             'NguoiDuyetKhoa'  => $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TK'),
             'LyDoTuChoi'      => null,
         ]);
 
-        // Gửi thông báo cho GV đề xuất
+        // Gửi thông báo cho GV đề xuất yêu cầu nộp Đề cương chi tiết
         if ($detai->giangVien && $detai->giangVien->MaTK) {
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
-                '🎉 Đề tài đã được Trưởng khoa phê duyệt chính thức',
-                "Đề tài '{$detai->TenDeTai}' đã được Trưởng khoa phê duyệt và sẵn sàng để Giáo vụ Khoa công bố cho sinh viên đăng ký.",
+                '📋 Đề tài được Khoa phê duyệt - Yêu cầu nộp Đề cương chi tiết',
+                "Đề tài '{$detai->TenDeTai}' đã được Trưởng khoa phê duyệt danh mục ban đầu. Vui lòng nộp file Đề cương chi tiết để Bộ môn tiến hành phân công phản biện.",
                 'Đề tài'
             );
         }
 
-        return redirect()->back()->with('success', "Đã phê duyệt đề tài '{$detai->TenDeTai}' cấp Khoa thành công! Đề tài sẵn sàng để Giáo vụ công bố.");
+        return redirect()->back()->with('success', "Đã phê duyệt đề xuất đề tài '{$detai->TenDeTai}' cấp Khoa thành công! Hệ thống đã gửi thông báo yêu cầu Giảng viên nộp Đề cương chi tiết.");
     }
 
     public function requestEdit(Request $request, $id)

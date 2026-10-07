@@ -128,9 +128,12 @@
                 Chỉ định Giảng viên phản biện thẩm định nội dung, tính khả thi và mục tiêu nghiên cứu của đề cương khóa luận.
             </p>
         </div>
-        <div>
-            <a href="{{ route('truongbomon.duyet_detai.index') }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-semibold">
-                <i class="fa-solid fa-clipboard-check me-1"></i> Sang Trang Duyệt Đề Tài
+        <div class="d-flex gap-2">
+            <a href="{{ route('truongbomon.duyet_decuong.index') }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
+                <i class="fa-solid fa-file-circle-check me-1"></i> Sang Trang Duyệt Đề Cương
+            </a>
+            <a href="{{ route('truongbomon.duyet_detai.index') }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3 fw-semibold">
+                <i class="fa-solid fa-list-check me-1"></i> Duyệt Đề Xuất Đề Tài
             </a>
         </div>
     </div>
@@ -231,12 +234,12 @@
                 <table class="table table-academic table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th width="10%">Mã ĐT</th>
-                            <th width="32%">Tên Đề Tài &amp; Ngành</th>
-                            <th width="18%">GV Đề Xuất</th>
+                            <th width="9%">Mã ĐT</th>
+                            <th width="28%">Tên Đề Tài &amp; Ngành</th>
+                            <th width="16%">GV Đề Xuất</th>
                             <th width="10%" class="text-center">Đề Cương</th>
                             <th width="18%">GV Phản Biện Đề Cương</th>
-                            <th width="12%" class="text-center">Trạng Thái ĐT</th>
+                            <th width="9%" class="text-center">Trạng Thái ĐT</th>
                             <th width="10%" class="text-center">Thao Tác</th>
                         </tr>
                     </thead>
@@ -268,10 +271,18 @@
                                     @if($dt->FileDeCuong)
                                         @php
                                             $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                                            $fileName = basename($dt->FileDeCuong);
                                         @endphp
-                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-1" title="Xem đề cương">
-                                            <i class="fa-solid fa-file-pdf me-1"></i> Xem file
-                                        </a>
+                                        <div class="d-flex flex-column gap-1 align-items-center">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-2 py-1 shadow-sm" 
+                                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}')"
+                                                    title="Xem nhanh đề cương trực tiếp trên web">
+                                                <i class="fa-solid fa-eye me-1"></i> Xem nhanh
+                                            </button>
+                                            <a href="{{ $filePath }}" target="_blank" class="text-muted small text-decoration-none" title="Mở tab mới hoặc tải về">
+                                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab
+                                            </a>
+                                        </div>
                                     @else
                                         <span class="text-muted small"><i class="fa-solid fa-circle-minus me-1"></i> Chưa có</span>
                                     @endif
@@ -283,6 +294,8 @@
                                         <div class="mt-1">
                                             @if($pb->KetQua === 'Đạt')
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                            @elseif($pb->KetQua === 'Đã nộp lại' || $pb->TrangThai === 'Đã nộp lại đề cương' || $dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại')
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-rotate me-1"></i> Đã nộp lại ĐC</span>
                                             @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
                                                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fa-solid fa-pen me-1"></i> Cần sửa</span>
                                             @elseif($pb->KetQua === 'Không đạt')
@@ -298,24 +311,89 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">{{ $dt->TrangThai }}</span>
+                                    @php
+                                        $pcStatusBadge = match($dt->TrangThai) {
+                                            'Trưởng khoa đã duyệt - Chờ nộp đề cương' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                                            'Đã nộp đề cương - Chờ phân công PB' => 'bg-info-subtle text-info-emphasis border border-info-subtle',
+                                            'Đang phản biện đề cương' => 'bg-info-subtle text-info border border-info-subtle',
+                                            'Đã cập nhật đề cương - Chờ phản biện lại' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                            'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                            'Đã công bố' => 'bg-success-subtle text-success border border-success-subtle',
+                                            'Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa' => 'bg-warning-subtle text-warning border border-warning-subtle',
+                                            'Không đạt phản biện', 'Từ chối' => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                            default => 'bg-light text-muted border',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $pcStatusBadge }} px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">{{ $dt->TrangThai }}</span>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm {{ $pb ? 'btn-outline-secondary' : 'btn-primary' }} rounded-3 px-2 py-1 text-nowrap" 
-                                            data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
-                                        <i class="fa-solid {{ $pb ? 'fa-user-pen' : 'fa-user-plus' }} me-1"></i>
-                                        {{ $pb ? 'Đổi PB' : 'Phân công' }}
-                                    </button>
-                                    <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-1 ms-1" title="Xem chi tiết">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </a>
+                                    @if($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố')
+                                        {{-- Nút duyệt đề cương lần 2 & công bố đề tài của TBM --}}
+                                        <button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 py-1 text-nowrap fw-bold shadow-sm mb-1 d-inline-flex align-items-center gap-1"
+                                                data-bs-toggle="modal" data-bs-target="#modalDuyetDeCuong{{ $dt->MaDeTai }}"
+                                                title="Phê duyệt kết quả phản biện và Công bố đề tài">
+                                            <i class="fa-solid fa-bullhorn"></i> Duyệt ĐC
+                                        </button>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-0.5 text-nowrap" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}" title="Đổi giảng viên phản biện">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                            </button>
+                                            <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-0.5" title="Xem chi tiết đề tài">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    @elseif($pb && $pb->KetQua === 'Yêu cầu chỉnh sửa' && $dt->TrangThai !== 'Đã công bố')
+                                        <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-2 py-1 text-nowrap fw-bold shadow-sm mb-1 d-inline-flex align-items-center gap-1"
+                                                data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}"
+                                                title="Gửi yêu cầu chỉnh sửa đề cương cho GVHD">
+                                            <i class="fa-solid fa-pen-to-square"></i> Yêu cầu sửa
+                                        </button>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-0.5 text-nowrap" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}" title="Đổi giảng viên phản biện">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                            </button>
+                                            <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-0.5" title="Xem chi tiết đề tài">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    @elseif($dt->TrangThai === 'Đã công bố')
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 mb-1 d-inline-block">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Đã công bố
+                                        </span>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-0.5 text-nowrap" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}" title="Đổi giảng viên phản biện">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                            </button>
+                                            <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-0.5" title="Xem chi tiết đề tài">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    @else
+                                        @if($dt->FileDeCuong)
+                                            <button type="button" class="btn btn-sm {{ $pb ? 'btn-outline-secondary' : 'btn-primary' }} rounded-3 px-2 py-1 text-nowrap" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
+                                                <i class="fa-solid {{ $pb ? 'fa-user-pen' : 'fa-user-plus' }} me-1"></i>
+                                                {{ $pb ? 'Đổi PB' : 'Phân công' }}
+                                            </button>
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-light border text-muted rounded-3 px-2 py-1 text-nowrap" disabled title="Chưa có file đề cương chi tiết để phân công">
+                                                <i class="fa-solid fa-clock me-1"></i> Chờ nộp ĐC
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-1 ms-1" title="Xem chi tiết">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
 
                             <!-- Modal Phân Công Phản Biện -->
                             <div class="modal fade" id="modalPhanCongPB{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content rounded-4">
+                                    <div class="modal-content rounded-4 shadow border-0">
                                         <form action="{{ route('truongbomon.phancong.store', $dt->MaDeTai) }}" method="POST">
                                             @csrf
                                             <div class="modal-header border-bottom">
@@ -332,11 +410,13 @@
                                                     <div class="small text-muted mt-1">GV Đề xuất: <strong>{{ $dt->giangVien->HoTen ?? 'N/A' }}</strong> ({{ $dt->giangVien->MaGV ?? '' }})</div>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Chọn Giảng viên phản biện <span class="text-danger">*</span></label>
+                                                    <label class="form-label fw-bold">
+                                                        Chọn Giảng viên phản biện (Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}) <span class="text-danger">*</span>
+                                                    </label>
                                                     <select name="MaGVPhanBien" class="form-select rounded-3" required>
-                                                        <option value="">-- Chọn Giảng viên phản biện --</option>
+                                                        <option value="">-- Chọn Giảng viên phản biện (Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}) --</option>
                                                         @foreach($allGiangViens as $gvOption)
-                                                            @if($gvOption->MaGV !== $dt->MaGV)
+                                                            @if($gvOption->MaGV !== $dt->MaGV && (!$dt->giangVien || $gvOption->MaBoMon === $dt->giangVien->MaBoMon))
                                                                 <option value="{{ $gvOption->MaGV }}" {{ ($pb && $pb->MaGV === $gvOption->MaGV) ? 'selected' : '' }}>
                                                                     {{ $gvOption->HoTen }} ({{ $gvOption->MaGV }} - {{ $gvOption->boMon->TenBoMon ?? 'N/A' }})
                                                                 </option>
@@ -344,7 +424,7 @@
                                                         @endforeach
                                                     </select>
                                                     <div class="form-text text-muted mt-1">
-                                                        <i class="fa-solid fa-circle-info me-1 text-primary"></i> Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
+                                                        <i class="fa-solid fa-circle-info me-1 text-primary"></i> Chỉ hiển thị các Giảng viên thuộc Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}. Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
                                                     </div>
                                                 </div>
                                             </div>
@@ -358,6 +438,103 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if($pb && $pb->KetQua === 'Đạt')
+                            <!-- Modal Duyệt Đề Cương & Công Bố Đề Tài (Lần 2) -->
+                            <div class="modal fade" id="modalDuyetDeCuong{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content rounded-4 shadow border-0">
+                                        <form action="{{ route('truongbomon.duyet_detai.duyetVaCongBo', $dt->MaDeTai) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-header bg-success text-white">
+                                                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                                                    <i class="fa-solid fa-bullhorn"></i>
+                                                    Phê Duyệt Đề Cương &amp; Công Bố Đề Tài
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-muted small fw-bold">Tên đề tài:</label>
+                                                    <div class="fw-bold text-dark fs-6">{{ $dt->TenDeTai }}</div>
+                                                    <div class="small text-muted mt-1">
+                                                        GV Đề xuất: <strong>{{ $dt->giangVien->HoTen ?? 'N/A' }}</strong> ({{ $dt->giangVien->MaGV ?? '' }})
+                                                    </div>
+                                                </div>
+
+                                                <div class="p-3 bg-light rounded-3 border mb-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="small text-muted fw-bold">Giảng viên phản biện:</span>
+                                                        <strong class="text-dark">{{ $pb->giangVien->HoTen ?? 'N/A' }}</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="small text-muted fw-bold">Kết luận thẩm định:</span>
+                                                        <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-check me-1"></i> ĐẠT YÊU CẦU</span>
+                                                    </div>
+                                                    @if($pb->NhanXet)
+                                                        <div class="mt-2 pt-2 border-top">
+                                                            <div class="small text-muted fw-bold mb-1">Ý kiến / Nhận xét của GV phản biện:</div>
+                                                            <div class="small text-secondary bg-white p-2 rounded border" style="white-space: pre-line;">{{ $pb->NhanXet }}</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+
+                                                <div class="alert alert-success border-0 small mb-0 d-flex gap-2 align-items-start">
+                                                    <i class="fa-solid fa-circle-check text-success fa-lg mt-1"></i>
+                                                    <div>
+                                                        <strong>Xác nhận phê duyệt lần 2:</strong><br>
+                                                        Sau khi Trưởng bộ môn phê duyệt, đề tài sẽ chính thức chuyển sang trạng thái <strong>"Đã công bố"</strong> và mở quyền cho sinh viên bắt đầu đăng ký!
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="submit" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm">
+                                                    <i class="fa-solid fa-check-double me-1"></i> Xác Nhận Duyệt &amp; Công Bố
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if($pb && $pb->KetQua === 'Yêu cầu chỉnh sửa')
+                            <!-- Modal Yêu Cầu Chỉnh Sửa Đề Cương -->
+                            <div class="modal fade" id="modalYeuCauSuaDC{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content rounded-4 shadow border-0">
+                                        <form action="{{ route('truongbomon.duyet_detai.yeuCauChinhSua', $dt->MaDeTai) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    Yêu Cầu Chỉnh Sửa Đề Cương
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-muted small fw-bold">Tên đề tài:</label>
+                                                    <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Ý kiến / Nội dung yêu cầu chỉnh sửa đề cương <span class="text-danger">*</span></label>
+                                                    <textarea name="YeuCauSua" class="form-control" rows="4" required 
+                                                              placeholder="Ghi rõ nội dung đề cương hoặc phương pháp cần giảng viên chỉnh sửa lại...">{{ $pb->NhanXet ? "Ý kiến GVPB: " . $pb->NhanXet : '' }}</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm">
+                                                    <i class="fa-solid fa-paper-plane me-1"></i> Gửi Yêu Cầu Cho GV
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
