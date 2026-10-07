@@ -19,9 +19,15 @@ class Nhom extends Model
         'TenNhom',
         'TrangThai',
         'NgayTao',
+        'MaHocKy',
     ];
 
     public $timestamps = true;
+
+    public function hocKy()
+    {
+        return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
 
     public function thanhVienNhoms()
     {
