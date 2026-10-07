@@ -188,13 +188,11 @@ class NhomController extends Controller
     {
         $request->validate([
             'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
-            'MaBoMon'   => 'required|string',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
         ], [
             'MaHocKy.required'   => 'Vui lòng chọn học kỳ muốn tạo nhóm.',
             'MaHocKy.exists'     => 'Học kỳ được chọn không hợp lệ trong hệ thống.',
-            'MaBoMon.required'   => 'Vui lòng chọn bộ môn hoặc khối học phần dùng chung.',
-            'MaHocPhan.required' => 'Vui lòng chọn học phần / môn học muốn tạo nhóm.',
+            'MaHocPhan.required' => 'Vui lòng chọn học phần khóa luận muốn tạo nhóm.',
             'MaHocPhan.exists'   => 'Học phần được chọn không tồn tại trong hệ thống.',
         ]);
 
@@ -202,15 +200,9 @@ class NhomController extends Controller
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
         $hocKy = \App\Models\HocKy::findOrFail($request->MaHocKy);
 
-        // 1. Ràng buộc quan hệ: Môn học phải thuộc đúng Bộ môn / Khối đã chọn
-        if ($request->MaBoMon === 'DUNG_CHUNG') {
-            if (!empty($hocPhan->MaBoMon)) {
-                return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' thuộc chuyên ngành bộ môn, không phải học phần dùng chung!");
-            }
-        } else {
-            if ($hocPhan->MaBoMon !== $request->MaBoMon) {
-                return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn đã chọn!");
-            }
+        // 1. Ràng buộc học phần: Chỉ cho phép tạo nhóm đối với học phần dùng chung toàn khoa (Khóa luận cử nhân / Khóa luận kỹ sư)
+        if (!empty($hocPhan->MaBoMon)) {
+            return redirect()->back()->withErrors("Học phần tạo nhóm khóa luận phải là học phần dùng chung toàn khoa (Khóa luận cử nhân hoặc Khóa luận kỹ sư)!");
         }
 
         // 2. Ràng buộc học kỳ: Môn học phải được mở trong học kỳ này (HocPhan_HocKy)

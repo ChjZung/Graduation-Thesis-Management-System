@@ -547,12 +547,11 @@
                     <div class="alert alert-primary bg-primary-subtle border-0 rounded-3 mb-4 p-3 d-flex align-items-start gap-3">
                         <i class="fa-solid fa-circle-info fs-3 text-primary mt-1"></i>
                         <div>
-                            <div class="fw-bold text-primary mb-1 fs-6">Quy trình bắt buộc khi khởi tạo nhóm:</div>
+                            <div class="fw-bold text-primary mb-1 fs-6">Quy trình khởi tạo nhóm khóa luận:</div>
                             <div class="small text-dark">
-                                Vui lòng thực hiện tuần tự 3 bước ràng buộc:
-                                <span class="badge bg-primary rounded-pill me-1">1</span> <strong>Chọn Học kỳ</strong> ➔ 
-                                <span class="badge bg-primary rounded-pill me-1">2</span> <strong>Chọn Bộ môn / Khối đào tạo</strong> ➔ 
-                                <span class="badge bg-primary rounded-pill me-1">3</span> <strong>Chọn Học phần / Môn học</strong>.
+                                Vui lòng thực hiện tuần tự 2 bước:
+                                <span class="badge bg-primary rounded-pill me-1">1</span> <strong>Chọn Học kỳ áp dụng</strong> ➔ 
+                                <span class="badge bg-primary rounded-pill me-1">2</span> <strong>Chọn Học phần Khóa luận (Khóa luận cử nhân hoặc Khóa luận kỹ sư)</strong>.
                             </div>
                         </div>
                     </div>
@@ -564,7 +563,7 @@
                                 <span class="badge bg-primary rounded-pill px-2 py-1 me-1">Bước 1</span> 
                                 Chọn Học Kỳ Áp Dụng <span class="text-danger">*</span>
                             </span>
-                            <span class="text-muted small fw-normal"><i class="fa-solid fa-calendar-days me-1"></i>Kỳ học môn/khóa luận</span>
+                            <span class="text-muted small fw-normal"><i class="fa-solid fa-calendar-days me-1"></i>Kỳ học khóa luận</span>
                         </label>
                         <select name="MaHocKy" id="create_group_hocky" class="form-select form-select-lg border-2 shadow-xs" required>
                             <option value="">-- Chọn Học Kỳ --</option>
@@ -577,53 +576,26 @@
                             @endif
                         </select>
                         <div class="form-text text-muted small mt-1">
-                            <i class="fa-solid fa-circle-check text-success me-1"></i>Hệ thống quản lý nhóm theo từng môn trong từng học kỳ độc lập.
+                            <i class="fa-solid fa-circle-check text-success me-1"></i>Chọn học kỳ mà bạn dự kiến thực hiện khóa luận tốt nghiệp.
                         </div>
                     </div>
 
-                    <!-- BƯỚC 2: CHỌN BỘ MÔN / KHỐI DÙNG CHUNG -->
+                    <!-- BƯỚC 2: CHỌN HỌC PHẦN KHÓA LUẬN -->
                     <div class="mb-3 p-3 bg-light rounded-3 border">
                         <label class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
                             <span>
                                 <span class="badge bg-primary rounded-pill px-2 py-1 me-1">Bước 2</span> 
-                                Chọn Bộ Môn / Đơn Vị Quản Lý <span class="text-danger">*</span>
+                                Chọn Học Phần Khóa Luận Toàn Khoa <span class="text-danger">*</span>
                             </span>
                             <span class="text-muted small fw-normal" id="step2_badge_status">
                                 <i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 1
                             </span>
                         </label>
-                        <select name="MaBoMon" id="create_group_bomon" class="form-select form-select-lg border-2 shadow-xs" required disabled>
-                            <option value="">-- Bước 2: Vui lòng chọn học kỳ trước --</option>
-                            <option value="DUNG_CHUNG">⭐ Học Phần Dùng Chung Toàn Khoa (Khóa luận cử nhân / Khóa luận kỹ sư)</option>
-                            @if(isset($boMons))
-                                @foreach($boMons as $bm)
-                                    <option value="{{ $bm->MaBoMon }}">
-                                        🏢 Bộ môn {{ $bm->TenBoMon }} ({{ $bm->MaBoMon }})
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        <div class="form-text text-muted small mt-1" id="step2_help_text">
-                            <i class="fa-solid fa-sitemap me-1"></i>Chọn bộ môn chuyên ngành hoặc khối Học phần dùng chung toàn khoa.
-                        </div>
-                    </div>
-
-                    <!-- BƯỚC 3: CHỌN HỌC PHẦN / MÔN HỌC -->
-                    <div class="mb-3 p-3 bg-light rounded-3 border">
-                        <label class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
-                            <span>
-                                <span class="badge bg-primary rounded-pill px-2 py-1 me-1">Bước 3</span> 
-                                Chọn Học Phần / Môn Học Cụ Thể <span class="text-danger">*</span>
-                            </span>
-                            <span class="text-muted small fw-normal" id="step3_badge_status">
-                                <i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 2
-                            </span>
-                        </label>
                         <select name="MaHocPhan" id="create_group_hocphan" class="form-select form-select-lg border-2 shadow-xs" required disabled>
-                            <option value="">-- Bước 3: Vui lòng chọn bộ môn ở bước 2 trước --</option>
+                            <option value="">-- Bước 2: Vui lòng chọn học kỳ ở bước 1 trước --</option>
                         </select>
                         <div class="form-text text-muted small mt-1" id="create_group_hocphan_help">
-                            <i class="fa-solid fa-book me-1"></i>Danh sách học phần sẽ được lọc chính xác theo bộ môn bạn chọn.
+                            <i class="fa-solid fa-graduation-cap me-1"></i>Học phần dùng chung toàn khoa: <strong>Khóa luận cử nhân</strong> hoặc <strong>Khóa luận kỹ sư</strong> mở trong kỳ này.
                         </div>
                     </div>
 
@@ -662,102 +634,72 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ── XỬ LÝ QUY TRÌNH 3 BƯỚC RÀNG BUỘC KHI TẠO NHÓM (HỌC KỲ -> BỘ MÔN -> HỌC PHẦN) ──
+    // ── XỬ LÝ QUY TRÌNH 2 BƯỚC KHI TẠO NHÓM (HỌC KỲ -> HỌC PHẦN KHÓA LUẬN TOÀN KHOA) ──
     const hocPhansData = @json($hocPhans ?? []);
     const selectHocKy = document.getElementById('create_group_hocky');
-    const selectBoMon = document.getElementById('create_group_bomon');
     const selectHocPhan = document.getElementById('create_group_hocphan');
     const btnSubmit = document.getElementById('btn_submit_create_group');
     const helpHocPhan = document.getElementById('create_group_hocphan_help');
     const step2Badge = document.getElementById('step2_badge_status');
-    const step3Badge = document.getElementById('step3_badge_status');
 
     function checkCanSubmit() {
-        if (selectHocKy && selectBoMon && selectHocPhan && btnSubmit) {
+        if (selectHocKy && selectHocPhan && btnSubmit) {
             const isValid = selectHocKy.value.trim() !== '' && 
-                            selectBoMon.value.trim() !== '' && 
                             selectHocPhan.value.trim() !== '';
             btnSubmit.disabled = !isValid;
         }
     }
 
-    if (selectHocKy && selectBoMon && selectHocPhan) {
-        // Khởi tạo ban đầu: Nếu học kỳ đã được chọn sẵn
-        if (selectHocKy.value) {
-            selectBoMon.disabled = false;
-            if (step2Badge) step2Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Sẵn sàng chọn</span>';
+    function updateHocPhanByHocKy() {
+        const currentHk = selectHocKy.value;
+        selectHocPhan.innerHTML = '';
+
+        if (!currentHk) {
+            selectHocPhan.disabled = true;
+            selectHocPhan.innerHTML = '<option value="">-- Bước 2: Vui lòng chọn học kỳ ở bước 1 trước --</option>';
+            if (step2Badge) step2Badge.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 1';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<i class="fa-solid fa-graduation-cap me-1"></i>Học phần dùng chung toàn khoa: <strong>Khóa luận cử nhân</strong> hoặc <strong>Khóa luận kỹ sư</strong> mở trong kỳ này.';
+            checkCanSubmit();
+            return;
         }
 
-        // 1. Khi thay đổi Học Kỳ
-        selectHocKy.addEventListener('change', function() {
-            if (!this.value) {
-                selectBoMon.disabled = true;
-                selectBoMon.value = '';
-                if (step2Badge) step2Badge.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 1';
-                
-                selectHocPhan.disabled = true;
-                selectHocPhan.innerHTML = '<option value="">-- Bước 3: Vui lòng chọn bộ môn ở bước 2 trước --</option>';
-                if (step3Badge) step3Badge.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 2';
-            } else {
-                selectBoMon.disabled = false;
-                if (step2Badge) step2Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Sẵn sàng chọn</span>';
-                if (selectBoMon.value) {
-                    selectBoMon.dispatchEvent(new Event('change'));
-                }
+        // Lọc CHỈ các học phần dùng chung toàn khoa (không có MaBoMon) và ĐƯỢC MỞ trong học kỳ đã chọn
+        const filtered = hocPhansData.filter(hp => {
+            if (hp.MaBoMon) return false;
+
+            if (hp.hoc_phan_hoc_kies && Array.isArray(hp.hoc_phan_hoc_kies)) {
+                return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === currentHk && hphk.TrangThai === 'Đang mở');
             }
-            checkCanSubmit();
+            return false;
         });
 
-        // 2. Khi thay đổi Bộ Môn
-        selectBoMon.addEventListener('change', function() {
-            const bmVal = this.value;
-            const currentHk = selectHocKy.value;
-            selectHocPhan.innerHTML = '';
-
-            if (!bmVal) {
-                selectHocPhan.disabled = true;
-                selectHocPhan.innerHTML = '<option value="">-- Bước 3: Vui lòng chọn bộ môn ở bước 2 trước --</option>';
-                if (step3Badge) step3Badge.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 2';
-                helpHocPhan.innerHTML = '<i class="fa-solid fa-book me-1"></i>Danh sách học phần sẽ được lọc chính xác theo bộ môn bạn chọn.';
-                checkCanSubmit();
-                return;
-            }
-
-            // Lọc danh sách học phần: vừa thuộc Bộ môn, vừa ĐƯỢC MỞ trong Học kỳ đã chọn
-            let filtered = hocPhansData.filter(hp => {
-                const matchBm = (bmVal === 'DUNG_CHUNG') ? !hp.MaBoMon : (hp.MaBoMon === bmVal);
-                if (!matchBm) return false;
-
-                if (hp.hoc_phan_hoc_kies && Array.isArray(hp.hoc_phan_hoc_kies)) {
-                    return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === currentHk && hphk.TrangThai === 'Đang mở');
-                }
-                return false;
+        if (filtered.length === 0) {
+            selectHocPhan.disabled = true;
+            selectHocPhan.innerHTML = '<option value="">-- Học kỳ này chưa mở Khóa luận cử nhân / Khóa luận kỹ sư --</option>';
+            if (step2Badge) step2Badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa mở môn</span>';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Học kỳ đã chọn hiện chưa mở đợt đăng ký Khóa luận toàn khoa.</span>';
+        } else {
+            selectHocPhan.disabled = false;
+            selectHocPhan.innerHTML = '<option value="">-- Bước 2: Chọn học phần khóa luận (' + filtered.length + ' học phần) --</option>';
+            filtered.forEach(hp => {
+                const opt = document.createElement('option');
+                opt.value = hp.MaHocPhan;
+                opt.textContent = `⭐ ${hp.TenHocPhan} (${hp.SoTinChi} tín chỉ)`;
+                selectHocPhan.appendChild(opt);
             });
+            if (step2Badge) step2Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Sẵn sàng chọn</span>';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' học phần dùng chung toàn khoa mở trong kỳ này. Vui lòng chọn để lập nhóm.</span>';
+        }
+        checkCanSubmit();
+    }
 
-            if (filtered.length === 0) {
-                selectHocPhan.disabled = true;
-                selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
-                if (step3Badge) step3Badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa mở môn</span>';
-                helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Bộ môn này hiện không mở học phần nào trong học kỳ bạn đã chọn.</span>';
-            } else {
-                selectHocPhan.disabled = false;
-                selectHocPhan.innerHTML = '<option value="">-- Bước 3: Chọn học phần / môn học (' + filtered.length + ' môn) --</option>';
-                filtered.forEach(hp => {
-                    const opt = document.createElement('option');
-                    opt.value = hp.MaHocPhan;
-                    opt.textContent = hp.TenHocPhan + ' (' + hp.SoTinChi + ' tín chỉ - ' + hp.LoaiHocPhan + ')';
-                    selectHocPhan.appendChild(opt);
-                });
-                if (step3Badge) step3Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Có ' + filtered.length + ' môn</span>';
-                helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' môn học đang mở trong kỳ này. Vui lòng chọn môn bạn muốn lập nhóm.</span>';
-            }
-            checkCanSubmit();
-        });
+    if (selectHocKy && selectHocPhan) {
+        selectHocKy.addEventListener('change', updateHocPhanByHocKy);
+        selectHocPhan.addEventListener('change', checkCanSubmit);
 
-        // 3. Khi thay đổi Học Phần
-        selectHocPhan.addEventListener('change', function() {
-            checkCanSubmit();
-        });
+        if (selectHocKy.value) {
+            updateHocPhanByHocKy();
+        }
     }
     // ── XỬ LÝ TRA CỨU & STUDENT VERIFICATION CARD ──
     const inputMSSVSearch = document.getElementById('inputMSSVSearch');
