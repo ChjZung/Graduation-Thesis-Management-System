@@ -27,12 +27,20 @@ class NhomController extends Controller
 
         $activePlan = \App\Services\PlanPhaseService::getActivePlan();
         $maHocKy = $activePlan ? $activePlan->MaHocKy : null;
+        if (!$maHocKy) {
+            $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
+            $maHocKy = $currentHk?->MaHocKy;
+        }
 
         // 1. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') trong kỳ hiện tại
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($maHocKy) {
-                if ($maHocKy) $q->where('MaHocKy', $maHocKy);
+                if ($maHocKy) {
+                    $q->where(function($sub) use ($maHocKy) {
+                        $sub->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+                    });
+                }
             })
             ->first();
 
@@ -97,9 +105,15 @@ class NhomController extends Controller
                 'truongNhom.taiKhoan',
                 'truongNhom.lop.nganh',
                 'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien.lop.nganh', 'sinhVien.taiKhoan')
-            ])
-            ->where('MaHocKy', $maHocKy)
-            ->whereDoesntHave('phieuDangKys', fn($q) => $q->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']));
+            ]);
+
+        if ($maHocKy) {
+            $queryNhoms->where(function($q) use ($maHocKy) {
+                $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+            });
+        }
+
+        $queryNhoms->whereDoesntHave('phieuDangKys', fn($q) => $q->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']));
 
         if ($request->filled('q')) {
             $search = trim($request->q);
