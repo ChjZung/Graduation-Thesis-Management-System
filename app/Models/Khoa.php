@@ -69,4 +69,9 @@ class Khoa extends Model
     {
         return $this->giaoVus();
     }
+
+    public function hocPhans()
+    {
+        return $this->hasMany(HocPhan::class, 'MaKhoa', 'MaKhoa');
+    }
 }

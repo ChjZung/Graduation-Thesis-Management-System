@@ -33,12 +33,10 @@
                 </div>
             </div>
             <div class="text-end">
-                @if($dangKyCurrent->TrangThai === 'Đã duyệt')
-                    <span class="badge bg-success rounded-pill fs-6 px-3 py-2"><i class="fa-solid fa-check-circle me-1"></i>Đã Duyệt Chính Thức</span>
-                @elseif($dangKyCurrent->TrangThai === 'Từ chối')
+                @if($dangKyCurrent->TrangThai === 'Từ chối')
                     <span class="badge bg-danger rounded-pill fs-6 px-3 py-2"><i class="fa-solid fa-circle-xmark me-1"></i>Đã Từ Chối</span>
                 @else
-                    <span class="badge bg-warning text-dark rounded-pill fs-6 px-3 py-2"><i class="fa-solid fa-clock me-1"></i>Đang Chờ Giáo Vụ Duyệt</span>
+                    <span class="badge bg-success rounded-pill fs-6 px-3 py-2"><i class="fa-solid fa-check-circle me-1"></i>Đã Gán Chính Thức Cho Nhóm</span>
                 @endif
             </div>
         </div>
@@ -51,14 +49,15 @@
                     <i class="fa-solid fa-arrow-down me-1"></i>Nhóm của bạn có thể lựa chọn và đăng ký một đề tài khác trong danh sách bên dưới.
                 </div>
             </div>
-        @elseif($dangKyCurrent->TrangThai === 'Chờ duyệt')
+        @else
             @if(isset($nhom) && $nhom && $nhom->MaTruongNhom === $sinhVien->MaSV)
-            <div class="mt-3 pt-2 border-top">
-                <form action="{{ route('sinhvien.dangky.destroy', $dangKyCurrent->MaDangKy) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn đăng ký đề tài này để chọn đề tài khác?');">
+            <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                <span class="small text-success fw-medium"><i class="fa-solid fa-circle-check me-1"></i>Đề tài đã được gán trực tiếp cho nhóm của bạn.</span>
+                <form action="{{ route('sinhvien.dangky.destroy', $dangKyCurrent->MaDangKy) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đăng ký đề tài này để chọn đề tài khác?');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                        <i class="fa-solid fa-trash-can me-1"></i>Hủy Đơn Đăng Ký Đang Chờ
+                        <i class="fa-solid fa-rotate-left me-1"></i>Hủy Đăng Ký Đề Tài Này
                     </button>
                 </form>
             </div>
@@ -80,10 +79,15 @@
                class="btn btn-sm {{ !$selectedHocPhan ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
                 Tất Cả Học Phần
             </a>
-            @foreach($hocPhans ?? ['Khóa luận tốt nghiệp', 'Đồ án tốt nghiệp', 'Đồ án chuyên ngành'] as $hp)
-            <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hp]) }}" 
-               class="btn btn-sm {{ $selectedHocPhan === $hp ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
-                {{ $hp }}
+            @foreach($hocPhans as $hp)
+            @php
+                $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
+                $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
+                $isActive = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
+            @endphp
+            <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hpCode]) }}" 
+               class="btn btn-sm {{ $isActive ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
+                {{ $hpName }}
             </a>
             @endforeach
         </div>
@@ -150,35 +154,31 @@
                         <td class="text-center fw-bold">{{ $dt->SoLuongSinhVienToiDa }} SV</td>
                         <td class="text-center">
                             @if($myGroupRegThis)
-                                @if($myGroupRegThis->TrangThai === 'Đã duyệt')
-                                    <span class="badge bg-success rounded-pill px-3 py-2">
-                                        <i class="fa-solid fa-check-circle me-1"></i>Đã Duyệt Chính Thức
-                                    </span>
-                                @elseif($myGroupRegThis->TrangThai === 'Từ chối')
+                                @if($myGroupRegThis->TrangThai === 'Từ chối')
                                     <span class="badge bg-danger rounded-pill px-3 py-2" title="{{ $myGroupRegThis->LyDoTuChoi }}">
                                         <i class="fa-solid fa-circle-xmark me-1"></i>Đã Bị Từ Chối
                                     </span>
                                 @else
-                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
-                                        <i class="fa-solid fa-clock me-1"></i>Đang Chờ Duyệt
+                                    <span class="badge bg-success rounded-pill px-3 py-2">
+                                        <i class="fa-solid fa-check-circle me-1"></i>Đã Gán Cho Nhóm Của Bạn
                                     </span>
                                 @endif
                             @elseif($isTakenByOther)
-                                <span class="badge bg-secondary rounded-pill px-3 py-2" title="Đề tài này đã có nhóm khác đăng ký">
+                                <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Đề tài này đã có nhóm khác đăng ký">
                                     <i class="fa-solid fa-lock me-1"></i>Đã Có Nhóm Đăng Ký
-                                </span>
+                                </button>
                             @elseif(isset($nhom) && $nhom)
                                 @if($nhom->MaTruongNhom !== $sinhVien->MaSV)
                                     <span class="text-muted small">Chỉ Trưởng nhóm mới có quyền đăng ký</span>
                                 @elseif($hasActiveRegistration)
-                                    <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm đang có đơn đăng ký đề tài khác chưa xử lý">
-                                        <i class="fa-solid fa-lock me-1"></i>Đã Đăng Ký Đề Tài Khác
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm của bạn đã đăng ký một đề tài khác rồi">
+                                        <i class="fa-solid fa-lock me-1"></i>Nhóm Đã Có Đề Tài
                                     </button>
                                 @else
                                     <form action="{{ route('sinhvien.dangky.store') }}" method="POST" class="d-inline">
                                         @csrf
                                         <input type="hidden" name="MaDeTai" value="{{ $dt->MaDeTai }}">
-                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn đại diện nhóm đăng ký đề tài {{ $dt->TenDeTai }}?');">
+                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn đại diện nhóm đăng ký đề tài {{ $dt->TenDeTai }}? Sau khi đăng ký, đề tài sẽ được gán trực tiếp cho nhóm.');">
                                             <i class="fa-solid fa-pen-to-square me-1"></i>Đăng Ký
                                         </button>
                                     </form>

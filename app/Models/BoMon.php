@@ -30,4 +30,9 @@ class BoMon extends Model
     {
         return $this->hasMany(GiangVien::class, 'MaBoMon', 'MaBoMon');
     }
+
+    public function hocPhans()
+    {
+        return $this->hasMany(HocPhan::class, 'MaBoMon', 'MaBoMon');
+    }
 }

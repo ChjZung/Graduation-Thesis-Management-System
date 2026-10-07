@@ -24,6 +24,7 @@ class DeTai extends Model
         'FileDeCuong',
         'MaNganh',
         'HocPhan',
+        'MaHocPhan',
         'TrangThai',
         'LyDoTuChoi',
         'NgayDeXuat',
@@ -42,6 +43,11 @@ class DeTai extends Model
     public function giangVien()
     {
         return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
+
+    public function hocPhanRef()
+    {
+        return $this->belongsTo(HocPhan::class, 'MaHocPhan', 'MaHocPhan');
     }
 
     public function hocKy()

@@ -94,6 +94,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('nganh', \App\Http\Controllers\NganhController::class);
     Route::resource('lop', \App\Http\Controllers\LopController::class);
     Route::resource('hocky', \App\Http\Controllers\HocKyController::class);
+    Route::resource('hocphan', \App\Http\Controllers\HocPhanController::class);
     Route::resource('giangvien', \App\Http\Controllers\GiangVienController::class);
     Route::get('sinhvien/du-dieu-kien', [\App\Http\Controllers\SinhVienController::class, 'dieuKienIndex'])->name('admin.sinhvien.dieu_kien');
     Route::post('sinhvien/du-dieu-kien/ra-soat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienRaSoat'])->name('admin.sinhvien.ra_soat');
@@ -172,6 +173,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/nganh/import', [\App\Http\Controllers\NganhController::class, 'importExcel'])->name('admin.nganh.import');
     Route::post('/lop/import', [\App\Http\Controllers\LopController::class, 'importExcel'])->name('admin.lop.import');
     Route::post('/hocky/import', [\App\Http\Controllers\HocKyController::class, 'importExcel'])->name('admin.hocky.import');
+    Route::post('/hocphan/import', [\App\Http\Controllers\HocPhanController::class, 'importExcel'])->name('admin.hocphan.import');
 
     // Thông báo
     Route::post('/thongbao/{id}/send-now', [\App\Http\Controllers\ThongBaoController::class, 'sendNow'])->name('thongbao.sendNow');

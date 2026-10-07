@@ -16,6 +16,33 @@
 </div>
 @endif
 
+<!-- THANH CHỌN HỌC PHẦN / MÔN HỌC -->
+@if(isset($hocPhans) && $hocPhans->count() > 0)
+<div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
+            <span class="small text-muted d-block d-md-inline ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach($hocPhans as $hp)
+            @php
+                $isActive = ($selectedHocPhan === $hp->MaHocPhan || $selectedHocPhan === $hp->TenHocPhan);
+                $hasGroupInHp = isset($sinhVienAllGroups) && $sinhVienAllGroups->contains(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLTN')));
+            @endphp
+            <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan]) }}" 
+               class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
+                {{ $hp->TenHocPhan }}
+                @if($hasGroupInHp)
+                    <span class="badge bg-success rounded-pill ms-1" style="font-size: 0.65rem;"><i class="fa-solid fa-check"></i> Đã có nhóm</span>
+                @endif
+            </a>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
 @if(!$nhomCurrent)
 <!-- ======================================================== -->
 <!-- 1. CHƯA CÓ NHÓM -> GIAO DIỆN TÌM KIẾM & DANH SÁCH NHÓM THEO PLAN -->
@@ -25,12 +52,13 @@
 <div class="card card-premium mb-4">
     <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
-            <h4 class="fw-bold text-primary-custom mb-1"><i class="fa-solid fa-users me-2"></i>Nhóm Khóa Luận</h4>
+            <h4 class="fw-bold text-primary-custom mb-1"><i class="fa-solid fa-users me-2"></i>Nhóm Môn: {{ $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? 'Khóa Luận' }}</h4>
             <p class="text-muted mb-0">Quản lý nhóm của bạn hoặc tìm kiếm nhóm đang mở để xin tham gia.</p>
         </div>
         <div>
-            <form action="{{ route('sinhvien.nhom.store') }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn tạo nhóm mới? Tên nhóm sẽ tự động được gán là Nhóm {{ $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV }}.');">
+            <form action="{{ route('sinhvien.nhom.store') }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn tạo nhóm mới cho môn học này? Tên nhóm sẽ tự động được gán là Nhóm {{ $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV }}.');">
                 @csrf
+                <input type="hidden" name="MaHocPhan" value="{{ $selectedHocPhan ?? 'HP_KLTN' }}">
                 <button type="submit" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm">
                     <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
                 </button>
@@ -180,10 +208,10 @@
 
 <div class="card card-premium mb-4">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-users text-primary me-2"></i>Nhóm Khóa Luận: <strong>{{ $nhomCurrent->TenNhom }}</strong></span>
+        <span><i class="fa-solid fa-users text-primary me-2"></i>Nhóm: <strong>{{ $nhomCurrent->TenNhom }}</strong> (Môn: <strong class="text-primary">{{ $nhomCurrent->hocPhan->TenHocPhan ?? 'Khóa luận tốt nghiệp' }}</strong>)</span>
         <div class="d-flex align-items-center gap-2">
             @if($isNhomLocked)
-                <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-lock me-1"></i>Nhóm Đã Khóa (Đã Duyệt Đề Tài)</span>
+                <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-lock me-1"></i>Nhóm Đã Khóa (Đã Có Đề Tài)</span>
             @elseif($nhomCurrent->thanhViens->count() === 3)
                 <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-check-circle me-1"></i>Đã Đủ 3 Thành Viên</span>
             @else
@@ -195,7 +223,7 @@
         <!-- ĐỀ TÀI CỦA NHÓM -->
         @if($nhomCurrent->deTai)
             <div class="p-3 bg-light border-start border-4 border-success rounded-3 mb-4">
-                <div class="small text-muted text-uppercase fw-bold">Đề Tài Đã Đăng Ký</div>
+                <div class="small text-muted text-uppercase fw-bold">Đề Tài Đã Gán Cho Nhóm</div>
                 <h5 class="fw-bold text-success mb-1">{{ $nhomCurrent->deTai->TenDeTai }}</h5>
                 <div class="small text-secondary">
                     <i class="fa-solid fa-chalkboard-user me-1"></i>Giảng viên hướng dẫn: <strong>{{ $nhomCurrent->deTai->giangVien->HoTen ?? 'Chưa gán' }}</strong>
@@ -204,20 +232,13 @@
         @else
             <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center mb-4">
                 <div>
-                    <i class="fa-solid fa-circle-info me-2"></i>Nhóm của bạn chưa đăng ký Đề tài Khóa luận.
-                    @if($nhomCurrent->thanhViens->count() < 3)
-                        <div class="small text-danger mt-1 fw-semibold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Lưu ý: Cần đủ 3 thành viên chính thức mới được phép đăng ký đề tài!</div>
-                    @endif
+                    <i class="fa-solid fa-circle-info me-2"></i>Nhóm của bạn chưa đăng ký Đề tài cho môn học này.
                 </div>
-                @if($nhomCurrent->thanhViens->count() === 3)
-                    <a href="{{ route('sinhvien.dangky.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
+                <div>
+                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLTN']) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
                         <i class="fa-solid fa-clipboard-list me-1"></i>Đăng Ký Đề Tài Ngay
                     </a>
-                @else
-                    <button class="btn btn-secondary btn-sm rounded-pill px-3 mt-2 mt-md-0" disabled title="Cần đủ 3 thành viên để đăng ký">
-                        <i class="fa-solid fa-lock me-1"></i>Cần Đủ 3 Thành Viên
-                    </button>
-                @endif
+                </div>
             </div>
         @endif
 

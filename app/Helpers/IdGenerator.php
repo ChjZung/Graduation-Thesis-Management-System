@@ -233,4 +233,18 @@ class IdGenerator
             return 'PC' . str_pad($next, 2, '0', STR_PAD_LEFT);
         });
     }
+
+    /**
+     * Sinh mã Học phần: HP01, HP02, ...
+     */
+    public static function nextHocPhan(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('HocPhan')
+                ->where('MaHocPhan', 'REGEXP', '^HP[0-9]+$')
+                ->max(DB::raw("CAST(SUBSTRING(MaHocPhan, 3) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            return 'HP' . str_pad($next, 2, '0', STR_PAD_LEFT);
+        });
+    }
 }

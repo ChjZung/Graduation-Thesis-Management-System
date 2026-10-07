@@ -24,16 +24,55 @@ class DangKyDeTaiController extends Controller
                 ->with('error', 'Hồ sơ sinh viên chưa được thiết lập. Vui lòng liên hệ Giáo vụ Khoa.');
         }
 
-        // 1. Kiểm tra Nhóm của sinh viên (chỉ lấy nhóm đã tham gia chính thức)
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia')
-            ->first();
+        // Lấy học kỳ hiện tại
+        $activePlan = \App\Services\PlanPhaseService::getActivePlan();
+        $maHocKy = $activePlan ? $activePlan->MaHocKy : null;
+        if (!$maHocKy) {
+            $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
+            $maHocKy = $currentHk?->MaHocKy;
+        }
+
+        // 2. Lấy danh sách Môn / Học phần từ DB
+        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
+            ->orderBy('MaKhoa')
+            ->orderBy('MaBoMon')
+            ->get();
+
+        $selectedHocPhan = $request->input('HocPhan');
+        if (!$selectedHocPhan && $request->filled('MaHocPhan')) {
+            $selectedHocPhan = $request->input('MaHocPhan');
+        }
+
+        // 1. Kiểm tra Nhóm của sinh viên theo môn và học kỳ
+        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia');
+
+        if ($selectedHocPhan) {
+            $thanhVienQuery->whereHas('nhom', function($q) use ($selectedHocPhan, $maHocKy) {
+                if ($maHocKy) {
+                    $q->where(function($sq) use ($maHocKy) {
+                        $sq->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+                    });
+                }
+                $q->where(function($sq) use ($selectedHocPhan) {
+                    $sq->where('MaHocPhan', $selectedHocPhan)
+                      ->orWhereHas('hocPhan', fn($hpq) => $hpq->where('TenHocPhan', $selectedHocPhan));
+                });
+            });
+        } elseif ($maHocKy) {
+            $thanhVienQuery->whereHas('nhom', function($q) use ($maHocKy) {
+                $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+            });
+        }
+
+        $thanhVienRecord = $thanhVienQuery->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+
         $nhom = null;
         $dangKyCurrent = null;
         $soThanhVien = 0;
 
         if ($thanhVienRecord) {
-            $nhom = Nhom::with('thanhViens')->where('MaNhom', $thanhVienRecord->MaNhom)->first();
+            $nhom = Nhom::with(['thanhViens', 'hocPhan'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
             if ($nhom) {
                 $soThanhVien = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
                 $dangKyCurrent = DangKyDeTai::with('deTai.giangVien')
@@ -43,29 +82,36 @@ class DangKyDeTaiController extends Controller
             }
         }
 
-        // 2. Lấy danh sách Đề tài đã công bố chính thức theo Môn/Học phần
-        $hocPhans = ['Khóa luận tốt nghiệp', 'Đồ án tốt nghiệp', 'Đồ án chuyên ngành'];
-        $selectedHocPhan = $request->input('HocPhan');
+        $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $selectedHocKy = $request->input('MaHocKy');
 
-        $query = DeTai::with(['giangVien.boMon', 'nganh'])->where('TrangThai', 'Đã công bố');
+        // 3. Lọc danh sách đề tài theo học kỳ và môn học đã công bố
+        $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocPhanRef', 'hocKy'])->where('TrangThai', 'Đã công bố');
 
-        if ($request->filled('HocPhan')) {
-            $query->where('HocPhan', $request->HocPhan);
+        if ($selectedHocKy) {
+            $query->where('MaHocKy', $selectedHocKy);
+        }
+
+        if ($selectedHocPhan) {
+            $query->where(function($q) use ($selectedHocPhan) {
+                $q->where('MaHocPhan', $selectedHocPhan)
+                  ->orWhere('HocPhan', $selectedHocPhan);
+            });
         }
 
         if ($request->filled('search')) {
             $query->where('TenDeTai', 'LIKE', '%' . trim($request->search) . '%');
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        // 3. Lấy map các đề tài đã có nhóm đăng ký ('Chờ duyệt' hoặc 'Đã duyệt')
+        // 4. Lấy map các đề tài đã có nhóm đăng ký ('Chờ duyệt' hoặc 'Đã duyệt')
         $deTaiDaDangKys = DangKyDeTai::whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
             ->with('nhom')
             ->get()
             ->keyBy('MaDeTai');
 
-        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan'));
+        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'hocKies', 'selectedHocKy', 'maHocKy'));
     }
 
     public function store(Request $request)
@@ -82,23 +128,30 @@ class DangKyDeTaiController extends Controller
 
         // 0. Kiểm tra đề tài đã được công bố chính thức chưa
         if ($deTai->TrangThai !== 'Đã công bố') {
-            return redirect()->back()->withErrors('Đề tài này chưa được Giáo vụ công bố chính thức cho sinh viên đăng ký!');
+            return redirect()->back()->withErrors('Đề tài này chưa được công bố chính thức cho sinh viên đăng ký!');
         }
 
-        // 1. Kiểm tra sinh viên có thuộc nhóm chính thức không
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia')
-            ->first();
+        // 1. Kiểm tra sinh viên có thuộc nhóm chính thức tương ứng không
+        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia');
+
+        if ($deTai->MaHocPhan) {
+            $thanhVienQuery->whereHas('nhom', function($q) use ($deTai) {
+                $q->where('MaHocPhan', $deTai->MaHocPhan)->orWhereNull('MaHocPhan');
+            });
+        }
+
+        $thanhVienRecord = $thanhVienQuery->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
 
         if (!$thanhVienRecord) {
-            return redirect()->back()->withErrors('Bạn chưa có nhóm khóa luận! Vui lòng tạo nhóm hoặc gia nhập nhóm trước khi đăng ký đề tài.');
+            return redirect()->back()->withErrors('Bạn chưa có nhóm khóa luận cho môn học này! Vui lòng tạo nhóm hoặc gia nhập nhóm trước khi đăng ký đề tài.');
         }
 
         $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->firstOrFail();
 
         // 2. Chỉ Trưởng nhóm được đăng ký
         if ($nhom->MaTruongNhom != $sinhVien->MaSV) {
-            return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài khóa luận!');
+            return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài!');
         }
 
         // 3. QUY ĐỊNH: Nhóm phải có từ 1 đến 3 thành viên chính thức và không vượt quá chỉ tiêu đề tài
@@ -115,7 +168,7 @@ class DangKyDeTaiController extends Controller
             return redirect()->back()->withErrors("Đề tài '{$deTai->TenDeTai}' chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm của bạn hiện có {$countMembers} thành viên!");
         }
 
-        // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (Chờ duyệt hoặc Đã duyệt)
+        // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (Chặn nếu đã có nhóm đăng ký)
         $alreadyTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
             ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
             ->exists();
@@ -124,29 +177,31 @@ class DangKyDeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài này đã có nhóm khác đăng ký. Vui lòng chọn đề tài khác!');
         }
 
-        // 5. Kiểm tra nhóm đã đăng ký đề tài nào chưa
+        // 5. Kiểm tra nhóm đã đăng ký đề tài nào chưa (Chặn nhóm đã đăng ký đề tài)
         $existingRegistration = DangKyDeTai::where('MaNhom', $nhom->MaNhom)
             ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
             ->first();
 
         if ($existingRegistration) {
-            return redirect()->back()->withErrors('Nhóm của bạn đã gửi đơn đăng ký đề tài rồi! Vui lòng chờ phê duyệt hoặc hủy đơn cũ.');
+            return redirect()->back()->withErrors('Nhóm của bạn đã đăng ký đề tài rồi! Mỗi nhóm chỉ được đăng ký 1 đề tài.');
         }
 
         $maDK = 'DK_' . Str::upper(Str::random(6));
 
+        // Đăng ký xong thì gán trực tiếp cho nhóm luôn, không cần ai duyệt nữa
         DangKyDeTai::create([
             'MaDangKy'     => $maDK,
             'MaNhom'       => $nhom->MaNhom,
             'MaDeTai'      => $deTai->MaDeTai,
             'MaGVHuongDan' => $deTai->MaGV,
             'NgayDangKy'   => now(),
-            'TrangThai'    => 'Chờ duyệt',
+            'TrangThai'    => 'Đã duyệt',
+            'NgayDuyet'    => now(),
         ]);
 
         $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
 
-        return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đơn đăng ký đang chờ Giảng viên hướng dẫn xác nhận.");
+        return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đề tài đã được gán trực tiếp cho nhóm của bạn.");
     }
 
     public function destroy($id)
@@ -157,16 +212,12 @@ class DangKyDeTaiController extends Controller
         $dangKy = DangKyDeTai::with('nhom')->findOrFail($id);
 
         if ($dangKy->nhom->MaTruongNhom != $sinhVien->MaSV) {
-            return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền hủy đơn đăng ký đề tài!');
-        }
-
-        if ($dangKy->TrangThai === 'Đã duyệt') {
-            return redirect()->back()->withErrors('Đơn đăng ký đề tài đã được duyệt chính thức. Bạn không thể tự hủy đơn!');
+            return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền hủy đăng ký đề tài!');
         }
 
         $dangKy->nhom->update(['MaDeTai' => null]);
         $dangKy->delete();
 
-        return redirect()->back()->with('success', 'Đã hủy đơn đăng ký đề tài thành công.');
+        return redirect()->back()->with('success', 'Đã hủy đăng ký đề tài thành công.');
     }
 }

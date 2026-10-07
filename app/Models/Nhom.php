@@ -20,6 +20,7 @@ class Nhom extends Model
         'TrangThai',
         'NgayTao',
         'MaHocKy',
+        'MaHocPhan',
     ];
 
     public $timestamps = true;
@@ -27,6 +28,11 @@ class Nhom extends Model
     public function hocKy()
     {
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
+    }
+
+    public function hocPhan()
+    {
+        return $this->belongsTo(HocPhan::class, 'MaHocPhan', 'MaHocPhan');
     }
 
     public function thanhVienNhoms()

@@ -152,6 +152,11 @@
                     <i class="fa-solid fa-users-rectangle"></i> Lớp
                 </a>
             </li>
+            <li class="{{ request()->routeIs('hocphan.*') ? 'active' : '' }}">
+                <a href="{{ route('hocphan.index') }}">
+                    <i class="fa-solid fa-graduation-cap"></i> Học phần
+                </a>
+            </li>
         </ul>
     </nav>
 

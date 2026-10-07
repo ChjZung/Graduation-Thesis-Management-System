@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BoMon;
+use App\Models\HocPhan;
 use App\Models\Nganh;
 use App\Models\Lop;
 use App\Models\MonHoc;
@@ -1286,6 +1287,120 @@ class ExcelImportService
         }
 
         AuditLog::log('import_bo_mon', 'BoMon', null, ['success' => count($validItems), 'errors' => count($errors)]);
+
+        return [
+            'total_count'   => count($rows),
+            'success_count' => count($validItems),
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
+        ];
+    }
+
+    // ==========================================
+    // 7B. IMPORT HỌC PHẦN
+    // ==========================================
+    public function importHocPhan($file): array
+    {
+        $rows = $this->parseFile($file);
+        $this->validateTemplateHeaders(
+            $rows,
+            ['TenHocPhan'],
+            ['MaHocPhan', 'TenHocPhan', 'SoTinChi', 'MaKhoa', 'MaBoMon', 'LoaiHocPhan', 'MoTa'],
+            'Học phần'
+        );
+
+        $errors = [];
+        $seenTenHocPhan = [];
+        $seenMaHocPhan = [];
+        $validItems = [];
+
+        $maxHP = DB::table('HocPhan')
+            ->where('MaHocPhan', 'REGEXP', '^HP[0-9]+$')
+            ->max(DB::raw("CAST(SUBSTRING(MaHocPhan, 3) AS UNSIGNED)")) ?? 0;
+        $nextHPNum = (int)$maxHP;
+
+        foreach ($rows as $row) {
+            $rNum = $row['_row_num'];
+            $tenHocPhan = trim($row['TenHocPhan'] ?? '');
+            $maHocPhan = strtoupper(trim($row['MaHocPhan'] ?? ''));
+            $soTinChi = (int)($row['SoTinChi'] ?? 3);
+            $maKhoaVal = trim($row['MaKhoa'] ?? '');
+            $maBoMonVal = trim($row['MaBoMon'] ?? '');
+            $loaiHocPhan = trim($row['LoaiHocPhan'] ?? 'Chuyên ngành');
+            $moTa = trim($row['MoTa'] ?? '');
+
+            if (empty($tenHocPhan)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Thiếu tên học phần'];
+                continue;
+            }
+
+            if (isset($seenTenHocPhan[mb_strtolower($tenHocPhan)])) {
+                $errors[] = ['row' => $rNum, 'reason' => "Tên học phần '{$tenHocPhan}' bị trùng lặp trong file"];
+                continue;
+            }
+
+            if (HocPhan::where('TenHocPhan', $tenHocPhan)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Tên học phần '{$tenHocPhan}' đã tồn tại trong hệ thống"];
+                continue;
+            }
+
+            if (!empty($maHocPhan)) {
+                if (isset($seenMaHocPhan[$maHocPhan])) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Mã học phần '{$maHocPhan}' bị trùng lặp trong file"];
+                    continue;
+                }
+                if (HocPhan::where('MaHocPhan', $maHocPhan)->exists()) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Mã học phần '{$maHocPhan}' đã tồn tại trong hệ thống"];
+                    continue;
+                }
+            } else {
+                $nextHPNum++;
+                $maHocPhan = 'HP' . str_pad($nextHPNum, 2, '0', STR_PAD_LEFT);
+                while (HocPhan::where('MaHocPhan', $maHocPhan)->exists() || isset($seenMaHocPhan[$maHocPhan])) {
+                    $nextHPNum++;
+                    $maHocPhan = 'HP' . str_pad($nextHPNum, 2, '0', STR_PAD_LEFT);
+                }
+            }
+
+            // Kiểm tra Khoa nếu có
+            if (!empty($maKhoaVal) && !\App\Models\Khoa::where('MaKhoa', $maKhoaVal)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã khoa '{$maKhoaVal}' không tồn tại trong hệ thống"];
+                continue;
+            }
+
+            // Kiểm tra Bộ môn nếu có (nếu trống -> Học phần dùng chung)
+            if (!empty($maBoMonVal) && !BoMon::where('MaBoMon', $maBoMonVal)->exists()) {
+                $errors[] = ['row' => $rNum, 'reason' => "Mã bộ môn '{$maBoMonVal}' không tồn tại trong hệ thống"];
+                continue;
+            }
+
+            $seenTenHocPhan[mb_strtolower($tenHocPhan)] = true;
+            $seenMaHocPhan[$maHocPhan] = true;
+
+            $validItems[] = [
+                'MaHocPhan'   => $maHocPhan,
+                'TenHocPhan'  => $tenHocPhan,
+                'SoTinChi'    => $soTinChi > 0 ? $soTinChi : 3,
+                'MaKhoa'      => !empty($maKhoaVal) ? $maKhoaVal : 'CNTT',
+                'MaBoMon'     => !empty($maBoMonVal) ? $maBoMonVal : null,
+                'LoaiHocPhan' => !empty($loaiHocPhan) ? $loaiHocPhan : (empty($maBoMonVal) ? 'Dùng chung' : 'Chuyên ngành'),
+                'TrangThai'   => 'Đang áp dụng',
+                'MoTa'        => !empty($moTa) ? $moTa : null,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ];
+        }
+
+        if (!empty($validItems)) {
+            DB::transaction(function () use ($validItems) {
+                foreach ($validItems as $item) {
+                    HocPhan::create($item);
+                }
+            });
+        }
+
+        AuditLog::log('import_hoc_phan', 'HocPhan', null, ['success' => count($validItems), 'errors' => count($errors)]);
 
         return [
             'total_count'   => count($rows),
