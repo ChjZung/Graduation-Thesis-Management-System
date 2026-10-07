@@ -15,7 +15,7 @@ class HocPhanController extends Controller
 
     public function index(Request $request)
     {
-        $query = HocPhan::with(['khoa', 'boMon'])->withCount(['deTais', 'nhoms']);
+        $query = HocPhan::with(['khoa', 'boMon', 'hocPhanHocKies.hocKy'])->withCount(['deTais', 'nhoms']);
 
         if ($request->filled('search')) {
             $s = trim($request->search);

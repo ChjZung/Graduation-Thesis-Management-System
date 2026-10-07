@@ -92,5 +92,42 @@ class HocPhanSeeder extends Seeder
             'MaHocPhan' => 'HP_KLCN',
             'HocPhan'   => 'Khóa luận cử nhân'
         ]);
+
+        // 4. Mở học phần theo học kỳ (HocPhan_HocKy)
+        $allHocKies = \App\Models\HocKy::all();
+        foreach ($allHocKies as $hk) {
+            // Khóa luận dùng chung luôn mở ở tất cả học kỳ
+            \App\Models\HocPhanHocKy::updateOrCreate(
+                ['MaHocPhan' => 'HP_KLCN', 'MaHocKy' => $hk->MaHocKy],
+                ['TrangThai' => 'Đang mở', 'GhiChu' => 'Mở định kỳ toàn khoa']
+            );
+            \App\Models\HocPhanHocKy::updateOrCreate(
+                ['MaHocPhan' => 'HP_KLKS', 'MaHocKy' => $hk->MaHocKy],
+                ['TrangThai' => 'Đang mở', 'GhiChu' => 'Mở định kỳ toàn khoa']
+            );
+
+            // Phân bổ môn chuyên ngành theo kỳ:
+            // Kỳ 1: Công nghệ phần mềm (CNPM) & Phân tích thiết kế hệ thống (HTTT)
+            // Kỳ 2: Kiểm thử phần mềm (CNPM) & Hệ thống thông tin quản lý (HTTT)
+            if (str_contains($hk->MaHocKy, '_1')) {
+                \App\Models\HocPhanHocKy::updateOrCreate(
+                    ['MaHocPhan' => 'HP_CNPM', 'MaHocKy' => $hk->MaHocKy],
+                    ['TrangThai' => 'Đang mở', 'GhiChu' => 'Học kỳ 1 môn chuyên ngành CNPM']
+                );
+                \App\Models\HocPhanHocKy::updateOrCreate(
+                    ['MaHocPhan' => 'HP_PTTKHT', 'MaHocKy' => $hk->MaHocKy],
+                    ['TrangThai' => 'Đang mở', 'GhiChu' => 'Học kỳ 1 môn chuyên ngành HTTT']
+                );
+            } elseif (str_contains($hk->MaHocKy, '_2')) {
+                \App\Models\HocPhanHocKy::updateOrCreate(
+                    ['MaHocPhan' => 'HP_KTPM', 'MaHocKy' => $hk->MaHocKy],
+                    ['TrangThai' => 'Đang mở', 'GhiChu' => 'Học kỳ 2 môn chuyên ngành CNPM']
+                );
+                \App\Models\HocPhanHocKy::updateOrCreate(
+                    ['MaHocPhan' => 'HP_HTTTQL', 'MaHocKy' => $hk->MaHocKy],
+                    ['TrangThai' => 'Đang mở', 'GhiChu' => 'Học kỳ 2 môn chuyên ngành HTTT']
+                );
+            }
+        }
     }
 }

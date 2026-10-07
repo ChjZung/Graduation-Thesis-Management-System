@@ -182,6 +182,18 @@
                                     @if($hp->MoTa)
                                         <div class="small text-muted text-truncate" style="max-width: 320px;">{{ $hp->MoTa }}</div>
                                     @endif
+                                    @if($hp->hocPhanHocKies && $hp->hocPhanHocKies->count() > 0)
+                                        <div class="mt-1.5 d-flex flex-wrap gap-1 align-items-center">
+                                            <span class="small text-muted" style="font-size: 0.72rem;"><i class="fa-solid fa-calendar-days me-1"></i>Mở kỳ:</span>
+                                            @foreach($hp->hocPhanHocKies as $hphk)
+                                                @if($hphk->TrangThai === 'Đang mở')
+                                                    <span class="badge bg-light text-primary border border-primary-subtle rounded-pill py-0.5 px-2" style="font-size: 0.7rem;">
+                                                        {{ $hphk->hocKy->TenHocKy ?? $hphk->MaHocKy }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="py-3 text-center">
                                     <span class="badge bg-primary-subtle text-primary fw-bold px-2.5 py-1">{{ $hp->SoTinChi }} TC</span>

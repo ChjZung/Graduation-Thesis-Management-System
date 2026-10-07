@@ -33,7 +33,13 @@ class NhomController extends Controller
         }
 
         // Lấy danh sách Môn / Học phần đang mở
-        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')->orderBy('MaKhoa')->orderBy('MaBoMon')->get();
+        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
+                $q->where('TrangThai', 'Đang mở');
+            }])
+            ->where('TrangThai', 'Đang áp dụng')
+            ->orderBy('MaKhoa')
+            ->orderBy('MaBoMon')
+            ->get();
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
@@ -205,6 +211,16 @@ class NhomController extends Controller
             if ($hocPhan->MaBoMon !== $request->MaBoMon) {
                 return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn đã chọn!");
             }
+        }
+
+        // 2. Ràng buộc học kỳ: Môn học phải được mở trong học kỳ này (HocPhan_HocKy)
+        $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
+            ->where('MaHocPhan', $request->MaHocPhan)
+            ->where('TrangThai', 'Đang mở')
+            ->exists();
+
+        if (!$isOpened) {
+            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ {$hocKy->TenHocKy}!");
         }
 
         $maHocKy = $request->MaHocKy;

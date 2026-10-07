@@ -47,6 +47,18 @@ class HocPhan extends Model
         return $this->hasMany(DeTai::class, 'MaHocPhan', 'MaHocPhan');
     }
 
+    public function hocKies()
+    {
+        return $this->belongsToMany(HocKy::class, 'HocPhan_HocKy', 'MaHocPhan', 'MaHocKy')
+                    ->withPivot(['id', 'TrangThai', 'GhiChu'])
+                    ->withTimestamps();
+    }
+
+    public function hocPhanHocKies()
+    {
+        return $this->hasMany(HocPhanHocKy::class, 'MaHocPhan', 'MaHocPhan');
+    }
+
     public function isDungChung(): bool
     {
         return empty($this->MaBoMon);

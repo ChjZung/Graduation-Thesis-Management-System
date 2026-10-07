@@ -66,4 +66,16 @@ class HocKy extends Model
     {
         return $this->hasMany(KetQuaSinhVien::class, 'MaHocKy', 'MaHocKy');
     }
+
+    public function hocPhans()
+    {
+        return $this->belongsToMany(HocPhan::class, 'HocPhan_HocKy', 'MaHocKy', 'MaHocPhan')
+                    ->withPivot(['id', 'TrangThai', 'GhiChu'])
+                    ->withTimestamps();
+    }
+
+    public function hocPhanHocKies()
+    {
+        return $this->hasMany(HocPhanHocKy::class, 'MaHocKy', 'MaHocKy');
+    }
 }

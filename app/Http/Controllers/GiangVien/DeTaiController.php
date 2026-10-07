@@ -90,7 +90,11 @@ class DeTaiController extends Controller
         // Lấy danh sách Học phần mà giảng viên này được phép đề xuất:
         // 1. Học phần dùng chung toàn khoa (MaBoMon is null: Khóa luận cử nhân, Khóa luận kỹ sư)
         // 2. Học phần chuyên ngành thuộc đúng Bộ môn của GV (MaBoMon == $gv->MaBoMon)
-        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
+        // Kèm theo thông tin các Học kỳ đang mở học phần này (HocPhan_HocKy)
+        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
+                $q->where('TrangThai', 'Đang mở');
+            }])
+            ->where('TrangThai', 'Đang áp dụng')
             ->where(function($q) use ($gv) {
                 $q->whereNull('MaBoMon');
                 if ($gv && $gv->MaBoMon) {
@@ -133,9 +137,19 @@ class DeTaiController extends Controller
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
 
+        // Kiểm tra học phần có được mở trong học kỳ này không
+        $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
+            ->where('MaHocPhan', $request->MaHocPhan)
+            ->where('TrangThai', 'Đang mở')
+            ->exists();
+
+        if (!$isOpened) {
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ đã chọn!");
+        }
+
         // Kiểm tra quyền bộ môn: học phần phải là dùng chung (MaBoMon is null) HOẶC thuộc bộ môn của GV
         if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
-            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
         }
 
         $count = DeTai::count() + 1;
@@ -288,7 +302,10 @@ class DeTaiController extends Controller
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
+        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
+                $q->where('TrangThai', 'Đang mở');
+            }])
+            ->where('TrangThai', 'Đang áp dụng')
             ->where(function($q) use ($gv) {
                 $q->whereNull('MaBoMon');
                 if ($gv && $gv->MaBoMon) {
@@ -328,8 +345,19 @@ class DeTaiController extends Controller
         ]);
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+
+        // Kiểm tra học phần có được mở trong học kỳ này không
+        $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
+            ->where('MaHocPhan', $request->MaHocPhan)
+            ->where('TrangThai', 'Đang mở')
+            ->exists();
+
+        if (!$isOpened) {
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ đã chọn!");
+        }
+
         if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
-            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
         }
 
         $data = [

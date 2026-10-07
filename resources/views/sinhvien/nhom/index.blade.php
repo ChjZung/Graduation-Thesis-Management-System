@@ -701,6 +701,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 selectBoMon.disabled = false;
                 if (step2Badge) step2Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Sẵn sàng chọn</span>';
+                if (selectBoMon.value) {
+                    selectBoMon.dispatchEvent(new Event('change'));
+                }
             }
             checkCanSubmit();
         });
@@ -708,6 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 2. Khi thay đổi Bộ Môn
         selectBoMon.addEventListener('change', function() {
             const bmVal = this.value;
+            const currentHk = selectHocKy.value;
             selectHocPhan.innerHTML = '';
 
             if (!bmVal) {
@@ -719,19 +723,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Lọc danh sách học phần
-            let filtered = [];
-            if (bmVal === 'DUNG_CHUNG') {
-                filtered = hocPhansData.filter(hp => !hp.MaBoMon);
-            } else {
-                filtered = hocPhansData.filter(hp => hp.MaBoMon === bmVal);
-            }
+            // Lọc danh sách học phần: vừa thuộc Bộ môn, vừa ĐƯỢC MỞ trong Học kỳ đã chọn
+            let filtered = hocPhansData.filter(hp => {
+                const matchBm = (bmVal === 'DUNG_CHUNG') ? !hp.MaBoMon : (hp.MaBoMon === bmVal);
+                if (!matchBm) return false;
+
+                if (hp.hoc_phan_hoc_kies && Array.isArray(hp.hoc_phan_hoc_kies)) {
+                    return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === currentHk && hphk.TrangThai === 'Đang mở');
+                }
+                return false;
+            });
 
             if (filtered.length === 0) {
                 selectHocPhan.disabled = true;
-                selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở cho bộ môn này --</option>';
-                if (step3Badge) step3Badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa có môn</span>';
-                helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Hiện chưa có học phần nào được thiết lập cho bộ môn này.</span>';
+                selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
+                if (step3Badge) step3Badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa mở môn</span>';
+                helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Bộ môn này hiện không mở học phần nào trong học kỳ bạn đã chọn.</span>';
             } else {
                 selectHocPhan.disabled = false;
                 selectHocPhan.innerHTML = '<option value="">-- Bước 3: Chọn học phần / môn học (' + filtered.length + ' môn) --</option>';
@@ -742,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectHocPhan.appendChild(opt);
                 });
                 if (step3Badge) step3Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Có ' + filtered.length + ' môn</span>';
-                helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' môn học tương ứng. Vui lòng chọn môn bạn muốn lập nhóm.</span>';
+                helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' môn học đang mở trong kỳ này. Vui lòng chọn môn bạn muốn lập nhóm.</span>';
             }
             checkCanSubmit();
         });

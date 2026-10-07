@@ -48,32 +48,10 @@
                         <div class="col-md-5">
                             <label for="MaHocPhan" class="form-label fw-bold">Môn / Học Phần Áp Dụng <span class="text-danger">*</span></label>
                             <select name="MaHocPhan" id="MaHocPhan" class="form-select" required>
-                                <option value="">-- Chọn môn / học phần --</option>
-                                @php
-                                    $dungChung = $hocPhans->whereNull('MaBoMon');
-                                    $chuyenNganh = $hocPhans->whereNotNull('MaBoMon');
-                                @endphp
-                                @if($dungChung->count() > 0)
-                                    <optgroup label="⭐ Học phần dùng chung toàn khoa">
-                                        @foreach($dungChung as $hp)
-                                            <option value="{{ $hp->MaHocPhan }}" {{ old('MaHocPhan') == $hp->MaHocPhan ? 'selected' : '' }}>
-                                                {{ $hp->TenHocPhan }} ({{ $hp->MaHocPhan }})
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endif
-                                @if($chuyenNganh->count() > 0)
-                                    <optgroup label="🏢 Chuyên ngành: {{ $gv->boMon->TenBoMon ?? 'Bộ môn trực thuộc' }}">
-                                        @foreach($chuyenNganh as $hp)
-                                            <option value="{{ $hp->MaHocPhan }}" {{ old('MaHocPhan') == $hp->MaHocPhan ? 'selected' : '' }}>
-                                                {{ $hp->TenHocPhan }} ({{ $hp->MaHocPhan }})
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endif
+                                <option value="">-- Vui lòng chọn học kỳ trước --</option>
                             </select>
-                            <div class="form-text text-muted small">
-                                Chỉ hiển thị các môn của Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong> và Khóa luận dùng chung.
+                            <div class="form-text text-muted small" id="MaHocPhan_help">
+                                Chỉ hiển thị các môn được mở trong học kỳ đã chọn theo Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong> & Khóa luận.
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -160,3 +138,88 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectHocKy = document.getElementById('MaHocKy');
+    const selectHocPhan = document.getElementById('MaHocPhan');
+    const helpHocPhan = document.getElementById('MaHocPhan_help');
+    const allHocPhans = @json($hocPhans ?? []);
+    const oldMaHocPhan = @json(old('MaHocPhan'));
+    const boMonTen = @json($gv->boMon->TenBoMon ?? 'Bộ môn trực thuộc');
+
+    function updateHocPhanOptions() {
+        const selectedHk = selectHocKy.value;
+        selectHocPhan.innerHTML = '';
+
+        if (!selectedHk) {
+            selectHocPhan.innerHTML = '<option value="">-- Vui lòng chọn học kỳ trước --</option>';
+            selectHocPhan.disabled = true;
+            return;
+        }
+
+        selectHocPhan.disabled = false;
+
+        // Lọc các học phần được mở trong selectedHk
+        const openedHocPhans = allHocPhans.filter(hp => {
+            if (!hp.hoc_phan_hoc_kies || !Array.isArray(hp.hoc_phan_hoc_kies)) return false;
+            return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === selectedHk && hphk.TrangThai === 'Đang mở');
+        });
+
+        if (openedHocPhans.length === 0) {
+            selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
+            selectHocPhan.disabled = true;
+            if (helpHocPhan) {
+                helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn hoặc Khóa luận được mở.</span>';
+            }
+            return;
+        }
+
+        if (helpHocPhan) {
+            helpHocPhan.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>Đã lọc <strong>${openedHocPhans.length}</strong> học phần đang mở trong kỳ này (Bộ môn <strong>${boMonTen}</strong> & Khóa luận).`;
+        }
+
+        selectHocPhan.innerHTML = '<option value="">-- Chọn môn / học phần --</option>';
+
+        const dungChung = openedHocPhans.filter(hp => !hp.MaBoMon);
+        const chuyenNganh = openedHocPhans.filter(hp => hp.MaBoMon);
+
+        if (dungChung.length > 0) {
+            const grp = document.createElement('optgroup');
+            grp.label = '⭐ Học phần dùng chung toàn khoa';
+            dungChung.forEach(hp => {
+                const opt = document.createElement('option');
+                opt.value = hp.MaHocPhan;
+                opt.textContent = `${hp.TenHocPhan} (${hp.MaHocPhan})`;
+                if (oldMaHocPhan === hp.MaHocPhan) opt.selected = true;
+                grp.appendChild(opt);
+            });
+            selectHocPhan.appendChild(grp);
+        }
+
+        if (chuyenNganh.length > 0) {
+            const grp = document.createElement('optgroup');
+            grp.label = `🏢 Chuyên ngành: ${boMonTen}`;
+            chuyenNganh.forEach(hp => {
+                const opt = document.createElement('option');
+                opt.value = hp.MaHocPhan;
+                opt.textContent = `${hp.TenHocPhan} (${hp.MaHocPhan})`;
+                if (oldMaHocPhan === hp.MaHocPhan) opt.selected = true;
+                grp.appendChild(opt);
+            });
+            selectHocPhan.appendChild(grp);
+        }
+    }
+
+    if (selectHocKy && selectHocPhan) {
+        selectHocKy.addEventListener('change', updateHocPhanOptions);
+        if (selectHocKy.value) {
+            updateHocPhanOptions();
+        } else {
+            selectHocPhan.disabled = true;
+        }
+    }
+});
+</script>
+@endpush
