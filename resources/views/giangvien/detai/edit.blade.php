@@ -30,6 +30,16 @@
                 </div>
                 @endif
 
+                @if($gv && $gv->boMon)
+                <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center justify-content-between rounded-3 border">
+                    <div>
+                        <i class="fa-solid fa-building-user me-2 text-primary"></i>
+                        Giảng viên: <strong>{{ $gv->HoTen }}</strong> — Trực thuộc: <span class="badge bg-primary fs-7">{{ $gv->boMon->TenBoMon }}</span>
+                    </div>
+                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần được lọc theo bộ môn trực thuộc & khóa luận dùng chung</span>
+                </div>
+                @endif
+
                 <form action="{{ route('giangvien.detai.update', $detai->MaDeTai) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -40,7 +50,7 @@
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
                             <select name="MaHocKy" id="MaHocKy" class="form-select" required>
                                 @foreach($hocKies as $hk)
@@ -48,22 +58,37 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label for="HocPhan" class="form-label fw-bold">Môn / Học Phần <span class="text-danger">*</span></label>
-                            <select name="HocPhan" id="HocPhan" class="form-select" required>
-                                <option value="Khóa luận tốt nghiệp" {{ old('HocPhan', $detai->HocPhan ?? 'Khóa luận tốt nghiệp') == 'Khóa luận tốt nghiệp' ? 'selected' : '' }}>Khóa luận tốt nghiệp</option>
-                                <option value="Đồ án tốt nghiệp" {{ old('HocPhan', $detai->HocPhan) == 'Đồ án tốt nghiệp' ? 'selected' : '' }}>Đồ án tốt nghiệp</option>
-                                <option value="Đồ án chuyên ngành" {{ old('HocPhan', $detai->HocPhan) == 'Đồ án chuyên ngành' ? 'selected' : '' }}>Đồ án chuyên ngành</option>
+                        <div class="col-md-5">
+                            <label for="MaHocPhan" class="form-label fw-bold">Môn / Học Phần Áp Dụng <span class="text-danger">*</span></label>
+                            <select name="MaHocPhan" id="MaHocPhan" class="form-select" required>
+                                <option value="">-- Chọn môn / học phần --</option>
+                                @php
+                                    $dungChung = $hocPhans->whereNull('MaBoMon');
+                                    $chuyenNganh = $hocPhans->whereNotNull('MaBoMon');
+                                    $selectedMaHP = old('MaHocPhan', $detai->MaHocPhan ?? ($hocPhans->firstWhere('TenHocPhan', $detai->HocPhan)?->MaHocPhan));
+                                @endphp
+                                @if($dungChung->count() > 0)
+                                    <optgroup label="⭐ Học phần dùng chung toàn khoa">
+                                        @foreach($dungChung as $hp)
+                                            <option value="{{ $hp->MaHocPhan }}" {{ $selectedMaHP == $hp->MaHocPhan ? 'selected' : '' }}>
+                                                {{ $hp->TenHocPhan }} ({{ $hp->MaHocPhan }})
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
+                                @if($chuyenNganh->count() > 0)
+                                    <optgroup label="🏢 Chuyên ngành: {{ $gv->boMon->TenBoMon ?? 'Bộ môn trực thuộc' }}">
+                                        @foreach($chuyenNganh as $hp)
+                                            <option value="{{ $hp->MaHocPhan }}" {{ $selectedMaHP == $hp->MaHocPhan ? 'selected' : '' }}>
+                                                {{ $hp->TenHocPhan }} ({{ $hp->MaHocPhan }})
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
                             </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="MaNganh" class="form-label fw-bold">Ngành Đào Tạo Phù Hợp</label>
-                            <select name="MaNganh" id="MaNganh" class="form-select">
-                                <option value="">-- Áp dụng toàn khoa --</option>
-                                @foreach($nganhs as $ng)
-                                <option value="{{ $ng->MaNganh }}" {{ old('MaNganh', $detai->MaNganh) == $ng->MaNganh ? 'selected' : '' }}>{{ $ng->TenNganh }}</option>
-                                @endforeach
-                            </select>
+                            <div class="form-text text-muted small">
+                                Chỉ hiển thị các môn của Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong> và Khóa luận dùng chung.
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label for="SoLuongSinhVienToiDa" class="form-label fw-bold">Số SV Tối Đa <span class="text-danger">*</span></label>

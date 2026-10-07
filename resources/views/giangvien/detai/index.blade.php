@@ -18,7 +18,7 @@
                 <thead>
                     <tr>
                         <th width="10%">Mã Đề Tài</th>
-                        <th width="32%">Tên Đề Tài & Ngành</th>
+                        <th width="32%">Tên Đề Tài & Học Phần</th>
                         <th width="12%">Lĩnh Vực</th>
                         <th width="18%">Nhóm Thực Hiện</th>
                         <th width="14%" class="text-center">Trạng Thái</th>

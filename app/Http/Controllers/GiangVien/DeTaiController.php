@@ -83,17 +83,32 @@ class DeTaiController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $gv = GiangVien::getLoggedInGiangVien($user);
+        $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
+              ?? GiangVien::getLoggedInGiangVien($user);
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
 
-        return view('giangvien.detai.create', compact('hocKies', 'gv', 'nganhs'));
+        // Lấy danh sách Học phần mà giảng viên này được phép đề xuất:
+        // 1. Học phần dùng chung toàn khoa (MaBoMon is null: Khóa luận cử nhân, Khóa luận kỹ sư)
+        // 2. Học phần chuyên ngành thuộc đúng Bộ môn của GV (MaBoMon == $gv->MaBoMon)
+        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
+            ->where(function($q) use ($gv) {
+                $q->whereNull('MaBoMon');
+                if ($gv && $gv->MaBoMon) {
+                    $q->orWhere('MaBoMon', $gv->MaBoMon);
+                }
+            })
+            ->orderByRaw('MaBoMon IS NOT NULL')
+            ->orderBy('TenHocPhan')
+            ->get();
+
+        return view('giangvien.detai.create', compact('hocKies', 'gv', 'hocPhans'));
     }
 
     public function store(Request $request)
     {
         $user = Auth::user();
-        $gv = GiangVien::getLoggedInGiangVien($user);
+        $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
+              ?? GiangVien::getLoggedInGiangVien($user);
         if (!$gv) {
             return redirect()->back()->withErrors('Không tìm thấy thông tin Giảng viên của tài khoản này.');
         }
@@ -101,8 +116,7 @@ class DeTaiController extends Controller
         $request->validate([
             'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
-            'HocPhan' => 'nullable|string|max:150',
-            'MaNganh' => 'nullable|exists:Nganh,MaNganh',
+            'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
@@ -110,10 +124,19 @@ class DeTaiController extends Controller
         ], [
             'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
             'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
+            'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
+            'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
             'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
             'SoLuongSinhVienToiDa.min' => 'Số sinh viên tối đa ít nhất là 1.',
             'SoLuongSinhVienToiDa.max' => 'Số sinh viên tối đa không vượt quá 3.',
         ]);
+
+        $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+
+        // Kiểm tra quyền bộ môn: học phần phải là dùng chung (MaBoMon is null) HOẶC thuộc bộ môn của GV
+        if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
+            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+        }
 
         $count = DeTai::count() + 1;
         $maDT = 'DT' . sprintf('%02d', $count);
@@ -129,16 +152,17 @@ class DeTaiController extends Controller
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
-            'HocPhan' => $request->HocPhan ?? 'Khóa luận tốt nghiệp',
+            'MaHocPhan' => $hocPhan->MaHocPhan,
+            'HocPhan' => $hocPhan->TenHocPhan,
             'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
             'FileDeCuong' => null,
-            'MaNganh' => $request->MaNganh,
+            'MaNganh' => null, // Đã bỏ theo yêu cầu, sinh viên đăng ký theo đúng ngành mình học
             'MaHocKy' => $request->MaHocKy,
             'TrangThai' => 'Chờ duyệt cấp Bộ môn',
             'NgayDeXuat' => now(),
         ]);
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Đề xuất đề tài mới thành công! Đề tài đã được chuyển tới Trưởng bộ môn và Trưởng khoa phê duyệt danh mục ban đầu. Đề cương chi tiết sẽ được nộp sau khi đề xuất được phê duyệt.');
+        return redirect()->route('giangvien.detai.index')->with('success', "Đề xuất đề tài '{$request->TenDeTai}' cho môn {$hocPhan->TenHocPhan} thành công! Đề tài đã được chuyển tới Trưởng bộ môn phê duyệt.");
     }
 
     public function nopDeCuong(Request $request, $id)
@@ -258,39 +282,62 @@ class DeTaiController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        $gv = GiangVien::getLoggedInGiangVien($user);
+        $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
+              ?? GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $nganhs = \App\Models\Nganh::orderBy('TenNganh')->get();
 
-        return view('giangvien.detai.edit', compact('detai', 'hocKies', 'nganhs'));
+        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
+            ->where(function($q) use ($gv) {
+                $q->whereNull('MaBoMon');
+                if ($gv && $gv->MaBoMon) {
+                    $q->orWhere('MaBoMon', $gv->MaBoMon);
+                }
+            })
+            ->orderByRaw('MaBoMon IS NOT NULL')
+            ->orderBy('TenHocPhan')
+            ->get();
+
+        return view('giangvien.detai.edit', compact('detai', 'hocKies', 'gv', 'hocPhans'));
     }
 
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        $gv = GiangVien::getLoggedInGiangVien($user);
+        $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
+              ?? GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
         $request->validate([
             'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
-            'HocPhan' => 'nullable|string|max:150',
-            'MaNganh' => 'nullable|exists:Nganh,MaNganh',
+            'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
             'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
             'LinhVuc' => 'nullable|string|max:150',
             'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+        ], [
+            'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
+            'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
+            'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
+            'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
+            'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
         ]);
+
+        $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+        if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
+            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+        }
 
         $data = [
             'TenDeTai' => $request->TenDeTai,
             'MaHocKy' => $request->MaHocKy,
-            'HocPhan' => $request->HocPhan ?? $detai->HocPhan ?? 'Khóa luận tốt nghiệp',
-            'MaNganh' => $request->MaNganh,
+            'MaHocPhan' => $hocPhan->MaHocPhan,
+            'HocPhan' => $hocPhan->TenHocPhan,
+            'MaNganh' => null,
             'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
