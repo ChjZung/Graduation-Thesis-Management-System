@@ -144,12 +144,11 @@ class NhomController extends Controller
 
         // Kiểm tra điều kiện làm khóa luận
         $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $sinhVien->MaSV)
-            ->where('MaHocKy', $maHocKy)
             ->where('TrangThai', 'Đủ điều kiện')
-            ->exists();
+            ->exists() || $sinhVien->isDuDieuKien();
 
         if (!$isEligible) {
-            return redirect()->back()->withErrors('Bạn không nằm trong danh sách đủ điều kiện làm khóa luận học kỳ này!');
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp để tạo nhóm!');
         }
 
         // Kiểm tra SV đã ở trong nhóm nào chính thức trong học kỳ này chưa
@@ -426,12 +425,11 @@ class NhomController extends Controller
 
         // Kiểm tra xem sinh viên được mời có đủ điều kiện không
         $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $svThem->MaSV)
-            ->where('MaHocKy', $nhom->MaHocKy)
             ->where('TrangThai', 'Đủ điều kiện')
-            ->exists();
+            ->exists() || $svThem->isDuDieuKien();
 
         if (!$isEligible) {
-            return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} không nằm trong danh sách đủ điều kiện làm khóa luận học kỳ này!");
+            return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} chưa đủ điều kiện làm khóa luận!");
         }
 
         // Tái kiểm tra sinh viên được mời đã có nhóm chưa (Chống Race Condition)
@@ -578,12 +576,11 @@ class NhomController extends Controller
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
 
         $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $sinhVien->MaSV)
-            ->where('MaHocKy', $nhom->MaHocKy)
             ->where('TrangThai', 'Đủ điều kiện')
-            ->exists();
+            ->exists() || $sinhVien->isDuDieuKien();
 
         if (!$isEligible) {
-            return redirect()->back()->withErrors('Bạn không nằm trong danh sách đủ điều kiện làm khóa luận học kỳ này!');
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận để xin gia nhập nhóm!');
         }
 
         if ($nhom->dangKyDeTai && in_array($nhom->dangKyDeTai->TrangThai, ['Chờ duyệt', 'Đã duyệt'])) {
