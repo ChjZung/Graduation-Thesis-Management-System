@@ -19,16 +19,9 @@
 <!-- THANH CHỌN HỌC PHẦN / MÔN HỌC -->
 @if(isset($hocPhans) && $hocPhans->count() > 0)
 <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <div>
-            <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
-            <span class="small text-muted d-block d-md-inline ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
-        </div>
-        <div>
-            <button type="button" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
-                <i class="fa-solid fa-plus-circle me-1"></i>+ Tạo Nhóm Mới
-            </button>
-        </div>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
+        <span class="small text-muted ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
     </div>
     <div class="d-flex flex-wrap gap-2">
         @foreach($hocPhans as $hp)
