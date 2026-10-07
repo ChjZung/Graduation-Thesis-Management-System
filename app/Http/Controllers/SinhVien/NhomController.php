@@ -315,13 +315,12 @@ class NhomController extends Controller
         } else {
             // 2.2 Sinh viên có đủ điều kiện trong học kỳ này không?
             $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $sinhVien->MaSV)
-                ->where('MaHocKy', $nhom ? $nhom->MaHocKy : (\App\Services\PlanPhaseService::getActivePlan()->MaHocKy ?? null))
                 ->where('TrangThai', 'Đủ điều kiện')
-                ->exists();
+                ->exists() || $sinhVien->isDuDieuKien();
 
             if (!$isEligible) {
                 $canInvite = false;
-                $statusText = '🔴 Không nằm trong danh sách đủ điều kiện làm khóa luận kỳ này.';
+                $statusText = '🔴 Chưa đủ điều kiện làm khóa luận (Tích lũy < 115 tín chỉ hoặc CPA < 2.0).';
                 $badgeClass = 'bg-danger';
             } else {
                 $inGroup = ThanhVienNhom::with('nhom')
