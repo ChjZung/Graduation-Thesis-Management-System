@@ -24,13 +24,15 @@ class DangKyDeTaiController extends Controller
                 ->with('error', 'Hồ sơ sinh viên chưa được thiết lập. Vui lòng liên hệ Giáo vụ Khoa.');
         }
 
-        // Lấy học kỳ hiện tại
+        // Lấy học kỳ
+        $requestedHocKy = $request->input('MaHocKy') ?? $request->input('HocKy') ?? $request->input('hoc_ky');
         $activePlan = \App\Services\PlanPhaseService::getActivePlan();
-        $maHocKy = $activePlan ? $activePlan->MaHocKy : null;
-        if (!$maHocKy) {
+        $defaultHocKy = $activePlan ? $activePlan->MaHocKy : null;
+        if (!$defaultHocKy) {
             $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
-            $maHocKy = $currentHk?->MaHocKy;
+            $defaultHocKy = $currentHk?->MaHocKy;
         }
+        $maHocKy = $requestedHocKy ?? $defaultHocKy;
 
         // 2. Lấy danh sách Môn / Học phần từ DB
         $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
@@ -83,7 +85,7 @@ class DangKyDeTaiController extends Controller
         }
 
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
-        $selectedHocKy = $request->input('MaHocKy');
+        $selectedHocKy = $requestedHocKy ?? ($nhom?->MaHocKy ?? $maHocKy);
 
         // 3. Lọc danh sách đề tài theo học kỳ và môn học đã công bố
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocPhanRef', 'hocKy'])->where('TrangThai', 'Đã công bố');

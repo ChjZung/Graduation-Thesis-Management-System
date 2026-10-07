@@ -25,11 +25,46 @@ class NhomController extends Controller
                 ->with('error', 'Hồ sơ sinh viên chưa được thiết lập. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ.');
         }
 
+        // Lấy danh sách tất cả các nhóm mà sinh viên này đang tham gia chính thức (không lọc cứng theo 1 học kỳ)
+        $sinhVienAllGroups = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')
+            ->with(['nhom.hocPhan', 'nhom.hocKy', 'nhom.dangKyDeTai.deTai'])
+            ->get();
+
+        // 1. Phân giải môn học được chọn (selectedHocPhan)
+        $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
+        if (!$selectedHocPhan) {
+            $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLCN';
+        }
+
+        // 2. Phân giải học kỳ (maHocKy):
+        // Ưu tiên 1: Tham số truyền vào từ Request (?hoc_ky=...)
+        // Ưu tiên 2: Tự động nhận diện học kỳ của nhóm sinh viên đang tham gia ở môn học đang chọn
+        // Ưu tiên 3: Học kỳ của Kế hoạch đang mở hoặc Học kỳ đang diễn ra
+        $requestedHocKy = $request->input('hoc_ky') ?? $request->input('MaHocKy');
+        $defaultHocKy = null;
         $activePlan = \App\Services\PlanPhaseService::getActivePlan();
-        $maHocKy = $activePlan ? $activePlan->MaHocKy : null;
-        if (!$maHocKy) {
+        if ($activePlan && !empty($activePlan->MaHocKy)) {
+            $defaultHocKy = $activePlan->MaHocKy;
+        } else {
             $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
-            $maHocKy = $currentHk?->MaHocKy;
+            $defaultHocKy = $currentHk?->MaHocKy;
+        }
+
+        if ($requestedHocKy) {
+            $maHocKy = $requestedHocKy;
+        } else {
+            $userGroupInThisHp = $sinhVienAllGroups->first(function($item) use ($selectedHocPhan) {
+                if (!$item->nhom) return false;
+                $hpNhom = $item->nhom->MaHocPhan ?? 'HP_KLCN';
+                return $hpNhom === $selectedHocPhan;
+            });
+
+            if ($userGroupInThisHp && !empty($userGroupInThisHp->nhom->MaHocKy)) {
+                $maHocKy = $userGroupInThisHp->nhom->MaHocKy;
+            } else {
+                $maHocKy = $defaultHocKy;
+            }
         }
 
         // Lấy danh sách Môn / Học phần đang mở
@@ -43,21 +78,7 @@ class NhomController extends Controller
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
-        // Danh sách tất cả các nhóm mà sinh viên này đang tham gia trong kỳ hiện tại
-        $sinhVienAllGroups = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia')
-            ->whereHas('nhom', function($q) use ($maHocKy) {
-                if ($maHocKy) $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
-            })
-            ->with(['nhom.hocPhan', 'nhom.dangKyDeTai.deTai'])
-            ->get();
-
-        $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
-        if (!$selectedHocPhan) {
-            $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLCN';
-        }
-
-        // 1. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo MÔN HỌC này trong kỳ hiện tại
+        // 3. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo MÔN HỌC và HỌC KỲ này
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
@@ -80,17 +101,22 @@ class NhomController extends Controller
         $isNhomLocked = false;
 
         if ($thanhVienRecord) {
-            // Khi SV ĐÃ CÓ NHÓM CHO MÔN NÀY -> Dọn dẹp các lời mời hoặc yêu cầu khác của riêng MÔN NÀY
+            // Khi SV ĐÃ CÓ NHÓM CHO MÔN NÀY & KỲ NÀY -> Dọn dẹp các lời mời hoặc yêu cầu khác của riêng MÔN NÀY & KỲ NÀY
             ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
                 ->where('TrangThai', '!=', 'da_tham_gia')
-                ->whereHas('nhom', function($q) use ($selectedHocPhan) {
-                    if ($selectedHocPhan) $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
+                ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
+                    if ($maHocKy) $q->where('MaHocKy', $maHocKy);
+                    if ($selectedHocPhan) $q->where('MaHocPhan', $selectedHocPhan);
                 })
                 ->delete();
 
-            $nhomCurrent = Nhom::with(['deTai.giangVien', 'truongNhom.taiKhoan', 'dangKyDeTai', 'hocPhan'])
+            $nhomCurrent = Nhom::with(['deTai.giangVien', 'truongNhom.taiKhoan', 'dangKyDeTai', 'hocPhan', 'hocKy'])
                 ->where('MaNhom', $thanhVienRecord->MaNhom)
                 ->first();
+
+            if ($nhomCurrent && $nhomCurrent->MaHocKy && !$requestedHocKy) {
+                $maHocKy = $nhomCurrent->MaHocKy;
+            }
 
             if ($nhomCurrent) {
                 // Nhóm đã khóa khi đề tài đang chờ duyệt hoặc đã được duyệt chính thức
@@ -272,7 +298,7 @@ class NhomController extends Controller
                 ->delete();
         });
 
-        return redirect()->route('sinhvien.nhom.index', ['hoc_phan' => $maHocPhan])
+        return redirect()->route('sinhvien.nhom.index', ['hoc_phan' => $maHocPhan, 'hoc_ky' => $maHocKy])
             ->with('success', "Khởi tạo '{$tenNhom}' cho môn {$hocPhan->TenHocPhan} ({$hocKy->TenHocKy}) thành công!");
     }
 
@@ -848,12 +874,17 @@ class NhomController extends Controller
                 'NgayThamGia' => now(),
             ]);
 
-        // 5. Dọn dẹp tất cả các lời mời hoặc yêu cầu khác của sinh viên này ở các nhóm khác
+        // 5. Dọn dẹp tất cả các lời mời hoặc yêu cầu khác của sinh viên này ở các nhóm khác cùng môn và học kỳ
         ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('MaNhom', '!=', $maNhom)
+            ->whereHas('nhom', function($q) use ($nhom) {
+                if ($nhom->MaHocKy) $q->where('MaHocKy', $nhom->MaHocKy);
+                if ($nhom->MaHocPhan) $q->where('MaHocPhan', $nhom->MaHocPhan);
+            })
             ->delete();
 
-        return redirect()->route('sinhvien.nhom.index')->with('success', 'Bạn đã tham gia nhóm thành công!');
+        return redirect()->route('sinhvien.nhom.index', ['hoc_phan' => $nhom->MaHocPhan, 'hoc_ky' => $nhom->MaHocKy])
+            ->with('success', 'Bạn đã tham gia nhóm thành công!');
     }
 
     public function tuChoiLoiMoi($maNhom)

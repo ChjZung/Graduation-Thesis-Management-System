@@ -16,20 +16,36 @@
 </div>
 @endif
 
-<!-- THANH CHỌN HỌC PHẦN / MÔN HỌC -->
-@if(isset($hocPhans) && $hocPhans->count() > 0)
+<!-- THANH CHỌN HỌC PHẦN / MÔN HỌC VÀ HỌC KỲ -->
 <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-        <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
-        <span class="small text-muted ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
+            <span class="small text-muted ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
+        </div>
+        @if(isset($hocKies) && $hocKies->count() > 0)
+        <div class="d-flex align-items-center gap-2">
+            <label class="small fw-bold text-secondary text-nowrap"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</label>
+            <select class="form-select form-select-sm rounded-pill fw-semibold border-secondary-subtle bg-white shadow-xs" style="width: auto; min-width: 170px;" onchange="window.location.href=this.value;">
+                @foreach($hocKies as $hk)
+                    <option value="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $hk->MaHocKy]) }}" {{ $maHocKy == $hk->MaHocKy ? 'selected' : '' }}>
+                        {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        @endif
     </div>
+    @if(isset($hocPhans) && $hocPhans->count() > 0)
     <div class="d-flex flex-wrap gap-2">
         @foreach($hocPhans as $hp)
         @php
             $isActive = ($selectedHocPhan === $hp->MaHocPhan || $selectedHocPhan === $hp->TenHocPhan);
-            $hasGroupInHp = isset($sinhVienAllGroups) && $sinhVienAllGroups->contains(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN')));
+            $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
+            $hasGroupInHp = !is_null($groupInThisHp);
+            $targetHk = $groupInThisHp?->nhom?->MaHocKy ?? $maHocKy;
         @endphp
-        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan]) }}" 
+        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan, 'hoc_ky' => $targetHk]) }}" 
            class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
             {{ $hp->TenHocPhan }}
             @if($hasGroupInHp)
@@ -38,8 +54,8 @@
         </a>
         @endforeach
     </div>
+    @endif
 </div>
-@endif
 
 @if(!$nhomCurrent)
 <!-- ======================================================== -->
@@ -96,6 +112,8 @@
     <!-- THANH TÌM KIẾM -->
     <div class="card-header bg-white border-bottom p-3">
         <form method="GET" action="{{ route('sinhvien.nhom.index') }}" class="row g-2 align-items-center">
+            <input type="hidden" name="hoc_phan" value="{{ $selectedHocPhan }}">
+            <input type="hidden" name="hoc_ky" value="{{ $maHocKy }}">
             <div class="col-md-9">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
@@ -107,7 +125,7 @@
                     <i class="fa-solid fa-filter me-1"></i>Tìm Kiếm
                 </button>
                 @if(request('q'))
-                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-outline-secondary rounded-pill px-3" title="Xóa bộ lọc">
+                <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy]) }}" class="btn btn-outline-secondary rounded-pill px-3" title="Xóa bộ lọc">
                     <i class="fa-solid fa-rotate-left"></i>
                 </a>
                 @endif
@@ -202,7 +220,14 @@
 
 <div class="card card-premium mb-4">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-users text-primary me-2"></i>Nhóm: <strong>{{ $nhomCurrent->TenNhom }}</strong> (Môn: <strong class="text-primary">{{ $nhomCurrent->hocPhan->TenHocPhan ?? 'Khóa luận tốt nghiệp' }}</strong>)</span>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span><i class="fa-solid fa-users text-primary me-2"></i>Nhóm: <strong>{{ $nhomCurrent->TenNhom }}</strong> (Môn: <strong class="text-primary">{{ $nhomCurrent->hocPhan->TenHocPhan ?? 'Khóa luận tốt nghiệp' }}</strong>)</span>
+            @if($nhomCurrent->hocKy)
+                <span class="badge bg-light text-primary border rounded-pill px-3 py-1">
+                    <i class="fa-solid fa-calendar-days me-1"></i>{{ $nhomCurrent->hocKy->TenHocKy }}
+                </span>
+            @endif
+        </div>
         <div class="d-flex align-items-center gap-2">
             @if($isNhomLocked)
                 <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-lock me-1"></i>Nhóm Đã Khóa (Đã Có Đề Tài)</span>
@@ -229,7 +254,7 @@
                     <i class="fa-solid fa-circle-info me-2"></i>Nhóm của bạn chưa đăng ký Đề tài cho môn học này.
                 </div>
                 <div>
-                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLCN']) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
+                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLCN', 'HocKy' => $nhomCurrent->MaHocKy]) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
                         <i class="fa-solid fa-clipboard-list me-1"></i>Đăng Ký Đề Tài Ngay
                     </a>
                 </div>
