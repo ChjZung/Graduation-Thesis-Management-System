@@ -34,6 +34,8 @@ class NhomController extends Controller
 
         // Lấy danh sách Môn / Học phần đang mở
         $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')->orderBy('MaKhoa')->orderBy('MaBoMon')->get();
+        $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
         // Danh sách tất cả các nhóm mà sinh viên này đang tham gia trong kỳ hiện tại
         $sinhVienAllGroups = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
@@ -108,7 +110,7 @@ class NhomController extends Controller
                 }
             }
 
-            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups'));
+            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy'));
         }
 
         // 2. KHI CHƯA CÓ NHÓM CHO MÔN NÀY:
@@ -170,7 +172,7 @@ class NhomController extends Controller
 
         $nhomsOpen = $queryNhoms->get();
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups') + ['NhomOpen' => $nhomsOpen]);
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**
@@ -178,46 +180,58 @@ class NhomController extends Controller
      */
     public function store(Request $request)
     {
-        $sinhVien = SinhVien::with('taiKhoan')->where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $request->validate([
+            'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
+            'MaBoMon'   => 'required|string',
+            'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
+        ], [
+            'MaHocKy.required'   => 'Vui lòng chọn học kỳ muốn tạo nhóm.',
+            'MaHocKy.exists'     => 'Học kỳ được chọn không hợp lệ trong hệ thống.',
+            'MaBoMon.required'   => 'Vui lòng chọn bộ môn hoặc khối học phần dùng chung.',
+            'MaHocPhan.required' => 'Vui lòng chọn học phần / môn học muốn tạo nhóm.',
+            'MaHocPhan.exists'   => 'Học phần được chọn không tồn tại trong hệ thống.',
+        ]);
 
-        $activePlan = \App\Services\PlanPhaseService::getActivePlan();
-        if (!$activePlan) {
-            $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
-            $maHocKy = $currentHk?->MaHocKy;
-            if (!$maHocKy) {
-                return redirect()->back()->withErrors('Hiện tại không có kế hoạch hoặc học kỳ khóa luận nào đang mở.');
+        $sinhVien = SinhVien::with('taiKhoan')->where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+        $hocKy = \App\Models\HocKy::findOrFail($request->MaHocKy);
+
+        // 1. Ràng buộc quan hệ: Môn học phải thuộc đúng Bộ môn / Khối đã chọn
+        if ($request->MaBoMon === 'DUNG_CHUNG') {
+            if (!empty($hocPhan->MaBoMon)) {
+                return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' thuộc chuyên ngành bộ môn, không phải học phần dùng chung!");
             }
         } else {
-            $maHocKy = $activePlan->MaHocKy;
+            if ($hocPhan->MaBoMon !== $request->MaBoMon) {
+                return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn đã chọn!");
+            }
         }
 
-        // Kiểm tra điều kiện làm khóa luận
+        $maHocKy = $request->MaHocKy;
+        $maHocPhan = $request->MaHocPhan;
+
+        // 2. Kiểm tra điều kiện xét duyệt học vụ của sinh viên
         $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'Đủ điều kiện')
             ->exists() || $sinhVien->isDuDieuKien();
 
         if (!$isEligible) {
-            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp để tạo nhóm!');
+            return redirect()->back()->withErrors('Bạn chưa đủ điều kiện xét duyệt học vụ để tạo nhóm!');
         }
 
-        $maHocPhan = $request->input('MaHocPhan') ?? $request->input('hoc_phan') ?? 'HP_KLCN';
-
-        // Kiểm tra SV đã ở trong nhóm nào chính thức của MÔN NÀY trong HỌC KỲ NÀY chưa
+        // 3. Kiểm tra SV đã ở trong nhóm nào chính thức của MÔN NÀY trong HỌC KỲ NÀY chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($maHocKy, $maHocPhan) {
-                $q->where('MaHocKy', $maHocKy);
-                if ($maHocPhan) {
-                    $q->where('MaHocPhan', $maHocPhan);
-                }
+                $q->where('MaHocKy', $maHocKy)->where('MaHocPhan', $maHocPhan);
             })
             ->exists();
 
         if ($alreadyInGroup) {
-            return redirect()->back()->withErrors('Bạn đã thuộc một nhóm của môn học này trong học kỳ này rồi!');
+            return redirect()->back()->withErrors("Bạn đã tham gia một nhóm của môn '{$hocPhan->TenHocPhan}' trong học kỳ {$hocKy->TenHocKy} rồi!");
         }
 
-        // Tên nhóm gán cứng mặc định là: "Nhóm " + MSSV
+        // Tên nhóm gán mặc định là: "Nhóm " + MSSV
         $mssv = $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV;
         $tenNhom = "Nhóm " . $mssv;
 
@@ -225,13 +239,12 @@ class NhomController extends Controller
             $maNhom = IdGenerator::nextNhom();
 
             Nhom::create([
-                'MaNhom'       => $maNhom,
-                'TenNhom'      => $tenNhom,
-                'MaTruongNhom' => $sinhVien->MaSV,
-                'TrangThai'    => 'Đang hoạt động',
-                'NgayTao'      => now(),
-                'MaHocKy'      => $maHocKy,
-                'MaHocPhan'    => $maHocPhan,
+                'MaNhom'    => $maNhom,
+                'TenNhom'   => $tenNhom,
+                'TrangThai' => 'Đang hoạt động',
+                'NgayTao'   => now(),
+                'MaHocKy'   => $maHocKy,
+                'MaHocPhan' => $maHocPhan,
             ]);
 
             ThanhVienNhom::create([
@@ -251,7 +264,8 @@ class NhomController extends Controller
                 ->delete();
         });
 
-        return redirect()->route('sinhvien.nhom.index', ['hoc_phan' => $maHocPhan])->with('success', "Khởi tạo '{$tenNhom}' thành công!");
+        return redirect()->route('sinhvien.nhom.index', ['hoc_phan' => $maHocPhan])
+            ->with('success', "Khởi tạo '{$tenNhom}' cho môn {$hocPhan->TenHocPhan} ({$hocKy->TenHocKy}) thành công!");
     }
 
     /**
