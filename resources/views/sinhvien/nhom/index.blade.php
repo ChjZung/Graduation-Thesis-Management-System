@@ -28,7 +28,7 @@
             @foreach($hocPhans as $hp)
             @php
                 $isActive = ($selectedHocPhan === $hp->MaHocPhan || $selectedHocPhan === $hp->TenHocPhan);
-                $hasGroupInHp = isset($sinhVienAllGroups) && $sinhVienAllGroups->contains(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLTN')));
+                $hasGroupInHp = isset($sinhVienAllGroups) && $sinhVienAllGroups->contains(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN')));
             @endphp
             <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan]) }}" 
                class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
@@ -58,7 +58,7 @@
         <div>
             <form action="{{ route('sinhvien.nhom.store') }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn tạo nhóm mới cho môn học này? Tên nhóm sẽ tự động được gán là Nhóm {{ $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV }}.');">
                 @csrf
-                <input type="hidden" name="MaHocPhan" value="{{ $selectedHocPhan ?? 'HP_KLTN' }}">
+                <input type="hidden" name="MaHocPhan" value="{{ $selectedHocPhan ?? 'HP_KLCN' }}">
                 <button type="submit" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm">
                     <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
                 </button>
@@ -235,7 +235,7 @@
                     <i class="fa-solid fa-circle-info me-2"></i>Nhóm của bạn chưa đăng ký Đề tài cho môn học này.
                 </div>
                 <div>
-                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLTN']) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
+                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLCN']) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
                         <i class="fa-solid fa-clipboard-list me-1"></i>Đăng Ký Đề Tài Ngay
                     </a>
                 </div>

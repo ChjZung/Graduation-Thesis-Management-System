@@ -132,7 +132,7 @@
                             <div class="small text-muted mb-1">{{ Str::limit($dt->MoTa, 90) }}</div>
                             <div class="d-flex flex-wrap gap-1 align-items-center">
                                 <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">
-                                    {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
+                                    {{ $dt->hocPhanRef->TenHocPhan ?? $dt->HocPhan ?? 'Khóa luận cử nhân' }}
                                 </span>
                                 @if($dt->LinhVuc)
                                     <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">{{ $dt->LinhVuc }}</span>

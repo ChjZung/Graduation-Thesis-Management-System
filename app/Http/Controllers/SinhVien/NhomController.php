@@ -46,7 +46,7 @@ class NhomController extends Controller
 
         $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
         if (!$selectedHocPhan) {
-            $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLTN';
+            $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLCN';
         }
 
         // 1. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo MÔN HỌC này trong kỳ hiện tại
@@ -200,7 +200,7 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Bạn chưa đủ điều kiện làm khóa luận tốt nghiệp để tạo nhóm!');
         }
 
-        $maHocPhan = $request->input('MaHocPhan') ?? $request->input('hoc_phan') ?? 'HP_KLTN';
+        $maHocPhan = $request->input('MaHocPhan') ?? $request->input('hoc_phan') ?? 'HP_KLCN';
 
         // Kiểm tra SV đã ở trong nhóm nào chính thức của MÔN NÀY trong HỌC KỲ NÀY chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)

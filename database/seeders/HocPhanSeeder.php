@@ -14,14 +14,14 @@ class HocPhanSeeder extends Seeder
         $hocPhans = [
             // 1. Học phần dùng chung (Khoa CNTT)
             [
-                'MaHocPhan'   => 'HP_KLTN',
-                'TenHocPhan'  => 'Khóa luận tốt nghiệp',
+                'MaHocPhan'   => 'HP_KLCN',
+                'TenHocPhan'  => 'Khóa luận cử nhân',
                 'SoTinChi'    => 10,
                 'MaKhoa'      => 'CNTT',
                 'MaBoMon'     => null, // Dùng chung
                 'LoaiHocPhan' => 'Khóa luận',
                 'TrangThai'   => 'Đang áp dụng',
-                'MoTa'        => 'Học phần khóa luận tốt nghiệp dùng chung cho sinh viên đủ điều kiện làm khóa luận.',
+                'MoTa'        => 'Học phần khóa luận cử nhân dùng chung cho toàn bộ sinh viên khoa CNTT đủ điều kiện làm khóa luận.',
             ],
             [
                 'MaHocPhan'   => 'HP_KLKS',
@@ -31,27 +31,7 @@ class HocPhanSeeder extends Seeder
                 'MaBoMon'     => null, // Dùng chung
                 'LoaiHocPhan' => 'Khóa luận',
                 'TrangThai'   => 'Đang áp dụng',
-                'MoTa'        => 'Học phần khóa luận kỹ sư định hướng công nghệ ứng dụng chuyên sâu.',
-            ],
-            [
-                'MaHocPhan'   => 'HP_DATN',
-                'TenHocPhan'  => 'Đồ án tốt nghiệp',
-                'SoTinChi'    => 4,
-                'MaKhoa'      => 'CNTT',
-                'MaBoMon'     => null, // Dùng chung
-                'LoaiHocPhan' => 'Đồ án',
-                'TrangThai'   => 'Đang áp dụng',
-                'MoTa'        => 'Đồ án tốt nghiệp cử nhân theo định hướng chuyên ngành.',
-            ],
-            [
-                'MaHocPhan'   => 'HP_DACN',
-                'TenHocPhan'  => 'Đồ án chuyên ngành',
-                'SoTinChi'    => 3,
-                'MaKhoa'      => 'CNTT',
-                'MaBoMon'     => null, // Dùng chung
-                'LoaiHocPhan' => 'Đồ án',
-                'TrangThai'   => 'Đang áp dụng',
-                'MoTa'        => 'Đồ án phát triển ứng dụng chuyên ngành theo nhóm sinh viên.',
+                'MoTa'        => 'Học phần khóa luận kỹ sư định hướng công nghệ ứng dụng chuyên sâu cho sinh viên khoa CNTT.',
             ],
 
             // 2. Bộ môn Công nghệ phần mềm (CNPM)
@@ -106,11 +86,11 @@ class HocPhanSeeder extends Seeder
             );
         }
 
-        // Cập nhật các nhóm và đề tài hiện có sang MaHocPhan mặc định là 'HP_KLTN' nếu chưa có
-        Nhom::whereNull('MaHocPhan')->update(['MaHocPhan' => 'HP_KLTN']);
-        DeTai::whereNull('MaHocPhan')->update([
-            'MaHocPhan' => 'HP_KLTN',
-            'HocPhan'   => 'Khóa luận tốt nghiệp'
+        // Cập nhật các nhóm và đề tài hiện có sang MaHocPhan mặc định là 'HP_KLCN' nếu chưa có
+        Nhom::whereNull('MaHocPhan')->orWhere('MaHocPhan', 'HP_KLTN')->update(['MaHocPhan' => 'HP_KLCN']);
+        DeTai::whereNull('MaHocPhan')->orWhere('MaHocPhan', 'HP_KLTN')->update([
+            'MaHocPhan' => 'HP_KLCN',
+            'HocPhan'   => 'Khóa luận cử nhân'
         ]);
     }
 }
