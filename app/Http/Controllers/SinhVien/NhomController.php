@@ -859,6 +859,7 @@ class NhomController extends Controller
     public function xacNhanLoiMoi($maNhom)
     {
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $nhom = Nhom::findOrFail($maNhom);
 
         // 1. Kiểm tra lời mời có tồn tại cho sinh viên này không
         $hasInvite = ThanhVienNhom::where('MaNhom', $maNhom)
@@ -870,9 +871,13 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Không tìm thấy lời mời này.');
         }
 
-        // 2. Kiểm tra SV đã thuộc nhóm khác chưa
+        // 2. Kiểm tra SV đã thuộc nhóm khác của môn này trong kỳ này chưa
         $alreadyInAnotherGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
+            ->whereHas('nhom', function($q) use ($nhom) {
+                if ($nhom->MaHocKy) $q->where('MaHocKy', $nhom->MaHocKy);
+                if ($nhom->MaHocPhan) $q->where('MaHocPhan', $nhom->MaHocPhan);
+            })
             ->exists();
 
         if ($alreadyInAnotherGroup) {
@@ -880,7 +885,7 @@ class NhomController extends Controller
                 ->where('MaSV', $sinhVien->MaSV)
                 ->where('TrangThai', 'cho_xac_nhan')
                 ->delete();
-            return redirect()->back()->withErrors('Bạn đã thuộc một nhóm khóa luận khác. Lời mời này đã được hủy tự động.');
+            return redirect()->back()->withErrors('Bạn đã thuộc một nhóm khóa luận của môn học này trong kỳ rồi. Lời mời này đã được hủy tự động.');
         }
 
         // 3. Kiểm tra số lượng thành viên hiện tại của nhóm
