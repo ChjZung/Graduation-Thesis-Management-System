@@ -118,10 +118,11 @@ class DatabaseSeeder extends Seeder
 
         // 7. Lớp
         DB::table('Lop')->insertOrIgnore([
-            ['MaLop' => '12DHTH01',  'TenLop' => '12DHTH01',  'KhoaHoc' => '2022-2026', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
-            ['MaLop' => '12DHTH02',  'TenLop' => '12DHTH02',  'KhoaHoc' => '2022-2026', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
-            ['MaLop' => '12DKTPM01', 'TenLop' => '12DKTPM01', 'KhoaHoc' => '2022-2026', 'MaNganh' => '7480103', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
-            ['MaLop' => '12DATTT01', 'TenLop' => '12DATTT01', 'KhoaHoc' => '2022-2026', 'MaNganh' => '7480202', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
+            ['MaLop' => '12DHTH01',  'TenLop' => '12DHTH01',  'KhoaHoc' => '2021-2025', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
+            ['MaLop' => '12DHTH02',  'TenLop' => '12DHTH02',  'KhoaHoc' => '2021-2025', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
+            ['MaLop' => '12DHTH03',  'TenLop' => '12DHTH03',  'KhoaHoc' => '2021-2025', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
+            ['MaLop' => '12DHTH04',  'TenLop' => '12DHTH04',  'KhoaHoc' => '2021-2025', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
+            ['MaLop' => '12DHTH05',  'TenLop' => '12DHTH05',  'KhoaHoc' => '2021-2025', 'MaNganh' => '7480201', 'MaKhoa' => 'CNTT', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // 8. Giáo Vụ / Admin
@@ -202,8 +203,8 @@ class DatabaseSeeder extends Seeder
 
         // 11. Học Kỳ
         DB::table('HocKy')->insertOrIgnore([
-            ['MaHocKy' => 'HK2526_1', 'TenHocKy' => 'Học kỳ 1 (2025-2026)', 'NamHoc' => '2025-2026', 'NgayDiHoc' => '2025-08-15', 'NgayKetThuc' => '2026-01-15', 'TrangThai' => 'Đã kết thúc', 'created_at' => $now, 'updated_at' => $now],
-            ['MaHocKy' => 'HK2526_2', 'TenHocKy' => 'Học kỳ 2 (2025-2026)', 'NamHoc' => '2025-2026', 'NgayDiHoc' => '2026-01-15', 'NgayKetThuc' => '2026-06-30', 'TrangThai' => 'Đang diễn ra', 'created_at' => $now, 'updated_at' => $now],
+            ['MaHocKy' => 'HK2526_1', 'TenHocKy' => 'Học kỳ 1', 'NamHoc' => '2025-2026', 'NgayDiHoc' => '2025-08-15', 'NgayKetThuc' => '2026-01-15', 'TrangThai' => 'Đã kết thúc', 'created_at' => $now, 'updated_at' => $now],
+            ['MaHocKy' => 'HK2526_2', 'TenHocKy' => 'Học kỳ 2', 'NamHoc' => '2025-2026', 'NgayDiHoc' => '2026-01-15', 'NgayKetThuc' => '2026-06-30', 'TrangThai' => 'Đang diễn ra', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // 12. Danh Sách SV Đủ Điều Kiện (BR03)

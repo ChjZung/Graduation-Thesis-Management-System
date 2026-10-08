@@ -56,6 +56,14 @@ class LopController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->filled('TenLop')) {
+            $tenLop = trim($request->TenLop);
+            $existing = Lop::where('TenLop', $tenLop)->orWhere('MaLop', $tenLop)->first();
+            if ($existing && $existing->created_at && $existing->created_at->diffInSeconds(now()) < 10) {
+                return redirect()->route('lop.index')->with('success', "Thêm lớp '{$tenLop}' thành công!");
+            }
+        }
+
         $request->validate([
             'TenLop' => 'required|string|max:100|unique:Lop,TenLop|unique:Lop,MaLop',
             'MaNganh' => 'required|exists:Nganh,MaNganh',

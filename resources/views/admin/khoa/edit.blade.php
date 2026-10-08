@@ -12,11 +12,6 @@
                 </div>
             </div>
             <div class="card-body p-4 p-md-5">
-                @if(isset($errors) && $errors->any())
-                <div class="alert alert-danger p-3 rounded-3 mb-4">
-                    <ul class="mb-0 small">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-                </div>
-                @endif
 
                 <form method="POST" action="{{ route('khoa.update', $khoa->MaKhoa) }}">
                     @csrf
@@ -36,12 +31,26 @@
 
 
 
-                    <div class="mb-4">
-                        <label class="form-label-huit">Trạng Thái Hoạt Động Hệ Thống</label>
-                        <select name="TrangThai" class="form-select form-select-huit">
-                            <option value="Active" selected>🟢 Hoạt động bình thường (Active)</option>
-                            <option value="Inactive">🔴 Tạm ngưng</option>
-                        </select>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label-huit">Trưởng Khoa Quản Lý</label>
+                            <select name="TruongKhoa" class="form-select form-select-huit">
+                                <option value="">-- Chưa phân công / Chọn Giảng viên --</option>
+                                @foreach($giangViens as $gv)
+                                    <option value="{{ $gv->HoTen }}" {{ old('TruongKhoa', $khoa->TruongKhoa) === $gv->HoTen ? 'selected' : '' }}>
+                                        {{ $gv->HoTen }} ({{ $gv->MaGV }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text text-muted small mt-1">Cán bộ phụ trách quản lý công tác đào tạo khoa</div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label-huit">Trạng Thái Hoạt Động</label>
+                            <select name="TrangThai" class="form-select form-select-huit">
+                                <option value="Active" selected>🟢 Hoạt động (Active)</option>
+                                <option value="Inactive">🔴 Tạm ngưng</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="card-footer-huit mx-n4 mb-n4 mt-5">

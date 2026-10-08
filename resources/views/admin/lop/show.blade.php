@@ -30,64 +30,66 @@
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 admin-kpi-card kpi-blue">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-medium">Sĩ Số Lớp</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">{{ $stats['total_sv'] }}</div>
-                        <div class="small text-muted mt-1">Sinh viên chính quy</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Sĩ Số Lớp</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-user-graduate fs-5"></i>
                     </div>
-                    <div class="kpi-icon-circle bg-primary-subtle text-primary">
-                        <i class="fa-solid fa-user-graduate"></i>
-                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_sv'] }}</span>
+                    <span class="small text-muted fw-medium">sinh viên</span>
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 admin-kpi-card kpi-green">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-medium">Đủ ĐK Khóa Luận</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">{{ $stats['sv_du_dk'] }}</div>
-                        <div class="small text-success mt-1 fw-medium"><i class="fa-solid fa-check me-1"></i>Tích lũy &ge; 115 TC</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Đủ ĐK Khóa Luận</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-circle-check fs-5"></i>
                     </div>
-                    <div class="kpi-icon-circle bg-success-subtle text-success">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $stats['sv_du_dk'] }}</span>
+                    <span class="small text-muted fw-medium">&ge; 115 tín chỉ</span>
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 admin-kpi-card kpi-orange">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-medium">Chưa Đủ Điều Kiện</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">{{ $stats['sv_chua_du_dk'] }}</div>
-                        <div class="small text-warning mt-1 fw-medium"><i class="fa-solid fa-clock me-1"></i>Dưới 115 tín chỉ</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Chưa Đủ ĐK</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
                     </div>
-                    <div class="kpi-icon-circle bg-warning-subtle text-warning">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-warning lh-1">{{ $stats['sv_chua_du_dk'] }}</span>
+                    <span class="small text-muted fw-medium">&lt; 115 tín chỉ</span>
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 admin-kpi-card kpi-cyan">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-medium">Tỷ Lệ Đạt Chuẩn</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">{{ $stats['pct_du_dk'] }}%</div>
-                        <div class="small text-muted mt-1">Đủ chuẩn làm KLTN</div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tỷ Lệ Đạt Chuẩn</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-chart-pie fs-5"></i>
                     </div>
-                    <div class="kpi-icon-circle bg-info-subtle text-info">
-                        <i class="fa-solid fa-chart-pie"></i>
-                    </div>
+                </div>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-3 fw-bold text-primary lh-1">{{ $stats['pct_du_dk'] }}%</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        Làm KLTN
+                    </span>
                 </div>
             </div>
         </div>

@@ -17,14 +17,64 @@
                 </div>
                 @endif
 
-                @if(in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Từ chối']) && $detai->LyDoTuChoi)
+                <!-- Trạng Thái Hiện Tại Của Đề Tài (Đồng bộ, nổi bật, chuyên nghiệp) -->
+                @php
+                    $tt = trim($detai->TrangThai ?? 'Chờ duyệt');
+                    $statusConfig = [
+                        'Chờ duyệt cấp Bộ môn' => ['class' => 'bg-warning-subtle text-warning-emphasis border-warning-subtle', 'icon' => 'fa-solid fa-clock', 'desc' => 'Đang chờ Trưởng bộ môn thẩm định nội dung.'],
+                        'Chờ duyệt cấp Khoa'   => ['class' => 'bg-info-subtle text-info border-info-subtle', 'icon' => 'fa-solid fa-paper-plane', 'desc' => 'Bộ môn đã thông qua, đang chờ Ban chủ nhiệm Khoa phê duyệt.'],
+                        'Trưởng khoa đã duyệt - Chờ nộp đề cương' => ['class' => 'bg-primary-subtle text-primary border-primary-subtle', 'icon' => 'fa-solid fa-file-arrow-up', 'desc' => 'Đề tài đã duyệt thông qua tên, vui lòng tải lên Đề cương chi tiết.'],
+                        'Đã nộp đề cương - Chờ phân công PB' => ['class' => 'bg-info-subtle text-info border-info-subtle', 'icon' => 'fa-solid fa-file-shield', 'desc' => 'Đã nộp đề cương, đang chờ Trưởng bộ môn phân công CB phản biện.'],
+                        'Đang phản biện đề cương' => ['class' => 'bg-primary-subtle text-primary border-primary-subtle', 'icon' => 'fa-solid fa-spinner fa-spin', 'desc' => 'Cán bộ phản biện đang tiến hành thẩm định đề cương.'],
+                        'Đã cập nhật đề cương - Chờ phản biện lại' => ['class' => 'bg-primary text-white', 'icon' => 'fa-solid fa-rotate', 'desc' => 'Đã nộp lại đề cương chỉnh sửa, chờ phản biện lại.'],
+                        'Yêu cầu chỉnh sửa đề cương' => ['class' => 'bg-warning text-dark border-warning', 'icon' => 'fa-solid fa-triangle-exclamation', 'desc' => 'Phản biện yêu cầu bổ sung/chỉnh sửa lại đề cương chi tiết.'],
+                        'Yêu cầu điều chỉnh'   => ['class' => 'bg-warning text-dark border-warning', 'icon' => 'fa-solid fa-wrench', 'desc' => 'Cần điều chỉnh lại thông tin đề tài theo góp ý của Hội đồng / Bộ môn.'],
+                        'Yêu cầu chỉnh sửa'    => ['class' => 'bg-warning text-dark border-warning', 'icon' => 'fa-solid fa-wrench', 'desc' => 'Cần điều chỉnh lại thông tin đề tài theo góp ý của Hội đồng / Bộ môn.'],
+                        'Đã duyệt'             => ['class' => 'bg-success-subtle text-success border-success-subtle', 'icon' => 'fa-solid fa-circle-check', 'desc' => 'Đề tài đã được phê duyệt chính thức.'],
+                        'Trưởng khoa đã duyệt' => ['class' => 'bg-success-subtle text-success border-success-subtle', 'icon' => 'fa-solid fa-circle-check', 'desc' => 'Đề tài đã được Trưởng khoa phê duyệt hoàn tất.'],
+                        'Đã công bố'           => ['class' => 'bg-success text-white', 'icon' => 'fa-solid fa-bullhorn', 'desc' => 'Đề tài đã công bố để sinh viên đăng ký.'],
+                        'Từ chối'              => ['class' => 'bg-danger text-white', 'icon' => 'fa-solid fa-circle-xmark', 'desc' => 'Đề tài không được duyệt hoặc đã bị từ chối.'],
+                        'Không đạt phản biện'  => ['class' => 'bg-danger text-white', 'icon' => 'fa-solid fa-circle-xmark', 'desc' => 'Đề cương không đạt yêu cầu phản biện.'],
+                    ];
+                    $currentConfig = $statusConfig[$tt] ?? ['class' => 'bg-secondary text-white', 'icon' => 'fa-solid fa-circle-info', 'desc' => 'Trạng thái hiện tại của đề tài trong hệ thống.'];
+                @endphp
+
+                <div class="card border rounded-3 shadow-sm mb-4 bg-light-subtle">
+                    <div class="card-body p-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border shadow-xs text-primary" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-secondary-subtle text-dark border px-2 py-1 font-monospace">{{ $detai->MaDeTai }}</span>
+                                        <span class="small text-muted">Học kỳ: <strong>{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}</strong></span>
+                                        @if($detai->NgayDeXuat)
+                                            <span class="small text-muted">&bull; Ngày gửi: {{ \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="small text-secondary">{{ $currentConfig['desc'] }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-end small text-muted mb-1 fw-semibold">Trạng thái đề tài:</div>
+                                <span class="badge {{ $currentConfig['class'] }} border rounded-pill px-3 py-2 fs-6 shadow-xs">
+                                    <i class="{{ $currentConfig['icon'] }} me-1"></i> {{ $tt }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if(in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện']) && $detai->LyDoTuChoi)
                 <div class="alert alert-warning border-warning d-flex align-items-start mb-4 rounded-3 shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation text-warning fs-4 me-3 mt-1"></i>
                     <div>
-                        <div class="fw-bold text-dark">Ý kiến phản hồi / Yêu cầu điều chỉnh từ Giáo vụ:</div>
+                        <div class="fw-bold text-dark">Ý kiến phản hồi / Lý do yêu cầu chỉnh sửa:</div>
                         <div class="text-danger mt-1 fw-semibold">{{ $detai->LyDoTuChoi }}</div>
                         <div class="small text-muted mt-2">
-                            <i class="fa-solid fa-circle-info me-1"></i>Sau khi quý Thầy/Cô chỉnh sửa và bấm <strong>"Cập Nhật & Nộp Lại Đề Tài"</strong>, đề tài sẽ tự động chuyển về trạng thái <strong>"Chờ duyệt"</strong> để Giáo vụ xem xét lại.
+                            <i class="fa-solid fa-circle-info me-1"></i>Sau khi quý Thầy/Cô chỉnh sửa và bấm <strong>"Cập Nhật & Nộp Lại Đề Tài"</strong>, đề tài sẽ tự động được gửi lại để xem xét phê duyệt.
                         </div>
                     </div>
                 </div>
@@ -34,9 +84,9 @@
                 <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center justify-content-between rounded-3 border">
                     <div>
                         <i class="fa-solid fa-building-user me-2 text-primary"></i>
-                        Giảng viên: <strong>{{ $gv->HoTen }}</strong> — Trực thuộc: <span class="badge bg-primary fs-7">{{ $gv->boMon->TenBoMon }}</span>
+                        Giảng viên: <strong>{{ $gv->HoTen }}</strong> &mdash; Bộ môn: <span class="badge bg-primary fs-7">{{ $gv->boMon->TenBoMon }}</span>
                     </div>
-                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần được lọc theo bộ môn trực thuộc & khóa luận dùng chung</span>
+                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần tự động lọc theo bộ môn trực thuộc</span>
                 </div>
                 @endif
 

@@ -305,14 +305,39 @@ class ExcelImportService
             } catch (\Throwable $e) {}
         }
 
-        // Try standard format patterns
-        $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'Y/m/d', 'm/d/Y'];
-        foreach ($formats as $fmt) {
-            $d = \DateTime::createFromFormat($fmt, $valStr);
-            if ($d && $d->format($fmt) === $valStr) {
-                return $d->format('Y-m-d');
+        // Tự động nhận diện trường hợp ngày > 12 hoặc tháng > 12 (ví dụ 1/15/2025 hay 20/7/2026)
+        if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $valStr, $m)) {
+            $p1 = (int)$m[1];
+            $p2 = (int)$m[2];
+            $year = (int)$m[3];
+            if ($p1 > 12 && $p2 <= 12) {
+                return sprintf('%04d-%02d-%02d', $year, $p2, $p1); // d/m/Y
             }
+            if ($p2 > 12 && $p1 <= 12) {
+                return sprintf('%04d-%02d-%02d', $year, $p1, $p2); // m/d/Y
+            }
+            // Mặc định Việt Nam: ưu tiên Ngày / Tháng / Năm
+            return sprintf('%04d-%02d-%02d', $year, $p2, $p1);
         }
+
+        // Thử các định dạng chuẩn
+        $formats = [
+            'Y-m-d', 'Y/m/d',
+            'd/m/Y', 'j/n/Y', 'd-m-Y', 'j-n-Y',
+            'm/d/Y', 'n/j/Y', 'm-d-Y', 'n-j-Y'
+        ];
+        foreach ($formats as $fmt) {
+            try {
+                $d = \DateTime::createFromFormat('!' . $fmt, $valStr);
+                if ($d && $d->format($fmt) === $valStr) {
+                    return $d->format('Y-m-d');
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        try {
+            return \Carbon\Carbon::parse($valStr)->format('Y-m-d');
+        } catch (\Throwable $e) {}
 
         $ts = strtotime(str_replace('/', '-', $valStr));
         if ($ts !== false && $ts > 0) {
@@ -361,7 +386,26 @@ class ExcelImportService
         if (empty($val)) return null;
         $valStr = trim((string)$val);
         if (HocKy::where('MaHocKy', $valStr)->exists()) return $valStr;
-        return HocKy::where('TenHocKy', 'LIKE', '%' . $valStr . '%')->value('MaHocKy');
+
+        // Nếu chuỗi chứa số năm học dạng (2024-2025)
+        if (preg_match('/(\d{4}[-\/]\d{4})/', $valStr, $matches)) {
+            $namHoc = str_replace('/', '-', $matches[1]);
+            $tenHK = trim(preg_replace('/\s*[\(\[]?\d{4}[-\/]\d{4}[\)\]]?/', '', $valStr));
+            $found = HocKy::where('NamHoc', 'LIKE', "%{$namHoc}%")
+                ->where('TenHocKy', 'LIKE', "%{$tenHK}%")
+                ->value('MaHocKy');
+            if ($found) return $found;
+        }
+
+        // Ưu tiên học kỳ đang diễn ra, sau đó là học kỳ mới nhất
+        $activeMatch = HocKy::where('TenHocKy', 'LIKE', '%' . $valStr . '%')
+            ->where('TrangThai', 'Đang diễn ra')
+            ->value('MaHocKy');
+        if ($activeMatch) return $activeMatch;
+
+        return HocKy::where('TenHocKy', 'LIKE', '%' . $valStr . '%')
+            ->orderByDesc('MaHocKy')
+            ->value('MaHocKy');
     }
 
     private function resolveGiangVienId($val)
@@ -1485,6 +1529,15 @@ class ExcelImportService
                 $seenMaHK[] = mb_strtolower($maHocKy);
             }
 
+            $rawStatus = mb_strtolower($trangThai);
+            if (in_array($rawStatus, ['da ket thuc', 'đã kết thúc', '0', 'completed', 'ended', 'closed'])) {
+                $standardStatus = 'Đã kết thúc';
+            } elseif (in_array($rawStatus, ['chua bat dau', 'chưa bắt đầu', 'upcoming'])) {
+                $standardStatus = 'Chưa bắt đầu';
+            } else {
+                $standardStatus = 'Đang diễn ra';
+            }
+
             $validItems[] = [
                 'MaHocKy'     => $maHocKy,
                 'TenHocKy'    => $tenHocKy,
@@ -1492,7 +1545,7 @@ class ExcelImportService
                 'NgayDiHoc'   => $ngayBatDau,
                 'NgayBatDau'  => $ngayBatDau,
                 'NgayKetThuc' => $ngayKetThuc,
-                'TrangThai'   => !empty($trangThai) ? $trangThai : 'Đang diễn ra',
+                'TrangThai'   => $standardStatus,
             ];
         }
 

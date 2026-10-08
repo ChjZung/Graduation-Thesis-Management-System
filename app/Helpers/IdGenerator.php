@@ -63,17 +63,45 @@ class IdGenerator
     }
 
     /**
-     * Sinh mã Học kỳ: HK01, HK02...
+     * Sinh mã Học kỳ đồng dạng với dữ liệu chuẩn hệ thống: HK + YY + YY + '_' + kỳ (Ví dụ: HK2627_1, HK2627_2)
      */
-    public static function nextHocKy(): string
+    public static function nextHocKy(?string $namHoc = null, ?string $tenHocKy = null): string
     {
-        return DB::transaction(function () {
-            $max = DB::table('HocKy')
-                ->where('MaHocKy', 'LIKE', 'HK%')
-                ->max(DB::raw("CAST(SUBSTRING(MaHocKy, 3) AS UNSIGNED)"));
-            $next = ($max ?? 0) + 1;
-            return 'HK' . str_pad($next, 2, '0', STR_PAD_LEFT);
-        });
+        $kyNum = '1';
+        if (!empty($tenHocKy) && preg_match('/(\d+)/', $tenHocKy, $m)) {
+            $kyNum = $m[1];
+        }
+
+        $codeYear = '';
+        if (!empty($namHoc) && preg_match('/(\d{4})[^\d](\d{4})/', $namHoc, $m)) {
+            $codeYear = substr($m[1], -2) . substr($m[2], -2);
+        } else {
+            $currentYear = (int)date('Y');
+            $codeYear = substr((string)$currentYear, -2) . substr((string)($currentYear + 1), -2);
+        }
+
+        $baseCode = 'HK' . $codeYear . '_' . $kyNum;
+        if (!DB::table('HocKy')->where('MaHocKy', $baseCode)->exists()) {
+            return $baseCode;
+        }
+
+        $cand2 = 'HK' . $codeYear . '_2';
+        if (!DB::table('HocKy')->where('MaHocKy', $cand2)->exists()) {
+            return $cand2;
+        }
+
+        $nextYear = (int)substr($codeYear, 0, 2) + 1;
+        $nextYearEnd = $nextYear + 1;
+        $candNext = 'HK' . str_pad($nextYear, 2, '0', STR_PAD_LEFT) . str_pad($nextYearEnd, 2, '0', STR_PAD_LEFT) . '_1';
+        if (!DB::table('HocKy')->where('MaHocKy', $candNext)->exists()) {
+            return $candNext;
+        }
+
+        $idx = 3;
+        while (DB::table('HocKy')->where('MaHocKy', 'HK' . $codeYear . '_' . $idx)->exists()) {
+            $idx++;
+        }
+        return 'HK' . $codeYear . '_' . $idx;
     }
 
     /**

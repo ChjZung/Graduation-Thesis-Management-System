@@ -25,13 +25,20 @@ class HocKyController extends Controller
         }
 
         if ($request->filled('trang_thai')) {
-            $query->where('TrangThai', $request->trang_thai);
+            $tt = trim($request->trang_thai);
+            if ($tt === '1') {
+                $query->whereIn('TrangThai', ['1', 'Đang diễn ra', 'Hoạt động']);
+            } elseif ($tt === '0') {
+                $query->whereIn('TrangThai', ['0', 'Đã kết thúc']);
+            } else {
+                $query->where('TrangThai', $tt);
+            }
         }
 
         $hockys = $query->paginate(5)->withQueryString();
 
         $totalHocky = HocKy::count();
-        $activeHk = HocKy::where('TrangThai', 1)->latest('created_at')->first();
+        $activeHk = HocKy::whereIn('TrangThai', ['1', 'Đang diễn ra', 'Hoạt động'])->latest('created_at')->first();
         $totalSv = $activeHk ? $activeHk->danhSachSVDuDieuKiens()->count() : \App\Models\SinhVien::count();
 
         $stats = [
@@ -42,7 +49,11 @@ class HocKyController extends Controller
             'status' => 'Ổn Định 100%',
         ];
 
-        return view('admin.hocky.index', compact('hockys', 'stats'));
+        $latestHk = HocKy::latest('created_at')->first();
+        $suggestedNamHoc = $latestHk ? $latestHk->NamHoc : '2026-2027';
+        $suggestedMaHk = IdGenerator::nextHocKy($suggestedNamHoc, 'Học kỳ 1');
+
+        return view('admin.hocky.index', compact('hockys', 'stats', 'suggestedMaHk', 'suggestedNamHoc'));
     }
 
     public function create()
@@ -65,6 +76,19 @@ class HocKyController extends Controller
             }
         }
 
+        $candidateMa = $request->filled('MaHocKy') ? strtoupper(trim($request->MaHocKy)) : null;
+
+        // Xử lý chống trùng lặp do double-click / resubmission
+        if ($candidateMa) {
+            $existing = HocKy::where('MaHocKy', $candidateMa)->first();
+            if ($existing) {
+                // Nếu bản ghi này vừa được tạo cách đây dưới 10 giây (double-click submit)
+                if ($existing->created_at && $existing->created_at->diffInSeconds(now()) <= 10) {
+                    return redirect()->route('hocky.index')->with('success', "Thêm học kỳ '{$existing->TenHocKy}' ({$existing->MaHocKy}) thành công!");
+                }
+            }
+        }
+
         $request->validate([
             'MaHocKy' => 'nullable|string|max:10|unique:HocKy,MaHocKy',
             'TenHocKy' => 'required|string|max:100',
@@ -72,7 +96,7 @@ class HocKyController extends Controller
             'NgayBatDau' => 'required|date',
             'NgayKetThuc' => 'required|date|after_or_equal:NgayBatDau'
         ], [
-            'MaHocKy.unique' => 'Mã học kỳ đã tồn tại.',
+            'MaHocKy.unique' => 'Mã học kỳ đã tồn tại trong hệ thống. Vui lòng chọn mã khác.',
             'TenHocKy.required' => 'Vui lòng nhập tên học kỳ.',
             'NamHoc.required' => 'Vui lòng nhập năm học.',
             'NgayBatDau.required' => 'Vui lòng chọn ngày bắt đầu.',
@@ -80,7 +104,15 @@ class HocKyController extends Controller
             'NgayKetThuc.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.'
         ]);
 
-        $maHK = $request->filled('MaHocKy') ? strtoupper(trim($request->MaHocKy)) : IdGenerator::nextHocKy();
+        $maHK = $candidateMa ?: IdGenerator::nextHocKy($request->NamHoc, $request->TenHocKy);
+
+        $trangThai = 'Đang diễn ra';
+        if ($request->filled('TrangThai')) {
+            $tt = trim($request->TrangThai);
+            if ($tt === '0' || $tt === 'Đã kết thúc') $trangThai = 'Đã kết thúc';
+            elseif ($tt === 'UPCOMING' || $tt === 'Chưa bắt đầu') $trangThai = 'Chưa bắt đầu';
+            else $trangThai = 'Đang diễn ra';
+        }
 
         HocKy::create([
             'MaHocKy' => $maHK,
@@ -88,10 +120,10 @@ class HocKyController extends Controller
             'NamHoc' => trim($request->NamHoc),
             'NgayBatDau' => $request->NgayBatDau,
             'NgayKetThuc' => $request->NgayKetThuc,
-            'TrangThai' => true,
+            'TrangThai' => $trangThai,
         ]);
 
-        return redirect()->route('hocky.index')->with('success', "Thêm học kỳ '{$request->TenHocKy}' thành công!");
+        return redirect()->route('hocky.index')->with('success', "Thêm học kỳ '{$request->TenHocKy}' ({$maHK}) thành công!");
     }
 
     public function show($id)
@@ -136,15 +168,29 @@ class HocKyController extends Controller
             'NgayKetThuc.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.'
         ]);
 
+        $trangThai = $hocky->TrangThai;
+        if ($request->filled('TrangThai')) {
+            $tt = trim($request->TrangThai);
+            if ($tt === '0' || $tt === 'Đã kết thúc') {
+                $trangThai = 'Đã kết thúc';
+            } elseif ($tt === 'UPCOMING' || $tt === 'Chưa bắt đầu') {
+                $trangThai = 'Chưa bắt đầu';
+            } elseif ($tt === '1' || $tt === 'Đang diễn ra' || $tt === 'Hoạt động') {
+                $trangThai = 'Đang diễn ra';
+            } else {
+                $trangThai = $tt;
+            }
+        }
+
         $hocky->update([
             'TenHocKy' => trim($request->TenHocKy),
             'NamHoc' => trim($request->NamHoc),
             'NgayBatDau' => $request->NgayBatDau,
             'NgayKetThuc' => $request->NgayKetThuc,
-            'TrangThai' => $request->has('TrangThai') ? (bool)$request->TrangThai : $hocky->TrangThai,
+            'TrangThai' => $trangThai,
         ]);
 
-        return redirect()->route('hocky.index')->with('success', 'Cập nhật học kỳ thành công!');
+        return redirect()->route('hocky.index')->with('success', "Cập nhật học kỳ '{$hocky->TenHocKy}' thành công!");
     }
 
     public function destroy($id)

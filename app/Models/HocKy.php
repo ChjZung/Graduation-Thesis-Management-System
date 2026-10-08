@@ -37,6 +37,11 @@ class HocKy extends Model
         $this->attributes['NgayDiHoc'] = $value;
     }
 
+    public function getTenDayDuAttribute(): string
+    {
+        return $this->TenHocKy . ($this->NamHoc ? ' (' . $this->NamHoc . ')' : '');
+    }
+
     public function deTais()
     {
         return $this->hasMany(DeTai::class, 'MaHocKy', 'MaHocKy');

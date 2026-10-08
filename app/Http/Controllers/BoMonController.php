@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\IdGenerator;
 use App\Models\BoMon;
 use App\Models\Khoa;
+use App\Models\GiangVien;
 use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
 
@@ -48,7 +49,9 @@ class BoMonController extends Controller
             'status' => '100%',
         ];
 
-        return view('admin.bomon.index', compact('bomons', 'khoas', 'stats', 'giangViens'));
+        $suggestedMaBoMon = IdGenerator::nextBoMon();
+
+        return view('admin.bomon.index', compact('bomons', 'khoas', 'stats', 'giangViens', 'suggestedMaBoMon'));
     }
 
     public function create()
@@ -65,6 +68,14 @@ class BoMonController extends Controller
         }
         if ($request->filled('MaBoMon')) {
             $request->merge(['MaBoMon' => strtoupper(trim($request->MaBoMon))]);
+        }
+
+        // Kiểm tra chống trùng lặp do double click submit
+        if ($request->filled('MaBoMon')) {
+            $existing = BoMon::where('MaBoMon', $request->MaBoMon)->first();
+            if ($existing && $existing->created_at && $existing->created_at->diffInSeconds(now()) < 10) {
+                return redirect()->route('bomon.index')->with('success', "Thêm bộ môn '{$existing->TenBoMon}' thành công!");
+            }
         }
 
         $request->validate([
@@ -112,7 +123,42 @@ class BoMonController extends Controller
             'total_detai'  => $totalDeTai,
         ];
 
-        return view('admin.bomon.show', compact('bomon', 'stats'));
+        $otherGiangViens = GiangVien::where(function($q) use ($id) {
+            $q->where('MaBoMon', '!=', $id)->orWhereNull('MaBoMon');
+        })->with('boMon')->orderBy('HoTen')->get();
+
+        return view('admin.bomon.show', compact('bomon', 'stats', 'otherGiangViens'));
+    }
+
+    public function assignLecturer(Request $request, $id)
+    {
+        $bomon = BoMon::findOrFail($id);
+        $request->validate([
+            'MaGV' => 'required|array',
+            'MaGV.*' => 'exists:GiangVien,MaGV',
+        ], [
+            'MaGV.required' => 'Vui lòng chọn ít nhất một giảng viên để gán vào bộ môn.',
+            'MaGV.*.exists' => 'Giảng viên đã chọn không tồn tại.',
+        ]);
+
+        GiangVien::whereIn('MaGV', $request->MaGV)->update(['MaBoMon' => $bomon->MaBoMon]);
+
+        return redirect()->route('bomon.show', $bomon->MaBoMon)->with('success', 'Đã phân bổ ' . count($request->MaGV) . " giảng viên vào bộ môn '{$bomon->TenBoMon}' thành công!");
+    }
+
+    public function removeLecturer($id, $magv)
+    {
+        $bomon = BoMon::findOrFail($id);
+        $gv = GiangVien::where('MaBoMon', $bomon->MaBoMon)->where('MaGV', $magv)->firstOrFail();
+        $gv->update(['MaBoMon' => null]);
+
+        return redirect()->route('bomon.show', $bomon->MaBoMon)->with('success', "Đã gỡ giảng viên '{$gv->HoTen}' khỏi bộ môn!");
+    }
+
+    public function importLecturers(Request $request, $id)
+    {
+        $bomon = BoMon::findOrFail($id);
+        return $this->runImport($request, 'importGiangVien', [], "Giảng viên bộ môn '{$bomon->TenBoMon}'");
     }
 
     public function edit($id)
