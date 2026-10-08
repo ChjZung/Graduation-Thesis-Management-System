@@ -4,6 +4,28 @@
 
 @section('content')
 
+<!-- TIẾN ĐỘ THỜI GIAN ĐĂNG KÝ THEO KẾ HOẠCH -->
+@if(isset($regState))
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="border-left: 5px solid {{ $regState['code'] === 'DANG_KY_CHINH_THUC' ? '#10b981' : ($regState['code'] === 'DANG_KY_BO_SUNG' ? '#f59e0b' : ($regState['code'] === 'KHOA_TAM_THOI' ? '#ef4444' : '#6b7280')) }} !important;">
+    <div class="card-body p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="fs-2">{{ $regState['code'] === 'DANG_KY_CHINH_THUC' ? '🟢' : ($regState['code'] === 'DANG_KY_BO_SUNG' ? '🔄' : ($regState['code'] === 'KHOA_TAM_THOI' ? '🔒' : '⏳')) }}</span>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge {{ $regState['badge'] }} rounded-pill px-3 py-1 fs-6">{{ $regState['label'] }}</span>
+                    <span class="text-muted small">| Học kỳ: <strong>{{ $hocKies->firstWhere('MaHocKy', $selectedHocKy)->TenHocKy ?? 'Hiện tại' }}</strong></span>
+                </div>
+                <div class="text-dark mt-1 fw-medium" style="font-size: 0.92rem;">{{ $regState['message'] }}</div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-3">
+                <i class="fa-solid fa-clock me-1 text-primary"></i>Giờ hệ thống: <strong>{{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</strong>
+            </span>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- THÔNG TIN NHÓM SINH VIÊN -->
 @if(isset($nhom) && $nhom)
@@ -230,7 +252,11 @@
                                     <i class="fa-solid fa-lock me-1"></i>Đã Có Nhóm Đăng Ký
                                 </button>
                             @elseif(isset($nhom) && $nhom)
-                                @if($nhom->MaTruongNhom !== $sinhVien->MaSV)
+                                @if(isset($regState) && !$regState['can_register'])
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="{{ $regState['message'] }}">
+                                        <i class="fa-solid fa-lock me-1"></i>{{ $regState['label'] }}
+                                    </button>
+                                @elseif($nhom->MaTruongNhom !== $sinhVien->MaSV)
                                     <span class="text-muted small">Chỉ Trưởng nhóm mới có quyền đăng ký</span>
                                 @elseif($hasActiveRegistration)
                                     <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm của bạn đã đăng ký một đề tài khác rồi">
@@ -244,8 +270,8 @@
                                     <form action="{{ route('sinhvien.dangky.store') }}" method="POST" class="d-inline">
                                         @csrf
                                         <input type="hidden" name="MaDeTai" value="{{ $dt->MaDeTai }}">
-                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn đại diện nhóm đăng ký đề tài {{ $dt->TenDeTai }}? Sau khi đăng ký, đề tài sẽ được gán trực tiếp cho nhóm.');">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i>Đăng Ký
+                                        <button type="submit" class="btn btn-sm {{ isset($regState) && $regState['is_supplementary'] ? 'btn-warning text-dark' : 'btn-primary' }} rounded-pill px-3 fw-bold shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn đại diện nhóm đăng ký đề tài {{ $dt->TenDeTai }}? Sau khi đăng ký, đề tài sẽ được gán trực tiếp cho nhóm.');">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>{{ isset($regState) && $regState['is_supplementary'] ? 'Đăng Ký Bổ Sung' : 'Đăng Ký' }}
                                         </button>
                                     </form>
                                 @endif

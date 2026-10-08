@@ -136,7 +136,7 @@
                 <select name="MaHocKy" class="form-select rounded-pill" onchange="this.form.submit()">
                     @foreach($hocKys as $hk)
                         <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }} - {{ $hk->NamHoc }}
+                            {{ $hk->TenHocKy }}
                         </option>
                     @endforeach
                 </select>
@@ -311,7 +311,7 @@
                         <select name="MaHocKy" class="form-select" required>
                             @foreach($hocKys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} - {{ $hk->NamHoc }}
+                                    {{ $hk->TenHocKy }}
                                 </option>
                             @endforeach
                         </select>

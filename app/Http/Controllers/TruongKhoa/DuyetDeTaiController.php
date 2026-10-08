@@ -41,7 +41,7 @@ class DuyetDeTaiController extends Controller
 
         // Danh sách học kỳ
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? $hocKies->first();
+        $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->orderBy('MaHocKy', 'desc')->first() ?? $hocKies->first();
         $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy ?? '');
 
         // Các dropdown lọc theo Khoa

@@ -21,10 +21,19 @@ class PhanBienDeCuongController extends Controller
             abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
         }
 
+        // Danh sách học kỳ
+        $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $currentHocKy = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->orderBy('MaHocKy', 'desc')->first() ?? $hocKies->first();
+        $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy ?? '');
+
         // Lấy các phân công phản biện đề cương của GV này
         $query = PhanCongPhanBien::with(['deTai.giangVien.boMon', 'deTai.hocKy', 'deTai.nganh'])
             ->where('MaGV', $gv->MaGV)
             ->where('VaiTro', 'Phản biện đề cương');
+
+        if ($selectedHocKy && $selectedHocKy !== 'ALL') {
+            $query->whereHas('deTai', fn($q) => $q->where('MaHocKy', $selectedHocKy));
+        }
 
         if ($request->filled('KetQua')) {
             if ($request->KetQua === 'chua_danh_gia') {
@@ -48,22 +57,28 @@ class PhanBienDeCuongController extends Controller
             }
         }
 
-        $phanCongs = $query->orderBy('created_at', 'desc')->paginate(10);
+        $phanCongs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        // Base query tính counts scoped theo Học kỳ
+        $baseCountQuery = PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương');
+        if ($selectedHocKy && $selectedHocKy !== 'ALL') {
+            $baseCountQuery->whereHas('deTai', fn($q) => $q->where('MaHocKy', $selectedHocKy));
+        }
 
         $counts = [
-            'chua_danh_gia' => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->whereNull('KetQua')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->count(),
-            'da_nop_lai'    => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where(function($q) {
+            'chua_danh_gia' => (clone $baseCountQuery)->whereNull('KetQua')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->count(),
+            'da_nop_lai'    => (clone $baseCountQuery)->where(function($q) {
                 $q->where('KetQua', 'Đã nộp lại')
                   ->orWhere('TrangThai', 'Đã nộp lại đề cương')
                   ->orWhereHas('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'));
             })->count(),
-            'dat'           => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt')->count(),
-            'yeu_cau_sua'   => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Yêu cầu chỉnh sửa')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->whereDoesntHave('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'))->count(),
-            'khong_dat'     => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Không đạt')->count(),
-            'total'         => PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương')->count(),
+            'dat'           => (clone $baseCountQuery)->where('KetQua', 'Đạt')->count(),
+            'yeu_cau_sua'   => (clone $baseCountQuery)->where('KetQua', 'Yêu cầu chỉnh sửa')->where('TrangThai', '!=', 'Đã nộp lại đề cương')->whereDoesntHave('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'))->count(),
+            'khong_dat'     => (clone $baseCountQuery)->where('KetQua', 'Không đạt')->count(),
+            'total'         => (clone $baseCountQuery)->count(),
         ];
 
-        return view('giangvien.phanbien.index', compact('gv', 'phanCongs', 'counts'));
+        return view('giangvien.phanbien.index', compact('gv', 'phanCongs', 'counts', 'hocKies', 'currentHocKy', 'selectedHocKy'));
     }
 
     public function show($id)

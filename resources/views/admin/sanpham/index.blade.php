@@ -17,7 +17,7 @@
                     <option value="">-- Tất cả --</option>
                     @foreach($hockys as $hk)
                         <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                            {{ $hk->TenHocKy }}
                         </option>
                     @endforeach
                 </select>

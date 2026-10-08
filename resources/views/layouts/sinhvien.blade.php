@@ -271,5 +271,6 @@
 </script>
 
 @stack('scripts')
+@include('components.time-machine')
 </body>
 </html>

@@ -37,6 +37,32 @@
         <form method="POST" action="{{ route('admin.kehoach.processParse') }}" enctype="multipart/form-data">
             @csrf
             
+            <!-- 1. BẮT BUỘC CHỌN HỌC KỲ ÁP DỤNG (CHỈ HỌC KỲ CHƯA BẮT ĐẦU ĐỂ TRÁNH XUNG ĐỘT) -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-8">
+                    <div class="card border-0 bg-light p-3 rounded-4 border">
+                        <label for="MaHocKy" class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fa-solid fa-calendar-days text-primary me-2"></i>1. Chọn Học Kỳ Áp Dụng Cho Kế Hoạch: <span class="text-danger">*</span></span>
+                            <span class="badge bg-warning text-dark font-weight-normal"><i class="fa-solid fa-shield-halved me-1"></i>Chỉ nhận học kỳ Chưa bắt đầu</span>
+                        </label>
+                        <select name="MaHocKy" id="MaHocKy" class="form-select form-select-lg rounded-3" required>
+                            <option value="">-- Chọn Học Kỳ (Trạng thái: Chưa bắt đầu) --</option>
+                            @forelse($hocKies as $hk)
+                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
+                                    {{ $hk->TenHocKy }} ({{ $hk->TrangThai }})
+                                </option>
+                            @empty
+                                <option value="" disabled>Hiện không có học kỳ nào ở trạng thái 'Chưa bắt đầu'</option>
+                            @endforelse
+                        </select>
+                        <div class="form-text text-muted small mt-2">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                            Để tránh xung đột dữ liệu, Kế hoạch mới bắt buộc chỉ được áp dụng cho học kỳ ở trạng thái <strong>Chưa bắt đầu</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row justify-content-center my-4">
                 <div class="col-md-8 text-center">
                     <div class="p-5 border border-2 border-dashed rounded-4 bg-light shadow-sm">

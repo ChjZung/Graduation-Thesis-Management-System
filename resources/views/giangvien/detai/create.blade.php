@@ -41,7 +41,7 @@
                             <select name="MaHocKy" id="MaHocKy" class="form-select" required>
                                 <option value="">-- Chọn học kỳ --</option>
                                 @foreach($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }} ({{ $hk->NamHoc }})</option>
+                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
                                 @endforeach
                             </select>
                         </div>

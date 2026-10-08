@@ -193,7 +193,7 @@
                         <option value="">-- Tất cả học kỳ --</option>
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                                {{ $hk->TenHocKy }}
                             </option>
                         @endforeach
                     </select>

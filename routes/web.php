@@ -143,6 +143,8 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     // Quản lý & Theo dõi Đăng ký Đề tài của Nhóm Sinh viên (GVHD phê duyệt, Giáo vụ theo dõi/tra cứu)
     Route::get('/duyet-dangky-detai', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'index'])->name('admin.duyet_dangky.index');
     Route::get('/duyet-dangky-detai/export', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'export'])->name('admin.duyet_dangky.export');
+    Route::post('/duyet-dangky-detai/gan-ngoai-le', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'assignTopicForNgoaiLe'])->name('admin.duyet_dangky.assignTopicForNgoaiLe');
+    Route::post('/duyet-dangky-detai/cong-bo-chinh-thuc', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'publishOfficialList'])->name('admin.duyet_dangky.publishOfficialList');
 
     // ── GĐ6: Hội Đồng & Hồ Sơ Bảo Vệ ──
     Route::get('/hoi-dong', [\App\Http\Controllers\Admin\HoiDongController::class, 'index'])->name('admin.hoidong.index');
@@ -364,6 +366,12 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
 // API ROUTES (AJAX Cascading Dropdowns)
 // ==========================================
 Route::get('/api/khoa/{maKhoa}/bomons', [\App\Http\Controllers\ThongKeDeTaiController::class, 'getBoMonsByKhoa'])->name('api.khoa.bomons');
+
+// ==========================================
+// TIME MACHINE ROUTES (Mô phỏng thời gian ảo phục vụ Test)
+// ==========================================
+Route::post('/dev/mock-time', [\App\Http\Controllers\TimeMachineController::class, 'setMockTime'])->name('dev.mock-time');
+Route::post('/dev/reset-mock-time', [\App\Http\Controllers\TimeMachineController::class, 'resetMockTime'])->name('dev.reset-mock-time');
 
 
 

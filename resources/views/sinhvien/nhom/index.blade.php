@@ -115,12 +115,42 @@
             <p class="text-muted mb-0">Quản lý nhóm của bạn hoặc tìm kiếm nhóm đang mở để xin tham gia.</p>
         </div>
         <div>
-            <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
-                <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
-            </button>
+            @if(isset($isTaoNhomOpen) && $isTaoNhomOpen)
+                <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
+                    <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
+                </button>
+            @elseif(isset($groupPhaseState) && $groupPhaseState['code'] === 'CHUA_MO')
+                <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Cổng tạo nhóm chưa mở. Mở từ ngày {{ $groupPhaseState['start_date']->format('d/m/Y') }}">
+                    <i class="fa-solid fa-clock me-2"></i>Chưa Mở Cổng Tạo Nhóm
+                </button>
+            @else
+                <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Đã hết thời hạn tạo nhóm mới theo Kế hoạch">
+                    <i class="fa-solid fa-lock me-2"></i>Đã Khóa Tạo Nhóm (Hết Hạn)
+                </button>
+            @endif
         </div>
     </div>
 </div>
+
+@if(isset($groupPhaseState) && !$isTaoNhomOpen)
+    @if($groupPhaseState['code'] === 'CHUA_MO')
+        <div class="alert alert-info bg-info-subtle border-info shadow-sm mb-4 d-flex align-items-center gap-3">
+            <i class="fa-solid fa-calendar-day fs-3 text-primary"></i>
+            <div>
+                <strong class="text-primary fs-6">{{ $groupPhaseState['message'] }}</strong>
+                <div class="small text-muted">Hệ thống sẽ mở cổng tạo và ghép nhóm đúng mốc thời gian quy định theo Kế hoạch khóa luận.</div>
+            </div>
+        </div>
+    @else
+        <div class="alert alert-danger bg-danger-subtle border-danger shadow-sm mb-4 d-flex align-items-center gap-3">
+            <i class="fa-solid fa-clock-rotate-left fs-3 text-danger"></i>
+            <div>
+                <strong class="text-danger fs-6">{{ $groupPhaseState['message'] }}</strong>
+                <div class="small text-muted">Cơ cấu danh sách các nhóm đã được chốt để phục vụ cho các đợt đăng ký đề tài tiếp theo.</div>
+            </div>
+        </div>
+    @endif
+@endif
 
 <!-- LỜI MỜI GIA NHẬP NHÓM ĐANG CHỜ -->
 @if(isset($loiMois) && $loiMois->count() > 0)
@@ -129,8 +159,16 @@
     @foreach($loiMois as $lm)
     <div class="d-flex flex-wrap justify-content-between align-items-center bg-white p-3 rounded-3 mt-2 border">
         <div>
-            <div>Lời mời từ Trưởng nhóm <strong>{{ $lm->nhom->truongNhom->HoTen ?? 'Bạn học' }}</strong> (MSSV: <code>{{ $lm->nhom->truongNhom->taiKhoan->TenDangNhap ?? $lm->nhom->MaTruongNhom }}</code>)</div>
-            <div class="small text-muted mt-1">Gia nhập nhóm: <strong class="text-primary">{{ $lm->nhom->TenNhom ?? '' }}</strong> (Hiện có {{ $lm->nhom->thanhViens->count() }}/3 thành viên)</div>
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                <span>Lời mời từ Trưởng nhóm <strong>{{ $lm->nhom->truongNhom->HoTen ?? 'Bạn học' }}</strong> (MSSV: <code>{{ $lm->nhom->truongNhom->taiKhoan->TenDangNhap ?? $lm->nhom->MaTruongNhom }}</code>)</span>
+                @if($lm->nhom && $lm->nhom->hocKy)
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-calendar-alt me-1"></i>{{ $lm->nhom->hocKy->TenHocKy }}</span>
+                @endif
+                @if($lm->nhom && $lm->nhom->hocPhan)
+                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa-solid fa-book me-1"></i>{{ $lm->nhom->hocPhan->TenHocPhan }}</span>
+                @endif
+            </div>
+            <div class="small text-muted">Gia nhập nhóm: <strong class="text-primary">{{ $lm->nhom->TenNhom ?? '' }}</strong> (Hiện có {{ $lm->nhom->thanhViens->count() }}/3 thành viên)</div>
         </div>
         <div class="d-flex gap-2 mt-2 mt-md-0">
             <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-view-group-detail" data-manhom="{{ $lm->MaNhom }}">
@@ -234,6 +272,10 @@
                         @elseif($isFull)
                             <button class="btn btn-secondary btn-sm rounded-pill px-3" disabled>
                                 <i class="fa-solid fa-ban me-1"></i>Đã Đủ Thành Viên
+                            </button>
+                        @elseif(!($isTaoNhomOpen ?? true))
+                            <button class="btn btn-secondary btn-sm rounded-pill px-3" disabled title="{{ $groupPhaseState['message'] ?? 'Cổng tạo và ghép nhóm chưa mở' }}">
+                                <i class="fa-solid fa-lock me-1"></i>Đã Khóa Xin Vào
                             </button>
                         @else
                             <form action="{{ route('sinhvien.nhom.xinGiaNhap', $no->MaNhom) }}" method="POST">
@@ -407,6 +449,17 @@
         <!-- ======================================================== -->
         @if($nhomCurrent->MaTruongNhom === $sinhVien->MaSV && !$isNhomLocked && $nhomCurrent->thanhViens->count() < 3)
         <hr class="my-4">
+        @if(!($isTaoNhomOpen ?? false))
+            <div class="alert {{ ($groupPhaseState['code'] ?? '') === 'CHUA_MO' ? 'alert-info bg-info-subtle border-info' : 'alert-danger bg-danger-subtle border-danger' }} p-3 rounded-3 d-flex align-items-center gap-3">
+                <i class="fa-solid {{ ($groupPhaseState['code'] ?? '') === 'CHUA_MO' ? 'fa-calendar-day text-primary' : 'fa-lock text-danger' }} fs-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-1 {{ ($groupPhaseState['code'] ?? '') === 'CHUA_MO' ? 'text-primary' : 'text-danger' }}">
+                        {{ ($groupPhaseState['code'] ?? '') === 'CHUA_MO' ? 'Chưa Mở Thời Gian Ghép & Mời Thành Viên' : 'Đã Khóa Tuyển Thành Viên (Hết Hạn Kế Hoạch)' }}
+                    </h6>
+                    <p class="small mb-0 text-muted">{{ $groupPhaseState['message'] ?? 'Cổng quản lý và ghép nhóm thành viên hiện đang đóng.' }}</p>
+                </div>
+            </div>
+        @else
         <div class="row g-4">
             <!-- TÌM KIẾM, XÁC THỰC & MỜI THÀNH VIÊN THEO FLOW PROMPT -->
             <div class="col-lg-6">
@@ -537,6 +590,7 @@
             </div>
         </div>
         @endif
+        @endif
     </div>
 </div>
 @endif
@@ -553,6 +607,19 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                <div class="p-3 bg-light rounded-3 mb-3 border">
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block mb-1"><i class="fa-solid fa-calendar-alt me-1 text-primary"></i>Học kỳ:</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-7 text-wrap text-start" id="groupDetailHocKy">--</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block mb-1"><i class="fa-solid fa-book-open me-1 text-info"></i>Môn học / Học phần:</span>
+                            <span class="badge bg-info-subtle text-info border border-info-subtle fs-7 text-wrap text-start" id="groupDetailHocPhan">--</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                     <div>
                         <span class="text-muted small">Số lượng:</span>
@@ -668,7 +735,7 @@
                             @if(isset($hocKies))
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ (isset($maHocKy) && $maHocKy === $hk->MaHocKy) ? 'selected' : '' }}>
-                                        {{ $hk->TenHocKy }} (Năm học {{ $hk->NamHoc }}) — [{{ $hk->TrangThai }}]
+                                        {{ $hk->TenHocKy }} — [{{ $hk->TrangThai }}]
                                     </option>
                                 @endforeach
                             @endif
@@ -966,6 +1033,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const nhom = data.nhom;
                     document.getElementById('groupDetailName').innerHTML = `<i class="fa-solid fa-users me-2"></i>${nhom.TenNhom}`;
+                    if (document.getElementById('groupDetailHocKy')) {
+                        document.getElementById('groupDetailHocKy').textContent = nhom.TenHocKy || 'Chưa xác định';
+                    }
+                    if (document.getElementById('groupDetailHocPhan')) {
+                        document.getElementById('groupDetailHocPhan').textContent = nhom.TenHocPhan || 'Khóa luận cử nhân';
+                    }
                     document.getElementById('groupDetailCount').textContent = `${nhom.SoLuong} / 3 thành viên`;
 
                     const badgeArea = document.getElementById('groupDetailStatusBadge');

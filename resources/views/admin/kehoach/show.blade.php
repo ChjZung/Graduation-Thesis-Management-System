@@ -63,7 +63,7 @@
                     <span class="badge {{ $badgeClass }} fs-6 px-3 py-1 rounded-pill">{{ $keHoach->TrangThai }}</span>
                 </div>
                 <h3 class="fw-bold text-primary mb-2">{{ $keHoach->TenKeHoach }}</h3>
-                <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-1"></i> <strong>Học Kỳ:</strong> {{ $keHoach->hocKy->TenHocKy ?? $keHoach->MaHocKy }} (Năm học {{ $keHoach->NamHoc ?? '2026-2027' }}) | <strong>Phạm vi:</strong> {{ $keHoach->khoa->TenKhoa ?? 'Toàn trường / Khoa CNTT' }}</p>
+                <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-1"></i> <strong>Học Kỳ:</strong> {{ $keHoach->hocKy->TenHocKy ?? $keHoach->MaHocKy }} | <strong>Phạm vi:</strong> {{ $keHoach->khoa->TenKhoa ?? 'Toàn trường / Khoa CNTT' }}</p>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <div class="p-3 bg-light rounded-3 border">

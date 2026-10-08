@@ -29,7 +29,7 @@
                     <option value="">-- Tất cả Học kỳ --</option>
                     @foreach($hocKies as $hk)
                         <option value="{{ $hk->MaHocKy }}" {{ request('ma_hoc_ky') == $hk->MaHocKy ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                            {{ $hk->TenHocKy }}
                         </option>
                     @endforeach
                 </select>
@@ -110,7 +110,7 @@
                         <td>
                             @if($item->hocKy)
                                 <span class="badge bg-light text-dark border">
-                                    {{ $item->hocKy->TenHocKy }} ({{ $item->hocKy->NamHoc }})
+                                    {{ $item->hocKy->TenHocKy }}
                                 </span>
                             @else
                                 <span class="text-muted">—</span>

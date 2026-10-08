@@ -7,6 +7,7 @@ use App\Models\KeHoachKhoaLuan;
 use App\Models\MocThoiGianKhoaLuan;
 use App\Models\QuyDinhKhoaLuan;
 use App\Models\HocKy;
+use App\Models\HocPhanHocKy;
 use App\Models\Khoa;
 use App\Models\GiaoVu;
 use App\Models\ThongBao;
@@ -31,7 +32,8 @@ class DocumentPlanController extends Controller
      */
     public function importForm()
     {
-        $hocKies = HocKy::all();
+        // Chỉ cho phép chọn học kỳ ở trạng thái 'Chưa bắt đầu' để tránh xung đột dữ liệu
+        $hocKies = HocKy::where('TrangThai', 'Chưa bắt đầu')->orderBy('MaHocKy', 'desc')->get();
         $khoas = Khoa::all();
         return view('admin.kehoach.import_document', compact('hocKies', 'khoas') + ['Khoa' => $khoas]);
     }
@@ -42,12 +44,22 @@ class DocumentPlanController extends Controller
     public function processParse(Request $request)
     {
         $request->validate([
+            'MaHocKy'       => 'required|string|exists:HocKy,MaHocKy',
             'document_file' => 'required|file|mimes:pdf,docx|max:10240',
         ], [
+            'MaHocKy.required'       => 'Vui lòng chọn học kỳ áp dụng cho kế hoạch.',
+            'MaHocKy.exists'         => 'Học kỳ đã chọn không tồn tại trong hệ thống.',
             'document_file.required' => 'Vui lòng chọn file văn bản thông báo (PDF hoặc Word).',
             'document_file.mimes'    => 'Hệ thống chỉ hỗ trợ file định dạng .pdf hoặc .docx.',
             'document_file.max'      => 'Kích thước file không được vượt quá 10MB.',
         ]);
+
+        $hocKy = HocKy::where('MaHocKy', $request->input('MaHocKy'))->first();
+        if (!$hocKy || $hocKy->TrangThai !== 'Chưa bắt đầu') {
+            return back()->withInput()->withErrors([
+                'MaHocKy' => 'Chỉ được phép chọn học kỳ ở trạng thái "Chưa bắt đầu" để tránh xung đột dữ liệu.'
+            ]);
+        }
 
         $file = $request->file('document_file');
         $ext = strtolower($file->getClientOriginalExtension());
@@ -58,9 +70,9 @@ class DocumentPlanController extends Controller
         // Bóc tách dữ liệu tiêu đề và mốc thời gian từ file văn bản
         $parsed = $this->parserService->parseDocument($fullPath, $ext);
 
-        // Tự động tìm kế hoạch đang có của Khoa để tính diff version
+        // Tự động tìm kế hoạch đang có của Học kỳ này (nếu có cập nhật lại) để tính diff version
         $existingPlan = KeHoachKhoaLuan::with(['mocThoiGians'])
-            ->where('TrangThai', 'Đang thực hiện')
+            ->where('MaHocKy', $hocKy->MaHocKy)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -102,6 +114,8 @@ class DocumentPlanController extends Controller
         // Lưu vào Session để chờ Khoa kiểm tra & Xác nhận
         session([
             'parsed_doc_data' => [
+                'ma_hoc_ky'           => $hocKy->MaHocKy,
+                'ten_hoc_ky'          => $hocKy->TenHocKy,
                 'temp_file_path'      => $tempPath,
                 'original_name'       => $file->getClientOriginalName(),
                 'ext'                 => $ext,
@@ -149,7 +163,7 @@ class DocumentPlanController extends Controller
 
         $user = Auth::user();
 
-        DB::transaction(function () use ($previewData, $user) {
+        DB::transaction(function () use ($previewData, $user, $request) {
             $header = $previewData['header'] ?? [];
             $milestones = $previewData['milestones'] ?? [];
 
@@ -160,28 +174,46 @@ class DocumentPlanController extends Controller
                 Storage::disk('public')->copy($previewData['temp_file_path'], $permanentPath);
             }
 
-            // 2. Đảm bảo Học kỳ hợp lệ
-            $hocKy = HocKy::first();
+            // 2. Đảm bảo Học kỳ hợp lệ và Kích hoạt trạng thái 'Đang diễn ra'
+            $maHocKy = $previewData['ma_hoc_ky'] ?? $request->input('MaHocKy');
+            $hocKy = $maHocKy ? HocKy::where('MaHocKy', $maHocKy)->first() : null;
+
             if (!$hocKy) {
-                $maHocKy = 'HK2425_1';
-                HocKy::create([
-                    'MaHocKy'    => $maHocKy,
-                    'TenHocKy'   => 'Học kỳ 1 (2024-2025)',
-                    'NamHoc'     => '2024-2025',
-                    'NgayBatDau' => now()->toDateString(),
-                    'NgayKetThuc'=> now()->addMonths(5)->toDateString(),
-                    'TrangThai'  => 'Đang diễn ra',
-                ]);
-            } else {
-                $maHocKy = $hocKy->MaHocKy;
+                $hocKy = HocKy::where('TrangThai', 'Chưa bắt đầu')->first() ?? HocKy::first();
+                $maHocKy = $hocKy ? $hocKy->MaHocKy : 'HK2627_1';
+            }
+
+            if ($hocKy) {
+                // Đóng các học kỳ cũ khác đang diễn ra sang 'Đã kết thúc' để tránh xung đột
+                HocKy::where('MaHocKy', '!=', $hocKy->MaHocKy)
+                    ->where('TrangThai', 'Đang diễn ra')
+                    ->update(['TrangThai' => 'Đã kết thúc']);
+
+                $hocKy->update(['TrangThai' => 'Đang diễn ra']);
+            }
+
+            // Tự động mở các môn học phần Khóa luận (Cử nhân & Kỹ sư) cho học kỳ này
+            $hocPhanCodes = ['HP_KLCN', 'HP_KLKS'];
+            foreach ($hocPhanCodes as $hpCode) {
+                HocPhanHocKy::updateOrCreate(
+                    [
+                        'MaHocPhan' => $hpCode,
+                        'MaHocKy'   => $maHocKy,
+                    ],
+                    [
+                        'TrangThai' => 'Đang mở',
+                        'GhiChu'    => 'Mở tự động theo Kế hoạch khóa luận ' . ($header['TenKeHoach'] ?? $hocKy?->TenHocKy ?? ''),
+                    ]
+                );
             }
 
             // 3. Lấy mã giáo vụ
             $maGVu = GiaoVu::first()?->MaGVu ?? 'GVU01';
 
             // 4. Tạo hoặc Cập nhật Kế Hoạch Khóa Luận
-            $maKeHoach = $previewData['existing_plan']->MakeHoach 
-                ?? $previewData['existing_plan']->MaKeHoach 
+            $currentPlanForHocKy = KeHoachKhoaLuan::where('MaHocKy', $maHocKy)->first();
+            $maKeHoach = $currentPlanForHocKy->MakeHoach 
+                ?? ($previewData['existing_plan']->MakeHoach ?? null)
                 ?? ('KH_' . date('Y') . '_' . Str::upper(Str::random(4)));
 
             $keHoach = KeHoachKhoaLuan::updateOrCreate(

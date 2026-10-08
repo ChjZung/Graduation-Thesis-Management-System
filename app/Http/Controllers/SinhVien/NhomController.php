@@ -168,16 +168,31 @@ class NhomController extends Controller
                 }
             }
 
-            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy'));
+            $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+            $isTaoNhomOpen = $groupPhaseState['is_open'];
+
+            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState'));
         }
 
         // 2. KHI CHƯA CÓ NHÓM CHO MÔN NÀY:
-        // Lấy danh sách lời mời gia nhập nhóm gửi tới SV này ('cho_xac_nhan')
-        $loiMois = ThanhVienNhom::with(['nhom.truongNhom.taiKhoan', 'nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien')])
+        // Lấy danh sách lời mời gia nhập nhóm gửi tới SV này ('cho_xac_nhan') theo đúng Học kỳ và Môn học được chọn
+        $loiMois = ThanhVienNhom::with([
+                'nhom.truongNhom.taiKhoan',
+                'nhom.hocKy',
+                'nhom.hocPhan',
+                'nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien')
+            ])
             ->where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'cho_xac_nhan')
-            ->whereHas('nhom', function($q) use ($selectedHocPhan) {
-                if ($selectedHocPhan) $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
+            ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
+                if ($maHocKy) {
+                    $q->where('MaHocKy', $maHocKy);
+                }
+                if ($selectedHocPhan) {
+                    $q->where(function($sub) use ($selectedHocPhan) {
+                        $sub->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
+                    });
+                }
             })
             ->get();
 
@@ -234,8 +249,10 @@ class NhomController extends Controller
         }
 
         $nhomsOpen = $queryNhoms->get();
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        $isTaoNhomOpen = $groupPhaseState['is_open'];
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy') + ['NhomOpen' => $nhomsOpen]);
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**
@@ -243,6 +260,12 @@ class NhomController extends Controller
      */
     public function store(Request $request)
     {
+        // 0. Ràng buộc thời gian: Kiểm tra còn trong thời hạn tạo nhóm theo Kế hoạch không
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
+
         $request->validate([
             'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
@@ -341,6 +364,8 @@ class NhomController extends Controller
         $nhom = Nhom::with([
             'truongNhom.taiKhoan',
             'truongNhom.lop.nganh',
+            'hocKy',
+            'hocPhan',
             'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien.lop.nganh', 'sinhVien.taiKhoan')
         ])->findOrFail($maNhom);
 
@@ -389,6 +414,10 @@ class NhomController extends Controller
             'nhom'           => [
                 'MaNhom'     => $nhom->MaNhom,
                 'TenNhom'    => $nhom->TenNhom,
+                'MaHocKy'    => $nhom->MaHocKy,
+                'TenHocKy'   => $nhom->hocKy->TenHocKy ?? 'Chưa xác định',
+                'MaHocPhan'  => $nhom->MaHocPhan,
+                'TenHocPhan' => $nhom->hocPhan->TenHocPhan ?? 'Khóa luận cử nhân',
                 'SoLuong'    => $soLuong,
                 'ConSlot'    => $conSlot,
                 'DaDu'       => ($soLuong >= 3),
@@ -529,6 +558,12 @@ class NhomController extends Controller
      */
     public function moiThanhVien(Request $request)
     {
+        // 0. Ràng buộc thời gian Kế hoạch
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
+
         $request->validate([
             'MaNhom' => 'required|exists:Nhom,MaNhom',
             'MaSV'   => 'required|exists:SinhVien,MaSV',
@@ -655,6 +690,11 @@ class NhomController extends Controller
      */
     public function khaiTruThanhVien($maNhom, $maSV)
     {
+        // 0. Ràng buộc thời gian Kế hoạch
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
         $currentUser = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $currentUser->MaTK)->firstOrFail();
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
@@ -709,6 +749,11 @@ class NhomController extends Controller
 
     public function xinGiaNhap(Request $request, $maNhom)
     {
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
+
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
 
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
@@ -794,6 +839,11 @@ class NhomController extends Controller
 
     public function duyetYeuCauXinVao($maNhom, $maSV)
     {
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
+
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
 
@@ -858,6 +908,11 @@ class NhomController extends Controller
 
     public function xacNhanLoiMoi($maNhom)
     {
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
+
         $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
         $nhom = Nhom::findOrFail($maNhom);
 

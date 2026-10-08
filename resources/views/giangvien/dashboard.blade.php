@@ -11,7 +11,7 @@
         </h3>
         <p class="text-muted mb-0">
             Chào mừng, <strong>{{ $giangVien->HocHam ? $giangVien->HocHam . '.' : '' }} {{ $giangVien->HocVi ? $giangVien->HocVi . '.' : '' }} {{ $giangVien->HoTen }}</strong> 
-            | <span class="badge bg-light text-dark border">{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ 2' }} ({{ $hocKyHienTai->NamHoc ?? '2025-2026' }})</span>
+            | <span class="badge bg-light text-dark border">{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ 1 (2026-2027)' }}</span>
         </p>
     </div>
     <div class="d-flex gap-2">

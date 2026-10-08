@@ -274,5 +274,6 @@
 @include('partials.modal_preview_decuong')
 
 @stack('scripts')
+@include('components.time-machine')
 </body>
 </html>

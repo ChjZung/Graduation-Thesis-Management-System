@@ -67,7 +67,90 @@ class DuyetDangKyDeTaiController extends Controller
 
         $dangKys = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        return view('admin.duyet_dangky.index', compact('dangKys', 'counts', 'hocKies', 'currentHocKy'));
+        // Danh sách nhóm chưa có đề tài và đề tài còn trống để phục vụ ngoại lệ tại VPK
+        $nhomChuaCoDeTai = \App\Models\Nhom::whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
+            ->with(['truongNhom', 'thanhViens.sinhVien'])
+            ->get();
+
+        $deTaiConTrong = \App\Models\DeTai::where('TrangThai', 'Đã công bố')
+            ->whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
+            ->with(['giangVien.boMon'])
+            ->get();
+
+        $regState = \App\Services\PlanPhaseService::getRegistrationState();
+
+        return view('admin.duyet_dangky.index', compact('dangKys', 'counts', 'hocKies', 'currentHocKy', 'nhomChuaCoDeTai', 'deTaiConTrong', 'regState'));
+    }
+
+    /**
+     * Giáo vụ giải quyết ngoại lệ tại VPK: Gán trực tiếp đề tài cho nhóm sinh viên
+     */
+    public function assignTopicForNgoaiLe(Request $request)
+    {
+        $request->validate([
+            'MaNhom'  => 'required|exists:Nhom,MaNhom',
+            'MaDeTai' => 'required|exists:DeTai,MaDeTai',
+        ], [
+            'MaNhom.required'  => 'Vui lòng chọn nhóm sinh viên.',
+            'MaDeTai.required' => 'Vui lòng chọn đề tài muốn gán.',
+        ]);
+
+        $nhom = \App\Models\Nhom::findOrFail($request->MaNhom);
+        $deTai = \App\Models\DeTai::findOrFail($request->MaDeTai);
+
+        // Kiểm tra đề tài đã có nhóm khác chiếm chưa
+        $isTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
+            ->where('TrangThai', 'Đã duyệt')
+            ->exists();
+
+        if ($isTaken) {
+            return redirect()->back()->withErrors('Đề tài này vừa được gán cho một nhóm khác. Vui lòng chọn đề tài khác!');
+        }
+
+        // Tạo bản ghi duyệt chính thức
+        $maDK = 'DK_VPK_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(5));
+        DangKyDeTai::updateOrCreate(
+            ['MaNhom' => $nhom->MaNhom],
+            [
+                'MaDangKy'     => $maDK,
+                'MaDeTai'      => $deTai->MaDeTai,
+                'MaGVHuongDan' => $deTai->MaGV,
+                'NgayDangKy'   => now(),
+                'TrangThai'    => 'Đã duyệt',
+                'NgayDuyet'    => now(),
+                'LyDoTuChoi'   => null,
+            ]
+        );
+
+        $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
+
+        return redirect()->back()->with('success', "Xử lý ngoại lệ thành công! Đã gán đề tài '{$deTai->TenDeTai}' cho nhóm '{$nhom->TenNhom}'.");
+    }
+
+    /**
+     * Giáo vụ chốt và công bố danh sách chính thức cho Giảng viên & Sinh viên
+     */
+    public function publishOfficialList(Request $request)
+    {
+        $hocKy = HocKy::where('TrangThai', 1)->first() ?? HocKy::orderBy('MaHocKy', 'desc')->first();
+        $tenHocKy = $hocKy ? $hocKy->TenHocKy : 'Học kỳ hiện tại';
+
+        $soLuongNhom = DangKyDeTai::where('TrangThai', 'Đã duyệt')->count();
+
+        // Tạo thông báo phát toàn trường
+        $maTB = 'TB_' . date('Y') . '_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(4));
+        \App\Models\ThongBao::create([
+            'MaThongBao'   => $maTB,
+            'TieuDe'       => "THÔNG BÁO CHÍNH THỨC: Danh sách Sinh viên đăng ký đề tài & GVHD {$tenHocKy}",
+            'NoiDung'      => "Khoa Công nghệ Thông tin thông báo chính thức danh sách {$soLuongNhom} nhóm sinh viên đã hoàn tất đăng ký đề tài và Giảng viên hướng dẫn (GVHD) trong {$tenHocKy}. Đề nghị các nhóm sinh viên chủ động liên hệ GVHD qua email trước ngày 17/08/2026 để trao đổi nội dung kế hoạch thực hiện đề tài. Nếu nhóm không liên hệ GVHD đúng hạn sẽ bị xem như không thực hiện khóa luận theo thông báo số 27/TB-KCNTT.",
+            'LoaiThongBao' => 'Thông báo khóa luận',
+            'DoiTuongNhan' => 'Toàn trường',
+            'NgayTao'      => now()->toDateString(),
+            'TrangThai'    => 'Đã phát hành',
+            'MaGVu'        => 'GVU01',
+        ]);
+
+        return redirect()->back()->with('success', "🎉 Đã công bố chính thức danh sách đề tài & GVHD! Hệ thống đã phát thông báo hướng dẫn liên hệ GVHD đến toàn thể Sinh viên và Giảng viên.");
     }
 
     /**

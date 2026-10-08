@@ -15,6 +15,7 @@
     @if(!empty($previewData))
     <form action="{{ route('admin.kehoach.confirmImport') }}" method="POST" class="d-inline">
         @csrf
+        <input type="hidden" name="MaHocKy" value="{{ $previewData['ma_hoc_ky'] ?? '' }}">
         <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm fw-bold">
             <i class="fa-solid fa-check-circle me-1"></i> XÁC NHẬN CẬP NHẬT KẾ HOẠCH & SINH LỊCH
         </button>
@@ -92,8 +93,8 @@
             </div>
 
             <div class="col-md-3">
-                <label class="small text-muted fw-bold">Học Kỳ / Năm Học:</label>
-                <div>{{ $previewData['header']['HocKy'] ?? '' }} {{ !empty($previewData['header']['NamHoc']) ? '(' . $previewData['header']['NamHoc'] . ')' : '' }}</div>
+                <label class="small text-muted fw-bold">Học Kỳ Áp Dụng (Đã chọn):</label>
+                <div class="fw-bold text-success"><i class="fa-solid fa-calendar-check me-1"></i>{{ $previewData['ten_hoc_ky'] ?? $previewData['header']['HocKy'] ?? '' }}</div>
             </div>
             <div class="col-md-3">
                 <label class="small text-muted fw-bold">Khóa Sinh Viên:</label>

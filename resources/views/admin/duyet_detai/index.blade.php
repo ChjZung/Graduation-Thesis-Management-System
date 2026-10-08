@@ -492,7 +492,7 @@
                         <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} ({{ $hk->NamHoc }}) {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -729,7 +729,7 @@
                             <select name="MaHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                        {{ $hk->TenHocKy }} ({{ $hk->NamHoc }}) {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -1153,7 +1153,7 @@
                             <option value="">-- Tất cả đề tài đã duyệt --</option>
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                                    {{ $hk->TenHocKy }}
                                 </option>
                             @endforeach
                         </select>

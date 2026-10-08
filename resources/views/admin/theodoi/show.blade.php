@@ -83,15 +83,38 @@
                 <ul class="list-group list-group-flush">
                     @php
                         $checkpoints = [
-                            1 => ['title' => 'Đăng ký đề tài & Nhóm', 'done' => true, 'desc' => 'Đã gửi đăng ký nguyện vọng đề tài thành công.'],
-                            2 => ['title' => 'Khoa xét duyệt đăng ký', 'done' => (bool)$nhom->MaDeTai, 'desc' => $nhom->MaDeTai ? 'Đề tài đã được Khoa phê duyệt.' : 'Đang chờ phê duyệt.'],
-                            3 => ['title' => 'Phân công GVHD', 'done' => (bool)($nhom->dangKyDeTai && $nhom->dangKyDeTai->MaGVHuongDan), 'desc' => 'Đã gán GVHD chính thức.'],
-                            4 => ['title' => 'Báo cáo tiến độ lần 1', 'done' => $nhom->baoCaos->count() >= 1, 'desc' => $nhom->baoCaos->count() >= 1 ? 'Đã nộp báo cáo tiến độ 1.' : 'Chưa nộp (Hạn 10/10/2026).'],
-                            5 => ['title' => 'Báo cáo tiến độ lần 2', 'done' => $nhom->baoCaos->count() >= 2, 'desc' => $nhom->baoCaos->count() >= 2 ? 'Đã nộp báo cáo tiến độ 2.' : 'Chưa nộp (Hạn 25/10/2026).'],
-                            6 => ['title' => 'Báo cáo tiến độ lần 3', 'done' => $nhom->baoCaos->count() >= 3, 'desc' => $nhom->baoCaos->count() >= 3 ? 'Đã nộp báo cáo tiến độ 3.' : 'Chưa nộp (Hạn 10/11/2026).'],
-                            7 => ['title' => 'Kiểm tra đạo văn (Turnitin)', 'done' => (bool)($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TyLeTrungLap !== null), 'desc' => 'Tỷ lệ trùng lặp: ' . ($nhom->hoSoBaoVe ? ($nhom->hoSoBaoVe->TyLeTrungLap . '%') : 'Chưa kiểm tra')],
-                            8 => ['title' => 'GVHD xác nhận đủ điều kiện', 'done' => (bool)($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->XacNhanGVHD), 'desc' => 'GVHD đánh giá đủ điều kiện bảo vệ.'],
-                            9 => ['title' => 'Nộp đồ án chính thức & Bảo vệ', 'done' => (bool)($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->MaHoiDong), 'desc' => 'Đã phân công vào Hội đồng bảo vệ.'],
+                            1 => [
+                                'title' => 'Giai đoạn 1: Nhận đề cương chi tiết + Thiết kế CSDL', 
+                                'done' => $nhom->baoCaos->count() >= 1, 
+                                'desc' => $nhom->baoCaos->count() >= 1 ? 'Đã nộp đề cương và thiết kế CSDL (Mốc 14/09).' : 'Chưa nộp đề cương & CSDL (Hạn 14/09 - 18/09/2026).'
+                            ],
+                            2 => [
+                                'title' => 'Giai đoạn 2: Thiết kế hệ thống & Xây dựng chức năng', 
+                                'done' => $nhom->baoCaos->count() >= 2, 
+                                'desc' => $nhom->baoCaos->count() >= 2 ? 'Đã nộp báo cáo thiết kế & mã nguồn chức năng (Mốc 12/10).' : 'Chưa nộp báo cáo chức năng (Hạn 12/10 - 16/10/2026).'
+                            ],
+                            3 => [
+                                'title' => 'Giai đoạn 3: Kiểm thử & Hoàn thành dự thảo báo cáo', 
+                                'done' => $nhom->baoCaos->count() >= 3, 
+                                'desc' => $nhom->baoCaos->count() >= 3 ? 'Đã nộp kết quả kiểm thử & bản thảo toàn văn (Mốc 02/11).' : 'Chưa nộp dự thảo báo cáo (Hạn 02/11 - 06/11/2026).'
+                            ],
+                            4 => [
+                                'title' => 'Giai đoạn 4: Hoàn thiện hồ sơ bảo vệ (Turnitin < 20% & GVHD ký duyệt)', 
+                                'done' => (bool)($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TyLeTrungLap !== null && $nhom->hoSoBaoVe->XacNhanGVHD), 
+                                'desc' => ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TyLeTrungLap !== null) 
+                                    ? ('Tỷ lệ trùng lặp: ' . $nhom->hoSoBaoVe->TyLeTrungLap . '%, ' . ($nhom->hoSoBaoVe->XacNhanGVHD ? 'GVHD đã ký duyệt bảo vệ.' : 'Chờ GVHD ký duyệt.')) 
+                                    : 'Chưa quét Turnitin / Chưa nộp cuốn chính thức (Hạn 11/11 - 16/11/2026).'
+                            ],
+                            5 => [
+                                'title' => 'Giai đoạn 5: Tiến hành bảo vệ trước Hội đồng chấm', 
+                                'done' => (bool)($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->MaHoiDong), 
+                                'desc' => ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->MaHoiDong) ? 'Đã xếp lịch và tiến hành bảo vệ trước Hội đồng.' : 'Chờ phân công Hội đồng chấm bảo vệ.'
+                            ],
+                            6 => [
+                                'title' => 'Giai đoạn 6: Nhận kết quả & Nộp lại kết quả hậu khóa luận', 
+                                'done' => (bool)($nhom->TrangThai === 'Hoàn thành' || ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->TrangThai === 'Đã hoàn thành')), 
+                                'desc' => ($nhom->TrangThai === 'Hoàn thành') ? 'Đã hoàn tất chỉnh sửa theo góp ý Hội đồng và nộp lưu trữ.' : 'Chờ nhận kết quả và hoàn thiện nộp lưu trữ hậu khóa luận.'
+                            ],
                         ];
                     @endphp
 

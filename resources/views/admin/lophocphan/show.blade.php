@@ -34,7 +34,7 @@
             <div class="col-md-4">
                 <div class="p-3 bg-light rounded-3 border">
                     <span class="text-muted small d-block mb-1">Học Kỳ</span>
-                    <h6 class="mb-0 fw-bold text-dark">{{ $lopHocPhan->hocKy->TenHocKy ?? 'N/A' }} ({{ $lopHocPhan->hocKy->NamHoc ?? 'N/A' }})</h6>
+                    <h6 class="mb-0 fw-bold text-dark">{{ $lopHocPhan->hocKy->TenHocKy ?? 'N/A' }}</h6>
                 </div>
             </div>
             <div class="col-md-4">

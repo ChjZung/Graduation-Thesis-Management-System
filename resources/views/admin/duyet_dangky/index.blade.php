@@ -15,9 +15,20 @@
             Theo dõi, tra cứu trạng thái đăng ký đề tài của các nhóm sinh viên theo kết quả phê duyệt từ Giảng viên hướng dẫn (GVHD).
         </p>
     </div>
-    <div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-warning text-dark rounded-3 px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNgoaiLeVPK">
+            <i class="fa-solid fa-hand-holding-hand me-1"></i> Xử Lý Ngoại Lệ (VPK)
+        </button>
+
+        <form action="{{ route('admin.duyet_dangky.publishOfficialList') }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn chốt và CÔNG BỐ CHÍNH THỨC danh sách đề tài & GVHD? Hệ thống sẽ phát thông báo hướng dẫn liên hệ GVHD đến toàn thể SV và GV.');">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold shadow-sm">
+                <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Danh Sách (14/08)
+            </button>
+        </form>
+
         <a href="{{ route('admin.duyet_dangky.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold shadow-sm">
-            <i class="fa-solid fa-file-excel me-1"></i> Xuất File Excel / CSV
+            <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel / CSV
         </a>
     </div>
 </div>
@@ -70,7 +81,7 @@
                 <option value="">-- Tất cả học kỳ --</option>
                 @foreach($hocKies as $hk)
                     <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy', $currentHocKy->MaHocKy ?? '') == $hk->MaHocKy ? 'selected' : '' }}>
-                        {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                        {{ $hk->TenHocKy }}
                     </option>
                 @endforeach
             </select>
@@ -305,6 +316,70 @@
         </div>
     </div>
     @endif
+<!-- MODAL XỬ LÝ NGOẠI LỆ TẠI VĂN PHÒNG KHOA (MỐC 12/08) -->
+<div class="modal fade" id="modalNgoaiLeVPK" tabindex="-1" aria-labelledby="modalNgoaiLeVPKLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form action="{{ route('admin.duyet_dangky.assignTopicForNgoaiLe') }}" method="POST">
+                @csrf
+                <div class="modal-header bg-warning bg-opacity-25 border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalNgoaiLeVPKLabel">
+                        <i class="fa-solid fa-hand-holding-hand text-warning"></i>
+                        Xử Lý Ngoại Lệ Đăng Ký Đề Tài Tại Văn Phòng Khoa (Mốc 12/08)
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 rounded-3 mb-3 p-3" style="font-size: 0.88rem;">
+                        <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+                        Chức năng dành cho Giáo vụ hỗ trợ các nhóm sinh viên gặp sự cố kỹ thuật hoặc chưa đăng ký được đề tài trên phần mềm trong ngày đăng ký chính thức, đến trực tiếp VPK xử lý theo thông báo số 27/TB-KCNTT.
+                    </div>
+
+                    <!-- 1. Chọn Nhóm Sinh Viên Chưa Có Đề Tài -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            1. Chọn Nhóm Sinh Viên Cần Gán Đề Tài: <span class="text-danger">*</span>
+                        </label>
+                        <select name="MaNhom" class="form-select" required>
+                            <option value="">-- Chọn nhóm sinh viên chưa có đề tài --</option>
+                            @forelse($nhomChuaCoDeTai ?? [] as $nh)
+                                <option value="{{ $nh->MaNhom }}">
+                                    [{{ $nh->MaNhom }}] {{ $nh->TenNhom }} | Trưởng nhóm: {{ $nh->truongNhom->HoTen ?? 'Chưa rõ' }} ({{ $nh->thanhViens->count() }}/3 thành viên)
+                                </option>
+                            @empty
+                                <option value="" disabled>Không có nhóm nào đang thiếu đề tài</option>
+                            @endforelse
+                        </select>
+                        <div class="form-text">Chỉ hiển thị các nhóm chưa có đề tài được duyệt trong hệ thống.</div>
+                    </div>
+
+                    <!-- 2. Chọn Đề Tài Còn Trống -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            2. Chọn Đề Tài Còn Trống Để Gán Cho Nhóm: <span class="text-danger">*</span>
+                        </label>
+                        <select name="MaDeTai" class="form-select" required>
+                            <option value="">-- Chọn đề tài còn trống --</option>
+                            @forelse($deTaiConTrong ?? [] as $dt)
+                                <option value="{{ $dt->MaDeTai }}">
+                                    [{{ $dt->MaDeTai }}] {{ $dt->TenDeTai }} | GVHD: {{ $dt->giangVien->HoTen ?? 'Chưa rõ' }} ({{ $dt->giangVien->boMon->TenBoMon ?? 'Toàn khoa' }})
+                                </option>
+                            @empty
+                                <option value="" disabled>Hiện không còn đề tài trống nào được công bố</option>
+                            @endforelse
+                        </select>
+                        <div class="form-text">Chỉ hiển thị các đề tài đã công bố và chưa có nhóm nào đăng ký.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2 px-4 border-top">
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold text-dark shadow-sm">
+                        <i class="fa-solid fa-check-circle me-1"></i> Xác Nhận Gán Đề Tài Cho Nhóm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @endsection

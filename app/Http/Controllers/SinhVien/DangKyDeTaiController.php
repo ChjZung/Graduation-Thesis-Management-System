@@ -129,11 +129,19 @@ class DangKyDeTaiController extends Controller
             ->get()
             ->keyBy('MaDeTai');
 
-        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'hocKies', 'boMons', 'selectedHocKy', 'maHocKy'));
+        $regState = \App\Services\PlanPhaseService::getRegistrationState();
+
+        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'hocKies', 'boMons', 'selectedHocKy', 'maHocKy', 'regState'));
     }
 
     public function store(Request $request)
     {
+        // 0. Kiểm tra tiến độ thời gian theo Kế hoạch
+        $regState = \App\Services\PlanPhaseService::getRegistrationState();
+        if (!$regState['can_register']) {
+            return redirect()->back()->withErrors($regState['message']);
+        }
+
         $request->validate([
             'MaDeTai' => 'required|exists:DeTai,MaDeTai',
         ], [
@@ -225,6 +233,11 @@ class DangKyDeTaiController extends Controller
 
     public function destroy($id)
     {
+        $regState = \App\Services\PlanPhaseService::getRegistrationState();
+        if (!$regState['can_register']) {
+            return redirect()->back()->withErrors('Cổng đăng ký đề tài hiện đang tạm khóa hoặc đã đóng. Không thể hủy đăng ký đề tài!');
+        }
+
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 

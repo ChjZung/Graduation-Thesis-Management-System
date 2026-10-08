@@ -101,7 +101,7 @@
 
                 <div class="text-muted mt-3" style="font-size: 0.78rem;">
                     <i class="fa-solid fa-calendar me-1"></i>Ngày chấm: {{ $ketQua->NgayCham }}
-                    &nbsp;|&nbsp; Học kỳ: {{ $ketQua->hocKy->TenHocKy ?? '' }} {{ $ketQua->hocKy->NamHoc ?? '' }}
+                    &nbsp;|&nbsp; Học kỳ: {{ $ketQua->hocKy->TenHocKy ?? '' }}
                 </div>
             </div>
         </div>

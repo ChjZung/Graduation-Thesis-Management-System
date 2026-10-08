@@ -87,7 +87,7 @@
                                         <i class="fa-solid fa-users-rectangle me-1"></i>{{ $pc->lop->TenLop ?? 'N/A' }}
                                     </span>
                                 </td>
-                                <td>{{ $pc->hocKy->TenHocKy ?? 'N/A' }} ({{ $pc->hocKy->NamHoc ?? '' }})</td>
+                                <td>{{ $pc->hocKy->TenHocKy ?? 'N/A' }}</td>
                                 <td>{{ date('d/m/Y', strtotime($pc->NgayPhanCong)) }}</td>
                                 <td class="text-end px-4">
                                     <form action="{{ route('phancong.destroy', $pc->MaPhanCong) }}" method="POST" class="d-inline form-delete">
@@ -136,7 +136,7 @@
                                 <td class="px-4 fw-bold text-primary">#{{ $lhp->MaLopHP }}</td>
                                 <td class="fw-bold text-dark">{{ $lhp->TenLopHP }}</td>
                                 <td>{{ $lhp->monHoc->TenMon ?? 'N/A' }}</td>
-                                <td>{{ $lhp->hocKy->TenHocKy ?? 'N/A' }} ({{ $lhp->hocKy->NamHoc ?? '' }})</td>
+                                <td>{{ $lhp->hocKy->TenHocKy ?? 'N/A' }}</td>
                                 <td>
                                     @if($lhp->giangVien)
                                         <span class="fw-bold text-dark">{{ $lhp->giangVien->HoTen }}</span><br>
@@ -232,7 +232,7 @@
                             <select name="MaHocKy" id="selectMaHocKy" class="form-select">
                                 <option value="">-- Chọn học kỳ --</option>
                                 @foreach($hockys as $hk)
-                                <option value="{{ $hk->MaHocKy }}">{{ $hk->TenHocKy }} ({{ $hk->NamHoc }})</option>
+                                <option value="{{ $hk->MaHocKy }}">{{ $hk->TenHocKy }}</option>
                                 @endforeach
                             </select>
                         </div>

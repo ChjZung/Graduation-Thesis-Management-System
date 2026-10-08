@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\EnsurePasswordStatus::class,
+            \App\Http\Middleware\MockTimeMiddleware::class,
         ]);
         $middleware->alias([
             'role'            => \App\Http\Middleware\CheckRole::class,

@@ -28,7 +28,7 @@
                 <option value="">-- Tất cả học kỳ --</option>
                 @foreach($hocKies as $hk)
                     <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                        {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                        {{ $hk->TenHocKy }}
                     </option>
                 @endforeach
             </select>
@@ -96,8 +96,7 @@
                         </div>
                         <div class="text-primary mt-1" style="font-size: 0.78rem; font-weight: 600;">
                             <i class="fa-solid fa-graduation-cap me-1"></i>
-                            {{ $kh->hocKy->TenHocKy ?? $kh->MaHocKy }} ({{ $kh->NamHoc ?? '2026–2027' }})
-                            • Khoa Công nghệ Thông tin
+                            {{ $kh->hocKy->TenHocKy ?? $kh->MaHocKy }} • Khoa Công nghệ Thông tin
                         </div>
                         <div class="text-muted mt-1" style="font-size: 0.74rem;">
                             @if(in_array($kh->TrangThai, ['NHÁP', 'CHỜ DUYỆT']))

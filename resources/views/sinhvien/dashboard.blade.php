@@ -56,7 +56,7 @@
                 <i class="fa-solid fa-graduation-cap me-1 text-info"></i>Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
             </span>
             <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-1 rounded-pill small">
-                <i class="fa-regular fa-calendar me-1 text-info"></i>Học kỳ: <strong>{{ $hocKyHienTai->TenHocKy ?? 'HK2' }} ({{ $hocKyHienTai->NamHoc ?? '2025-2026' }})</strong>
+                <i class="fa-regular fa-calendar me-1 text-info"></i>Học kỳ: <strong>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ 1 (2026-2027)' }}</strong>
             </span>
         </div>
 

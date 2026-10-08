@@ -17,7 +17,7 @@
                 <p class="text-muted mb-0">
                     <i class="fa-solid fa-book me-1"></i>Môn Học: <strong>{{ $lopHP->monHoc->TenMon ?? 'N/A' }}</strong> ({{ $lopHP->monHoc->SoTinChi ?? 0 }} tín chỉ)
                     &nbsp;|&nbsp;
-                    <i class="fa-solid fa-calendar me-1"></i>Học Kỳ: <strong>{{ $lopHP->hocKy->TenHocKy ?? 'N/A' }} ({{ $lopHP->hocKy->NamHoc ?? '' }})</strong>
+                    <i class="fa-solid fa-calendar me-1"></i>Học Kỳ: <strong>{{ $lopHP->hocKy->TenHocKy ?? 'N/A' }}</strong>
                 </p>
             </div>
             <div class="d-flex gap-2">

@@ -23,7 +23,7 @@
                         <option value="">-- Tất cả các Học Kỳ --</option>
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ request('ma_hoc_ky') == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                                {{ $hk->TenHocKy }}
                             </option>
                         @endforeach
                     </select>
@@ -60,7 +60,7 @@
                                         </a>
                                     </td>
                                     <td>{{ $item->monHoc->TenMon ?? '—' }}</td>
-                                    <td><span class="badge bg-info text-dark">{{ $item->hocKy->TenHocKy ?? '—' }} ({{ $item->hocKy->NamHoc ?? '' }})</span></td>
+                                    <td><span class="badge bg-info text-dark">{{ $item->hocKy->TenHocKy ?? '—' }}</span></td>
                                     <td class="text-center"><span class="badge bg-light text-dark border">{{ $item->sinhVienLopHocPhans->count() }} / {{ $item->SiSoToiDa ?? 40 }} SV</span></td>
                                     <td class="text-end px-4">
                                         <a href="{{ route('giangvien.lop.show', $item->MaLopHP) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">

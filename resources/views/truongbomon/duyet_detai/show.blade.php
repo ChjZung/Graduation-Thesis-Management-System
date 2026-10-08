@@ -18,7 +18,7 @@
                 <span class="mx-2">•</span>
                 <span>Bộ môn: <strong>{{ $detai->giangVien->boMon->TenBoMon ?? 'N/A' }}</strong></span>
                 <span class="mx-2">•</span>
-                <span>Học kỳ: <strong>{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }} ({{ $detai->hocKy->NamHoc ?? '' }})</strong></span>
+                <span>Học kỳ: <strong>{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}</strong></span>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">

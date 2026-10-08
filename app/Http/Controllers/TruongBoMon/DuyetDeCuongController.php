@@ -42,7 +42,7 @@ class DuyetDeCuongController extends Controller
 
         // Danh sách học kỳ
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? $hocKies->first();
+        $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->orderBy('MaHocKy', 'desc')->first() ?? $hocKies->first();
         $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy ?? '');
 
         // Base query các đề tài có file đề cương hoặc bước phản biện / duyệt đề cương

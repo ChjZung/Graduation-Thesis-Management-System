@@ -496,7 +496,7 @@
                         <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} ({{ $hk->NamHoc }}) {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -568,7 +568,10 @@
                         <i class="fa-solid fa-table-list text-primary"></i> Danh Sách Đề Tài Khóa Luận – {{ $boMon->TenBoMon ?? 'Bộ Môn' }}
                     </h5>
                     <div class="text-muted small mt-1">
-                        Hiển thị đề tài thuộc <strong>{{ $currentHocKy?->TenHocKy ?? $selectedHocKy }}</strong> &bull; Phân trang chuẩn 5 đề tài/trang
+                        @php
+                            $selectedHkObj = $hocKies->firstWhere('MaHocKy', $selectedHocKy);
+                        @endphp
+                        Hiển thị đề tài thuộc <strong>{{ $selectedHkObj?->TenHocKy ?? $selectedHocKy }}</strong> &bull; Phân trang chuẩn 5 đề tài/trang
                     </div>
                 </div>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
@@ -725,7 +728,7 @@
                             <select name="MaHocKy" id="statsSelectHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                        {{ $hk->TenHocKy }} ({{ $hk->NamHoc }}) {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
                                     </option>
                                 @endforeach
                             </select>
