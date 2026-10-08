@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\QuyDinhKhoaLuan;
 use App\Models\KeHoachKhoaLuan;
+use App\Models\HocKy;
+use App\Services\PlanPhaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,6 +14,43 @@ class QuyDinhKhoaLuanController extends Controller
 {
     public function index(Request $request)
     {
+        $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
+
+        // Tự động khởi tạo 8 Quy định Chuẩn nếu CSDL chưa có dữ liệu
+        if (QuyDinhKhoaLuan::count() === 0) {
+            $targetPlan = $keHoachs->first();
+            if (!$targetPlan) {
+                $hocKy = HocKy::first();
+                $targetPlan = KeHoachKhoaLuan::create([
+                    'MakeHoach'   => 'KH_2026_01',
+                    'MaKeHoach'   => 'KH_2026_01',
+                    'MaHocKy'     => $hocKy ? $hocKy->MaHocKy : 'HK01',
+                    'TenKeHoach'  => 'Kế hoạch Khóa luận tốt nghiệp HK1 2026-2027',
+                    'NoiDung'     => 'Kế hoạch khóa luận tốt nghiệp theo Thông báo số 27/TB-KCNTT.',
+                    'NgayBatDau'  => '2026-08-10',
+                    'NgayKetThuc' => '2026-11-28',
+                    'TrangThai'   => 'ĐÃ CÔNG BỐ',
+                    'NgayTao'     => now(),
+                ]);
+                $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
+            }
+
+            if ($targetPlan) {
+                $defaultRules = PlanPhaseService::getDefaultRegulations();
+                foreach ($defaultRules as $idx => $r) {
+                    $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $targetPlan->MakeHoach);
+                    $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                    QuyDinhKhoaLuan::create([
+                        'MaQuyDinh'  => substr($maQD, 0, 20),
+                        'TenQuyDinh' => $r['TenQuyDinh'],
+                        'GiaTri'     => $r['GiaTri'],
+                        'MoTa'       => $r['MoTa'],
+                        'MakeHoach'  => $targetPlan->MakeHoach,
+                    ]);
+                }
+            }
+        }
+
         $query = QuyDinhKhoaLuan::with('keHoachKhoaLuan.hocKy');
 
         if ($request->filled('make_hoach')) {
@@ -28,7 +67,6 @@ class QuyDinhKhoaLuanController extends Controller
         }
 
         $totalQD = QuyDinhKhoaLuan::count();
-        $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
         $soKeHoachApDung = QuyDinhKhoaLuan::distinct('MakeHoach')->count('MakeHoach');
 
         $stats = [
@@ -38,7 +76,7 @@ class QuyDinhKhoaLuanController extends Controller
             'gpa_chuan'       => '2.0 GPA',
         ];
 
-        $quyDinhs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $quyDinhs = $query->orderBy('created_at', 'asc')->paginate(12)->withQueryString();
 
         return view('admin.quydinh.index', compact('quyDinhs', 'keHoachs', 'stats'));
     }
@@ -133,65 +171,37 @@ class QuyDinhKhoaLuanController extends Controller
         ]);
 
         $maKH = $request->MakeHoach;
-
-        $defaultRules = [
-            [
-                'MaQuyDinh'  => 'QD_TIN_CHI_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Số tín chỉ tích lũy tối thiểu làm KLTN',
-                'GiaTri'     => '115 Tín chỉ',
-                'MoTa'       => 'Sinh viên phải tích lũy tối thiểu 115 tín chỉ và không nợ các môn điều kiện tiên quyết.',
-                'MakeHoach'  => $maKH,
-            ],
-            [
-                'MaQuyDinh'  => 'QD_GPA_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Điểm trung bình tích lũy tối thiểu (GPA)',
-                'GiaTri'     => '2.0 GPA',
-                'MoTa'       => 'Điểm trung bình tích lũy thang điểm 4.0 đạt từ 2.0 trở lên tại thời điểm xét duyệt.',
-                'MakeHoach'  => $maKH,
-            ],
-            [
-                'MaQuyDinh'  => 'QD_MAX_SV_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Số lượng sinh viên tối đa trong một nhóm',
-                'GiaTri'     => '2 Sinh viên',
-                'MoTa'       => 'Mỗi nhóm khóa luận tối đa 2 sinh viên (trừ trường hợp đặc biệt được Trưởng khoa phê duyệt).',
-                'MakeHoach'  => $maKH,
-            ],
-            [
-                'MaQuyDinh'  => 'QD_MAX_DETAI_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Định mức đề tài tối đa một giảng viên hướng dẫn',
-                'GiaTri'     => '5 Đề tài',
-                'MoTa'       => 'Mỗi giảng viên hướng dẫn tối đa 5 đề tài/nhóm trong một học kỳ để đảm bảo chất lượng.',
-                'MakeHoach'  => $maKH,
-            ],
-            [
-                'MaQuyDinh'  => 'QD_TURNITIN_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Ngưỡng trùng lặp kiểm tra Turnitin tối đa',
-                'GiaTri'     => '<= 20%',
-                'MoTa'       => 'Báo cáo toàn văn quét qua hệ thống Turnitin có độ trùng lặp không được vượt quá 20%.',
-                'MakeHoach'  => $maKH,
-            ],
-            [
-                'MaQuyDinh'  => 'QD_DIEM_DAT_' . Str::upper(Str::random(4)),
-                'TenQuyDinh' => 'Điểm tổng kết tối thiểu để đạt Khóa luận',
-                'GiaTri'     => '>= 5.0 Điểm',
-                'MoTa'       => 'Điểm tổng kết bảo vệ theo trọng số (GVHD 30%, GVPB 30%, HĐ 40%) phải đạt từ 5.0 trở lên.',
-                'MakeHoach'  => $maKH,
-            ],
-        ];
+        $defaultRules = PlanPhaseService::getDefaultRegulations();
 
         $count = 0;
-        foreach ($defaultRules as $rule) {
-            // Không tạo trùng tên trong cùng kế hoạch
-            $exists = QuyDinhKhoaLuan::where('MakeHoach', $maKH)
-                                     ->where('TenQuyDinh', $rule['TenQuyDinh'])
-                                     ->exists();
-            if (!$exists) {
-                QuyDinhKhoaLuan::create($rule);
+        foreach ($defaultRules as $idx => $r) {
+            $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $maKH);
+            $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+
+            $ruleData = [
+                'MaQuyDinh'  => substr($maQD, 0, 20),
+                'TenQuyDinh' => $r['TenQuyDinh'],
+                'GiaTri'     => $r['GiaTri'],
+                'MoTa'       => $r['MoTa'],
+                'MakeHoach'  => $maKH,
+            ];
+
+            // Nếu đã tồn tại thì cập nhật, chưa có thì tạo mới
+            $existing = QuyDinhKhoaLuan::where('MakeHoach', $maKH)
+                                       ->where('TenQuyDinh', $r['TenQuyDinh'])
+                                       ->first();
+            if ($existing) {
+                $existing->update([
+                    'GiaTri' => $r['GiaTri'],
+                    'MoTa'   => $r['MoTa'],
+                ]);
+            } else {
+                QuyDinhKhoaLuan::create($ruleData);
                 $count++;
             }
         }
 
         return redirect()->route('admin.quydinh.index', ['make_hoach' => $maKH])
-                         ->with('success', "Đã khởi tạo thành công {$count} quy định chuẩn HUIT cho Kế hoạch!");
+                         ->with('success', "Đã đồng bộ thành công 8 quy định & tiêu chuẩn chuẩn cho Kế hoạch khóa luận!");
     }
 }

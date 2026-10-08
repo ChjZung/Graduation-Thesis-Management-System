@@ -28,9 +28,9 @@
         <div class="mb-4 p-3 bg-light rounded-3 border">
             <div class="row text-center small fw-bold text-muted g-2">
                 <div class="col-md-3 text-primary"><i class="fa-solid fa-circle-1 me-1"></i>1. Upload Văn bản</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Phân tích AI/OCR</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Preview Đối chiếu</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Sinh lịch</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Trích xuất văn bản</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Đối chiếu xem trước</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Cập nhật</div>
             </div>
         </div>
 
@@ -90,8 +90,8 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <button type="submit" class="btn btn-success rounded-pill px-5 font-weight-bold shadow-sm">
-                    <i class="fa-solid fa-microchip me-1"></i> Bắt Đầu Phân Tích & Preview
+                <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm">
+                    <i class="fa-solid fa-file-invoice me-1"></i> Bắt Đầu Trích Xuất &amp; Xem Trước
                 </button>
             </div>
         </form>

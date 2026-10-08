@@ -464,4 +464,53 @@ class PlanPhaseService
             ],
         ];
     }
+
+    /**
+     * Danh sách 8 Quy định & Tiêu chuẩn chuẩn trích xuất từ văn bản kế hoạch khóa luận
+     */
+    public static function getDefaultRegulations(): array
+    {
+        return [
+            [
+                'TenQuyDinh' => 'Số tín chỉ tích lũy tối thiểu làm KLTN',
+                'GiaTri'     => '115 Tín chỉ',
+                'MoTa'       => 'Sinh viên phải tích lũy tối thiểu 115 tín chỉ và không nợ các môn điều kiện tiên quyết.',
+            ],
+            [
+                'TenQuyDinh' => 'Điểm trung bình tích lũy tối thiểu (GPA)',
+                'GiaTri'     => '2.0 GPA',
+                'MoTa'       => 'Điểm trung bình tích lũy thang điểm 4.0 đạt từ 2.0 trở lên tại thời điểm xét duyệt.',
+            ],
+            [
+                'TenQuyDinh' => 'Số lượng sinh viên tối đa trong một nhóm',
+                'GiaTri'     => '2 - 3 Sinh viên',
+                'MoTa'       => 'Mỗi nhóm khóa luận gồm 2 đến 3 sinh viên (trừ trường hợp đặc biệt được Trưởng khoa duyệt).',
+            ],
+            [
+                'TenQuyDinh' => 'Định mức đề tài tối đa một giảng viên hướng dẫn',
+                'GiaTri'     => 'Tối đa 5 Đề tài / GV',
+                'MoTa'       => 'Mỗi giảng viên hướng dẫn tối đa 5 đề tài/nhóm trong một học kỳ để đảm bảo chất lượng hướng dẫn.',
+            ],
+            [
+                'TenQuyDinh' => 'Ngưỡng trùng lặp kiểm tra Turnitin tối đa',
+                'GiaTri'     => '<= 20%',
+                'MoTa'       => 'Báo cáo toàn văn quét qua hệ thống Turnitin có độ trùng lặp không được vượt quá 20%.',
+            ],
+            [
+                'TenQuyDinh' => 'Điểm tổng kết tối thiểu để đạt Khóa luận',
+                'GiaTri'     => '>= 5.0 Điểm',
+                'MoTa'       => 'Điểm tổng kết bảo vệ theo trọng số (GVHD 30%, GVPB 30%, Hội đồng 40%) phải đạt từ 5.0 trở lên.',
+            ],
+            [
+                'TenQuyDinh' => 'Thời gian thực hiện khóa luận tốt nghiệp',
+                'GiaTri'     => '12 Tuần',
+                'MoTa'       => 'Thời gian từ khi công bố đề tài chính thức đến khi nộp báo cáo hoàn chỉnh bảo vệ theo Thông báo số 27/TB-KCNTT.',
+            ],
+            [
+                'TenQuyDinh' => 'Yêu cầu hồ sơ và sản phẩm nộp bảo vệ',
+                'GiaTri'     => '03 Cuốn báo cáo + Source code + Slide',
+                'MoTa'       => 'Sinh viên nộp cuốn báo cáo đúng format, mã nguồn hoàn chỉnh và slide trình bày trước ngày bảo vệ.',
+            ],
+        ];
+    }
 }

@@ -172,8 +172,8 @@
                 <form action="{{ route('admin.quydinh.initDefaults') }}" method="POST" class="d-inline mt-2">
                     @csrf
                     <input type="hidden" name="MakeHoach" value="{{ $keHoach->MakeHoach }}">
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 mt-2">
-                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Nhanh Bộ 6 Chuẩn HUIT
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 mt-2 fw-semibold">
+                        <i class="fa-solid fa-scale-balanced me-1"></i> Nạp 8 Quy Định &amp; Tiêu Chuẩn Chuẩn
                     </button>
                 </form>
             </div>

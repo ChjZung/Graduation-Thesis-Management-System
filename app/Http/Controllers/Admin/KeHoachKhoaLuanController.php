@@ -122,9 +122,25 @@ class KeHoachKhoaLuanController extends Controller
                     'BatBuoc'         => isset($mocData['BatBuoc']) ? (bool)$mocData['BatBuoc'] : true,
                 ]);
             }
+
+            // Tự động khởi tạo 8 Quy định & Tiêu chuẩn chuẩn cho Kế hoạch khóa luận
+            $defaultRegs = PlanPhaseService::getDefaultRegulations();
+            foreach ($defaultRegs as $rIdx => $reg) {
+                $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $maKH);
+                $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($rIdx + 1, 2, '0', STR_PAD_LEFT);
+                $maQD = substr($maQD, 0, 20);
+
+                QuyDinhKhoaLuan::create([
+                    'MaQuyDinh'  => $maQD,
+                    'TenQuyDinh' => $reg['TenQuyDinh'],
+                    'GiaTri'     => $reg['GiaTri'],
+                    'MoTa'       => $reg['MoTa'],
+                    'MakeHoach'  => $maKH,
+                ]);
+            }
         });
 
-        return redirect()->route('admin.kehoach.index')->with('success', 'Tạo Kế hoạch Khóa luận mới thành công!');
+        return redirect()->route('admin.kehoach.index')->with('success', 'Tạo Kế hoạch Khóa luận mới và thiết lập 8 quy định chuẩn thành công!');
     }
 
     public function show($id)

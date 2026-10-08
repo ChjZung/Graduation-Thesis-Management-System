@@ -249,6 +249,9 @@ class DocumentPlanController extends Controller
 
             // 5b. Tự động lưu Quy định Khóa luận trích xuất từ văn bản kế hoạch vào CSDL
             $regulations = $previewData['regulations'] ?? [];
+            if (empty($regulations)) {
+                $regulations = \App\Services\PlanPhaseService::getDefaultRegulations();
+            }
             foreach ($regulations as $idx => $r) {
                 $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $keHoach->MakeHoach);
                 $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
