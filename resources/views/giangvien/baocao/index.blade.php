@@ -121,11 +121,12 @@
 @php
     $baoCaos = $nhom->baoCaos->keyBy('LanBaoCao');
     $mocs = [
-        1 => 'Mốc 1: Đề cương & Phân tích',
-        2 => 'Mốc 2: Nghiên cứu & Thiết kế',
-        3 => 'Mốc 3: Lập trình & Kiểm thử',
-        4 => 'Mốc 4: Hoàn thiện & Code Git',
-        5 => 'Mốc 5: Báo cáo & Bảo vệ',
+        1 => 'GĐ 1: Nhận đề cương & Thiết kế CSDL',
+        2 => 'GĐ 2: Thiết kế hệ thống & Xây dựng chức năng',
+        3 => 'GĐ 3: Kiểm thử & Hoàn thành báo cáo',
+        4 => 'GĐ 4: Hoàn thiện hồ sơ bảo vệ',
+        5 => 'GĐ 5: Tiến hành bảo vệ',
+        6 => 'GĐ 6: Nhận kết quả & Nộp lại kết quả',
     ];
 @endphp
 

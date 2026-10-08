@@ -14,11 +14,25 @@ use Illuminate\Support\Facades\DB;
 
 class HoiDongController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $hoiDongs = HoiDong::with(['thanhViens.giangVien', 'hoSoBaoVes.nhom'])
-            ->orderBy('ThoiGianBatDau', 'desc')
-            ->paginate(10);
+        $query = HoiDong::with(['thanhViens.giangVien', 'hoSoBaoVes.nhom'])
+            ->orderBy('ThoiGianBatDau', 'desc');
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function($q) use ($s) {
+                $q->where('TenHoiDong', 'like', "%{$s}%")
+                  ->orWhere('MaHoiDong', 'like', "%{$s}%")
+                  ->orWhere('DiaDiem', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('TrangThai')) {
+            $query->where('TrangThai', $request->TrangThai);
+        }
+
+        $hoiDongs = $query->paginate(10)->withQueryString();
 
         return view('admin.hoidong.index', compact('hoiDongs'));
     }
@@ -174,5 +188,61 @@ class HoiDongController extends Controller
             'TrangThai' => 'Đủ điều kiện bảo vệ',
         ]);
         return redirect()->back()->with('success', 'Đã hủy phân công nhóm khỏi hội đồng!');
+    }
+
+    public function themThanhVien(Request $request, $id)
+    {
+        $request->validate([
+            'MaGV'   => 'required|exists:GiangVien,MaGV',
+            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên,Thành viên,Phản biện',
+        ], [
+            'MaGV.required'   => 'Vui lòng chọn giảng viên.',
+            'VaiTro.required' => 'Vui lòng chọn vai trò trong Hội đồng.',
+        ]);
+
+        $hoiDong = HoiDong::findOrFail($id);
+
+        $exists = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $request->MaGV)->exists();
+        if ($exists) {
+            return redirect()->back()->with('error', 'Giảng viên này đã có trong danh sách thành viên Hội đồng!');
+        }
+
+        ThanhVienHoiDong::create([
+            'MaHoiDong' => $hoiDong->MaHoiDong,
+            'MaGV'      => $request->MaGV,
+            'VaiTro'    => $request->VaiTro,
+        ]);
+
+        return redirect()->back()->with('success', 'Đã thêm thành viên vào Hội đồng thành công!');
+    }
+
+    public function doiVaiTroThanhVien(Request $request, $id, $maGV)
+    {
+        $request->validate([
+            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên,Thành viên,Phản biện',
+        ]);
+
+        $tv = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $maGV)->firstOrFail();
+        $tv->update(['VaiTro' => $request->VaiTro]);
+
+        return redirect()->back()->with('success', 'Đã cập nhật vai trò thành viên thành công!');
+    }
+
+    public function xoaThanhVien($id, $maGV)
+    {
+        $hoiDong = HoiDong::findOrFail($id);
+
+        // Kiểm tra xem giảng viên đã có phiếu chấm điểm nào trong hội đồng này chưa
+        $daChamDiem = \App\Models\PhieuChamDiem::where('MaHoiDong', $id)->where('MaGV', $maGV)->exists();
+        if ($daChamDiem) {
+            return redirect()->back()->with('error', 'Không thể xóa thành viên này vì đã có phiếu chấm điểm được ghi nhận trong Hội đồng!');
+        }
+
+        $deleted = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $maGV)->delete();
+        if ($deleted) {
+            return redirect()->back()->with('success', 'Đã xóa thành viên khỏi Hội đồng thành công!');
+        }
+
+        return redirect()->back()->with('error', 'Không tìm thấy thành viên cần xóa.');
     }
 }

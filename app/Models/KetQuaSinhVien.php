@@ -20,6 +20,7 @@ class KetQuaSinhVien extends Model
         'DiemHoiDongTB',
         'DiemTongKet',
         'KetQua',
+        'LoaiKhoaLuan',
         'NhanXetChung',
         'NgayCham',
         'MaSV',
@@ -56,14 +57,7 @@ class KetQuaSinhVien extends Model
 
     public function getDiemHuongDanAttribute()
     {
-        if (isset($this->attributes['DiemHuongDan'])) {
-            return (float)$this->attributes['DiemHuongDan'];
-        }
-        if ($this->DiemTongKet && $this->DiemPhanBien && $this->DiemHoiDongTB) {
-            $val = ($this->DiemTongKet - ($this->DiemPhanBien * 0.3) - ($this->DiemHoiDongTB * 0.4)) / 0.3;
-            return round(max(0, min(10, $val)), 2);
-        }
-        return 0.0;
+        return isset($this->attributes['DiemHuongDan']) ? (float)$this->attributes['DiemHuongDan'] : null;
     }
 
     public function getDiemHe4Attribute()

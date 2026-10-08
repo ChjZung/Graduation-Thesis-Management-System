@@ -117,7 +117,9 @@
                                             {{ $tb->TieuDe }}
                                         </a>
                                         @if($tb->FileDinhKem)
-                                            <i class="fa-solid fa-paperclip text-muted small ms-1" title="Có tệp đính kèm"></i>
+                                            <a href="{{ route('thongbao.show', $tb->MaThongBao) }}" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 ms-1 text-decoration-none small" style="font-size: 0.72rem;">
+                                                <i class="fa-solid fa-file-pdf me-1"></i> Xem công văn
+                                            </a>
                                         @endif
                                     </div>
                                     @if($tb->LoaiThongBao)

@@ -154,10 +154,8 @@
                                 <th>Họ và Tên</th>
                                 <th>Lớp & Bộ Môn</th>
                                 <th>Đề Tài Khóa Luận</th>
-                                <th class="text-center">Điểm HD</th>
-                                <th class="text-center">Điểm PB</th>
-                                <th class="text-center">Điểm HĐ</th>
-                                <th class="text-center text-danger">Điểm Tổng Kết</th>
+                                <th class="text-center">Điểm HĐ (100%)</th>
+                                <th class="text-center text-primary">Điểm Tổng Kết</th>
                                 <th class="text-center">Xếp Loại</th>
                             </tr>
                         </thead>
@@ -181,17 +179,11 @@
                                             {{ $kq->hoSoBaoVe->deTai->TenDeTai ?? 'Chưa xác định' }}
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        {{ $kq->DiemHuongDan !== null ? number_format($kq->DiemHuongDan, 2) : '-' }}
+                                    <td class="text-center fw-semibold text-dark">
+                                        {{ number_format((float)($kq->DiemHoiDongTB ?? $kq->DiemTongKet ?? 0), 2) }}
                                     </td>
-                                    <td class="text-center">
-                                        {{ $kq->DiemPhanBien !== null ? number_format($kq->DiemPhanBien, 2) : '-' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $kq->DiemHoiDongTB !== null ? number_format($kq->DiemHoiDongTB, 2) : '-' }}
-                                    </td>
-                                    <td class="text-center fw-bold fs-6 text-danger">
-                                        {{ $kq->DiemTongKet !== null ? number_format($kq->DiemTongKet, 2) : '-' }}
+                                    <td class="text-center fw-bold fs-6 text-primary">
+                                        {{ number_format((float)($kq->DiemTongKet ?? $kq->DiemHoiDongTB ?? 0), 2) }}
                                     </td>
                                     <td class="text-center">
                                         @php

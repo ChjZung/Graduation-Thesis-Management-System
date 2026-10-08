@@ -164,6 +164,9 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\Admin\HoiDongController::class, 'updateTrangThai'])->name('admin.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\Admin\HoiDongController::class, 'phanCongNhom'])->name('admin.hoidong.phanCongNhom');
     Route::post('/hoi-dong/{id}/huy-phan-cong/{maHoSo}', [\App\Http\Controllers\Admin\HoiDongController::class, 'huyPhanCongNhom'])->name('admin.hoidong.huyPhanCongNhom');
+    Route::post('/hoi-dong/{id}/them-thanh-vien', [\App\Http\Controllers\Admin\HoiDongController::class, 'themThanhVien'])->name('admin.hoidong.themThanhVien');
+    Route::post('/hoi-dong/{id}/doi-vai-tro/{maGV}', [\App\Http\Controllers\Admin\HoiDongController::class, 'doiVaiTroThanhVien'])->name('admin.hoidong.doiVaiTroThanhVien');
+    Route::delete('/hoi-dong/{id}/xoa-thanh-vien/{maGV}', [\App\Http\Controllers\Admin\HoiDongController::class, 'xoaThanhVien'])->name('admin.hoidong.xoaThanhVien');
 
     Route::get('/ho-so-bao-ve', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'index'])->name('admin.hosoBaoVe.index');
     Route::post('/ho-so-bao-ve/{id}/phan-cong', [\App\Http\Controllers\Admin\HoSoBaoVeController::class, 'phanCong'])->name('admin.hosoBaoVe.phanCong');

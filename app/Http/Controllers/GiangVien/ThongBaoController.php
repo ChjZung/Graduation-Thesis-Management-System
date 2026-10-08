@@ -212,6 +212,34 @@ class ThongBaoController extends Controller
     public function show($id)
     {
         $thongBao = ThongBao::with(['giangVien', 'giaoVu'])->where('MaThongBao', $id)->firstOrFail();
-        return view('giangvien.thongbao.show', compact('thongBao'));
+
+        $fileUrl = $thongBao->FileDinhKem;
+        if (!empty($fileUrl)) {
+            $fileUrl = ltrim($fileUrl, '/');
+            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = 'storage/' . $fileUrl;
+            }
+        }
+        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
+            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
+            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
+                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
+                if (file_exists(public_path($candidate))) {
+                    $fileUrl = $candidate;
+                }
+            }
+        }
+
+        $fileType = 'other';
+        if (!empty($fileUrl)) {
+            $ext = strtolower(pathinfo($fileUrl, PATHINFO_EXTENSION));
+            if ($ext === 'pdf') {
+                $fileType = 'pdf';
+            } elseif (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
+                $fileType = 'image';
+            }
+        }
+
+        return view('giangvien.thongbao.show', compact('thongBao', 'fileUrl', 'fileType'));
     }
 }

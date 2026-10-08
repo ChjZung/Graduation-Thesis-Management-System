@@ -129,11 +129,42 @@ class ThongBaoController extends Controller
     }
 
     /**
-     * Trang Xem Chi Tiết Thông Báo & Lịch Sử Người Nhận
+     * Trang Xem Chi Tiết Thông Báo & Lịch Sử Người Nhận (Hỗ trợ Split-view xem công văn trực tiếp)
      */
     public function show($id)
     {
-        $thongBao = ThongBao::where('MaThongBao', $id)->firstOrFail();
+        $thongBao = ThongBao::with(['giaoVu', 'giangVien'])->where('MaThongBao', $id)->firstOrFail();
+
+        // 1. Tự động kiểm tra file công văn đính kèm
+        $fileUrl = $thongBao->FileDinhKem;
+        if (!empty($fileUrl)) {
+            $fileUrl = ltrim($fileUrl, '/');
+            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = 'storage/' . $fileUrl;
+            }
+        }
+
+        // Nếu thông báo chưa có file, tự động lấy file công văn từ kế hoạch khóa luận tương ứng hoặc mới nhất
+        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
+            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
+            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
+                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
+                if (file_exists(public_path($candidate))) {
+                    $fileUrl = $candidate;
+                }
+            }
+        }
+
+        // Xác định loại file (PDF hay Ảnh)
+        $fileType = 'other';
+        if (!empty($fileUrl)) {
+            $ext = strtolower(pathinfo($fileUrl, PATHINFO_EXTENSION));
+            if ($ext === 'pdf') {
+                $fileType = 'pdf';
+            } elseif (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
+                $fileType = 'image';
+            }
+        }
 
         $target = $thongBao->DoiTuongNhan;
         if ($target === 'Sinh viên') {
@@ -146,7 +177,7 @@ class ThongBaoController extends Controller
         $readCount = 0;
         $unreadCount = $totalSent;
 
-        return view('thongbao.show', compact('thongBao', 'totalSent', 'readCount', 'unreadCount'));
+        return view('thongbao.show', compact('thongBao', 'fileUrl', 'fileType', 'totalSent', 'readCount', 'unreadCount'));
     }
 
     /**

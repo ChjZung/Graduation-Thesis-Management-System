@@ -19,13 +19,14 @@ use Carbon\Carbon;
 
 class BaoCaoController extends Controller
 {
-    // Danh sách 5 mốc cố định
+    // Danh sách 6 giai đoạn tiến độ khóa luận
     const MOCS = [
-        1 => ['ten' => 'Mốc 1: Đề cương & Phân tích', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF đề cương nghiên cứu'],
-        2 => ['ten' => 'Mốc 2: Nghiên cứu & Thiết kế', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF báo cáo thiết kế hệ thống'],
-        3 => ['ten' => 'Mốc 3: Lập trình & Kiểm thử', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF báo cáo tiến độ lập trình'],
-        4 => ['ten' => 'Mốc 4: Hoàn thiện & Code', 'loai' => 'git', 'mo_ta' => 'Nộp link GitHub/GitLab (repository cuối)'],
-        5 => ['ten' => 'Mốc 5: Báo cáo & Bảo vệ', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp file PDF báo cáo hoàn chỉnh + link repository'],
+        1 => ['ten' => 'GĐ 1: Nhận đề cương & Thiết kế CSDL', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF đề cương chi tiết đề tài và sơ đồ thiết kế cơ sở dữ liệu.'],
+        2 => ['ten' => 'GĐ 2: Thiết kế hệ thống & Xây dựng chức năng', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp tài liệu thiết kế kiến trúc hệ thống, giao diện và link GitHub/GitLab các chức năng đã xây dựng.'],
+        3 => ['ten' => 'GĐ 3: Kiểm thử hoàn thiện & Báo cáo dự thảo', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp kết quả kiểm thử (Test report), dự thảo toàn văn khóa luận và hoàn thiện source code.'],
+        4 => ['ten' => 'GĐ 4: Hoàn thiện hồ sơ bảo vệ', 'loai' => 'pdf', 'mo_ta' => 'Nộp kết quả kiểm tra đạo văn Turnitin và hồ sơ xin bảo vệ đã có ý kiến của GVHD.'],
+        5 => ['ten' => 'GĐ 5: Tiến hành bảo vệ trước Hội đồng', 'loai' => 'pdf', 'mo_ta' => 'Nộp slide thuyết trình và tóm tắt đề tài phục vụ phiên bảo vệ trước Hội đồng chấm.'],
+        6 => ['ten' => 'GĐ 6: Nhận kết quả & Nộp lại kết quả hoàn chỉnh', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp bản khóa luận hoàn chỉnh đã chỉnh sửa theo kết luận và góp ý của Hội đồng chấm.'],
     ];
 
     public function index()
@@ -73,7 +74,7 @@ class BaoCaoController extends Controller
             ->keyBy('LanBaoCao');
 
         $mocHienTai = 1;
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 6; $i++) {
             if (!isset($baoCaos[$i])) {
                 $mocHienTai = $i;
                 break;
@@ -84,9 +85,9 @@ class BaoCaoController extends Controller
             }
             $mocHienTai = $i + 1;
         }
-        if ($mocHienTai > 5) $mocHienTai = 5;
+        if ($mocHienTai > 6) $mocHienTai = 6;
 
-        // BƯỚC 4: Lấy deadline các mốc từ KeHoach để hiển thị cảnh báo
+        // Lấy deadline các mốc từ KeHoach để hiển thị cảnh báo
         $mocDeadlines = $this->getMocDeadlines();
 
         return view('sinhvien.baocao.index', compact(
@@ -111,55 +112,45 @@ class BaoCaoController extends Controller
         $mocInfo = self::MOCS[$lan] ?? null;
 
         if (!$mocInfo) {
-            return back()->with('error', 'Mốc báo cáo không hợp lệ.');
+            return back()->with('error', 'Giai đoạn báo cáo không hợp lệ.');
         }
 
         // Validate theo loại mốc
-        $rules = ['LanBaoCao' => 'required|integer|min:1|max:5'];
+        $rules = ['LanBaoCao' => 'required|integer|min:1|max:6'];
         $messages = [];
 
+        $existing = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
+            ->where('LanBaoCao', $lan)
+            ->first();
+
         if (in_array($mocInfo['loai'], ['pdf', 'pdf_git'])) {
-            $rules['FileBaoCao'] = 'required|file|mimes:pdf|max:20480';
+            // Nếu đã có file trước đó và đang chỉnh sửa thì không bắt buộc upload lại file mới
+            $fileRule = ($existing && $existing->DuongDanFile) ? 'nullable|file|mimes:pdf|max:20480' : 'required|file|mimes:pdf|max:20480';
+            $rules['FileBaoCao'] = $fileRule;
             $messages['FileBaoCao.required'] = 'Vui lòng đính kèm file PDF.';
             $messages['FileBaoCao.mimes'] = 'Chỉ chấp nhận file PDF.';
             $messages['FileBaoCao.max'] = 'File PDF tối đa 20MB.';
         }
         if (in_array($mocInfo['loai'], ['git', 'pdf_git'])) {
-            $rules['LinkCode'] = 'required|url';
-            $messages['LinkCode.required'] = 'Vui lòng nhập link GitHub/GitLab.';
+            $rules['LinkCode'] = 'nullable|url';
             $messages['LinkCode.url'] = 'Link Code phải là URL hợp lệ (bắt đầu https://).';
         }
 
         $request->validate($rules, $messages);
 
-        // BƯỚC 4 FIX: Kiểm tra Deadline từ MocThoiGian
-        $deadlineError = $this->checkDeadline($lan);
-        if ($deadlineError) {
-            return back()->with('error', $deadlineError);
-        }
-
-        // Kiểm tra thứ tự mốc
+        // Kiểm tra thứ tự mốc: Phải hoàn thành mốc trước mới được nộp mốc sau
         if ($lan > 1) {
             $mocTruoc = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
                 ->where('LanBaoCao', $lan - 1)
                 ->where('TrangThai', 'Đạt')
                 ->first();
             if (!$mocTruoc) {
-                return back()->with('error', "Bạn cần hoàn thành Mốc " . ($lan - 1) . " và được Giảng viên đánh giá \"Đạt\" trước khi nộp Mốc {$lan}.");
+                return back()->with('error', "Bạn cần hoàn thành Giai đoạn " . ($lan - 1) . " và được Giảng viên đánh giá \"Đạt\" trước khi nộp Giai đoạn {$lan}.");
             }
         }
 
-        // Không cho nộp lại nếu đã có bài "Chờ duyệt" hoặc "Đạt"
-        $existing = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
-            ->where('LanBaoCao', $lan)
-            ->first();
-        if ($existing) {
-            if ($existing->TrangThai === 'Đạt') {
-                return back()->with('error', "Mốc {$lan} đã được Giảng viên đánh giá Đạt, không cần nộp lại.");
-            }
-            if ($existing->TrangThai === 'Chờ duyệt') {
-                return back()->with('error', "Mốc {$lan} đã có bài nộp đang chờ Giảng viên đánh giá.");
-            }
+        if ($existing && $existing->TrangThai === 'Đạt') {
+            return back()->with('error', "Giai đoạn {$lan} đã được Giảng viên đánh giá Đạt, không cần nộp lại.");
         }
 
         $maBaoCao = null;
@@ -210,7 +201,7 @@ class BaoCaoController extends Controller
         GenerateAiSummaryJob::dispatch($maBaoCao);
 
         return redirect()->route('sinhvien.baocao.index')
-            ->with('success', "Nộp báo cáo Mốc {$lan} thành công! Hệ thống đã kích hoạt trợ lý AI phân tích và tóm tắt nội dung báo cáo.");
+            ->with('success', "Nộp và lưu thông tin tiến độ GĐ {$lan} thành công! Hệ thống đã kích hoạt trợ lý AI phân tích và tóm tắt nội dung báo cáo.");
     }
 
     /**
@@ -224,8 +215,12 @@ class BaoCaoController extends Controller
         if (!$keHoach) return null; // Không có kế hoạch → bỏ qua kiểm tra
 
         $moc = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)
-            ->where('TenMoc', 'LIKE', "%Mốc {$lan}%")
-            ->orWhere('TenMoc', 'LIKE', "%Moc {$lan}%")
+            ->where(function($q) use ($lan) {
+                $q->where('TenMoc', 'LIKE', "%Mốc {$lan}%")
+                  ->orWhere('TenMoc', 'LIKE', "%Moc {$lan}%")
+                  ->orWhere('TenMoc', 'LIKE', "%GĐ {$lan}%")
+                  ->orWhere('TenMoc', 'LIKE', "%Giai đoạn {$lan}%");
+            })
             ->first();
 
         if (!$moc) return null; // Chưa cấu hình mốc → bỏ qua
@@ -233,7 +228,7 @@ class BaoCaoController extends Controller
         $ngayKetThuc = Carbon::parse($moc->NgayKetThuc)->endOfDay();
 
         if (now()->greaterThan($ngayKetThuc)) {
-            return "Đã quá hạn nộp Mốc {$lan}! Hạn cuối là " . $ngayKetThuc->format('d/m/Y H:i') . ". Vui lòng liên hệ Giáo vụ Khoa nếu cần gia hạn.";
+            return "Đã quá hạn nộp Giai đoạn {$lan}! Hạn cuối là " . $ngayKetThuc->format('d/m/Y H:i') . ". Vui lòng liên hệ Giáo vụ Khoa nếu cần gia hạn.";
         }
 
         return null;
@@ -250,8 +245,8 @@ class BaoCaoController extends Controller
         $mocs = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)->get();
         $map = [];
         foreach ($mocs as $moc) {
-            foreach (range(1, 5) as $lan) {
-                if (str_contains($moc->TenMoc, "Mốc {$lan}") || str_contains($moc->TenMoc, "Moc {$lan}")) {
+            foreach (range(1, 6) as $lan) {
+                if (str_contains($moc->TenMoc, "Mốc {$lan}") || str_contains($moc->TenMoc, "GĐ {$lan}") || str_contains($moc->TenMoc, "Giai đoạn {$lan}")) {
                     $map[$lan] = $moc->NgayKetThuc;
                 }
             }
