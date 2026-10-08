@@ -3,143 +3,147 @@
 @section('page_title', 'Quản lý giảng viên')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div>
-        <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-            <i class="fa-solid fa-chalkboard-user text-primary"></i> Quản Lý Danh Sách Giảng Viên, Bộ Môn &amp; Cấp Tài Khoản Portal
-        </h4>
-        <div class="text-muted small">Kiểm soát định mức hướng dẫn đề tài, phân công bộ môn chuyên môn, reset mật khẩu và trạng thái truy cập hệ thống.</div>
+<div class="container-fluid px-0">
+    <!-- Breadcrumb & Header Section -->
+    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
+        <i class="fas fa-home"></i> Trang chủ <i class="fas fa-chevron-right text-muted" style="font-size: 0.65rem;"></i> Quản lý hệ thống
     </div>
-    <div class="d-flex align-items-center">
-        <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
-            <i class="fa-solid fa-university text-primary me-1"></i> Khoa Công nghệ Thông tin — Học kỳ 1 (2026–2027)
-        </span>
-    </div>
-</div>
-
-
-
-@if(session('import_result'))
-    @php
-        $alertType = session('import_alert_type') ?? (session('import_danger') ? 'import_danger' : (session('import_warning') ? 'import_warning' : 'import_result'));
-        $alertClass = ($alertType === 'import_danger') ? 'alert-danger' : (($alertType === 'import_warning') ? 'alert-warning' : 'alert-success');
-        $borderColor = ($alertType === 'import_danger') ? '#dc3545' : (($alertType === 'import_warning') ? '#f59e0b' : '#198754');
-        $bgColor = ($alertType === 'import_danger') ? '#fef2f2' : (($alertType === 'import_warning') ? '#fffbeb' : '#f0fdf4');
-    @endphp
-    <div class="alert {{ $alertClass }} alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid {{ $borderColor }} !important; background-color: {{ $bgColor }};">
-        {!! session('import_result') !!}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-<!-- 4 KPI Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-            <div>
-                <div class="text-muted small fw-medium mb-1">Tổng Giảng Viên Khoa CNTT</div>
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-3 fw-bold text-dark">{{ $stats['total'] ?? $giangviens->total() }}</span>
-                    <span class="small text-muted fw-medium">giảng viên</span>
-                </div>
-            </div>
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                <i class="fa-solid fa-chalkboard-user fs-5"></i>
-            </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>Quản Lý Danh Sách Giảng Viên, Bộ Môn &amp; Cấp Tài Khoản Portal</h4>
+            <p class="text-muted small mb-0">Kiểm soát định mức hướng dẫn đề tài, phân công bộ môn chuyên môn, reset mật khẩu và trạng thái truy cập hệ thống.</p>
+        </div>
+        <div class="d-flex align-items-center">
+            <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
+                <i class="fa-solid fa-university text-primary me-1"></i> Khoa Công nghệ Thông tin &mdash; Học kỳ 1 (2026&ndash;2027)
+            </span>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-            <div>
-                <div class="text-muted small fw-medium mb-1">Nhận Hướng Dẫn Khóa Luận</div>
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-3 fw-bold text-success">{{ $stats['huong_dan'] ?? 0 }}</span>
+    @if(session('import_result'))
+        @php
+            $alertType = session('import_alert_type') ?? (session('import_danger') ? 'import_danger' : (session('import_warning') ? 'import_warning' : 'import_result'));
+            $alertClass = ($alertType === 'import_danger') ? 'alert-danger' : (($alertType === 'import_warning') ? 'alert-warning' : 'alert-success');
+            $borderColor = ($alertType === 'import_danger') ? '#dc3545' : (($alertType === 'import_warning') ? '#f59e0b' : '#198754');
+            $bgColor = ($alertType === 'import_danger') ? '#fef2f2' : (($alertType === 'import_warning') ? '#fffbeb' : '#f0fdf4');
+        @endphp
+        <div class="alert {{ $alertClass }} alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid {{ $borderColor }} !important; background-color: {{ $bgColor }};">
+            {!! session('import_result') !!}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- 4 KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Giảng Viên Khoa CNTT</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-chalkboard-user fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total'] ?? $giangviens->total() }}</span>
                     <span class="small text-muted fw-medium">giảng viên</span>
                 </div>
             </div>
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                <i class="fa-solid fa-person-chalkboard fs-5"></i>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Nhận Hướng Dẫn Khóa Luận</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-person-chalkboard fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $stats['huong_dan'] ?? 0 }}</span>
+                    <span class="small text-muted fw-medium">giảng viên</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-            <div>
-                <div class="text-muted small fw-medium mb-1">Thành Viên Hội Đồng</div>
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-3 fw-bold text-warning">{{ $stats['hoi_dong'] ?? 0 }}</span>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thành Viên Hội Đồng</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-award fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-warning lh-1">{{ $stats['hoi_dong'] ?? 0 }}</span>
                     <span class="small text-muted fw-medium">cán bộ chấm</span>
                 </div>
             </div>
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                <i class="fa-solid fa-award fs-5"></i>
-            </div>
         </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
-            <div>
-                <div class="text-muted small fw-medium mb-1">Tài Khoản Portal Active</div>
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-3 fw-bold text-info">{{ $stats['active'] ?? 0 }}</span>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tài Khoản Portal Active</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-user-shield fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-info lh-1">{{ $stats['active'] ?? 0 }}</span>
                     <span class="small text-muted fw-medium">/ {{ $stats['total'] ?? $giangviens->total() }} tài khoản</span>
                 </div>
             </div>
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
-                <i class="fa-solid fa-user-shield fs-5"></i>
-            </div>
         </div>
     </div>
-</div>
 
-<!-- Filter Bar -->
-<div class="admin-filter-bar mb-4">
-    <form method="GET" action="{{ route('giangvien.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
-        <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
-            <div class="input-group" style="min-width: 260px; flex: 1;">
-                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                <input type="text" name="search" class="form-control border-start-0" placeholder="Tìm theo tên GV, học hàm, email, mã GV..." value="{{ request('search') }}">
+    <!-- Filter Bar -->
+    <div class="admin-filter-bar mb-4">
+        <form method="GET" action="{{ route('giangvien.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
+            <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
+                <div class="input-group" style="min-width: 260px; flex: 1;">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Tìm theo tên GV, học hàm, email, mã GV..." value="{{ request('search') }}">
+                </div>
+                <select name="MaBoMon" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
+                    <option value="">-- Tất cả Bộ môn --</option>
+                    @foreach($bomons as $bm)
+                        <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
+                            {{ $bm->TenBoMon }} ({{ $bm->khoa->TenKhoa ?? '' }})
+                        </option>
+                    @endforeach
+                </select>
+                @if(request()->anyFilled(['search', 'MaBoMon']))
+                    <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                @endif
             </div>
-            <select name="MaBoMon" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
-                <option value="">-- Tất cả Bộ môn --</option>
-                @foreach($bomons as $bm)
-                    <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
-                        {{ $bm->TenBoMon }} ({{ $bm->khoa->TenKhoa ?? '' }})
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary shadow-xs" title="Tải file mẫu Excel">
-                <i class="fa-solid fa-download me-1"></i> File Mẫu
-            </a>
-            <button type="button" class="btn btn-info text-white shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-import me-1"></i> Import GV
-            </button>
-            <button type="button" class="btn btn-warning text-dark shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#importTBM_TK_Modal">
-                <i class="fa-solid fa-user-shield me-1"></i> Upload DS TK / TBM
-            </button>
-            <button type="button" class="btn btn-success shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#createModal">
-                <i class="fa-solid fa-plus me-1"></i> Thêm Giảng Viên
-            </button>
-        </div>
-    </form>
-</div>
-
-<!-- Table Card -->
-<div class="admin-table-card mb-4">
-    <div class="table-card-header d-flex justify-content-between align-items-center">
-        <div class="table-card-title">
-            <i class="fa-regular fa-folder-open text-primary me-2"></i> Danh Sách Giảng Viên Khoa Công Nghệ Thông Tin &amp; Quản Lý Tài Khoản Portal
-        </div>
-        <a href="javascript:void(0)" class="text-decoration-none small fw-semibold text-primary" onclick="alert('Đã kết nối máy chủ LDAP trường lúc 08:00 ngày 15/09/2026')">
-            <i class="fa-solid fa-arrows-rotate me-1"></i> Đồng bộ LDAP
-        </a>
+            <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
+                <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary shadow-xs" title="Tải file mẫu Excel">
+                    <i class="fa-solid fa-download me-1"></i> File Mẫu
+                </a>
+                <button type="button" class="btn btn-info text-white shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fa-solid fa-file-import me-1"></i> Import GV
+                </button>
+                <button type="button" class="btn btn-warning text-dark shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#importTBM_TK_Modal">
+                    <i class="fa-solid fa-user-shield me-1"></i> Upload DS TK / TBM
+                </button>
+                <button type="button" class="btn btn-success shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm Giảng Viên
+                </button>
+            </div>
+        </form>
     </div>
+
+    <!-- Main Table Card -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Danh Sách Giảng Viên Khoa Công Nghệ Thông Tin &amp; Quản Lý Tài Khoản Portal</span>
+            <div class="d-flex align-items-center gap-2">
+                <a href="javascript:void(0)" class="text-decoration-none small fw-semibold text-primary me-2" onclick="alert('Đã kết nối máy chủ LDAP trường lúc 08:00 ngày 15/09/2026')">
+                    <i class="fa-solid fa-arrows-rotate me-1"></i> Đồng bộ LDAP
+                </a>
+                <span class="badge bg-light text-secondary border fw-normal">Tổng: {{ $giangviens->total() }} giảng viên</span>
+            </div>
+        </div>
 
     <div class="table-responsive">
         <table class="table admin-table align-middle mb-0">
@@ -200,15 +204,15 @@
                             </span>
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center py-3">
                         <div class="d-flex justify-content-center gap-1">
-                            <a href="{{ route('giangvien.show', $gv->MaGV) }}" class="btn-action-icon text-primary" title="Xem hồ sơ chi tiết">
+                            <a href="{{ route('giangvien.show', $gv->MaGV) }}" class="btn btn-sm btn-light text-primary btn-action-circle border" title="Xem hồ sơ chi tiết">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
-                            <a href="{{ route('giangvien.edit', $gv->MaGV) }}" class="btn-action-icon text-warning" title="Chỉnh sửa thông tin">
+                            <a href="{{ route('giangvien.edit', $gv->MaGV) }}" class="btn btn-sm btn-light text-warning btn-action-circle border" title="Chỉnh sửa thông tin">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
-                            <button type="button" class="btn-action-icon" style="color: #7c3aed;" 
+                            <button type="button" class="btn btn-sm btn-light btn-action-circle border" style="color: #7c3aed;" 
                                     onclick="openBoNhiemModal('{{ $gv->MaGV }}', '{{ addslashes($gv->HoTen) }}', '{{ $gv->MaBoMon }}', '{{ $gv->boMon->MaKhoa ?? '' }}')" 
                                     title="Bổ nhiệm Trưởng khoa / Trưởng bộ môn">
                                 <i class="fa-solid fa-award"></i>
@@ -216,7 +220,7 @@
                             @if($tk)
                             <form action="{{ route('admin.yeucau.approve', $tk->MaTK) }}" method="POST" class="d-inline" onsubmit="return confirm('Reset mật khẩu tài khoản của {{ $gv->HoTen }} về 123456?');">
                                 @csrf
-                                <button type="submit" class="btn-action-icon text-secondary" title="Reset mật khẩu">
+                                <button type="submit" class="btn btn-sm btn-light text-info btn-action-circle border" title="Reset mật khẩu">
                                     <i class="fa-solid fa-key"></i>
                                 </button>
                             </form>
@@ -224,7 +228,7 @@
                             <form action="{{ route('giangvien.destroy', $gv->MaGV) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa giảng viên này?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn-action-icon text-danger" title="Xóa tài khoản">
+                                <button type="submit" class="btn btn-sm btn-light text-danger btn-action-circle border" title="Xóa tài khoản">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>
@@ -234,11 +238,15 @@
                 @empty
                 <tr>
                     <td colspan="6" class="text-center py-5">
-                        <div class="text-muted">
-                            <i class="fa-solid fa-chalkboard-user fa-3x text-secondary mb-3 opacity-50"></i>
-                            <h6 class="fw-bold">Chưa có dữ liệu giảng viên</h6>
-                            <p class="small mb-3">Vui lòng thêm mới hoặc import từ file Excel.</p>
-                            <a href="{{ route('giangvien.create') }}" class="btn btn-sm btn-primary rounded-pill px-4">Thêm Giảng Viên Mới</a>
+                        <div class="empty-state-box">
+                            <i class="fa-solid fa-chalkboard-user text-muted mb-3" style="font-size: 2.5rem;"></i>
+                            <h6 class="fw-bold text-secondary">Chưa có dữ liệu giảng viên nào</h6>
+                            <p class="small text-muted mb-3">Vui lòng điều chỉnh bộ lọc hoặc thêm mới giảng viên.</p>
+                            @if(request()->anyFilled(['search', 'MaBoMon']))
+                                <a href="{{ route('giangvien.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-1"></i> Xóa bộ lọc</a>
+                            @else
+                                <a href="{{ route('giangvien.create') }}" class="btn btn-primary btn-sm rounded-pill px-4">Thêm Giảng Viên Mới</a>
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -247,12 +255,16 @@
         </table>
     </div>
 
-    @if($giangviens->hasPages())
-    <div class="p-3 border-top d-flex justify-content-between align-items-center">
-        <span class="small text-muted">Hiển thị <strong>{{ $giangviens->firstItem() }} - {{ $giangviens->lastItem() }}</strong> trên tổng số <strong>{{ $giangviens->total() }}</strong> giảng viên</span>
-        {{ $giangviens->withQueryString()->links('pagination::bootstrap-5') }}
+    <div class="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center">
+        <span class="small text-muted">
+            Hiển thị {{ $giangviens->firstItem() ?? 0 }}–{{ $giangviens->lastItem() ?? 0 }} trên tổng số {{ $giangviens->total() }} giảng viên hệ thống
+        </span>
+        @if($giangviens->hasPages())
+            <div>
+                {{ $giangviens->withQueryString()->links('pagination::bootstrap-5') }}
+            </div>
+        @endif
     </div>
-    @endif
 </div>
 
 <!-- Bottom Info Card: HUIT Lecturer Rules -->

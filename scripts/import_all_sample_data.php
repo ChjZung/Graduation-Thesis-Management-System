@@ -71,28 +71,59 @@ $deletedTK = DB::table('taikhoan')
 echo "[DELETE] Da xoa {$deletedTK} tai khoan cu (Giang vien, Sinh vien, TBM, Truong khoa).\n";
 
 $adminPass = Hash::make('123456');
-DB::table('taikhoan')->where('TenDangNhap', 'admin')->update([
-    'MatKhau' => $adminPass,
-    'TrangThai' => 1,
-    'SoLanDangNhapSai' => 0,
-    'BatBuocDoiMatKhau' => 0,
-    'TrangThaiMatKhau' => 'ACTIVE'
-]);
+DB::table('taikhoan')->updateOrInsert(
+    ['TenDangNhap' => 'admin'],
+    [
+        'MaTK' => 'TK_ADMIN',
+        'MaVaiTro' => 'VT01',
+        'MatKhau' => $adminPass,
+        'TrangThai' => 1,
+        'SoLanDangNhapSai' => 0,
+        'BatBuocDoiMatKhau' => 0,
+        'TrangThaiMatKhau' => 'ACTIVE',
+        'updated_at' => now()
+    ]
+);
 
-DB::table('taikhoan')->where('TenDangNhap', 'giaovu01')->update([
-    'MatKhau' => $adminPass,
-    'TrangThai' => 1,
-    'SoLanDangNhapSai' => 0,
-    'BatBuocDoiMatKhau' => 0,
-    'TrangThaiMatKhau' => 'ACTIVE'
-]);
+DB::table('taikhoan')->updateOrInsert(
+    ['TenDangNhap' => 'giaovu01'],
+    [
+        'MaTK' => 'TK_GIAOVU01',
+        'MaVaiTro' => 'VT01',
+        'MatKhau' => $adminPass,
+        'TrangThai' => 1,
+        'SoLanDangNhapSai' => 0,
+        'BatBuocDoiMatKhau' => 0,
+        'TrangThaiMatKhau' => 'ACTIVE',
+        'updated_at' => now()
+    ]
+);
 
-echo "[UPDATE] Da dat mat khau cho 'admin' va 'giaovu01' la: 123456\n";
+echo "[UPDATE/INSERT] Da khoi tao va dat mat khau cho 'admin' va 'giaovu01' la: 123456\n";
 
 if (Schema::hasTable('giaovu')) {
-    DB::table('giaovu')->update([
-        'MaKhoa' => null
-    ]);
+    DB::table('giaovu')->updateOrInsert(
+        ['MaGVu' => 'GVU01'],
+        [
+            'MaTK' => 'TK_ADMIN',
+            'HoTen' => 'Quản trị viên Admin',
+            'Email' => 'admin@huit.edu.vn',
+            'SoDienThoai' => '0908123456',
+            'ChucVu' => 'Giáo vụ Khoa',
+            'updated_at' => now()
+        ]
+    );
+    DB::table('giaovu')->updateOrInsert(
+        ['MaGVu' => 'GVU02'],
+        [
+            'MaTK' => 'TK_GIAOVU01',
+            'HoTen' => 'Giáo vụ Khoa 01',
+            'Email' => 'giaovu01@huit.edu.vn',
+            'SoDienThoai' => '0908123457',
+            'ChucVu' => 'Giáo vụ Khoa',
+            'updated_at' => now()
+        ]
+    );
 }
 
 $roles = [
