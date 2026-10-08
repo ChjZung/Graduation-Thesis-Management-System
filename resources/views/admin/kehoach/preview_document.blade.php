@@ -187,7 +187,7 @@
 <div class="card card-premium mb-4">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-scale-balanced text-primary me-2"></i> Quy Định &amp; Tiêu Chuẩn Khóa Luận Trích Xuất Từ Văn Bản Kế Hoạch ({{ count($previewData['regulations']) }} Quy định)</span>
-        <span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3">Tự động thiết lập khi xác nhận</span>
+        <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 fw-semibold">Tự động đồng bộ sang Quy Định Khóa Luận</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -217,6 +217,10 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 bg-light border-top text-muted small d-flex align-items-center gap-2">
+            <i class="fa-solid fa-circle-info text-primary"></i>
+            <span>Khi bấm <strong>[XÁC NHẬN CẬP NHẬT KẾ HOẠCH &amp; SINH LỊCH]</strong> ở trên, toàn bộ {{ count($previewData['regulations']) }} quy định này sẽ được đồng bộ trực tiếp vào mục <strong>Quy Định Khóa Luận</strong> để Giáo vụ theo dõi và tùy chỉnh.</span>
         </div>
     </div>
 </div>

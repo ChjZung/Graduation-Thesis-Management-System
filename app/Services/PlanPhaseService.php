@@ -366,7 +366,8 @@ class PlanPhaseService
     }
 
     /**
-     * Danh sách 13 mốc chuẩn định nghĩa sẵn cho kế hoạch theo đúng thông báo của Khoa CNTT - HUIT.
+     * Danh sách các mốc chuẩn định nghĩa sẵn cho kế hoạch theo đúng thông báo của Khoa CNTT - HUIT.
+     * Lưu ý: Báo cáo tiến độ là chức năng riêng biệt, không thêm vào các mốc kế hoạch chung.
      */
     public static function getDefaultPhases(string $startDateStr = '2026-08-10'): array
     {
@@ -374,7 +375,7 @@ class PlanPhaseService
             [
                 'LoaiGiaiDoan'    => 'TAO_NHOM',
                 'ThuTu'           => 1,
-                'TenMoc'          => '1. Sinh viên tạo nhóm trên phần mềm',
+                'TenMoc'          => '1. Sinh viên tạo nhóm trên phần mềm HUIT-STUDENT',
                 'DoiTuongThucHien'=> 'Sinh viên',
                 'NgayBatDau'      => '2026-08-10',
                 'NgayKetThuc'     => '2026-08-10',
@@ -384,7 +385,7 @@ class PlanPhaseService
             [
                 'LoaiGiaiDoan'    => 'DANG_KY_DE_TAI',
                 'ThuTu'           => 2,
-                'TenMoc'          => '2. Nhóm trưởng đăng ký đề tài chính thức',
+                'TenMoc'          => '2. Nhóm trưởng đăng ký đề tài theo đúng chuyên ngành',
                 'DoiTuongThucHien'=> 'Nhóm trưởng',
                 'NgayBatDau'      => '2026-08-11',
                 'NgayKetThuc'     => '2026-08-11',
@@ -394,18 +395,18 @@ class PlanPhaseService
             [
                 'LoaiGiaiDoan'    => 'XU_LY_NGOAI_LE',
                 'ThuTu'           => 3,
-                'TenMoc'          => '3. Xử lý ngoại lệ & Đăng ký bổ sung',
-                'DoiTuongThucHien'=> 'Giáo vụ Khoa & Nhóm trưởng',
+                'TenMoc'          => '3. Xử lý các trường hợp ngoại lệ trực tiếp tại VPK',
+                'DoiTuongThucHien'=> 'Giáo vụ Khoa',
                 'NgayBatDau'      => '2026-08-12',
                 'NgayKetThuc'     => '2026-08-12',
-                'MoTa'            => 'Mở đăng ký bổ sung cho nhóm chưa có đề tài và Giáo vụ hỗ trợ trực tiếp tại VPK. Khung giờ: 08:00 - 16:00.',
+                'MoTa'            => 'Sinh viên đến trực tiếp VPK gặp Giáo vụ để hỗ trợ xử lý ngoại lệ (8h00 - 11h00 & 13h30 - 16h00).',
                 'BatBuoc'         => true,
             ],
             [
                 'LoaiGiaiDoan'    => 'CONG_BO_GVHD',
                 'ThuTu'           => 4,
-                'TenMoc'          => '4. Công bố chính thức danh sách SV & GVHD',
-                'DoiTuongThucHien'=> 'Khoa / Giáo vụ',
+                'TenMoc'          => '4. Khoa thông báo chính thức danh sách SV và GVHD',
+                'DoiTuongThucHien'=> 'Khoa CNTT',
                 'NgayBatDau'      => '2026-08-14',
                 'NgayKetThuc'     => '2026-08-14',
                 'MoTa'            => 'Khoa tổng hợp danh sách SV đăng ký đề tài và GVHD, thông báo chính thức trên website và hệ thống.',
@@ -424,82 +425,91 @@ class PlanPhaseService
             [
                 'LoaiGiaiDoan'    => 'THUC_HIEN',
                 'ThuTu'           => 6,
-                'TenMoc'          => '6. Bắt đầu thực hiện khóa luận (12 tuần)',
+                'TenMoc'          => '6. Thời gian thực hiện khóa luận (12 tuần)',
                 'DoiTuongThucHien'=> 'Sinh viên & GVHD',
                 'NgayBatDau'      => '2026-08-17',
-                'NgayKetThuc'     => '2026-08-28',
-                'MoTa'            => 'Nhóm bắt đầu thực hiện khóa luận 12 tuần (17/08/2026 - 08/11/2026) và hoàn thiện đề cương chi tiết.',
-                'BatBuoc'         => true,
-            ],
-            [
-                'LoaiGiaiDoan'    => 'BAO_CAO_TIEN_DO_1',
-                'ThuTu'           => 7,
-                'TenMoc'          => '7. Báo cáo tiến độ đợt 1 (Đề cương & CSDL)',
-                'DoiTuongThucHien'=> 'Sinh viên & GVHD',
-                'NgayBatDau'      => '2026-09-14',
-                'NgayKetThuc'     => '2026-09-18',
-                'MoTa'            => 'Nộp báo cáo tiến độ đợt 1: Đề cương chi tiết và thiết kế cơ sở dữ liệu (CSDL).',
-                'BatBuoc'         => true,
-            ],
-            [
-                'LoaiGiaiDoan'    => 'BAO_CAO_TIEN_DO_2',
-                'ThuTu'           => 8,
-                'TenMoc'          => '8. Báo cáo tiến độ đợt 2 (Thiết kế hệ thống & Chức năng)',
-                'DoiTuongThucHien'=> 'Sinh viên & GVHD',
-                'NgayBatDau'      => '2026-10-12',
-                'NgayKetThuc'     => '2026-10-16',
-                'MoTa'            => 'Nộp báo cáo tiến độ đợt 2: Thiết kế kiến trúc hệ thống và xây dựng các chức năng chính.',
-                'BatBuoc'         => true,
-            ],
-            [
-                'LoaiGiaiDoan'    => 'BAO_CAO_TIEN_DO_3',
-                'ThuTu'           => 9,
-                'TenMoc'          => '9. Báo cáo tiến độ đợt 3 (Kiểm thử & Dự thảo báo cáo)',
-                'DoiTuongThucHien'=> 'Sinh viên & GVHD',
-                'NgayBatDau'      => '2026-11-02',
-                'NgayKetThuc'     => '2026-11-06',
-                'MoTa'            => 'Nộp báo cáo tiến độ đợt 3: Kiểm thử hoàn thiện phần mềm và viết dự thảo toàn văn cuốn báo cáo.',
-                'BatBuoc'         => true,
-            ],
-            [
-                'LoaiGiaiDoan'    => 'DAO_VAN',
-                'ThuTu'           => 10,
-                'TenMoc'          => '10. Kiểm tra đạo văn (Quét Turnitin độ trùng lặp < 20%)',
-                'DoiTuongThucHien'=> 'Sinh viên & Khoa',
-                'NgayBatDau'      => '2026-11-09',
-                'NgayKetThuc'     => '2026-11-12',
-                'MoTa'            => 'Upload file cuốn toàn văn để kiểm tra Turnitin, đảm bảo tỷ lệ trùng lặp dưới 20%.',
-                'BatBuoc'         => true,
-            ],
-            [
-                'LoaiGiaiDoan'    => 'GVHD_XAC_NHAN',
-                'ThuTu'           => 11,
-                'TenMoc'          => '11. GVHD xác nhận đủ điều kiện bảo vệ',
-                'DoiTuongThucHien'=> 'GVHD',
-                'NgayBatDau'      => '2026-11-13',
-                'NgayKetThuc'     => '2026-11-16',
-                'MoTa'            => 'GVHD chấm điểm hướng dẫn và ký phiếu xác nhận đủ điều kiện bảo vệ khóa luận.',
+                'NgayKetThuc'     => '2026-11-08',
+                'MoTa'            => 'Thời gian thực hiện khóa luận 12 tuần: KLTN (Mã HP: 0101102534) và KLCN (Mã HP: 0101102008).',
                 'BatBuoc'         => true,
             ],
             [
                 'LoaiGiaiDoan'    => 'NOP_BAO_CAO',
-                'ThuTu'           => 12,
-                'TenMoc'          => '12. Nộp báo cáo khóa luận chính thức & hoàn tất hồ sơ',
-                'DoiTuongThucHien'=> 'Sinh viên & Giáo vụ',
-                'NgayBatDau'      => '2026-11-18',
-                'NgayKetThuc'     => '2026-11-20',
-                'MoTa'            => 'Sinh viên nộp cuốn báo cáo khóa luận chính thức và nộp hồ sơ bảo vệ về Khoa.',
+                'ThuTu'           => 7,
+                'TenMoc'          => '7. Sinh viên nộp báo cáo Khóa luận tốt nghiệp / cử nhân',
+                'DoiTuongThucHien'=> 'Sinh viên',
+                'NgayBatDau'      => '2026-11-11',
+                'NgayKetThuc'     => '2026-11-11',
+                'MoTa'            => 'SV nộp báo cáo Khóa luận cử nhân (0101102008) và Khóa luận tốt nghiệp (0101102534). Hình thức nộp Khoa thông báo sau.',
+                'BatBuoc'         => true,
+            ],
+            [
+                'LoaiGiaiDoan'    => 'THONG_BAO_HOI_DONG',
+                'ThuTu'           => 8,
+                'TenMoc'          => '8. Thông báo lịch làm việc của các Hội đồng bảo vệ KLCN, KLTN',
+                'DoiTuongThucHien'=> 'Khoa CNTT',
+                'NgayBatDau'      => '2026-11-13',
+                'NgayKetThuc'     => '2026-11-13',
+                'MoTa'            => 'Thông báo lịch làm việc của các hội đồng bảo vệ KLCN, KLTN đến SV trên bảng tin website Khoa.',
                 'BatBuoc'         => true,
             ],
             [
                 'LoaiGiaiDoan'    => 'BAO_VE',
-                'ThuTu'           => 13,
-                'TenMoc'          => '13. Tổ chức Hội đồng đánh giá và Lễ bảo vệ khóa luận',
-                'DoiTuongThucHien'=> 'Hội đồng & Sinh viên',
-                'NgayBatDau'      => '2026-11-25',
+                'ThuTu'           => 9,
+                'TenMoc'          => '9. Tổ chức các buổi bảo vệ khóa luận trước Hội đồng chấm',
+                'DoiTuongThucHien'=> 'Khoa & Hội đồng',
+                'NgayBatDau'      => '2026-11-18',
                 'NgayKetThuc'     => '2026-11-28',
-                'MoTa'            => 'Tổ chức các buổi bảo vệ khóa luận trước Hội đồng chấm và công bố kết quả.',
+                'MoTa'            => 'Tổ chức các buổi bảo vệ khóa luận trước Hội đồng chấm KLCN, KLTN.',
                 'BatBuoc'         => true,
+            ],
+        ];
+    }
+
+    /**
+     * Danh sách 8 Quy định & Tiêu chuẩn chuẩn trích xuất từ văn bản kế hoạch khóa luận
+     */
+    public static function getDefaultRegulations(): array
+    {
+        return [
+            [
+                'TenQuyDinh' => 'Số tín chỉ tích lũy tối thiểu làm KLTN',
+                'GiaTri'     => '115 Tín chỉ',
+                'MoTa'       => 'Sinh viên phải tích lũy tối thiểu 115 tín chỉ và không nợ các môn điều kiện tiên quyết.',
+            ],
+            [
+                'TenQuyDinh' => 'Điểm trung bình tích lũy tối thiểu (GPA)',
+                'GiaTri'     => '2.0 GPA',
+                'MoTa'       => 'Điểm trung bình tích lũy thang điểm 4.0 đạt từ 2.0 trở lên tại thời điểm xét duyệt.',
+            ],
+            [
+                'TenQuyDinh' => 'Số lượng sinh viên tối đa trong một nhóm',
+                'GiaTri'     => '2 - 3 Sinh viên',
+                'MoTa'       => 'Mỗi nhóm khóa luận gồm 2 đến 3 sinh viên (trừ trường hợp đặc biệt được Trưởng khoa duyệt).',
+            ],
+            [
+                'TenQuyDinh' => 'Định mức đề tài tối đa một giảng viên hướng dẫn',
+                'GiaTri'     => 'Tối đa 5 Đề tài / GV',
+                'MoTa'       => 'Mỗi giảng viên hướng dẫn tối đa 5 đề tài/nhóm trong một học kỳ để đảm bảo chất lượng hướng dẫn.',
+            ],
+            [
+                'TenQuyDinh' => 'Ngưỡng trùng lặp kiểm tra Turnitin tối đa',
+                'GiaTri'     => '<= 20%',
+                'MoTa'       => 'Báo cáo toàn văn quét qua hệ thống Turnitin có độ trùng lặp không được vượt quá 20%.',
+            ],
+            [
+                'TenQuyDinh' => 'Điểm tổng kết tối thiểu để đạt Khóa luận',
+                'GiaTri'     => '>= 5.0 Điểm',
+                'MoTa'       => 'Điểm tổng kết bảo vệ theo trọng số (GVHD 30%, GVPB 30%, Hội đồng 40%) phải đạt từ 5.0 trở lên.',
+            ],
+            [
+                'TenQuyDinh' => 'Thời gian thực hiện khóa luận tốt nghiệp',
+                'GiaTri'     => '12 Tuần',
+                'MoTa'       => 'Thời gian từ khi công bố đề tài chính thức đến khi nộp báo cáo hoàn chỉnh bảo vệ theo Thông báo số 27/TB-KCNTT.',
+            ],
+            [
+                'TenQuyDinh' => 'Yêu cầu hồ sơ và sản phẩm nộp bảo vệ',
+                'GiaTri'     => '03 Cuốn báo cáo + Source code + Slide',
+                'MoTa'       => 'Sinh viên nộp cuốn báo cáo đúng format, mã nguồn hoàn chỉnh và slide trình bày trước ngày bảo vệ.',
             ],
         ];
     }

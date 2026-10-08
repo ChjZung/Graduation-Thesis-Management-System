@@ -128,6 +128,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     Route::resource('kehoach', \App\Http\Controllers\Admin\KeHoachKhoaLuanController::class)->names('admin.kehoach');
     Route::post('/kehoach/{id}/status', [\App\Http\Controllers\Admin\KeHoachKhoaLuanController::class, 'updateStatus'])->name('admin.kehoach.updateStatus');
+    Route::post('/kehoach/{id}/publish', [\App\Http\Controllers\Admin\KeHoachKhoaLuanController::class, 'publish'])->name('admin.kehoach.publish');
 
     // Quy định Khóa luận tốt nghiệp
     Route::post('/quydinh/init-defaults', [\App\Http\Controllers\Admin\QuyDinhKhoaLuanController::class, 'initDefaults'])->name('admin.quydinh.initDefaults');

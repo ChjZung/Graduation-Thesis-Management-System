@@ -28,9 +28,9 @@
         <div class="mb-4 p-3 bg-light rounded-3 border">
             <div class="row text-center small fw-bold text-muted g-2">
                 <div class="col-md-3 text-primary"><i class="fa-solid fa-circle-1 me-1"></i>1. Upload Văn bản</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Phân tích AI/OCR</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Preview Đối chiếu</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Sinh lịch</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Trích xuất văn bản</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Đối chiếu xem trước</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Cập nhật</div>
             </div>
         </div>
 
@@ -43,21 +43,21 @@
                     <div class="card border-0 bg-light p-3 rounded-4 border">
                         <label for="MaHocKy" class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
                             <span><i class="fa-solid fa-calendar-days text-primary me-2"></i>1. Chọn Học Kỳ Áp Dụng Cho Kế Hoạch: <span class="text-danger">*</span></span>
-                            <span class="badge bg-warning text-dark font-weight-normal"><i class="fa-solid fa-shield-halved me-1"></i>Chỉ nhận học kỳ Chưa bắt đầu</span>
+                            <span class="badge bg-primary text-white font-weight-normal"><i class="fa-solid fa-graduation-cap me-1"></i>Học kỳ áp dụng</span>
                         </label>
                         <select name="MaHocKy" id="MaHocKy" class="form-select form-select-lg rounded-3" required>
-                            <option value="">-- Chọn Học Kỳ (Trạng thái: Chưa bắt đầu) --</option>
+                            <option value="">-- Chọn Học Kỳ Áp Dụng --</option>
                             @forelse($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} ({{ $hk->TrangThai }})
+                                <option value="{{ $hk->MaHocKy }}" {{ (old('MaHocKy') == $hk->MaHocKy || $hk->TrangThai == 'đang diễn ra' || $hk->TrangThai == 'Đang diễn ra') ? 'selected' : '' }}>
+                                    {{ $hk->TenHocKy }} (Năm học: {{ $hk->NamHoc }} - {{ $hk->TrangThai }})
                                 </option>
                             @empty
-                                <option value="" disabled>Hiện không có học kỳ nào ở trạng thái 'Chưa bắt đầu'</option>
+                                <option value="" disabled>Hiện không có học kỳ nào trong hệ thống</option>
                             @endforelse
                         </select>
                         <div class="form-text text-muted small mt-2">
                             <i class="fa-solid fa-circle-info text-primary me-1"></i>
-                            Để tránh xung đột dữ liệu, Kế hoạch mới bắt buộc chỉ được áp dụng cho học kỳ ở trạng thái <strong>Chưa bắt đầu</strong>.
+                            Kế hoạch khóa luận và các mốc quy trình sẽ được liên kết và thiết lập cho học kỳ này.
                         </div>
                     </div>
                 </div>
@@ -90,8 +90,8 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <button type="submit" class="btn btn-success rounded-pill px-5 font-weight-bold shadow-sm">
-                    <i class="fa-solid fa-microchip me-1"></i> Bắt Đầu Phân Tích & Preview
+                <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm">
+                    <i class="fa-solid fa-file-invoice me-1"></i> Bắt Đầu Trích Xuất &amp; Xem Trước
                 </button>
             </div>
         </form>

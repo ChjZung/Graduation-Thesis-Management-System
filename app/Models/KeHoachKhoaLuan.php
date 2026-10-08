@@ -18,6 +18,7 @@ class KeHoachKhoaLuan extends Model
         'MakeHoach',
         'TenKeHoach',
         'NoiDung',
+        'FileDinhKem',
         'TrangThai',
         'NgayTao',
         'MaHocKy',
