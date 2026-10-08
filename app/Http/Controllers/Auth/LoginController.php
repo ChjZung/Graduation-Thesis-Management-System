@@ -193,7 +193,7 @@ class LoginController extends Controller implements HasMiddleware
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                $this->username() => ['Tài khoản của bạn đã bị khóa do nhập sai mật khẩu quá 5 lần liên tiếp. Vui lòng liên hệ Giáo vụ Khoa để mở khóa.'],
+                $this->username() => ['Tài khoản của bạn đã bị khóa.'],
             ]);
         }
 
@@ -205,6 +205,42 @@ class LoginController extends Controller implements HasMiddleware
 
         throw \Illuminate\Validation\ValidationException::withMessages([
             $this->username() => [$msg],
+        ]);
+    }
+
+    /**
+     * Override sendLockoutResponse để phân biệt chính xác:
+     * - Tài khoản có trạng thái bị khóa -> "Tài khoản của bạn đã bị khóa."
+     * - Khóa tạm do đếm ngược RateLimiter (seconds > 0) -> "Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau X giây."
+     */
+    protected function sendLockoutResponse(\Illuminate\Http\Request $request)
+    {
+        $inputUsername = trim($request->TenDangNhap);
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
+            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
+            ->first();
+
+        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $this->username() => ['Tài khoản của bạn đã bị khóa.'],
+            ]);
+        }
+
+        $seconds = $this->limiter()->availableIn(
+            $this->throttleKey($request)
+        );
+
+        if ($seconds > 0) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $this->username() => [__('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ])],
+            ])->status(429);
+        }
+
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            $this->username() => ['Tài khoản của bạn đã bị khóa.'],
         ]);
     }
 }

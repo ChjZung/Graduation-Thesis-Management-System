@@ -15,7 +15,7 @@ echo "========================================================\n";
 echo ">>> BUOC 1: RESET TOAN BO DU LIEU DATABASE HE THONG <<<\n";
 echo "========================================================\n\n";
 
-DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
+Schema::disableForeignKeyConstraints();
 
 $tablesToTruncate = [
     'baocaotiendo',
@@ -110,7 +110,7 @@ foreach ($roles as $r) {
     );
 }
 
-DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
+Schema::enableForeignKeyConstraints();
 echo "[CHECK] Da dam bao 5 vai tro co dinh trong bang vaitro.\n";
 
 echo "\n========================================================\n";
