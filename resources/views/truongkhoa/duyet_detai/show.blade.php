@@ -259,12 +259,11 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <!-- Nút 1: Phê Duyệt Cấp Khoa -->
                         <form action="{{ route('truongkhoa.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
-                              onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề xuất đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nSau khi phê duyệt, hệ thống sẽ gửi thông báo yêu cầu Giảng viên nộp Đề cương chi tiết để Bộ môn phân công phản biện.');">
+                              onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề xuất đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nSau khi phê duyệt, đề tài sẽ được công bố chính thức để sinh viên đăng ký theo kế hoạch.');">
                             @csrf
                             <button type="submit" class="btn btn-success w-100 py-2 fw-bold" {{ $detai->TrangThai !== 'Chờ duyệt cấp Khoa' ? 'disabled' : '' }}>
-                                <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt Cấp Khoa
+                                <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt &amp; Công Bố Cho Sinh Viên Đăng Ký
                             </button>
                         </form>
 

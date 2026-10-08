@@ -41,11 +41,11 @@ class DeTaiController extends Controller
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // Danh sách các nhóm chưa có đề tài đã duyệt
-        $NhomChuaCoDeTai = Nhom::with(['truongNhom', 'thanhViens.sinhVien'])
+        $nhomsChuaCoDeTai = Nhom::with(['truongNhom.taiKhoan', 'thanhViens.sinhVien', 'hocKy', 'hocPhan'])
             ->whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
             ->get();
 
-        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'NhomChuaCoDeTai'));
+        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'nhomsChuaCoDeTai') + ['NhomChuaCoDeTai' => $nhomsChuaCoDeTai]);
     }
 
     public function downloadTemplate(Request $request)
@@ -187,7 +187,18 @@ class DeTaiController extends Controller
 
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
+        // Ràng buộc: Đề tài bắt buộc phải được gán cho một nhóm sinh viên mới được phép nộp đề cương
+        $hasGroupAssigned = $detai->phieuDangKys()
+            ->where('TrangThai', 'Đã duyệt')
+            ->whereNotNull('MaNhom')
+            ->exists();
+
+        if (!$hasGroupAssigned) {
+            return redirect()->back()->withErrors('Đề tài này chưa được gán cho nhóm sinh viên nào! Chỉ được phép nộp đề cương sau khi đề tài đã có nhóm sinh viên đăng ký chính thức.');
+        }
+
         $allowedStates = [
+            'Đã công bố',
             'Trưởng khoa đã duyệt - Chờ nộp đề cương', 
             'Yêu cầu chỉnh sửa đề cương', 
             'Trưởng khoa đã duyệt', 
@@ -421,11 +432,20 @@ class DeTaiController extends Controller
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
+        // Không cho phép xóa nếu đề tài đã được Trưởng khoa duyệt hoặc đã có nhóm đăng ký/gán
+        if ($detai->dangKyDeTais()->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])->exists()) {
+            return redirect()->back()->withErrors('Không thể xóa đề tài này do đã có nhóm sinh viên đăng ký/thực hiện.');
+        }
+
+        if (in_array($detai->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) || !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức, không thể xóa!');
+        }
+
         try {
             $detai->delete();
             return redirect()->route('giangvien.detai.index')->with('success', 'Xóa đề tài thành công!');
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors('Không thể xóa đề tài này do đã có sinh viên đăng ký.');
+            return redirect()->back()->withErrors('Không thể xóa đề tài này do có dữ liệu liên quan.');
         }
     }
 
@@ -475,7 +495,6 @@ class DeTaiController extends Controller
             ]);
 
             $nhom->update([
-                'MaDeTai'   => $detai->MaDeTai,
                 'TrangThai' => 'Đã duyệt',
             ]);
         });

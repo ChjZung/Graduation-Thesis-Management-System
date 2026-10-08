@@ -241,10 +241,15 @@ class DangKyDeTaiController extends Controller
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        $dangKy = DangKyDeTai::with('nhom')->findOrFail($id);
+        $dangKy = DangKyDeTai::with(['nhom', 'deTai'])->findOrFail($id);
 
         if ($dangKy->nhom->MaTruongNhom != $sinhVien->MaSV) {
             return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền hủy đăng ký đề tài!');
+        }
+
+        // Quy định: Đề tài của nhóm sinh viên sau khi được Trưởng khoa duyệt thì không được phép hủy, chỉ đợi nhận đề cương
+        if ($dangKy->deTai && (in_array($dangKy->deTai->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) || !empty($dangKy->deTai->NgayDuyetKhoa))) {
+            return redirect()->back()->withErrors('Đề tài của nhóm đã được Trưởng khoa phê duyệt chính thức và chốt danh sách thực hiện, không được phép hủy! Nhóm vui lòng chờ Giảng viên hướng dẫn nộp Đề cương chi tiết.');
         }
 
         $dangKy->nhom->update(['MaDeTai' => null]);
