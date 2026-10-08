@@ -89,18 +89,43 @@
                 </div>
             </div>
         @else
-            @if(isset($nhom) && $nhom && $nhom->MaTruongNhom === $sinhVien->MaSV)
-            <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
-                <span class="small text-success fw-medium"><i class="fa-solid fa-circle-check me-1"></i>Đề tài đã được gán trực tiếp cho nhóm của bạn.</span>
-                <form action="{{ route('sinhvien.dangky.destroy', $dangKyCurrent->MaDangKy) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đăng ký đề tài này để chọn đề tài khác?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                        <i class="fa-solid fa-rotate-left me-1"></i>Hủy Đăng Ký Đề Tài Này
-                    </button>
-                </form>
+            @php
+                $isDuyetKhoa = $dangKyCurrent->deTai && (in_array($dangKyCurrent->deTai->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) || !empty($dangKyCurrent->deTai->NgayDuyetKhoa));
+                $hasDeCuong = !empty($dangKyCurrent->deTai?->FileDeCuong);
+            @endphp
+            <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                @if($isDuyetKhoa)
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="small text-success fw-medium"><i class="fa-solid fa-circle-check me-1"></i>Đề tài đã được Trưởng khoa phê duyệt & gán chính thức cho nhóm.</span>
+                        @if($hasDeCuong)
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+                                <i class="fa-solid fa-file-circle-check me-1"></i>Đã có Đề cương chi tiết
+                            </span>
+                        @else
+                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-1">
+                                <i class="fa-solid fa-lock me-1 text-warning"></i>Không thể hủy — Đang chờ nhận Đề cương
+                            </span>
+                        @endif
+                    </div>
+                    @if($hasDeCuong)
+                        @php
+                            $fileDcUrl = Str::startsWith($dangKyCurrent->deTai->FileDeCuong, ['http', 'storage/']) ? asset($dangKyCurrent->deTai->FileDeCuong) : asset('storage/' . $dangKyCurrent->deTai->FileDeCuong);
+                        @endphp
+                        <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                            <i class="fa-solid fa-file-pdf me-1"></i>Xem Đề Cương
+                        </a>
+                    @endif
+                @elseif(isset($nhom) && $nhom && $nhom->MaTruongNhom === $sinhVien->MaSV)
+                    <span class="small text-success fw-medium"><i class="fa-solid fa-circle-check me-1"></i>Đề tài đã được gán cho nhóm của bạn.</span>
+                    <form action="{{ route('sinhvien.dangky.destroy', $dangKyCurrent->MaDangKy) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đăng ký đề tài này để chọn đề tài khác?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Hủy Đăng Ký Đề Tài Này
+                        </button>
+                    </form>
+                @endif
             </div>
-            @endif
         @endif
     </div>
 </div>

@@ -136,7 +136,19 @@ class NhomController extends Controller
                 })
                 ->delete();
 
-            $nhomCurrent = Nhom::with(['deTai.giangVien', 'truongNhom.taiKhoan', 'dangKyDeTai', 'hocPhan', 'hocKy'])
+            $nhomCurrent = Nhom::with([
+                    'deTai.giangVien.boMon',
+                    'deTai.hocKy',
+                    'deTai.hocPhanRef',
+                    'deTai.nganh',
+                    'dangKyDeTai.deTai.giangVien.boMon',
+                    'dangKyDeTai.deTai.hocKy',
+                    'dangKyDeTai.deTai.hocPhanRef',
+                    'dangKyDeTai.deTai.nganh',
+                    'truongNhom.taiKhoan',
+                    'hocPhan',
+                    'hocKy'
+                ])
                 ->where('MaNhom', $thanhVienRecord->MaNhom)
                 ->first();
 

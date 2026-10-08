@@ -30,6 +30,17 @@
                     @php
                         $dangKyApproved = $dt->dangKyDeTais->where('TrangThai', 'Đã duyệt')->first();
                         $dangKyPending = $dt->dangKyDeTais->where('TrangThai', 'Chờ duyệt')->first();
+                        $hasGroupAssigned = !empty($dangKyApproved) && !empty($dangKyApproved->nhom);
+
+                        // Chỉ khi ĐÃ CÓ NHÓM SINH VIÊN GÁN CHO ĐỀ TÀI thì nút Nộp Đề Cương mới được phép hiển thị
+                        $canNopDeCuong = $hasGroupAssigned && in_array($dt->TrangThai, [
+                            'Đã công bố',
+                            'Trưởng khoa đã duyệt',
+                            'Trưởng khoa đã duyệt - Chờ nộp đề cương',
+                            'Yêu cầu chỉnh sửa đề cương',
+                            'Đã cập nhật đề cương - Chờ phản biện lại'
+                        ]);
+                        $isNopLai = in_array($dt->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
                     @endphp
                     <tr>
                         <td>
@@ -110,12 +121,12 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1 flex-wrap">
-                                @if(in_array($dt->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Yêu cầu chỉnh sửa đề cương', 'Trưởng khoa đã duyệt', 'Đã cập nhật đề cương - Chờ phản biện lại']))
+                                @if($canNopDeCuong)
                                     <button type="button" class="btn btn-sm btn-primary rounded-pill px-2 py-1 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNopDeCuong{{ $dt->MaDeTai }}" title="Nộp Đề Cương Chi Tiết">
-                                        <i class="fa-solid fa-file-arrow-up me-1"></i>{{ $dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại' ? 'Nộp lại ĐC' : 'Nộp Đề Cương' }}
+                                        <i class="fa-solid fa-file-arrow-up me-1"></i>{{ $isNopLai ? 'Nộp lại ĐC' : 'Nộp Đề Cương' }}
                                     </button>
                                 @endif
-                                @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)
+                                @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$hasGroupAssigned)
                                     <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}" title="Gán nhóm cho đề tài này">
                                         <i class="fa-solid fa-user-check me-1"></i>Gán Nhóm
                                     </button>
@@ -123,7 +134,7 @@
                                 <a href="{{ route('giangvien.detai.edit', $dt->MaDeTai) }}" class="btn btn-sm btn-light text-primary rounded-circle" title="Sửa">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
-                                @if(!$dangKyApproved)
+                                @if(!$hasGroupAssigned)
                                 <form action="{{ route('giangvien.detai.destroy', $dt->MaDeTai) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này?');">
                                     @csrf
                                     @method('DELETE')
@@ -136,8 +147,8 @@
                         </td>
                     </tr>
 
-                    <!-- MODAL NỘP ĐỀ CƯƠNG CHI TIẾT -->
-                    @if(in_array($dt->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Yêu cầu chỉnh sửa đề cương', 'Trưởng khoa đã duyệt', 'Đã cập nhật đề cương - Chờ phản biện lại']))
+                    <!-- MODAL NỘP ĐỀ CƯƠNG CHI TIẾT (CHỈ HIỂN THỊ KHI ĐÃ ĐƯỢC GÁN CHO NHÓM SINH VIÊN) -->
+                    @if($canNopDeCuong)
                     <div class="modal fade" id="modalNopDeCuong{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
@@ -145,7 +156,7 @@
                                     @csrf
                                     <div class="modal-header">
                                         <h6 class="modal-title fw-bold text-primary">
-                                            <i class="fa-solid fa-file-arrow-up me-2"></i>Nộp Đề Cương Chi Tiết
+                                            <i class="fa-solid fa-file-arrow-up me-2"></i>{{ $isNopLai ? 'Nộp Lại Đề Cương Chi Tiết' : 'Nộp Đề Cương Chi Tiết' }}
                                         </h6>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
@@ -156,7 +167,7 @@
                                         </div>
                                         <div class="alert alert-info py-2 small my-3">
                                             <i class="fa-solid fa-circle-info me-1"></i>
-                                            Đề tài đã được Trưởng khoa phê duyệt danh mục ban đầu. Vui lòng tải lên file Đề cương chi tiết (.pdf, .doc, .docx) để Trưởng bộ môn tiến hành phân công Giảng viên phản biện.
+                                            Đề tài đã được gán cho nhóm <strong>{{ $dangKyApproved->nhom->TenNhom ?? 'sinh viên' }}</strong>. Vui lòng tải lên file Đề cương chi tiết (.pdf, .doc, .docx) để Trưởng bộ môn tiến hành phân công Giảng viên phản biện.
                                         </div>
 
                                         <div class="p-2 mb-3 bg-light rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -226,16 +237,35 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="small text-muted">Chỉ hiển thị các nhóm đã có <strong>đủ 3 thành viên chính thức</strong> và chưa đăng ký đề tài nào.</p>
+                                        <p class="small text-muted mb-2">
+                                            Danh sách nhóm thuộc <strong>{{ $dt->hocKy->TenHocKy ?? 'học kỳ này' }}</strong> - Môn <strong>{{ $dt->HocPhan ?? 'Khóa luận' }}</strong> chưa đăng ký đề tài:
+                                        </p>
                                         <div class="mb-3">
-                                            <label class="form-label fw-bold small">Chọn Nhóm Sinh Viên:</label>
+                                            <label class="form-label fw-bold small">Chọn Nhóm Sinh Viên <span class="text-danger">*</span>:</label>
+                                            @php
+                                                $allNhoms = $nhomsChuaCoDeTai ?? $NhomChuaCoDeTai ?? collect();
+                                                $dsNhoms = $allNhoms->filter(function($n) use ($dt) {
+                                                    if (!empty($dt->MaHocKy) && !empty($n->MaHocKy) && $n->MaHocKy !== $dt->MaHocKy) {
+                                                        return false;
+                                                    }
+                                                    if (!empty($dt->MaHocPhan) && !empty($n->MaHocPhan) && $n->MaHocPhan !== $dt->MaHocPhan) {
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                });
+                                            @endphp
                                             <select name="MaNhom" class="form-select" required>
                                                 <option value="">-- Chọn nhóm sinh viên --</option>
-                                                @foreach($nhomsChuaCoDeTai ?? [] as $nhomOption)
+                                                @forelse($dsNhoms as $nhomOption)
+                                                    @php
+                                                        $soTV = $nhomOption->thanhViens->where('TrangThai', 'da_tham_gia')->count();
+                                                    @endphp
                                                     <option value="{{ $nhomOption->MaNhom }}">
-                                                        {{ $nhomOption->TenNhom }} (Trưởng nhóm: {{ $nhomOption->truongNhom->HoTen ?? '' }} - 3 SV)
+                                                        {{ $nhomOption->TenNhom }} (Trưởng nhóm: {{ $nhomOption->truongNhom->HoTen ?? 'Chưa rõ' }} - {{ $soTV }}/3 SV)
                                                     </option>
-                                                @endforeach
+                                                @empty
+                                                    <option value="" disabled>Không tìm thấy nhóm phù hợp trong học kỳ này</option>
+                                                @endforelse
                                             </select>
                                         </div>
                                     </div>

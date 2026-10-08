@@ -367,23 +367,24 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::findOrFail($id);
 
         $detai->update([
-            'TrangThai'       => 'Trưởng khoa đã duyệt - Chờ nộp đề cương',
+            'TrangThai'       => 'Đã công bố',
             'NgayDuyetKhoa'   => now(),
+            'NgayCongBo'      => now(),
             'NguoiDuyetKhoa'  => $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TK'),
             'LyDoTuChoi'      => null,
         ]);
 
-        // Gửi thông báo cho GV đề xuất yêu cầu nộp Đề cương chi tiết
+        // Gửi thông báo cho GV đề xuất
         if ($detai->giangVien && $detai->giangVien->MaTK) {
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
-                '📋 Đề tài được Khoa phê duyệt - Yêu cầu nộp Đề cương chi tiết',
-                "Đề tài '{$detai->TenDeTai}' đã được Trưởng khoa phê duyệt danh mục ban đầu. Vui lòng nộp file Đề cương chi tiết để Bộ môn tiến hành phân công phản biện.",
+                '✅ Đề tài đã được Trưởng khoa phê duyệt & Công bố',
+                "Đề tài '{$detai->TenDeTai}' đã được Trưởng khoa phê duyệt và chính thức CÔNG BỐ để sinh viên đăng ký theo kế hoạch.",
                 'Đề tài'
             );
         }
 
-        return redirect()->back()->with('success', "Đã phê duyệt đề xuất đề tài '{$detai->TenDeTai}' cấp Khoa thành công! Hệ thống đã gửi thông báo yêu cầu Giảng viên nộp Đề cương chi tiết.");
+        return redirect()->back()->with('success', "Đã phê duyệt đề xuất đề tài '{$detai->TenDeTai}' cấp Khoa và CÔNG BỐ đề tài cho sinh viên đăng ký thành công!");
     }
 
     public function requestEdit(Request $request, $id)

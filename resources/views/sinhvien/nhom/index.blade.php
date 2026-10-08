@@ -63,7 +63,7 @@
         <div class="col-md-5">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="applyCascadeFilter()">
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="onHocPhanFilterChange()">
                     @php
                         $filteredHps = $hocPhans;
                         if ($selectedBoMon === 'DUNG_CHUNG') {
@@ -73,32 +73,16 @@
                         }
                     @endphp
                     @foreach($filteredHps as $hp)
+                        @php
+                            $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
+                        @endphp
                         <option value="{{ $hp->MaHocPhan }}" {{ $selectedHocPhan == $hp->MaHocPhan ? 'selected' : '' }}>
-                            {{ $hp->TenHocPhan }}
+                            {{ $hp->TenHocPhan }}{{ $groupInThisHp ? ' (Đã có nhóm)' : '' }}
                         </option>
                     @endforeach
                 </select>
             </div>
         </div>
-    </div>
-
-    <!-- CÁC NÚT TAB HỌC PHẦN DƯỚI DẠNG PILLS ĐỂ CHỌN NHANH -->
-    <div class="d-flex flex-wrap gap-2 mt-3 pt-2 border-top">
-        @foreach($filteredHps as $hp)
-        @php
-            $isActive = ($selectedHocPhan === $hp->MaHocPhan || $selectedHocPhan === $hp->TenHocPhan);
-            $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
-            $hasGroupInHp = !is_null($groupInThisHp);
-            $targetHk = $groupInThisHp?->nhom?->MaHocKy ?? $maHocKy;
-        @endphp
-        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan, 'hoc_ky' => $targetHk, 'bo_mon' => $selectedBoMon]) }}" 
-           class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
-            {{ $hp->TenHocPhan }}
-            @if($hasGroupInHp)
-                <span class="badge bg-success rounded-pill ms-1" style="font-size: 0.65rem;"><i class="fa-solid fa-check"></i> Đã có nhóm</span>
-            @endif
-        </a>
-        @endforeach
     </div>
 </div>
 
@@ -328,12 +312,51 @@
     </div>
     <div class="card-body p-4">
         <!-- ĐỀ TÀI CỦA NHÓM -->
-        @if($nhomCurrent->deTai)
-            <div class="p-3 bg-light border-start border-4 border-success rounded-3 mb-4">
-                <div class="small text-muted text-uppercase fw-bold">Đề Tài Đã Gán Cho Nhóm</div>
-                <h5 class="fw-bold text-success mb-1">{{ $nhomCurrent->deTai->TenDeTai }}</h5>
-                <div class="small text-secondary">
-                    <i class="fa-solid fa-chalkboard-user me-1"></i>Giảng viên hướng dẫn: <strong>{{ $nhomCurrent->deTai->giangVien->HoTen ?? 'Chưa gán' }}</strong>
+        @php
+            $currentDeTai = $nhomCurrent->deTai ?? $nhomCurrent->dangKyDeTai?->deTai;
+        @endphp
+        @if($currentDeTai)
+            <div class="p-3 bg-light border-start border-4 border-success rounded-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="small text-muted text-uppercase fw-bold">Đề Tài Đã Gán Cho Nhóm</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            <i class="fa-solid fa-circle-check me-1"></i>Đã phê duyệt
+                        </span>
+                        @if($currentDeTai->FileDeCuong)
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i class="fa-solid fa-file-lines me-1"></i>Đã có đề cương
+                            </span>
+                        @else
+                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                                <i class="fa-solid fa-clock me-1 text-warning"></i>Đang chờ nhận đề cương
+                            </span>
+                        @endif
+                    </div>
+                    <h5 class="fw-bold text-success mb-1">
+                        <a href="javascript:void(0)" class="text-success text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalTopicDetail" title="Bấm để xem chi tiết đề tài">
+                            {{ $currentDeTai->TenDeTai }} <i class="fa-solid fa-arrow-up-right-from-square fs-6 ms-1 text-muted"></i>
+                        </a>
+                    </h5>
+                    <div class="small text-secondary d-flex flex-wrap gap-3 align-items-center mt-1">
+                        <span><i class="fa-solid fa-chalkboard-user me-1 text-primary"></i>Giảng viên hướng dẫn: <strong>{{ $currentDeTai->giangVien->HoTen ?? 'Chưa gán' }}</strong></span>
+                        @if($currentDeTai->giangVien?->boMon)
+                            <span class="text-muted">| Bộ môn: {{ $currentDeTai->giangVien->boMon->TenBoMon }}</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTopicDetail">
+                        <i class="fa-solid fa-circle-info me-1"></i>Xem Chi Tiết Đề Tài
+                    </button>
+                    @if($currentDeTai->FileDeCuong)
+                        @php
+                            $fileDcUrl = Str::startsWith($currentDeTai->FileDeCuong, ['http', 'storage/']) ? asset($currentDeTai->FileDeCuong) : asset('storage/' . $currentDeTai->FileDeCuong);
+                        @endphp
+                        <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs fw-semibold">
+                            <i class="fa-solid fa-file-pdf me-1"></i>Xem Đề Cương
+                        </a>
+                    @endif
                 </div>
             </div>
         @else
@@ -694,6 +717,157 @@
 </div>
 
 <!-- ======================================================== -->
+<!-- MODAL CHI TIẾT ĐỀ TÀI ĐÃ GÁN CHO NHÓM -->
+<!-- ======================================================== -->
+@if(isset($nhomCurrent) && ($nhomCurrent->deTai || $nhomCurrent->dangKyDeTai?->deTai))
+@php
+    $dtDetail = $nhomCurrent->deTai ?? $nhomCurrent->dangKyDeTai?->deTai;
+@endphp
+<div class="modal fade" id="modalTopicDetail" tabindex="-1" aria-labelledby="modalTopicDetailLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+            <div class="modal-header bg-success text-white py-3 px-4">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalTopicDetailLabel">
+                        <i class="fa-solid fa-book-bookmark me-2"></i>Chi Tiết Đề Tài Khóa Luận
+                    </h5>
+                    <div class="small opacity-75">Thông tin đề tài đã được gán chính thức cho nhóm của bạn</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- TÊN ĐỀ TÀI & MÃ ĐỀ TÀI -->
+                <div class="mb-4 pb-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge bg-light text-dark border">Mã: <strong>{{ $dtDetail->MaDeTai }}</strong></span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-circle-check me-1"></i>{{ $dtDetail->TrangThai }}</span>
+                        @if($dtDetail->LinhVuc)
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $dtDetail->LinhVuc }}</span>
+                        @endif
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">{{ $dtDetail->TenDeTai }}</h4>
+                    @if($dtDetail->TenDeTaiTiengAnh)
+                        <div class="text-secondary fst-italic mb-2">{{ $dtDetail->TenDeTaiTiengAnh }}</div>
+                    @endif
+                </div>
+
+                <!-- THÔNG TIN CHUNG HỌC PHẦN, HỌC KỲ, GVHD -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-graduation-cap me-2"></i>Thông tin môn học</h6>
+                            <div class="small mb-1">
+                                <span class="text-muted">Học kỳ:</span> 
+                                <strong>{{ $dtDetail->hocKy->TenHocKy ?? $nhomCurrent->hocKy->TenHocKy ?? 'Chưa xác định' }}</strong>
+                            </div>
+                            <div class="small mb-1">
+                                <span class="text-muted">Học phần:</span> 
+                                <strong>{{ $dtDetail->hocPhanRef->TenHocPhan ?? $dtDetail->HocPhan ?? $nhomCurrent->hocPhan->TenHocPhan ?? 'Khóa luận' }}</strong>
+                            </div>
+                            <div class="small">
+                                <span class="text-muted">Quy mô nhóm:</span> 
+                                <strong>Tối đa {{ $dtDetail->SoLuongSinhVienToiDa ?? 3 }} sinh viên</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-chalkboard-user me-2"></i>Giảng viên hướng dẫn</h6>
+                            <div class="small mb-1">
+                                <span class="text-muted">Họ tên:</span> 
+                                <strong class="text-dark">{{ $dtDetail->giangVien->HoTen ?? 'Chưa gán' }}</strong>
+                            </div>
+                            <div class="small mb-1">
+                                <span class="text-muted">Học vị:</span> 
+                                <span>{{ $dtDetail->giangVien->HocVi ?? 'Giảng viên' }}</span>
+                            </div>
+                            <div class="small mb-1">
+                                <span class="text-muted">Bộ môn:</span> 
+                                <span>{{ $dtDetail->giangVien->boMon->TenBoMon ?? 'Khoa CNTT' }}</span>
+                            </div>
+                            @if($dtDetail->giangVien && $dtDetail->giangVien->Email)
+                            <div class="small">
+                                <span class="text-muted">Email:</span> 
+                                <code>{{ $dtDetail->giangVien->Email }}</code>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MÔ TẢ ĐỀ TÀI -->
+                @if($dtDetail->MoTa)
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1"><i class="fa-solid fa-align-left me-1 text-primary"></i>Mô tả tóm tắt nội dung:</label>
+                    <div class="p-3 bg-light rounded-3 border small text-dark" style="white-space: pre-line;">
+                        {{ $dtDetail->MoTa }}
+                    </div>
+                </div>
+                @endif
+
+                <!-- MỤC TIÊU & YÊU CẦU -->
+                @if($dtDetail->MucTieu)
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1"><i class="fa-solid fa-bullseye me-1 text-success"></i>Mục tiêu & Sản phẩm dự kiến:</label>
+                    <div class="p-3 bg-light rounded-3 border small text-dark" style="white-space: pre-line;">
+                        {{ $dtDetail->MucTieu }}
+                    </div>
+                </div>
+                @endif
+
+                @if($dtDetail->YeuCau)
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted text-uppercase mb-1"><i class="fa-solid fa-list-check me-1 text-warning"></i>Yêu cầu thực hiện đối với sinh viên:</label>
+                    <div class="p-3 bg-light rounded-3 border small text-dark" style="white-space: pre-line;">
+                        {{ $dtDetail->YeuCau }}
+                    </div>
+                </div>
+                @endif
+
+                <!-- KHUNG ĐỀ CƯƠNG CHI TIẾT (NẾU CÓ THÌ KÈM ĐỀ CƯƠNG, KHÔNG THÌ BÁO CHƯA CÓ) -->
+                <div class="mb-2">
+                    <label class="fw-bold small text-muted text-uppercase mb-2"><i class="fa-solid fa-file-lines me-1 text-info"></i>Đề cương chi tiết:</label>
+                    @if($dtDetail->FileDeCuong)
+                        @php
+                            $fileDcUrl = Str::startsWith($dtDetail->FileDeCuong, ['http', 'storage/']) ? asset($dtDetail->FileDeCuong) : asset('storage/' . $dtDetail->FileDeCuong);
+                            $fileName = basename($dtDetail->FileDeCuong);
+                        @endphp
+                        <div class="p-3 bg-success-subtle border border-success-subtle rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                            <div>
+                                <div class="fw-bold text-success mb-1">
+                                    <i class="fa-solid fa-circle-check me-1"></i>File đề cương chi tiết đã được Giảng viên cập nhật
+                                </div>
+                                <div class="small text-muted">
+                                    <i class="fa-solid fa-paperclip me-1 text-primary"></i>Tên tệp: <code>{{ $fileName }}</code>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-semibold">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Xem Trực Tiếp
+                                </a>
+                                <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                                    <i class="fa-solid fa-download me-1"></i>Tải Về
+                                </a>
+                            </div>
+                        </div>
+                    @else
+                        <div class="p-3 bg-light border rounded-3 text-center text-muted">
+                            <i class="fa-solid fa-file-circle-xmark text-secondary fs-4 mb-1 d-block"></i>
+                            <div class="fw-semibold small text-dark">Chưa có file đề cương chi tiết</div>
+                            <div class="small text-muted">Đề tài đã được Trưởng khoa phê duyệt chính thức cho nhóm (không thể hủy). Nhóm sinh viên vui lòng chờ Giảng viên hướng dẫn nộp Đề cương chi tiết.</div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="modal-footer px-4 py-3 bg-light border-top">
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- ======================================================== -->
 <!-- MODAL TẠO NHÓM MỚI THEO QUY TRÌNH RÀNG BUỘC (HỌC KỲ -> BỘ MÔN -> HỌC PHẦN) -->
 <!-- ======================================================== -->
 <div class="modal fade" id="modalCreateGroup" tabindex="-1" aria-labelledby="modalCreateGroupLabel" aria-hidden="true">
@@ -800,6 +974,8 @@
 <script>
 // ── XỬ LÝ CASCADE FILTER: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN TRÊN TRANG NHÓM ──
 const allHocPhansList = @json($hocPhans ?? []);
+const userGroupHpIds = @json(isset($sinhVienAllGroups) ? $sinhVienAllGroups->map(fn($g) => $g->nhom?->MaHocPhan ?? 'HP_KLCN')->values() : []);
+const groupSemestersMap = @json(isset($sinhVienAllGroups) ? $sinhVienAllGroups->filter(fn($g) => $g->nhom && $g->nhom->MaHocKy)->mapWithKeys(fn($g) => [$g->nhom->MaHocPhan ?? 'HP_KLCN' => $g->nhom->MaHocKy]) : []);
 
 function populateFilterHocPhans(selectedBm, currentHpVal) {
     const filterHocPhan = document.getElementById('filter_hoc_phan');
@@ -816,12 +992,25 @@ function populateFilterHocPhans(selectedBm, currentHpVal) {
     filtered.forEach(hp => {
         const opt = document.createElement('option');
         opt.value = hp.MaHocPhan;
-        opt.textContent = hp.TenHocPhan;
+        const hasGroup = userGroupHpIds.includes(hp.MaHocPhan);
+        opt.textContent = hp.TenHocPhan + (hasGroup ? ' (Đã có nhóm)' : '');
         if (hp.MaHocPhan === currentHpVal) {
             opt.selected = true;
         }
         filterHocPhan.appendChild(opt);
     });
+}
+
+function onHocPhanFilterChange() {
+    const filterHocPhan = document.getElementById('filter_hoc_phan');
+    const hpVal = filterHocPhan ? filterHocPhan.value : '';
+    if (hpVal && groupSemestersMap[hpVal]) {
+        const filterHocKy = document.getElementById('filter_hoc_ky');
+        if (filterHocKy) {
+            filterHocKy.value = groupSemestersMap[hpVal];
+        }
+    }
+    applyCascadeFilter();
 }
 
 function onBoMonChange() {
