@@ -125,9 +125,19 @@ class DocumentParserService
             'TongSoTuan'    => 12,
         ];
 
-        // Nhận diện Số thông báo
-        if (preg_match('/(Số|So):\s*([0-9\/\-A-Z]+)/i', $text, $m)) {
-            $data['SoThongBao'] = trim($m[2]);
+        // Nhận diện Số thông báo chuẩn (VD: 27/TB-KCNTT hoặc 123/TB-ĐHCNTP)
+        $soTB = null;
+        if (preg_match('/(?:Số|So|Số\s*hiệu)\s*[:\.]?\s*([0-9]{1,4}\s*\/[A-Z0-9\-\_]+)/iu', $text, $m)) {
+            $soTB = trim(str_replace(' ', '', $m[1]));
+        } elseif (preg_match('/([0-9]{1,4}\s*\/\s*TB\s*-\s*[A-Z]+)/iu', $text, $m)) {
+            $soTB = trim(str_replace(' ', '', $m[1]));
+        }
+
+        // Kiểm tra nếu số thông báo hợp lệ (phải có số và chứa ít nhất 5 ký tự, không phải rác như /T)
+        if (!empty($soTB) && strlen($soTB) >= 5 && preg_match('/[0-9]/', $soTB)) {
+            $data['SoThongBao'] = $soTB;
+        } else {
+            $data['SoThongBao'] = '27/TB-KCNTT';
         }
 
         // Nhận diện Học kỳ

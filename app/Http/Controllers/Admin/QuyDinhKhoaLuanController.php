@@ -16,26 +16,12 @@ class QuyDinhKhoaLuanController extends Controller
     {
         $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
 
-        // Tự động khởi tạo 8 Quy định Chuẩn nếu CSDL chưa có dữ liệu
-        if (QuyDinhKhoaLuan::count() === 0) {
+        // Chỉ nạp 8 Quy định Chuẩn nếu đã có Kế hoạch Khóa luận nhưng kế hoạch đó chưa có quy định
+        // TUYỆT ĐỐI không tự động tạo Kế hoạch mới khi người dùng chưa bấm tạo hoặc chưa xác nhận import!
+        if ($keHoachs->isNotEmpty()) {
             $targetPlan = $keHoachs->first();
-            if (!$targetPlan) {
-                $hocKy = HocKy::first();
-                $targetPlan = KeHoachKhoaLuan::create([
-                    'MakeHoach'   => 'KH_2026_01',
-                    'MaKeHoach'   => 'KH_2026_01',
-                    'MaHocKy'     => $hocKy ? $hocKy->MaHocKy : 'HK01',
-                    'TenKeHoach'  => 'Kế hoạch Khóa luận tốt nghiệp HK1 2026-2027',
-                    'NoiDung'     => 'Kế hoạch khóa luận tốt nghiệp theo Thông báo số 27/TB-KCNTT.',
-                    'NgayBatDau'  => '2026-08-10',
-                    'NgayKetThuc' => '2026-11-28',
-                    'TrangThai'   => 'ĐÃ CÔNG BỐ',
-                    'NgayTao'     => now(),
-                ]);
-                $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
-            }
-
-            if ($targetPlan) {
+            $hasRules = QuyDinhKhoaLuan::where('MakeHoach', $targetPlan->MakeHoach)->exists();
+            if (!$hasRules) {
                 $defaultRules = PlanPhaseService::getDefaultRegulations();
                 foreach ($defaultRules as $idx => $r) {
                     $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $targetPlan->MakeHoach);

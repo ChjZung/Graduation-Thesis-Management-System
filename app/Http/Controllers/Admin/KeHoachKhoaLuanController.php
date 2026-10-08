@@ -47,9 +47,10 @@ class KeHoachKhoaLuanController extends Controller
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $khoas = Khoa::orderBy('TenKhoa')->get();
         $boMons = BoMon::orderBy('TenBoMon')->get();
-        $defaultPhases = PlanPhaseService::getDefaultPhases('2026-09-01');
+        $defaultPhases = PlanPhaseService::getDefaultPhases('2026-08-10');
+        $defaultRegulations = PlanPhaseService::getDefaultRegulations();
 
-        return view('admin.kehoach.create', compact('hocKies', 'khoas', 'boMons', 'defaultPhases'));
+        return view('admin.kehoach.create', compact('hocKies', 'khoas', 'boMons', 'defaultPhases', 'defaultRegulations'));
     }
 
     public function store(Request $request)
@@ -67,7 +68,12 @@ class KeHoachKhoaLuanController extends Controller
         ], [
             'TenKeHoach.required'   => 'Vui lòng nhập tên kế hoạch.',
             'MaHocKy.required'      => 'Vui lòng chọn học kỳ.',
+            'NgayBatDau.required'   => 'Vui lòng nhập ngày bắt đầu của kế hoạch.',
+            'NgayKetThuc.required'  => 'Vui lòng nhập ngày kết thúc của kế hoạch.',
             'NgayKetThuc.after'     => 'Ngày kết thúc của kế hoạch phải diễn ra sau ngày bắt đầu.',
+            'mocs.*.TenMoc.required'     => 'Tên mốc quy trình không được để trống.',
+            'mocs.*.NgayBatDau.required'  => 'Không được để trống ngày bắt đầu của bất kỳ mốc thời gian nào.',
+            'mocs.*.NgayKetThuc.required' => 'Không được để trống ngày kết thúc của bất kỳ mốc thời gian nào.',
             'mocs.*.NgayKetThuc.after_or_equal' => 'Ngày kết thúc của từng mốc phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
@@ -80,8 +86,11 @@ class KeHoachKhoaLuanController extends Controller
             return redirect()->back()->withInput()->withErrors('Đã tồn tại kế hoạch khóa luận trong cùng Học kỳ.');
         }
 
-        // Kiểm tra các mốc phải nằm trong khoảng ngày bắt đầu và kết thúc của kế hoạch
+        // Kiểm tra chặt chẽ: Không được để trống mốc thời gian và phải nằm trong khoảng kế hoạch
         foreach ($request->mocs as $idx => $m) {
+            if (empty($m['NgayBatDau']) || empty($m['NgayKetThuc'])) {
+                return redirect()->back()->withInput()->withErrors("Mốc thứ " . ($idx + 1) . " ('" . ($m['TenMoc'] ?? '') . "') không được để trống ngày bắt đầu hoặc ngày kết thúc.");
+            }
             if ($m['NgayBatDau'] < $request->NgayBatDau || $m['NgayKetThuc'] > $request->NgayKetThuc) {
                 return redirect()->back()->withInput()->withErrors("Mốc thứ " . ($idx + 1) . " ('{$m['TenMoc']}') phải nằm trong khoảng thời gian từ {$request->NgayBatDau} đến {$request->NgayKetThuc} của kế hoạch.");
             }
@@ -104,6 +113,8 @@ class KeHoachKhoaLuanController extends Controller
                 'TrangThai'   => $request->action === 'publish' ? 'ĐÃ CÔNG BỐ' : 'NHÁP',
                 'NgayTao'     => now(),
                 'NgayCongBo'  => $request->action === 'publish' ? now() : null,
+                'NgayBatDau'  => $request->NgayBatDau,
+                'NgayKetThuc' => $request->NgayKetThuc,
             ]);
 
             foreach ($request->mocs as $index => $mocData) {
@@ -123,24 +134,29 @@ class KeHoachKhoaLuanController extends Controller
                 ]);
             }
 
-            // Tự động khởi tạo 8 Quy định & Tiêu chuẩn chuẩn cho Kế hoạch khóa luận
-            $defaultRegs = PlanPhaseService::getDefaultRegulations();
-            foreach ($defaultRegs as $rIdx => $reg) {
+            // Lưu các Quy định & Tiêu chuẩn khóa luận (theo form chỉnh sửa hoặc mặc định)
+            $submittedRegulations = $request->input('regulations', []);
+            if (empty($submittedRegulations)) {
+                $submittedRegulations = PlanPhaseService::getDefaultRegulations();
+            }
+
+            foreach ($submittedRegulations as $rIdx => $reg) {
+                if (empty($reg['TenQuyDinh']) || empty($reg['GiaTri'])) continue;
+
                 $cleanSuffix = preg_replace('/[^A-Za-z0-9]/', '', $maKH);
                 $maQD = 'QD_' . substr($cleanSuffix, -4) . '_' . str_pad($rIdx + 1, 2, '0', STR_PAD_LEFT);
-                $maQD = substr($maQD, 0, 20);
 
                 QuyDinhKhoaLuan::create([
-                    'MaQuyDinh'  => $maQD,
-                    'TenQuyDinh' => $reg['TenQuyDinh'],
-                    'GiaTri'     => $reg['GiaTri'],
-                    'MoTa'       => $reg['MoTa'],
+                    'MaQuyDinh'  => substr($maQD, 0, 20),
+                    'TenQuyDinh' => trim($reg['TenQuyDinh']),
+                    'GiaTri'     => trim($reg['GiaTri']),
+                    'MoTa'       => isset($reg['MoTa']) ? trim($reg['MoTa']) : null,
                     'MakeHoach'  => $maKH,
                 ]);
             }
         });
 
-        return redirect()->route('admin.kehoach.index')->with('success', 'Tạo Kế hoạch Khóa luận mới và thiết lập 8 quy định chuẩn thành công!');
+        return redirect()->route('admin.kehoach.index')->with('success', 'Tạo Kế hoạch Khóa luận mới và lưu đầy đủ quy định thành công!');
     }
 
     public function show($id)

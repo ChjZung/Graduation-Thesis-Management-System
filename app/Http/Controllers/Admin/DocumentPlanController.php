@@ -196,9 +196,10 @@ class DocumentPlanController extends Controller
                 $hocKy->update(['TrangThai' => 'Đang diễn ra']);
             }
 
-            // Tự động mở các môn học phần Khóa luận (Cử nhân & Kỹ sư) cho học kỳ này
-            $hocPhanCodes = ['HP_KLCN', 'HP_KLKS'];
-            foreach ($hocPhanCodes as $hpCode) {
+            // Tự động mở các môn học phần Khóa luận (Cử nhân & Tốt nghiệp) cho học kỳ này
+            $candidateHocPhans = ['HP_KLCN', 'HP_KLTN'];
+            $existingHocPhans = DB::table('hocphan')->whereIn('MaHocPhan', $candidateHocPhans)->pluck('MaHocPhan')->toArray();
+            foreach ($existingHocPhans as $hpCode) {
                 HocPhanHocKy::updateOrCreate(
                     [
                         'MaHocPhan' => $hpCode,
@@ -271,7 +272,8 @@ class DocumentPlanController extends Controller
             }
 
             // 6. Gửi Thông Báo Tự Động cho Sinh viên & Giảng viên
-            $title = "[Khóa luận] " . ($previewData['is_version_update'] ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
+            $isUpdate = !empty($previewData['is_version_update']);
+            $title = "[Khóa luận] " . ($isUpdate ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
             $content = "Khoa đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp. File gốc đính kèm: /storage/" . $permanentPath;
 
             $maTB = 'TB_' . Str::upper(Str::random(7));
