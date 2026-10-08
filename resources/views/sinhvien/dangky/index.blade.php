@@ -7,17 +7,34 @@
 
 <!-- THÔNG TIN NHÓM SINH VIÊN -->
 @if(isset($nhom) && $nhom)
-<div class="alert alert-info border-info shadow-sm mb-4 d-flex justify-content-between align-items-center">
+@php
+    $isGroupReady = ($soThanhVien >= 3);
+@endphp
+@if(!$isGroupReady)
+<div class="alert alert-warning border-warning shadow-sm mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
-        <i class="fa-solid fa-users fs-5 me-2 text-info"></i>
-        <strong>Nhóm của bạn:</strong> <strong>{{ $nhom->TenNhom }}</strong> ({{ $soThanhVien }}/3 thành viên). Nhóm có từ 1 đến 3 thành viên được phép đăng ký đề tài.
+        <div class="fw-bold text-dark">
+            <i class="fa-solid fa-triangle-exclamation text-warning fs-5 me-2"></i>
+            Nhóm của bạn: <strong>{{ $nhom->TenNhom }}</strong> ({{ $soThanhVien }}/3 thành viên) — <span class="text-danger fw-bold">CHƯA ĐỦ ĐIỀU KIỆN ĐĂNG KÝ ĐỀ TÀI</span>
+        </div>
+        <div class="small text-muted mt-1">
+            Quy định: Nhóm phải có <strong>đủ 3 thành viên</strong> thì Trưởng nhóm mới được phép đăng ký đề tài. Bạn còn thiếu <strong>{{ 3 - $soThanhVien }} thành viên</strong>.
+        </div>
     </div>
-    @if($soThanhVien < 3)
-    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-user-plus me-1"></i>Mời thêm thành viên (Tối đa 3)
-    </a>
-    @endif
+    <div>
+        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $nhom->MaHocPhan, 'hoc_ky' => $nhom->MaHocKy]) }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark shadow-xs">
+            <i class="fa-solid fa-users me-1"></i>Vào Quản Lý Nhóm Để Mời Thêm (Còn thiếu {{ 3 - $soThanhVien }} TV)
+        </a>
+    </div>
 </div>
+@else
+<div class="alert alert-success border-success shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <i class="fa-solid fa-circle-check fs-5 me-2 text-success"></i>
+        <strong>Nhóm của bạn:</strong> <strong>{{ $nhom->TenNhom }}</strong> ({{ $soThanhVien }}/3 thành viên) — <span class="text-success fw-bold">Đã đủ 3 thành viên, sẵn sàng đăng ký đề tài!</span>
+    </div>
+</div>
+@endif
 @endif
 
 <!-- TÌNH TRẠNG ĐĂNG KÝ CỦA NHÓM -->
@@ -67,29 +84,74 @@
 </div>
 @endif
 
-<!-- BƯỚC 1: CHỌN MÔN / HỌC PHẦN -->
+<!-- BƯỚC 1: LỌC DANH SÁCH ĐỀ TÀI THEO: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN -->
 <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-light">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div>
-            <span class="fw-bold text-dark"><i class="fa-solid fa-book-open text-primary me-2"></i>Bước 1: Chọn Môn / Học Phần:</span>
-            <div class="small text-muted">Lọc danh sách đề tài chính thức theo học phần bạn đang học</div>
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bước 1: Lọc Đề Tài (Học kỳ ➔ Bộ môn ➔ Học phần):</span>
+                <div class="small text-muted">Lọc danh sách đề tài chính thức theo học kỳ và học phần chuyên ngành</div>
+            </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('sinhvien.dangky.index') }}" 
-               class="btn btn-sm {{ !$selectedHocPhan ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
-                Tất Cả Học Phần
-            </a>
-            @foreach($hocPhans as $hp)
-            @php
-                $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
-                $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
-                $isActive = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
-            @endphp
-            <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hpCode]) }}" 
-               class="btn btn-sm {{ $isActive ? 'btn-primary text-white' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
-                {{ $hpName }}
-            </a>
-            @endforeach
+    </div>
+    <div class="row g-2 align-items-center">
+        <!-- 1. HỌC KỲ -->
+        <div class="col-md-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
+                    @foreach($hocKies as $hk)
+                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $hk->MaHocKy, 'bo_mon' => $selectedBoMon, 'HocPhan' => $selectedHocPhan]) }}" {{ ($selectedHocKy == $hk->MaHocKy || $maHocKy == $hk->MaHocKy) ? 'selected' : '' }}>
+                            {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- 2. BỘ MÔN -->
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
+                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => 'DUNG_CHUNG', 'HocPhan' => 'HP_KLCN']) }}" {{ $selectedBoMon === 'DUNG_CHUNG' ? 'selected' : '' }}>
+                        ⭐ Học phần Dùng chung (Khóa luận)
+                    </option>
+                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => 'ALL']) }}" {{ $selectedBoMon === 'ALL' ? 'selected' : '' }}>
+                        -- Tất cả bộ môn --
+                    </option>
+                    @foreach($boMons as $bm)
+                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => $bm->MaBoMon]) }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
+                            {{ $bm->TenBoMon }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- 3. HỌC PHẦN PILLS -->
+        <div class="col-md-5">
+            <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                @php
+                    $displayedHps = $hocPhans;
+                    if ($selectedBoMon === 'DUNG_CHUNG') {
+                        $displayedHps = $hocPhans->whereNull('MaBoMon');
+                    } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
+                        $displayedHps = $hocPhans->where('MaBoMon', $selectedBoMon);
+                    }
+                @endphp
+                @foreach($displayedHps as $hp)
+                @php
+                    $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
+                    $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
+                    $isActive = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
+                @endphp
+                <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hpCode, 'HocKy' => $selectedHocKy, 'bo_mon' => $selectedBoMon]) }}" 
+                   class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
+                    {{ $hpName }}
+                </a>
+                @endforeach
+            </div>
         </div>
     </div>
 </div>
@@ -173,6 +235,10 @@
                                 @elseif($hasActiveRegistration)
                                     <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Nhóm của bạn đã đăng ký một đề tài khác rồi">
                                         <i class="fa-solid fa-lock me-1"></i>Nhóm Đã Có Đề Tài
+                                    </button>
+                                @elseif($soThanhVien < 3)
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Quy định: Nhóm phải có đủ 3 thành viên mới được phép đăng ký đề tài">
+                                        <i class="fa-solid fa-lock me-1"></i>Chưa Đủ 3 TV ({{ $soThanhVien }}/3)
                                     </button>
                                 @else
                                     <form action="{{ route('sinhvien.dangky.store') }}" method="POST" class="d-inline">

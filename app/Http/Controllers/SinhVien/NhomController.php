@@ -31,10 +31,47 @@ class NhomController extends Controller
             ->with(['nhom.hocPhan', 'nhom.hocKy', 'nhom.dangKyDeTai.deTai'])
             ->get();
 
+        // Lấy danh sách Môn / Học phần đang mở
+        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
+                $q->where('TrangThai', 'Đang mở');
+            }])
+            ->where('TrangThai', 'Đang áp dụng')
+            ->orderBy('MaKhoa')
+            ->orderBy('MaBoMon')
+            ->get();
+        $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
+
         // 1. Phân giải môn học được chọn (selectedHocPhan)
         $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
         if (!$selectedHocPhan) {
             $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLCN';
+        }
+
+        // Phân giải bộ môn được chọn (selectedBoMon) theo luồng: Học kỳ -> Bộ môn -> Học phần
+        $selectedBoMon = $request->input('bo_mon') ?? $request->input('MaBoMon');
+        if ($selectedBoMon) {
+            if ($selectedBoMon === 'DUNG_CHUNG') {
+                $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
+                if ($hpCheck && !empty($hpCheck->MaBoMon)) {
+                    $selectedHocPhan = 'HP_KLCN';
+                }
+            } elseif ($selectedBoMon !== 'ALL') {
+                $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
+                if (!$hpCheck || $hpCheck->MaBoMon !== $selectedBoMon) {
+                    $firstHpInBm = $hocPhans->where('MaBoMon', $selectedBoMon)->first();
+                    if ($firstHpInBm) {
+                        $selectedHocPhan = $firstHpInBm->MaHocPhan;
+                    }
+                }
+            }
+        } else {
+            $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
+            if ($hpCheck && !empty($hpCheck->MaBoMon)) {
+                $selectedBoMon = $hpCheck->MaBoMon;
+            } else {
+                $selectedBoMon = 'DUNG_CHUNG';
+            }
         }
 
         // 2. Phân giải học kỳ (maHocKy):
@@ -66,17 +103,6 @@ class NhomController extends Controller
                 $maHocKy = $defaultHocKy;
             }
         }
-
-        // Lấy danh sách Môn / Học phần đang mở
-        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
-                $q->where('TrangThai', 'Đang mở');
-            }])
-            ->where('TrangThai', 'Đang áp dụng')
-            ->orderBy('MaKhoa')
-            ->orderBy('MaBoMon')
-            ->get();
-        $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
-        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
         // 3. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo MÔN HỌC và HỌC KỲ này
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
@@ -142,7 +168,7 @@ class NhomController extends Controller
                 }
             }
 
-            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy'));
+            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy'));
         }
 
         // 2. KHI CHƯA CÓ NHÓM CHO MÔN NÀY:
@@ -167,6 +193,7 @@ class NhomController extends Controller
                 'truongNhom.taiKhoan',
                 'truongNhom.lop.nganh',
                 'hocPhan',
+                'hocKy',
                 'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien.lop.nganh', 'sinhVien.taiKhoan')
             ]);
 
@@ -180,6 +207,10 @@ class NhomController extends Controller
             $queryNhoms->where(function($q) use ($selectedHocPhan) {
                 $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
             });
+        } elseif ($selectedBoMon === 'DUNG_CHUNG') {
+            $queryNhoms->whereHas('hocPhan', fn($q) => $q->whereNull('MaBoMon'));
+        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
+            $queryNhoms->whereHas('hocPhan', fn($q) => $q->where('MaBoMon', $selectedBoMon));
         }
 
         $queryNhoms->whereDoesntHave('phieuDangKys', fn($q) => $q->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']));
@@ -204,7 +235,7 @@ class NhomController extends Controller
 
         $nhomsOpen = $queryNhoms->get();
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy') + ['NhomOpen' => $nhomsOpen]);
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**

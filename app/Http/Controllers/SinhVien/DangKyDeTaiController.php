@@ -34,15 +34,24 @@ class DangKyDeTaiController extends Controller
         }
         $maHocKy = $requestedHocKy ?? $defaultHocKy;
 
-        // 2. Lấy danh sách Môn / Học phần từ DB
+        // 2. Lấy danh sách Môn / Học phần và Bộ môn từ DB
         $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
             ->orderBy('MaKhoa')
             ->orderBy('MaBoMon')
             ->get();
+        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
-        $selectedHocPhan = $request->input('HocPhan');
-        if (!$selectedHocPhan && $request->filled('MaHocPhan')) {
-            $selectedHocPhan = $request->input('MaHocPhan');
+        $selectedHocPhan = $request->input('HocPhan') ?? $request->input('hoc_phan') ?? $request->input('MaHocPhan');
+        $selectedBoMon = $request->input('bo_mon') ?? $request->input('MaBoMon');
+
+        if (!$selectedBoMon && $selectedHocPhan) {
+            $currentHp = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
+            if ($currentHp) {
+                $selectedBoMon = $currentHp->MaBoMon ?: 'DUNG_CHUNG';
+            }
+        }
+        if (!$selectedBoMon) {
+            $selectedBoMon = 'DUNG_CHUNG';
         }
 
         // 1. Kiểm tra Nhóm của sinh viên theo môn và học kỳ
@@ -87,7 +96,7 @@ class DangKyDeTaiController extends Controller
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $selectedHocKy = $requestedHocKy ?? ($nhom?->MaHocKy ?? $maHocKy);
 
-        // 3. Lọc danh sách đề tài theo học kỳ và môn học đã công bố
+        // 3. Lọc danh sách đề tài theo học kỳ, bộ môn và môn học đã công bố
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocPhanRef', 'hocKy'])->where('TrangThai', 'Đã công bố');
 
         if ($selectedHocKy) {
@@ -98,6 +107,13 @@ class DangKyDeTaiController extends Controller
             $query->where(function($q) use ($selectedHocPhan) {
                 $q->where('MaHocPhan', $selectedHocPhan)
                   ->orWhere('HocPhan', $selectedHocPhan);
+            });
+        } elseif ($selectedBoMon === 'DUNG_CHUNG') {
+            $query->whereHas('hocPhanRef', fn($q) => $q->whereNull('MaBoMon'));
+        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
+            $query->where(function($q) use ($selectedBoMon) {
+                $q->whereHas('giangVien', fn($gv) => $gv->where('MaBoMon', $selectedBoMon))
+                  ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $selectedBoMon));
             });
         }
 
@@ -113,7 +129,7 @@ class DangKyDeTaiController extends Controller
             ->get()
             ->keyBy('MaDeTai');
 
-        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'hocKies', 'selectedHocKy', 'maHocKy'));
+        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'hocKies', 'boMons', 'selectedHocKy', 'maHocKy'));
     }
 
     public function store(Request $request)
@@ -156,13 +172,14 @@ class DangKyDeTaiController extends Controller
             return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài!');
         }
 
-        // 3. QUY ĐỊNH: Nhóm phải có từ 1 đến 3 thành viên chính thức và không vượt quá chỉ tiêu đề tài
+        // 3. QUY ĐỊNH: Nhóm phải có ĐỦ 3 THÀNH VIÊN chính thức mới được phép đăng ký đề tài
         $countMembers = ThanhVienNhom::where('MaNhom', $nhom->MaNhom)
             ->where('TrangThai', 'da_tham_gia')
             ->count();
 
-        if ($countMembers < 1 || $countMembers > 3) {
-            return redirect()->back()->withErrors("Quy định: Nhóm phải có từ 1 đến tối đa 3 thành viên để đăng ký đề tài! Hiện tại nhóm của bạn có {$countMembers} thành viên.");
+        $minRequired = 3;
+        if ($countMembers < $minRequired) {
+            return redirect()->back()->withErrors("Quy định: Nhóm phải có đủ {$minRequired} thành viên mới được phép đăng ký đề tài! Hiện tại nhóm của bạn có {$countMembers}/{$minRequired} thành viên. Vui lòng mời hoặc phê duyệt thêm thành viên trước khi đăng ký đề tài.");
         }
 
         $maxSV = $deTai->SoLuongSinhVienToiDa ?? 3;

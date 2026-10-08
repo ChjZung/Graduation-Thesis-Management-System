@@ -16,36 +16,82 @@
 </div>
 @endif
 
-<!-- THANH CHỌN HỌC PHẦN / MÔN HỌC VÀ HỌC KỲ -->
+<!-- THANH BỘ LỌC TÌM KIẾM THEO: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN -->
 <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-2">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Chọn Môn / Học Phần:</span>
-            <span class="small text-muted ms-md-2">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ Lọc Nhóm Khóa Luận (Học kỳ ➔ Bộ môn ➔ Học phần):</span>
+            <span class="small text-muted">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
         </div>
-        @if(isset($hocKies) && $hocKies->count() > 0)
-        <div class="d-flex align-items-center gap-2">
-            <label class="small fw-bold text-secondary text-nowrap"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</label>
-            <select class="form-select form-select-sm rounded-pill fw-semibold border-secondary-subtle bg-white shadow-xs" style="width: auto; min-width: 170px;" onchange="window.location.href=this.value;">
-                @foreach($hocKies as $hk)
-                    <option value="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $hk->MaHocKy]) }}" {{ $maHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                        {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        @endif
     </div>
-    @if(isset($hocPhans) && $hocPhans->count() > 0)
-    <div class="d-flex flex-wrap gap-2">
-        @foreach($hocPhans as $hp)
+    <div class="row g-2 align-items-center">
+        <!-- 1. CHỌN HỌC KỲ -->
+        <div class="col-md-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_ky" onchange="applyCascadeFilter()">
+                    @foreach($hocKies as $hk)
+                        <option value="{{ $hk->MaHocKy }}" {{ $maHocKy == $hk->MaHocKy ? 'selected' : '' }}>
+                            {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- 2. CHỌN BỘ MÔN -->
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_bo_mon" onchange="onBoMonChange()">
+                    <option value="DUNG_CHUNG" {{ $selectedBoMon === 'DUNG_CHUNG' ? 'selected' : '' }}>
+                        ⭐ Học phần Dùng chung (Khóa luận)
+                    </option>
+                    <option value="ALL" {{ $selectedBoMon === 'ALL' ? 'selected' : '' }}>
+                        -- Tất cả bộ môn --
+                    </option>
+                    @foreach($boMons as $bm)
+                        <option value="{{ $bm->MaBoMon }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
+                            {{ $bm->TenBoMon }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- 3. CHỌN HỌC PHẦN -->
+        <div class="col-md-5">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="applyCascadeFilter()">
+                    @php
+                        $filteredHps = $hocPhans;
+                        if ($selectedBoMon === 'DUNG_CHUNG') {
+                            $filteredHps = $hocPhans->whereNull('MaBoMon');
+                        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
+                            $filteredHps = $hocPhans->where('MaBoMon', $selectedBoMon);
+                        }
+                    @endphp
+                    @foreach($filteredHps as $hp)
+                        <option value="{{ $hp->MaHocPhan }}" {{ $selectedHocPhan == $hp->MaHocPhan ? 'selected' : '' }}>
+                            {{ $hp->TenHocPhan }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- CÁC NÚT TAB HỌC PHẦN DƯỚI DẠNG PILLS ĐỂ CHỌN NHANH -->
+    <div class="d-flex flex-wrap gap-2 mt-3 pt-2 border-top">
+        @foreach($filteredHps as $hp)
         @php
             $isActive = ($selectedHocPhan === $hp->MaHocPhan || $selectedHocPhan === $hp->TenHocPhan);
             $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
             $hasGroupInHp = !is_null($groupInThisHp);
             $targetHk = $groupInThisHp?->nhom?->MaHocKy ?? $maHocKy;
         @endphp
-        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan, 'hoc_ky' => $targetHk]) }}" 
+        <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $hp->MaHocPhan, 'hoc_ky' => $targetHk, 'bo_mon' => $selectedBoMon]) }}" 
            class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
             {{ $hp->TenHocPhan }}
             @if($hasGroupInHp)
@@ -54,7 +100,6 @@
         </a>
         @endforeach
     </div>
-    @endif
 </div>
 
 @if(!$nhomCurrent)
@@ -114,6 +159,7 @@
         <form method="GET" action="{{ route('sinhvien.nhom.index') }}" class="row g-2 align-items-center">
             <input type="hidden" name="hoc_phan" value="{{ $selectedHocPhan }}">
             <input type="hidden" name="hoc_ky" value="{{ $maHocKy }}">
+            <input type="hidden" name="bo_mon" value="{{ $selectedBoMon }}">
             <div class="col-md-9">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
@@ -125,7 +171,7 @@
                     <i class="fa-solid fa-filter me-1"></i>Tìm Kiếm
                 </button>
                 @if(request('q'))
-                <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy]) }}" class="btn btn-outline-secondary rounded-pill px-3" title="Xóa bộ lọc">
+                <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy, 'bo_mon' => $selectedBoMon]) }}" class="btn btn-outline-secondary rounded-pill px-3" title="Xóa bộ lọc">
                     <i class="fa-solid fa-rotate-left"></i>
                 </a>
                 @endif
@@ -249,16 +295,43 @@
                 </div>
             </div>
         @else
-            <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center mb-4">
-                <div>
-                    <i class="fa-solid fa-circle-info me-2"></i>Nhóm của bạn chưa đăng ký Đề tài cho môn học này.
+            @php
+                $memberCountCurrent = $nhomCurrent->thanhViens->count();
+                $isFullGroup = ($memberCountCurrent >= 3);
+            @endphp
+            @if(!$isFullGroup)
+                <div class="alert alert-warning border-warning d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <div class="fw-bold text-dark mb-1">
+                            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Chưa Đủ Thành Viên Để Đăng Ký Đề Tài (Đang có {{ $memberCountCurrent }}/3 thành viên)
+                        </div>
+                        <div class="small text-muted">
+                            Theo quy định, nhóm của bạn phải tập hợp <strong>đủ 3 thành viên chính thức</strong> thì Trưởng nhóm mới có thể đăng ký đề tài. Bạn cần tuyển thêm <strong>{{ 3 - $memberCountCurrent }} thành viên</strong> nữa.
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0" disabled title="Nhóm cần đủ 3 thành viên mới được phép đăng ký đề tài">
+                            <i class="fa-solid fa-lock me-1"></i>Đăng Ký Đề Tài (Cần Đủ 3/3 SV)
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLCN', 'HocKy' => $nhomCurrent->MaHocKy]) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0">
-                        <i class="fa-solid fa-clipboard-list me-1"></i>Đăng Ký Đề Tài Ngay
-                    </a>
+            @else
+                <div class="alert alert-success border-success d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <div class="fw-bold text-success mb-1">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>Nhóm Đã Đủ 3 Thành Viên! Sẵn Sàng Đăng Ký Đề Tài
+                        </div>
+                        <div class="small text-muted">
+                            Nhóm của bạn đã đạt chỉ tiêu 3 thành viên và chưa đăng ký Đề tài. Trưởng nhóm có thể chọn đề tài ngay bây giờ.
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $nhomCurrent->MaHocPhan ?? 'HP_KLCN', 'HocKy' => $nhomCurrent->MaHocKy]) }}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold mt-2 mt-md-0 shadow-sm">
+                            <i class="fa-solid fa-clipboard-list me-1"></i>Đăng Ký Đề Tài Ngay
+                        </a>
+                    </div>
                 </div>
-            </div>
+            @endif
         @endif
 
         <!-- DANH SÁCH THÀNH VIÊN CHÍNH THỨC -->
@@ -658,7 +731,58 @@
 
 @push('scripts')
 <script>
+// ── XỬ LÝ CASCADE FILTER: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN TRÊN TRANG NHÓM ──
+const allHocPhansList = @json($hocPhans ?? []);
+
+function populateFilterHocPhans(selectedBm, currentHpVal) {
+    const filterHocPhan = document.getElementById('filter_hoc_phan');
+    if (!filterHocPhan) return;
+    filterHocPhan.innerHTML = '';
+
+    let filtered = allHocPhansList;
+    if (selectedBm === 'DUNG_CHUNG') {
+        filtered = allHocPhansList.filter(hp => !hp.MaBoMon);
+    } else if (selectedBm && selectedBm !== 'ALL') {
+        filtered = allHocPhansList.filter(hp => hp.MaBoMon === selectedBm);
+    }
+
+    filtered.forEach(hp => {
+        const opt = document.createElement('option');
+        opt.value = hp.MaHocPhan;
+        opt.textContent = hp.TenHocPhan;
+        if (hp.MaHocPhan === currentHpVal) {
+            opt.selected = true;
+        }
+        filterHocPhan.appendChild(opt);
+    });
+}
+
+function onBoMonChange() {
+    const filterBoMon = document.getElementById('filter_bo_mon');
+    const selectedBm = filterBoMon ? filterBoMon.value : 'DUNG_CHUNG';
+    populateFilterHocPhans(selectedBm, null);
+    applyCascadeFilter();
+}
+
+function applyCascadeFilter() {
+    const filterHocKy = document.getElementById('filter_hoc_ky');
+    const filterBoMon = document.getElementById('filter_bo_mon');
+    const filterHocPhan = document.getElementById('filter_hoc_phan');
+
+    const hk = filterHocKy ? filterHocKy.value : '';
+    const bm = filterBoMon ? filterBoMon.value : '';
+    const hp = filterHocPhan ? filterHocPhan.value : '';
+
+    const url = new URL("{{ route('sinhvien.nhom.index') }}", window.location.origin);
+    if (hk) url.searchParams.set('hoc_ky', hk);
+    if (bm) url.searchParams.set('bo_mon', bm);
+    if (hp) url.searchParams.set('hoc_phan', hp);
+    window.location.href = url.toString();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // ── KHỞI TẠO OPTIONS BỘ LỌC HỌC PHẦN ──
+    populateFilterHocPhans("{{ $selectedBoMon }}", "{{ $selectedHocPhan }}");
     // ── XỬ LÝ QUY TRÌNH 2 BƯỚC KHI TẠO NHÓM (HỌC KỲ -> HỌC PHẦN KHÓA LUẬN TOÀN KHOA) ──
     const hocPhansData = @json($hocPhans ?? []);
     const selectHocKy = document.getElementById('create_group_hocky');
