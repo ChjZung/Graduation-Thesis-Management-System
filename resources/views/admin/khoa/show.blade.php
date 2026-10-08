@@ -231,7 +231,12 @@
                             <span class="text-muted">Tên Khoa</span>
                             <span class="fw-bold text-dark text-end">{{ $khoa->TenKhoa }}</span>
                         </li>
-
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span class="text-muted">Trưởng Khoa</span>
+                            <span class="fw-bold text-primary text-end">
+                                <i class="fa-solid fa-user-tie me-1"></i>{{ $khoa->TruongKhoa ?: 'Chưa phân công' }}
+                            </span>
+                        </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                             <span class="text-muted">Trạng Thái</span>
                             <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
@@ -246,17 +251,35 @@
                 </div>
             </div>
 
-            <!-- Ban Giáo Vụ / Phụ Trách -->
+            <!-- Ban Quản Lý & Giáo Vụ Khoa -->
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-white py-3 border-bottom">
                     <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fa-solid fa-user-shield text-primary me-2"></i>Ban Quản Lý & Giáo Vụ
+                        <i class="fa-solid fa-user-shield text-primary me-2"></i>Ban Lãnh Đạo & Giáo Vụ Khoa
                     </h6>
                 </div>
                 <div class="card-body p-3">
+                    @if($khoa->TruongKhoa)
+                        <div class="d-flex align-items-center gap-3 p-2.5 rounded-3 bg-primary-subtle border border-primary-subtle mb-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.1rem;">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="badge bg-primary text-white rounded-pill px-2 py-0.5 mb-1" style="font-size: 0.68rem;">TRƯỞNG KHOA</div>
+                                <div class="fw-bold text-dark text-truncate">{{ $khoa->TruongKhoa }}</div>
+                                <div class="small text-muted">Phụ trách công tác quản trị chung của khoa</div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3 border-0">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Khoa hiện chưa có thông tin Trưởng Khoa quản lý.
+                        </div>
+                    @endif
+
+                    <div class="text-muted small fw-bold text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">Cán bộ giáo vụ khoa:</div>
                     @forelse($khoa->giaoVus as $gv)
                         <div class="d-flex align-items-center gap-3 p-2 rounded bg-light mb-2">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <div class="bg-white border text-primary rounded-circle d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 38px; height: 38px;">
                                 <i class="fa-solid fa-user"></i>
                             </div>
                             <div class="flex-grow-1 overflow-hidden">
@@ -265,8 +288,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-3 text-muted small">
-                            <i class="fa-regular fa-id-badge mb-2" style="font-size: 1.5rem;"></i>
+                        <div class="text-center py-2 text-muted small">
                             <div>Chưa gán thông tin cán bộ giáo vụ riêng cho khoa này.</div>
                         </div>
                     @endforelse

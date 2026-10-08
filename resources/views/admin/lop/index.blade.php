@@ -25,64 +25,68 @@
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Số Lớp Quản Lý</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-dark">{{ $stats['total_lop'] ?? $lops->total() }}</span>
-                        <span class="small text-muted fw-medium">lớp</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Số Lớp Quản Lý</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-users-rectangle fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                    <i class="fa-solid fa-users-rectangle fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_lop'] ?? $lops->total() }}</span>
+                    <span class="small text-muted fw-medium">lớp sinh hoạt</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Lớp Khoa CNTT</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-success">{{ $stats['lop_cntt'] ?? 5 }}</span>
-                        <span class="small text-muted fw-medium">lớp sinh hoạt</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Lớp Khoa CNTT</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-laptop-code fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                    <i class="fa-solid fa-microchip fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $stats['lop_cntt'] ?? 5 }}</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Sĩ Số Sinh Viên</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-warning">{{ $stats['total_sv'] ?? 240 }}</span>
-                        <span class="small text-muted fw-medium">sinh viên</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Sĩ Số Sinh Viên</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-users-line fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                    <i class="fa-solid fa-users-line fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ number_format($stats['total_sv'] ?? 240) }}</span>
+                    <span class="small text-muted fw-medium">sinh viên</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Trạng Thái Niên Khóa</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-info">{{ $stats['status'] ?? 'Đang học' }}</span>
-                        <span class="small text-muted fw-medium">(Khóa 14)</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Trạng Thái Niên Khóa</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-circle-check fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
-                    <i class="fa-solid fa-circle-check fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-primary lh-1">{{ $stats['status'] ?? 'Đang học' }}</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        Khóa hiện tại
+                    </span>
                 </div>
             </div>
         </div>
@@ -261,11 +265,11 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
                             <label class="form-label-huit">Mã Lớp Học <span class="text-danger">*</span></label>
-                            <input type="text" name="TenLop" class="form-control form-control-huit" value="14DHTH03" placeholder="14DHTH03" required>
+                            <input type="text" name="TenLop" class="form-control form-control-huit" value="{{ old('TenLop') }}" placeholder="VD: 14DHTH01, 14DHPM02..." required>
                         </div>
                         <div class="col-md-7">
-                            <label class="form-label-huit">Tên Lớp Sinh Hoạt <span class="text-danger">*</span></label>
-                            <input type="text" name="TenLopFull" class="form-control form-control-huit" value="Đại học Kỹ thuật Phần mềm 03" placeholder="Đại học Kỹ thuật Phần mềm 03">
+                            <label class="form-label-huit">Tên Lớp Sinh Hoạt</label>
+                            <input type="text" name="TenLopFull" class="form-control form-control-huit" value="{{ old('TenLopFull') }}" placeholder="VD: Đại học Kỹ thuật Phần mềm 01...">
                         </div>
                     </div>
 
@@ -275,15 +279,15 @@
                             <select name="MaNganh" class="form-select form-select-huit" required>
                                 <option value="">-- Chọn ngành đào tạo --</option>
                                 @foreach($nganhs as $ng)
-                                    <option value="{{ $ng->MaNganh }}" {{ $loop->first ? 'selected' : '' }}>
-                                        {{ $ng->TenNganh }} (Khoa CNTT)
+                                    <option value="{{ $ng->MaNganh }}" {{ old('MaNganh') == $ng->MaNganh || (empty(old('MaNganh')) && $loop->first) ? 'selected' : '' }}>
+                                        {{ $ng->TenNganh }} ({{ $ng->MaNganh }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label-huit">Sĩ Số Sinh Viên Dự Kiến</label>
-                            <input type="text" name="KhoaHoc" class="form-control form-control-huit" value="50 SV" placeholder="50 SV">
+                            <label class="form-label-huit">Khóa Học / Niên Khóa <span class="text-danger">*</span></label>
+                            <input type="text" name="KhoaHoc" class="form-control form-control-huit" value="{{ old('KhoaHoc', '2023-2027') }}" placeholder="VD: 2023-2027" required>
                         </div>
                     </div>
 

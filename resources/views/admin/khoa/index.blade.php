@@ -22,83 +22,76 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-    @if(isset($errors) && $errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert">
-            <ul class="mb-0 ps-3">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
     <!-- Page Title & Header -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">Quản Lý Danh Sách Các Khoa Đào Tạo Trực Thuộc Trường</h4>
+            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-university text-primary me-2"></i>Quản Lý Danh Sách Các Khoa Đào Tạo</h4>
             <p class="text-muted small mb-0">Theo dõi mã khoa, tên khoa chuyên môn, trưởng khoa quản lý và tổng số ngành/bộ môn trực thuộc.</p>
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Số Khoa Đào Tạo</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-dark">{{ $stats['total_khoa'] ?? $khoas->total() }}</span>
-                        <span class="small text-muted fw-medium">khoa chuyên môn</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Số Khoa</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-building-columns fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                    <i class="fa-solid fa-building-columns fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_khoa'] ?? $khoas->total() }}</span>
+                    <span class="small text-muted fw-medium">khoa chuyên môn</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Khoa Công Nghệ Thông Tin</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-success">{{ $stats['bomon_cntt'] ?? 4 }}</span>
-                        <span class="small text-muted fw-medium">bộ môn trực thuộc</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Khoa Trọng Điểm</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-sitemap fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                    <i class="fa-solid fa-sitemap fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-success lh-1">CNTT ({{ $stats['bomon_cntt'] ?? 4 }} BM)</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-danger d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Giảng Viên Khoa</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-danger">{{ $stats['total_gv'] ?? 0 }}</span>
-                        <span class="small text-muted fw-medium">giảng viên</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Giảng Viên</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-chalkboard-user fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fee2e2; color: #dc2626;">
-                    <i class="fa-solid fa-chalkboard-user fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ number_format($stats['total_gv'] ?? 0) }}</span>
+                    <span class="small text-muted fw-medium">giảng viên</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Trạng Thái Hoạt Động</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-warning">{{ $stats['status'] ?? '100%' }}</span>
-                        <span class="small text-muted fw-medium">Chuẩn kiểm định</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Kiểm Định Chất Lượng</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-shield-halved fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                    <i class="fa-solid fa-shield-halved fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-primary lh-1">100% Đạt</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        Chuẩn Bộ GD
+                    </span>
                 </div>
             </div>
         </div>
@@ -253,13 +246,13 @@
     </div>
 </div>
 
-<!-- Modal Thêm Mới Khoa Đào Tạo & Phân Công Bộ Môn (Matching Reference UI Image 5) -->
+<!-- Modal Thêm Mới Khoa Đào Tạo -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-huit">
         <div class="modal-content modal-content-huit">
             <div class="modal-header-huit">
                 <div class="modal-title-huit">
-                    + Thêm Mới Khoa Đào Tạo & Phân Công Bộ Môn
+                    + Thêm Mới Khoa Đào Tạo & Phân Công Quản Lý
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -269,23 +262,34 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
                             <label class="form-label-huit">Mã Khoa Viết Tắt <span class="text-danger">*</span></label>
-                            <input type="text" name="MaKhoa" class="form-control form-control-huit" value="CNTT" placeholder="CNTT" required>
+                            <input type="text" name="MaKhoa" id="inputMaKhoa" class="form-control form-control-huit fw-bold text-primary" 
+                                   value="{{ $suggestedMaKhoa ?? 'K04' }}" placeholder="K04 hoặc CNTT..." required>
+                            <div class="form-text text-muted small mt-1">Định dạng gợi ý: Mã số hoặc viết tắt chữ hoa</div>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label-huit">Tên Khoa Đào Tạo <span class="text-danger">*</span></label>
-                            <input type="text" name="TenKhoa" class="form-control form-control-huit" value="Khoa Công nghệ Thông tin" placeholder="Khoa Công nghệ Thông tin" required>
+                            <input type="text" name="TenKhoa" id="inputTenKhoa" class="form-control form-control-huit" 
+                                   value="" placeholder="Ví dụ: Khoa Công nghệ Hóa học & Thực phẩm" required>
                         </div>
                     </div>
 
-
-
-
-                    <div class="mb-4">
-                        <label class="form-label-huit">Trạng Thái Hoạt Động Hệ Thống</label>
-                        <select name="TrangThai" class="form-select form-select-huit">
-                            <option value="Active" selected>🟢 Hoạt động bình thường (Active)</option>
-                            <option value="Inactive">🔴 Tạm ngưng</option>
-                        </select>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label-huit">Trưởng Khoa Quản Lý</label>
+                            <select name="TruongKhoa" class="form-select form-select-huit">
+                                <option value="">-- Chọn Giảng viên phụ trách --</option>
+                                @foreach($giangViens as $gv)
+                                    <option value="{{ $gv->HoTen }}">{{ $gv->HoTen }} ({{ $gv->MaGV }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label-huit">Trạng Thái Hoạt Động</label>
+                            <select name="TrangThai" class="form-select form-select-huit">
+                                <option value="Active" selected>🟢 Hoạt động (Active)</option>
+                                <option value="Inactive">🔴 Tạm ngưng</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="alert-info-huit mb-2">

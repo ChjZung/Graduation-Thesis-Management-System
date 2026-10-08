@@ -327,6 +327,22 @@
                 a.close();
             });
         }, 5000);
+
+        // Chống Double Submit trên tất cả các form POST trong Admin
+        document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const btn = form.querySelector('button[type="submit"]:not([disabled])');
+                if (btn) {
+                    setTimeout(function () {
+                        btn.disabled = true;
+                        if (!btn.dataset.originalHtml) {
+                            btn.dataset.originalHtml = btn.innerHTML;
+                        }
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang xử lý...';
+                    }, 30);
+                }
+            });
+        });
     });
 </script>
 

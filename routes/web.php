@@ -91,6 +91,9 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     // Danh mục cơ bản
     Route::resource('khoa', \App\Http\Controllers\KhoaController::class);
     Route::resource('bomon', \App\Http\Controllers\BoMonController::class);
+    Route::post('/bomon/{id}/assign-lecturer', [\App\Http\Controllers\BoMonController::class, 'assignLecturer'])->name('admin.bomon.assign_lecturer');
+    Route::post('/bomon/{id}/remove-lecturer/{magv}', [\App\Http\Controllers\BoMonController::class, 'removeLecturer'])->name('admin.bomon.remove_lecturer');
+    Route::post('/bomon/{id}/import-lecturers', [\App\Http\Controllers\BoMonController::class, 'importLecturers'])->name('admin.bomon.import_lecturers');
     Route::resource('nganh', \App\Http\Controllers\NganhController::class);
     Route::resource('lop', \App\Http\Controllers\LopController::class);
     Route::resource('hocky', \App\Http\Controllers\HocKyController::class);

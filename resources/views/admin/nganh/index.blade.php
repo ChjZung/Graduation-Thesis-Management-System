@@ -25,64 +25,68 @@
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Số Ngành Đào Tạo</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-dark">{{ $stats['total_nganh'] ?? $nganhs->total() }}</span>
-                        <span class="small text-muted fw-medium">ngành</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Số Ngành Đào Tạo</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-graduation-cap fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                    <i class="fa-solid fa-graduation-cap fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_nganh'] ?? $nganhs->total() }}</span>
+                    <span class="small text-muted fw-medium">chương trình đào tạo</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Ngành Khoa CNTT</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-success">{{ $stats['nganh_cntt'] ?? 4 }}</span>
-                        <span class="small text-muted fw-medium">ngành chuyên sâu</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Ngành Khoa CNTT</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-laptop-code fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                    <i class="fa-solid fa-laptop-code fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $stats['nganh_cntt'] ?? 4 }}</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Sinh Viên Đồ Án</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-warning">{{ $stats['total_sv'] ?? 48 }}</span>
-                        <span class="small text-muted fw-medium">sinh viên</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Sinh Viên</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-user-graduate fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                    <i class="fa-solid fa-user-graduate fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ number_format($stats['total_sv'] ?? 0) }}</span>
+                    <span class="small text-muted fw-medium">sinh viên</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Trạng Thái Đào Tạo</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-info">{{ $stats['status'] ?? '100%' }}</span>
-                        <span class="small text-muted fw-medium">Chuẩn tín chỉ</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Chuẩn Đào Tạo</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-circle-check fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
-                    <i class="fa-solid fa-circle-check fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-primary lh-1">Chuẩn Bộ GD</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        150 Tín chỉ
+                    </span>
                 </div>
             </div>
         </div>
@@ -262,11 +266,11 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
                             <label class="form-label-huit">Mã Ngành (Theo Bộ GD&ĐT) <span class="text-danger">*</span></label>
-                            <input type="text" name="MaNganh" class="form-control form-control-huit" value="7480105" placeholder="7480105" required>
+                            <input type="text" name="MaNganh" class="form-control form-control-huit" value="{{ old('MaNganh', $suggestedMaNganh ?? '') }}" placeholder="VD: 7480201, 7480104..." required>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label-huit">Tên Ngành Đào Tạo <span class="text-danger">*</span></label>
-                            <input type="text" name="TenNganh" class="form-control form-control-huit" value="An toàn thông tin chất lượng cao" placeholder="An toàn thông tin chất lượng cao" required>
+                            <input type="text" name="TenNganh" class="form-control form-control-huit" value="{{ old('TenNganh') }}" placeholder="VD: Kỹ thuật phần mềm, Khoa học dữ liệu..." required>
                         </div>
                     </div>
 
@@ -276,15 +280,15 @@
                             <select name="MaKhoa" class="form-select form-select-huit" required>
                                 <option value="">-- Chọn Khoa Đào Tạo --</option>
                                 @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ $loop->first ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }} (CNTT)
+                                    <option value="{{ $k->MaKhoa }}" {{ old('MaKhoa') == $k->MaKhoa || (empty(old('MaKhoa')) && $loop->first) ? 'selected' : '' }}>
+                                        {{ $k->TenKhoa }} ({{ $k->MaKhoa }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label-huit">Tổng Số Tín Chỉ <span class="text-danger">*</span></label>
-                            <input type="text" name="SoTinChi" class="form-control form-control-huit" value="150 TC" placeholder="150 TC">
+                            <input type="text" name="SoTinChi" class="form-control form-control-huit" value="{{ old('SoTinChi', '150 TC') }}" placeholder="150 TC">
                         </div>
                     </div>
 

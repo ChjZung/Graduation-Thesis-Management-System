@@ -24,7 +24,7 @@ class ThongKeDeTaiSeeder extends Seeder
         DB::table('HocKy')->updateOrInsert(
             ['MaHocKy' => 'HK2425_1'],
             [
-                'TenHocKy' => 'Học kỳ 1 (2024-2025)',
+                'TenHocKy' => 'Học kỳ 1',
                 'NamHoc' => '2024-2025',
                 'TrangThai' => 'Đang diễn ra',
                 'updated_at' => $now

@@ -16,83 +16,76 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-    @if(isset($errors) && $errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert">
-            <ul class="mb-0 ps-3">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Quản Lý Danh Sách Học Kỳ & Niên Khóa Khóa Luận</h4>
-            <p class="text-muted small mb-0">Kiểm soát mã học kỳ, tên học kỳ, thời gian đào tạo và trạng thái mở đợt khóa luận.</p>
+            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Quản Lý Danh Sách Học Kỳ & Niên Khóa</h4>
+            <p class="text-muted small mb-0">Kiểm soát mã học kỳ, tên học kỳ, thời gian đào tạo và trạng thái mở đợt khóa luận tốt nghiệp.</p>
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Số Học Kỳ</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-dark">{{ $stats['total_hocky'] ?? $hockys->total() }}</span>
-                        <span class="small text-muted fw-medium">học kỳ</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Số Học Kỳ</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-building-columns fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                    <i class="fa-solid fa-building-columns fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_hocky'] ?? $hockys->total() }}</span>
+                    <span class="small text-muted fw-medium">học kỳ hệ thống</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Học Kỳ Đang Mở</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-4 fw-bold text-success">{{ $stats['active_hk'] ?? 'HK 2026-1' }}</span>
-                        <span class="small text-success fw-medium">● Hoạt động</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Học Kỳ Đang Mở</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-calendar-check fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                    <i class="fa-solid fa-calendar-check fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-success lh-1 text-truncate" title="{{ $stats['active_hk'] ?? '' }}">{{ $stats['active_hk'] ?? 'Chưa mở' }}</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Sinh Viên Đợt Này</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-warning">{{ number_format($stats['total_sv'] ?? 1450) }}</span>
-                        <span class="small text-muted fw-medium">sinh viên</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Sinh Viên Đợt Này</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-user-graduate fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                    <i class="fa-solid fa-users-line fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ number_format($stats['total_sv'] ?? 1450) }}</span>
+                    <span class="small text-muted fw-medium">sinh viên</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Trạng Thái Hệ Thống</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-4 fw-bold text-info">Ổn Định</span>
-                        <span class="small text-muted fw-medium">100%</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Trạng Thái Cổng</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-bolt fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
-                    <i class="fa-solid fa-bolt fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-primary lh-1">Sẵn Sàng</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        Ổn Định
+                    </span>
                 </div>
             </div>
         </div>
@@ -108,8 +101,9 @@
                 </div>
                 <select name="trang_thai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="1" {{ request('trang_thai') === '1' ? 'selected' : '' }}>🟢 Đang mở (Hoạt động)</option>
-                    <option value="0" {{ request('trang_thai') === '0' ? 'selected' : '' }}>⚪ Đã kết thúc</option>
+                    <option value="Đang diễn ra" {{ in_array(request('trang_thai'), ['1', 'Đang diễn ra', 'Hoạt động']) ? 'selected' : '' }}>🟢 Đang mở (Hoạt động)</option>
+                    <option value="Đã kết thúc" {{ in_array(request('trang_thai'), ['0', 'Đã kết thúc']) ? 'selected' : '' }}>⚪ Đã kết thúc</option>
+                    <option value="Chưa bắt đầu" {{ request('trang_thai') === 'Chưa bắt đầu' ? 'selected' : '' }}>🔵 Chưa bắt đầu</option>
                 </select>
                 @if(request('search') || request('trang_thai') !== null)
                     <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
@@ -159,17 +153,26 @@
                                 <td class="py-3">
                                     <div class="small fw-medium text-dark">
                                         <i class="fa-regular fa-calendar me-1 text-primary"></i>
-                                        {{ \Carbon\Carbon::parse($hk->NgayBatDau)->format('d/m/Y') }} &mdash; {{ \Carbon\Carbon::parse($hk->NgayKetThuc)->format('d/m/Y') }}
+                                        {{ $hk->NgayBatDau ? \Carbon\Carbon::parse($hk->NgayBatDau)->format('d/m/Y') : 'Chưa định' }} &mdash; {{ $hk->NgayKetThuc ? \Carbon\Carbon::parse($hk->NgayKetThuc)->format('d/m/Y') : 'Chưa định' }}
                                     </div>
                                 </td>
                                 <td class="text-center py-3">
-                                    @if($hk->TrangThai)
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
-                                        </span>
-                                    @else
+                                    @php
+                                        $st = mb_strtolower(trim((string)$hk->TrangThai));
+                                        $isEnded = in_array($st, ['0', 'da ket thuc', 'đã kết thúc', 'completed', 'ended', 'closed']);
+                                        $isUpcoming = in_array($st, ['chua bat dau', 'chưa bắt đầu', 'upcoming']);
+                                    @endphp
+                                    @if($isEnded)
                                         <span class="badge bg-light text-muted border rounded-pill px-3 py-1.5 fw-medium">
                                             Đã kết thúc
+                                        </span>
+                                    @elseif($isUpcoming)
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1.5 fw-medium">
+                                            Chưa bắt đầu
+                                        </span>
+                                    @else
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
                                         </span>
                                     @endif
                                 </td>
@@ -252,7 +255,7 @@
     </div>
 </div>
 
-<!-- Modal Thêm Mới Học Kỳ (Matching Reference UI Image 1) -->
+<!-- Modal Thêm Mới Học Kỳ -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-huit">
         <div class="modal-content modal-content-huit">
@@ -268,15 +271,28 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
                             <label class="form-label-huit">Mã Học Kỳ <span class="text-danger">*</span></label>
-                            <input type="text" name="MaHocKy" class="form-control form-control-huit" value="HK2_2627" placeholder="HK2_2627" required>
+                            <input type="text" name="MaHocKy" id="inputMaHocKy" class="form-control form-control-huit fw-bold text-primary" 
+                                   value="{{ $suggestedMaHk ?? 'HK2627_1' }}" placeholder="HK2627_1" required>
+                            <div class="form-text text-muted small mt-1">Định dạng chuẩn: <code>HK[YY][YY]_[kỳ]</code></div>
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label-huit">Tên Học Kỳ & Niên Khóa <span class="text-danger">*</span></label>
-                            <input type="text" name="TenHocKy" class="form-control form-control-huit" value="Học kỳ 2 — Năm học 2026–2027" placeholder="Học kỳ 2 — Năm học 2026–2027" required>
+                            <label class="form-label-huit">Tên Học Kỳ <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select id="selectTenHocKy" class="form-select form-select-huit" style="max-width: 140px;" onchange="syncTenHocKy(this.value)">
+                                    <option value="Học kỳ 1" selected>Học kỳ 1</option>
+                                    <option value="Học kỳ 2">Học kỳ 2</option>
+                                    <option value="Học kỳ 3">Học kỳ 3</option>
+                                    <option value="Học kỳ hè">Học kỳ hè</option>
+                                    <option value="custom">Khác...</option>
+                                </select>
+                                <input type="text" name="TenHocKy" id="inputTenHocKy" class="form-control form-control-huit" 
+                                       value="Học kỳ 1" placeholder="Học kỳ 1" required>
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-huit">Năm Học <span class="text-danger">*</span></label>
-                            <input type="text" name="NamHoc" class="form-control form-control-huit" value="2026-2027" placeholder="2026-2027" required>
+                            <input type="text" name="NamHoc" id="inputNamHoc" class="form-control form-control-huit" 
+                                   value="{{ $suggestedNamHoc ?? '2026-2027' }}" placeholder="2026-2027" required>
                         </div>
                     </div>
                     <div class="row g-4 mb-4">
@@ -299,7 +315,7 @@
                     <div class="mb-2">
                         <label class="form-label-huit">Trạng Thái Học Kỳ Hệ Thống</label>
                         <select name="TrangThai" class="form-select form-select-huit">
-                            <option value="UPCOMING" selected>🟢 Chuẩn bị kích hoạt (Upcoming)</option>
+                            <option value="UPCOMING" selected>🔵 Chưa bắt đầu (Chuẩn bị kích hoạt)</option>
                             <option value="1">🟢 Đang diễn ra (Active)</option>
                             <option value="0">⚪ Đã kết thúc (Completed)</option>
                         </select>
@@ -315,4 +331,49 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function syncTenHocKy(val) {
+        const txtInput = document.getElementById('inputTenHocKy');
+        if (val !== 'custom') {
+            txtInput.value = val;
+        } else {
+            txtInput.value = '';
+            txtInput.focus();
+        }
+        recalcMaHocKy();
+    }
+
+    function recalcMaHocKy() {
+        const namHoc = (document.getElementById('inputNamHoc')?.value || '').trim();
+        const tenHk = (document.getElementById('inputTenHocKy')?.value || '').trim();
+        const codeInput = document.getElementById('inputMaHocKy');
+        if (!codeInput) return;
+
+        // Parse nam hoc (e.g. 2026-2027 -> 2627)
+        let yearCode = '';
+        const matchYear = namHoc.match(/(\d{4})[^\d]+(\d{4})/);
+        if (matchYear) {
+            yearCode = matchYear[1].substring(2) + matchYear[2].substring(2);
+        } else {
+            const m = namHoc.match(/(\d{2})[^\d]+(\d{2})/);
+            if (m) yearCode = m[1] + m[2];
+        }
+
+        // Parse ky (e.g. Hoc ky 2 -> 2)
+        let ky = '1';
+        if (/2|hai/i.test(tenHk)) ky = '2';
+        else if (/3|ba/i.test(tenHk)) ky = '3';
+        else if (/hè|he|summer/i.test(tenHk)) ky = '3';
+
+        if (yearCode) {
+            codeInput.value = 'HK' + yearCode + '_' + ky;
+        }
+    }
+
+    document.getElementById('inputNamHoc')?.addEventListener('input', recalcMaHocKy);
+    document.getElementById('inputTenHocKy')?.addEventListener('input', recalcMaHocKy);
+</script>
+@endpush
 @endsection

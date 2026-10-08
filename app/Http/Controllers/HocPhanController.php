@@ -15,50 +15,74 @@ class HocPhanController extends Controller
 
     public function index(Request $request)
     {
-        $query = HocPhan::with(['khoa', 'boMon', 'hocPhanHocKies.hocKy'])->withCount(['deTais', 'nhoms']);
+        $activeTab = $request->get('tab', 'bomon'); // 'bomon' hoặc 'dung_chung'
 
-        if ($request->filled('search')) {
-            $s = trim($request->search);
-            $query->where(function($q) use ($s) {
-                $q->where('MaHocPhan', 'like', "%{$s}%")
-                  ->orWhere('TenHocPhan', 'like', "%{$s}%");
-            });
-        }
+        // 1. Query cho Tab Học phần theo bộ môn
+        $queryBoMon = HocPhan::with(['khoa', 'boMon', 'hocPhanHocKies.hocKy'])
+            ->withCount(['deTais', 'nhoms'])
+            ->whereNotNull('MaBoMon');
 
-        if ($request->filled('ma_khoa')) {
-            $query->where('MaKhoa', $request->ma_khoa);
-        }
+        // 2. Query cho Tab Học phần dùng chung (không thuộc riêng bất kỳ bộ môn nào)
+        $queryDungChung = HocPhan::with(['khoa', 'hocPhanHocKies.hocKy'])
+            ->withCount(['deTais', 'nhoms'])
+            ->whereNull('MaBoMon');
 
-        if ($request->filled('ma_bomon')) {
-            if ($request->ma_bomon === 'DUNG_CHUNG') {
-                $query->whereNull('MaBoMon');
-            } else {
-                $query->where('MaBoMon', $request->ma_bomon);
+        // Áp dụng bộ lọc cho Tab Bộ môn
+        if ($activeTab === 'bomon') {
+            if ($request->filled('search')) {
+                $s = trim($request->search);
+                $queryBoMon->where(function ($q) use ($s) {
+                    $q->where('MaHocPhan', 'like', "%{$s}%")
+                      ->orWhere('TenHocPhan', 'like', "%{$s}%");
+                });
+            }
+            if ($request->filled('ma_bomon')) {
+                $queryBoMon->where('MaBoMon', $request->ma_bomon);
+            }
+            if ($request->filled('trang_thai')) {
+                $queryBoMon->where('TrangThai', $request->trang_thai);
             }
         }
 
-        if ($request->filled('loai_hoc_phan')) {
-            $query->where('LoaiHocPhan', $request->loai_hoc_phan);
+        // Áp dụng bộ lọc cho Tab Dùng chung
+        if ($activeTab === 'dung_chung') {
+            if ($request->filled('search')) {
+                $s = trim($request->search);
+                $queryDungChung->where(function ($q) use ($s) {
+                    $q->where('MaHocPhan', 'like', "%{$s}%")
+                      ->orWhere('TenHocPhan', 'like', "%{$s}%");
+                });
+            }
+            if ($request->filled('trang_thai')) {
+                $queryDungChung->where('TrangThai', $request->trang_thai);
+            }
         }
 
-        $hocphans = $query->orderBy('MaKhoa')->orderBy('MaBoMon')->orderBy('TenHocPhan')->paginate(10)->withQueryString();
-        $khoas = Khoa::orderBy('TenKhoa')->get();
+        $hocPhanBoMons = $queryBoMon->orderBy('MaBoMon')->orderBy('TenHocPhan')->paginate(10, ['*'], 'bm_page')->withQueryString();
+        $hocPhanDungChungs = $queryDungChung->orderBy('TenHocPhan')->paginate(10, ['*'], 'dc_page')->withQueryString();
+
         $bomons = BoMon::orderBy('TenBoMon')->get();
+        $khoas = Khoa::orderBy('TenKhoa')->get();
 
-        $totalHocPhan = HocPhan::count();
-        $cnttKhoa = Khoa::where('TenKhoa', 'like', '%Công nghệ thông tin%')->orWhere('MaKhoa', 'like', '%CNTT%')->first();
-        $hpCntt = $cnttKhoa ? HocPhan::where('MaKhoa', $cnttKhoa->MaKhoa)->count() : 0;
-        $hpDungChung = HocPhan::whereNull('MaBoMon')->count();
-        $hpChuyenNganh = HocPhan::whereNotNull('MaBoMon')->count();
-
+        // Thống kê 4 thẻ
         $stats = [
-            'total'       => $totalHocPhan,
-            'cntt'        => $hpCntt,
-            'dung_chung'  => $hpDungChung,
-            'chuyen_nganh'=> $hpChuyenNganh,
+            'total'       => HocPhan::count(),
+            'theo_bomon'  => HocPhan::whereNotNull('MaBoMon')->count(),
+            'dung_chung'  => HocPhan::whereNull('MaBoMon')->count(),
+            'so_bomon'    => BoMon::count(),
         ];
 
-        return view('admin.hocphan.index', compact('hocphans', 'khoas', 'bomons', 'stats'));
+        $suggestedMaHocPhan = IdGenerator::nextHocPhan();
+
+        return view('admin.hocphan.index', compact(
+            'hocPhanBoMons',
+            'hocPhanDungChungs',
+            'bomons',
+            'khoas',
+            'stats',
+            'activeTab',
+            'suggestedMaHocPhan'
+        ));
     }
 
     public function create()
@@ -77,36 +101,47 @@ class HocPhanController extends Controller
             $request->merge(['MaHocPhan' => strtoupper(trim($request->MaHocPhan))]);
         }
 
+        $isDungChung = $request->boolean('is_dung_chung') || empty($request->MaBoMon);
+
         $request->validate([
             'MaHocPhan'   => 'nullable|string|max:20|unique:HocPhan,MaHocPhan',
             'TenHocPhan'  => 'required|string|max:150|unique:HocPhan,TenHocPhan',
             'SoTinChi'    => 'required|integer|min:1|max:30',
+            'SoTietLT'    => 'nullable|integer|min:0',
+            'SoTietTH'    => 'nullable|integer|min:0',
+            'SoTietKhac'  => 'nullable|integer|min:0',
             'MaKhoa'      => 'nullable|exists:Khoa,MaKhoa',
-            'MaBoMon'     => 'nullable|exists:BoMon,MaBoMon',
-            'LoaiHocPhan' => 'required|string|max:50',
+            'MaBoMon'     => $isDungChung ? 'nullable' : 'required|exists:BoMon,MaBoMon',
+            'LoaiHocPhan' => 'nullable|string|max:50',
             'TrangThai'   => 'required|string|max:50',
+            'MoTa'        => 'nullable|string',
         ], [
-            'MaHocPhan.unique'     => 'Mã học phần đã tồn tại trong hệ thống.',
-            'TenHocPhan.required'  => 'Vui lòng nhập tên học phần.',
-            'TenHocPhan.unique'    => 'Tên học phần này đã tồn tại trong hệ thống.',
-            'SoTinChi.required'    => 'Vui lòng nhập số tín chỉ.',
-            'SoTinChi.min'         => 'Số tín chỉ tối thiểu là 1.',
+            'MaHocPhan.unique'    => 'Mã học phần đã tồn tại trong hệ thống.',
+            'TenHocPhan.required' => 'Vui lòng nhập tên học phần.',
+            'TenHocPhan.unique'   => 'Tên học phần này đã tồn tại trong hệ thống.',
+            'SoTinChi.required'   => 'Vui lòng nhập số tín chỉ.',
+            'MaBoMon.required'    => 'Vui lòng chọn Bộ môn phụ trách cho học phần này.',
         ]);
 
         $maHocPhan = $request->filled('MaHocPhan') ? $request->MaHocPhan : IdGenerator::nextHocPhan();
 
-        HocPhan::create([
+        $hocphan = HocPhan::create([
             'MaHocPhan'   => $maHocPhan,
             'TenHocPhan'  => $request->TenHocPhan,
             'SoTinChi'    => $request->SoTinChi,
+            'SoTietLT'    => $request->input('SoTietLT', 0) ?: 0,
+            'SoTietTH'    => $request->input('SoTietTH', 0) ?: 0,
+            'SoTietKhac'  => $request->input('SoTietKhac', 0) ?: 0,
             'MaKhoa'      => $request->MaKhoa ?: 'CNTT',
-            'MaBoMon'     => $request->MaBoMon ?: null,
-            'LoaiHocPhan' => $request->LoaiHocPhan,
+            'MaBoMon'     => $isDungChung ? null : $request->MaBoMon,
+            'LoaiHocPhan' => $isDungChung ? ($request->LoaiHocPhan ?: 'Khóa luận') : ($request->LoaiHocPhan ?: 'Chuyên ngành'),
             'TrangThai'   => $request->TrangThai,
             'MoTa'        => $request->MoTa,
         ]);
 
-        return redirect()->route('hocphan.index')->with('success', "Thêm học phần '{$request->TenHocPhan}' thành công!");
+        $targetTab = $isDungChung ? 'dung_chung' : 'bomon';
+        return redirect()->route('hocphan.index', ['tab' => $targetTab])
+            ->with('success', "Thêm học phần '{$hocphan->TenHocPhan}' thành công!");
     }
 
     public function show($id)
@@ -134,29 +169,53 @@ class HocPhanController extends Controller
             $request->merge(['TenHocPhan' => trim($request->TenHocPhan)]);
         }
 
-        $request->validate([
+        $isDungChung = $request->boolean('is_dung_chung') || $hocphan->isDungChung();
+
+        $rules = [
             'TenHocPhan'  => 'required|string|max:150|unique:HocPhan,TenHocPhan,' . $id . ',MaHocPhan',
             'SoTinChi'    => 'required|integer|min:1|max:30',
-            'MaKhoa'      => 'nullable|exists:Khoa,MaKhoa',
-            'MaBoMon'     => 'nullable|exists:BoMon,MaBoMon',
-            'LoaiHocPhan' => 'required|string|max:50',
+            'SoTietLT'    => 'nullable|integer|min:0',
+            'SoTietTH'    => 'nullable|integer|min:0',
+            'SoTietKhac'  => 'nullable|integer|min:0',
             'TrangThai'   => 'required|string|max:50',
-        ], [
+            'MoTa'        => 'nullable|string',
+        ];
+
+        if (!$isDungChung) {
+            $rules['MaBoMon'] = 'required|exists:BoMon,MaBoMon';
+        }
+
+        $request->validate($rules, [
             'TenHocPhan.required' => 'Vui lòng nhập tên học phần.',
             'TenHocPhan.unique'   => 'Tên học phần này đã tồn tại trong hệ thống.',
+            'MaBoMon.required'    => 'Vui lòng chọn Bộ môn phụ trách.',
         ]);
 
-        $hocphan->update([
+        $updateData = [
             'TenHocPhan'  => $request->TenHocPhan,
             'SoTinChi'    => $request->SoTinChi,
-            'MaKhoa'      => $request->MaKhoa ?: null,
-            'MaBoMon'     => $request->MaBoMon ?: null,
-            'LoaiHocPhan' => $request->LoaiHocPhan,
+            'SoTietLT'    => $request->input('SoTietLT', 0) ?: 0,
+            'SoTietTH'    => $request->input('SoTietTH', 0) ?: 0,
+            'SoTietKhac'  => $request->input('SoTietKhac', 0) ?: 0,
             'TrangThai'   => $request->TrangThai,
             'MoTa'        => $request->MoTa,
-        ]);
+        ];
 
-        return redirect()->route('hocphan.index')->with('success', 'Cập nhật học phần thành công!');
+        if ($request->filled('LoaiHocPhan')) {
+            $updateData['LoaiHocPhan'] = $request->LoaiHocPhan;
+        }
+
+        if ($isDungChung) {
+            $updateData['MaBoMon'] = null; // Luôn đảm bảo không thuộc bộ môn nào
+        } else {
+            $updateData['MaBoMon'] = $request->MaBoMon;
+        }
+
+        $hocphan->update($updateData);
+
+        $targetTab = $hocphan->isDungChung() ? 'dung_chung' : 'bomon';
+        return redirect()->route('hocphan.index', ['tab' => $targetTab])
+            ->with('success', "Cập nhật học phần '{$hocphan->TenHocPhan}' thành công!");
     }
 
     public function destroy($id)
@@ -164,12 +223,15 @@ class HocPhanController extends Controller
         $hocphan = HocPhan::withCount(['deTais', 'nhoms'])->findOrFail($id);
 
         if ($hocphan->de_tais_count > 0 || $hocphan->nhoms_count > 0) {
-            return redirect()->back()->withErrors("Không thể xóa học phần '{$hocphan->TenHocPhan}' do đang có {$hocphan->de_tais_count} đề tài và {$hocphan->nhoms_count} nhóm khóa luận liên kết.");
+            return redirect()->back()->withErrors("Không thể xóa học phần đang được sử dụng trong hệ thống. Vui lòng chuyển trạng thái sang “Ngừng sử dụng”. (Hiện có {$hocphan->de_tais_count} đề tài và {$hocphan->nhoms_count} nhóm khóa luận liên quan)");
         }
 
         try {
+            $tenHp = $hocphan->TenHocPhan;
+            $targetTab = $hocphan->isDungChung() ? 'dung_chung' : 'bomon';
             $hocphan->delete();
-            return redirect()->route('hocphan.index')->with('success', "Xóa học phần '{$hocphan->TenHocPhan}' thành công!");
+            return redirect()->route('hocphan.index', ['tab' => $targetTab])
+                ->with('success', "Xóa học phần '{$tenHp}' thành công!");
         } catch (\Throwable $e) {
             return redirect()->back()->withErrors("Không thể xóa học phần '{$hocphan->TenHocPhan}': " . $e->getMessage());
         }

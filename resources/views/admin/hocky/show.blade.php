@@ -204,13 +204,22 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                             <span class="text-muted">Trạng Thái</span>
-                            @if($hocky->TrangThai)
-                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
-                                    <i class="fa-solid fa-circle me-1 small" style="font-size: 0.5rem;"></i> Đang hoạt động
+                            @php
+                                $st = mb_strtolower(trim((string)$hocky->TrangThai));
+                                $isEnded = in_array($st, ['0', 'da ket thuc', 'đã kết thúc', 'completed', 'ended', 'closed']);
+                                $isUpcoming = in_array($st, ['chua bat dau', 'chưa bắt đầu', 'upcoming']);
+                            @endphp
+                            @if($isEnded)
+                                <span class="badge bg-light text-muted border rounded-pill px-3 py-1 fw-medium">
+                                    Đã kết thúc
+                                </span>
+                            @elseif($isUpcoming)
+                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1 fw-medium">
+                                    Chưa bắt đầu
                                 </span>
                             @else
-                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1">
-                                    Đã kết thúc
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
+                                    <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đang diễn ra
                                 </span>
                             @endif
                         </li>

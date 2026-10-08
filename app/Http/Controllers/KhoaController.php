@@ -40,7 +40,9 @@ class KhoaController extends Controller
             'status' => '100%',
         ];
 
-        return view('admin.khoa.index', compact('khoas', 'stats', 'giangViens'));
+        $suggestedMaKhoa = IdGenerator::nextKhoa();
+
+        return view('admin.khoa.index', compact('khoas', 'stats', 'giangViens', 'suggestedMaKhoa'));
     }
 
     public function create()
@@ -58,6 +60,15 @@ class KhoaController extends Controller
             $request->merge(['MaKhoa' => strtoupper(trim($request->MaKhoa))]);
         }
 
+        // Chống double-submit
+        $candidateMa = $request->filled('MaKhoa') ? $request->MaKhoa : null;
+        if ($candidateMa) {
+            $existing = Khoa::where('MaKhoa', $candidateMa)->first();
+            if ($existing && $existing->created_at && $existing->created_at->diffInSeconds(now()) <= 10) {
+                return redirect()->route('khoa.index')->with('success', "Thêm Khoa '{$existing->TenKhoa}' ({$existing->MaKhoa}) thành công!");
+            }
+        }
+
         $request->validate([
             'MaKhoa' => 'nullable|string|max:10|unique:Khoa,MaKhoa',
             'TenKhoa' => 'required|string|max:100|unique:Khoa,TenKhoa',
@@ -67,7 +78,7 @@ class KhoaController extends Controller
             'TenKhoa.unique' => 'Tên khoa này đã tồn tại trong hệ thống.',
         ]);
 
-        $maKhoa = $request->filled('MaKhoa') ? $request->MaKhoa : IdGenerator::nextKhoa();
+        $maKhoa = $candidateMa ?: IdGenerator::nextKhoa();
 
         Khoa::create([
             'MaKhoa' => $maKhoa,

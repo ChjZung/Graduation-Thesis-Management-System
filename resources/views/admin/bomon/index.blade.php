@@ -30,64 +30,68 @@
         </div>
     </div>
 
-    <!-- 4 KPI Cards -->
+    <!-- 4 KPI Cards: Cân đối, đồng đều, icon chuẩn, typography đồng nhất -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Số Bộ Môn Toàn Trường</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-dark">{{ $stats['total_bomon'] ?? $bomons->total() }}</span>
-                        <span class="small text-muted fw-medium">bộ môn</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Số Bộ Môn</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-sitemap fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
-                    <i class="fa-solid fa-sitemap fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $stats['total_bomon'] ?? $bomons->total() }}</span>
+                    <span class="small text-muted fw-medium">bộ môn toàn trường</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Bộ Môn Khoa CNTT</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-success">{{ $stats['bomon_cntt'] ?? 4 }}</span>
-                        <span class="small text-muted fw-medium">bộ môn chuyên môn</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Bộ Môn Khoa CNTT</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
+                        <i class="fa-solid fa-laptop-code fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a;">
-                    <i class="fa-solid fa-laptop-code fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $stats['bomon_cntt'] ?? 4 }}</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Tổng Giảng Viên Phụ Trách</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-warning">{{ $stats['total_gv'] ?? 18 }}</span>
-                        <span class="small text-muted fw-medium">giảng viên CNTT</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tổng Giảng Viên</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
+                        <i class="fa-solid fa-chalkboard-user fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #fef3c7; color: #d97706;">
-                    <i class="fa-solid fa-user-graduate fs-5"></i>
+                <div class="d-flex align-items-baseline gap-2 mt-auto">
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ number_format($stats['total_gv'] ?? 18) }}</span>
+                    <span class="small text-muted fw-medium">giảng viên trực thuộc</span>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="admin-kpi-card h-100 p-3 bg-white rounded-3 shadow-sm border-start border-4 border-info d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Trạng Thái Hoạt Động</div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="fs-3 fw-bold text-info">{{ $stats['status'] ?? '100%' }}</span>
-                        <span class="small text-muted fw-medium">Đã phân bổ</span>
+            <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Trạng Thái Bộ Môn</span>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #e0e7ff; color: #4f46e5;">
+                        <i class="fa-solid fa-circle-check fs-5"></i>
                     </div>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #e0e7ff; color: #4f46e5;">
-                    <i class="fa-solid fa-circle-check fs-5"></i>
+                <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
+                    <span class="fs-4 fw-bold text-primary lh-1">100% Hoạt động</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small fw-semibold">
+                        Đã phân bổ
+                    </span>
                 </div>
             </div>
         </div>
@@ -273,11 +277,11 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
                             <label class="form-label-huit">Mã Bộ Môn <span class="text-danger">*</span></label>
-                            <input type="text" name="MaBoMon" class="form-control form-control-huit" value="BM_IoT" placeholder="BM_IoT" required>
+                            <input type="text" name="MaBoMon" class="form-control form-control-huit" value="{{ old('MaBoMon', $suggestedMaBoMon ?? '') }}" placeholder="VD: BM01, BM02..." required>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label-huit">Tên Bộ Môn Chuyên Môn <span class="text-danger">*</span></label>
-                            <input type="text" name="TenBoMon" class="form-control form-control-huit" value="Bộ môn Internet vạn vật (IoT) & Nhúng" placeholder="Bộ môn Internet vạn vật (IoT) & Nhúng" required>
+                            <input type="text" name="TenBoMon" class="form-control form-control-huit" value="{{ old('TenBoMon') }}" placeholder="VD: Mạng máy tính & An ninh mạng..." required>
                         </div>
                     </div>
 
@@ -287,8 +291,8 @@
                             <select name="MaKhoa" class="form-select form-select-huit" required>
                                 <option value="">-- Chọn Khoa Đào Tạo --</option>
                                 @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ $loop->first ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }} (CNTT)
+                                    <option value="{{ $k->MaKhoa }}" {{ old('MaKhoa') == $k->MaKhoa || (empty(old('MaKhoa')) && $loop->first) ? 'selected' : '' }}>
+                                        {{ $k->TenKhoa }} ({{ $k->MaKhoa }})
                                     </option>
                                 @endforeach
                             </select>
@@ -296,11 +300,11 @@
                         <div class="col-md-5">
                             <label class="form-label-huit">Trưởng Bộ Môn</label>
                             <select name="TruongBoMon" class="form-select form-select-huit">
-                                <option value="">-- Chọn giảng viên --</option>
+                                <option value="">-- Chưa chỉ định --</option>
                                 @if(isset($giangViens))
                                     @foreach($giangViens as $gv)
                                         @php $val = ($gv->HocVi ? $gv->HocVi . '. ' : '') . $gv->HoTen . " ({$gv->MaGV})"; @endphp
-                                        <option value="{{ $val }}">
+                                        <option value="{{ $val }}" {{ old('TruongBoMon') == $val ? 'selected' : '' }}>
                                             {{ $val }}
                                         </option>
                                     @endforeach

@@ -43,7 +43,9 @@ class NganhController extends Controller
             'status' => '100%',
         ];
 
-        return view('admin.nganh.index', compact('nganhs', 'khoas', 'stats'));
+        $suggestedMaNganh = IdGenerator::nextNganh();
+
+        return view('admin.nganh.index', compact('nganhs', 'khoas', 'stats', 'suggestedMaNganh'));
     }
 
     public function create()
@@ -59,6 +61,14 @@ class NganhController extends Controller
         }
         if ($request->filled('MaNganh')) {
             $request->merge(['MaNganh' => strtoupper(trim($request->MaNganh))]);
+        }
+
+        // Kiểm tra chống trùng lặp do double click submit
+        if ($request->filled('MaNganh')) {
+            $existing = Nganh::where('MaNganh', $request->MaNganh)->first();
+            if ($existing && $existing->created_at && $existing->created_at->diffInSeconds(now()) < 10) {
+                return redirect()->route('nganh.index')->with('success', "Thêm ngành '{$existing->TenNganh}' thành công!");
+            }
         }
 
         $request->validate([
