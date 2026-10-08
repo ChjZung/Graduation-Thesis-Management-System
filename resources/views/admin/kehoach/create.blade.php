@@ -13,7 +13,7 @@
     <div class="admin-table-header">
         <h5 class="admin-table-header-title">
             <i class="fa-solid fa-calendar-plus text-primary"></i>
-            Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới &amp; Thiết Lập 13 Mốc Thời Gian Quy Trình
+            Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới &amp; Thiết Lập Các Mốc Thời Gian Quy Trình
         </h5>
     </div>
     <div class="card-body p-4">
@@ -72,7 +72,7 @@
 
             <hr class="my-4">
 
-            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>Thiết Lập 13 Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa CNTT)</h5>
+            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>Thiết Lập Các Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa CNTT)</h5>
 
             <div class="table-responsive mb-4">
                 <table class="table table-bordered align-middle mb-0">

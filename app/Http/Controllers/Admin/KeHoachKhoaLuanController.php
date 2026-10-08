@@ -8,6 +8,7 @@ use App\Models\MocThoiGianKhoaLuan;
 use App\Models\HocKy;
 use App\Models\Khoa;
 use App\Models\BoMon;
+use App\Models\QuyDinhKhoaLuan;
 use App\Services\PlanPhaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

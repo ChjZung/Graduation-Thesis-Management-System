@@ -222,9 +222,20 @@ class DocumentParserService
         }
 
         // Nếu dòng văn bản nói về "Thời gian thực hiện 12 tuần" hoặc "thời gian thực hiện":
-        // Tự động phân rã thành các mốc tiến độ cụ thể thay vì để nguyên một cục 12 tuần
+        // Giữ nguyên 1 mốc thực hiện duy nhất (báo cáo tiến độ là chức năng riêng biệt, không thêm vào kế hoạch)
         if (preg_match('/(?:12\s*tuần|[0-9]{1,2}\s*tuần|thời\s*gian\s*thực\s*hiện)/iu', $noiDung)) {
-            return $this->expandExecutionPeriodToMilestones($startDate, $endDate);
+            return [
+                'TenMoc'           => 'Thời gian thực hiện khóa luận (KLTN & KLCN: 12 tuần)',
+                'LoaiGiaiDoan'     => 'THUC_HIEN',
+                'NgayBatDau'       => $startDate,
+                'NgayKetThuc'      => $endDate,
+                'GioBatDau'        => null,
+                'GioKetThuc'       => null,
+                'DoiTuongThucHien' => 'Sinh viên & GVHD',
+                'MoTa'             => 'Thời gian sinh viên thực hiện đề tài khóa luận trong 12 tuần theo quy định.',
+                'BatBuoc'          => true,
+                'StatusBadge'      => '[✓ Đã nhận diện]',
+            ];
         }
 
         // Mapping Mã Quy Trình
@@ -245,116 +256,6 @@ class DocumentParserService
     }
 
     /**
-     * Phân rã khoảng thời gian thực hiện thành các mốc tiến độ cụ thể thay vì gom chung 12 tuần
-     */
-    private function expandExecutionPeriodToMilestones(string $startDate, string $endDate): array
-    {
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
-        $totalDays = max(14, (int)$start->diff($end)->days);
-
-        // Mốc 1: Bắt đầu thực hiện & Hoàn thiện đề cương (ngày 0 -> ngày 12)
-        $m1Start = clone $start;
-        $m1End = (clone $start)->modify('+12 days');
-        if ($m1End > $end) $m1End = clone $end;
-
-        // Mốc 2: Báo cáo tiến độ đợt 1 (Đề cương chi tiết & Thiết kế CSDL) - Tuần 4
-        $m2Start = (clone $start)->modify('+' . round($totalDays * 0.28) . ' days');
-        $m2End = (clone $m2Start)->modify('+4 days');
-
-        // Mốc 3: Báo cáo tiến độ đợt 2 (Thiết kế hệ thống & Xây dựng chức năng) - Tuần 8
-        $m3Start = (clone $start)->modify('+' . round($totalDays * 0.60) . ' days');
-        $m3End = (clone $m3Start)->modify('+4 days');
-
-        // Mốc 4: Báo cáo tiến độ đợt 3 (Kiểm thử chức năng & Hoàn thiện báo cáo) - Tuần 11
-        $m4Start = (clone $start)->modify('+' . round($totalDays * 0.88) . ' days');
-        $m4End = (clone $m4Start)->modify('+4 days');
-
-        // Mốc 5: Kiểm tra đạo văn (Turnitin < 20%) - Tuần 12
-        $m5Start = (clone $end)->modify('+1 days');
-        $m5End = (clone $end)->modify('+4 days');
-
-        // Mốc 6: GVHD xác nhận đủ điều kiện bảo vệ - Tuần 12
-        $m6Start = (clone $end)->modify('+5 days');
-        $m6End = (clone $end)->modify('+8 days');
-
-        return [
-            [
-                'TenMoc'           => 'Bắt đầu thực hiện khóa luận & Hoàn thiện đề cương chi tiết',
-                'LoaiGiaiDoan'     => 'THUC_HIEN',
-                'NgayBatDau'       => $m1Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m1End->format('Y-m-d'),
-                'GioBatDau'        => null,
-                'GioKetThuc'       => null,
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Sinh viên liên hệ GVHD, thống nhất mục tiêu nghiên cứu và hoàn thiện đề cương chi tiết.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 1 (Đề cương chi tiết & Thiết kế CSDL)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_1',
-                'NgayBatDau'       => $m2Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m2End->format('Y-m-d'),
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Nộp báo cáo tiến độ lần 1 gồm đề cương chi tiết, sơ đồ phân tích và thiết kế CSDL lên hệ thống.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 2 (Thiết kế hệ thống & Xây dựng chức năng)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_2',
-                'NgayBatDau'       => $m3Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m3End->format('Y-m-d'),
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Nộp báo cáo tiến độ lần 2 phản ánh kiến trúc phân hệ, giao diện UI/UX và mã nguồn đã triển khai.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 3 (Kiểm thử hoàn thiện & Viết dự thảo báo cáo)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_3',
-                'NgayBatDau'       => $m4Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m4End->format('Y-m-d'),
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Kiểm thử toàn diện chức năng, đo lường kết quả và hoàn thiện bản thảo toàn văn cuốn báo cáo.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Kiểm tra đạo văn (Quét Turnitin độ trùng lặp < 20%)',
-                'LoaiGiaiDoan'     => 'DAO_VAN',
-                'NgayBatDau'       => $m5Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m5End->format('Y-m-d'),
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '17:00',
-                'DoiTuongThucHien' => 'Sinh viên & Khoa',
-                'MoTa'             => 'Nộp file toàn văn kiểm tra qua hệ thống Turnitin, độ trùng lặp không quá 20%.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Giảng viên hướng dẫn xác nhận đủ điều kiện bảo vệ',
-                'LoaiGiaiDoan'     => 'GVHD_XAC_NHAN',
-                'NgayBatDau'       => $m6Start->format('Y-m-d'),
-                'NgayKetThuc'      => $m6End->format('Y-m-d'),
-                'GioBatDau'        => null,
-                'GioKetThuc'       => null,
-                'DoiTuongThucHien' => 'GVHD',
-                'MoTa'             => 'GVHD chấm điểm hướng dẫn và ký phiếu xác nhận đủ điều kiện bảo vệ trước Hội đồng.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-        ];
-    }
-
-    /**
      * Mapping nội dung tiếng Việt trong văn bản -> Mã quy trình chuẩn
      */
     private function mapProcessCode(string $noiDung): string
@@ -366,177 +267,125 @@ class DocumentParserService
         if (str_contains($nd, 'ngoại lệ') || str_contains($nd, 'xử lý')) return 'XU_LY_NGOAI_LE';
         if (str_contains($nd, 'công bố') && (str_contains($nd, 'gvhd') || str_contains($nd, 'danh sách'))) return 'CONG_BO_GVHD';
         if (str_contains($nd, 'liên hệ gvhd') || str_contains($nd, 'gặp gvhd')) return 'LIEN_HE_GVHD';
-        if (str_contains($nd, 'tiến độ đợt 1') || str_contains($nd, 'tiến độ 1') || str_contains($nd, 'tiến độ lần 1')) return 'BAO_CAO_TIEN_DO_1';
-        if (str_contains($nd, 'tiến độ đợt 2') || str_contains($nd, 'tiến độ 2') || str_contains($nd, 'tiến độ lần 2')) return 'BAO_CAO_TIEN_DO_2';
-        if (str_contains($nd, 'tiến độ đợt 3') || str_contains($nd, 'tiến độ 3') || str_contains($nd, 'tiến độ lần 3')) return 'BAO_CAO_TIEN_DO_3';
-        if (str_contains($nd, 'turnitin') || str_contains($nd, 'đạo văn')) return 'DAO_VAN';
-        if (str_contains($nd, 'xác nhận') && str_contains($nd, 'gvhd')) return 'GVHD_XAC_NHAN';
         if (str_contains($nd, 'thực hiện')) return 'THUC_HIEN';
         if (str_contains($nd, 'nộp báo cáo') || str_contains($nd, 'nộp đồ án') || str_contains($nd, 'nộp khóa luận')) return 'NOP_BAO_CAO';
+        if (str_contains($nd, 'thông báo lịch') || (str_contains($nd, 'thông báo') && str_contains($nd, 'hội đồng'))) return 'THONG_BAO_HOI_DONG';
         if (str_contains($nd, 'hội đồng') || str_contains($nd, 'bảo vệ')) return 'BAO_VE';
 
         return 'KHAC';
     }
 
     /**
-     * Danh sách 13 mốc trích xuất mặc định từ văn bản thông báo thực tế của Khoa CNTT
+     * Danh sách mốc trích xuất mặc định từ văn bản thông báo thực tế của Khoa CNTT (Thông báo số 27/TB-KCNTT)
      */
     private function getDefaultExtractedPhasesFromDemo(): array
     {
         return [
             [
-                'TenMoc'           => 'Sinh viên tạo nhóm trên phần mềm',
+                'TenMoc'           => 'Sinh viên tạo nhóm trên phần mềm HUIT-STUDENT (mỗi nhóm 3 SV/1 đề tài)',
                 'LoaiGiaiDoan'     => 'TAO_NHOM',
                 'NgayBatDau'       => '2026-08-10',
                 'NgayKetThuc'      => '2026-08-10',
                 'GioBatDau'        => '08:00',
                 'GioKetThuc'       => '23:59',
                 'DoiTuongThucHien' => 'Sinh viên',
-                'MoTa'             => 'Sinh viên tự lập nhóm 3 SV/1 đề tài trên phần mềm quản lý.',
+                'MoTa'             => 'Sinh viên tự tạo nhóm 3 SV/1 đề tài trên phần mềm HUIT-STUDENT theo đúng ngành học.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Nhóm trưởng đăng ký đề tài chính thức',
+                'TenMoc'           => 'Nhóm trưởng các nhóm thực hiện đăng ký đề tài theo đúng chuyên ngành',
                 'LoaiGiaiDoan'     => 'DANG_KY_DE_TAI',
                 'NgayBatDau'       => '2026-08-11',
                 'NgayKetThuc'      => '2026-08-11',
                 'GioBatDau'        => '08:00',
                 'GioKetThuc'       => '20:00',
                 'DoiTuongThucHien' => 'Nhóm trưởng',
-                'MoTa'             => 'Nhóm trưởng thực hiện đăng ký nguyện vọng đề tài theo khung giờ 08h00 - 20h00.',
+                'MoTa'             => 'Nhóm trưởng thực hiện đăng ký đề tài theo đúng chuyên ngành trong khung giờ 08h00 - 20h00.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Xử lý các trường hợp ngoại lệ',
+                'TenMoc'           => 'Xử lý các trường hợp ngoại lệ trực tiếp tại VPK',
                 'LoaiGiaiDoan'     => 'XU_LY_NGOAI_LE',
                 'NgayBatDau'       => '2026-08-12',
                 'NgayKetThuc'      => '2026-08-12',
                 'GioBatDau'        => '08:00',
                 'GioKetThuc'       => '16:00',
                 'DoiTuongThucHien' => 'Giáo vụ Khoa',
-                'MoTa'             => 'Khoa xử lý điều chỉnh các trường hợp sinh viên đăng ký ngoại lệ.',
+                'MoTa'             => 'Sinh viên đến trực tiếp VPK gặp Giáo vụ để hỗ trợ xử lý ngoại lệ (8h00 - 11h00 & 13h30 - 16h00).',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Công bố chính thức danh sách SV & GVHD',
+                'TenMoc'           => 'Khoa tổng hợp & thông báo chính thức danh sách SV đăng ký đề tài và GVHD',
                 'LoaiGiaiDoan'     => 'CONG_BO_GVHD',
                 'NgayBatDau'       => '2026-08-14',
                 'NgayKetThuc'      => '2026-08-14',
                 'GioBatDau'        => null,
                 'GioKetThuc'       => null,
                 'DoiTuongThucHien' => 'Khoa CNTT',
-                'MoTa'             => 'Công bố danh sách chính thức sinh viên được phân công GVHD.',
+                'MoTa'             => 'Khoa tổng hợp danh sách sinh viên đăng ký đề tài và GVHD, thông báo chính thức trên website khoa.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Sinh viên chủ động liên hệ GVHD & Họp giao nhiệm vụ',
+                'TenMoc'           => 'Sinh viên chủ động liên hệ GVHD qua email để trao đổi kế hoạch thực hiện',
                 'LoaiGiaiDoan'     => 'LIEN_HE_GVHD',
                 'NgayBatDau'       => '2026-08-14',
                 'NgayKetThuc'      => '2026-08-17',
                 'GioBatDau'        => null,
                 'GioKetThuc'       => null,
                 'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Sinh viên liên hệ GVHD để họp nhóm và nhận nhiệm vụ khóa luận.',
+                'MoTa'             => 'Sinh viên chủ động liên hệ GVHD qua email để trao đổi nội dung kế hoạch thực hiện đề tài.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Bắt đầu thực hiện khóa luận & Hoàn thiện đề cương chi tiết',
+                'TenMoc'           => 'Thời gian thực hiện khóa luận (KLTN & KLCN: 12 tuần)',
                 'LoaiGiaiDoan'     => 'THUC_HIEN',
                 'NgayBatDau'       => '2026-08-17',
-                'NgayKetThuc'      => '2026-08-28',
+                'NgayKetThuc'      => '2026-11-08',
                 'GioBatDau'        => null,
                 'GioKetThuc'       => null,
                 'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Sinh viên gặp GVHD, thống nhất mục tiêu nghiên cứu và hoàn thiện đề cương chi tiết.',
+                'MoTa'             => 'Thời gian thực hiện khóa luận tốt nghiệp (12 tuần) và khóa luận cử nhân (12 tuần).',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 1 (Đề cương chi tiết & Thiết kế CSDL)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_1',
-                'NgayBatDau'       => '2026-09-14',
-                'NgayKetThuc'      => '2026-09-18',
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Nộp báo cáo tiến độ lần 1 gồm đề cương chi tiết, sơ đồ phân tích và thiết kế CSDL lên hệ thống.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 2 (Thiết kế hệ thống & Xây dựng chức năng)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_2',
-                'NgayBatDau'       => '2026-10-12',
-                'NgayKetThuc'      => '2026-10-16',
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Nộp báo cáo tiến độ lần 2 phản ánh kiến trúc phân hệ, giao diện UI/UX và mã nguồn đã triển khai.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Báo cáo tiến độ đợt 3 (Kiểm thử hoàn thiện & Viết dự thảo báo cáo)',
-                'LoaiGiaiDoan'     => 'BAO_CAO_TIEN_DO_3',
-                'NgayBatDau'       => '2026-11-02',
-                'NgayKetThuc'      => '2026-11-06',
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '23:59',
-                'DoiTuongThucHien' => 'Sinh viên & GVHD',
-                'MoTa'             => 'Kiểm thử toàn diện chức năng, đo lường kết quả và hoàn thiện bản thảo toàn văn cuốn báo cáo.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Kiểm tra đạo văn (Quét Turnitin độ trùng lặp < 20%)',
-                'LoaiGiaiDoan'     => 'DAO_VAN',
-                'NgayBatDau'       => '2026-11-09',
-                'NgayKetThuc'      => '2026-11-12',
-                'GioBatDau'        => '08:00',
-                'GioKetThuc'       => '17:00',
-                'DoiTuongThucHien' => 'Sinh viên & Khoa',
-                'MoTa'             => 'Nộp file toàn văn kiểm tra qua hệ thống Turnitin, độ trùng lặp không quá 20%.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Giảng viên hướng dẫn xác nhận đủ điều kiện bảo vệ',
-                'LoaiGiaiDoan'     => 'GVHD_XAC_NHAN',
-                'NgayBatDau'       => '2026-11-13',
-                'NgayKetThuc'      => '2026-11-16',
-                'GioBatDau'        => null,
-                'GioKetThuc'       => null,
-                'DoiTuongThucHien' => 'GVHD',
-                'MoTa'             => 'GVHD chấm điểm hướng dẫn và ký phiếu xác nhận đủ điều kiện bảo vệ trước Hội đồng.',
-                'BatBuoc'          => true,
-                'StatusBadge'      => '[✓ Đã nhận diện]',
-            ],
-            [
-                'TenMoc'           => 'Nộp báo cáo khóa luận chính thức & hoàn tất hồ sơ bảo vệ',
+                'TenMoc'           => 'Sinh viên nộp báo cáo Khóa luận cử nhân, Khóa luận tốt nghiệp',
                 'LoaiGiaiDoan'     => 'NOP_BAO_CAO',
-                'NgayBatDau'       => '2026-11-18',
-                'NgayKetThuc'      => '2026-11-20',
+                'NgayBatDau'       => '2026-11-11',
+                'NgayKetThuc'      => '2026-11-11',
                 'GioBatDau'        => '08:00',
                 'GioKetThuc'       => '17:00',
                 'DoiTuongThucHien' => 'Sinh viên',
-                'MoTa'             => 'Nộp sản phẩm, mã nguồn và file báo cáo hoàn chỉnh lên hệ thống.',
+                'MoTa'             => 'SV nộp báo cáo Khóa luận cử nhân (0101102008), Khóa luận tốt nghiệp (0101102534). Hình thức nộp Khoa thông báo sau.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],
             [
-                'TenMoc'           => 'Tổ chức Hội đồng đánh giá và Lễ bảo vệ khóa luận tốt nghiệp',
+                'TenMoc'           => 'Thông báo lịch làm việc của các Hội đồng bảo vệ KLCN, KLTN đến SV',
+                'LoaiGiaiDoan'     => 'THONG_BAO_HOI_DONG',
+                'NgayBatDau'       => '2026-11-13',
+                'NgayKetThuc'      => '2026-11-13',
+                'GioBatDau'        => null,
+                'GioKetThuc'       => null,
+                'DoiTuongThucHien' => 'Khoa CNTT',
+                'MoTa'             => 'Thông báo lịch làm việc của các hội đồng bảo vệ KLCN, KLTN đến SV trên bảng tin website Khoa.',
+                'BatBuoc'          => true,
+                'StatusBadge'      => '[✓ Đã nhận diện]',
+            ],
+            [
+                'TenMoc'           => 'Tổ chức các buổi bảo vệ khóa luận tốt nghiệp trước Hội đồng chấm',
                 'LoaiGiaiDoan'     => 'BAO_VE',
-                'NgayBatDau'       => '2026-11-25',
+                'NgayBatDau'       => '2026-11-18',
                 'NgayKetThuc'      => '2026-11-28',
                 'GioBatDau'        => null,
                 'GioKetThuc'       => null,
                 'DoiTuongThucHien' => 'Khoa & Hội đồng',
-                'MoTa'             => 'Công bố danh sách các tiểu ban hội đồng và tổ chức bảo vệ khóa luận.',
+                'MoTa'             => 'Tổ chức các buổi bảo vệ khóa luận trước Hội đồng chấm KLCN, KLTN.',
                 'BatBuoc'          => true,
                 'StatusBadge'      => '[✓ Đã nhận diện]',
             ],

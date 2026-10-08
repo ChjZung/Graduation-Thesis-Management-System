@@ -75,10 +75,10 @@
     </div>
 </div>
 
-<!-- Timeline 13 Mốc Thời Gian Quy Trình Trực Quan -->
+<!-- Timeline Các Mốc Thời Gian Quy Trình Trực Quan -->
 <div class="card card-premium mb-4">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-timeline text-primary me-2"></i> Timeline Visual & 13 Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa)</span>
+        <span><i class="fa-solid fa-timeline text-primary me-2"></i> Timeline Visual &amp; Các Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa)</span>
         <span class="badge bg-light text-dark border rounded-pill px-3">{{ $keHoach->mocThoiGians->count() }} Mốc quy trình</span>
     </div>
     <div class="card-body p-4">

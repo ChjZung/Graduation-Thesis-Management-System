@@ -7,7 +7,7 @@
     <div class="col-lg-11">
         <div class="card card-premium mb-4">
             <div class="card-header-premium d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Chỉnh Sửa Kế Hoạch Khóa Luận & 13 Mốc Thời Gian Quy Trình</span>
+                <span><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Chỉnh Sửa Kế Hoạch Khóa Luận &amp; Các Mốc Thời Gian Quy Trình</span>
                 <a href="{{ route('admin.kehoach.index') }}" class="btn btn-light border btn-sm rounded-pill px-3">Quay Lại Danh Sách</a>
             </div>
             <div class="card-body p-4">
