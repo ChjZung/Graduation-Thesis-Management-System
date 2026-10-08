@@ -224,12 +224,13 @@ class DocumentPlanController extends Controller
             $keHoach = KeHoachKhoaLuan::updateOrCreate(
                 ['MakeHoach' => $maKeHoach],
                 [
-                    'TenKeHoach' => $header['TenKeHoach'] ?? ("Kế hoạch Khóa luận " . ($header['NamHoc'] ?? date('Y'))),
-                    'MaHocKy'    => $maHocKy,
-                    'NoiDung'    => "Văn bản thông báo chính thức số " . ($header['SoThongBao'] ?? 'TB-KCNTT'),
-                    'TrangThai'  => 'Đang thực hiện',
-                    'NgayTao'    => now()->toDateString(),
-                    'MaGVu'      => $maGVu,
+                    'TenKeHoach'  => $header['TenKeHoach'] ?? ("Kế hoạch Khóa luận " . ($header['NamHoc'] ?? date('Y'))),
+                    'MaHocKy'     => $maHocKy,
+                    'NoiDung'     => "Văn bản thông báo chính thức số " . ($header['SoThongBao'] ?? 'TB-KCNTT'),
+                    'FileDinhKem' => $permanentPath,
+                    'TrangThai'   => 'Đang thực hiện',
+                    'NgayTao'     => now()->toDateString(),
+                    'MaGVu'       => $maGVu,
                 ]
             );
 
@@ -239,12 +240,13 @@ class DocumentPlanController extends Controller
             foreach ($milestones as $idx => $m) {
                 $maMoc = 'MOC_' . substr($keHoach->MakeHoach, -4) . '_' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
                 MocThoiGianKhoaLuan::create([
-                    'MaMoc'       => $maMoc,
-                    'TenMoc'      => $m['TenMoc'] ?? ('Mốc quy trình ' . ($idx + 1)),
-                    'NgayBatDau'  => !empty($m['NgayBatDau']) ? date('Y-m-d', strtotime($m['NgayBatDau'])) : now()->toDateString(),
-                    'NgayKetThuc' => !empty($m['NgayKetThuc']) ? date('Y-m-d', strtotime($m['NgayKetThuc'])) : now()->addDays(7)->toDateString(),
-                    'MoTa'        => "Trích xuất tự động từ văn bản " . ($header['SoThongBao'] ?? '') . (!empty($m['LoaiGiaiDoan']) ? " [{$m['LoaiGiaiDoan']}]" : ''),
-                    'MakeHoach'   => $keHoach->MakeHoach,
+                    'MaMoc'           => $maMoc,
+                    'TenMoc'          => $m['TenMoc'] ?? ('Mốc quy trình ' . ($idx + 1)),
+                    'DoiTuongThucHien'=> $m['DoiTuongThucHien'] ?? 'Tất cả',
+                    'NgayBatDau'      => !empty($m['NgayBatDau']) ? date('Y-m-d', strtotime($m['NgayBatDau'])) : now()->toDateString(),
+                    'NgayKetThuc'     => !empty($m['NgayKetThuc']) ? date('Y-m-d', strtotime($m['NgayKetThuc'])) : now()->addDays(7)->toDateString(),
+                    'MoTa'            => "Trích xuất tự động từ văn bản " . ($header['SoThongBao'] ?? '') . (!empty($m['LoaiGiaiDoan']) ? " [{$m['LoaiGiaiDoan']}]" : ''),
+                    'MakeHoach'       => $keHoach->MakeHoach,
                 ]);
             }
 
@@ -271,10 +273,10 @@ class DocumentPlanController extends Controller
                 );
             }
 
-            // 6. Gửi Thông Báo Tự Động cho Sinh viên & Giảng viên
+            // 6. Gửi Thông Báo Tự Động cho Toàn Thể Hệ Thống (Sinh viên, Giảng viên & Cán bộ)
             $isUpdate = !empty($previewData['is_version_update']);
             $title = "[Khóa luận] " . ($isUpdate ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
-            $content = "Khoa đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp. File gốc đính kèm: /storage/" . $permanentPath;
+            $content = "Khoa đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp.\n\nFile gốc đính kèm: " . asset('storage/' . $permanentPath);
 
             $maTB = 'TB_' . Str::upper(Str::random(7));
             while (ThongBao::where('MaThongBao', $maTB)->exists()) {
@@ -289,6 +291,7 @@ class DocumentPlanController extends Controller
                 'DoiTuongNhan' => 'Toàn thể',
                 'NgayTao'      => now(),
                 'TrangThai'    => 'Đã phát hành',
+                'FileDinhKem'  => 'storage/' . $permanentPath,
                 'MaGVu'        => $maGVu,
             ]);
         });

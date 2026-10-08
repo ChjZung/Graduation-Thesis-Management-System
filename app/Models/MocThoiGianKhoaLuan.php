@@ -17,6 +17,7 @@ class MocThoiGianKhoaLuan extends Model
     protected $fillable = [
         'MaMoc',
         'TenMoc',
+        'DoiTuongThucHien',
         'NgayBatDau',
         'NgayKetThuc',
         'MoTa',

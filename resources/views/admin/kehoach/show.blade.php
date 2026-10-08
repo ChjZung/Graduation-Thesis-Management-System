@@ -9,33 +9,34 @@
     </a>
     
     <!-- Action Workflow Controls -->
-    <div class="d-flex gap-2">
-        <form action="{{ route('admin.kehoach.updateStatus', $keHoach->MaKeHoach) }}" method="POST" class="d-inline">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        {{-- Nút Công Bố Kế Hoạch (Gửi thông báo kèm file cho toàn hệ thống) --}}
+        <form action="{{ route('admin.kehoach.publish', $keHoach->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận Công Bố Kế Hoạch này? Hệ thống sẽ phát hành thông báo kèm file công văn đính kèm cho toàn thể người dùng.');">
             @csrf
-            @if($keHoach->TrangThai === 'NHÁP')
-                <button type="submit" name="TrangThai" value="CHỜ DUYỆT" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-paper-plane me-1"></i> Gửi Chờ Duyệt
-                </button>
-                <button type="submit" name="TrangThai" value="ĐÃ CÔNG BỐ" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Kế Hoạch Ngay
-                </button>
-            @elseif($keHoach->TrangThai === 'CHỜ DUYỆT')
-                <button type="submit" name="TrangThai" value="ĐÃ DUYỆT" class="btn btn-info text-white btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-check me-1"></i> Duyệt Kế Hoạch
-                </button>
-            @elseif($keHoach->TrangThai === 'ĐÃ DUYỆT')
-                <button type="submit" name="TrangThai" value="ĐÃ CÔNG BỐ" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Kế Hoạch
-                </button>
-            @elseif($keHoach->TrangThai === 'ĐÃ CÔNG BỐ')
-                <button type="submit" name="TrangThai" value="ĐANG THỰC HIỆN" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-play me-1"></i> Chuyển Sang Đang Thực Hiện
-                </button>
-            @elseif($keHoach->TrangThai === 'ĐANG THỰC HIỆN')
-                <button type="submit" name="TrangThai" value="HOÀN THÀNH" class="btn btn-dark btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-flag-checkered me-1"></i> Đánh Dấu Hoàn Thành
-                </button>
-            @endif
+            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fa-solid fa-bullhorn me-1"></i> {{ in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN']) ? 'Phát Lại Thông Báo Công Bố' : 'Công Bố Kế Hoạch (Gửi Toàn Hệ Thống)' }}
+            </button>
+        </form>
+
+        {{-- Cập nhật bằng upload file mới --}}
+        <a href="{{ route('admin.kehoach.importDocument') }}?ma_hoc_ky={{ $keHoach->MaHocKy }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Cập Nhật Qua File Mới
+        </a>
+
+        {{-- Tải file công văn gốc nếu có --}}
+        @if($keHoach->FileDinhKem)
+        <a href="{{ asset('storage/' . $keHoach->FileDinhKem) }}" target="_blank" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold shadow-sm">
+            <i class="fa-solid fa-file-pdf me-1"></i> Tải File Công Văn Gốc
+        </a>
+        @endif
+
+        {{-- Xóa kế hoạch --}}
+        <form action="{{ route('admin.kehoach.destroy', $keHoach->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kế hoạch này?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
+                <i class="fa-solid fa-trash me-1"></i> Xóa
+            </button>
         </form>
     </div>
 </div>
@@ -64,6 +65,13 @@
                 </div>
                 <h3 class="fw-bold text-primary mb-2">{{ $keHoach->TenKeHoach }}</h3>
                 <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-1"></i> <strong>Học Kỳ:</strong> {{ $keHoach->hocKy->TenHocKy ?? $keHoach->MaHocKy }} | <strong>Phạm vi:</strong> {{ $keHoach->khoa->TenKhoa ?? 'Toàn trường / Khoa CNTT' }}</p>
+                @if($keHoach->FileDinhKem)
+                <div class="mt-2">
+                    <a href="{{ asset('storage/' . $keHoach->FileDinhKem) }}" target="_blank" class="badge bg-light text-danger border rounded-pill px-3 py-2 text-decoration-none shadow-sm">
+                        <i class="fa-solid fa-file-pdf me-1"></i> Văn bản công văn gốc đính kèm: {{ basename($keHoach->FileDinhKem) }} (Bấm để tải về)
+                    </a>
+                </div>
+                @endif
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <div class="p-3 bg-light rounded-3 border">

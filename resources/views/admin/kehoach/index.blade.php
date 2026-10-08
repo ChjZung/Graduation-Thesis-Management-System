@@ -53,10 +53,7 @@
         </h5>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('admin.kehoach.importDocument') }}" class="btn btn-sm text-white rounded-3 px-3 fw-semibold shadow-sm" style="background: #0072ce;">
-                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Thông Báo Kế Hoạch (PDF)
-            </a>
-            <a href="{{ route('admin.kehoach.create') }}" class="btn btn-sm btn-success rounded-3 px-3 fw-semibold shadow-sm" style="background: #198754;">
-                <i class="fa-solid fa-plus me-1"></i> Lập Kế Hoạch Mới
+                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Tải Lên Công Văn Kế Hoạch (PDF / Word)
             </a>
         </div>
     </div>
@@ -70,7 +67,7 @@
                     <th style="width: 220px;">Thời Gian Thực Hiện</th>
                     <th class="text-center" style="width: 130px;">Mốc Quy Trình</th>
                     <th class="text-center" style="width: 140px;">Trạng Thái</th>
-                    <th class="text-center" style="width: 140px;">Thao Tác</th>
+                    <th class="text-center" style="width: 160px;">Thao Tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -98,6 +95,13 @@
                             <i class="fa-solid fa-graduation-cap me-1"></i>
                             {{ $kh->hocKy->TenHocKy ?? $kh->MaHocKy }} • Khoa Công nghệ Thông tin
                         </div>
+                        @if($kh->FileDinhKem)
+                        <div class="mt-1">
+                            <a href="{{ asset('storage/' . $kh->FileDinhKem) }}" target="_blank" class="badge bg-light text-danger border rounded-pill px-2 text-decoration-none" title="Xem / Tải văn bản công văn đính kèm">
+                                <i class="fa-solid fa-file-pdf me-1"></i> File công văn đính kèm
+                            </a>
+                        </div>
+                        @endif
                         <div class="text-muted mt-1" style="font-size: 0.74rem;">
                             @if(in_array($kh->TrangThai, ['NHÁP', 'CHỜ DUYỆT']))
                                 <span class="text-warning fw-semibold">Đang chờ Ban Chủ nhiệm Khoa phê duyệt chỉ tiêu đề tài</span>
@@ -146,17 +150,30 @@
 
                     {{-- Thao tác --}}
                     <td class="text-center">
-                        <div class="d-inline-flex gap-1">
-                            <a href="{{ route('admin.kehoach.show', $kh->MaKeHoach) }}" class="btn-action-icon btn-action-view" title="Xem chi tiết">
+                        <div class="d-inline-flex gap-1 align-items-center">
+                            {{-- Xem chi tiết --}}
+                            <a href="{{ route('admin.kehoach.show', $kh->MaKeHoach) }}" class="btn-action-icon btn-action-view" title="Xem chi tiết kế hoạch">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.kehoach.edit', $kh->MaKeHoach) }}" class="btn-action-icon btn-action-edit" title="Chỉnh sửa">
-                                <i class="fa-solid fa-pen"></i>
+
+                            {{-- Cập nhật bằng file công văn --}}
+                            <a href="{{ route('admin.kehoach.importDocument') }}?ma_hoc_ky={{ $kh->MaHocKy }}" class="btn-action-icon btn-action-edit text-primary" title="Cập nhật bằng cách upload file công văn mới">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
                             </a>
-                            <form action="{{ route('admin.kehoach.destroy', $kh->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kế hoạch này?');">
+
+                            {{-- Nút Công bố kế hoạch & Gửi thông báo kèm file --}}
+                            <form action="{{ route('admin.kehoach.publish', $kh->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Công bố kế hoạch này? Hệ thống sẽ phát hành thông báo kèm file công văn tới tất cả người dùng trong hệ thống.');">
+                                @csrf
+                                <button type="submit" class="btn-action-icon {{ $kh->TrangThai === 'ĐÃ CÔNG BỐ' ? 'text-secondary' : 'text-success' }}" title="{{ $kh->TrangThai === 'ĐÃ CÔNG BỐ' ? 'Đã công bố (Bấm để phát lại thông báo kèm file)' : 'Công bố kế hoạch & Gửi thông báo kèm file cho toàn hệ thống' }}">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                </button>
+                            </form>
+
+                            {{-- Xóa kế hoạch --}}
+                            <form action="{{ route('admin.kehoach.destroy', $kh->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kế hoạch này? Các mốc thời gian và quy định kèm theo sẽ bị xóa.');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn-action-icon btn-action-delete" title="Xóa">
+                                <button type="submit" class="btn-action-icon btn-action-delete" title="Xóa kế hoạch">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>

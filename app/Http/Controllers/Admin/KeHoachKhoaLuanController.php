@@ -9,9 +9,12 @@ use App\Models\HocKy;
 use App\Models\Khoa;
 use App\Models\BoMon;
 use App\Models\QuyDinhKhoaLuan;
+use App\Models\ThongBao;
 use App\Services\PlanPhaseService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class KeHoachKhoaLuanController extends Controller
@@ -44,13 +47,8 @@ class KeHoachKhoaLuanController extends Controller
 
     public function create()
     {
-        $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $khoas = Khoa::orderBy('TenKhoa')->get();
-        $boMons = BoMon::orderBy('TenBoMon')->get();
-        $defaultPhases = PlanPhaseService::getDefaultPhases('2026-08-10');
-        $defaultRegulations = PlanPhaseService::getDefaultRegulations();
-
-        return view('admin.kehoach.create', compact('hocKies', 'khoas', 'boMons', 'defaultPhases', 'defaultRegulations'));
+        return redirect()->route('admin.kehoach.importDocument')
+            ->with('info', 'Hệ thống yêu cầu tải lên file công văn thông báo kế hoạch (PDF/Word) để bóc tách và tạo kế hoạch tự động.');
     }
 
     public function store(Request $request)
@@ -202,13 +200,16 @@ class KeHoachKhoaLuanController extends Controller
 
         if ($request->has('mocs')) {
             foreach ($request->mocs as $maMoc => $mocData) {
-                MocThoiGianKhoaLuan::where('MaMoc', $maMoc)->update([
-                    'TenMoc'          => $mocData['TenMoc'],
-                    'NgayBatDau'      => $mocData['NgayBatDau'],
-                    'NgayKetThuc'     => $mocData['NgayKetThuc'],
-                    'DoiTuongThucHien'=> $mocData['DoiTuongThucHien'] ?? 'Tất cả',
-                    'MoTa'            => $mocData['MoTa'] ?? null,
-                ]);
+                $fieldsToUpdate = [
+                    'TenMoc'      => $mocData['TenMoc'],
+                    'NgayBatDau'  => $mocData['NgayBatDau'],
+                    'NgayKetThuc' => $mocData['NgayKetThuc'],
+                    'MoTa'        => $mocData['MoTa'] ?? null,
+                ];
+                if (Schema::hasColumn('MocThoiGianKhoaLuan', 'DoiTuongThucHien')) {
+                    $fieldsToUpdate['DoiTuongThucHien'] = $mocData['DoiTuongThucHien'] ?? 'Tất cả';
+                }
+                MocThoiGianKhoaLuan::where('MaMoc', $maMoc)->update($fieldsToUpdate);
             }
         }
 
@@ -217,7 +218,7 @@ class KeHoachKhoaLuanController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $keHoach = KeHoachKhoaLuan::findOrFail($id);
+        $keHoach = KeHoachKhoaLuan::with(['hocKy'])->findOrFail($id);
         $status = $request->input('TrangThai');
 
         $allowedStatuses = ['NHÁP', 'CHỜ DUYỆT', 'ĐÃ DUYỆT', 'ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN', 'HOÀN THÀNH', 'HỦY'];
@@ -228,7 +229,57 @@ class KeHoachKhoaLuanController extends Controller
         $keHoach->TrangThai = $status;
         $keHoach->save();
 
+        if (in_array($status, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN'])) {
+            $this->sendBroadcastNotification($keHoach);
+            return redirect()->back()->with('success', "Đã chuyển trạng thái sang {$status} và gửi thông báo kèm file công văn tới toàn bộ hệ thống.");
+        }
+
         return redirect()->back()->with('success', "Đã chuyển trạng thái kế hoạch thành: {$status}");
+    }
+
+    public function publish($id)
+    {
+        $keHoach = KeHoachKhoaLuan::with(['hocKy', 'mocThoiGians'])->findOrFail($id);
+        $keHoach->TrangThai = 'ĐÃ CÔNG BỐ';
+        $keHoach->save();
+
+        $this->sendBroadcastNotification($keHoach);
+
+        return redirect()->back()->with('success', '🎉 Đã công bố Kế hoạch khóa luận thành công! Thông báo kèm file công văn đính kèm đã được phát hành cho toàn thể hệ thống.');
+    }
+
+    private function sendBroadcastNotification(KeHoachKhoaLuan $keHoach): void
+    {
+        $headerName = $keHoach->hocKy->TenHocKy ?? $keHoach->TenKeHoach;
+        $title = "[KHOA CNTT] Thông Báo Công Bố Kế Hoạch Khóa Luận Tốt Nghiệp - {$headerName}";
+
+        $fileUrl = null;
+        if (!empty($keHoach->FileDinhKem)) {
+            $fileUrl = asset('storage/' . $keHoach->FileDinhKem);
+        }
+
+        $noiDung = "Khoa Công nghệ Thông tin chính thức công bố {$keHoach->TenKeHoach} (" . ($keHoach->NoiDung ?? '') . ").\n\n"
+            . "Đề nghị toàn thể Giảng viên và Sinh viên theo dõi chi tiết các mốc thời gian quy trình và thực hiện theo đúng kế hoạch."
+            . ($fileUrl ? "\n\n📄 File công văn đính kèm: " . $fileUrl : "");
+
+        $maGVu = $keHoach->MaGVu ?? (Auth::user()?->giaoVu?->MaGVu ?? 'GVU01');
+
+        $maTB = 'TB_' . Str::upper(Str::random(7));
+        while (ThongBao::where('MaThongBao', $maTB)->exists()) {
+            $maTB = 'TB_' . Str::upper(Str::random(7));
+        }
+
+        ThongBao::create([
+            'MaThongBao'   => $maTB,
+            'TieuDe'       => $title,
+            'NoiDung'      => $noiDung,
+            'LoaiThongBao' => 'Kế hoạch',
+            'DoiTuongNhan' => 'Toàn thể',
+            'NgayTao'      => now(),
+            'TrangThai'    => 'Đã phát hành',
+            'FileDinhKem'  => $keHoach->FileDinhKem ? ('storage/' . $keHoach->FileDinhKem) : null,
+            'MaGVu'        => $maGVu,
+        ]);
     }
 
     public function destroy($id)
