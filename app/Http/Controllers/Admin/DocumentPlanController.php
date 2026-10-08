@@ -32,8 +32,12 @@ class DocumentPlanController extends Controller
      */
     public function importForm()
     {
-        // Chỉ cho phép chọn học kỳ ở trạng thái 'Chưa bắt đầu' để tránh xung đột dữ liệu
-        $hocKies = HocKy::where('TrangThai', 'Chưa bắt đầu')->orderBy('MaHocKy', 'desc')->get();
+        // Cho phép chọn học kỳ Chưa bắt đầu hoặc Đang diễn ra
+        $hocKies = HocKy::whereIn('TrangThai', ['Chưa bắt đầu', 'đang diễn ra', 'Đang diễn ra'])
+            ->orderBy('MaHocKy', 'desc')->get();
+        if ($hocKies->isEmpty()) {
+            $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
+        }
         $khoas = Khoa::all();
         return view('admin.kehoach.import_document', compact('hocKies', 'khoas') + ['Khoa' => $khoas]);
     }
@@ -55,9 +59,9 @@ class DocumentPlanController extends Controller
         ]);
 
         $hocKy = HocKy::where('MaHocKy', $request->input('MaHocKy'))->first();
-        if (!$hocKy || $hocKy->TrangThai !== 'Chưa bắt đầu') {
+        if (!$hocKy) {
             return back()->withInput()->withErrors([
-                'MaHocKy' => 'Chỉ được phép chọn học kỳ ở trạng thái "Chưa bắt đầu" để tránh xung đột dữ liệu.'
+                'MaHocKy' => 'Học kỳ được chọn không hợp lệ trong hệ thống.'
             ]);
         }
 

@@ -13,7 +13,7 @@
     <div class="admin-table-header">
         <h5 class="admin-table-header-title">
             <i class="fa-solid fa-calendar-plus text-primary"></i>
-            Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới &amp; Thiết Lập 12 Giai Đoạn
+            Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới &amp; Thiết Lập 13 Mốc Thời Gian Quy Trình
         </h5>
     </div>
     <div class="card-body p-4">
@@ -58,21 +58,21 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Ngày Bắt Đầu Kế Hoạch <span class="text-danger">*</span></label>
-                    <input type="date" name="NgayBatDau" class="form-control" value="{{ old('NgayBatDau', '2026-09-01') }}" required>
+                    <input type="date" name="NgayBatDau" class="form-control" value="{{ old('NgayBatDau', '2026-08-10') }}" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Ngày Kết Thúc Kế Hoạch <span class="text-danger">*</span></label>
-                    <input type="date" name="NgayKetThuc" class="form-control" value="{{ old('NgayKetThuc', '2026-12-10') }}" required>
+                    <input type="date" name="NgayKetThuc" class="form-control" value="{{ old('NgayKetThuc', '2026-11-28') }}" required>
                 </div>
                 <div class="col-12">
                     <label class="form-label fw-bold">Mô Tả / Nội Dung Kế Hoạch</label>
-                    <textarea name="NoiDung" class="form-control" rows="2" placeholder="Nhập ghi chú hoặc quy định chung của kế hoạch...">Kế hoạch quản lý và thực hiện Khóa luận tốt nghiệp Học kỳ 1 Năm học 2026-2027 cho sinh viên ngành Công nghệ Thông tin.</textarea>
+                    <textarea name="NoiDung" class="form-control" rows="2" placeholder="Nhập ghi chú hoặc quy định chung của kế hoạch...">Kế hoạch quản lý và thực hiện Khóa luận tốt nghiệp Học kỳ 1 Năm học 2026-2027 cho sinh viên ngành Công nghệ Thông tin theo Thông báo số 27/TB-KCNTT.</textarea>
                 </div>
             </div>
 
             <hr class="my-4">
 
-            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>Thiết Lập 12 Giai Đoạn / Mốc Thời Gian Quy Trình</h5>
+            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i>Thiết Lập 13 Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa CNTT)</h5>
 
             <div class="table-responsive mb-4">
                 <table class="table table-bordered align-middle mb-0">

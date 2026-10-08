@@ -43,21 +43,21 @@
                     <div class="card border-0 bg-light p-3 rounded-4 border">
                         <label for="MaHocKy" class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
                             <span><i class="fa-solid fa-calendar-days text-primary me-2"></i>1. Chọn Học Kỳ Áp Dụng Cho Kế Hoạch: <span class="text-danger">*</span></span>
-                            <span class="badge bg-warning text-dark font-weight-normal"><i class="fa-solid fa-shield-halved me-1"></i>Chỉ nhận học kỳ Chưa bắt đầu</span>
+                            <span class="badge bg-primary text-white font-weight-normal"><i class="fa-solid fa-graduation-cap me-1"></i>Học kỳ áp dụng</span>
                         </label>
                         <select name="MaHocKy" id="MaHocKy" class="form-select form-select-lg rounded-3" required>
-                            <option value="">-- Chọn Học Kỳ (Trạng thái: Chưa bắt đầu) --</option>
+                            <option value="">-- Chọn Học Kỳ Áp Dụng --</option>
                             @forelse($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} ({{ $hk->TrangThai }})
+                                <option value="{{ $hk->MaHocKy }}" {{ (old('MaHocKy') == $hk->MaHocKy || $hk->TrangThai == 'đang diễn ra' || $hk->TrangThai == 'Đang diễn ra') ? 'selected' : '' }}>
+                                    {{ $hk->TenHocKy }} (Năm học: {{ $hk->NamHoc }} - {{ $hk->TrangThai }})
                                 </option>
                             @empty
-                                <option value="" disabled>Hiện không có học kỳ nào ở trạng thái 'Chưa bắt đầu'</option>
+                                <option value="" disabled>Hiện không có học kỳ nào trong hệ thống</option>
                             @endforelse
                         </select>
                         <div class="form-text text-muted small mt-2">
                             <i class="fa-solid fa-circle-info text-primary me-1"></i>
-                            Để tránh xung đột dữ liệu, Kế hoạch mới bắt buộc chỉ được áp dụng cho học kỳ ở trạng thái <strong>Chưa bắt đầu</strong>.
+                            Kế hoạch khóa luận và các mốc quy trình sẽ được liên kết và thiết lập cho học kỳ này.
                         </div>
                     </div>
                 </div>

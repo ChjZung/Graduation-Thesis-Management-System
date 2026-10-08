@@ -138,8 +138,8 @@ class KeHoachKhoaLuanController extends Controller
     {
         $keHoach = KeHoachKhoaLuan::with('mocThoiGians')->findOrFail($id);
 
-        if (in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN', 'HOÀN THÀNH'])) {
-            return redirect()->back()->withErrors('Không cho phép chỉnh sửa kế hoạch đã công bố hoặc đang thực hiện do đã phát sinh dữ liệu.');
+        if ($keHoach->TrangThai === 'HOÀN THÀNH') {
+            return redirect()->back()->withErrors('Không cho phép chỉnh sửa kế hoạch đã hoàn thành.');
         }
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
@@ -153,15 +153,13 @@ class KeHoachKhoaLuanController extends Controller
     {
         $keHoach = KeHoachKhoaLuan::findOrFail($id);
 
-        if (in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN', 'HOÀN THÀNH'])) {
-            return redirect()->back()->withErrors('Không thể cập nhật kế hoạch đã công bố.');
+        if ($keHoach->TrangThai === 'HOÀN THÀNH') {
+            return redirect()->back()->withErrors('Không thể cập nhật kế hoạch đã hoàn thành.');
         }
 
         $request->validate([
             'TenKeHoach'  => 'required|string|max:200',
             'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
-            'NgayBatDau'  => 'required|date',
-            'NgayKetThuc' => 'required|date|after:NgayBatDau',
         ]);
 
         $keHoach->update($request->only([
@@ -204,18 +202,19 @@ class KeHoachKhoaLuanController extends Controller
     {
         $keHoach = KeHoachKhoaLuan::findOrFail($id);
 
-        if (in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN', 'HOÀN THÀNH'])) {
-            return redirect()->back()->withErrors('Không cho phép xóa kế hoạch đã công bố hoặc đã thực hiện.');
+        if ($keHoach->TrangThai === 'HOÀN THÀNH') {
+            return redirect()->back()->withErrors('Không cho phép xóa kế hoạch đã hoàn thành.');
         }
 
         try {
             DB::transaction(function () use ($keHoach) {
-                MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)->delete();
+                MocThoiGianKhoaLuan::where('MakeHoach', $keHoach->MakeHoach)->delete();
+                QuyDinhKhoaLuan::where('MakeHoach', $keHoach->MakeHoach)->delete();
                 $keHoach->delete();
             });
             return redirect()->route('admin.kehoach.index')->with('success', 'Xóa Kế hoạch Khóa luận thành công!');
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors('Không thể xóa kế hoạch này do đã vướng dữ liệu liên quan.');
+            return redirect()->back()->withErrors('Không thể xóa kế hoạch này: ' . $e->getMessage());
         }
     }
 }
