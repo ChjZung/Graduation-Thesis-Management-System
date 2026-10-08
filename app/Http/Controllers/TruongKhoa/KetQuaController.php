@@ -171,15 +171,15 @@ class KetQuaController extends Controller
                 'Lớp',
                 'Bộ môn',
                 'Đề tài khóa luận',
-                'Điểm HD',
-                'Điểm PB',
-                'Điểm HĐ',
+                'Loại Khóa Luận',
+                'Điểm Hội Đồng (100%)',
                 'Điểm Tổng Kết',
                 'Xếp Loại',
                 'Ghi Chú',
             ]);
 
             foreach ($list as $index => $row) {
+                $diem = (float)($row->DiemTongKet ?? $row->DiemHoiDongTB ?? 0);
                 fputcsv($handle, [
                     $index + 1,
                     $row->MaSV,
@@ -187,10 +187,9 @@ class KetQuaController extends Controller
                     $row->sinhVien->lop->TenLop ?? ($row->sinhVien->MaLop ?? 'N/A'),
                     $row->hoSoBaoVe->deTai->giangVien->boMon->TenBoMon ?? 'N/A',
                     $row->hoSoBaoVe->deTai->TenDeTai ?? 'N/A',
-                    $row->DiemHuongDan !== null ? number_format($row->DiemHuongDan, 2) : '-',
-                    $row->DiemPhanBien !== null ? number_format($row->DiemPhanBien, 2) : '-',
-                    $row->DiemHoiDongTB !== null ? number_format($row->DiemHoiDongTB, 2) : '-',
-                    $row->DiemTongKet !== null ? number_format($row->DiemTongKet, 2) : '-',
+                    $row->LoaiKhoaLuan ?? 'KLCN',
+                    number_format($diem, 2),
+                    number_format($diem, 2),
                     $row->KetQua ?? ($row->xep_loai ?? 'N/A'),
                     $row->NhanXetChung ?? '',
                 ]);

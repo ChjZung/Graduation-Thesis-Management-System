@@ -1,363 +1,520 @@
 @extends('layouts.giangvien')
 
-@section('page_title', 'Chấm Điểm & Tổng Hợp Kết Quả Khóa Luận')
+@section('page_title', 'Phiếu Chấm Điểm Khóa Luận Tốt Nghiệp — HUIT')
 
 @section('content')
+<div class="container-fluid px-0">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid #198754 !important; background-color: #f0fdf4;">
+            <i class="fa-solid fa-circle-check me-2 text-success"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid #dc3545 !important; background-color: #fef2f2;">
+            <i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-
-@if($hoiDongs->isEmpty())
-<div class="card card-premium shadow-sm border-0">
-    <div class="card-body text-center py-5">
-        <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">Bạn chưa được phân công vào Hội đồng nào</h5>
-        <p class="text-muted">Khi Giáo vụ thành lập Hội đồng và thêm bạn vào, danh sách sẽ hiện ở đây.</p>
-    </div>
-</div>
-@else
-
-@php
-    // Lấy hội đồng đầu tiên và nhóm đầu tiên làm mẫu hiển thị chi tiết chuẩn Mockup Ảnh 3
-    $activeHoiDong = $hoiDongs->first();
-    $activeHoSo = $activeHoiDong?->hoSoBaoVes?->first();
-    $activeNhom = $activeHoSo?->nhom;
-    $activeDeTai = $activeNhom?->deTai;
-    $activeThanhVien = $activeNhom?->thanhViens?->first();
-    $activeSV = $activeThanhVien?->sinhVien;
-
-    $vaiTroGV = $activeHoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV)?->VaiTro ?? 'Cán bộ chấm 1 (Chủ tịch)';
-    $keyCham = ($activeHoiDong?->MaHoiDong ?? '') . '_' . ($activeSV?->MaSV ?? '');
-    $daChamDiem = $diemDaCham[$keyCham] ?? null;
-@endphp
-
-<!-- Tiêu đề & Chọn Sinh viên chấm điểm -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-        <h4 class="fw-bold mb-1 text-primary-custom">
-            <i class="fa-solid fa-file-signature text-primary me-2"></i>Chấm Điểm & Tổng Hợp Kết Quả Khóa Luận
-        </h4>
-        <div class="text-muted small">
-            Đánh giá theo 4 tiêu chí chuẩn hóa của Hội đồng bảo vệ Khóa luận tốt nghiệp
+    @if($hoiDongs->isEmpty())
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-inbox fa-3x text-muted mb-3 opacity-50"></i>
+            <h5 class="fw-bold text-secondary">Bạn chưa được phân công vào Hội đồng bảo vệ nào</h5>
+            <p class="text-muted small mb-0">Khi Giáo vụ thành lập Hội đồng và thêm Thầy/Cô vào danh sách thành viên, các ca bảo vệ sẽ hiển thị tại đây.</p>
         </div>
     </div>
-    <div class="d-flex gap-2 align-items-center">
-        @if($hoiDongs->count() > 1)
-            <select class="form-select form-select-sm" onchange="location = this.value;">
-                @foreach($hoiDongs as $hd)
-                    <option value="?hd={{ $hd->MaHoiDong }}" {{ $hd->MaHoiDong === $activeHoiDong->MaHoiDong ? 'selected' : '' }}>
-                        {{ $hd->TenHoiDong }}
-                    </option>
-                @endforeach
-            </select>
-        @else
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
-                <i class="fa-solid fa-landmark me-1"></i>{{ $activeHoiDong->TenHoiDong }}
-            </span>
-        @endif
-    </div>
-</div>
+    @else
 
-<!-- Header Thông Tin Đề Tài & Sinh Viên (Theo chuẩn Mockup Ảnh 3) -->
-<div class="card card-premium shadow-sm border-0 mb-4">
-    <div class="card-body p-3 bg-light rounded-3 border">
+    @php
+        $activeNhom = $activeHoSo?->nhom;
+        $activeDeTai = $activeNhom?->deTai;
+        $activeThanhViens = $activeNhom?->thanhViens ?? collect();
+        $sinhViens = $activeThanhViens->pluck('sinhVien')->filter();
+
+        // Vai trò của giảng viên trong hội đồng này
+        $tvRecord = $activeHoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV);
+        $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
+
+        $isKLKS = ($loaiKhoaLuan === 'KLKS');
+        $rubric = $isKLKS ? $rubricKLKS : $rubricKLCN;
+        $tenBieuMau = $isKLKS ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
+    @endphp
+
+    <!-- Header Section (Đồng bộ chuẩn Học Kỳ) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h4 class="fw-bold mb-1" style="color: #00305a;">
+                <i class="fa-solid fa-file-signature text-primary me-2"></i>{{ $tenBieuMau }}
+            </h4>
+            <p class="text-muted small mb-0">
+                Thang điểm Rubric chuẩn hóa Khoa CNTT — Trường ĐH Công Thương TP.HCM (Điểm khóa luận 100% do Hội đồng chấm).
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Toggle chọn mẫu KLCN hoặc KLKS -->
+            <div class="btn-group btn-group-sm shadow-xs" role="group">
+                <a href="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLCN']) }}" 
+                   class="btn {{ !$isKLKS ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">
+                    <i class="fa-solid fa-graduation-cap me-1"></i> Mẫu Cử Nhân (KLCN)
+                </a>
+                <a href="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLKS']) }}" 
+                   class="btn {{ $isKLKS ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">
+                    <i class="fa-solid fa-microchip me-1"></i> Mẫu Kỹ Sư (KLKS)
+                </a>
+            </div>
+
+            <!-- Nút In Phiếu -->
+            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary shadow-xs">
+                <i class="fa-solid fa-print me-1"></i> In Phiếu
+            </button>
+        </div>
+    </div>
+
+    <!-- Thanh Bộ Chọn Hội Đồng & Chọn Nhóm Bảo Vệ -->
+    <div class="admin-filter-bar mb-3 p-3">
         <div class="row g-2 align-items-center">
-            <div class="col-lg-8">
-                <div class="fw-bold text-dark fs-6 mb-1">
-                    <i class="fa-solid fa-book text-primary me-2"></i>
-                    Đề tài: {{ $activeDeTai->TenDeTai ?? 'Xây dựng hệ thống quản lý chuỗi cung ứng ứng dụng Blockchain' }}
-                </div>
-                <div class="small text-muted d-flex flex-wrap gap-3 align-items-center">
-                    <span>
-                        <strong><i class="fa-solid fa-user-graduate me-1 text-secondary"></i>Sinh viên:</strong> 
-                        <strong class="text-dark">{{ $activeSV->HoTen ?? 'Nguyễn Văn Nam' }}</strong>
-                        (MSSV: {{ $activeSV->MaSV ?? '2001200123' }})
-                    </span>
-                    <span>
-                        <strong>Lớp:</strong> {{ $activeSV->MaLop ?? '11DHTH01' }}
-                    </span>
-                </div>
+            <div class="col-md-6 col-lg-5">
+                <label class="form-label small fw-bold text-secondary mb-1">
+                    <i class="fa-solid fa-landmark text-primary me-1"></i> Hội Đồng Bảo Vệ:
+                </label>
+                <select class="form-select form-select-sm" onchange="location = this.value;">
+                    @foreach($hoiDongs as $hd)
+                        <option value="{{ route('giangvien.chamdiem.index', ['hd' => $hd->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}" {{ $activeHoiDong && $hd->MaHoiDong === $activeHoiDong->MaHoiDong ? 'selected' : '' }}>
+                            {{ $hd->TenHoiDong }} ({{ $hd->DiaDiem ?? 'Phòng B.304' }})
+                        </option>
+                    @endforeach
+                </select>
             </div>
-            <div class="col-lg-4 text-lg-end">
-                <div class="small text-muted">
-                    <strong>Hội đồng:</strong> {{ $activeHoiDong->TenHoiDong ?? 'HĐ01 - Hội đồng CNTT 01' }}
+
+            <div class="col-md-6 col-lg-5">
+                <label class="form-label small fw-bold text-secondary mb-1">
+                    <i class="fa-solid fa-users-rectangle text-success me-1"></i> Nhóm Sinh Viên Bảo Vệ:
+                </label>
+                <select class="form-select form-select-sm" onchange="location = this.value;">
+                    @forelse($activeHoiDong->hoSoBaoVes as $hs)
+                        <option value="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $hs->MaHoSo, 'loai' => $loaiKhoaLuan]) }}" {{ $activeHoSo && $hs->MaHoSo === $activeHoSo->MaHoSo ? 'selected' : '' }}>
+                            {{ $hs->nhom->TenNhom ?? $hs->MaHoSo }} — {{ Str::limit($hs->nhom->deTai->TenDeTai ?? 'Chưa có tên đề tài', 45) }}
+                        </option>
+                    @empty
+                        <option value="">(Chưa có nhóm nào được phân vào Hội đồng này)</option>
+                    @endforelse
+                </select>
+            </div>
+
+            <div class="col-md-12 col-lg-2 text-lg-end pt-lg-3">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                    <i class="fa-solid fa-user-check me-1"></i>{{ $vaiTroGV }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @if(!$activeHoSo)
+    <div class="card border-0 shadow-sm rounded-3 p-5 text-center text-muted">
+        <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
+        <h6>Hội đồng này hiện chưa có nhóm sinh viên nào được phân công bảo vệ.</h6>
+    </div>
+    @else
+
+    <!-- Card Thông Tin Phiếu Chấm Điểm Chuẩn Văn Bản Khoa CNTT -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="text-center">
+                <div class="text-uppercase fw-bold text-secondary small" style="letter-spacing: 1px;">KHOA CÔNG NGHỆ THÔNG TIN &bull; TRƯỜNG ĐH CÔNG THƯƠNG TP.HCM</div>
+                <h5 class="fw-bold mb-1 text-primary mt-1">{{ $tenBieuMau }}</h5>
+                <div class="text-muted small fst-italic">(Hướng ứng dụng — Thang điểm 10.0)</div>
+            </div>
+        </div>
+        <div class="card-body p-4 bg-light-subtle">
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="p-2.5 bg-white rounded-3 border">
+                        <span class="fw-bold text-dark">Tên đề tài:</span>
+                        <span class="text-primary fw-semibold fs-6 ms-1">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</span>
+                    </div>
                 </div>
-                <div class="small text-primary fw-semibold mt-1">
-                    <i class="fa-solid fa-user-check me-1"></i>Vai trò: <strong>{{ $vaiTroGV }}</strong>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                        <div class="text-muted small">Giảng viên hướng dẫn:</div>
+                        <div class="fw-bold text-dark mt-1">{{ $activeDeTai->giangVien->HoTen ?? 'Chưa phân công' }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                        <div class="text-muted small">Hội đồng số / Phòng:</div>
+                        <div class="fw-bold text-dark mt-1">{{ $activeHoiDong->TenHoiDong }} &bull; {{ $activeHoSo->PhongBaoVe ?? ($activeHoiDong->DiaDiem ?? 'Phòng B.304') }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                        <div class="text-muted small">Ngày chấm:</div>
+                        <div class="fw-bold text-dark mt-1">{{ \Carbon\Carbon::parse($activeHoSo->ThoiGianBaoVe ?? ($activeHoiDong->ThoiGianBatDau ?? now()))->format('d/m/Y H:i') }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                        <div class="text-muted small">Giám khảo chấm điểm:</div>
+                        <div class="fw-bold text-dark mt-1">{{ $giangVien->HoTen }} ({{ $vaiTroGV }})</div>
+                    </div>
+                </div>
+
+                <!-- Danh sách sinh viên thực hiện đề tài (SV1, SV2, SV3) -->
+                <div class="col-12">
+                    <div class="p-3 bg-white rounded-3 border">
+                        <div class="fw-bold text-dark small mb-2">
+                            <i class="fa-solid fa-user-graduate text-primary me-1"></i> Danh Sách Nhóm Sinh Viên Thực Hiện:
+                        </div>
+                        <div class="row g-2">
+                            @forelse($sinhViens as $idx => $sv)
+                            <div class="col-md-4">
+                                <div class="p-2 bg-light rounded-2 border">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-primary text-white">SV{{ $idx + 1 }}</span>
+                                        <span class="badge-code">{{ $sv->MaSoSinhVien ?? $sv->MaSV }}</span>
+                                    </div>
+                                    <div class="fw-bold text-dark mt-1">{{ $sv->HoTen }}</div>
+                                    <div class="text-muted small">Lớp: {{ $sv->lop->TenLop ?? '14DHTH01' }}</div>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="col-12 text-muted small fst-italic">Chưa có danh sách sinh viên trong nhóm.</div>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Main 2-Column Layout (Theo chuẩn Mockup Ảnh 3) -->
-<div class="row g-4">
-    <!-- Cột Trái (65%): Phiếu Chấm Điểm 4 Tiêu Chí -->
-    <div class="col-lg-7">
-        <div class="card card-premium shadow-sm border-0 h-100">
-            <div class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center">
+    <!-- FORM NHẬP ĐIỂM THEO RUBRIC CHUẨN KHOA CNTT -->
+    <form id="formChamDiem" action="{{ route('giangvien.chamdiem.store') }}" method="POST">
+        @csrf
+        <input type="hidden" name="MaHoiDong" value="{{ $activeHoiDong->MaHoiDong }}">
+        <input type="hidden" name="MaHoSo" value="{{ $activeHoSo->MaHoSo }}">
+        <input type="hidden" name="LoaiKhoaLuan" value="{{ $loaiKhoaLuan }}">
+
+        <!-- Bảng Rubric Tiêu Chí Đánh Giá -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold text-dark">
+                    <i class="fa-solid fa-list-check text-primary me-2"></i>Bảng Tiêu Chí Đánh Giá &amp; Điểm Chấm Cho Từng Sinh Viên (Thang 10.0)
+                </span>
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-clipboard-check text-primary"></i>
-                    <h6 class="fw-bold mb-0">Phiếu Chấm Điểm Khóa Luận Tốt Nghiệp</h6>
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1" onclick="dienDiemNhanh(0.9)" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Điểm Mẫu (90%)
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1" onclick="dienDiemNhanh(1.0)" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-star me-1"></i> Tối Đa (10.0)
+                    </button>
                 </div>
-                <span class="badge bg-light text-muted border small">Thang điểm 10.0</span>
             </div>
-            <div class="card-body p-3">
-                <form id="formChamDiem" action="{{ route('giangvien.chamdiem.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="MaHoiDong" value="{{ $activeHoiDong->MaHoiDong }}">
-                    <input type="hidden" name="diems[0][MaSV]" value="{{ $activeSV->MaSV ?? '2001200123' }}">
-                    <input type="hidden" id="inputFinalDiem" name="diems[0][Diem]" value="{{ $daChamDiem->Diem ?? '9.08' }}">
 
-                    <!-- Bảng 4 Tiêu Chí Chấm Điểm -->
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered align-middle mb-0">
-                            <thead class="table-light small text-secondary">
-                                <tr>
-                                    <th width="48%">Tiêu chí đánh giá</th>
-                                    <th width="16%" class="text-center">Tỷ trọng</th>
-                                    <th width="16%" class="text-center">Tối đa</th>
-                                    <th width="20%" class="text-center">Điểm chấm</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- TC 1 -->
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark small">Tiêu chí 1: Chất lượng nội dung khóa luận</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Tính khoa học, hoàn thiện SRS và tài liệu kỹ thuật</div>
-                                    </td>
-                                    <td class="text-center fw-bold text-primary small">40%</td>
-                                    <td class="text-center text-muted small">10.0</td>
-                                    <td>
-                                        <input type="number" step="0.1" min="0" max="10" 
-                                               id="tc1" class="form-control form-control-sm text-center fw-bold text-primary score-input" 
-                                               value="9.0" required>
-                                    </td>
-                                </tr>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                            <tr>
+                                <th class="text-center py-3" style="width: 50px;">STT</th>
+                                <th class="py-3" style="min-width: 320px;">NỘI DUNG ĐÁNH GIÁ</th>
+                                <th class="text-center py-3" style="width: 85px;">CLO</th>
+                                <th class="text-center py-3" style="width: 100px;">ĐIỂM TỐI ĐA</th>
+                                @foreach($sinhViens as $idx => $sv)
+                                <th class="text-center py-3" style="width: 130px; background: #f0f7ff;">
+                                    <div>SV{{ $idx + 1 }}</div>
+                                    <div class="text-primary fw-bold text-truncate" style="font-size: 0.72rem; max-width: 120px;" title="{{ $sv->HoTen }}">
+                                        {{ $sv->HoTen }}
+                                    </div>
+                                </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            @foreach($rubric as $criterion)
+                            @php
+                                $isBonus = !empty($criterion['is_bonus']);
+                                $cId = $criterion['id'];
+                                $cMax = (float)$criterion['max'];
+                            @endphp
+                            <tr class="{{ $isBonus ? 'table-warning-subtle' : '' }}">
+                                <td class="text-center fw-bold {{ $isBonus ? 'text-warning-emphasis' : 'text-secondary' }}">
+                                    {{ $criterion['stt'] }}
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark" style="font-size: 0.85rem;">
+                                        {{ $criterion['noi_dung'] }}
+                                    </div>
+                                    @if($isBonus)
+                                        <div class="badge bg-warning text-dark mt-1" style="font-size: 0.68rem;">Điểm cộng khuyến khích</div>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.72rem;">{{ $criterion['clo'] }}</span>
+                                </td>
+                                <td class="text-center fw-bold {{ $isBonus ? 'text-warning-emphasis' : 'text-primary' }}">
+                                    {{ number_format($cMax, 2) }}
+                                </td>
 
-                                <!-- TC 2 -->
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark small">Tiêu chí 2: Sản phẩm thực nghiệm</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Mức độ hoàn thiện, tính ứng dụng và độ ổn định sản phẩm</div>
-                                    </td>
-                                    <td class="text-center fw-bold text-primary small">30%</td>
-                                    <td class="text-center text-muted small">10.0</td>
-                                    <td>
-                                        <input type="number" step="0.1" min="0" max="10" 
-                                               id="tc2" class="form-control form-control-sm text-center fw-bold text-primary score-input" 
-                                               value="9.5" required>
-                                    </td>
-                                </tr>
+                                {{-- Cột điểm cho từng sinh viên --}}
+                                @foreach($sinhViens as $sIdx => $sv)
+                                @php
+                                    $daChamSV = $diemDaCham->get($sv->MaSV);
+                                    $svChiTiet = $daChamSV?->ChiTietDiem;
+                                    $oldScore = $svChiTiet[$cId] ?? ($isBonus ? 0.0 : $cMax);
+                                @endphp
+                                <td class="text-center p-2" style="background: #f8fbff;">
+                                    <input type="number" 
+                                           step="0.05" 
+                                           min="0" 
+                                           max="{{ $cMax }}" 
+                                           name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $cId }}]" 
+                                           data-max="{{ $cMax }}" 
+                                           data-sv="{{ $sv->MaSV }}" 
+                                           data-bonus="{{ $isBonus ? '1' : '0' }}" 
+                                           class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }}" 
+                                           value="{{ number_format((float)$oldScore, 2) }}" 
+                                           required>
+                                </td>
+                                @endforeach
+                            </tr>
+                            @endforeach
 
-                                <!-- TC 3 -->
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark small">Tiêu chí 3: Kỹ năng thuyết trình & Slide</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Bố cục slide rõ ràng, phong thái tự tin, đúng giờ</div>
-                                    </td>
-                                    <td class="text-center fw-bold text-primary small">15%</td>
-                                    <td class="text-center text-muted small">10.0</td>
-                                    <td>
-                                        <input type="number" step="0.1" min="0" max="10" 
-                                               id="tc3" class="form-control form-control-sm text-center fw-bold text-primary score-input" 
-                                               value="8.5" required>
-                                    </td>
-                                </tr>
-
-                                <!-- TC 4 -->
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark small">Tiêu chí 4: Trả lời câu hỏi Hội đồng</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Nắm vững kiến thức chuyên môn, phản biện logic</div>
-                                    </td>
-                                    <td class="text-center fw-bold text-primary small">15%</td>
-                                    <td class="text-center text-muted small">10.0</td>
-                                    <td>
-                                        <input type="number" step="0.1" min="0" max="10" 
-                                               id="tc4" class="form-control form-control-sm text-center fw-bold text-primary score-input" 
-                                               value="9.0" required>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Textarea Nhận xét chi tiết -->
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-dark">
-                            <i class="fa-solid fa-pen-to-square me-1 text-primary"></i>Nhận xét chi tiết của cán bộ chấm
-                        </label>
-                        <textarea id="nhanXet" name="diems[0][NhanXet]" rows="4" class="form-control form-control-sm"
-                                  placeholder="Nhập nhận xét chi tiết về đề tài, sản phẩm và phần bảo vệ của sinh viên...">{{ $daChamDiem->NhanXet ?? 'Sinh viên chuẩn bị bài chu đáo, phong thái tự tin. Sản phẩm demo ổn định, áp dụng tốt công nghệ Smart Contract vào chuỗi cung ứng. Cần bổ sung thêm phần kiểm thử bảo mật cho API trước khi triển khai thực tế.' }}</textarea>
-                    </div>
-
-                    <!-- Action Buttons (Theo Mockup Ảnh 3) -->
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 btn-sm" onclick="alert('Đã lưu nháp kết quả điểm chấm vào phiên làm việc!');">
-                            <i class="fa-regular fa-floppy-disk me-1"></i>Lưu nháp điểm
-                        </button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 btn-sm shadow-sm" style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);">
-                            <i class="fa-solid fa-lock me-1"></i>Hoàn tất & Khóa bảng điểm
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cột Phải (35%): Card Tổng Điểm Realtime & Lưu Ý BR11 -->
-    <div class="col-lg-5 d-flex flex-column gap-3">
-        <!-- Card Realtime Navy Gradient (Theo Mockup Ảnh 3) -->
-        <div class="card shadow-lg border-0 text-white rounded-4 overflow-hidden" 
-             style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);">
-            <div class="card-body p-4 text-center">
-                <div class="text-uppercase tracking-wider small fw-semibold text-info mb-2" style="letter-spacing: 1px; font-size: 0.75rem;">
-                    Tổng Điểm Tổng Hợp (Realtime)
-                </div>
-
-                <!-- Big Bold Score Display -->
-                <div class="display-3 fw-bold text-white mb-0" id="displayScore">
-                    9.07
-                </div>
-                <div class="small text-white-50 mb-3">Thang điểm 10.0</div>
-
-                <!-- Badges / Ratings -->
-                <div class="d-flex justify-content-center align-items-center gap-2 mb-4">
-                    <span class="badge bg-success fs-6 px-3 py-1 rounded-pill" id="badgeGrade">
-                        Điểm chữ: A+
-                    </span>
-                    <span class="badge bg-secondary fs-6 px-3 py-1 rounded-pill" id="badgeScale4">
-                        Hệ 4: 4.0
-                    </span>
-                </div>
-
-                <div class="p-2 rounded-3 bg-white bg-opacity-10 mb-4">
-                    <div class="small text-white-50">Kết luận đánh giá</div>
-                    <div class="fw-bold text-warning fs-6" id="textResult">
-                        ĐẠT (Xuất sắc)
-                    </div>
-                </div>
-
-                <!-- Thành phần điểm chi tiết -->
-                <div class="border-top border-secondary pt-3 text-start">
-                    <div class="small fw-semibold text-white-50 mb-2">Chi tiết thành phần điểm:</div>
-                    <div class="d-flex justify-content-between small text-white-50 mb-1">
-                        <span>TC1 (Chất lượng - 40%):</span>
-                        <strong class="text-white" id="valTC1">3.60</strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-white-50 mb-1">
-                        <span>TC2 (Sản phẩm - 30%):</span>
-                        <strong class="text-white" id="valTC2">2.85</strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-white-50 mb-1">
-                        <span>TC3 (Thuyết trình - 15%):</span>
-                        <strong class="text-white" id="valTC3">1.28</strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-white-50 mb-1">
-                        <span>TC4 (Trả lời - 15%):</span>
-                        <strong class="text-white" id="valTC4">1.35</strong>
-                    </div>
-                    <div class="d-flex justify-content-between small text-info fw-bold border-top border-secondary pt-2 mt-2">
-                        <span>Tổng điểm tích lũy:</span>
-                        <span class="fs-6" id="valTotal">9.08</span>
-                    </div>
+                            {{-- Hàng TỔNG CỘNG --}}
+                            <tr style="background: #e6f2ff; border-top: 2px solid #0072ce;">
+                                <td colspan="3" class="text-end fw-bold text-dark py-3 fs-6">
+                                    <i class="fa-solid fa-calculator text-primary me-2"></i>TỔNG CỘNG (Thang Điểm 10.0):
+                                </td>
+                                <td class="text-center fw-bold text-primary py-3 fs-6">
+                                    10.00
+                                </td>
+                                @foreach($sinhViens as $sIdx => $sv)
+                                <td class="text-center py-3" style="background: #dbeafe;">
+                                    <div class="fs-5 fw-bold text-primary" id="totalScore_{{ $sv->MaSV }}">
+                                        10.00
+                                    </div>
+                                    <input type="hidden" name="diems[{{ $sv->MaSV }}][Diem]" id="inputTotalScore_{{ $sv->MaSV }}" value="10.00">
+                                    <div class="small fw-semibold text-success mt-0.5" id="badgeGrade_{{ $sv->MaSV }}">
+                                        Điểm chữ: A+ (4.0)
+                                    </div>
+                                </td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Lưu ý Quy tắc BR11 -->
-        <div class="card card-premium shadow-sm border-0">
-            <div class="card-body p-3 bg-warning-subtle border border-warning-subtle rounded-3">
-                <div class="d-flex align-items-start gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-warning-emphasis fs-5 mt-1"></i>
-                    <div>
-                        <div class="fw-bold small text-warning-emphasis mb-1">Quy định Chốt Điểm (BR11)</div>
-                        <p class="small text-secondary mb-0" style="font-size: 0.78rem; line-height: 1.4;">
-                            Điểm sau khi cán bộ chấm xác nhận <strong>Khóa bảng điểm</strong> sẽ được đồng bộ trực tiếp vào kết quả chung của Hội đồng và không thể hoàn tác trừ khi có đơn phúc khảo được Trưởng khoa phê duyệt.
-                        </p>
+        <!-- Nhận xét của Giám khảo & Thẻ Tổng Hợp Điểm Realtime -->
+        <div class="row g-4 mb-4">
+            <!-- Cột trái: Nhận xét chi tiết của Giám khảo -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <span class="fw-bold text-dark">
+                            <i class="fa-solid fa-pen-to-square text-primary me-2"></i>Nhận Xét Chi Tiết Của Giám Khảo Chấm Điểm
+                        </span>
+                    </div>
+                    <div class="card-body p-3">
+                        @foreach($sinhViens as $idx => $sv)
+                        @php
+                            $daChamSV = $diemDaCham->get($sv->MaSV);
+                        @endphp
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center">
+                                <span><i class="fa-solid fa-user me-1 text-primary"></i> Nhận xét cho SV{{ $idx + 1 }}: <strong>{{ $sv->HoTen }}</strong> ({{ $sv->MaSoSinhVien ?? $sv->MaSV }})</span>
+                            </label>
+                            <textarea name="diems[{{ $sv->MaSV }}][NhanXet]" rows="3" class="form-control" style="font-size: 0.88rem;"
+                                placeholder="Nhập nhận xét về mức độ đóng góp, tính chủ động, khả năng trả lời phản biện của sinh viên...">{{ $daChamSV?->NhanXet ?? 'Sinh viên nắm vững kiến thức chuyên môn, trả lời tốt câu hỏi của Hội đồng. Sản phẩm thực nghiệm hoạt động ổn định và đáp ứng đầy đủ yêu cầu đề tài.' }}</textarea>
+                        </div>
+                        @endforeach
+
+                        <div class="alert alert-info py-2 px-3 small rounded-3 mb-0 border-0 bg-info-subtle text-info-emphasis">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            <strong>Lưu ý:</strong> Điểm sau khi lưu sẽ được hệ thống tự động cộng dồn với các thành viên khác trong Hội đồng để tính ra điểm trung bình chính thức của nhóm.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Bảng Thống Kê Tổng Kết Học Lực Realtime -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <span class="fw-bold text-dark">
+                            <i class="fa-solid fa-award text-primary me-2"></i>Tổng Hợp Kết Quả Đánh Giá Realtime
+                        </span>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="d-flex flex-column gap-3">
+                            @foreach($sinhViens as $idx => $sv)
+                            <div class="p-3 rounded-3 border bg-light-subtle" id="cardSummary_{{ $sv->MaSV }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="badge bg-primary text-white">SV{{ $idx + 1 }}</span>
+                                        <strong class="text-dark ms-1">{{ $sv->HoTen }}</strong>
+                                        <div class="small text-muted">{{ $sv->MaSoSinhVien ?? $sv->MaSV }} &bull; {{ $sv->lop->TenLop ?? 'Lớp' }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="fs-4 fw-bold text-primary lh-1" id="displaySummaryScore_{{ $sv->MaSV }}">10.00</span>
+                                        <div class="small text-muted">/ 10.0</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" id="badgeSummaryResult_{{ $sv->MaSV }}">
+                                        ĐẠT (Xuất sắc)
+                                    </span>
+                                    <span class="small fw-semibold text-secondary" id="badgeSummaryScale_{{ $sv->MaSV }}">
+                                        Điểm chữ: A+ | Hệ 4: 4.0
+                                    </span>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        <div class="p-3 bg-warning-subtle border border-warning-subtle rounded-3 mt-3">
+                            <div class="small fw-bold text-warning-emphasis mb-1">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Quy Chế Điểm Khóa Luận (HUIT):
+                            </div>
+                            <div class="small text-secondary" style="font-size: 0.78rem; line-height: 1.4;">
+                                Điểm cuối cùng của sinh viên được tính bằng <strong>100% điểm trung bình do Hội đồng bảo vệ chấm</strong>. Không cộng trọng số 30% GVHD hay 30% GVPB.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 bg-white rounded-3 border shadow-sm">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="alert('Đã lưu nháp bảng điểm vào phiên làm việc hiện tại!');">
+                <i class="fa-regular fa-floppy-disk me-1"></i> Lưu Nháp Điểm
+            </button>
+            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" style="background: #0072ce; border-color: #0072ce;">
+                <i class="fa-solid fa-lock me-1"></i> Ký Xác Nhận &amp; Khóa Phiếu Chấm
+            </button>
+        </div>
+    </form>
+    @endif
+    @endif
 </div>
 
-<!-- JavaScript Realtime Score Calculator (Mockup Ảnh 3) -->
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const inTC1 = document.getElementById('tc1');
-    const inTC2 = document.getElementById('tc2');
-    const inTC3 = document.getElementById('tc3');
-    const inTC4 = document.getElementById('tc4');
+    const svInputs = document.querySelectorAll('.score-criterion');
 
-    const displayScore = document.getElementById('displayScore');
-    const badgeGrade = document.getElementById('badgeGrade');
-    const badgeScale4 = document.getElementById('badgeScale4');
-    const textResult = document.getElementById('textResult');
-    const valTC1 = document.getElementById('valTC1');
-    const valTC2 = document.getElementById('valTC2');
-    const valTC3 = document.getElementById('valTC3');
-    const valTC4 = document.getElementById('valTC4');
-    const valTotal = document.getElementById('valTotal');
-    const inputFinalDiem = document.getElementById('inputFinalDiem');
+    function calculateScores() {
+        const svMap = {};
 
-    function calculateRealtime() {
-        const v1 = parseFloat(inTC1.value) || 0;
-        const v2 = parseFloat(inTC2.value) || 0;
-        const v3 = parseFloat(inTC3.value) || 0;
-        const v4 = parseFloat(inTC4.value) || 0;
+        // Nhóm inputs theo sinh viên
+        svInputs.forEach(input => {
+            const svId = input.getAttribute('data-sv');
+            if (!svMap[svId]) svMap[svId] = { total: 0, bonus: 0 };
 
-        const w1 = v1 * 0.40;
-        const w2 = v2 * 0.30;
-        const w3 = v3 * 0.15;
-        const w4 = v4 * 0.15;
+            let val = parseFloat(input.value) || 0;
+            const maxVal = parseFloat(input.getAttribute('data-max')) || 0;
+            const isBonus = input.getAttribute('data-bonus') === '1';
 
-        const total = w1 + w2 + w3 + w4;
-        const formattedTotal = total.toFixed(2);
+            if (val > maxVal) {
+                val = maxVal;
+                input.value = maxVal.toFixed(2);
+            }
+            if (val < 0) {
+                val = 0;
+                input.value = '0.00';
+            }
 
-        // Hiển thị 9.07 nếu các giá trị mặc định giống mockup
-        displayScore.textContent = (v1 === 9.0 && v2 === 9.5 && v3 === 8.5 && v4 === 9.0) ? '9.07' : formattedTotal;
-        valTC1.textContent = w1.toFixed(2);
-        valTC2.textContent = w2.toFixed(2);
-        valTC3.textContent = w3.toFixed(2);
-        valTC4.textContent = w4.toFixed(2);
-        valTotal.textContent = formattedTotal;
-        inputFinalDiem.value = formattedTotal;
+            if (isBonus) {
+                svMap[svId].bonus += val;
+            } else {
+                svMap[svId].total += val;
+            }
+        });
 
-        // Tính điểm chữ & hệ 4
-        let letter = 'F';
-        let scale4 = '0.0';
-        let res = 'KHÔNG ĐẠT';
+        // Cập nhật từng sinh viên
+        Object.keys(svMap).forEach(svId => {
+            let finalScore = svMap[svId].total + svMap[svId].bonus;
+            // Tổng không vượt quá 10.0
+            if (finalScore > 10.0) finalScore = 10.0;
+            const formatted = finalScore.toFixed(2);
 
-        if (total >= 9.0) {
-            letter = 'A+'; scale4 = '4.0'; res = 'ĐẠT (Xuất sắc)';
-        } else if (total >= 8.5) {
-            letter = 'A'; scale4 = '3.7'; res = 'ĐẠT (Giỏi)';
-        } else if (total >= 8.0) {
-            letter = 'B+'; scale4 = '3.5'; res = 'ĐẠT (Khá giỏi)';
-        } else if (total >= 7.0) {
-            letter = 'B'; scale4 = '3.0'; res = 'ĐẠT (Khá)';
-        } else if (total >= 6.5) {
-            letter = 'C+'; scale4 = '2.5'; res = 'ĐẠT (Trung bình khá)';
-        } else if (total >= 5.5) {
-            letter = 'C'; scale4 = '2.0'; res = 'ĐẠT (Trung bình)';
-        } else if (total >= 5.0) {
-            letter = 'D+'; scale4 = '1.5'; res = 'ĐẠT (Trung bình yếu)';
-        } else if (total >= 4.0) {
-            letter = 'D'; scale4 = '1.0'; res = 'ĐẠT (Yếu)';
-        }
+            const totalEl = document.getElementById('totalScore_' + svId);
+            const inputEl = document.getElementById('inputTotalScore_' + svId);
+            const badgeGradeEl = document.getElementById('badgeGrade_' + svId);
+            const summaryScoreEl = document.getElementById('displaySummaryScore_' + svId);
+            const summaryResultEl = document.getElementById('badgeSummaryResult_' + svId);
+            const summaryScaleEl = document.getElementById('badgeSummaryScale_' + svId);
 
-        badgeGrade.textContent = 'Điểm chữ: ' + letter;
-        badgeScale4.textContent = 'Hệ 4: ' + scale4;
-        textResult.textContent = res;
+            if (totalEl) totalEl.textContent = formatted;
+            if (inputEl) inputEl.value = formatted;
+            if (summaryScoreEl) summaryScoreEl.textContent = formatted;
+
+            // Tính điểm chữ, hệ 4 và xếp loại
+            let letter = 'F';
+            let scale4 = '0.0';
+            let xepLoai = 'Không đạt';
+            let badgeClass = 'bg-danger-subtle text-danger border border-danger-subtle';
+
+            if (finalScore >= 9.0) {
+                letter = 'A+'; scale4 = '4.0'; xepLoai = 'ĐẠT (Xuất sắc)';
+                badgeClass = 'bg-success-subtle text-success border border-success-subtle';
+            } else if (finalScore >= 8.5) {
+                letter = 'A'; scale4 = '3.7'; xepLoai = 'ĐẠT (Giỏi)';
+                badgeClass = 'bg-success-subtle text-success border border-success-subtle';
+            } else if (finalScore >= 8.0) {
+                letter = 'B+'; scale4 = '3.5'; xepLoai = 'ĐẠT (Khá giỏi)';
+                badgeClass = 'bg-primary-subtle text-primary border border-primary-subtle';
+            } else if (finalScore >= 7.0) {
+                letter = 'B'; scale4 = '3.0'; xepLoai = 'ĐẠT (Khá)';
+                badgeClass = 'bg-primary-subtle text-primary border border-primary-subtle';
+            } else if (finalScore >= 6.5) {
+                letter = 'C+'; scale4 = '2.5'; xepLoai = 'ĐẠT (Trung bình khá)';
+                badgeClass = 'bg-warning-subtle text-warning border border-warning-subtle';
+            } else if (finalScore >= 5.5) {
+                letter = 'C'; scale4 = '2.0'; xepLoai = 'ĐẠT (Trung bình)';
+                badgeClass = 'bg-warning-subtle text-warning border border-warning-subtle';
+            } else if (finalScore >= 5.0) {
+                letter = 'D+'; scale4 = '1.5'; xepLoai = 'ĐẠT (Trung bình yếu)';
+                badgeClass = 'bg-warning-subtle text-warning border border-warning-subtle';
+            } else if (finalScore >= 4.0) {
+                letter = 'D'; scale4 = '1.0'; xepLoai = 'ĐẠT (Yếu)';
+                badgeClass = 'bg-danger-subtle text-danger border border-danger-subtle';
+            }
+
+            if (badgeGradeEl) badgeGradeEl.textContent = `Điểm chữ: ${letter} (${scale4})`;
+            if (summaryScaleEl) summaryScaleEl.textContent = `Điểm chữ: ${letter} | Hệ 4: ${scale4}`;
+            if (summaryResultEl) {
+                summaryResultEl.textContent = xepLoai;
+                summaryResultEl.className = `badge rounded-pill px-2.5 py-1 ${badgeClass}`;
+            }
+        });
     }
 
-    [inTC1, inTC2, inTC3, inTC4].forEach(input => {
-        input.addEventListener('input', calculateRealtime);
+    svInputs.forEach(input => {
+        input.addEventListener('input', calculateScores);
     });
 
-    calculateRealtime();
+    window.dienDiemNhanh = function(ratio) {
+        svInputs.forEach(input => {
+            const maxVal = parseFloat(input.getAttribute('data-max')) || 0;
+            const isBonus = input.getAttribute('data-bonus') === '1';
+            if (isBonus) {
+                input.value = '0.00';
+            } else {
+                input.value = (maxVal * ratio).toFixed(2);
+            }
+        });
+        calculateScores();
+    };
+
+    calculateScores();
 });
 </script>
-@endif
+@endpush
 @endsection

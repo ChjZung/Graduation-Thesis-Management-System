@@ -119,15 +119,16 @@ class KetQuaController extends Controller
                 'Họ và Tên',
                 'Lớp',
                 'Học Kỳ',
-                'Điểm GVHD (30%)',
-                'Điểm Phản Biện (30%)',
-                'Điểm Hội Đồng (40%)',
-                'Điểm Tổng Kết',
+                'Loại Khóa Luận',
+                'Điểm Hội Đồng (100%)',
+                'Điểm Chữ',
+                'Điểm Hệ 4',
                 'Xếp Loại'
             ]);
 
             foreach ($ketQuas as $idx => $kq) {
                 $sv = $kq->sinhVien;
+                $diem = (float)($kq->DiemTongKet ?? $kq->DiemHoiDongTB ?? 0);
 
                 fputcsv($file, [
                     $idx + 1,
@@ -135,10 +136,10 @@ class KetQuaController extends Controller
                     $sv->HoTen ?? '',
                     $sv->lop->TenLop ?? '',
                     $kq->hocKy->TenHocKy ?? $kq->MaHocKy,
-                    $kq->DiemHuongDan,
-                    $kq->DiemPhanBien,
-                    $kq->DiemHoiDongTB,
-                    $kq->DiemTongKet,
+                    $kq->LoaiKhoaLuan ?? 'KLCN',
+                    number_format($diem, 2),
+                    $kq->diem_chu,
+                    number_format($kq->diem_he4, 1),
                     $kq->KetQua
                 ]);
             }

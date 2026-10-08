@@ -41,23 +41,65 @@
             </div>
         </div>
 
-        {{-- Modal Chi Tiết Thông Báo --}}
+        {{-- Modal Chi Tiết Thông Báo (Hỗ trợ xem trực tiếp công văn) --}}
+        @php
+            $modalFile = $tb->FileDinhKem;
+            if (!empty($modalFile)) {
+                $modalFile = ltrim($modalFile, '/');
+                if (!str_starts_with($modalFile, 'storage/') && !str_starts_with($modalFile, 'http')) {
+                    $modalFile = 'storage/' . $modalFile;
+                }
+            }
+        @endphp
         <div class="modal fade" id="tbModal{{ $tb->id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-dialog-centered {{ !empty($modalFile) ? 'modal-xl' : 'modal-lg' }}">
                 <div class="modal-content rounded-4 border-0 shadow">
                     <div class="modal-header border-bottom pb-3">
-                        <h6 class="modal-title fw-bold text-primary">
-                            <i class="fa-solid fa-circle-info me-2"></i>{{ $tb->TieuDe }}
-                        </h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-pill px-3 py-1">{{ $tb->Loai ?? 'Thông báo' }}</span>
+                            <h6 class="modal-title fw-bold text-dark mb-0">
+                                {{ $tb->TieuDe }}
+                            </h6>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body py-3">
-                        <div class="text-muted small mb-3">
-                            <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($tb->created_at)->format('d/m/Y H:i') }}
-                        </div>
-                        <div class="p-3 bg-light rounded-3 border text-secondary" style="white-space: pre-line; font-size: 0.9rem; line-height: 1.6;">
-                            {{ $tb->NoiDung }}
-                        </div>
+                    <div class="modal-body p-4">
+                        @if(!empty($modalFile))
+                            <div class="row g-3">
+                                {{-- 1 Bên: Xem Công Văn Trực Tiếp --}}
+                                <div class="col-12 col-lg-7">
+                                    <div class="border rounded-3 overflow-hidden" style="height: 520px; background: #525659;">
+                                        <iframe src="{{ asset($modalFile) }}#toolbar=1" style="width: 100%; height: 100%; border: none;"></iframe>
+                                    </div>
+                                </div>
+                                {{-- 1 Bên: Thông Tin Thông Báo --}}
+                                <div class="col-12 col-lg-5 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small mb-2">
+                                            <i class="fa-regular fa-clock me-1"></i> Ngày đăng: {{ \Carbon\Carbon::parse($tb->created_at)->format('H:i d/m/Y') }}
+                                        </div>
+                                        <div class="p-3 bg-light rounded-3 border text-dark mb-3" style="white-space: pre-line; font-size: 0.92rem; line-height: 1.7; max-height: 420px; overflow-y: auto;">
+                                            {{ $tb->NoiDung }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ asset($modalFile) }}" download class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">
+                                            <i class="fa-solid fa-download me-1"></i> Tải file công văn
+                                        </a>
+                                        <a href="{{ asset($modalFile) }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-muted small mb-3">
+                                <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($tb->created_at)->format('d/m/Y H:i') }}
+                            </div>
+                            <div class="p-3 bg-light rounded-3 border text-secondary" style="white-space: pre-line; font-size: 0.9rem; line-height: 1.6;">
+                                {{ $tb->NoiDung }}
+                            </div>
+                        @endif
                     </div>
                     <div class="modal-footer border-top pt-2">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>

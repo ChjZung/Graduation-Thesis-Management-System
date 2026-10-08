@@ -46,25 +46,25 @@
 </div>
 
 @php
-    $allCompleted = ($baoCaos->count() >= 5 && isset($baoCaos[5]) && $baoCaos[5]->TrangThai === 'Đạt');
+    $allCompleted = ($baoCaos->count() >= 6 && isset($baoCaos[6]) && $baoCaos[6]->TrangThai === 'Đạt');
     $bcHienTai = $baoCaos[$mocHienTai] ?? null;
 @endphp
 
-<!-- Milestone Stepper Ngang 5 Mốc Liên Hoàn -->
+<!-- Milestone Stepper Ngang 6 Giai Đoạn Liên Hoàn -->
 <div class="card card-premium shadow-sm border-0 mb-4">
     <div class="card-body p-4">
         <div class="stepper-horizontal-container">
             <div class="row g-2 text-center position-relative">
-                <!-- Đường nối ngang giữa các mốc -->
+                <!-- Đường nối ngang giữa các giai đoạn -->
                 <div class="position-absolute top-50 start-0 translate-middle-y w-100 d-none d-md-block" style="height: 3px; background: #e2e8f0; z-index: 1; margin-top: -15px;">
                     @php
                         $completedCount = 0;
-                        for ($i = 1; $i <= 5; $i++) {
+                        for ($i = 1; $i <= 6; $i++) {
                             if (isset($baoCaos[$i]) && $baoCaos[$i]->TrangThai === 'Đạt') {
                                 $completedCount++;
                             }
                         }
-                        $progressPercent = ($completedCount / 5) * 100;
+                        $progressPercent = ($completedCount / 6) * 100;
                     @endphp
                     <div style="height: 100%; width: {{ $progressPercent }}%; background: linear-gradient(90deg, #10b981 0%, #2563eb 100%); transition: width 0.4s ease;"></div>
                 </div>
@@ -89,7 +89,7 @@
                             Đã Đạt
                         </span>
                     @elseif($isCurrent)
-                        <!-- Mốc hiện tại đang active -->
+                        <!-- Giai đoạn hiện tại đang active -->
                         <div class="mx-auto rounded-circle text-white shadow-lg mb-2"
                              style="width: 48px; height: 48px; background-color: {{ $isPending ? '#f59e0b' : ($isResubmit ? '#0284c7' : '#2563eb') }}; box-shadow: 0 0 15px rgba(37, 99, 235, 0.4) !important; margin-top: -2px; display: flex; align-items: center; justify-content: center;">
                             @if($isPending)
@@ -103,11 +103,11 @@
                         <div class="fw-bold small text-primary" style="font-size: 0.8rem;">{{ $moc['ten'] }}</div>
                         @if($isPending)
                             <span class="badge bg-warning text-dark rounded-pill small fw-bold" style="font-size: 0.68rem;">
-                                CHỜ DUYỆT
+                                CHỜ DUYỆT (CHO SỬA)
                             </span>
                         @elseif($isResubmit)
                             <span class="badge bg-info text-dark rounded-pill small fw-bold" style="font-size: 0.68rem;">
-                                NỘP LẠI
+                                CẦN NỘP LẠI
                             </span>
                         @else
                             <span class="badge bg-primary text-white rounded-pill small fw-bold" style="font-size: 0.68rem;">
@@ -115,7 +115,7 @@
                             </span>
                         @endif
                     @else
-                        <!-- Mốc tương lai chưa mở -->
+                        <!-- Giai đoạn tương lai chưa mở -->
                         <div class="mx-auto rounded-circle text-secondary border mb-2"
                              style="width: 44px; height: 44px; background-color: #f8fafc; display: flex; align-items: center; justify-content: center;">
                             <span class="fw-bold text-muted">{{ $soMoc }}</span>
@@ -133,22 +133,22 @@
 </div>
 
 @if($allCompleted)
-<!-- Trạng thái hoàn thành tất cả 5 mốc -->
+<!-- Trạng thái hoàn thành tất cả 6 giai đoạn -->
 <div class="card card-premium shadow-sm border-0 mb-4 bg-success bg-opacity-10 border-success">
     <div class="card-body p-4 text-center">
         <i class="fa-solid fa-trophy fa-3x text-success mb-3"></i>
         <h4 class="fw-bold text-success">Chúc mừng nhóm của bạn!</h4>
         <p class="text-muted mb-3">
-            Nhóm đã hoàn thành xuất sắc và được Giảng viên hướng dẫn đánh giá <strong>"Đạt"</strong> ở toàn bộ 5 mốc tiến độ.
+            Nhóm đã hoàn thành xuất sắc toàn bộ 6 giai đoạn khóa luận tốt nghiệp và được nghiệm thu kết quả chính thức.
         </p>
-        <a href="{{ route('sinhvien.hoso.index') }}" class="btn btn-success rounded-pill px-4 fw-bold">
-            <i class="fa-solid fa-file-shield me-2"></i>Chuyển đến Nộp Hồ Sơ Bảo Vệ (Turnitin)
+        <a href="{{ route('sinhvien.ketqua.index') }}" class="btn btn-success rounded-pill px-4 fw-bold">
+            <i class="fa-solid fa-graduation-cap me-2"></i>Xem Bảng Điểm & Kết Quả Khóa Luận
         </a>
     </div>
 </div>
 @else
 
-<!-- Card Chi Tiết Mốc Hiện Tại: Nộp Báo Cáo -->
+<!-- Card Chi Tiết Giai Đoạn Hiện Tại: Nộp Báo Cáo / Chỉnh Sửa Tiến Độ -->
 <div class="card card-premium shadow-sm border-0 mb-4">
     <div class="card-header bg-white py-3 px-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
@@ -159,7 +159,7 @@
         <div class="d-flex gap-2 align-items-center">
             @if($bcHienTai && $bcHienTai->TrangThai === 'Chờ duyệt')
                 <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
-                    <i class="fa-solid fa-hourglass-half me-1"></i>Đang chờ GVHD đánh giá
+                    <i class="fa-solid fa-hourglass-half me-1"></i>Đang chờ GVHD đánh giá (Cho phép chỉnh sửa)
                 </span>
             @elseif($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
                 <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold">
@@ -182,7 +182,7 @@
         <!-- Quy định & Hướng dẫn nộp bài -->
         <div class="p-3 rounded-3 bg-light border border-info-subtle mb-4">
             <div class="fw-bold text-primary small mb-1">
-                <i class="fa-solid fa-circle-info me-1"></i>Yêu cầu & Quy định mốc này:
+                <i class="fa-solid fa-circle-info me-1"></i>Nội dung & Yêu cầu giai đoạn này:
             </div>
             <div class="small text-secondary" style="line-height: 1.6;">
                 {{ $mocs[$mocHienTai]['mo_ta'] }}
@@ -199,86 +199,89 @@
         </div>
 
         @if($bcHienTai && $bcHienTai->TrangThai === 'Chờ duyệt')
-            <!-- Thông báo khi bài đang chờ duyệt -->
-            <div class="alert alert-info border-info-subtle d-flex align-items-center gap-3 mb-0">
-                <i class="fa-solid fa-circle-notch fa-spin fa-2x text-info"></i>
-                <div>
-                    <div class="fw-bold">Bài nộp Mốc {{ $mocHienTai }} đang trong quá trình đánh giá!</div>
-                    <div class="small text-muted">
-                        Bạn đã nộp thành công bài báo cáo vào ngày {{ \Carbon\Carbon::parse($bcHienTai->NgayNop)->format('d/m/Y') }}. 
-                        Giảng viên hướng dẫn sẽ xem xét và phản hồi sớm nhất. Vui lòng theo dõi trạng thái ở bảng Lịch sử bên dưới.
+            <div class="alert alert-info border-info-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-info fs-5"></i>
+                    <div>
+                        <div class="fw-bold text-dark">Bạn đã nộp bài vào ngày {{ \Carbon\Carbon::parse($bcHienTai->NgayNop)->format('d/m/Y') }}</div>
+                        <div class="small text-muted">Trong khi chờ GVHD đánh giá, bạn có thể chỉnh sửa nội dung, ghi chú hoặc cập nhật file mới bất cứ lúc nào.</div>
                     </div>
+                </div>
+                <span class="badge bg-light text-primary border">Có thể chỉnh sửa</span>
+            </div>
+        @elseif($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
+            <div class="alert alert-warning border-warning-subtle mb-3">
+                <div class="fw-bold text-dark"><i class="fa-solid fa-comment-dots text-warning me-1"></i>Nhận xét yêu cầu chỉnh sửa từ GVHD:</div>
+                <div class="small text-dark mt-1"><em>"{{ $bcHienTai->NhanXet }}"</em></div>
+            </div>
+        @endif
+
+        <form action="{{ route('sinhvien.baocao.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="LanBaoCao" value="{{ $mocHienTai }}">
+
+            <div class="row g-3 mb-3">
+                <!-- Tiêu đề báo cáo -->
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-dark">
+                        Tiêu đề tiến độ <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="TieuDe" class="form-control form-control-sm" 
+                           value="{{ $bcHienTai?->TieuDe ?? ('Báo cáo tiến độ ' . $mocs[$mocHienTai]['ten']) }}" required>
+                </div>
+
+                <!-- Tệp báo cáo PDF nếu loại mốc yêu cầu -->
+                @if(in_array($mocs[$mocHienTai]['loai'], ['pdf', 'pdf_git']))
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">
+                        Tệp tài liệu báo cáo (PDF) 
+                        @if(!$bcHienTai || !$bcHienTai->DuongDanFile) <span class="text-danger">*</span> @endif
+                    </label>
+                    <input type="file" name="FileBaoCao" class="form-control form-control-sm" accept=".pdf" {{ (!$bcHienTai || !$bcHienTai->DuongDanFile) ? 'required' : '' }}>
+                    <div class="form-text" style="font-size: 0.72rem;">
+                        @if($bcHienTai && $bcHienTai->TenFile)
+                            <span class="text-success fw-semibold"><i class="fa-solid fa-file-pdf me-1"></i>Đã có: {{ $bcHienTai->TenFile }}</span> (Chọn file mới nếu muốn thay thế)
+                        @else
+                            Định dạng: .pdf (Dung lượng tối đa 20MB)
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                <!-- Link Git nếu loại mốc yêu cầu -->
+                @if(in_array($mocs[$mocHienTai]['loai'], ['git', 'pdf_git']))
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">
+                        Link Source Code (GitHub / GitLab)
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted"><i class="fa-brands fa-github"></i></span>
+                        <input type="url" name="LinkCode" class="form-control form-control-sm" 
+                               placeholder="https://github.com/username/repository" 
+                               value="{{ $bcHienTai?->LinkCode ?? '' }}">
+                    </div>
+                    <div class="form-text" style="font-size: 0.72rem;">Đường dẫn repository công khai hoặc branch đồ án</div>
+                </div>
+                @endif
+
+                <!-- Ghi chú cho GVHD -->
+                <div class="col-12">
+                    <label class="form-label small fw-bold text-dark">
+                        Nội dung chi tiết & Ghi chú gửi Giảng viên hướng dẫn
+                    </label>
+                    <textarea name="NoiDungBaoCao" rows="3" class="form-control form-control-sm" 
+                              placeholder="Mô tả tóm tắt các kết quả đạt được, khó khăn hoặc câu hỏi dành cho thầy/cô hướng dẫn...">{{ $bcHienTai?->NoiDungBaoCao ?? '' }}</textarea>
                 </div>
             </div>
-        @else
-            <!-- Form Nộp Báo Cáo (Cho mốc mới hoặc mốc cần nộp lại) -->
-            @if($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
-                <div class="alert alert-warning border-warning-subtle mb-3">
-                    <div class="fw-bold text-dark"><i class="fa-solid fa-comment-dots text-warning me-1"></i>Nhận xét yêu cầu nộp lại từ GVHD:</div>
-                    <div class="small text-dark mt-1"><em>"{{ $bcHienTai->NhanXet }}"</em></div>
-                </div>
-            @endif
 
-            <form action="{{ route('sinhvien.baocao.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="hidden" name="LanBaoCao" value="{{ $mocHienTai }}">
-
-                <div class="row g-3 mb-3">
-                    <!-- Tiêu đề báo cáo -->
-                    <div class="col-md-12">
-                        <label class="form-label small fw-bold text-dark">
-                            Tiêu đề báo cáo <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" name="TieuDe" class="form-control form-control-sm" 
-                               value="{{ $bcHienTai?->TieuDe ?? ('Báo cáo tiến độ ' . $mocs[$mocHienTai]['ten']) }}" required>
-                    </div>
-
-                    <!-- Tệp báo cáo PDF nếu loại mốc yêu cầu -->
-                    @if(in_array($mocs[$mocHienTai]['loai'], ['pdf', 'pdf_git']))
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-dark">
-                            Tệp tài liệu báo cáo (PDF) <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" name="FileBaoCao" class="form-control form-control-sm" accept=".pdf" required>
-                        <div class="form-text" style="font-size: 0.72rem;">Định dạng: .pdf (Dung lượng tối đa 20MB)</div>
-                    </div>
-                    @endif
-
-                    <!-- Link Git nếu loại mốc yêu cầu -->
-                    @if(in_array($mocs[$mocHienTai]['loai'], ['git', 'pdf_git']))
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-dark">
-                            Link Source Code (GitHub / GitLab) <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-light text-muted"><i class="fa-brands fa-github"></i></span>
-                            <input type="url" name="LinkCode" class="form-control form-control-sm" 
-                                   placeholder="https://github.com/username/repository" 
-                                   value="{{ $bcHienTai?->LinkCode ?? '' }}" required>
-                        </div>
-                        <div class="form-text" style="font-size: 0.72rem;">Đường dẫn repository công khai hoặc branch đồ án</div>
-                    </div>
-                    @endif
-
-                    <!-- Ghi chú cho GVHD -->
-                    <div class="col-12">
-                        <label class="form-label small fw-bold text-dark">
-                            Ghi chú & Tóm tắt gửi Giảng viên hướng dẫn
-                        </label>
-                        <textarea name="NoiDungBaoCao" rows="3" class="form-control form-control-sm" 
-                                  placeholder="Mô tả tóm tắt các kết quả đạt được, khó khăn hoặc câu hỏi dành cho thầy/cô hướng dẫn...">{{ $bcHienTai?->NoiDungBaoCao ?? '' }}</textarea>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold d-inline-flex align-items-center gap-2"
-                            style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); border: none;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>{{ $bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại' ? 'Nộp Lại Báo Cáo Mốc ' . $mocHienTai : 'Nộp Báo Cáo Mốc ' . $mocHienTai }}</span>
-                    </button>
-                </div>
-            </form>
-        @endif
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold d-inline-flex align-items-center gap-2"
+                        style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); border: none;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>{{ $bcHienTai ? 'Lưu Thay Đổi & Cập Nhật Tiến Độ GĐ ' . $mocHienTai : 'Nộp Báo Cáo Tiến Độ GĐ ' . $mocHienTai }}</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 @endif

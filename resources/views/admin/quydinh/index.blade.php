@@ -21,6 +21,9 @@
             <div class="text-muted small mt-1">Quản lý các chỉ số điều kiện, tiêu chuẩn thực hiện và bảo vệ khóa luận tốt nghiệp theo quy định của Khoa &amp; Trường.</div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{{ route('admin.calendar') }}" class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm fw-semibold">
+                <i class="fa-solid fa-calendar-week me-1"></i> Xem Lịch Quy Trình Theo Tuần
+            </a>
             <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalInitDefaults">
                 <i class="fa-solid fa-arrows-rotate me-1"></i> Nạp 8 Quy Định Chuẩn từ Kế Hoạch
             </button>

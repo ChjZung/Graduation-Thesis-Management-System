@@ -28,37 +28,55 @@
     @endif
 </div>
 
-{{-- ── 5 PILL TABS THỐNG KÊ / LỌC TRẠNG THÁI ── --}}
-<div class="admin-pill-tabs">
-    <a href="{{ route('admin.theodoi.index') }}" 
-       class="admin-pill-tab {{ !request('status_code') ? 'active' : '' }}">
-        <span class="fw-bold">{{ $stats['total'] }}</span> Tất Cả Nhóm
-    </a>
-    <a href="{{ route('admin.theodoi.index', ['status_code' => 'DUNG_TIEN_DO']) }}" 
-       class="admin-pill-tab {{ request('status_code') == 'DUNG_TIEN_DO' ? 'active' : '' }}">
-        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#10b981;"></span>
-        <span class="fw-bold">{{ $stats['dung_tien_do'] }}</span> Đúng Tiến Độ
-    </a>
-    <a href="{{ route('admin.theodoi.index', ['status_code' => 'SAP_DEN_HAN']) }}" 
-       class="admin-pill-tab {{ request('status_code') == 'SAP_DEN_HAN' ? 'active' : '' }}">
-        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#f59e0b;"></span>
-        <span class="fw-bold">{{ $stats['sap_den_han'] }}</span> Sắp Đến Hạn
-    </a>
-    <a href="{{ route('admin.theodoi.index', ['status_code' => 'QUA_HAN']) }}" 
-       class="admin-pill-tab {{ request('status_code') == 'QUA_HAN' ? 'active' : '' }}">
-        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#ef4444;"></span>
-        <span class="fw-bold">{{ $stats['qua_han'] }}</span> Quá Hạn Cảnh Báo
-    </a>
-    <a href="{{ route('admin.theodoi.index', ['status_code' => 'HOAN_THANH']) }}" 
-       class="admin-pill-tab {{ request('status_code') == 'HOAN_THANH' ? 'active' : '' }}">
-        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#94a3b8;"></span>
-        <span class="fw-bold">{{ $stats['hoan_thanh'] }}</span> Đã Hoàn Thành
-    </a>
+{{-- ── 6 GIAI ĐOẠN TIẾN ĐỘ KHÓA LUẬN (GIÁM SÁT CHUYÊN BIỆT CHO GIÁO VỤ) ── --}}
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-white" style="border: 1px solid #e2e8f0 !important;">
+    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+        <div class="fw-bold text-dark small d-flex align-items-center gap-2">
+            <i class="fa-solid fa-layer-group text-primary"></i>
+            <span>Lọc theo 6 Giai Đoạn Giám Sát Tiến Độ Khóa Luận:</span>
+        </div>
+        <div class="text-muted small">
+            Đúng tiến độ: <span class="text-success fw-bold">{{ $stats['dung_tien_do'] }}</span> &bull; 
+            Sắp đến hạn: <span class="text-warning fw-bold">{{ $stats['sap_den_han'] }}</span> &bull; 
+            Quá hạn: <span class="text-danger fw-bold">{{ $stats['qua_han'] }}</span>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('admin.theodoi.index') }}" 
+           class="btn btn-sm {{ !request('stage') && !request('status_code') ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            Tất Cả Nhóm ({{ $stats['total'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 1]) }}" 
+           class="btn btn-sm {{ request('stage') == 1 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-database me-1 text-primary"></i>GĐ 1: Đề cương & CSDL ({{ $stats['gd1'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 2]) }}" 
+           class="btn btn-sm {{ request('stage') == 2 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-code me-1 text-info"></i>GĐ 2: Hệ thống & Chức năng ({{ $stats['gd2'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 3]) }}" 
+           class="btn btn-sm {{ request('stage') == 3 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-vial-circle-check me-1 text-success"></i>GĐ 3: Kiểm thử & Báo cáo ({{ $stats['gd3'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 4]) }}" 
+           class="btn btn-sm {{ request('stage') == 4 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-file-shield me-1 text-warning"></i>GĐ 4: Hồ sơ bảo vệ ({{ $stats['gd4'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 5]) }}" 
+           class="btn btn-sm {{ request('stage') == 5 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-chalkboard-user me-1 text-danger"></i>GĐ 5: Bảo vệ Hội đồng ({{ $stats['gd5'] }})
+        </a>
+        <a href="{{ route('admin.theodoi.index', ['stage' => 6]) }}" 
+           class="btn btn-sm {{ request('stage') == 6 ? 'btn-primary' : 'btn-light border' }} rounded-pill px-3 py-1" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-award me-1 text-primary"></i>GĐ 6: Kết quả & Nộp lại ({{ $stats['gd6'] }})
+        </a>
+    </div>
 </div>
 
 {{-- ── THANH TÌM KIẾM & BỘ LỌC DỮ LIỆU ── --}}
 <div class="admin-filter-bar">
     <form method="GET" action="{{ route('admin.theodoi.index') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="stage" value="{{ request('stage') }}">
         <input type="hidden" name="status_code" value="{{ request('status_code') }}">
         <div class="col-12 col-md-5">
             <div class="input-group input-group-sm">
@@ -97,12 +115,12 @@
     </form>
 </div>
 
-{{-- ── BẢNG DANH SÁCH NHÓM & TIẾN ĐỘ ── --}}
+{{-- ── BẢNG DANH SÁCH NHÓM & 6 GIAI ĐOẠN TIẾN ĐỘ ── --}}
 <div class="admin-table-card">
     <div class="admin-table-header">
         <h5 class="admin-table-header-title">
             <i class="fa-regular fa-folder-open text-primary"></i>
-            Danh Sách Nhóm Thực Hiện &amp; Tiến Độ
+            Danh Sách Nhóm Thực Hiện &amp; 6 Giai Đoạn Tiến Độ
         </h5>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.ketqua.export') }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-semibold">
@@ -115,12 +133,12 @@
         <table class="table admin-table mb-0 align-middle">
             <thead>
                 <tr>
-                    <th style="width: 140px;">Mã Nhóm</th>
-                    <th style="min-width: 320px;">Tên Đề Tài &amp; Trưởng Nhóm</th>
-                    <th style="min-width: 220px;">GV Hướng Dẫn</th>
-                    <th style="width: 230px;">Tiến Độ Real-Time</th>
-                    <th style="width: 190px;">Trạng Thái / Cảnh Báo</th>
-                    <th class="text-center" style="width: 110px;">Thao Tác</th>
+                    <th style="width: 130px;">Mã Nhóm</th>
+                    <th style="min-width: 280px;">Tên Đề Tài &amp; Trưởng Nhóm</th>
+                    <th style="min-width: 200px;">GV Hướng Dẫn</th>
+                    <th style="width: 280px;">6 Giai Đoạn Tiến Độ</th>
+                    <th style="width: 170px;">Trạng Thái / Cảnh Báo</th>
+                    <th class="text-center" style="width: 100px;">Thao Tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -184,24 +202,54 @@
                         @endif
                     </td>
 
-                    {{-- Tiến độ Real-time --}}
+                    {{-- 6 Giai Đoạn Tiến Độ Track --}}
                     <td>
-                        <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.82rem;">
-                            <span class="fw-semibold text-secondary">Tiến độ:</span>
-                            <span class="fw-bold" style="color: {{ $nhom->progress_percent >= 80 ? '#10b981' : ($nhom->progress_percent >= 40 ? '#0ea5e9' : '#f59e0b') }};">
-                                {{ $nhom->progress_percent }}%
+                        <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.78rem;">
+                            <span class="fw-bold text-primary">
+                                Đang ở: GĐ {{ $nhom->current_stage }} ({{ $nhom->current_stage_label }})
+                            </span>
+                            <span class="fw-bold text-dark">
+                                {{ $nhom->completed_stages }}/6 GĐ ({{ $nhom->progress_percent }}%)
                             </span>
                         </div>
-                        <div class="progress rounded-pill shadow-none mb-1" style="height: 7px; background: #e2e8f0;">
-                            <div class="progress-bar rounded-pill {{ $nhom->progress_percent >= 100 ? 'bg-success' : ($nhom->status_code == 'QUA_HAN' ? 'bg-danger' : 'bg-success') }}" 
-                                 style="width: {{ $nhom->progress_percent }}%;"></div>
+
+                        {{-- 6 Steps Visual Stepper Track --}}
+                        <div class="d-flex align-items-center gap-1 mb-2">
+                            @foreach($nhom->stages as $stIndex => $stInfo)
+                                @php
+                                    $stepColor = '#94a3b8'; // gray default
+                                    $stepBg = '#f1f5f9';
+                                    if ($stInfo['status'] === 'DAT') {
+                                        $stepColor = '#10b981'; // green
+                                        $stepBg = '#dcfce7';
+                                    } elseif ($stInfo['status'] === 'CHO_DUYET') {
+                                        $stepColor = '#f59e0b'; // amber
+                                        $stepBg = '#fef3c7';
+                                    } elseif ($stInfo['status'] === 'NOP_LAI') {
+                                        $stepColor = '#0ea5e9'; // blue
+                                        $stepBg = '#e0f2fe';
+                                    } elseif ($stIndex === $nhom->current_stage) {
+                                        $stepColor = '#0284c7';
+                                        $stepBg = '#e0f2fe';
+                                    }
+                                @endphp
+                                <div class="flex-grow-1 text-center py-1 rounded" 
+                                     style="background: {{ $stepBg }}; border: 1px solid {{ $stepColor }};"
+                                     title="{{ $stInfo['name'] }}: {{ $stInfo['status_label'] }}">
+                                    <span style="font-size: 0.68rem; font-weight: 700; color: {{ $stepColor }};">
+                                        @if($stInfo['status'] === 'DAT')
+                                            ✓ {{ $stIndex }}
+                                        @else
+                                            {{ $stIndex }}
+                                        @endif
+                                    </span>
+                                </div>
+                            @endforeach
                         </div>
-                        <div class="text-muted" style="font-size: 0.74rem;">
-                            @if($nhom->progress_percent >= 50)
-                                <span class="text-success fw-semibold"><i class="fa-solid fa-check me-1"></i>Đã nghiệm thu Mốc 1 &amp; Mốc 2</span>
-                            @else
-                                <i class="fa-regular fa-clock me-1 text-primary"></i>{{ $nhom->nearest_deadline }}
-                            @endif
+
+                        <div class="progress rounded-pill shadow-none" style="height: 5px; background: #e2e8f0;">
+                            <div class="progress-bar rounded-pill {{ $nhom->progress_percent >= 100 ? 'bg-success' : ($nhom->status_code == 'QUA_HAN' ? 'bg-danger' : 'bg-primary') }}" 
+                                 style="width: {{ $nhom->progress_percent }}%;"></div>
                         </div>
                     </td>
 
@@ -211,13 +259,12 @@
                             <span class="badge-status-green">Đúng tiến độ</span>
                         @elseif($nhom->status_code === 'SAP_DEN_HAN')
                             <span class="badge-status-amber"><i class="fa-solid fa-triangle-exclamation"></i> {{ $nhom->status_label }}</span>
-                            <div class="text-danger fw-semibold mt-1" style="font-size: 0.72rem;">Sắp đến hạn nộp báo cáo</div>
                         @elseif($nhom->status_code === 'QUA_HAN')
                             <span class="badge-status-red"><i class="fa-solid fa-triangle-exclamation"></i> {{ $nhom->status_label }}</span>
-                            <div class="text-danger fw-bold mt-1" style="font-size: 0.72rem;">Quá hạn cảnh báo</div>
                         @else
                             <span class="badge-status-blue">{{ $nhom->status_label }}</span>
                         @endif
+                    </td>
                     </td>
 
                     {{-- Thao tác --}}

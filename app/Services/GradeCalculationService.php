@@ -2,30 +2,27 @@
 
 namespace App\Services;
 
-use App\Models\ChiTietDiemHoiDong;
+use App\Models\PhieuChamDiem;
 use App\Models\ThanhVienHoiDong;
 use App\Models\KetQuaSinhVien;
 use App\Models\HocKy;
+use App\Models\HoiDong;
 
 class GradeCalculationService
 {
-    // Trọng số điểm (từ config để dễ thay đổi sau)
-    const WEIGHT_GVHD   = 0.30;
-    const WEIGHT_PB     = 0.30;
-    const WEIGHT_HD     = 0.40;
-
     /**
      * Tổng hợp kết quả cho tất cả SV trong Hội đồng sau khi có điểm mới.
+     * QUY CHẾ KHOA CNTT - HUIT: Điểm khóa luận tốt nghiệp 100% do Hội đồng chấm.
      */
     public function tongHopKetQuaHoiDong(string $maHoiDong): void
     {
-        $hoiDong = \App\Models\HoiDong::with([
-            'hoSoBaoVes.nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia'),
+        $hoiDong = HoiDong::with([
+            'hoSoBaoVes.nhom.thanhViens',
         ])->find($maHoiDong);
 
         if (!$hoiDong) return;
 
-        $hocKy = HocKy::where('TrangThai', true)->first();
+        $hocKy = HocKy::where('TrangThai', true)->first() ?? HocKy::latest()->first();
         if (!$hocKy) return;
 
         foreach ($hoiDong->hoSoBaoVes as $hoSo) {
@@ -39,62 +36,53 @@ class GradeCalculationService
 
     /**
      * Tính và lưu điểm tổng kết cho 1 Sinh viên.
+     * Điểm tổng kết = Điểm trung bình các thành viên Hội đồng chấm cho sinh viên.
      */
-    private function tinhVaLuuDiemSinhVien(
+    public function tinhVaLuuDiemSinhVien(
         string $maSV,
         string $maHoiDong,
         $hoSo,
         string $maHocKy
     ): void {
-        // Điểm trung bình từ tất cả GV trong HĐ cho SV này
-        $allDiems = ChiTietDiemHoiDong::where('MaHoiDong', $maHoiDong)
-            ->where('MaSV', $maSV)->get();
+        // Lấy tất cả điểm phiếu chấm từ các thành viên trong Hội đồng cho SV này
+        $allDiems = PhieuChamDiem::where('MaHoiDong', $maHoiDong)
+            ->where('MaSV', $maSV)
+            ->get();
 
         if ($allDiems->isEmpty()) return;
 
-        $diemHoiDongTB = round($allDiems->avg('Diem'), 2);
+        $diemHoiDongTB = round((float)$allDiems->avg('Diem'), 2);
 
-        // BƯỚC 6 FIX: Điểm GVHD lấy từ ChamDiem — 0 nếu chưa chấm
-        // (không hardcode default 8)
-        $diemGVHD = \App\Models\ChamDiem::where('MaSV', $maSV)->value('DiemHuongDan') ?? 0;
+        // Điểm khóa luận 100% từ Hội đồng chấm bảo vệ
+        $diemTongKet = $diemHoiDongTB;
 
-        // Điểm GV Phản biện trong HĐ
-        $maGVPB = ThanhVienHoiDong::where('MaHoiDong', $maHoiDong)
-            ->where('VaiTro', 'Phản biện')->value('MaGV');
+        // Nhận diện loại khóa luận (KLCN hoặc KLKS)
+        $loaiKhoaLuan = $allDiems->first()->LoaiKhoaLuan ?? 'KLCN';
 
-        $diemPB = $maGVPB
-            ? (ChiTietDiemHoiDong::where('MaHoiDong', $maHoiDong)
-                ->where('MaGV', $maGVPB)->where('MaSV', $maSV)->value('Diem') ?? 0)
-            : 0;
-
-        // Tính điểm tổng kết theo công thức đã cấu hình trong constants
-        $diemTongKet = self::tinhTongKet($diemGVHD, $diemPB, $diemHoiDongTB);
+        $existing = KetQuaSinhVien::where('MaSV', $maSV)->where('MaHocKy', $maHocKy)->first();
+        $maKetQua = $existing ? $existing->MaKetQua : ('KQ' . str_pad(KetQuaSinhVien::count() + 1, 4, '0', STR_PAD_LEFT));
 
         KetQuaSinhVien::updateOrCreate(
             ['MaSV' => $maSV, 'MaHocKy' => $maHocKy],
             [
-                'MaKetQua'      => 'KQ' . str_pad(KetQuaSinhVien::count() + 1, 3, '0', STR_PAD_LEFT),
-                'DiemHuongDan'  => $diemGVHD,
-                'DiemPhanBien'  => $diemPB,
+                'MaKetQua'      => $maKetQua,
+                'DiemPhanBien'  => null,
                 'DiemHoiDongTB' => $diemHoiDongTB,
                 'DiemTongKet'   => $diemTongKet,
                 'KetQua'        => KetQuaSinhVien::xepLoai($diemTongKet),
+                'LoaiKhoaLuan'  => $loaiKhoaLuan,
+                'MaHoSo'        => $hoSo->MaHoSo ?? null,
                 'NgayCham'      => now()->toDateString(),
             ]
         );
     }
 
     /**
-     * Công thức tính điểm tổng kết.
+     * Công thức tính điểm tổng kết khóa luận (100% Hội đồng chấm).
      */
-    public static function tinhTongKet(float $diemGVHD, float $diemPB, float $diemHDTB): float
+    public static function tinhTongKet(float $diemHDTB): float
     {
-        return round(
-            ($diemGVHD * self::WEIGHT_GVHD) +
-            ($diemPB   * self::WEIGHT_PB) +
-            ($diemHDTB * self::WEIGHT_HD),
-            2
-        );
+        return round($diemHDTB, 2);
     }
 
     /**
@@ -106,7 +94,7 @@ class GradeCalculationService
             $diem >= 9.0 => 'Xuất sắc',
             $diem >= 8.0 => 'Giỏi',
             $diem >= 7.0 => 'Khá',
-            $diem >= 6.0 => 'Trung bình',
+            $diem >= 5.5 => 'Trung bình',
             default      => 'Không đạt',
         };
     }
