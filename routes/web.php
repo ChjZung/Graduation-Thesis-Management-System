@@ -21,8 +21,14 @@ Route::get('/', function () {
 
 Auth::routes(['register' => false]);
 
-// Custom: Quên mật khẩu
-Route::get('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'showForm'])->name('password.request');
+// Quên mật khẩu qua Email chính
+Route::get('/password/reset', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/password/email', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/password/reset/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/password/reset', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
+
+// Yêu cầu cấp lại mật khẩu qua Giáo vụ (Giữ nguyên tính năng cũ)
+Route::get('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'showForm'])->name('password.giao_vu_request');
 Route::post('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauController::class, 'sendRequest'])->name('password.send_request');
 
 // Thiết lập mật khẩu lần đầu (Onboarding cho tài khoản INITIAL)

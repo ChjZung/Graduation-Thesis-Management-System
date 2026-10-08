@@ -199,6 +199,7 @@ class RolesAndAccountsSeeder extends Seeder
         DB::table('TaiKhoan')->updateOrInsert(
             ['TenDangNhap' => 'gv01'],
             [
+                'MaTK' => 'TK_GV01_ALIAS',
                 'MaVaiTro' => 'VT02',
                 'MatKhau' => Hash::make('123456'),
                 'TrangThai' => true,
