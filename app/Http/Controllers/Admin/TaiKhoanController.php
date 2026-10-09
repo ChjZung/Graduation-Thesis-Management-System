@@ -45,11 +45,20 @@ class TaiKhoanController extends Controller
             // 1. Tìm kiếm (Username, MSSV, Họ tên, Email)
             if ($request->filled('search')) {
                 $s = trim($request->search);
-                $query->where(function ($q) use ($s) {
+                $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+                $query->where(function ($q) use ($s, $sClean) {
                     $q->where('TenDangNhap', 'LIKE', "%{$s}%")
-                      ->orWhereHas('sinhVien', fn($sv) => $sv->where('MaSV', 'LIKE', "%{$s}%")
-                                                             ->orWhere('HoTen', 'LIKE', "%{$s}%")
-                                                             ->orWhere('Email', 'LIKE', "%{$s}%"));
+                      ->orWhereHas('sinhVien', function($sv) use ($s, $sClean) {
+                          $sv->where('MaSV', 'LIKE', "%{$s}%")
+                             ->orWhere('HoTen', 'LIKE', "%{$s}%")
+                             ->orWhere('Email', 'LIKE', "%{$s}%");
+                          if (!empty($sClean)) {
+                              $sv->orWhere('MaSV', 'LIKE', "%{$sClean}%");
+                          }
+                      });
+                    if (!empty($sClean)) {
+                        $q->orWhere('TenDangNhap', 'LIKE', "%{$sClean}%");
+                    }
                 });
             }
             // 2. Khoa
@@ -82,11 +91,20 @@ class TaiKhoanController extends Controller
             // 1. Tìm kiếm (Mã cán bộ, Họ tên, Email, Username)
             if ($request->filled('search')) {
                 $s = trim($request->search);
-                $query->where(function ($q) use ($s) {
+                $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+                $query->where(function ($q) use ($s, $sClean) {
                     $q->where('TenDangNhap', 'LIKE', "%{$s}%")
-                      ->orWhereHas('giangVien', fn($g) => $g->where('MaGV', 'LIKE', "%{$s}%")
-                                                            ->orWhere('HoTen', 'LIKE', "%{$s}%")
-                                                            ->orWhere('Email', 'LIKE', "%{$s}%"));
+                      ->orWhereHas('giangVien', function($g) use ($s, $sClean) {
+                          $g->where('MaGV', 'LIKE', "%{$s}%")
+                            ->orWhere('HoTen', 'LIKE', "%{$s}%")
+                            ->orWhere('Email', 'LIKE', "%{$s}%");
+                          if (!empty($sClean)) {
+                              $g->orWhere('MaGV', 'LIKE', "%{$sClean}%");
+                          }
+                      });
+                    if (!empty($sClean)) {
+                        $q->orWhere('TenDangNhap', 'LIKE', "%{$sClean}%");
+                    }
                 });
             }
             // 2. Khoa
@@ -109,10 +127,19 @@ class TaiKhoanController extends Controller
             // 1. Tìm kiếm (Username, Tên, Mã CB)
             if ($request->filled('search')) {
                 $s = trim($request->search);
-                $query->where(function ($q) use ($s) {
+                $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+                $query->where(function ($q) use ($s, $sClean) {
                     $q->where('TenDangNhap', 'LIKE', "%{$s}%")
-                      ->orWhereHas('giangVien', fn($g) => $g->where('MaGV', 'LIKE', "%{$s}%")
-                                                            ->orWhere('HoTen', 'LIKE', "%{$s}%"));
+                      ->orWhereHas('giangVien', function($g) use ($s, $sClean) {
+                          $g->where('MaGV', 'LIKE', "%{$s}%")
+                            ->orWhere('HoTen', 'LIKE', "%{$s}%");
+                          if (!empty($sClean)) {
+                              $g->orWhere('MaGV', 'LIKE', "%{$sClean}%");
+                          }
+                      });
+                    if (!empty($sClean)) {
+                        $q->orWhere('TenDangNhap', 'LIKE', "%{$sClean}%");
+                    }
                 });
             }
             // 2. Khoa
@@ -141,10 +168,19 @@ class TaiKhoanController extends Controller
             // 1. Tìm kiếm (Username, Tên, Mã CB)
             if ($request->filled('search')) {
                 $s = trim($request->search);
-                $query->where(function ($q) use ($s) {
+                $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+                $query->where(function ($q) use ($s, $sClean) {
                     $q->where('TenDangNhap', 'LIKE', "%{$s}%")
-                      ->orWhereHas('giangVien', fn($g) => $g->where('MaGV', 'LIKE', "%{$s}%")
-                                                            ->orWhere('HoTen', 'LIKE', "%{$s}%"));
+                      ->orWhereHas('giangVien', function($g) use ($s, $sClean) {
+                          $g->where('MaGV', 'LIKE', "%{$s}%")
+                            ->orWhere('HoTen', 'LIKE', "%{$s}%");
+                          if (!empty($sClean)) {
+                              $g->orWhere('MaGV', 'LIKE', "%{$sClean}%");
+                          }
+                      });
+                    if (!empty($sClean)) {
+                        $q->orWhere('TenDangNhap', 'LIKE', "%{$sClean}%");
+                    }
                 });
             }
             // 2. Khoa

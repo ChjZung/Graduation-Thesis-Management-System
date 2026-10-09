@@ -397,6 +397,7 @@ class ThongKeDeTaiSeeder extends Seeder
 
         foreach ($topics as $index => $t) {
             $maDT = $t['MaDeTai'];
+            $magv = preg_match('/^GV(\d+)$/', $t['MaGV'], $m) ? ('GV' . str_pad($m[1], 8, '0', STR_PAD_LEFT)) : $t['MaGV'];
             
             DB::table('DeTai')->insert([
                 'MaDeTai'              => $maDT,
@@ -414,7 +415,7 @@ class ThongKeDeTaiSeeder extends Seeder
                 'NgayDuyetKhoa'        => in_array($t['TrangThai'], ['Trưởng khoa đã duyệt', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành']) ? Carbon::now()->subDays(rand(1, 5))->toDateString() : null,
                 'NguoiDuyetKhoa'       => 'Trưởng khoa CNTT',
                 'NgayCongBo'           => in_array($t['TrangThai'], ['Đã công bố', 'Đã đăng ký', 'Hoàn thành']) ? Carbon::now()->subDays(rand(1, 4))->toDateString() : null,
-                'MaGV'                 => $t['MaGV'],
+                'MaGV'                 => $magv,
                 'MaHocKy'              => 'HK2425_1',
                 'created_at'           => $now,
                 'updated_at'           => $now,

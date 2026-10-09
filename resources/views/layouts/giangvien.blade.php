@@ -80,33 +80,101 @@
                 </a>
             </li>
 
-            <!-- 6. Phản biện đề cương -->
-            <li class="{{ request()->routeIs('giangvien.phanbien.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.phanbien.index') }}">
-                    <i class="fa-solid fa-file-pen"></i> Phản biện đề cương
-                </a>
-            </li>
+        @php
+            $currentGvUser = Auth::user();
+            $currentGvModel = $currentGvUser ? \App\Models\GiangVien::getLoggedInGiangVien($currentGvUser) : null;
+            $countDeCuongCanPB = 0;
+            if ($currentGvModel) {
+                $countDeCuongCanPB = \App\Models\PhanCongPhanBien::where('MaGV', $currentGvModel->MaGV)
+                    ->where('VaiTro', 'Phản biện đề cương')
+                    ->where(function($q) {
+                        $q->whereNull('KetQua')
+                          ->orWhere('TrangThai', 'Đã nộp lại đề cương')
+                          ->orWhereHas('deTai', fn($dq) => $dq->where('TrangThai', 'Đã cập nhật đề cương - Chờ phản biện lại'));
+                    })
+                    ->count();
+            }
+        @endphp
 
-            <!-- 7. Xác nhận hồ sơ bảo vệ -->
-            <li class="{{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.xacnhan_baove.index') }}">
-                    <i class="fa-solid fa-user-check"></i> Xác nhận hồ sơ BV
-                </a>
-            </li>
+        <div class="px-2 py-2">
+            <!-- 1. TỔNG QUAN & LỊCH TRÌNH -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isGvTongQuan = request()->routeIs('giangvien.dashboard') || request()->routeIs('giangvien.my_tasks') || request()->routeIs('giangvien.calendar') || request()->routeIs('giangvien.thongbao.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isGvTongQuan ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-tongquan" aria-expanded="{{ $isGvTongQuan ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Tổng Quan &amp; Lịch</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isGvTongQuan ? 'show' : '' }}" id="sub-gv-tongquan">
+                    <a href="{{ route('giangvien.dashboard') }}" class="submenu-link {{ request()->routeIs('giangvien.dashboard') ? 'active-sub' : '' }}">
+                        <span>Bảng tổng quan</span>
+                    </a>
+                    <a href="{{ route('giangvien.my_tasks') }}" class="submenu-link {{ request()->routeIs('giangvien.my_tasks') ? 'active-sub' : '' }}">
+                        <span>Công việc hướng dẫn</span>
+                    </a>
+                    <a href="{{ route('giangvien.calendar') }}" class="submenu-link {{ request()->routeIs('giangvien.calendar') ? 'active-sub' : '' }}">
+                        <span>Lịch công việc</span>
+                    </a>
+                    <a href="{{ route('giangvien.thongbao.index') }}" class="submenu-link {{ request()->routeIs('giangvien.thongbao.*') ? 'active-sub' : '' }}">
+                        <span>Thông báo hệ thống</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- 8. Thông báo -->
-            @php
-                $unreadGvNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
-            @endphp
-            <li class="{{ request()->routeIs('giangvien.thongbao.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-bell"></i> Thông báo</span>
-                    @if($unreadGvNoti > 0)
-                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $unreadGvNoti }}</span>
-                    @endif
-                </a>
-            </li>
-        </ul>
+            <!-- 2. QUẢN LÝ ĐỀ TÀI -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isGvDeTai = request()->routeIs('giangvien.detai.*') || request()->routeIs('giangvien.phanbien.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isGvDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-detai" aria-expanded="{{ $isGvDeTai ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>Quản Lý Đề Tài</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isGvDeTai ? 'show' : '' }}" id="sub-gv-detai">
+                    <a href="{{ route('giangvien.detai.index') }}" class="submenu-link {{ request()->routeIs('giangvien.detai.*') ? 'active-sub' : '' }}">
+                        <span>Đề tài của tôi</span>
+                    </a>
+                    <a href="{{ route('giangvien.phanbien.index') }}" class="submenu-link {{ request()->routeIs('giangvien.phanbien.*') ? 'active-sub' : '' }}">
+                        <span>Phản biện đề cương</span>
+                        @if($countDeCuongCanPB > 0)
+                            <span class="badge bg-warning text-dark rounded-pill" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countDeCuongCanPB }}</span>
+                        @endif
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. ĐÁNH GIÁ & TIẾN ĐỘ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isGvDanhGia ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-danhgia" aria-expanded="{{ $isGvDanhGia ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Đánh Giá &amp; Báo Cáo</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isGvDanhGia ? 'show' : '' }}" id="sub-gv-danhgia">
+                    <a href="{{ route('giangvien.baocao.index') }}" class="submenu-link {{ request()->routeIs('giangvien.baocao.*') ? 'active-sub' : '' }}">
+                        <span>Duyệt báo cáo tiến độ</span>
+                    </a>
+                    <a href="{{ route('giangvien.chamdiem.index') }}" class="submenu-link {{ request()->routeIs('giangvien.chamdiem.*') ? 'active-sub' : '' }}">
+                        <span>Chấm điểm hội đồng</span>
+                    </a>
+                    <a href="{{ route('giangvien.xacnhan_baove.index') }}" class="submenu-link {{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active-sub' : '' }}">
+                        <span>Xác nhận hồ sơ BV</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </nav>
     <!-- /SIDEBAR -->
 
@@ -126,37 +194,8 @@
                     @yield('page_title', 'Giảng Viên')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Dropdown -->
-                    <div class="dropdown">
-                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
-                            <i class="fa-solid fa-bell" style="font-size: 1.15rem;"></i>
-                            @if($unreadGvNoti > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadGvNoti }}</span>
-                            @endif
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow" style="width: 360px; max-height: 420px; overflow-y: auto; border-radius: 12px;">
-                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                <strong style="font-size: .85rem; color: #003b73;">Thông Báo Hệ Thống</strong>
-                                <span class="badge bg-danger rounded-pill small">{{ $unreadGvNoti }}</span>
-                            </div>
-                            @php
-                                $gvRecentNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->orderBy('created_at', 'desc')->limit(6)->get();
-                            @endphp
-                            @forelse($gvRecentNoti as $noti)
-                            <div class="dropdown-item px-3 py-2 border-bottom">
-                                <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size: .85rem; flex-shrink: 0;"></i>
-                                    <div>
-                                        <div class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size: 0.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            @empty
-                            <div class="text-center py-4 text-muted small">Chưa có thông báo nào.</div>
-                            @endforelse
-                        </div>
-                    </div>
+                    <!-- Notification Bell Dropdown Unified -->
+                    @include('partials.header_notifications')
 
                     <!-- User Dropdown -->
                     <div class="dropdown">

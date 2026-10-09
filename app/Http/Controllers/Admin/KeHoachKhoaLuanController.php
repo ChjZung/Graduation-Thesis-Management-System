@@ -32,10 +32,14 @@ class KeHoachKhoaLuanController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $search = trim($request->search);
+            $cleanSearch = preg_replace('/[^A-Za-z0-9]/', '', $search);
+            $query->where(function ($q) use ($search, $cleanSearch) {
                 $q->where('TenKeHoach', 'LIKE', "%{$search}%")
                   ->orWhere('MaKeHoach', 'LIKE', "%{$search}%");
+                if (!empty($cleanSearch)) {
+                    $q->orWhere('MaKeHoach', 'LIKE', "%{$cleanSearch}%");
+                }
             });
         }
 

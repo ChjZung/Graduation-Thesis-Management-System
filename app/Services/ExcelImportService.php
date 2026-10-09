@@ -1814,6 +1814,170 @@ class ExcelImportService
     }
 
     /**
+     * Import Danh Sách Sinh Viên Tham Gia Khóa Luận Theo Học Kỳ (Xét Điều Kiện)
+     */
+    public function importSinhVienHocKy($file, $targetMaHocKy = null): array
+    {
+        $rows = $this->parseFile($file);
+        $errors = [];
+        $success = 0;
+        $seenMSSVs = [];
+
+        foreach ($rows as $index => $row) {
+            $rNum = $row['_row_num'] ?? ($index + 2);
+            $mssv = trim($row['MSSV'] ?? $row['MaSV'] ?? $row['ma_sv'] ?? '');
+            $hoTen = trim($row['HoTen'] ?? $row['TenSinhVien'] ?? $row['ho_ten'] ?? '');
+            $maHocKy = trim($row['MaHocKy'] ?? $row['HocKy'] ?? $targetMaHocKy ?? '');
+            $trangThaiDk = trim($row['TrangThai'] ?? $row['KetQua'] ?? '');
+            $ghiChu = trim($row['GhiChu'] ?? $row['LyDo'] ?? '');
+            $tinChiInFile = isset($row['SoTinChiTichLuy']) ? $row['SoTinChiTichLuy'] : (isset($row['SoTinChi']) ? $row['SoTinChi'] : (isset($row['TinChi']) ? $row['TinChi'] : null));
+            $gpaInFile = isset($row['DiemTichLuy']) ? $row['DiemTichLuy'] : (isset($row['DiemTB']) ? $row['DiemTB'] : (isset($row['GPA']) ? $row['GPA'] : null));
+
+            if (empty($mssv)) {
+                $errors[] = ['row' => $rNum, 'reason' => 'Mã số sinh viên (MSSV) không được để trống', 'data' => $row];
+                continue;
+            }
+
+            if (in_array(mb_strtolower($mssv), $seenMSSVs)) {
+                $errors[] = ['row' => $rNum, 'reason' => "MSSV '{$mssv}' bị trùng lặp trong file", 'data' => $row];
+                continue;
+            }
+            $seenMSSVs[] = mb_strtolower($mssv);
+
+            if (empty($maHocKy)) {
+                $errors[] = ['row' => $rNum, 'reason' => "Chưa xác định học kỳ cho sinh viên '{$mssv}'", 'data' => $row];
+                continue;
+            }
+
+            // Tìm sinh viên trong hệ thống
+            $sv = SinhVien::where('MaSV', $mssv)->first();
+            if (!$sv) {
+                if (!empty($hoTen)) {
+                    $maLop = trim($row['MaLop'] ?? $row['TenLop'] ?? '');
+                    $lopObj = null;
+                    if (!empty($maLop)) {
+                        $lopObj = Lop::where('MaLop', $maLop)->orWhere('TenLop', $maLop)->first();
+                    }
+                    if (!$lopObj) {
+                        $lopObj = Lop::first();
+                    }
+
+                    try {
+                        // Tự động tạo tài khoản Portal cho sinh viên mới (Mật khẩu mặc định: 123456)
+                        $tk = TaiKhoan::firstOrCreate(
+                            ['TenDangNhap' => $mssv],
+                            [
+                                'MaTK'              => $mssv,
+                                'MatKhau'           => \Illuminate\Support\Facades\Hash::make('123456'),
+                                'MaVaiTro'          => 'VT03',
+                                'TrangThai'         => true,
+                                'TrangThaiMatKhau'  => 'INITIAL',
+                                'BatBuocDoiMatKhau' => true,
+                                'SoLanDangNhapSai'  => 0,
+                            ]
+                        );
+
+                        $sv = SinhVien::create([
+                            'MaSV'            => $mssv,
+                            'MaTK'            => $tk->MaTK,
+                            'HoTen'           => $hoTen,
+                            'Email'           => $mssv . '@st.huit.edu.vn',
+                            'SoDienThoai'     => '0900000000',
+                            'MaLop'           => $lopObj?->MaLop,
+                            'KhoaHoc'         => $lopObj?->KhoaHoc ?? '2021-2025',
+                            'SoTinChiTichLuy' => is_numeric($tinChiInFile) ? (int)$tinChiInFile : 120,
+                            'DiemTichLuy'     => is_numeric($gpaInFile) ? (float)$gpaInFile : 2.50,
+                            'TrangThai'       => 'Đang học',
+                            'MaKhoa'          => $lopObj?->MaKhoa ?? 'CNTT',
+                            'MaNganh'         => $lopObj?->MaNganh ?? '7480201',
+                        ]);
+                    } catch (\Exception $e) {
+                        $errors[] = ['row' => $rNum, 'reason' => "Không thể tạo hồ sơ cho sinh viên '{$mssv}': " . $e->getMessage(), 'data' => $row];
+                        continue;
+                    }
+                } else {
+                    $errors[] = ['row' => $rNum, 'reason' => "Sinh viên '{$mssv}' chưa có trong hệ thống (cần thêm cột HoTen để tự tạo)", 'data' => $row];
+                    continue;
+                }
+            } else {
+                // Sinh viên đã có trong hệ thống: TUYỆT ĐỐI KHÔNG TẠO MỚI TÀI KHOẢN (bảo toàn tài khoản & mật khẩu)
+                if (!$sv->MaTK || !TaiKhoan::where('MaTK', $sv->MaTK)->exists()) {
+                    $tk = TaiKhoan::firstOrCreate(
+                        ['TenDangNhap' => $sv->MaSV],
+                        [
+                            'MaTK'              => $sv->MaSV,
+                            'MatKhau'           => \Illuminate\Support\Facades\Hash::make('123456'),
+                            'MaVaiTro'          => 'VT03',
+                            'TrangThai'         => true,
+                            'TrangThaiMatKhau'  => 'INITIAL',
+                            'BatBuocDoiMatKhau' => true,
+                            'SoLanDangNhapSai'  => 0,
+                        ]
+                    );
+                    $sv->MaTK = $tk->MaTK;
+                    $sv->save();
+                }
+
+                $needsSave = false;
+                if (is_numeric($tinChiInFile)) {
+                    $sv->SoTinChiTichLuy = (int)$tinChiInFile;
+                    $needsSave = true;
+                }
+                if (is_numeric($gpaInFile)) {
+                    $sv->DiemTichLuy = (float)$gpaInFile;
+                    $needsSave = true;
+                }
+                if ($needsSave) {
+                    $sv->save();
+                }
+            }
+
+            // Đánh giá điều kiện
+            $tc = (int)($sv->SoTinChiTichLuy ?? 0);
+            $gpa = (float)($sv->DiemTichLuy ?? 0.0);
+            $isDatChuan = ($tc >= 115 && $gpa >= 2.0 && in_array($sv->TrangThai, ['Đang học', 'Đủ điều kiện']));
+
+            if (!empty($trangThaiDk)) {
+                $trangThaiFinal = (mb_stripos($trangThaiDk, 'Đủ') !== false || mb_stripos($trangThaiDk, 'Dat') !== false)
+                    ? 'Đủ điều kiện' : 'Chưa đủ điều kiện';
+            } else {
+                $trangThaiFinal = $isDatChuan ? 'Đủ điều kiện' : 'Chưa đủ điều kiện';
+            }
+
+            $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
+            $maDsdk = substr('DK_' . $sv->MaSV . '_' . $shortHk, 0, 20);
+
+            $ghiChuFinal = $ghiChu ?: ($trangThaiFinal === 'Đủ điều kiện' ? 'Đủ điều kiện làm khóa luận tốt nghiệp' : 'Chưa đủ điều kiện: Tín chỉ < 115 hoặc ĐTB < 2.0');
+
+            try {
+                \App\Models\DanhSachSVDuDieuKien::updateOrCreate(
+                    [
+                        'MaSV' => $sv->MaSV,
+                        'MaHocKy' => $maHocKy,
+                    ],
+                    [
+                        'MaDSDK' => $maDsdk,
+                        'NgayXetDuyet' => now(),
+                        'TrangThai' => $trangThaiFinal,
+                        'DieuKien' => "Tín chỉ: {$tc} | ĐTB: " . number_format($gpa, 2),
+                        'GhiChu' => $ghiChuFinal,
+                    ]
+                );
+                $success++;
+            } catch (\Exception $e) {
+                $errors[] = ['row' => $rNum, 'reason' => "Lỗi lưu dữ liệu: " . $e->getMessage(), 'data' => $row];
+            }
+        }
+
+        return [
+            'total_count' => count($rows),
+            'success_count' => $success,
+            'error_count' => count($errors),
+            'errors' => $errors,
+        ];
+    }
+
+    /**
      * Import Sinh Viên vào Lớp Học Phần từ file Excel
      */
     public function importSinhVienLopHocPhan($file, $targetMaLopHP = null)

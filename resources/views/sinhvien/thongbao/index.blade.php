@@ -32,9 +32,9 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 text-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#tbModal{{ $tb->id }}">
-                    Xem chi tiết
-                </button>
+                <a href="{{ route('sinhvien.thongbao.show', $tb->MaThongBao ?? $tb->id) }}" class="btn btn-sm btn-light border rounded-pill px-3 text-primary fw-semibold">
+                    <i class="fa-solid fa-eye me-1"></i> Xem chi tiết
+                </a>
                 @if(!$tb->DaDoc)
                     <span class="badge bg-primary rounded-circle" style="width:8px;height:8px;padding:0;display:inline-block;" title="Chưa đọc"></span>
                 @endif

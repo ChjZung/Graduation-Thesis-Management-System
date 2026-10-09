@@ -84,7 +84,21 @@ class DuyetDeTaiController extends Controller
         $tuChoi       = (clone $baseCountQuery)->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện'])->count();
         $total        = (clone $baseCountQuery)->count();
 
+        $countDangXetDuyet = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa',
+            'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'
+        ])->count();
+        $countDaCongBoTab  = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Đã công bố', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã đăng ký', 'Hoàn thành'
+        ])->count();
+        $countTuChoiCanSua = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện'
+        ])->count();
+
         $counts = [
+            'dang_xet_duyet'      => $countDangXetDuyet,
+            'da_cong_bo_tab'      => $countDaCongBoTab,
+            'tu_choi_can_sua'     => $countTuChoiCanSua,
             'cho_duyet_bm'        => $choDuyetBM,
             'dang_phan_bien'      => $dangPB,
             'cho_duyet_khoa'      => $choDuyetKhoa,
@@ -229,7 +243,20 @@ class DuyetDeTaiController extends Controller
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            if ($request->TrangThai === 'Trưởng khoa đã duyệt') {
+            if ($request->TrangThai === 'dang_xet_duyet' || $request->TrangThai === 'cho_duyet') {
+                $query->whereIn('TrangThai', [
+                    'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa',
+                    'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'
+                ]);
+            } elseif ($request->TrangThai === 'da_cong_bo') {
+                $query->whereIn('TrangThai', [
+                    'Đã công bố', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã đăng ký', 'Hoàn thành'
+                ]);
+            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+                $query->whereIn('TrangThai', [
+                    'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện'
+                ]);
+            } elseif ($request->TrangThai === 'Trưởng khoa đã duyệt') {
                 $query->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương']);
             } elseif ($request->TrangThai === 'Đang phản biện đề cương') {
                 $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM']);
@@ -257,11 +284,20 @@ class DuyetDeTaiController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function ($q) use ($s, $sClean) {
                 $q->where('TenDeTai', 'like', "%{$s}%")
                   ->orWhere('MaDeTai', 'like', "%{$s}%")
-                  ->orWhere('LinhVuc', 'like', "%{$s}%")
-                  ->orWhereHas('giangVien', fn($g) => $g->where('HoTen', 'like', "%{$s}%"));
+                  ->orWhere('LinhVuc', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                }
+                $q->orWhereHas('giangVien', function($g) use ($s, $sClean) {
+                    $g->where('HoTen', 'like', "%{$s}%");
+                    if (!empty($sClean)) {
+                        $g->orWhere('MaGV', 'like', "%{$sClean}%");
+                    }
+                });
             });
         }
 
@@ -366,6 +402,10 @@ class DuyetDeTaiController extends Controller
 
         $detai = DeTai::findOrFail($id);
 
+        if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->with('info', "Đề tài '{$detai->TenDeTai}' đã được phê duyệt và công bố trước đó.");
+        }
+
         $detai->update([
             'TrangThai'       => 'Đã công bố',
             'NgayDuyetKhoa'   => now(),
@@ -397,6 +437,10 @@ class DuyetDeTaiController extends Controller
 
         $detai = DeTai::findOrFail($id);
 
+        if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã hoàn tất phê duyệt cấp Khoa và đã công bố chính thức. Không thể yêu cầu chỉnh sửa đề tài này.');
+        }
+
         $detai->update([
             'TrangThai'  => 'Yêu cầu chỉnh sửa',
             'LyDoTuChoi' => trim($request->YeuCauSua),
@@ -423,6 +467,10 @@ class DuyetDeTaiController extends Controller
         ]);
 
         $detai = DeTai::findOrFail($id);
+
+        if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã hoàn tất phê duyệt cấp Khoa và đã công bố chính thức. Không thể từ chối đề tài này.');
+        }
 
         $detai->update([
             'TrangThai'  => 'Từ chối',

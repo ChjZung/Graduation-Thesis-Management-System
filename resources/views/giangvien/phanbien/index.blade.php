@@ -211,4 +211,5 @@
         </div>
     </div>
 </div>
+@include('partials.modal_preview_decuong')
 @endsection

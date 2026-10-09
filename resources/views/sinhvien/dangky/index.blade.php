@@ -110,10 +110,17 @@
                     @if($hasDeCuong)
                         @php
                             $fileDcUrl = Str::startsWith($dangKyCurrent->deTai->FileDeCuong, ['http', 'storage/']) ? asset($dangKyCurrent->deTai->FileDeCuong) : asset('storage/' . $dangKyCurrent->deTai->FileDeCuong);
+                            $fileName = basename($dangKyCurrent->deTai->FileDeCuong);
                         @endphp
-                        <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
-                            <i class="fa-solid fa-file-pdf me-1"></i>Xem Đề Cương
-                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs"
+                                    onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($dangKyCurrent->deTai->TenDeTai ?? '') }}')">
+                                <i class="fa-solid fa-eye me-1"></i>Xem Nhanh Đề Cương
+                            </button>
+                            <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                                <i class="fa-solid fa-download me-1"></i>Tải Về
+                            </a>
+                        </div>
                     @endif
                 @elseif(isset($nhom) && $nhom && $nhom->MaTruongNhom === $sinhVien->MaSV)
                     <span class="small text-success fw-medium"><i class="fa-solid fa-circle-check me-1"></i>Đề tài đã được gán cho nhóm của bạn.</span>
@@ -131,12 +138,12 @@
 </div>
 @endif
 
-<!-- BƯỚC 1: LỌC DANH SÁCH ĐỀ TÀI THEO: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN -->
+<!-- BƯỚC 1: LỌC DANH SÁCH ĐỀ TÀI THEO: HỌC KỲ -> HỌC PHẦN CHUYÊN NGÀNH -->
 <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-light">
     <div class="row g-2 align-items-center mb-2">
         <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
-                <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bước 1: Lọc Đề Tài (Học kỳ ➔ Bộ môn ➔ Học phần):</span>
+                <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bước 1: Lọc Đề Tài (Học kỳ ➔ Học phần chuyên ngành):</span>
                 <div class="small text-muted">Lọc danh sách đề tài chính thức theo học kỳ và học phần chuyên ngành</div>
             </div>
         </div>
@@ -148,7 +155,7 @@
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
                 <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
                     @foreach($hocKies as $hk)
-                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $hk->MaHocKy, 'bo_mon' => $selectedBoMon, 'HocPhan' => $selectedHocPhan]) }}" {{ ($selectedHocKy == $hk->MaHocKy || $maHocKy == $hk->MaHocKy) ? 'selected' : '' }}>
+                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $hk->MaHocKy, 'HocPhan' => $selectedHocPhan]) }}" {{ ($selectedHocKy == $hk->MaHocKy || $maHocKy == $hk->MaHocKy) ? 'selected' : '' }}>
                             {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
                         </option>
                     @endforeach
@@ -156,48 +163,33 @@
             </div>
         </div>
 
-        <!-- 2. BỘ MÔN -->
+        <!-- 2. BỘ MÔN CHUYÊN NGÀNH CỦA SINH VIÊN -->
         <div class="col-md-4">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
-                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => 'DUNG_CHUNG', 'HocPhan' => 'HP_KLCN']) }}" {{ $selectedBoMon === 'DUNG_CHUNG' ? 'selected' : '' }}>
-                        ⭐ Học phần Dùng chung (Khóa luận)
-                    </option>
-                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => 'ALL']) }}" {{ $selectedBoMon === 'ALL' ? 'selected' : '' }}>
-                        -- Tất cả bộ môn --
-                    </option>
-                    @foreach($boMons as $bm)
-                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'bo_mon' => $bm->MaBoMon]) }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
-                            {{ $bm->TenBoMon }}
-                        </option>
-                    @endforeach
-                </select>
+                <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate">
+                    {{ $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành') }}
+                </span>
             </div>
         </div>
 
-        <!-- 3. HỌC PHẦN PILLS -->
+        <!-- 3. CHỌN HỌC PHẦN (DROPDOWN GỌN GÀNG) -->
         <div class="col-md-5">
-            <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                @php
-                    $displayedHps = $hocPhans;
-                    if ($selectedBoMon === 'DUNG_CHUNG') {
-                        $displayedHps = $hocPhans->whereNull('MaBoMon');
-                    } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
-                        $displayedHps = $hocPhans->where('MaBoMon', $selectedBoMon);
-                    }
-                @endphp
-                @foreach($displayedHps as $hp)
-                @php
-                    $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
-                    $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
-                    $isActive = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
-                @endphp
-                <a href="{{ route('sinhvien.dangky.index', ['HocPhan' => $hpCode, 'HocKy' => $selectedHocKy, 'bo_mon' => $selectedBoMon]) }}" 
-                   class="btn btn-sm {{ $isActive ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary bg-white' }} rounded-pill px-3 fw-semibold">
-                    {{ $hpName }}
-                </a>
-                @endforeach
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
+                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy]) }}">-- Tất cả học phần của ngành --</option>
+                    @foreach($hocPhans as $hp)
+                        @php
+                            $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
+                            $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
+                            $isSelected = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
+                        @endphp
+                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'HocPhan' => $hpCode]) }}" {{ $isSelected ? 'selected' : '' }}>
+                            {{ $hpName }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
         </div>
     </div>
@@ -207,7 +199,10 @@
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Bước 2: Danh Sách Đề Tài Đã Công Bố ({{ $detais->total() }} đề tài)</span>
         @if($selectedHocPhan)
-            <span class="badge bg-primary rounded-pill px-3 py-1">{{ $selectedHocPhan }}</span>
+            @php
+                $selHpName = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? $selectedHocPhan;
+            @endphp
+            <span class="badge bg-primary rounded-pill px-3 py-1">{{ $selHpName }}</span>
         @endif
     </div>
     <div class="card-body p-0">
@@ -250,9 +245,14 @@
                                     <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">{{ $dt->nganh->TenNganh }}</span>
                                 @endif
                                 @if($dt->FileDeCuong)
-                                    <a href="{{ asset($dt->FileDeCuong) }}" target="_blank" class="badge bg-success-subtle text-success border text-decoration-none" style="font-size: 0.72rem;">
-                                        <i class="fa-solid fa-file-lines me-1"></i> Xem đề cương
-                                    </a>
+                                    @php
+                                        $dtDcUrl = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                                        $dtDcName = basename($dt->FileDeCuong);
+                                    @endphp
+                                    <button type="button" class="btn badge bg-success-subtle text-success border text-decoration-none" style="font-size: 0.72rem; cursor: pointer;"
+                                            onclick="quickPreviewOutline('{{ $dtDcUrl }}', '{{ $dtDcName }}', '{{ addslashes($dt->TenDeTai) }}')">
+                                        <i class="fa-solid fa-eye me-1"></i> Xem đề cương
+                                    </button>
                                 @endif
                             </div>
                         </td>
@@ -323,4 +323,5 @@
     </div>
     @endif
 </div>
+@include('partials.modal_preview_decuong')
 @endsection

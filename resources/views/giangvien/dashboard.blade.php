@@ -24,23 +24,21 @@
     </div>
 </div>
 
-<!-- 4 Stat Cards (Theo chuẩn Mockup Ảnh 2) -->
+<!-- 4 Stat Cards (Đồng bộ chuẩn học thuật - Không màu sặc sỡ) -->
 <div class="row g-3 mb-4">
     <!-- Stat 1: Đề tài đảm nhận -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card card-premium h-100 border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card">
+            <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                        Đề tài đảm nhận
-                    </div>
-                    <div class="fs-3 fw-bold text-dark mb-1">{{ $soDeTai }}</div>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                    <div class="kpi-title">Đề tài đảm nhận</div>
+                    <div class="kpi-value">{{ $soDeTai }}</div>
+                    <span class="badge bg-light text-primary border rounded-pill">
                         Đang mở: {{ $deTaiDangMo }}
                     </span>
                 </div>
-                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                    <i class="fa-solid fa-book-bookmark fa-xl text-primary"></i>
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                    <i class="fa-solid fa-book-bookmark"></i>
                 </div>
             </div>
         </div>
@@ -48,23 +46,21 @@
 
     <!-- Stat 2: Nhóm HD chính thức -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card card-premium h-100 border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card">
+            <div class="d-flex align-items-center justify-content-between">
                 <div class="w-100 me-2">
-                    <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                        Nhóm HD chính thức
-                    </div>
-                    <div class="fs-3 fw-bold text-dark mb-1">{{ $soNhomHD }} <span class="fs-6 text-muted fw-normal">/ {{ $soNhomToiDa }} nhóm</span></div>
+                    <div class="kpi-title">Nhóm HD chính thức</div>
+                    <div class="kpi-value">{{ $soNhomHD }} <span class="fs-6 text-muted fw-normal">/ {{ $soNhomToiDa }} nhóm</span></div>
                     @php
                         $percentHD = min(100, round(($soNhomHD / max(1, $soNhomToiDa)) * 100));
                     @endphp
                     <div class="progress mt-1" style="height: 6px;">
-                        <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $percentHD }}%;"></div>
+                        <div class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: {{ $percentHD }}%;"></div>
                     </div>
-                    <small class="text-muted" style="font-size: 0.72rem;">{{ $percentHD }}% chỉ tiêu phân bổ</small>
+                    <div class="kpi-subtext text-muted mt-1">{{ $percentHD }}% chỉ tiêu phân bổ</div>
                 </div>
-                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 52px; height: 52px;">
-                    <i class="fa-solid fa-users-viewfinder fa-xl text-success"></i>
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                    <i class="fa-solid fa-users-viewfinder"></i>
                 </div>
             </div>
         </div>
@@ -72,25 +68,23 @@
 
     <!-- Stat 3: Báo cáo chờ đánh giá -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card card-premium h-100 border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card">
+            <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                        Báo cáo chờ đánh giá
-                    </div>
-                    <div class="fs-3 fw-bold text-dark mb-1">{{ $soBaoCaoChoDuyet }} <span class="fs-6 text-muted fw-normal">báo cáo</span></div>
+                    <div class="kpi-title">Báo cáo chờ đánh giá</div>
+                    <div class="kpi-value">{{ $soBaoCaoChoDuyet }}</div>
                     @if($soBaoCaoChoDuyet > 0)
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill animate__animated animate__pulse animate__infinite">
-                            <i class="fa-solid fa-bell me-1"></i>Cần xử lý
+                        <span class="badge bg-light text-primary border rounded-pill">
+                            <i class="fa-solid fa-bell me-1 text-danger"></i>Cần xử lý
                         </span>
                     @else
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="fa-solid fa-check me-1"></i>Đã duyệt hết
+                        <span class="badge bg-light text-muted border rounded-pill">
+                            <i class="fa-solid fa-check me-1 text-success"></i>Đã duyệt hết
                         </span>
                     @endif
                 </div>
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                    <i class="fa-solid fa-file-circle-exclamation fa-xl text-danger"></i>
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                    <i class="fa-solid fa-file-circle-exclamation"></i>
                 </div>
             </div>
         </div>
@@ -98,25 +92,68 @@
 
     <!-- Stat 4: Nhóm rủi ro trễ tiến độ -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card card-premium h-100 border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div class="admin-kpi-card">
+            <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                        Nhóm rủi ro trễ tiến độ
-                    </div>
-                    <div class="fs-3 fw-bold text-dark mb-1">{{ $soNhomTreHan }} <span class="fs-6 text-muted fw-normal">nhóm</span></div>
+                    <div class="kpi-title">Nhóm rủi ro trễ tiến độ</div>
+                    <div class="kpi-value">{{ $soNhomTreHan }}</div>
                     @if($soNhomTreHan > 0)
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
-                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Cảnh báo
+                        <span class="badge bg-light text-danger border border-danger-subtle rounded-pill">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Cần đôn đốc
                         </span>
                     @else
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                        <span class="badge bg-light text-success border border-success-subtle rounded-pill">
                             <i class="fa-solid fa-shield-check me-1"></i>Đúng tiến độ
                         </span>
                     @endif
                 </div>
-                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                    <i class="fa-solid fa-clock-rotate-left fa-xl text-warning-emphasis"></i>
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Biểu Đồ Thống Kê & Phân Tích Tiến Độ Nhóm Hướng Dẫn -->
+<div class="row g-4 mb-4">
+    <!-- Biểu đồ 1: Tiến độ các mốc của từng nhóm -->
+    <div class="col-lg-7">
+        <div class="card card-premium border-0 shadow-sm h-100 rounded-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-chart-simple text-primary me-2"></i>
+                    Tiến Độ Mốc Báo Cáo Của Từng Nhóm Hướng Dẫn
+                </h6>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small">Mục Tiêu 5 Mốc</span>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <div style="position: relative; height: 230px; width: 100%;">
+                    <canvas id="gvGroupProgressChart"></canvas>
+                </div>
+                <div class="mt-3 small text-muted text-center">
+                    Số lượng mốc báo cáo đã hoàn thành đạt chuẩn trên quy chuẩn 5 mốc
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 2: Tình trạng đánh giá báo cáo -->
+    <div class="col-lg-5">
+        <div class="card card-premium border-0 shadow-sm h-100 rounded-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-chart-pie text-success me-2"></i>
+                    Tình Trạng Đánh Giá Báo Cáo
+                </h6>
+                <span class="badge bg-light text-secondary border rounded-pill small">Tiến Độ Thẩm Định</span>
+            </div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 p-md-4">
+                <div style="position: relative; height: 230px; width: 100%;">
+                    <canvas id="gvReportStatusChart"></canvas>
+                </div>
+                <div class="mt-3 small text-muted text-center">
+                    Tổng hợp tình trạng các bài nộp của {{ $soNhomHD }} nhóm đang hướng dẫn
                 </div>
             </div>
         </div>
@@ -306,3 +343,77 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Bar Chart: Tiến độ các nhóm
+    const groupCtx = document.getElementById('gvGroupProgressChart');
+    if (groupCtx) {
+        new Chart(groupCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($chartNhomLabels ?? []) !!},
+                datasets: [{
+                    label: 'Mốc đã đạt (trên 5)',
+                    data: {!! json_encode($chartNhomProgress ?? []) !!},
+                    backgroundColor: '#0072ce',
+                    borderRadius: 6,
+                    maxBarThickness: 32
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: { stepSize: 1 }
+                    },
+                    x: {
+                        ticks: { font: { size: 11 }, maxRotation: 25, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Doughnut Chart: Trạng thái báo cáo
+    const reportCtx = document.getElementById('gvReportStatusChart');
+    if (reportCtx) {
+        new Chart(reportCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đã duyệt', 'Chờ GV duyệt', 'Cần nộp lại'],
+                datasets: [{
+                    data: [
+                        {{ $chartBaoCaoStatus['da_duyet'] ?? 0 }},
+                        {{ $chartBaoCaoStatus['cho_duyet'] ?? 0 }},
+                        {{ $chartBaoCaoStatus['can_nop_lai'] ?? 0 }}
+                    ],
+                    backgroundColor: ['#198754', '#dc3545', '#ffc107'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+});
+</script>
+@endpush

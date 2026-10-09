@@ -31,46 +31,34 @@ class NhomController extends Controller
             ->with(['nhom.hocPhan', 'nhom.hocKy', 'nhom.dangKyDeTai.deTai'])
             ->get();
 
-        // Lấy danh sách Môn / Học phần đang mở
+        // Xác định Bộ môn chuyên ngành theo Ngành học của sinh viên
+        $svBoMon = $sinhVien->getMaBoMon();
+        $selectedBoMon = $svBoMon;
+
+        // Lấy danh sách Môn / Học phần đang mở THUỘC ĐÚNG BỘ MÔN CHUYÊN NGÀNH CỦA SINH VIÊN
         $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
                 $q->where('TrangThai', 'Đang mở');
             }])
-            ->where('TrangThai', 'Đang áp dụng')
-            ->orderBy('MaKhoa')
-            ->orderBy('MaBoMon')
+            ->where(function($q) {
+                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
+                  ->orWhere('TrangThai', true);
+            })
+            ->where('MaBoMon', $svBoMon)
+            ->orderBy('TenHocPhan')
             ->get();
+
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
-        // 1. Phân giải môn học được chọn (selectedHocPhan)
+        // 2. Phân giải môn học được chọn (selectedHocPhan)
         $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
-        if (!$selectedHocPhan) {
-            $selectedHocPhan = $sinhVienAllGroups->first()?->nhom?->MaHocPhan ?? 'HP_KLCN';
-        }
-
-        // Phân giải bộ môn được chọn (selectedBoMon) theo luồng: Học kỳ -> Bộ môn -> Học phần
-        $selectedBoMon = $request->input('bo_mon') ?? $request->input('MaBoMon');
-        if ($selectedBoMon) {
-            if ($selectedBoMon === 'DUNG_CHUNG') {
-                $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
-                if ($hpCheck && !empty($hpCheck->MaBoMon)) {
-                    $selectedHocPhan = 'HP_KLCN';
-                }
-            } elseif ($selectedBoMon !== 'ALL') {
-                $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
-                if (!$hpCheck || $hpCheck->MaBoMon !== $selectedBoMon) {
-                    $firstHpInBm = $hocPhans->where('MaBoMon', $selectedBoMon)->first();
-                    if ($firstHpInBm) {
-                        $selectedHocPhan = $firstHpInBm->MaHocPhan;
-                    }
-                }
-            }
-        } else {
-            $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
-            if ($hpCheck && !empty($hpCheck->MaBoMon)) {
-                $selectedBoMon = $hpCheck->MaBoMon;
+        $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
+        if (!$hpCheck) {
+            $groupHp = $sinhVienAllGroups->first()?->nhom?->MaHocPhan;
+            if ($groupHp && $hocPhans->firstWhere('MaHocPhan', $groupHp)) {
+                $selectedHocPhan = $groupHp;
             } else {
-                $selectedBoMon = 'DUNG_CHUNG';
+                $selectedHocPhan = $hocPhans->first()?->MaHocPhan;
             }
         }
 
@@ -234,8 +222,6 @@ class NhomController extends Controller
             $queryNhoms->where(function($q) use ($selectedHocPhan) {
                 $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
             });
-        } elseif ($selectedBoMon === 'DUNG_CHUNG') {
-            $queryNhoms->whereHas('hocPhan', fn($q) => $q->whereNull('MaBoMon'));
         } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
             $queryNhoms->whereHas('hocPhan', fn($q) => $q->where('MaBoMon', $selectedBoMon));
         }
@@ -244,19 +230,31 @@ class NhomController extends Controller
 
         if ($request->filled('q')) {
             $search = trim($request->q);
-            $queryNhoms->where(function ($q) use ($search) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $search);
+            $queryNhoms->where(function ($q) use ($search, $sClean) {
                 $q->where('TenNhom', 'LIKE', "%{$search}%")
-                  ->orWhere('MaNhom', 'LIKE', "%{$search}%")
-                  ->orWhereHas('truongNhom', function ($sq) use ($search) {
-                      $sq->where('HoTen', 'LIKE', "%{$search}%")
-                         ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
-                         ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
-                  })
-                  ->orWhereHas('thanhViens.sinhVien', function ($sq) use ($search) {
-                      $sq->where('HoTen', 'LIKE', "%{$search}%")
-                         ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
-                         ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
-                  });
+                  ->orWhere('MaNhom', 'LIKE', "%{$search}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaNhom', 'LIKE', "%{$sClean}%");
+                }
+                $q->orWhereHas('truongNhom', function ($sq) use ($search, $sClean) {
+                    $sq->where('HoTen', 'LIKE', "%{$search}%")
+                       ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
+                       ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
+                    if (!empty($sClean)) {
+                        $sq->orWhere('SinhVien.MaSV', 'LIKE', "%{$sClean}%")
+                           ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$sClean}%"));
+                    }
+                })
+                ->orWhereHas('thanhViens.sinhVien', function ($sq) use ($search, $sClean) {
+                    $sq->where('HoTen', 'LIKE', "%{$search}%")
+                       ->orWhere('SinhVien.MaSV', 'LIKE', "%{$search}%")
+                       ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$search}%"));
+                    if (!empty($sClean)) {
+                        $sq->orWhere('SinhVien.MaSV', 'LIKE', "%{$sClean}%")
+                           ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', 'LIKE', "%{$sClean}%"));
+                    }
+                });
             });
         }
 
@@ -292,19 +290,19 @@ class NhomController extends Controller
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
         $hocKy = \App\Models\HocKy::findOrFail($request->MaHocKy);
 
-        // 1. Ràng buộc học phần: Chỉ cho phép tạo nhóm đối với học phần dùng chung toàn khoa (Khóa luận cử nhân / Khóa luận kỹ sư)
-        if (!empty($hocPhan->MaBoMon)) {
-            return redirect()->back()->withErrors("Học phần tạo nhóm khóa luận phải là học phần dùng chung toàn khoa (Khóa luận cử nhân hoặc Khóa luận kỹ sư)!");
+        // 1. Ràng buộc học kỳ & học phần: Học phần phải thuộc bộ môn của sinh viên và được mở trong học kỳ này
+        $svBoMon = $sinhVien->getMaBoMon();
+        if ($hocPhan->MaBoMon && $hocPhan->MaBoMon !== $svBoMon) {
+            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn chuyên ngành của bạn!");
         }
 
-        // 2. Ràng buộc học kỳ: Môn học phải được mở trong học kỳ này (HocPhan_HocKy)
         $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
             ->where('MaHocPhan', $request->MaHocPhan)
             ->where('TrangThai', 'Đang mở')
             ->exists();
 
         if (!$isOpened) {
-            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ {$hocKy->TenHocKy}!");
+            return redirect()->back()->withErrors("Học phần '{$hocPhan->TenHocPhan}' hiện chưa được mở trong học kỳ {$hocKy->TenHocKy}!");
         }
 
         $maHocKy = $request->MaHocKy;
@@ -461,11 +459,17 @@ class NhomController extends Controller
         $user = Auth::user();
         $currentUserSV = SinhVien::where('MaTK', $user->MaTK)->first();
 
-        // 1. Tìm sinh viên từ database (Exact match qua MSSV/TenDangNhap hoặc MaSV)
+        $mssvClean = preg_replace('/[^A-Za-z0-9]/', '', $mssv);
+
+        // 1. Tìm sinh viên từ database (Hỗ trợ cả MSSV nhập có dấu chấm/cách và mã chuẩn)
         $sinhVien = SinhVien::with(['taiKhoan', 'lop.nganh'])
-            ->where(function($q) use ($mssv) {
+            ->where(function($q) use ($mssv, $mssvClean) {
                 $q->where('MaSV', $mssv)
                   ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', $mssv));
+                if (!empty($mssvClean)) {
+                    $q->orWhere('MaSV', $mssvClean)
+                      ->orWhereHas('taiKhoan', fn($tq) => $tq->where('TenDangNhap', $mssvClean));
+                }
             })
             ->first();
 
@@ -694,7 +698,7 @@ class NhomController extends Controller
             );
         });
 
-        return redirect()->back()->with('success', "Đã gửi lời mời gia nhập nhóm đến sinh viên {$svThem->HoTen} ({$svThem->taiKhoan->TenDangNhap}) thành công!");
+        return redirect()->back()->with('invite_success', "Đã gửi lời mời gia nhập nhóm đến sinh viên {$svThem->HoTen} ({$svThem->taiKhoan->TenDangNhap}) thành công!");
     }
 
     /**

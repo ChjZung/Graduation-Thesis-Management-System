@@ -19,7 +19,7 @@
                 
                 <form action="{{ route('giangvien.lop.index') }}" method="GET" class="d-flex align-items-center gap-2 m-0">
                     <label class="small text-muted fw-bold text-nowrap mb-0"><i class="fa-solid fa-filter me-1"></i>Lọc Học kỳ:</label>
-                    <select name="ma_hoc_ky" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()" style="min-width: 220px;">
+                    <select name="ma_hoc_ky" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()" style="min-width: 320px;">
                         <option value="">-- Tất cả các Học Kỳ --</option>
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ request('ma_hoc_ky') == $hk->MaHocKy ? 'selected' : '' }}>

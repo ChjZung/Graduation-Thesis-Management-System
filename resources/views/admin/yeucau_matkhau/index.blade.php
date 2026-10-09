@@ -4,10 +4,6 @@
 
 @section('content')
 <div class="container-fluid px-0">
-    <!-- Breadcrumb & Header Section -->
-    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
-        <i class="fas fa-home"></i> Trang chủ <i class="fas fa-chevron-right text-muted" style="font-size: 0.65rem;"></i> Quản lý hệ thống
-    </div>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
             <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Quản Lý An Toàn Mật Khẩu &amp; Trạng Thái Khóa / Mở Tài Khoản Portal</h4>
@@ -183,7 +179,7 @@
                         <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
                         <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Tìm theo Tên đăng nhập / MSSV / Mã GV..." value="{{ request('search') }}">
                     </div>
-                    <select name="MaVaiTro" class="form-select" style="min-width: 170px;" onchange="this.form.submit()">
+                    <select name="MaVaiTro" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
                         <option value="">-- Tất cả Vai trò --</option>
                         @foreach($vaiTros as $vt)
                             <option value="{{ $vt->MaVaiTro }}" {{ request('MaVaiTro') == $vt->MaVaiTro ? 'selected' : '' }}>
@@ -191,7 +187,7 @@
                             </option>
                         @endforeach
                     </select>
-                    <select name="TrangThai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
+                    <select name="TrangThai" class="form-select" style="min-width: 210px;" onchange="this.form.submit()">
                         <option value="">-- Trạng thái tài khoản --</option>
                         <option value="1" {{ request('TrangThai') === '1' ? 'selected' : '' }}>🟢 Đang hoạt động</option>
                         <option value="0" {{ request('TrangThai') === '0' ? 'selected' : '' }}>🔴 Đang bị khóa</option>

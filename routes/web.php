@@ -20,6 +20,7 @@ Route::get('/', function () {
 });
 
 Auth::routes(['register' => false]);
+Route::match(['get', 'post'], '/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 // Quên mật khẩu qua Email chính
 Route::get('/password/reset', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -103,12 +104,18 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('nganh', \App\Http\Controllers\NganhController::class);
     Route::resource('lop', \App\Http\Controllers\LopController::class);
     Route::resource('hocky', \App\Http\Controllers\HocKyController::class);
+    Route::post('/hocphan/toggle-hocky', [\App\Http\Controllers\HocPhanController::class, 'toggleHocKy'])->name('admin.hocphan.toggle_hocky');
+    Route::post('/hocphan/bulk-hocky', [\App\Http\Controllers\HocPhanController::class, 'bulkHocKy'])->name('admin.hocphan.bulk_hocky');
     Route::resource('hocphan', \App\Http\Controllers\HocPhanController::class);
+    Route::get('giangvien/export', [\App\Http\Controllers\GiangVienController::class, 'exportExcel'])->name('admin.giangvien.export');
     Route::resource('giangvien', \App\Http\Controllers\GiangVienController::class);
     Route::get('sinhvien/du-dieu-kien', [\App\Http\Controllers\SinhVienController::class, 'dieuKienIndex'])->name('admin.sinhvien.dieu_kien');
     Route::post('sinhvien/du-dieu-kien/ra-soat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienRaSoat'])->name('admin.sinhvien.ra_soat');
+    Route::post('sinhvien/du-dieu-kien/them', [\App\Http\Controllers\SinhVienController::class, 'dieuKienThem'])->name('admin.sinhvien.them_dk');
+    Route::post('sinhvien/du-dieu-kien/import', [\App\Http\Controllers\SinhVienController::class, 'dieuKienImportExcel'])->name('admin.sinhvien.import_dk');
     Route::post('sinhvien/du-dieu-kien/cap-nhat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienCapNhat'])->name('admin.sinhvien.cap_nhat');
     Route::post('sinhvien/du-dieu-kien/cong-bo', [\App\Http\Controllers\SinhVienController::class, 'dieuKienCongBo'])->name('admin.sinhvien.cong_bo');
+    Route::delete('sinhvien/du-dieu-kien/{id}', [\App\Http\Controllers\SinhVienController::class, 'dieuKienXoa'])->name('admin.sinhvien.xoa_dk');
     Route::get('sinhvien/du-dieu-kien/export', [\App\Http\Controllers\SinhVienController::class, 'dieuKienExport'])->name('admin.sinhvien.export_du_dk');
 
     Route::resource('sinhvien', \App\Http\Controllers\SinhVienController::class);
@@ -200,6 +207,8 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     // Bổ nhiệm & Import tài khoản Trưởng khoa / Trưởng bộ môn
     Route::post('/giangvien/{id}/bo-nhiem', [\App\Http\Controllers\GiangVienController::class, 'boNhiem'])->name('admin.giangvien.bo_nhiem');
+    Route::post('/giangvien/{id}/huy-bo-nhiem', [\App\Http\Controllers\GiangVienController::class, 'huyBoNhiem'])->name('admin.giangvien.huy_bo_nhiem');
+    Route::delete('/giangvien/{id}/xoa-tai-khoan', [\App\Http\Controllers\GiangVienController::class, 'xoaTaiKhoanPortal'])->name('admin.giangvien.xoa_tai_khoan');
     Route::post('/giangvien/import-tbm-tk', [\App\Http\Controllers\GiangVienController::class, 'importTaiKhoanTBM_TK'])->name('admin.giangvien.import_tbm_tk');
 });
 
@@ -217,6 +226,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Đề tài
     Route::get('detai/bieu-mau-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'downloadTemplate'])->name('giangvien.detai.download_template');
+    Route::get('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'showNopDeCuong'])->name('giangvien.detai.nop_decuong.show');
     Route::post('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'nopDeCuong'])->name('giangvien.detai.nopDeCuong');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
@@ -301,6 +311,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
 
     // Thông báo
     Route::get('/thongbao', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'index'])->name('sinhvien.thongbao.index');
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'show'])->name('sinhvien.thongbao.show');
     Route::post('/thongbao/{id}/read', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'markRead'])->name('sinhvien.thongbao.read');
     Route::post('/thongbao/read-all', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'markAllRead'])->name('sinhvien.thongbao.readAll');
 

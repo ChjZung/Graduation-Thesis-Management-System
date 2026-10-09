@@ -25,9 +25,9 @@ class DuyetDeTaiController extends Controller
             if ($bm) return $bm;
         }
 
-        // Dự phòng: parse mã bộ môn từ Tên đăng nhập (ví dụ: TBM_CNTT_CNPM_GV002 -> CNPM)
-        if ($user && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->first();
+        // Dự phòng: parse mã bộ môn từ Tên đăng nhập (ví dụ: TBM_BM_CNPM_GV00000001 -> BM_CNPM hoặc CNPM)
+        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
             if ($bm) return $bm;
         }
 
@@ -37,7 +37,7 @@ class DuyetDeTaiController extends Controller
     public function index(Request $request)
     {
         $boMon = $this->getBoMon();
-        $maBoMon = $boMon ? $boMon->MaBoMon : 'CNPM';
+        $maBoMon = $boMon ? $boMon->MaBoMon : 'BM_CNPM';
 
         $giangViens = GiangVien::where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
         $gvIds = $giangViens->pluck('MaGV');
@@ -47,21 +47,27 @@ class DuyetDeTaiController extends Controller
         $currentHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->orderBy('MaHocKy', 'desc')->first() ?? $hocKies->first();
         $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy ?? '');
 
+        // Query cơ sở tính toán counts & filters: đề tài do GV thuộc bộ môn đề xuất HOẶC môn học thuộc bộ môn
+        $baseScopeClosure = function($q) use ($gvIds, $maBoMon) {
+            $q->whereIn('MaGV', $gvIds)
+              ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $maBoMon));
+        };
+
         // Dropdowns bộ lọc
-        $linhVucs = DeTai::whereIn('MaGV', $gvIds)
+        $linhVucs = DeTai::where($baseScopeClosure)
             ->whereNotNull('LinhVuc')
             ->where('LinhVuc', '!=', '')
             ->distinct()
             ->pluck('LinhVuc');
 
-        $hocPhans = DeTai::whereIn('MaGV', $gvIds)
+        $hocPhans = DeTai::where($baseScopeClosure)
             ->whereNotNull('HocPhan')
             ->where('HocPhan', '!=', '')
             ->distinct()
             ->pluck('HocPhan');
 
         // Query cơ sở tính toán counts
-        $baseCountQuery = DeTai::whereIn('MaGV', $gvIds);
+        $baseCountQuery = DeTai::where($baseScopeClosure);
         if ($selectedHocKy && $selectedHocKy !== 'ALL') {
             $baseCountQuery->where('MaHocKy', $selectedHocKy);
         }
@@ -87,7 +93,21 @@ class DuyetDeTaiController extends Controller
         $tuChoi       = (clone $baseCountQuery)->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện'])->count();
         $total        = (clone $baseCountQuery)->count();
 
+        $countDangXetDuyet = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa',
+            'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'
+        ])->count();
+        $countDaCongBoTab  = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Đã công bố', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã đăng ký', 'Hoàn thành'
+        ])->count();
+        $countTuChoiCanSua = (clone $baseCountQuery)->whereIn('TrangThai', [
+            'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện'
+        ])->count();
+
         $counts = [
+            'dang_xet_duyet'      => $countDangXetDuyet,
+            'da_cong_bo_tab'      => $countDaCongBoTab,
+            'tu_choi_can_sua'     => $countTuChoiCanSua,
             'cho_duyet_bm'        => $choDuyetBM,
             'dang_phan_bien'      => $dangPB,
             'da_phan_bien'        => $daPB,
@@ -227,15 +247,26 @@ class DuyetDeTaiController extends Controller
             'hocKy', 
             'phieuDangKys.nhom.thanhVienNhoms.sinhVien.lop', 
             'phanCongPhanBiens.giangVien'
-        ])->whereIn('MaGV', $gvIds);
+        ])->where($baseScopeClosure);
 
         if ($selectedHocKy && $selectedHocKy !== 'ALL') {
             $query->where('MaHocKy', $selectedHocKy);
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            if ($request->TrangThai === 'can_duyet') {
-                $query->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']);
+            if ($request->TrangThai === 'dang_xet_duyet' || $request->TrangThai === 'can_duyet') {
+                $query->whereIn('TrangThai', [
+                    'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa',
+                    'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'
+                ]);
+            } elseif ($request->TrangThai === 'da_cong_bo') {
+                $query->whereIn('TrangThai', [
+                    'Đã công bố', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã đăng ký', 'Hoàn thành'
+                ]);
+            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+                $query->whereIn('TrangThai', [
+                    'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện'
+                ]);
             } elseif ($request->TrangThai === 'dang_phan_bien' || $request->TrangThai === 'Đang phản biện đề cương') {
                 $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB']);
             } elseif ($request->TrangThai === 'da_phan_bien' || $request->TrangThai === 'Đã phản biện - Chờ duyệt BM') {
@@ -265,11 +296,20 @@ class DuyetDeTaiController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function ($q) use ($s, $sClean) {
                 $q->where('TenDeTai', 'like', "%{$s}%")
                   ->orWhere('MaDeTai', 'like', "%{$s}%")
-                  ->orWhere('LinhVuc', 'like', "%{$s}%")
-                  ->orWhereHas('giangVien', fn($g) => $g->where('HoTen', 'like', "%{$s}%"));
+                  ->orWhere('LinhVuc', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                }
+                $q->orWhereHas('giangVien', function($g) use ($s, $sClean) {
+                    $g->where('HoTen', 'like', "%{$s}%");
+                    if (!empty($sClean)) {
+                        $g->orWhere('MaGV', 'like', "%{$sClean}%");
+                    }
+                });
             });
         }
 
@@ -363,10 +403,14 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->findOrFail($id);
 
+        $user = Auth::user();
+        $currentGv = GiangVien::getLoggedInGiangVien($user);
+
         $maBoMon = $detai->giangVien?->MaBoMon ?? ($boMon?->MaBoMon ?? 'CNPM');
         $allGiangViens = GiangVien::with('boMon')
             ->where('MaBoMon', $maBoMon)
             ->where('MaGV', '!=', $detai->MaGV)
+            ->when($currentGv, fn($q) => $q->where('MaGV', '!=', $currentGv->MaGV))
             ->orderBy('HoTen')
             ->get();
         $phanBienHienTai = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
@@ -386,6 +430,13 @@ class DuyetDeTaiController extends Controller
 
         if (!$detai->FileDeCuong) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
+        }
+
+        // Trưởng bộ môn không được tự phân công phản biện cho bản thân
+        $user = Auth::user();
+        $currentGv = GiangVien::getLoggedInGiangVien($user);
+        if ($currentGv && $request->MaGVPhanBien === $currentGv->MaGV) {
+            return redirect()->back()->withErrors('Trưởng bộ môn không được tự phân công phản biện đề cương cho chính bản thân! Vui lòng phân công cho giảng viên khác trong bộ môn.');
         }
 
         // Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó
@@ -443,6 +494,10 @@ class DuyetDeTaiController extends Controller
         $gv = GiangVien::getLoggedInGiangVien($user);
 
         $detai = DeTai::findOrFail($id);
+
+        if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức, quyết định đã hoàn tất.');
+        }
 
         $detai->update([
             'TrangThai'    => 'Chờ duyệt cấp Khoa',
@@ -509,6 +564,10 @@ class DuyetDeTaiController extends Controller
 
         $detai = DeTai::findOrFail($id);
 
+        if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể yêu cầu chỉnh sửa đề tài này.');
+        }
+
         $detai->update([
             'TrangThai'   => 'Yêu cầu chỉnh sửa',
             'LyDoTuChoi'  => trim($request->YeuCauSua),
@@ -535,6 +594,10 @@ class DuyetDeTaiController extends Controller
         ]);
 
         $detai = DeTai::findOrFail($id);
+
+        if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
+            return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể từ chối đề tài này.');
+        }
 
         $detai->update([
             'TrangThai'  => 'Từ chối',

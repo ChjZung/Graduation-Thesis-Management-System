@@ -31,14 +31,21 @@ class KetQuaController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function ($q) use ($s, $sClean) {
                 $q->where('MaSV', 'LIKE', "%{$s}%")
-                  ->orWhereHas('sinhVien', function ($sv) use ($s) {
+                  ->orWhereHas('sinhVien', function ($sv) use ($s, $sClean) {
                       $sv->where('HoTen', 'LIKE', "%{$s}%")
-                         ->orWhere('MaSoSinhVien', 'LIKE', "%{$s}%");
+                         ->orWhere('MaSV', 'LIKE', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $sv->orWhere('MaSV', 'LIKE', "%{$sClean}%");
+                      }
                   })
                   ->orWhereHas('hoSoBaoVe.nhom', fn($n) => $n->where('TenNhom', 'LIKE', "%{$s}%"))
                   ->orWhereHas('hoSoBaoVe.deTai', fn($dt) => $dt->where('TenDeTai', 'LIKE', "%{$s}%"));
+                if (!empty($sClean)) {
+                    $q->orWhere('MaSV', 'LIKE', "%{$sClean}%");
+                }
             });
         }
 

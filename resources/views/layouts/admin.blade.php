@@ -37,127 +37,150 @@
             </div>
         </div>
 
-        <ul class="list-unstyled components">
-            <!-- Tổng Quan -->
-            <li class="nav-section-label">Tổng Quan</li>
-            <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('admin.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('thongbao.*') ? 'active' : '' }}">
-                <a href="{{ route('thongbao.index') }}">
-                    <i class="fa-solid fa-bell"></i> Thông báo hệ thống
-                </a>
-            </li>
+        <div class="px-2 py-2">
+            <!-- 1. TỔNG QUAN -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isTongQuanActive = request()->routeIs('admin.dashboard') || request()->routeIs('thongbao.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isTongQuanActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tongquan" aria-expanded="{{ $isTongQuanActive ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Tổng Quan</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isTongQuanActive ? 'show' : '' }}" id="sub-tongquan">
+                    <a href="{{ route('admin.dashboard') }}" class="submenu-link {{ request()->routeIs('admin.dashboard') ? 'active-sub' : '' }}">
+                        <span>Bảng tổng quan</span>
+                    </a>
+                    <a href="{{ route('thongbao.index') }}" class="submenu-link {{ request()->routeIs('thongbao.*') ? 'active-sub' : '' }}">
+                        <span>Thông báo hệ thống</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- Quản Lý Khóa Luận -->
-            <li class="nav-section-label">Quản Lý Khóa Luận</li>
-            <li class="{{ request()->routeIs('admin.kehoach.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.kehoach.index') }}">
-                    <i class="fa-solid fa-calendar-check"></i> Kế hoạch khóa luận
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.quydinh.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.quydinh.index') }}">
-                    <i class="fa-solid fa-scale-balanced"></i> Quy định khóa luận
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.calendar') ? 'active' : '' }}">
-                <a href="{{ route('admin.calendar') }}">
-                    <i class="fa-regular fa-calendar-days"></i> Lịch quy trình
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.theodoi.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.theodoi.index') }}">
-                    <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.duyet_detai.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.duyet_detai.index') }}">
-                    <i class="fa-solid fa-book-bookmark"></i> Quản lý đề tài
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.duyet_dangky.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.duyet_dangky.index') }}">
-                    <i class="fa-solid fa-clipboard-list"></i> Xem đăng ký đề tài
-                </a>
-            </li>
+            <!-- 2. QUẢN LÝ KHÓA LUẬN -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isQLKLActive = request()->routeIs('admin.kehoach.*') || request()->routeIs('admin.quydinh.*') || request()->routeIs('admin.calendar') || request()->routeIs('admin.theodoi.*') || request()->routeIs('admin.duyet_detai.*') || request()->routeIs('admin.duyet_dangky.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isQLKLActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-qlkl" aria-expanded="{{ $isQLKLActive ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>Quản Lý Khóa Luận</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isQLKLActive ? 'show' : '' }}" id="sub-qlkl">
+                    <a href="{{ route('admin.kehoach.index') }}" class="submenu-link {{ request()->routeIs('admin.kehoach.*') ? 'active-sub' : '' }}">
+                        <span>Kế hoạch khóa luận</span>
+                    </a>
+                    <a href="{{ route('admin.quydinh.index') }}" class="submenu-link {{ request()->routeIs('admin.quydinh.*') ? 'active-sub' : '' }}">
+                        <span>Quy định khóa luận</span>
+                    </a>
+                    <a href="{{ route('admin.calendar') }}" class="submenu-link {{ request()->routeIs('admin.calendar') ? 'active-sub' : '' }}">
+                        <span>Lịch quy trình</span>
+                    </a>
+                    <a href="{{ route('admin.theodoi.index') }}" class="submenu-link {{ request()->routeIs('admin.theodoi.*') ? 'active-sub' : '' }}">
+                        <span>Theo dõi tiến độ</span>
+                    </a>
+                    <a href="{{ route('admin.duyet_detai.index') }}" class="submenu-link {{ request()->routeIs('admin.duyet_detai.*') ? 'active-sub' : '' }}">
+                        <span>Quản lý đề tài</span>
+                    </a>
+                    <a href="{{ route('admin.duyet_dangky.index') }}" class="submenu-link {{ request()->routeIs('admin.duyet_dangky.*') ? 'active-sub' : '' }}">
+                        <span>Xem đăng ký đề tài</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- Bảo Vệ & Hội Đồng -->
-            <li class="nav-section-label">Bảo Vệ &amp; Hội Đồng</li>
-            <li class="{{ request()->routeIs('admin.hoidong.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.hoidong.index') }}">
-                    <i class="fa-solid fa-landmark"></i> Hội đồng bảo vệ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.hosoBaoVe.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.hosoBaoVe.index') }}">
-                    <i class="fa-solid fa-folder-check"></i> Hồ sơ bảo vệ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.ketqua.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.ketqua.index') }}">
-                    <i class="fa-solid fa-square-poll-vertical"></i> Bảng điểm &amp; Kết quả
-                </a>
-            </li>
+            <!-- 3. BẢO VỆ & HỘI ĐỒNG -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isHoiDongActive = request()->routeIs('admin.hoidong.*') || request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isHoiDongActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hoidong" aria-expanded="{{ $isHoiDongActive ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-landmark"></i>
+                        <span>Bảo Vệ &amp; Hội Đồng</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isHoiDongActive ? 'show' : '' }}" id="sub-hoidong">
+                    <a href="{{ route('admin.hoidong.index') }}" class="submenu-link {{ request()->routeIs('admin.hoidong.*') ? 'active-sub' : '' }}">
+                        <span>Hội đồng bảo vệ</span>
+                    </a>
+                    <a href="{{ route('admin.hosoBaoVe.index') }}" class="submenu-link {{ request()->routeIs('admin.hosoBaoVe.*') ? 'active-sub' : '' }}">
+                        <span>Hồ sơ bảo vệ</span>
+                    </a>
+                    <a href="{{ route('admin.ketqua.index') }}" class="submenu-link {{ request()->routeIs('admin.ketqua.*') ? 'active-sub' : '' }}">
+                        <span>Bảng điểm &amp; Kết quả</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- Quản Lý Người Dùng & Hồ Sơ -->
-            <li class="nav-section-label">Người Dùng &amp; Hồ Sơ</li>
-            <li class="{{ request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.index') }}">
-                    <i class="fa-solid fa-user-graduate"></i> Quản lý Sinh viên
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('giangvien.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.index') }}">
-                    <i class="fa-solid fa-chalkboard-user"></i> Giảng viên
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.taikhoan.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.taikhoan.index') }}">
-                    <i class="fa-solid fa-users-gear"></i> Tài khoản hệ thống
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.yeucau.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.yeucau.index') }}">
-                    <i class="fa-solid fa-key"></i> Đổi mật khẩu
-                </a>
-            </li>
+            <!-- 4. NGƯỜI DÙNG & HỒ SƠ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isUserActive = request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') || request()->routeIs('giangvien.*') || request()->routeIs('admin.taikhoan.*') || request()->routeIs('admin.yeucau.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isUserActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-user" aria-expanded="{{ $isUserActive ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Người Dùng &amp; Hồ Sơ</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isUserActive ? 'show' : '' }}" id="sub-user">
+                    <a href="{{ route('sinhvien.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') ? 'active-sub' : '' }}">
+                        <span>Quản lý Sinh viên</span>
+                    </a>
+                    <a href="{{ route('giangvien.index') }}" class="submenu-link {{ request()->routeIs('giangvien.*') ? 'active-sub' : '' }}">
+                        <span>Quản lý Giảng viên</span>
+                    </a>
+                    <a href="{{ route('admin.taikhoan.index') }}" class="submenu-link {{ request()->routeIs('admin.taikhoan.*') ? 'active-sub' : '' }}">
+                        <span>Tài khoản hệ thống</span>
+                    </a>
+                    <a href="{{ route('admin.yeucau.index') }}" class="submenu-link {{ request()->routeIs('admin.yeucau.*') ? 'active-sub' : '' }}">
+                        <span>Đổi mật khẩu</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- Danh Mục Học Vụ -->
-            <li class="nav-section-label">Danh Mục Học Vụ</li>
-            <li class="{{ request()->routeIs('hocky.*') ? 'active' : '' }}">
-                <a href="{{ route('hocky.index') }}">
-                    <i class="fa-solid fa-clock"></i> Học kỳ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('khoa.*') ? 'active' : '' }}">
-                <a href="{{ route('khoa.index') }}">
-                    <i class="fa-solid fa-university"></i> Khoa
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('bomon.*') ? 'active' : '' }}">
-                <a href="{{ route('bomon.index') }}">
-                    <i class="fa-solid fa-building"></i> Bộ môn
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('nganh.*') ? 'active' : '' }}">
-                <a href="{{ route('nganh.index') }}">
-                    <i class="fa-solid fa-book-open"></i> Ngành
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('lop.*') ? 'active' : '' }}">
-                <a href="{{ route('lop.index') }}">
-                    <i class="fa-solid fa-users-rectangle"></i> Lớp
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('hocphan.*') ? 'active' : '' }}">
-                <a href="{{ route('hocphan.index') }}">
-                    <i class="fa-solid fa-graduation-cap"></i> Học phần
-                </a>
-            </li>
-        </ul>
+            <!-- 5. DANH MỤC HỌC VỤ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isHocVuActive = request()->routeIs('hocky.*') || request()->routeIs('khoa.*') || request()->routeIs('bomon.*') || request()->routeIs('nganh.*') || request()->routeIs('lop.*') || request()->routeIs('hocphan.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isHocVuActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hocvu" aria-expanded="{{ $isHocVuActive ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>Danh Mục Học Vụ</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isHocVuActive ? 'show' : '' }}" id="sub-hocvu">
+                    <a href="{{ route('hocky.index') }}" class="submenu-link {{ request()->routeIs('hocky.*') ? 'active-sub' : '' }}">
+                        <span>Học kỳ</span>
+                    </a>
+                    <a href="{{ route('khoa.index') }}" class="submenu-link {{ request()->routeIs('khoa.*') ? 'active-sub' : '' }}">
+                        <span>Khoa</span>
+                    </a>
+                    <a href="{{ route('bomon.index') }}" class="submenu-link {{ request()->routeIs('bomon.*') ? 'active-sub' : '' }}">
+                        <span>Bộ môn</span>
+                    </a>
+                    <a href="{{ route('nganh.index') }}" class="submenu-link {{ request()->routeIs('nganh.*') ? 'active-sub' : '' }}">
+                        <span>Ngành</span>
+                    </a>
+                    <a href="{{ route('lop.index') }}" class="submenu-link {{ request()->routeIs('lop.*') ? 'active-sub' : '' }}">
+                        <span>Lớp</span>
+                    </a>
+                    <a href="{{ route('hocphan.index') }}" class="submenu-link {{ request()->routeIs('hocphan.*') ? 'active-sub' : '' }}">
+                        <span>Học phần</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <!-- /SIDEBAR -->
@@ -181,41 +204,8 @@
                 <span class="current-page">@yield('page_title', 'Dashboard')</span>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <!-- Notification Bell Admin -->
-                @php
-                    $adminRecentNoti = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'da_gui', 'ACTIVE'])
-                        ->orderBy('created_at', 'desc')
-                        ->limit(6)
-                        ->get();
-                    $adminUnread = $adminRecentNoti->count();
-                @endphp
-                <div class="dropdown">
-                    <a href="#" class="position-relative text-decoration-none dropdown-toggle no-caret" data-bs-toggle="dropdown" aria-expanded="false" style="color: #0072ce;">
-                        <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
-                        @if($adminUnread > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:3px 5px;">{{ $adminUnread }}</span>
-                        @endif
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width:360px;max-height:420px;overflow-y:auto;border-radius:12px;">
-                        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                            <strong style="font-size:.85rem;color:#003b73;">Thông Báo Hệ Thống</strong>
-                            <a href="{{ route('thongbao.index') }}" class="small text-muted text-decoration-none">Tất cả</a>
-                        </div>
-                        @forelse($adminRecentNoti as $noti)
-                        <a href="{{ route('thongbao.show', $noti->MaThongBao) }}" class="dropdown-item px-3 py-2 border-bottom text-wrap">
-                            <div class="d-flex gap-2 align-items-start">
-                                <i class="fa-solid fa-bullhorn text-primary mt-1" style="font-size:.85rem;flex-shrink:0;"></i>
-                                <div>
-                                    <div class="fw-semibold text-dark" style="font-size:.82rem;">{{ $noti->TieuDe }}</div>
-                                    <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
-                                </div>
-                            </div>
-                        </a>
-                        @empty
-                        <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
-                        @endforelse
-                    </div>
-                </div>
+                <!-- Notification Bell Unified -->
+                @include('partials.header_notifications')
 
                 <!-- Admin Profile Pill -->
                 <div class="dropdown">

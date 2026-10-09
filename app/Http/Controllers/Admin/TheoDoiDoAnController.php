@@ -31,12 +31,27 @@ class TheoDoiDoAnController extends Controller
         ]);
 
         if ($request->filled('search')) {
-            $s = $request->search;
-            $query->where(function ($q) use ($s) {
+            $s = trim($request->search);
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function ($q) use ($s, $sClean) {
                 $q->where('MaNhom', 'like', "%{$s}%")
                   ->orWhere('TenNhom', 'like', "%{$s}%")
-                  ->orWhereHas('deTai', fn($dq) => $dq->where('TenDeTai', 'like', "%{$s}%"))
-                  ->orWhereHas('truongNhom', fn($sq) => $sq->where('HoTen', 'like', "%{$s}%")->orWhere('MaSV', 'like', "%{$s}%"));
+                  ->orWhereHas('deTai', function($dq) use ($s, $sClean) {
+                      $dq->where('TenDeTai', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $dq->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                      }
+                  })
+                  ->orWhereHas('thanhViens.sinhVien', function($sq) use ($s, $sClean) {
+                      $sq->where('HoTen', 'like', "%{$s}%")
+                         ->orWhere('MaSV', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $sq->orWhere('MaSV', 'like', "%{$sClean}%");
+                      }
+                  });
+                if (!empty($sClean)) {
+                    $q->orWhere('MaNhom', 'like', "%{$sClean}%");
+                }
             });
         }
 

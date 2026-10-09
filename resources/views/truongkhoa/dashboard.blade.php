@@ -31,71 +31,65 @@
         </div>
     </div>
 
-    <!-- KPI Metric Cards -->
+    <!-- KPI Metric Cards (Đồng bộ chuẩn học thuật - Không màu sặc sỡ) -->
     <div class="row g-3 mb-4">
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #dc3545 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Chờ Trưởng Khoa Duyệt</div>
-                            <h3 class="fw-bold my-1 text-danger">{{ $stats['cho_duyet_khoa'] }}</h3>
-                            <div class="small text-muted">Bộ môn đã thông qua</div>
-                        </div>
-                        <div class="p-3 bg-danger-subtle text-danger rounded-circle">
-                            <i class="fa-solid fa-stamp fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Chờ Trưởng Khoa Duyệt</div>
+                        <div class="kpi-value">{{ $stats['cho_duyet_khoa'] }}</div>
+                        <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="small text-decoration-none text-primary fw-semibold">
+                            Xem phê duyệt ngay <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-stamp"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #198754 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Trưởng Khoa Đã Duyệt</div>
-                            <h3 class="fw-bold my-1 text-success">{{ $stats['truong_khoa_da_duyet'] }}</h3>
-                            <div class="small text-muted">Chờ Giáo vụ công bố</div>
-                        </div>
-                        <div class="p-3 bg-success-subtle text-success rounded-circle">
-                            <i class="fa-solid fa-circle-check fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Đề Tài Đã Công Bố</div>
+                        <div class="kpi-value">{{ $stats['da_cong_bo'] }}</div>
+                        <div class="kpi-subtext text-muted">Sinh viên được phép đăng ký</div>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-bullhorn"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0d6efd !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Đề Tài Đã Công Bố</div>
-                            <h3 class="fw-bold my-1 text-primary">{{ $stats['da_cong_bo'] }}</h3>
-                            <div class="small text-muted">Sinh viên đang thực hiện</div>
-                        </div>
-                        <div class="p-3 bg-primary-subtle text-primary rounded-circle">
-                            <i class="fa-solid fa-bullhorn fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Đang Xử Lý Tại Bộ Môn</div>
+                        <div class="kpi-value">{{ $stats['cho_duyet_bm'] + $stats['dang_phan_bien'] }}</div>
+                        <div class="kpi-subtext text-muted">Bộ môn thẩm định chuyên môn</div>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-building-columns"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ffc107 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Đang Xử Lý Tại Bộ Môn</div>
-                            <h3 class="fw-bold my-1 text-warning">{{ $stats['cho_duyet_bm'] + $stats['dang_phan_bien'] }}</h3>
-                            <div class="small text-muted">Chờ phản biện & TBM duyệt</div>
-                        </div>
-                        <div class="p-3 bg-warning-subtle text-warning rounded-circle">
-                            <i class="fa-solid fa-clock-rotate-left fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Tổng Đề Tài Toàn Khoa</div>
+                        <div class="kpi-value">{{ $stats['total_detai'] }}</div>
+                        <div class="kpi-subtext text-muted">Khóa luận học kỳ hiện tại</div>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-folder-open"></i>
                     </div>
                 </div>
             </div>
@@ -136,14 +130,59 @@
         </div>
     </div>
 
+    <!-- Biểu đồ phân tích & Thống kê Khoa -->
+    <div class="row g-4 mb-4">
+        <!-- Biểu đồ 1: Đề tài theo Bộ môn -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-chart-column text-primary me-2"></i>
+                        Phân Bổ Đề Tài Theo Các Bộ Môn Trực Thuộc Khoa
+                    </h6>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small">Toàn Khoa</span>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <div style="position: relative; height: 240px; width: 100%;">
+                        <canvas id="tkBoMonChart"></canvas>
+                    </div>
+                    <div class="mt-3 small text-muted text-center">
+                        Số lượng đề tài do các Bộ môn thuộc khoa triển khai
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ 2: Trạng thái đề tài cấp Khoa -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-chart-pie text-danger me-2"></i>
+                        Trạng Thái Phê Duyệt Cấp Khoa
+                    </h6>
+                    <span class="badge bg-light text-secondary border rounded-pill small">Tiến Độ Thẩm Định</span>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 p-md-4">
+                    <div style="position: relative; height: 240px; width: 100%;">
+                        <canvas id="tkStatusChart"></canvas>
+                    </div>
+                    <div class="mt-3 small text-muted text-center">
+                        Tổng hợp tiến độ phê duyệt trên tổng số {{ $stats['so_de_tai'] }} đề tài của Khoa
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Topics Awaiting Faculty Approval -->
-    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom flex-wrap gap-2">
             <h6 class="fw-bold mb-0 text-dark">
                 <i class="fa-solid fa-stamp text-danger me-2"></i>
                 Đề Tài Đang Chờ Trưởng Khoa Phê Duyệt
             </h6>
-            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-outline-danger btn-sm">
+            <a href="{{ route('truongkhoa.duyet_detai.index', ['TrangThai' => 'dang_xet_duyet']) }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
                 Xem Tất Cả ({{ $stats['cho_duyet_khoa'] }}) <i class="fa-solid fa-arrow-right ms-1"></i>
             </a>
         </div>
@@ -160,11 +199,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 100px;">Mã ĐT</th>
-                                <th>Tên Đề Tài & Bộ Môn</th>
+                                <th>Tên Đề Tài &amp; Bộ Môn</th>
                                 <th>GV Hướng Dẫn</th>
                                 <th>Ý Kiến Phản Biện Đề Cương</th>
                                 <th>Ngày TBM Duyệt</th>
-                                <th class="text-end" style="width: 140px;">Thao Tác</th>
+                                <th class="text-end" style="width: 160px;">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -185,13 +224,13 @@
                                         @if($pb)
                                             <div class="small fw-semibold">{{ $pb->giangVien->HoTen ?? 'N/A' }}</div>
                                             @if($pb->KetQua === 'Đạt')
-                                                <span class="badge bg-success" style="font-size: 0.7rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.72rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
                                             @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
-                                                <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">Cần sửa</span>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.72rem;">Cần sửa</span>
                                             @elseif($pb->KetQua === 'Không đạt')
-                                                <span class="badge bg-danger" style="font-size: 0.7rem;">Không đạt</span>
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.72rem;">Không đạt</span>
                                             @else
-                                                <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">Chưa đánh giá</span>
+                                                <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.72rem;">Chưa đánh giá</span>
                                             @endif
                                         @else
                                             <span class="text-muted small">Chưa ghi nhận</span>
@@ -201,9 +240,11 @@
                                         {{ $dt->NgayDuyetBM ? \Carbon\Carbon::parse($dt->NgayDuyetBM)->format('d/m/Y H:i') : 'Đã duyệt' }}
                                     </td>
                                     <td class="text-end">
-                                        <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold">
-                                            <i class="fa-solid fa-stamp me-1"></i> Xem & Duyệt
-                                        </a>
+                                        <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
+                                            <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
+                                                <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -215,3 +256,78 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Bar Chart: Đề tài theo Bộ môn
+    const bmCtx = document.getElementById('tkBoMonChart');
+    if (bmCtx) {
+        new Chart(bmCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($chartBmLabels ?? []) !!},
+                datasets: [{
+                    label: 'Số đề tài',
+                    data: {!! json_encode($chartBmCounts ?? []) !!},
+                    backgroundColor: '#002855',
+                    borderRadius: 6,
+                    maxBarThickness: 36
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 }
+                    },
+                    x: {
+                        ticks: { font: { size: 11 }, maxRotation: 25, minRotation: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Doughnut Chart: Trạng thái phê duyệt cấp Khoa
+    const statusCtx = document.getElementById('tkStatusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Chờ Khoa duyệt', 'TK đã duyệt', 'Đã công bố', 'Đang xử lý tại BM', 'Cần sửa / Từ chối'],
+                datasets: [{
+                    data: [
+                        {{ $chartStatusKhoa['cho_duyet_khoa'] ?? 0 }},
+                        {{ $chartStatusKhoa['truong_khoa_duyet'] ?? 0 }},
+                        {{ $chartStatusKhoa['da_cong_bo'] ?? 0 }},
+                        {{ $chartStatusKhoa['dang_xu_ly_bm'] ?? 0 }},
+                        {{ $chartStatusKhoa['can_sua_tu_choi'] ?? 0 }}
+                    ],
+                    backgroundColor: ['#dc3545', '#198754', '#0d6efd', '#ffc107', '#6c757d'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+});
+</script>
+@endpush

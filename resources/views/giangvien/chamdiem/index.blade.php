@@ -4,18 +4,7 @@
 
 @section('content')
 <div class="container-fluid px-0">
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid #198754 !important; background-color: #f0fdf4;">
-            <i class="fa-solid fa-circle-check me-2 text-success"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-3 p-3 shadow-sm rounded-3 border-0" role="alert" style="border-left: 5px solid #dc3545 !important; background-color: #fef2f2;">
-            <i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>{{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+
 
     @if($hoiDongs->isEmpty())
     <div class="card border-0 shadow-sm rounded-3">

@@ -29,9 +29,14 @@ class YeuCauDoiMatKhauController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('TenDangNhap', 'LIKE', "%{$s}%")
                   ->orWhere('MaTK', 'LIKE', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('TenDangNhap', 'LIKE', "%{$sClean}%")
+                      ->orWhere('MaTK', 'LIKE', "%{$sClean}%");
+                }
             });
         }
 

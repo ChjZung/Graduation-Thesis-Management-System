@@ -1,6 +1,6 @@
 @extends($layout)
 
-@section('page_title', 'Lịch Quy Trình & Mốc Thời Gian Khóa Luận Theo Tuần')
+@section('page_title', ($roleTitle ?? '') == 'Sinh Viên' ? 'Lịch Báo Cáo' : 'Lịch Quy Trình & Mốc Thời Gian Khóa Luận Theo Tuần')
 
 @push('styles')
 <style>
@@ -299,25 +299,45 @@
             {{-- Tiêu đề trang & Radio Bộ Lọc theo Nhóm Đối Tượng --}}
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h5 class="timetable-title">
-                    <i class="fa-solid fa-calendar-week text-primary"></i> Lịch quy trình & mốc khóa luận theo tuần
+                    <i class="fa-solid fa-calendar-week text-primary"></i> 
+                    @if(($roleTitle ?? '') == 'Sinh Viên')
+                        Lịch Báo Cáo Khóa Luận
+                    @else
+                        Lịch quy trình &amp; mốc khóa luận theo tuần
+                    @endif
                 </h5>
                 <div class="d-flex align-items-center gap-2.5 small text-muted ms-2 flex-wrap">
-                    <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                        <input type="radio" name="filter_role" value="ALL" class="form-check-input mt-0" checked onchange="filterMilestoneRole('ALL')">
-                        Tất cả
-                    </label>
-                    <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                        <input type="radio" name="filter_role" value="SINH_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('SINH_VIEN')">
-                        Sinh viên
-                    </label>
-                    <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                        <input type="radio" name="filter_role" value="GIANG_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('GIANG_VIEN')">
-                        GVHD
-                    </label>
-                    <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                        <input type="radio" name="filter_role" value="KHOA_HDS" class="form-check-input mt-0" onchange="filterMilestoneRole('KHOA_HDS')">
-                        Khoa & Hội đồng
-                    </label>
+                    @if(($roleTitle ?? '') == 'Sinh Viên')
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="ALL" class="form-check-input mt-0" checked onchange="filterMilestoneRole('ALL')">
+                            Tất cả
+                        </label>
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="SINH_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('SINH_VIEN')">
+                            Báo cáo GV &amp; Kế hoạch
+                        </label>
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="KHOA_HDS" class="form-check-input mt-0" onchange="filterMilestoneRole('KHOA_HDS')">
+                            Báo cáo Hội đồng
+                        </label>
+                    @else
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="ALL" class="form-check-input mt-0" checked onchange="filterMilestoneRole('ALL')">
+                            Tất cả
+                        </label>
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="SINH_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('SINH_VIEN')">
+                            Sinh viên
+                        </label>
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="GIANG_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('GIANG_VIEN')">
+                            GVHD
+                        </label>
+                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
+                            <input type="radio" name="filter_role" value="KHOA_HDS" class="form-check-input mt-0" onchange="filterMilestoneRole('KHOA_HDS')">
+                            Khoa &amp; Hội đồng
+                        </label>
+                    @endif
                 </div>
             </div>
 

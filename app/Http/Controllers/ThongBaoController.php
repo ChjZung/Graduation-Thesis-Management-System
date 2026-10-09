@@ -26,11 +26,15 @@ class ThongBaoController extends Controller
         $query = ThongBao::orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
-            $s = $request->search;
-            $query->where(function($q) use ($s) {
+            $s = trim($request->search);
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('TieuDe', 'like', "%{$s}%")
                   ->orWhere('NoiDung', 'like', "%{$s}%")
                   ->orWhere('MaThongBao', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaThongBao', 'like', "%{$sClean}%");
+                }
             });
         }
 

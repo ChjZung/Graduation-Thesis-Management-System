@@ -105,7 +105,7 @@ class IdGenerator
     }
 
     /**
-     * Sinh mã Giảng viên: GV01, GV02...
+     * Sinh mã Giảng viên: chuẩn đúng 10 ký tự (Ví dụ: GV00000001)
      */
     public static function nextGiangVien(): string
     {
@@ -114,7 +114,7 @@ class IdGenerator
                 ->where('MaGV', 'LIKE', 'GV%')
                 ->max(DB::raw("CAST(SUBSTRING(MaGV, 3) AS UNSIGNED)"));
             $next = ($max ?? 0) + 1;
-            return 'GV' . str_pad($next, 2, '0', STR_PAD_LEFT);
+            return 'GV' . str_pad($next, 8, '0', STR_PAD_LEFT);
         });
     }
 

@@ -66,6 +66,30 @@ class DuyetDeTaiController extends Controller
             $baseCountQuery->where('HocPhan', $request->HocPhan);
         }
 
+        $dangXetDuyetStatuses = [
+            'Chờ duyệt cấp Bộ môn',
+            'Đang phản biện đề cương',
+            'Chờ duyệt cấp Khoa',
+            'Đã nộp đề cương - Chờ phân công PB',
+            'Đã phản biện - Chờ duyệt BM',
+            'Đã phản biện - Chờ TBM duyệt đề cương'
+        ];
+
+        $daCongBoStatuses = [
+            'Đã công bố',
+            'Trưởng khoa đã duyệt',
+            'Đã đăng ký',
+            'Hoàn thành',
+            'Đã duyệt'
+        ];
+
+        $tuChoiCanSuaStatuses = [
+            'Yêu cầu chỉnh sửa',
+            'Yêu cầu chỉnh sửa đề cương',
+            'Từ chối',
+            'Không đạt phản biện'
+        ];
+
         $choDuyetBM   = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Bộ môn')->count();
         $dangPB       = (clone $baseCountQuery)->where('TrangThai', 'Đang phản biện đề cương')->count();
         $choDuyetKhoa = (clone $baseCountQuery)->where('TrangThai', 'Chờ duyệt cấp Khoa')->count();
@@ -77,7 +101,14 @@ class DuyetDeTaiController extends Controller
         $tuChoi       = (clone $baseCountQuery)->where('TrangThai', 'Từ chối')->count();
         $total        = (clone $baseCountQuery)->count();
 
+        $countDangXetDuyet = (clone $baseCountQuery)->whereIn('TrangThai', $dangXetDuyetStatuses)->count();
+        $countDaCongBoTab  = (clone $baseCountQuery)->whereIn('TrangThai', $daCongBoStatuses)->count();
+        $countTuChoiCanSua = (clone $baseCountQuery)->whereIn('TrangThai', $tuChoiCanSuaStatuses)->count();
+
         $counts = [
+            'dang_xet_duyet'      => $countDangXetDuyet,
+            'da_cong_bo_tab'      => $countDaCongBoTab,
+            'tu_choi_can_sua'     => $countTuChoiCanSua,
             'cho_duyet_bm'        => $choDuyetBM,
             'dang_phan_bien'      => $dangPB,
             'cho_duyet_khoa'      => $choDuyetKhoa,
@@ -220,7 +251,15 @@ class DuyetDeTaiController extends Controller
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            $query->where('TrangThai', $request->TrangThai);
+            if ($request->TrangThai === 'dang_xet_duyet') {
+                $query->whereIn('TrangThai', $dangXetDuyetStatuses);
+            } elseif ($request->TrangThai === 'da_cong_bo') {
+                $query->whereIn('TrangThai', $daCongBoStatuses);
+            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+                $query->whereIn('TrangThai', $tuChoiCanSuaStatuses);
+            } else {
+                $query->where('TrangThai', $request->TrangThai);
+            }
         }
 
         if ($request->filled('MaKhoa')) {
@@ -251,13 +290,20 @@ class DuyetDeTaiController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
+            $cleanSearch = preg_replace('/[^A-Za-z0-9]/', '', $search);
+            $query->where(function ($q) use ($search, $cleanSearch) {
                 $q->where('TenDeTai', 'LIKE', "%{$search}%")
                   ->orWhere('MaDeTai', 'LIKE', "%{$search}%")
-                  ->orWhere('LinhVuc', 'LIKE', "%{$search}%")
-                  ->orWhereHas('giangVien', function($gq) use ($search) {
-                      $gq->where('HoTen', 'LIKE', "%{$search}%");
-                  });
+                  ->orWhere('LinhVuc', 'LIKE', "%{$search}%");
+                if (!empty($cleanSearch)) {
+                    $q->orWhere('MaDeTai', 'LIKE', "%{$cleanSearch}%");
+                }
+                $q->orWhereHas('giangVien', function($gq) use ($search, $cleanSearch) {
+                    $gq->where('HoTen', 'LIKE', "%{$search}%");
+                    if (!empty($cleanSearch)) {
+                        $gq->orWhere('MaGV', 'LIKE', "%{$cleanSearch}%");
+                    }
+                });
             });
         }
 
@@ -332,7 +378,15 @@ class DuyetDeTaiController extends Controller
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy']);
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            $query->where('TrangThai', $request->TrangThai);
+            if ($request->TrangThai === 'dang_xet_duyet') {
+                $query->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa', 'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']);
+            } elseif ($request->TrangThai === 'da_cong_bo' || $request->TrangThai === 'Đã công bố') {
+                $query->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã đăng ký', 'Hoàn thành', 'Đã duyệt']);
+            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện']);
+            } else {
+                $query->where('TrangThai', $request->TrangThai);
+            }
         }
         if ($request->filled('MaHocKy')) {
             $query->where('MaHocKy', $request->MaHocKy);

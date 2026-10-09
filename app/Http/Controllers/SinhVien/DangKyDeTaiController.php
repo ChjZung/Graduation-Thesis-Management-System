@@ -34,24 +34,23 @@ class DangKyDeTaiController extends Controller
         }
         $maHocKy = $requestedHocKy ?? $defaultHocKy;
 
-        // 2. Lấy danh sách Môn / Học phần và Bộ môn từ DB
-        $hocPhans = \App\Models\HocPhan::where('TrangThai', 'Đang áp dụng')
-            ->orderBy('MaKhoa')
-            ->orderBy('MaBoMon')
+        // Xác định Bộ môn theo Ngành học của sinh viên
+        $svBoMon = $sinhVien->getMaBoMon();
+        $selectedBoMon = $svBoMon;
+
+        // 2. Lấy danh sách Môn / Học phần thuộc đúng Bộ môn của sinh viên
+        $hocPhans = \App\Models\HocPhan::where(function($q) {
+                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
+                  ->orWhere('TrangThai', true);
+            })
+            ->where('MaBoMon', $svBoMon)
+            ->orderBy('TenHocPhan')
             ->get();
         $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
         $selectedHocPhan = $request->input('HocPhan') ?? $request->input('hoc_phan') ?? $request->input('MaHocPhan');
-        $selectedBoMon = $request->input('bo_mon') ?? $request->input('MaBoMon');
-
-        if (!$selectedBoMon && $selectedHocPhan) {
-            $currentHp = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
-            if ($currentHp) {
-                $selectedBoMon = $currentHp->MaBoMon ?: 'DUNG_CHUNG';
-            }
-        }
-        if (!$selectedBoMon) {
-            $selectedBoMon = 'DUNG_CHUNG';
+        if ($selectedHocPhan && !$hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)) {
+            $selectedHocPhan = null;
         }
 
         // 1. Kiểm tra Nhóm của sinh viên theo môn và học kỳ
@@ -103,22 +102,30 @@ class DangKyDeTaiController extends Controller
             $query->where('MaHocKy', $selectedHocKy);
         }
 
+        // Lọc theo bộ môn chuyên ngành của sinh viên
+        $query->where(function($q) use ($svBoMon) {
+            $q->whereHas('giangVien', fn($gv) => $gv->where('MaBoMon', $svBoMon))
+              ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $svBoMon));
+        });
+
         if ($selectedHocPhan) {
             $query->where(function($q) use ($selectedHocPhan) {
                 $q->where('MaHocPhan', $selectedHocPhan)
                   ->orWhere('HocPhan', $selectedHocPhan);
             });
-        } elseif ($selectedBoMon === 'DUNG_CHUNG') {
-            $query->whereHas('hocPhanRef', fn($q) => $q->whereNull('MaBoMon'));
-        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
-            $query->where(function($q) use ($selectedBoMon) {
-                $q->whereHas('giangVien', fn($gv) => $gv->where('MaBoMon', $selectedBoMon))
-                  ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $selectedBoMon));
-            });
         }
 
         if ($request->filled('search')) {
-            $query->where('TenDeTai', 'LIKE', '%' . trim($request->search) . '%');
+            $s = trim($request->search);
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
+                $q->where('TenDeTai', 'LIKE', "%{$s}%")
+                  ->orWhere('MaDeTai', 'LIKE', "%{$s}%")
+                  ->orWhereHas('giangVien', fn($gv) => $gv->where('HoTen', 'LIKE', "%{$s}%"));
+                if (!empty($sClean)) {
+                    $q->orWhere('MaDeTai', 'LIKE', "%{$sClean}%");
+                }
+            });
         }
 
         $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();

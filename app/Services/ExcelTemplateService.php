@@ -107,6 +107,17 @@ class ExcelTemplateService
                 ],
                 'note'     => 'Lưu ý: MSSV, HoTen và MaLop là bắt buộc. MSSV là duy nhất. Email dùng đuôi @st.huit.edu.vn. MaLop có thể điền Mã Lớp hoặc Tên Lớp. Hệ thống tự động liên kết Khoa và Ngành từ Lớp học và tạo Tài khoản sinh viên (Mật khẩu mặc định: 123456).'
             ],
+            'sinhvien_hocky' => [
+                'filename' => 'Template_SinhVien_TheoHocKy.xlsx',
+                'title'    => 'MẪU DANH SÁCH SINH VIÊN THAM GIA KHÓA LUẬN THEO HỌC KỲ',
+                'headers'  => ['MSSV', 'HoTen', 'TrangThai', 'GhiChu'],
+                'examples' => [
+                    ['2001210041', 'Châu Gia Hưng', 'Đủ điều kiện', 'Đủ điều kiện làm khóa luận tốt nghiệp'],
+                    ['2001210042', 'Nguyễn Thị Hoa', 'Chưa đủ điều kiện', 'Thiếu tín chỉ tích lũy (105/115)'],
+                    ['2001210043', 'Trần Văn Nam', '', ''],
+                ],
+                'note'     => 'Lưu ý: MSSV là bắt buộc. HoTen là tùy chọn nếu sinh viên đã có trong hệ thống. Cột TrangThai có thể điền "Đủ điều kiện" hoặc "Chưa đủ điều kiện" (nếu để trống, hệ thống sẽ tự động rà soát chuẩn Tín chỉ >= 115 và ĐTB >= 2.0). Cột GhiChu là tùy chọn.'
+            ],
             'taikhoan' => [
                 'filename' => 'Template_TaiKhoan.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU TÀI KHOẢN NGƯỜI DÙNG',

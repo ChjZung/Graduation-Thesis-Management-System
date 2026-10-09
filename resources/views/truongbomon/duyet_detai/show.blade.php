@@ -318,69 +318,176 @@
                 </div>
             </div>
 
-            <!-- TBM Decision Actions -->
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fa-solid fa-stamp text-primary me-2"></i>
-                        Quyết Định Của Trưởng Bộ Môn
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        @if(in_array($detai->TrangThai, ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']) || ($phanBienHienTai && $phanBienHienTai->KetQua === 'Đạt' && $detai->TrangThai !== 'Đã công bố'))
-                            <div class="alert alert-info py-2 small mb-2 text-start">
-                                <i class="fa-solid fa-circle-info me-1"></i> Đề tài đã có kết quả phản biện Đạt. Thao tác duyệt đề cương và công bố đề tài được quản lý tại mục <strong>Phân công phản biện</strong>.
+            <!-- TBM Decision / Result Section -->
+            @php
+                $isBothApproved = in_array($detai->TrangThai, [
+                    'Đã công bố',
+                    'Trưởng khoa đã duyệt',
+                    'Trưởng khoa đã duyệt - Chờ nộp đề cương',
+                    'Đã nộp đề cương - Chờ phân công PB',
+                    'Đang phản biện đề cương',
+                    'Đã cập nhật đề cương - Chờ phản biện lại',
+                    'Đã phản biện - Chờ duyệt BM',
+                    'Đã phản biện - Chờ TBM duyệt đề cương',
+                    'Hoàn thành'
+                ]) || (!empty($detai->NgayDuyetBM) && !empty($detai->NgayDuyetKhoa));
+            @endphp
+
+            @if($isBothApproved)
+                {{-- ĐÃ PHÊ DUYỆT 2 CẤP (BỘ MÔN & KHOA): CHUYỂN PHẦN QUYẾT ĐỊNH THÀNH KẾT QUẢ, KHÔNG HIỆN NÚT SỬA/TỪ CHỐI --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-success fs-5"></i>
+                        <h6 class="fw-bold mb-0 text-dark">Kết Quả Phê Duyệt Đề Tài</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="text-center mb-3">
+                            <span class="badge bg-success text-white px-3.5 py-2 fs-6 rounded-pill shadow-xs">
+                                <i class="fa-solid fa-stamp me-1.5"></i> Đã Phê Duyệt Chính Thức
+                            </span>
+                            <div class="text-muted small mt-2">
+                                Đề tài đã hoàn tất quy trình phê duyệt 2 cấp: <strong>Bộ môn</strong> và <strong>Ban Chủ nhiệm Khoa</strong>.
                             </div>
-                            <a href="{{ route('truongbomon.phancong.index', ['tab' => 'da_phan_bien', 'search' => $detai->MaDeTai]) }}" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+                        </div>
+
+                        <div class="bg-light p-3 rounded-3 mb-3 small">
+                            <div class="d-flex justify-content-between align-items-center py-1.5 border-bottom">
+                                <span class="text-muted"><i class="fa-solid fa-building-columns text-primary me-1.5"></i> Bộ môn duyệt:</span>
+                                <strong class="text-dark">{{ $detai->NgayDuyetBM ? \Carbon\Carbon::parse($detai->NgayDuyetBM)->format('d/m/Y H:i') : 'Đã duyệt' }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-1.5 border-bottom">
+                                <span class="text-muted"><i class="fa-solid fa-stamp text-success me-1.5"></i> Trưởng khoa duyệt:</span>
+                                <strong class="text-dark">{{ $detai->NgayDuyetKhoa ? \Carbon\Carbon::parse($detai->NgayDuyetKhoa)->format('d/m/Y H:i') : 'Đã duyệt' }}</strong>
+                            </div>
+                            @if($detai->NgayCongBo)
+                            <div class="d-flex justify-content-between align-items-center py-1.5">
+                                <span class="text-muted"><i class="fa-solid fa-bullhorn text-info me-1.5"></i> Ngày công bố:</span>
+                                <strong class="text-dark">{{ \Carbon\Carbon::parse($detai->NgayCongBo)->format('d/m/Y H:i') }}</strong>
+                            </div>
+                            @endif
+                        </div>
+
+                        @if(in_array($detai->TrangThai, ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']) || ($phanBienHienTai && $phanBienHienTai->KetQua === 'Đạt' && $detai->TrangThai !== 'Đã công bố'))
+                            <div class="alert alert-info py-2.5 px-3 small mb-2 text-start rounded-3">
+                                <i class="fa-solid fa-circle-info me-1"></i> Đề cương đã phản biện Đạt. Thao tác chốt duyệt đề cương được quản lý tại mục <strong>Phân công phản biện</strong>.
+                            </div>
+                            <a href="{{ route('truongbomon.phancong.index', ['tab' => 'da_phan_bien', 'search' => $detai->MaDeTai]) }}" class="btn btn-success w-100 py-2.5 fw-bold shadow-sm rounded-pill">
                                 <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sang Phân Công Phản Biện Để Duyệt
                             </a>
-                        @elseif($detai->TrangThai === 'Chờ duyệt cấp Bộ môn')
-                            <!-- Nút 2: Duyệt Đề Xuất Cấp Bộ Môn (Lần 1 - Chuyển Lên Khoa) -->
+                        @elseif($detai->TrangThai === 'Đã công bố')
+                            <div class="p-2.5 bg-success-subtle text-success rounded-3 text-center small fw-semibold">
+                                <i class="fa-solid fa-circle-check me-1"></i> Đề tài đã công bố chính thức cho sinh viên đăng ký!
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @elseif($detai->TrangThai === 'Chờ duyệt cấp Khoa')
+                {{-- BỘ MÔN ĐÃ DUYỆT NHƯNG KHOA CHƯA DUYỆT: VẪN CÒN 3 NÚT ĐỂ CẬP NHẬT/ĐIỀU CHỈNH --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="fa-solid fa-stamp text-primary me-2"></i> Quyết Định Của Trưởng Bộ Môn
+                        </h6>
+                        <span class="badge bg-info-subtle text-info border">Chờ Khoa duyệt</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="alert alert-info py-2.5 px-3 small rounded-3 mb-3">
+                            <i class="fa-solid fa-info-circle me-1"></i> Bộ môn đã phê duyệt và chuyển tiếp Khoa. Do Trưởng khoa chưa chốt duyệt, Trưởng bộ môn vẫn có thể cập nhật hoặc điều chỉnh lại quyết định.
+                        </div>
+
+                        <div class="d-grid gap-2.5">
+                            <!-- Nút 1: Cập nhật duyệt -->
+                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
+                                  onsubmit="return confirm('Xác nhận CẬP NHẬT PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn?');">
+                                @csrf
+                                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold shadow-sm rounded-pill">
+                                    <i class="fa-solid fa-rotate me-1"></i> Cập Nhật Phê Duyệt Cấp Bộ Môn
+                                </button>
+                            </form>
+
+                            <!-- Nút 2: Yêu Cầu Chỉnh Sửa -->
+                            <button type="button" class="btn btn-outline-warning w-100 py-2.5 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Yêu Cầu Chỉnh Sửa
+                            </button>
+
+                            <!-- Nút 3: Từ Chối -->
+                            <button type="button" class="btn btn-outline-danger w-100 py-2.5 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark me-1"></i> Từ Chối Đề Tài
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @elseif($detai->TrangThai === 'Chờ duyệt cấp Bộ môn')
+                {{-- ĐỀ TÀI MỚI CHỜ DUYỆT CẤP BỘ MÔN: 3 NÚT --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="fa-solid fa-stamp text-primary me-2"></i> Quyết Định Của Trưởng Bộ Môn
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-grid gap-2.5">
+                            <!-- Nút 1: Phê Duyệt Đề Xuất (Chuyển tiếp Khoa) -->
                             <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
                                   onsubmit="return confirm('Bạn có chắc chắn muốn PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn và chuyển tiếp lên Trưởng khoa?');">
                                 @csrf
-                                <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+                                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold shadow-sm rounded-pill">
                                     <i class="fa-solid fa-check me-1"></i> Phê Duyệt Đề Xuất
                                 </button>
                             </form>
-                        @endif
 
-                        <!-- Nút Yêu Cầu Chỉnh Sửa -->
-                        <button type="button" class="btn btn-outline-warning w-100 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                            <i class="fa-solid fa-pen-to-square me-1"></i> Yêu Cầu Chỉnh Sửa
-                        </button>
+                            <!-- Nút 2: Yêu Cầu Chỉnh Sửa -->
+                            <button type="button" class="btn btn-outline-warning w-100 py-2.5 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Yêu Cầu Chỉnh Sửa
+                            </button>
 
-                        <!-- Nút Từ Chối -->
-                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTuChoi"
-                                {{ in_array($detai->TrangThai, ['Từ chối', 'Đã công bố']) ? 'disabled' : '' }}>
-                            <i class="fa-solid fa-circle-xmark me-1"></i> Từ Chối Đề Tài
-                        </button>
+                            <!-- Nút 3: Từ Chối -->
+                            <button type="button" class="btn btn-outline-danger w-100 py-2.5 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark me-1"></i> Từ Chối Đề Tài
+                            </button>
+                        </div>
                     </div>
-
-                    @if($detai->TrangThai === 'Đã công bố')
-                        <div class="mt-3 p-2 bg-success-subtle text-success rounded text-center small fw-semibold">
-                            <i class="fa-solid fa-circle-check me-1"></i> Đề tài đã được Bộ môn phê duyệt đề cương và Công bố chính thức cho SV đăng ký!
-                        </div>
-                    @elseif($detai->TrangThai === 'Chờ duyệt cấp Khoa')
-                        <div class="mt-3 p-2 bg-light rounded text-center small text-muted">
-                            <i class="fa-solid fa-paper-plane text-primary me-1"></i> Đã duyệt cấp Bộ môn. Đang chờ Trưởng khoa phê duyệt chủ trương.
-                        </div>
-                    @elseif($detai->TrangThai === 'Trưởng khoa đã duyệt - Chờ nộp đề cương')
-                        <div class="mt-3 p-2 bg-warning-subtle text-warning-emphasis rounded text-center small fw-semibold">
-                            <i class="fa-solid fa-clock me-1"></i> Khoa đã thông qua. Đang chờ GV đề xuất nộp Đề cương chi tiết.
-                        </div>
-                    @elseif($detai->TrangThai === 'Đã nộp đề cương - Chờ phân công PB')
-                        <div class="mt-3 p-2 bg-info-subtle text-info-emphasis rounded text-center small fw-semibold">
-                            <i class="fa-solid fa-file-circle-check me-1"></i> GV đã nộp Đề cương. Vui lòng phân công GV phản biện ở ô phía trên.
-                        </div>
-                    @elseif($detai->TrangThai === 'Đang phản biện đề cương')
-                        <div class="mt-3 p-2 bg-info-subtle text-info-emphasis rounded text-center small fw-semibold">
-                            <i class="fa-solid fa-spinner me-1"></i> Đang chờ GV phản biện đọc đề cương và gửi nhận xét đánh giá.
-                        </div>
-                    @endif
                 </div>
-            </div>
+            @elseif($detai->TrangThai === 'Từ chối')
+                {{-- ĐỀ TÀI BỊ TỪ CHỐI --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-xmark text-danger fs-5"></i>
+                        <h6 class="fw-bold mb-0 text-dark">Kết Quả: Đã Từ Chối Đề Tài</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="alert alert-danger py-2.5 px-3 small rounded-3 mb-0">
+                            <strong>Lý do từ chối:</strong> {{ $detai->LyDoTuChoi ?? 'Không đạt yêu cầu chuyên môn' }}
+                        </div>
+                    </div>
+                </div>
+            @else
+                {{-- CÁC TRẠNG THÁI KHÁC (VÍ DỤ: YÊU CẦU CHỈNH SỬA) --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="fa-solid fa-stamp text-primary me-2"></i> Quyết Định Của Trưởng Bộ Môn
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="alert alert-warning py-2.5 px-3 small rounded-3 mb-3">
+                            <i class="fa-solid fa-clock me-1"></i> Đề tài đang ở trạng thái <strong>{{ $detai->TrangThai }}</strong>. Đang chờ Giảng viên cập nhật và nộp lại bản điều chỉnh.
+                        </div>
+                        <div class="d-grid gap-2.5">
+                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
+                                  onsubmit="return confirm('Xác nhận PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn và chuyển tiếp lên Trưởng khoa?');">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-success w-100 py-2.5 fw-bold rounded-pill">
+                                    <i class="fa-solid fa-check me-1"></i> Phê Duyệt Lại Đề Xuất
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-outline-danger w-100 py-2.5 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark me-1"></i> Từ Chối Đề Tài
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

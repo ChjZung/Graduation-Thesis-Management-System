@@ -19,9 +19,13 @@ class BoMonController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('MaBoMon', 'like', "%{$s}%")
                   ->orWhere('TenBoMon', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaBoMon', 'like', "%{$sClean}%");
+                }
             });
         }
 

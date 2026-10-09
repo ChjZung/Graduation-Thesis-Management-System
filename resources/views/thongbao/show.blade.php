@@ -1,4 +1,14 @@
-@extends('layouts.admin')
+@php
+    if (empty($layout)) {
+        $uRole = Auth::user()?->VaiTro ?? '';
+        if ($uRole === 'SinhVien') $layout = 'layouts.sinhvien';
+        elseif ($uRole === 'GiangVien') $layout = 'layouts.giangvien';
+        elseif ($uRole === 'TruongBoMon') $layout = 'layouts.truongbomon';
+        elseif ($uRole === 'TruongKhoa') $layout = 'layouts.truongkhoa';
+        else $layout = 'layouts.admin';
+    }
+@endphp
+@extends($layout)
 
 @section('page_title', 'Chi Tiết Thông Báo & Xem Văn Bản Công Văn')
 
@@ -71,7 +81,7 @@
     {{-- Thanh điều hướng & Action bar --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <a href="{{ $backUrl ?? route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                 <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
             </a>
             <span class="text-muted small">|</span>
@@ -87,7 +97,7 @@
                     <i class="fa-solid fa-download me-1"></i> Tải Công Văn Gốc
                 </a>
             @endif
-            @if(in_array($thongBao->TrangThai, ['NHÁP', 'ĐÃ LÊN LỊCH']))
+            @if(in_array($thongBao->TrangThai, ['NHÁP', 'ĐÃ LÊN LỊCH']) && Route::has('thongbao.edit') && (!isset($layout) || $layout === 'layouts.admin'))
                 <a href="{{ route('thongbao.edit', $thongBao->MaThongBao) }}" class="btn btn-warning btn-sm rounded-pill px-3 shadow-sm fw-semibold">
                     <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
                 </a>

@@ -69,6 +69,6 @@ class HocPhan extends Model
 
     public function getTenBoMonHienThiAttribute(): string
     {
-        return $this->boMon ? $this->boMon->TenBoMon : 'Học phần dùng chung';
+        return $this->boMon ? $this->boMon->TenBoMon : 'Chưa phân bộ môn';
     }
 }

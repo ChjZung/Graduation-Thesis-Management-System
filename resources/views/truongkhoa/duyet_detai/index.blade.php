@@ -47,13 +47,7 @@
         box-shadow: 0 8px 18px -2px rgba(0, 40, 85, 0.08);
     }
     .kpi-metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--card-accent, #0072ce);
+        display: none !important;
     }
     .kpi-icon-box {
         width: 44px;
@@ -186,16 +180,16 @@
     .table-academic thead th {
         background: #f8fafc;
         color: #475569;
-        font-size: 0.75rem;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        padding: 12px 14px;
+        padding: 14px 16px;
         border-bottom: 1px solid #e2e8f0;
         white-space: nowrap;
     }
     .table-academic tbody td {
-        padding: 12px 14px;
+        padding: 14px 16px;
         border-bottom: 1px solid #f1f5f9;
         color: #334155;
         font-size: 0.88rem;
@@ -309,13 +303,13 @@
         <div class="row g-3 mb-4">
             {{-- Card 1: Tổng đề tài --}}
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card" style="--card-accent: #004a8f;">
+                <div class="kpi-metric-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="kpi-label">Tổng Đề Tài (Học Kỳ)</div>
                             <div class="kpi-value">{{ $counts['total'] }}</div>
                         </div>
-                        <div class="kpi-icon-box" style="background: #e8f1fa; color: #004a8f;">
+                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
                             <i class="fa-solid fa-folder-open"></i>
                         </div>
                     </div>
@@ -328,147 +322,98 @@
 
             {{-- Card 2: Đã công bố cho SV --}}
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card" style="--card-accent: #0284c7;">
+                <div class="kpi-metric-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="kpi-label">Đã Công Bố Cho Sinh Viên</div>
-                            <div class="kpi-value text-primary">{{ $counts['da_cong_bo'] }}</div>
+                            <div class="kpi-value">{{ $counts['da_cong_bo'] }}</div>
                         </div>
-                        <div class="kpi-icon-box" style="background: #e0f2fe; color: #0284c7;">
+                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
                             <i class="fa-solid fa-bullhorn"></i>
                         </div>
                     </div>
                     <div class="kpi-subtext mt-2">
                         @php $pctCb = $counts['total'] > 0 ? round(($counts['da_cong_bo'] / $counts['total']) * 100, 1) : 0; @endphp
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold">{{ $pctCb }}%</span>
+                        <span class="badge bg-light text-primary border fw-semibold">{{ $pctCb }}%</span>
                         <span>Sinh viên được phép đăng ký</span>
                     </div>
                 </div>
             </div>
 
-            {{-- Card 3: TK Đã duyệt (Chờ công bố) --}}
+            {{-- Card 3: Cần chỉnh sửa / Từ chối --}}
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card" style="--card-accent: #10b981;">
+                <div class="kpi-metric-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="kpi-label">TK Đã Duyệt (Chờ Công Bố)</div>
-                            <div class="kpi-value text-success">{{ $counts['truong_khoa_da_duyet'] }}</div>
+                            <div class="kpi-label">Cần Chỉnh Sửa / Từ Chối</div>
+                            <div class="kpi-value">{{ $counts['tu_choi_can_sua'] }}</div>
                         </div>
-                        <div class="kpi-icon-box" style="background: #dcfce7; color: #16a34a;">
-                            <i class="fa-solid fa-circle-check"></i>
+                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
                         </div>
                     </div>
                     <div class="kpi-subtext mt-2">
-                        @if($counts['truong_khoa_da_duyet'] > 0)
-                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">Sẵn sàng công bố</span>
+                        @if($counts['tu_choi_can_sua'] > 0)
+                            <span class="badge bg-light text-danger border fw-semibold">Cần GV hoàn thiện</span>
                         @else
-                            <span class="badge bg-light text-muted border">Không có đề tài chờ</span>
+                            <span class="badge bg-light text-muted border">Không có đề tài lỗi</span>
                         @endif
-                        <span>Đã thông qua cấp Khoa</span>
+                        <span>Chưa đạt yêu cầu</span>
                     </div>
                 </div>
             </div>
 
             {{-- Card 4: Đang trong luồng duyệt --}}
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card" style="--card-accent: #f59e0b;">
+                <div class="kpi-metric-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="kpi-label">Đang Xét Duyệt Chuyên Môn</div>
-                            <div class="kpi-value text-warning">{{ $counts['cho_duyet'] }}</div>
+                            <div class="kpi-value">{{ $counts['cho_duyet'] }}</div>
                         </div>
-                        <div class="kpi-icon-box" style="background: #fef3c7; color: #d97706;">
+                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
                             <i class="fa-solid fa-hourglass-half"></i>
                         </div>
                     </div>
                     <div class="kpi-subtext mt-2">
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold">{{ $counts['cho_duyet_bm'] }} BM / {{ $counts['cho_duyet_khoa'] }} Khoa</span>
+                        <span class="badge bg-light text-secondary border fw-semibold">{{ $counts['cho_duyet_bm'] }} BM / {{ $counts['cho_duyet_khoa'] }} Khoa</span>
                         <span>Đang xử lý thẩm định</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- ── PILL TABS TRẠNG THÁI ĐỒNG BỘ (THANH TRẠNG THÁI CHUYÊN NGHIỆP) ── --}}
-        <div class="admin-pill-tabs mb-3" role="navigation" aria-label="Bộ lọc trạng thái đề tài">
+        <div class="admin-pill-tabs mb-4" role="navigation" aria-label="Bộ lọc trạng thái đề tài">
             {{-- 1. Tất Cả --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'ALL', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai', 'ALL') === 'ALL' ? 'active' : '' }}" title="Xem toàn bộ đề tài trong học kỳ">
-                <i class="fa-solid fa-layer-group text-primary {{ request('TrangThai', 'ALL') === 'ALL' ? 'text-white' : '' }}"></i>
-                <span>Tất Cả</span>
+            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'ALL', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'active' : '' }}" title="Xem toàn bộ đề tài trong học kỳ">
+                <i class="fa-solid fa-layer-group {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'text-white' : 'text-primary' }}"></i>
+                <span>Tất Cả Đề Tài</span>
                 <span class="pill-count">{{ $counts['total'] }}</span>
             </a>
 
-            {{-- 2. Chờ BM Duyệt --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Chờ duyệt cấp Bộ môn', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Chờ duyệt cấp Bộ môn' ? 'active' : '' }}" title="Đề tài đang chờ Bộ môn chuyên môn thẩm định">
+            {{-- 2. Đang Xét Duyệt --}}
+            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'dang_xet_duyet', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ request('TrangThai') === 'dang_xet_duyet' || request('TrangThai') === 'cho_duyet' ? 'active' : '' }}" title="Đề tài đang trong quy trình thẩm định hoặc chờ Khoa phê chuẩn">
                 <span class="pill-dot" style="background:#f59e0b;"></span>
-                <span>Chờ BM Duyệt</span>
-                <span class="pill-count">{{ $counts['cho_duyet_bm'] }}</span>
+                <span>Đang Xét Duyệt</span>
+                <span class="pill-count">{{ $counts['dang_xet_duyet'] }}</span>
             </a>
 
-            {{-- 3. Đang Phản Biện Đề Cương --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Đang phản biện đề cương', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Đang phản biện đề cương' ? 'active' : '' }}" title="Đề cương đang được phân công thẩm định phản biện">
-                <span class="pill-dot" style="background:#06b6d4;"></span>
-                <span>Đang Phản Biện</span>
-                <span class="pill-count">{{ $counts['dang_phan_bien'] }}</span>
-            </a>
-
-            {{-- 4. Chờ Khoa Duyệt --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Chờ duyệt cấp Khoa', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Chờ duyệt cấp Khoa' ? 'active' : '' }}" title="Bộ môn đã thông qua, đang chờ Ban Chủ nhiệm Khoa phê duyệt">
-                <span class="pill-dot" style="background:#ef4444;"></span>
-                <span>Chờ Khoa Duyệt</span>
-                <span class="pill-count">{{ $counts['cho_duyet_khoa'] }}</span>
-            </a>
-
-            {{-- 5. Trưởng Khoa Đã Duyệt --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Trưởng khoa đã duyệt', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Trưởng khoa đã duyệt' ? 'active' : '' }}" title="Trưởng khoa đã phê duyệt - Sẵn sàng để công bố cho sinh viên">
+            {{-- 3. Đã Phê Duyệt & Công Bố --}}
+            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_cong_bo', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ request('TrangThai') === 'da_cong_bo' ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt / công bố cho sinh viên">
                 <span class="pill-dot" style="background:#10b981;"></span>
-                <span>TK Đã Duyệt</span>
-                <span class="pill-count">{{ $counts['truong_khoa_da_duyet'] }}</span>
+                <span>Đã Công Bố &amp; Đã Duyệt</span>
+                <span class="pill-count">{{ $counts['da_cong_bo_tab'] }}</span>
             </a>
 
-            {{-- 6. Đã Công Bố --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Đã công bố', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Đã công bố' ? 'active' : '' }}" title="Đã công bố chính thức - Sinh viên được phép xem và đăng ký">
-                <span class="pill-dot" style="background:#0072ce;"></span>
-                <span>Đã Công Bố</span>
-                <span class="pill-count">{{ $counts['da_cong_bo'] }}</span>
-            </a>
-
-            {{-- 7. Đã Đăng Ký (Có Nhóm 3 SV) --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Đã đăng ký', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Đã đăng ký' ? 'active' : '' }}" title="Đã có nhóm sinh viên đăng ký đề tài (chuẩn 3 SV/nhóm)">
-                <span class="pill-dot" style="background:#6366f1;"></span>
-                <span>Đã Có Nhóm (3 SV)</span>
-                <span class="pill-count">{{ $counts['da_dang_ky'] }}</span>
-            </a>
-
-            {{-- 8. Hoàn Thành --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Hoàn thành', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Hoàn thành' ? 'active' : '' }}" title="Đề tài đã hoàn thành bảo vệ và tổng kết điểm">
-                <span class="pill-dot" style="background:#334155;"></span>
-                <span>Hoàn Thành</span>
-                <span class="pill-count">{{ $counts['hoan_thanh'] }}</span>
-            </a>
-
-            {{-- 9. Cần Chỉnh Sửa --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Yêu cầu chỉnh sửa', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Yêu cầu chỉnh sửa' ? 'active' : '' }}" title="Khoa / Bộ môn yêu cầu giảng viên chỉnh sửa đề cương">
-                <span class="pill-dot" style="background:#ea580c;"></span>
-                <span>Cần Chỉnh Sửa</span>
-                <span class="pill-count">{{ $counts['yeu_cau_sua'] }}</span>
-            </a>
-
-            {{-- 10. Từ Chối --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except('page'), ['TrangThai' => 'Từ chối', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'Từ chối' ? 'active' : '' }}" title="Đề tài không được duyệt">
-                <span class="pill-dot" style="background:#64748b;"></span>
-                <span>Từ Chối</span>
-                <span class="pill-count">{{ $counts['tu_choi'] }}</span>
+            {{-- 4. Cần Chỉnh Sửa / Từ Chối --}}
+            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'tu_choi_can_sua', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ request('TrangThai') === 'tu_choi_can_sua' ? 'active' : '' }}" title="Đề tài có yêu cầu chỉnh sửa hoặc không đạt">
+                <span class="pill-dot" style="background:#ef4444;"></span>
+                <span>Cần Chỉnh Sửa / Từ Chối</span>
+                <span class="pill-count">{{ $counts['tu_choi_can_sua'] }}</span>
             </a>
         </div>
 
@@ -575,10 +520,10 @@
                             <th width="4%" class="text-center">#</th>
                             <th width="10%">Mã Đề Tài</th>
                             <th width="32%">Tên Đề Tài &amp; Lĩnh Vực</th>
-                            <th width="20%">Giảng Viên Hướng Dẫn</th>
-                            <th width="14%" class="text-center">Đăng Ký SV</th>
+                            <th width="18%">Giảng Viên Hướng Dẫn</th>
+                            <th width="12%" class="text-center">Đăng Ký SV</th>
                             <th width="12%" class="text-center">Trạng Thái</th>
-                            <th width="8%" class="text-center">Thao Tác</th>
+                            <th width="12%" class="text-center">Thao Tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -654,12 +599,12 @@
                             <td class="text-center">
                                 @if($dt->TrangThai === 'Chờ duyệt cấp Khoa')
                                     <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap">
+                                       class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold text-nowrap shadow-xs">
                                         <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
                                     </a>
                                 @else
                                     <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" 
-                                       class="btn btn-sm btn-outline-primary rounded-3 px-3 text-nowrap">
+                                       class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 text-nowrap">
                                         <i class="fa-solid fa-eye me-1"></i> Chi Tiết
                                     </a>
                                 @endif
@@ -758,12 +703,12 @@
         <div class="row g-3 mb-4">
             <!-- 1. Tổng đề tài -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-primary">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Tổng Đề Tài</div>
                         <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['total']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #e0f2fe; color: #0284c7;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-regular fa-folder-open"></i>
                     </div>
                 </div>
@@ -771,12 +716,12 @@
 
             <!-- 2. Đã công bố -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-info">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Đã Công Bố</div>
-                        <div class="fs-4 fw-bold text-info mt-1">{{ number_format($statsKPIs['da_cong_bo']) }}</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['da_cong_bo']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #e0e7ff; color: #4338ca;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-solid fa-bullhorn"></i>
                     </div>
                 </div>
@@ -784,12 +729,12 @@
 
             <!-- 3. Đang đăng ký -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-warning">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Đang Đăng Ký</div>
-                        <div class="fs-4 fw-bold text-warning mt-1">{{ number_format($statsKPIs['dang_dang_ky']) }}</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['dang_dang_ky']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #fef3c7; color: #d97706;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-solid fa-user-plus"></i>
                     </div>
                 </div>
@@ -797,12 +742,12 @@
 
             <!-- 4. Đã đủ nhóm -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-success">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Đã Đủ Nhóm</div>
-                        <div class="fs-4 fw-bold text-success mt-1">{{ number_format($statsKPIs['da_du_nhom']) }}</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['da_du_nhom']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-solid fa-users-viewfinder"></i>
                     </div>
                 </div>
@@ -810,12 +755,12 @@
 
             <!-- 5. Đang chờ duyệt -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-secondary">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Đang Chờ Duyệt</div>
-                        <div class="fs-4 fw-bold text-secondary mt-1">{{ number_format($statsKPIs['dang_cho_duyet']) }}</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['dang_cho_duyet']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #475569;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-regular fa-clock"></i>
                     </div>
                 </div>
@@ -823,12 +768,12 @@
 
             <!-- 6. Đã hoàn thành -->
             <div class="col-12 col-sm-6 col-md-4 col-xl-2">
-                <div class="stat-kpi-card d-flex align-items-center justify-content-between border-start border-4 border-dark">
+                <div class="stat-kpi-card d-flex align-items-center justify-content-between border">
                     <div>
                         <div class="text-muted small fw-semibold">Đã Hoàn Thành</div>
                         <div class="fs-4 fw-bold text-dark mt-1">{{ number_format($statsKPIs['da_hoan_thanh']) }}</div>
                     </div>
-                    <div class="stat-kpi-icon" style="background: #f3e8ff; color: #7e22ce;">
+                    <div class="stat-kpi-icon" style="background: #f1f5f9; color: #003366;">
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
                 </div>

@@ -23,7 +23,7 @@
                         <i class="fa-solid fa-building-user me-2 text-primary"></i>
                         Giảng viên: <strong>{{ $gv->HoTen }}</strong> — Trực thuộc: <span class="badge bg-primary fs-7">{{ $gv->boMon->TenBoMon }}</span>
                     </div>
-                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần được lọc theo bộ môn trực thuộc & khóa luận dùng chung</span>
+                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần tự động lọc theo bộ môn trực thuộc & theo từng học kỳ</span>
                 </div>
                 @endif
 
@@ -51,16 +51,13 @@
                                 <option value="">-- Vui lòng chọn học kỳ trước --</option>
                             </select>
                             <div class="form-text text-muted small" id="MaHocPhan_help">
-                                Chỉ hiển thị các môn được mở trong học kỳ đã chọn theo Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong> & Khóa luận.
+                                Chỉ hiển thị các môn được mở trong học kỳ đã chọn theo Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong>.
                             </div>
                         </div>
                         <div class="col-md-3">
                             <label for="SoLuongSinhVienToiDa" class="form-label fw-bold">Số SV Tối Đa <span class="text-danger">*</span></label>
-                            <select name="SoLuongSinhVienToiDa" id="SoLuongSinhVienToiDa" class="form-select" required>
-                                <option value="1" {{ old('SoLuongSinhVienToiDa') == 1 ? 'selected' : '' }}>1 Sinh viên</option>
-                                <option value="2" {{ old('SoLuongSinhVienToiDa', 2) == 2 ? 'selected' : '' }}>2 Sinh viên (Khuyến nghị)</option>
-                                <option value="3" {{ old('SoLuongSinhVienToiDa') == 3 ? 'selected' : '' }}>3 Sinh viên</option>
-                            </select>
+                            <input type="text" class="form-control bg-light fw-semibold text-dark" value="3 Sinh viên" readonly>
+                            <input type="hidden" name="SoLuongSinhVienToiDa" value="3">
                         </div>
                     </div>
 
@@ -79,58 +76,18 @@
                         <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3" placeholder="Ví dụ: Thành thạo Laravel/Vue, kiến thức cơ sở dữ liệu vững vàng, có tinh thần làm việc nhóm...">{{ old('YeuCau') }}</textarea>
                     </div>
 
-                    <div class="mb-4 p-3 bg-light rounded-3 border border-dashed">
-                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                            <div class="fw-bold text-dark">
-                                <i class="fa-solid fa-file-circle-exclamation text-primary me-1"></i> Đề Cương Chi Tiết (Chưa nộp ở bước này)
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa-solid fa-download me-1"></i> Tải Biểu Mẫu Đề Cương (.docx)
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                                    <li><h6 class="dropdown-header small fw-bold text-muted">Chọn biểu mẫu theo môn/học phần</h6></li>
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'cu_nhan']) }}">
-                                            <i class="fa-solid fa-graduation-cap text-primary me-2 fa-fw"></i>
-                                            <div>
-                                                <div class="fw-semibold">Khóa Luận Cử Nhân</div>
-                                                <small class="text-muted">Biểu mẫu đề cương cử nhân ngành CNTT</small>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'ky_su']) }}">
-                                            <i class="fa-solid fa-gears text-success me-2 fa-fw"></i>
-                                            <div>
-                                                <div class="fw-semibold">Khóa Luận Kỹ Sư</div>
-                                                <small class="text-muted">Biểu mẫu đề cương kỹ sư ngành CNTT</small>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center py-2" href="{{ route('giangvien.detai.download_template', ['type' => 'do_an']) }}">
-                                            <i class="fa-solid fa-folder-open text-warning me-2 fa-fw"></i>
-                                            <div>
-                                                <div class="fw-semibold">Đồ Án Tốt Nghiệp</div>
-                                                <small class="text-muted">Biểu mẫu đề cương đồ án ngành CNTT</small>
-                                            </div>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="text-muted small">
-                            <i class="fa-solid fa-circle-info text-info me-1"></i>
-                            <strong>Quy trình thực hiện:</strong> Ở bước đề xuất ban đầu, Giảng viên <strong>không nộp file đề cương</strong> mà chỉ khai báo tên, mục tiêu và yêu cầu đề tài. File Đề cương chi tiết sẽ được mở để nộp sau khi đề xuất được <strong>Trưởng Bộ Môn</strong> và <strong>Trưởng Khoa phê duyệt chủ trương</strong>.
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <div class="small text-secondary d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-primary"></i>
+                            <span><strong>Đề cương chi tiết:</strong> Đề tài chưa được phê duyệt (Giảng viên sẽ nộp file đề cương chi tiết sau khi đề tài được phê duyệt).</span>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-semibold">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Gửi Đề Xuất Lên Bộ Môn Duyệt
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Đề xuất đề tài
                         </button>
-                        <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 rounded-pill">Hủy Bỏ</a>
+                        <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4">Hủy Bỏ</a>
                     </div>
                 </form>
             </div>
@@ -161,55 +118,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         selectHocPhan.disabled = false;
 
-        // Lọc các học phần được mở trong selectedHk
+        // Lọc các học phần của Bộ môn được mở trong selectedHk
         const openedHocPhans = allHocPhans.filter(hp => {
-            if (!hp.hoc_phan_hoc_kies || !Array.isArray(hp.hoc_phan_hoc_kies)) return false;
-            return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === selectedHk && hphk.TrangThai === 'Đang mở');
+            if (hp.hoc_phan_hoc_kies && Array.isArray(hp.hoc_phan_hoc_kies) && hp.hoc_phan_hoc_kies.length > 0) {
+                const hphk = hp.hoc_phan_hoc_kies.find(x => x.MaHocKy === selectedHk);
+                if (hphk) {
+                    return hphk.TrangThai === 'Đang mở';
+                }
+            }
+            return false;
         });
 
         if (openedHocPhans.length === 0) {
             selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
             selectHocPhan.disabled = true;
             if (helpHocPhan) {
-                helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn hoặc Khóa luận được mở.</span>';
+                helpHocPhan.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn <strong>${boMonTen}</strong> được kích hoạt mở. Vui lòng liên hệ Giáo vụ/Admin để mở học phần trong tab Phân bổ học kỳ.</span>`;
             }
             return;
         }
 
         if (helpHocPhan) {
-            helpHocPhan.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>Đã lọc <strong>${openedHocPhans.length}</strong> học phần đang mở trong kỳ này (Bộ môn <strong>${boMonTen}</strong> & Khóa luận).`;
+            helpHocPhan.innerHTML = '';
         }
 
         selectHocPhan.innerHTML = '<option value="">-- Chọn môn / học phần --</option>';
 
-        const dungChung = openedHocPhans.filter(hp => !hp.MaBoMon);
-        const chuyenNganh = openedHocPhans.filter(hp => hp.MaBoMon);
-
-        if (dungChung.length > 0) {
-            const grp = document.createElement('optgroup');
-            grp.label = '⭐ Học phần dùng chung toàn khoa';
-            dungChung.forEach(hp => {
-                const opt = document.createElement('option');
-                opt.value = hp.MaHocPhan;
-                opt.textContent = `${hp.TenHocPhan} (${hp.MaHocPhan})`;
-                if (oldMaHocPhan === hp.MaHocPhan) opt.selected = true;
-                grp.appendChild(opt);
-            });
-            selectHocPhan.appendChild(grp);
-        }
-
-        if (chuyenNganh.length > 0) {
-            const grp = document.createElement('optgroup');
-            grp.label = `🏢 Chuyên ngành: ${boMonTen}`;
-            chuyenNganh.forEach(hp => {
-                const opt = document.createElement('option');
-                opt.value = hp.MaHocPhan;
-                opt.textContent = `${hp.TenHocPhan} (${hp.MaHocPhan})`;
-                if (oldMaHocPhan === hp.MaHocPhan) opt.selected = true;
-                grp.appendChild(opt);
-            });
-            selectHocPhan.appendChild(grp);
-        }
+        openedHocPhans.forEach(hp => {
+            const opt = document.createElement('option');
+            opt.value = hp.MaHocPhan;
+            opt.textContent = hp.TenHocPhan;
+            if (oldMaHocPhan === hp.MaHocPhan || openedHocPhans.length === 1) opt.selected = true;
+            selectHocPhan.appendChild(opt);
+        });
     }
 
     if (selectHocKy && selectHocPhan) {

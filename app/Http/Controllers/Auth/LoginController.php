@@ -77,14 +77,43 @@ class LoginController extends Controller implements HasMiddleware
     }
 
     /**
+     * Tra cứu tài khoản linh hoạt: theo TenDangNhap, MaTK, hoặc Email / Mã hồ sơ (Giảng viên, Sinh viên, Giáo vụ)
+     */
+    protected function findTaiKhoan(?string $inputUsername): ?\App\Models\TaiKhoan
+    {
+        $input = trim((string)$inputUsername);
+        if ($input === '') return null;
+
+        // 1. Tìm trực tiếp theo TenDangNhap hoặc MaTK
+        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $input)
+            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($input)])
+            ->orWhere('MaTK', $input)
+            ->first();
+
+        if ($taiKhoan) return $taiKhoan;
+
+        // 2. Tra cứu qua Email hoặc Mã hồ sơ liên kết
+        if (strtolower($input) === 'admin@huit.edu.vn') {
+            return \App\Models\TaiKhoan::where('TenDangNhap', 'admin')->first();
+        }
+
+        $maTK = \App\Models\GiaoVu::where('Email', $input)->value('MaTK')
+            ?? \App\Models\GiangVien::where('Email', $input)->orWhere('MaGV', $input)->value('MaTK')
+            ?? \App\Models\SinhVien::where('Email', $input)->orWhere('MaSV', $input)->value('MaTK');
+
+        if ($maTK) {
+            return \App\Models\TaiKhoan::find($maTK);
+        }
+
+        return null;
+    }
+
+    /**
      * Đồng bộ kiểm tra giới hạn đăng nhập với dữ liệu CSDL (BR01)
      */
     protected function hasTooManyLoginAttempts(\Illuminate\Http\Request $request)
     {
-        $inputUsername = trim($request->TenDangNhap);
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
-            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
-            ->first();
+        $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             return true;
@@ -99,10 +128,7 @@ class LoginController extends Controller implements HasMiddleware
     protected function attemptLogin(\Illuminate\Http\Request $request)
     {
         $inputUsername = trim($request->TenDangNhap);
-        // Tìm tài khoản theo username (hỗ trợ không phân biệt chữ hoa / thường)
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
-            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
-            ->first();
+        $taiKhoan = $this->findTaiKhoan($inputUsername);
 
         // Nếu tài khoản bị khóa → từ chối ngay
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
@@ -186,10 +212,7 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
     {
-        $inputUsername = trim($request->TenDangNhap);
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
-            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
-            ->first();
+        $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -215,10 +238,7 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected function sendLockoutResponse(\Illuminate\Http\Request $request)
     {
-        $inputUsername = trim($request->TenDangNhap);
-        $taiKhoan = \App\Models\TaiKhoan::where('TenDangNhap', $inputUsername)
-            ->orWhereRaw('LOWER(TenDangNhap) = ?', [strtolower($inputUsername)])
-            ->first();
+        $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             throw \Illuminate\Validation\ValidationException::withMessages([

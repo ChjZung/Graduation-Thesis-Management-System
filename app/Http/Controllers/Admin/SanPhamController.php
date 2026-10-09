@@ -61,11 +61,27 @@ class SanPhamController extends Controller
         // 5. Tìm theo tên nhóm / sản phẩm
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
+            $cleanSearch = preg_replace('/[^A-Za-z0-9]/', '', $search);
+            $query->where(function ($q) use ($search, $cleanSearch) {
                 $q->where('TenSanPham', 'LIKE', "%{$search}%")
-                  ->orWhereHas('nhomDoAn', function ($nq) use ($search) {
-                      $nq->where('TenNhom', 'LIKE', "%{$search}%");
+                  ->orWhere('MaSanPham', 'LIKE', "%{$search}%")
+                  ->orWhereHas('nhomDoAn', function ($nq) use ($search, $cleanSearch) {
+                      $nq->where('TenNhom', 'LIKE', "%{$search}%")
+                         ->orWhere('MaNhom', 'LIKE', "%{$search}%")
+                         ->orWhereHas('thanhVienNhoms.sinhVien', function($sq) use ($search, $cleanSearch) {
+                             $sq->where('HoTen', 'LIKE', "%{$search}%")
+                                ->orWhere('MaSV', 'LIKE', "%{$search}%");
+                             if (!empty($cleanSearch)) {
+                                 $sq->orWhere('MaSV', 'LIKE', "%{$cleanSearch}%");
+                             }
+                         });
+                      if (!empty($cleanSearch)) {
+                          $nq->orWhere('MaNhom', 'LIKE', "%{$cleanSearch}%");
+                      }
                   });
+                if (!empty($cleanSearch)) {
+                    $q->orWhere('MaSanPham', 'LIKE', "%{$cleanSearch}%");
+                }
             });
         }
 

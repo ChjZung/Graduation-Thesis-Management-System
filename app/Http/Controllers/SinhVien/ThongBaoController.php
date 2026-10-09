@@ -77,4 +77,57 @@ class ThongBaoController extends Controller
             ->count();
         return response()->json(['count' => $count]);
     }
+
+    /**
+     * Chi tiết thông báo xem trực tiếp công văn (Đồng bộ split-view như Admin)
+     */
+    public function show($id)
+    {
+        $thongBao = ThongBao::with(['giaoVu', 'giangVien'])->where('MaThongBao', $id)->firstOrFail();
+
+        // Đánh dấu đã đọc
+        $readIds = session()->get('read_thong_bao_ids', []);
+        if (!in_array($id, $readIds)) {
+            $readIds[] = $id;
+            session(['read_thong_bao_ids' => $readIds]);
+        }
+
+        $fileUrl = $thongBao->FileDinhKem;
+        if (!empty($fileUrl)) {
+            $fileUrl = ltrim($fileUrl, '/');
+            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = 'storage/' . $fileUrl;
+            }
+        }
+        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
+            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
+            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
+                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
+                if (file_exists(public_path($candidate))) {
+                    $fileUrl = $candidate;
+                }
+            }
+        }
+
+        $fileType = 'other';
+        if (!empty($fileUrl)) {
+            $ext = strtolower(pathinfo($fileUrl, PATHINFO_EXTENSION));
+            if ($ext === 'pdf') {
+                $fileType = 'pdf';
+            } elseif (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
+                $fileType = 'image';
+            }
+        }
+
+        return view('thongbao.show', [
+            'thongBao'  => $thongBao,
+            'fileUrl'   => $fileUrl,
+            'fileType'  => $fileType,
+            'layout'    => 'layouts.sinhvien',
+            'backUrl'   => route('sinhvien.thongbao.index'),
+            'totalSent' => 0,
+            'readCount' => 0,
+            'unreadCount' => 0,
+        ]);
+    }
 }

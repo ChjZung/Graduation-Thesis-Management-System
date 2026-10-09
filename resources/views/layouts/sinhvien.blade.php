@@ -37,68 +37,79 @@
             </div>
         </div>
 
-        <ul class="list-unstyled components">
-            <li class="{{ request()->routeIs('sinhvien.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.my_tasks') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.my_tasks') }}">
-                    <i class="fa-solid fa-list-check"></i> Công việc của tôi
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.calendar') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.calendar') }}">
-                    <i class="fa-regular fa-calendar-days"></i> Lịch Báo Cáo & Countdown
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('calendar.matrix') ? 'active' : '' }}">
-                <a href="{{ route('calendar.matrix') }}">
-                    <i class="fa-solid fa-table-cells"></i> Lịch Quy Trình Kế Hoạch
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.nhom.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.nhom.index') }}">
-                    <i class="fa-solid fa-users"></i> Nhóm của tôi
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.dangky.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.dangky.index') }}">
-                    <i class="fa-solid fa-clipboard-list"></i> Đăng ký đề tài
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.baocao.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.baocao.index') }}">
-                    <i class="fa-solid fa-file-invoice"></i> Báo cáo tiến độ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.hoso.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.hoso.index') }}">
-                    <i class="fa-solid fa-folder-check"></i> Hồ Sơ Bảo Vệ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('sinhvien.ketqua.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.ketqua.index') }}">
-                    <i class="fa-solid fa-award"></i> Kết Quả Khóa Luận
-                </a>
-            </li>
+        <div class="px-2 py-2">
+            <!-- 1. TỔNG QUAN & LỊCH TRÌNH -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isSvTongQuan = request()->routeIs('sinhvien.dashboard') || request()->routeIs('sinhvien.calendar') || request()->routeIs('sinhvien.thongbao.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isSvTongQuan ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-sv-tongquan" aria-expanded="{{ $isSvTongQuan ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Tổng Quan &amp; Lịch</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isSvTongQuan ? 'show' : '' }}" id="sub-sv-tongquan">
+                    <a href="{{ route('sinhvien.dashboard') }}" class="submenu-link {{ request()->routeIs('sinhvien.dashboard') ? 'active-sub' : '' }}">
+                        <span>Bảng tổng quan</span>
+                    </a>
+                    <a href="{{ route('sinhvien.calendar') }}" class="submenu-link {{ request()->routeIs('sinhvien.calendar') ? 'active-sub' : '' }}">
+                        <span>Lịch báo cáo</span>
+                    </a>
+                    <a href="{{ route('sinhvien.thongbao.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.thongbao.*') ? 'active-sub' : '' }}">
+                        <span>Thông báo hệ thống</span>
+                    </a>
+                </div>
+            </div>
 
-            @php
-                $readNotiIds = session()->get('read_thong_bao_ids', []);
-                $unreadNotiCount = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])
-                    ->whereNotIn('MaThongBao', $readNotiIds)
-                    ->count();
-            @endphp
-            <li class="{{ request()->routeIs('sinhvien.thongbao.*') ? 'active' : '' }}">
-                <a href="{{ route('sinhvien.thongbao.index') }}" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-bell"></i> Thông báo</span>
-                    @if($unreadNotiCount > 0)
-                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $unreadNotiCount }}</span>
-                    @endif
-                </a>
-            </li>
-        </ul>
+            <!-- 2. NHÓM & ĐỀ TÀI -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isSvDeTai = request()->routeIs('sinhvien.nhom.*') || request()->routeIs('sinhvien.dangky.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isSvDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-sv-detai" aria-expanded="{{ $isSvDeTai ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Nhóm &amp; Đề Tài</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isSvDeTai ? 'show' : '' }}" id="sub-sv-detai">
+                    <a href="{{ route('sinhvien.nhom.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.nhom.*') ? 'active-sub' : '' }}">
+                        <span>Nhóm của tôi</span>
+                    </a>
+                    <a href="{{ route('sinhvien.dangky.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.dangky.*') ? 'active-sub' : '' }}">
+                        <span>Đăng ký đề tài</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. THỰC HIỆN & KẾT QUẢ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isSvBaoCao = request()->routeIs('sinhvien.baocao.*') || request()->routeIs('sinhvien.hoso.*') || request()->routeIs('sinhvien.ketqua.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isSvBaoCao ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-sv-baocao" aria-expanded="{{ $isSvBaoCao ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Thực Hiện &amp; Kết Quả</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isSvBaoCao ? 'show' : '' }}" id="sub-sv-baocao">
+                    <a href="{{ route('sinhvien.baocao.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.baocao.*') ? 'active-sub' : '' }}">
+                        <span>Báo cáo tiến độ</span>
+                    </a>
+                    <a href="{{ route('sinhvien.hoso.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.hoso.*') ? 'active-sub' : '' }}">
+                        <span>Hồ sơ bảo vệ</span>
+                    </a>
+                    <a href="{{ route('sinhvien.ketqua.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.*') ? 'active-sub' : '' }}">
+                        <span>Kết quả khóa luận</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <!-- /SIDEBAR -->
@@ -119,43 +130,8 @@
                     @yield('page_title', 'Dashboard')
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Dropdown -->
-                    <div class="dropdown">
-                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
-                            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
-                            @if($unreadNotiCount > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadNotiCount }}</span>
-                            @endif
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow" style="width:360px; max-height:420px; overflow-y:auto; border-radius:12px;">
-                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                <strong style="font-size:.85rem;">Thông Báo</strong>
-                                @if($unreadNotiCount > 0)
-                                <form action="{{ route('sinhvien.thongbao.readAll') }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-xs btn-link p-0 text-muted" style="font-size:.72rem;">Đánh dấu đã đọc</button>
-                                </form>
-                                @endif
-                            </div>
-                            @php
-                                $recentNoti = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])->orderBy('created_at','desc')->limit(6)->get();
-                            @endphp
-                            @forelse($recentNoti as $noti)
-                            <div class="dropdown-item px-3 py-2 border-bottom">
-                                <div class="d-flex gap-2 align-items-start">
-                                    <i class="fa-solid fa-bullhorn text-primary mt-1 flex-shrink-0" style="font-size:.85rem;"></i>
-                                    <div>
-                                        <div class="fw-semibold text-wrap" style="font-size:.82rem; line-height:1.3;">{{ $noti->TieuDe }}</div>
-                                        <div class="text-muted" style="font-size:.72rem;">{{ \Carbon\Carbon::parse($noti->created_at ?? $noti->NgayTao)->diffForHumans() }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            @empty
-                            <div class="text-center py-4 text-muted" style="font-size:.82rem;">Chưa có thông báo nào.</div>
-                            @endforelse
-                            <a href="{{ route('sinhvien.thongbao.index') }}" class="dropdown-item text-center text-primary py-2" style="font-size:.8rem;">Xem tất cả thông báo</a>
-                        </div>
-                    </div>
+                    <!-- Notification Bell Dropdown Unified -->
+                    @include('partials.header_notifications')
 
 
                     <!-- User Dropdown -->

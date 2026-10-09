@@ -25,8 +25,8 @@ class PhanCongPhanBienController extends Controller
             if ($bm) return $bm;
         }
 
-        if ($user && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->first();
+        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
             if ($bm) return $bm;
         }
 
@@ -36,16 +36,26 @@ class PhanCongPhanBienController extends Controller
     public function index(Request $request)
     {
         $boMon = $this->getBoMon();
-        $maBoMon = $boMon ? $boMon->MaBoMon : 'CNPM';
+        $maBoMon = $boMon ? $boMon->MaBoMon : 'BM_CNPM';
 
         $giangViens = GiangVien::where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
         $gvIds = $giangViens->pluck('MaGV');
 
-        // Giảng viên thuộc cùng Bộ môn để chọn làm GV phản biện
-        $allGiangViens = GiangVien::with('boMon')->where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
+        $user = Auth::user();
+        $currentGv = GiangVien::getLoggedInGiangVien($user);
+
+        // Giảng viên thuộc cùng Bộ môn để chọn làm GV phản biện (Loại trừ Trưởng bộ môn)
+        $allGiangViens = GiangVien::with('boMon')
+            ->where('MaBoMon', $maBoMon)
+            ->when($currentGv, fn($q) => $q->where('MaGV', '!=', $currentGv->MaGV))
+            ->orderBy('HoTen')
+            ->get();
 
         $query = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
-            ->whereIn('MaGV', $gvIds);
+            ->where(function($q) use ($gvIds, $maBoMon) {
+                $q->whereIn('MaGV', $gvIds)
+                  ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $maBoMon));
+            });
 
         // Tab lọc
         $statusTab = $request->input('tab', 'chua_phan_cong');
@@ -140,6 +150,13 @@ class PhanCongPhanBienController extends Controller
 
         if (!$detai->FileDeCuong) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
+        }
+
+        // Trưởng bộ môn không được tự phân công phản biện cho bản thân
+        $user = Auth::user();
+        $currentGv = GiangVien::getLoggedInGiangVien($user);
+        if ($currentGv && $request->MaGVPhanBien === $currentGv->MaGV) {
+            return redirect()->back()->withErrors('Trưởng bộ môn không được tự phân công phản biện đề cương cho chính bản thân! Vui lòng phân công cho giảng viên khác trong bộ môn.');
         }
 
         // Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó

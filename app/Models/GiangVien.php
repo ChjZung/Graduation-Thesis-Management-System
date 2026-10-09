@@ -56,6 +56,11 @@ class GiangVien extends Model
         return $this->hasMany(DeTai::class, 'MaGV', 'MaGV');
     }
 
+    public function deTai()
+    {
+        return $this->deTais();
+    }
+
     public function chiTieuHuongDans()
     {
         return $this->hasMany(ChiTieuHuongDan::class, 'MaGV', 'MaGV');

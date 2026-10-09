@@ -3,24 +3,11 @@
 @section('page_title', 'Nhóm Khóa Luận')
 
 @section('content')
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-    <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(isset($errors) && $errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-    <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
-<!-- THANH BỘ LỌC TÌM KIẾM THEO: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN -->
+<!-- THANH BỘ LỌC TÌM KIẾM THEO: HỌC KỲ -> HỌC PHẦN CHUYÊN NGÀNH -->
 <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
     <div class="row g-2 align-items-center mb-2">
         <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ Lọc Nhóm Khóa Luận (Học kỳ ➔ Bộ môn ➔ Học phần):</span>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ Lọc Nhóm Khóa Luận (Học kỳ ➔ Học phần chuyên ngành):</span>
             <span class="small text-muted">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
         </div>
     </div>
@@ -39,45 +26,28 @@
             </div>
         </div>
 
-        <!-- 2. CHỌN BỘ MÔN -->
+        <!-- 2. BỘ MÔN CHUYÊN NGÀNH CỦA SINH VIÊN -->
         <div class="col-md-4">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_bo_mon" onchange="onBoMonChange()">
-                    <option value="DUNG_CHUNG" {{ $selectedBoMon === 'DUNG_CHUNG' ? 'selected' : '' }}>
-                        ⭐ Học phần Dùng chung (Khóa luận)
-                    </option>
-                    <option value="ALL" {{ $selectedBoMon === 'ALL' ? 'selected' : '' }}>
-                        -- Tất cả bộ môn --
-                    </option>
-                    @foreach($boMons as $bm)
-                        <option value="{{ $bm->MaBoMon }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
-                            {{ $bm->TenBoMon }}
-                        </option>
-                    @endforeach
-                </select>
+                <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate">
+                    {{ $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành') }}
+                </span>
+                <input type="hidden" id="filter_bo_mon" value="{{ $selectedBoMon }}">
             </div>
         </div>
 
-        <!-- 3. CHỌN HỌC PHẦN -->
+        <!-- 3. CHỌN HỌC PHẦN CHUYÊN NGÀNH -->
         <div class="col-md-5">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
                 <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="onHocPhanFilterChange()">
-                    @php
-                        $filteredHps = $hocPhans;
-                        if ($selectedBoMon === 'DUNG_CHUNG') {
-                            $filteredHps = $hocPhans->whereNull('MaBoMon');
-                        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
-                            $filteredHps = $hocPhans->where('MaBoMon', $selectedBoMon);
-                        }
-                    @endphp
-                    @foreach($filteredHps as $hp)
+                    @foreach($hocPhans as $hp)
                         @php
                             $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
                         @endphp
                         <option value="{{ $hp->MaHocPhan }}" {{ $selectedHocPhan == $hp->MaHocPhan ? 'selected' : '' }}>
-                            {{ $hp->TenHocPhan }}{{ $groupInThisHp ? ' (Đã có nhóm)' : '' }}
+                            {{ $hp->TenHocPhan }}
                         </option>
                     @endforeach
                 </select>
@@ -352,9 +322,14 @@
                     @if($currentDeTai->FileDeCuong)
                         @php
                             $fileDcUrl = Str::startsWith($currentDeTai->FileDeCuong, ['http', 'storage/']) ? asset($currentDeTai->FileDeCuong) : asset('storage/' . $currentDeTai->FileDeCuong);
+                            $fileName = basename($currentDeTai->FileDeCuong);
                         @endphp
-                        <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs fw-semibold">
-                            <i class="fa-solid fa-file-pdf me-1"></i>Xem Đề Cương
+                        <button type="button" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs fw-semibold"
+                                onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($currentDeTai->TenDeTai ?? '') }}')">
+                            <i class="fa-solid fa-eye me-1"></i>Xem Nhanh Đề Cương
+                        </button>
+                        <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-xs fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Tải Về
                         </a>
                     @endif
                 </div>
@@ -491,6 +466,13 @@
                         <i class="fa-solid fa-user-plus me-2"></i>Mời Sinh Viên Vào Nhóm
                     </div>
                     <div class="card-body">
+                        @if(session('invite_success'))
+                        <div class="alert alert-success alert-dismissible fade show p-2 px-3 small mb-3 border-0 rounded-3 shadow-sm" role="alert" style="background-color: #d1e7dd; color: #0f5132;">
+                            <i class="fa-solid fa-circle-check me-2"></i>{{ session('invite_success') }}
+                            <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        @endif
+
                         <!-- BƯỚC 1: NHẬP MSSV & TRA CỨU -->
                         <div id="stepSearchArea">
                             <label class="form-label small fw-bold">Mã số sinh viên (MSSV):</label>
@@ -842,9 +824,10 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
-                                <a href="{{ $fileDcUrl }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-semibold">
-                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Xem Trực Tiếp
-                                </a>
+                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-semibold"
+                                        onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($dtDetail->TenDeTai ?? '') }}')">
+                                    <i class="fa-solid fa-eye me-1"></i>Xem Nhanh Đề Cương
+                                </button>
                                 <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
                                     <i class="fa-solid fa-download me-1"></i>Tải Về
                                 </a>
@@ -890,7 +873,7 @@
                             <div class="small text-dark">
                                 Vui lòng thực hiện tuần tự 2 bước:
                                 <span class="badge bg-primary rounded-pill me-1">1</span> <strong>Chọn Học kỳ áp dụng</strong> ➔ 
-                                <span class="badge bg-primary rounded-pill me-1">2</span> <strong>Chọn Học phần Khóa luận (Khóa luận cử nhân hoặc Khóa luận kỹ sư)</strong>.
+                                <span class="badge bg-primary rounded-pill me-1">2</span> <strong>Chọn Học phần Khóa luận tốt nghiệp</strong>.
                             </div>
                         </div>
                     </div>
@@ -924,7 +907,7 @@
                         <label class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
                             <span>
                                 <span class="badge bg-primary rounded-pill px-2 py-1 me-1">Bước 2</span> 
-                                Chọn Học Phần Khóa Luận Toàn Khoa <span class="text-danger">*</span>
+                                Chọn Học Phần Khóa Luận <span class="text-danger">*</span>
                             </span>
                             <span class="text-muted small fw-normal" id="step2_badge_status">
                                 <i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 1
@@ -934,7 +917,7 @@
                             <option value="">-- Bước 2: Vui lòng chọn học kỳ ở bước 1 trước --</option>
                         </select>
                         <div class="form-text text-muted small mt-1" id="create_group_hocphan_help">
-                            <i class="fa-solid fa-graduation-cap me-1"></i>Học phần dùng chung toàn khoa: <strong>Khóa luận cử nhân</strong> hoặc <strong>Khóa luận kỹ sư</strong> mở trong kỳ này.
+                            <i class="fa-solid fa-graduation-cap me-1"></i>Học phần khóa luận: <strong>Khóa luận tốt nghiệp theo Bộ môn</strong> mở trong kỳ này.
                         </div>
                     </div>
 
@@ -983,17 +966,14 @@ function populateFilterHocPhans(selectedBm, currentHpVal) {
     filterHocPhan.innerHTML = '';
 
     let filtered = allHocPhansList;
-    if (selectedBm === 'DUNG_CHUNG') {
-        filtered = allHocPhansList.filter(hp => !hp.MaBoMon);
-    } else if (selectedBm && selectedBm !== 'ALL') {
+    if (selectedBm && selectedBm !== 'ALL') {
         filtered = allHocPhansList.filter(hp => hp.MaBoMon === selectedBm);
     }
 
     filtered.forEach(hp => {
         const opt = document.createElement('option');
         opt.value = hp.MaHocPhan;
-        const hasGroup = userGroupHpIds.includes(hp.MaHocPhan);
-        opt.textContent = hp.TenHocPhan + (hasGroup ? ' (Đã có nhóm)' : '');
+        opt.textContent = hp.TenHocPhan;
         if (hp.MaHocPhan === currentHpVal) {
             opt.selected = true;
         }
@@ -1015,7 +995,7 @@ function onHocPhanFilterChange() {
 
 function onBoMonChange() {
     const filterBoMon = document.getElementById('filter_bo_mon');
-    const selectedBm = filterBoMon ? filterBoMon.value : 'DUNG_CHUNG';
+    const selectedBm = filterBoMon ? filterBoMon.value : 'ALL';
     populateFilterHocPhans(selectedBm, null);
     applyCascadeFilter();
 }
@@ -1039,7 +1019,7 @@ function applyCascadeFilter() {
 document.addEventListener('DOMContentLoaded', function() {
     // ── KHỞI TẠO OPTIONS BỘ LỌC HỌC PHẦN ──
     populateFilterHocPhans("{{ $selectedBoMon }}", "{{ $selectedHocPhan }}");
-    // ── XỬ LÝ QUY TRÌNH 2 BƯỚC KHI TẠO NHÓM (HỌC KỲ -> HỌC PHẦN KHÓA LUẬN TOÀN KHOA) ──
+    // ── XỬ LÝ QUY TRÌNH 2 BƯỚC KHI TẠO NHÓM (HỌC KỲ -> HỌC PHẦN KHÓA LUẬN) ──
     const hocPhansData = @json($hocPhans ?? []);
     const selectHocKy = document.getElementById('create_group_hocky');
     const selectHocPhan = document.getElementById('create_group_hocphan');
@@ -1063,15 +1043,13 @@ document.addEventListener('DOMContentLoaded', function() {
             selectHocPhan.disabled = true;
             selectHocPhan.innerHTML = '<option value="">-- Bước 2: Vui lòng chọn học kỳ ở bước 1 trước --</option>';
             if (step2Badge) step2Badge.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Khóa cho đến khi chọn Bước 1';
-            if (helpHocPhan) helpHocPhan.innerHTML = '<i class="fa-solid fa-graduation-cap me-1"></i>Học phần dùng chung toàn khoa: <strong>Khóa luận cử nhân</strong> hoặc <strong>Khóa luận kỹ sư</strong> mở trong kỳ này.';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<i class="fa-solid fa-graduation-cap me-1"></i>Học phần khóa luận: <strong>Khóa luận tốt nghiệp theo Bộ môn</strong> mở trong kỳ này.';
             checkCanSubmit();
             return;
         }
 
-        // Lọc CHỈ các học phần dùng chung toàn khoa (không có MaBoMon) và ĐƯỢC MỞ trong học kỳ đã chọn
+        // Lọc các học phần ĐƯỢC MỞ trong học kỳ đã chọn
         const filtered = hocPhansData.filter(hp => {
-            if (hp.MaBoMon) return false;
-
             if (hp.hoc_phan_hoc_kies && Array.isArray(hp.hoc_phan_hoc_kies)) {
                 return hp.hoc_phan_hoc_kies.some(hphk => hphk.MaHocKy === currentHk && hphk.TrangThai === 'Đang mở');
             }
@@ -1080,20 +1058,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (filtered.length === 0) {
             selectHocPhan.disabled = true;
-            selectHocPhan.innerHTML = '<option value="">-- Học kỳ này chưa mở Khóa luận cử nhân / Khóa luận kỹ sư --</option>';
+            selectHocPhan.innerHTML = '<option value="">-- Học kỳ này chưa mở học phần khóa luận nào --</option>';
             if (step2Badge) step2Badge.innerHTML = '<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa mở môn</span>';
-            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Học kỳ đã chọn hiện chưa mở đợt đăng ký Khóa luận toàn khoa.</span>';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Học kỳ đã chọn hiện chưa mở đợt đăng ký Khóa luận.</span>';
         } else {
             selectHocPhan.disabled = false;
             selectHocPhan.innerHTML = '<option value="">-- Bước 2: Chọn học phần khóa luận (' + filtered.length + ' học phần) --</option>';
             filtered.forEach(hp => {
                 const opt = document.createElement('option');
                 opt.value = hp.MaHocPhan;
-                opt.textContent = `⭐ ${hp.TenHocPhan} (${hp.SoTinChi} tín chỉ)`;
+                opt.textContent = hp.TenHocPhan;
                 selectHocPhan.appendChild(opt);
             });
             if (step2Badge) step2Badge.innerHTML = '<span class="text-success"><i class="fa-solid fa-lock-open me-1"></i>Sẵn sàng chọn</span>';
-            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' học phần dùng chung toàn khoa mở trong kỳ này. Vui lòng chọn để lập nhóm.</span>';
+            if (helpHocPhan) helpHocPhan.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã tải ' + filtered.length + ' học phần khóa luận mở trong kỳ này. Vui lòng chọn để lập nhóm.</span>';
         }
         checkCanSubmit();
     }
@@ -1329,4 +1307,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+@include('partials.modal_preview_decuong')
 @endsection

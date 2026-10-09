@@ -199,6 +199,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
     transition: var(--transition);
 }
 
@@ -1948,4 +1950,290 @@ body {
     font-size: 0.9rem !important;
     font-weight: 500 !important;
 }
+
+/* ============================================================
+   CHUẨN HÓA GIAO DIỆN HUIT - KHÔNG XUỐNG DÒNG NÚT, FONT MIN 13PX,
+   BẢNG ĐỒNG BỘ HEADER/FOOTER, CARD Ô VUÔNG VÀ SIDEBAR MENU CẤP 2
+   ============================================================ */
+
+/* 1. ĐẢM BẢO TẤT CẢ NÚT TOÀN HỆ THỐNG KHÔNG BỊ XUỐNG DÒNG */
+.btn, button, a.btn, .btn-sm, .btn-lg, .action-btn, [class*="btn-"],
+.btn-primary, .btn-outline-primary, .btn-success, .btn-outline-success,
+.btn-secondary, .btn-outline-secondary, .btn-danger, .btn-outline-danger,
+.btn-warning, .btn-outline-warning, .btn-info, .btn-outline-info {
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+    word-break: keep-all !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+}
+
+/* 2. QUY CHUẨN KÍCH CỠ CHỮ NHỎ NHẤT TOÀN BỘ HỆ THỐNG LÀ 13PX */
+html, body {
+    font-size: 14px;
+}
+small, .small, .text-muted.small, .form-text, .pill-count,
+.kpi-label, .kpi-subtext, .admin-breadcrumb, .nav-section-label,
+.table th, .table td, .badge, .btn-sm, .btn-xs,
+.dropdown-item, .form-label, .form-select-sm, .form-control-sm {
+    font-size: 13px !important;
+    line-height: 1.5;
+}
+.badge {
+    font-size: 13px !important;
+    padding: 4px 10px !important;
+    font-weight: 600;
+}
+
+/* Triệt tiêu triệt để mọi font-size < 13px kể cả khi dùng inline style */
+[style*="font-size: 0.5"], [style*="font-size:0.5"],
+[style*="font-size: 0.6"], [style*="font-size:0.6"],
+[style*="font-size: 0.7"], [style*="font-size:0.7"],
+[style*="font-size: 8px"],  [style*="font-size:8px"],
+[style*="font-size: 9px"],  [style*="font-size:9px"],
+[style*="font-size: 10px"], [style*="font-size:10px"],
+[style*="font-size: 11px"], [style*="font-size:11px"],
+[style*="font-size: 12px"], [style*="font-size:12px"] {
+    font-size: 13px !important;
+}
+
+/* 3. BẢNG CHUẨN HỌC THUẬT ĐỒNG BỘ VỚI HEADER, FOOTER & SIDEBAR */
+.table, .table-academic {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    color: #1e293b;
+    background-color: #ffffff;
+    margin-bottom: 0;
+}
+.table thead th, .table-academic thead th {
+    background-color: #003366 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 11px 14px !important;
+    vertical-align: middle;
+    border-bottom: none !important;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+.table thead th a {
+    color: #ffffff !important;
+}
+.table tbody td, .table-academic tbody td {
+    padding: 11px 14px !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 13px !important;
+    color: #334155;
+}
+.table tbody tr:hover, .table-academic tbody tr:hover {
+    background-color: #f0f7ff !important;
+}
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+.table th:last-child, .table td:last-child {
+    white-space: nowrap !important;
+}
+
+/* 4. CARD Ô VUÔNG / KPI CARD ĐỒNG BỘ - KHÔNG DÙNG VIỀN MÀU SẶC SỠ */
+.admin-kpi-card, .kpi-metric-card, .stat-kpi-card, .card-premium, .dash-kpi-box {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 18px 20px !important;
+    height: 100% !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.22s ease !important;
+}
+.admin-kpi-card::before, .kpi-metric-card::before,
+.border-accent-blue::before, .border-accent-green::before,
+.border-accent-amber::before, .border-accent-purple::before {
+    display: none !important;
+}
+.admin-kpi-card, .border-accent-blue, .border-accent-green,
+.border-accent-amber, .border-accent-purple {
+    border-left: 1px solid #e2e8f0 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.admin-kpi-card:hover, .kpi-metric-card:hover, .stat-kpi-card:hover, .card-premium:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 6px 16px rgba(0, 51, 102, 0.08) !important;
+}
+.kpi-title, .kpi-label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+    margin-bottom: 6px !important;
+}
+.kpi-value {
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.15 !important;
+    margin-bottom: 6px !important;
+}
+.kpi-subtext {
+    font-size: 13px !important;
+    color: #64748b !important;
+}
+.kpi-icon-wrap, .kpi-icon-box {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 10px !important;
+    background: #f1f5f9 !important;
+    color: #003366 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important;
+    flex-shrink: 0 !important;
+}
+
+/* 5. SIDEBAR MENU CẤP 2 (COLLAPSIBLE ACCORDION) */
+#sidebar .sidebar-menu-group {
+    margin-bottom: 4px;
+}
+#sidebar .menu-parent-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: calc(100% - 16px);
+    margin: 2px 8px;
+    padding: 9.5px 14px;
+    color: rgba(255, 255, 255, 0.85);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+#sidebar .menu-parent-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+}
+#sidebar .menu-parent-btn.active-parent {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
+    font-weight: 700;
+}
+#sidebar .menu-parent-btn .parent-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#sidebar .menu-parent-btn .parent-icon-title i {
+    width: 20px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.9;
+}
+#sidebar .menu-parent-btn .chevron-arrow {
+    font-size: 11px;
+    transition: transform 0.25s ease;
+    opacity: 0.7;
+}
+#sidebar .menu-parent-btn:not(.collapsed) .chevron-arrow {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+#sidebar .submenu-collapse {
+    margin-left: 20px;
+    margin-right: 8px;
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    padding-left: 6px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+#sidebar .submenu-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: var(--transition);
+}
+#sidebar .submenu-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(3px);
+}
+#sidebar .submenu-link.active-sub {
+    color: #ffffff !important;
+    background: #0072ce !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 114, 206, 0.4);
+}
+
+/* ============================================================
+   6. CHUẨN HÓA DROPDOWN (SELECT) TOÀN BỘ HỆ THỐNG - KHÔNG BỊ CHE CHỮ
+   ============================================================ */
+.form-select, select.form-control, .form-select-sm {
+    min-width: 200px !important;
+    font-size: 13px !important;
+    padding-right: 2.25rem !important;
+    line-height: 1.5;
+    background-position: right 0.65rem center !important;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown Học kỳ toàn hệ thống - Đảm bảo đủ chiều rộng cho chuỗi năm học dài */
+.form-select[name*="HocKy"], .form-select[name*="hocky"], .form-select[name*="MaHocKy"], .form-select[name*="hoc_ky"],
+select[name*="HocKy"], select[name*="hocky"], select[name*="MaHocKy"], select[name*="hoc_ky"] {
+    min-width: 290px !important;
+}
+
+/* Dropdown Lớp, Ngành, Khoa, Bộ Môn, Học Phần */
+.form-select[name*="Lop"], select[name*="Lop"],
+.form-select[name*="Nganh"], select[name*="Nganh"],
+.form-select[name*="BoMon"], select[name*="BoMon"],
+.form-select[name*="Khoa"], select[name*="Khoa"],
+.form-select[name*="HocPhan"], select[name*="HocPhan"] {
+    min-width: 220px !important;
+}
+
+/* Dropdown Trạng thái */
+.form-select[name*="TrangThai"], select[name*="TrangThai"],
+.form-select[name*="trang_thai"], select[name*="trang_thai"] {
+    min-width: 200px !important;
+}
+
+/* Khi dùng class rounded-pill có padding lớn */
+.form-select.rounded-pill {
+    padding-left: 1rem !important;
+    padding-right: 2.5rem !important;
+    min-width: 260px !important;
+}
+
+.form-select.rounded-pill[name*="HocKy"],
+.form-select.rounded-pill[name*="MaHocKy"],
+.form-select.rounded-pill[name*="hoc_ky"],
+select.rounded-pill[name*="HocKy"],
+select.rounded-pill[name*="MaHocKy"],
+select.rounded-pill[name*="hoc_ky"] {
+    min-width: 320px !important;
+}
+
 

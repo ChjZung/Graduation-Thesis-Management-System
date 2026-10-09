@@ -263,8 +263,14 @@ $giangVienList = [
     ['GV047', 'ThS. Mạc Thị Xuyến',      'xuyenmt@huit.edu.vn','0903123047', '1990-08-04', 'Nữ',  '',             'Thạc sĩ', 'CBTP', 'Đang công tác'],
     ['GV048', 'TS. La Quốc Ý',           'ylq@huit.edu.vn',    '0903123048', '1982-12-16', 'Nam', '',             'Tiến sĩ', 'KTD',  'Đang công tác'],
     ['GV049', 'ThS. Sầm Ngọc Anh',       'anhsn@huit.edu.vn',  '0903123049', '1993-04-11', 'Nữ',  '',             'Thạc sĩ', 'TA_CN','Đang công tác'],
-    ['GV050', 'TS. Nông Văn Bắc',        'bacnv@huit.edu.vn',  '0903123050', '1981-07-29', 'Nam', '',             'Tiến sĩ', 'CTM',  'Đang công tác']
 ];
+
+foreach ($giangVienList as &$gvItem) {
+    if (preg_match('/^GV(\d+)$/', $gvItem[0], $m)) {
+        $gvItem[0] = 'GV' . str_pad($m[1], 8, '0', STR_PAD_LEFT);
+    }
+}
+unset($gvItem);
 
 $giangVienHeaders = ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai'];
 saveFiles('06_GiangVien_Mau', $giangVienHeaders, $giangVienList, $outDir);

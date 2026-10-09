@@ -68,11 +68,27 @@ class TheoDoiController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $queryNhoms->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $queryNhoms->where(function ($q) use ($s, $sClean) {
                 $q->where('TenNhom', 'like', "%{$s}%")
                   ->orWhere('MaNhom', 'like', "%{$s}%")
-                  ->orWhereHas('deTai', fn($dq) => $dq->where('TenDeTai', 'like', "%{$s}%"))
-                  ->orWhereHas('dangKyDeTai.giangVienHuongDan', fn($g) => $g->where('HoTen', 'like', "%{$s}%"));
+                  ->orWhereHas('deTai', function($dq) use ($s, $sClean) {
+                      $dq->where('TenDeTai', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $dq->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                      }
+                  })
+                  ->orWhereHas('dangKyDeTai.giangVienHuongDan', fn($g) => $g->where('HoTen', 'like', "%{$s}%"))
+                  ->orWhereHas('thanhViens.sinhVien', function($sq) use ($s, $sClean) {
+                      $sq->where('HoTen', 'like', "%{$s}%")
+                         ->orWhere('MaSV', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $sq->orWhere('MaSV', 'like', "%{$sClean}%");
+                      }
+                  });
+                if (!empty($sClean)) {
+                    $q->orWhere('MaNhom', 'like', "%{$sClean}%");
+                }
             });
         }
 
@@ -94,10 +110,32 @@ class TheoDoiController extends Controller
 
         if ($request->filled('search_baove')) {
             $sbv = trim($request->search_baove);
-            $queryHoSo->where(function ($q) use ($sbv) {
+            $sbvClean = preg_replace('/[^A-Za-z0-9]/', '', $sbv);
+            $queryHoSo->where(function ($q) use ($sbv, $sbvClean) {
                 $q->where('MaHoSo', 'like', "%{$sbv}%")
-                  ->orWhereHas('nhom', fn($nq) => $nq->where('TenNhom', 'like', "%{$sbv}%"))
-                  ->orWhereHas('deTai', fn($dq) => $dq->where('TenDeTai', 'like', "%{$sbv}%"));
+                  ->orWhereHas('nhom', function($nq) use ($sbv, $sbvClean) {
+                      $nq->where('TenNhom', 'like', "%{$sbv}%")
+                         ->orWhere('MaNhom', 'like', "%{$sbv}%")
+                         ->orWhereHas('thanhViens.sinhVien', function($sq) use ($sbv, $sbvClean) {
+                             $sq->where('HoTen', 'like', "%{$sbv}%")
+                                ->orWhere('MaSV', 'like', "%{$sbv}%");
+                             if (!empty($sbvClean)) {
+                                 $sq->orWhere('MaSV', 'like', "%{$sbvClean}%");
+                             }
+                         });
+                      if (!empty($sbvClean)) {
+                          $nq->orWhere('MaNhom', 'like', "%{$sbvClean}%");
+                      }
+                  })
+                  ->orWhereHas('deTai', function($dq) use ($sbv, $sbvClean) {
+                      $dq->where('TenDeTai', 'like', "%{$sbv}%");
+                      if (!empty($sbvClean)) {
+                          $dq->orWhere('MaDeTai', 'like', "%{$sbvClean}%");
+                      }
+                  });
+                if (!empty($sbvClean)) {
+                    $q->orWhere('MaHoSo', 'like', "%{$sbvClean}%");
+                }
             });
         }
 

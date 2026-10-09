@@ -49,7 +49,6 @@
                             <label class="form-label-huit">Trạng Thái Học Tập</label>
                             <select name="TrangThai" class="form-select form-select-huit">
                                 <option value="Đang học" {{ old('TrangThai', $sinhvien->TrangThai) == 'Đang học' ? 'selected' : '' }}>🟢 Đang học</option>
-                                <option value="Đủ điều kiện" {{ old('TrangThai', $sinhvien->TrangThai) == 'Đủ điều kiện' ? 'selected' : '' }}>⭐ Đủ điều kiện làm khóa luận</option>
                                 <option value="Tạm dừng" {{ old('TrangThai', $sinhvien->TrangThai) == 'Tạm dừng' ? 'selected' : '' }}>🔴 Tạm dừng học</option>
                                 <option value="Đã tốt nghiệp" {{ old('TrangThai', $sinhvien->TrangThai) == 'Đã tốt nghiệp' ? 'selected' : '' }}>🎓 Đã tốt nghiệp</option>
                             </select>

@@ -80,6 +80,23 @@ class DashboardController extends Controller
             ->take(3)
             ->get();
 
+        // 6. Dữ liệu biểu đồ thống kê tiến độ nhóm & trạng thái báo cáo
+        $chartNhomLabels = [];
+        $chartNhomProgress = [];
+        foreach ($nhoms as $nhom) {
+            $tenNhomOrDT = $nhom->MaNhom . ' - ' . \Illuminate\Support\Str::limit($nhom->deTai?->TenDeTai ?? 'Đề tài', 22);
+            $chartNhomLabels[] = $tenNhomOrDT;
+            $completedCount = $nhom->baoCaos ? $nhom->baoCaos->whereIn('TrangThai', ['Đạt', 'Đã duyệt'])->count() : 0;
+            $chartNhomProgress[] = $completedCount;
+        }
+
+        $allBaoCaos = BaoCaoTienDo::whereIn('MaDeTai', $maDeTais)->get();
+        $chartBaoCaoStatus = [
+            'da_duyet'    => $allBaoCaos->whereIn('TrangThai', ['Đạt', 'Đã duyệt'])->count(),
+            'cho_duyet'   => $allBaoCaos->where('TrangThai', 'Chờ duyệt')->count(),
+            'can_nop_lai' => $allBaoCaos->whereIn('TrangThai', ['Yêu cầu nộp lại', 'Không đạt'])->count(),
+        ];
+
         return view('giangvien.dashboard', compact(
             'giangVien',
             'hocKyHienTai',
@@ -91,7 +108,10 @@ class DashboardController extends Controller
             'soNhomTreHan',
             'nhoms',
             'lichGaps',
-            'hoiDongs'
+            'hoiDongs',
+            'chartNhomLabels',
+            'chartNhomProgress',
+            'chartBaoCaoStatus'
         ));
     }
 }

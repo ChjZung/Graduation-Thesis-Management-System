@@ -43,9 +43,9 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
-        // 10 Giảng viên (GV01 - GV10 & gv01 - gv10)
+        // 10 Giảng viên chuẩn 10 ký tự (GV00000001 - GV00000010)
         for ($i = 1; $i <= 10; $i++) {
-            $code = str_pad($i, 2, '0', STR_PAD_LEFT);
+            $code = str_pad($i, 8, '0', STR_PAD_LEFT);
             $accounts[] = [
                 'MaTK' => 'TK_GV' . $code,
                 'MaVaiTro' => 'VT02',
@@ -140,18 +140,18 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        // 9. Giảng Viên
+        // 9. Giảng Viên chuẩn 10 ký tự
         $giangViens = [
-            ['MaGV' => 'GV01', 'MaTK' => 'TK_GV01', 'HoTen' => 'PGS.TS Trần Văn Hướng Dẫn', 'Email' => 'gv01@huit.edu.vn', 'SoDienThoai' => '0912000001', 'HocHam' => 'Phó Giáo sư', 'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'CNPM'],
-            ['MaGV' => 'GV02', 'MaTK' => 'TK_GV02', 'HoTen' => 'TS. Lê Thị Phản Biện',       'Email' => 'gv02@huit.edu.vn', 'SoDienThoai' => '0912000002', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'CNPM'],
-            ['MaGV' => 'GV03', 'MaTK' => 'TK_GV03', 'HoTen' => 'TS. Nguyễn Văn Chủ Tịch',     'Email' => 'gv03@huit.edu.vn', 'SoDienThoai' => '0912000003', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'HTTT'],
-            ['MaGV' => 'GV04', 'MaTK' => 'TK_GV04', 'HoTen' => 'ThS. Hoàng Thị Thư Ký',      'Email' => 'gv04@huit.edu.vn', 'SoDienThoai' => '0912000004', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'HTTT'],
-            ['MaGV' => 'GV05', 'MaTK' => 'TK_GV05', 'HoTen' => 'ThS. Đỗ Minh Ủy Viên',        'Email' => 'gv05@huit.edu.vn', 'SoDienThoai' => '0912000005', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'MMT'],
-            ['MaGV' => 'GV06', 'MaTK' => 'TK_GV06', 'HoTen' => 'TS. Vũ Quang Trí',           'Email' => 'gv06@huit.edu.vn', 'SoDienThoai' => '0912000006', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'KHM'],
-            ['MaGV' => 'GV07', 'MaTK' => 'TK_GV07', 'HoTen' => 'ThS. Bùi Đình Thảo',         'Email' => 'gv07@huit.edu.vn', 'SoDienThoai' => '0912000007', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'CNPM'],
-            ['MaGV' => 'GV08', 'MaTK' => 'TK_GV08', 'HoTen' => 'ThS. Ngô Thanh Sơn',         'Email' => 'gv08@huit.edu.vn', 'SoDienThoai' => '0912000008', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'HTTT'],
-            ['MaGV' => 'GV09', 'MaTK' => 'TK_GV09', 'HoTen' => 'TS. Mai Tuấn Kiệt',          'Email' => 'gv09@huit.edu.vn', 'SoDienThoai' => '0912000009', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'MMT'],
-            ['MaGV' => 'GV10', 'MaTK' => 'TK_GV10', 'HoTen' => 'ThS. Đặng Cẩm Tú',           'Email' => 'gv10@huit.edu.vn', 'SoDienThoai' => '0912000010', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'KHM'],
+            ['MaGV' => 'GV00000001', 'MaTK' => 'TK_GV00000001', 'HoTen' => 'PGS.TS Trần Văn Hướng Dẫn', 'Email' => 'gv01@huit.edu.vn', 'SoDienThoai' => '0912000001', 'HocHam' => 'Phó Giáo sư', 'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'CNPM'],
+            ['MaGV' => 'GV00000002', 'MaTK' => 'TK_GV00000002', 'HoTen' => 'TS. Lê Thị Phản Biện',       'Email' => 'gv02@huit.edu.vn', 'SoDienThoai' => '0912000002', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'CNPM'],
+            ['MaGV' => 'GV00000003', 'MaTK' => 'TK_GV00000003', 'HoTen' => 'TS. Nguyễn Văn Chủ Tịch',     'Email' => 'gv03@huit.edu.vn', 'SoDienThoai' => '0912000003', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'HTTT'],
+            ['MaGV' => 'GV00000004', 'MaTK' => 'TK_GV00000004', 'HoTen' => 'ThS. Hoàng Thị Thư Ký',      'Email' => 'gv04@huit.edu.vn', 'SoDienThoai' => '0912000004', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'HTTT'],
+            ['MaGV' => 'GV00000005', 'MaTK' => 'TK_GV00000005', 'HoTen' => 'ThS. Đỗ Minh Ủy Viên',        'Email' => 'gv05@huit.edu.vn', 'SoDienThoai' => '0912000005', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'MMT'],
+            ['MaGV' => 'GV00000006', 'MaTK' => 'TK_GV00000006', 'HoTen' => 'TS. Vũ Quang Trí',           'Email' => 'gv06@huit.edu.vn', 'SoDienThoai' => '0912000006', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'KHM'],
+            ['MaGV' => 'GV00000007', 'MaTK' => 'TK_GV00000007', 'HoTen' => 'ThS. Bùi Đình Thảo',         'Email' => 'gv07@huit.edu.vn', 'SoDienThoai' => '0912000007', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'CNPM'],
+            ['MaGV' => 'GV00000008', 'MaTK' => 'TK_GV00000008', 'HoTen' => 'ThS. Ngô Thanh Sơn',         'Email' => 'gv08@huit.edu.vn', 'SoDienThoai' => '0912000008', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'HTTT'],
+            ['MaGV' => 'GV00000009', 'MaTK' => 'TK_GV00000009', 'HoTen' => 'TS. Mai Tuấn Kiệt',          'Email' => 'gv09@huit.edu.vn', 'SoDienThoai' => '0912000009', 'HocHam' => null,          'HocVi' => 'Tiến sĩ', 'MaBoMon' => 'MMT'],
+            ['MaGV' => 'GV00000010', 'MaTK' => 'TK_GV00000010', 'HoTen' => 'ThS. Đặng Cẩm Tú',           'Email' => 'gv10@huit.edu.vn', 'SoDienThoai' => '0912000010', 'HocHam' => null,          'HocVi' => 'Thạc sĩ', 'MaBoMon' => 'KHM'],
         ];
         foreach ($giangViens as &$gv) {
             $gv['NgaySinh'] = '1980-01-01';
@@ -235,7 +235,7 @@ class DatabaseSeeder extends Seeder
                 'SoNhomToiDa' => 5,
                 'NgayPhanBo' => '2026-01-12',
                 'MaHocKy' => 'HK2526_2',
-                'MaGV' => 'GV' . $code,
+                'MaGV' => 'GV' . str_pad($i, 8, '0', STR_PAD_LEFT),
                 'created_at' => $now,
                 'updated_at' => $now
             ];

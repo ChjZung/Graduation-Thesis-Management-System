@@ -27,17 +27,29 @@ class DeTaiController extends Controller
             return redirect()->back()->withErrors('Không tìm thấy thông tin Giảng viên liên kết với tài khoản này.');
         }
 
-        $query = DeTai::with(['giangVien', 'dangKyDeTais.nhom.thanhViens.sinhVien'])->where('MaGV', $gv->MaGV);
+        $query = DeTai::with(['giangVien', 'hocKy', 'dangKyDeTais.nhom.thanhViens.sinhVien', 'phanCongPhanBiens.giangVien'])->where('MaGV', $gv->MaGV);
 
         if ($request->filled('search')) {
-            $query->where('TenDeTai', 'LIKE', '%' . trim($request->search) . '%');
+            $s = trim($request->search);
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
+                $q->where('TenDeTai', 'LIKE', "%{$s}%")
+                  ->orWhere('MaDeTai', 'LIKE', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaDeTai', 'LIKE', "%{$sClean}%");
+                }
+            });
+        }
+
+        if ($request->filled('MaHocKy')) {
+            $query->where('MaHocKy', $request->MaHocKy);
         }
 
         if ($request->filled('TrangThai')) {
             $query->where('TrangThai', $request->TrangThai);
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // Danh sách các nhóm chưa có đề tài đã duyệt
@@ -87,21 +99,19 @@ class DeTaiController extends Controller
               ?? GiangVien::getLoggedInGiangVien($user);
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        // Lấy danh sách Học phần mà giảng viên này được phép đề xuất:
-        // 1. Học phần dùng chung toàn khoa (MaBoMon is null: Khóa luận cử nhân, Khóa luận kỹ sư)
-        // 2. Học phần chuyên ngành thuộc đúng Bộ môn của GV (MaBoMon == $gv->MaBoMon)
-        // Kèm theo thông tin các Học kỳ đang mở học phần này (HocPhan_HocKy)
+        // Lấy danh sách Học phần thuộc Bộ môn của GV kèm các Học kỳ đang mở (HocPhan_HocKy)
+        // Chỉ lấy học phần cho Khóa luận tốt nghiệp
         $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
                 $q->where('TrangThai', 'Đang mở');
             }])
-            ->where('TrangThai', 'Đang áp dụng')
-            ->where(function($q) use ($gv) {
-                $q->whereNull('MaBoMon');
-                if ($gv && $gv->MaBoMon) {
-                    $q->orWhere('MaBoMon', $gv->MaBoMon);
-                }
+            ->where('LoaiHocPhan', 'Khóa luận')
+            ->where(function($q) {
+                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
+                  ->orWhere('TrangThai', true);
             })
-            ->orderByRaw('MaBoMon IS NOT NULL')
+            ->when($gv && $gv->MaBoMon, function($q) use ($gv) {
+                $q->where('MaBoMon', $gv->MaBoMon);
+            })
             ->orderBy('TenHocPhan')
             ->get();
 
@@ -121,7 +131,6 @@ class DeTaiController extends Controller
             'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
-            'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
             'LinhVuc' => 'nullable|string|max:150',
@@ -130,12 +139,14 @@ class DeTaiController extends Controller
             'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
-            'SoLuongSinhVienToiDa.min' => 'Số sinh viên tối đa ít nhất là 1.',
-            'SoLuongSinhVienToiDa.max' => 'Số sinh viên tối đa không vượt quá 3.',
         ]);
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+
+        // Kiểm tra quyền bộ môn: học phần phải thuộc đúng bộ môn của GV
+        if ($gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn " . ($gv->boMon->TenBoMon ?? $gv->MaBoMon) . " của bạn!");
+        }
 
         // Kiểm tra học phần có được mở trong học kỳ này không
         $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
@@ -144,12 +155,25 @@ class DeTaiController extends Controller
             ->exists();
 
         if (!$isOpened) {
-            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ đã chọn!");
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' hiện chưa được mở trong học kỳ đã chọn!");
         }
 
-        // Kiểm tra quyền bộ môn: học phần phải là dùng chung (MaBoMon is null) HOẶC thuộc bộ môn của GV
-        if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
-            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+        // Kiểm tra định mức chỉ tiêu đề tài của giảng viên trong học kỳ (tối đa 5 đề tài)
+        $maxDinhMuc = 5;
+        $chiTieuDb = \Illuminate\Support\Facades\DB::table('chitieuhuongdan')
+            ->where('MaGV', $gv->MaGV)
+            ->where('MaHocKy', $request->MaHocKy)
+            ->value('SoNhomToiDa');
+        if ($chiTieuDb && $chiTieuDb > 0) {
+            $maxDinhMuc = (int)$chiTieuDb;
+        }
+
+        $currentTopicsCount = DeTai::where('MaGV', $gv->MaGV)
+            ->where('MaHocKy', $request->MaHocKy)
+            ->count();
+
+        if ($currentTopicsCount >= $maxDinhMuc) {
+            return redirect()->back()->withInput()->withErrors("Bạn đã đề xuất đạt định mức chỉ tiêu tối đa ({$currentTopicsCount}/{$maxDinhMuc} đề tài) trong học kỳ này theo quy định của Khoa!");
         }
 
         $count = DeTai::count() + 1;
@@ -168,7 +192,7 @@ class DeTaiController extends Controller
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
             'MaHocPhan' => $hocPhan->MaHocPhan,
             'HocPhan' => $hocPhan->TenHocPhan,
-            'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
+            'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
             'FileDeCuong' => null,
             'MaNganh' => null, // Đã bỏ theo yêu cầu, sinh viên đăng ký theo đúng ngành mình học
             'MaHocKy' => $request->MaHocKy,
@@ -179,22 +203,83 @@ class DeTaiController extends Controller
         return redirect()->route('giangvien.detai.index')->with('success', "Đề xuất đề tài '{$request->TenDeTai}' cho môn {$hocPhan->TenHocPhan} thành công! Đề tài đã được chuyển tới Trưởng bộ môn phê duyệt.");
     }
 
+    public function show($id)
+    {
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
+
+        $detai = DeTai::with([
+            'hocKy',
+            'giangVien.boMon',
+            'taiLieuNops' => fn($q) => $q->orderBy('LanNop', 'desc'),
+            'phanCongPhanBiens.giangVien',
+            'dangKyDeTais.nhom.thanhViens.sinhVien',
+            'dangKyDeTais.nhom.truongNhom'
+        ])->where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        return view('giangvien.detai.show', compact('detai', 'gv'));
+    }
+
+    public function showNopDeCuong($id)
+    {
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
+
+        $detai = DeTai::with([
+            'hocKy',
+            'giangVien.boMon',
+            'taiLieuNops' => fn($q) => $q->orderBy('LanNop', 'desc'),
+            'phanCongPhanBiens.giangVien',
+            'dangKyDeTais.nhom.thanhViens.sinhVien',
+            'dangKyDeTais.nhom.truongNhom'
+        ])->where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        // 1. Kiểm tra xem đề tài đã được duyệt đề xuất 2 cấp (Bộ môn & Khoa) chưa
+        if (in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Từ chối'])) {
+            return redirect()->route('giangvien.detai.index')
+                ->withErrors('Đề tài hiện đang ở trạng thái "' . $detai->TrangThai . '". Chỉ đề tài đã được Trưởng bộ môn & Trưởng khoa phê duyệt chủ trương đề xuất và công bố mới có thể nộp đề cương.');
+        }
+
+        // 2. Quy trình: Đề tài phải có nhóm sinh viên tham gia đăng ký / gán thành công
+        $dangKyApproved = $detai->dangKyDeTais->where('TrangThai', 'Đã duyệt')->first();
+        $hasGroupAssigned = !empty($dangKyApproved) && !empty($dangKyApproved->nhom);
+
+        if (!$hasGroupAssigned) {
+            return redirect()->route('giangvien.detai.index')
+                ->withErrors("Đề tài '{$detai->TenDeTai}' hiện chưa có nhóm sinh viên đăng ký! Theo quy định, chỉ sau khi sinh viên đăng ký đề tài (hoặc Giảng viên gán nhóm đủ 3 thành viên) thì mới được nộp đề cương chi tiết.");
+        }
+
+        // 3. Kiểm tra đề cương đã hoàn tất thẩm định và chốt công bố chưa
+        $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
+        $isOutlineFinalized = !empty($detai->FileDeCuong) && $phanBien && $phanBien->KetQua === 'Đạt' && !empty($detai->NgayDuyetBM);
+        $isLocked = $isOutlineFinalized || ($detai->TrangThai === 'Hoàn thành');
+        $isNopLai = in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
+
+        return view('giangvien.detai.nop_decuong', compact('detai', 'gv', 'isLocked', 'isNopLai'));
+    }
+
     public function nopDeCuong(Request $request, $id)
     {
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
 
-        $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+        $detai = DeTai::with(['phanCongPhanBiens', 'dangKyDeTais.nhom'])->where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
-        // Ràng buộc: Đề tài bắt buộc phải được gán cho một nhóm sinh viên mới được phép nộp đề cương
-        $hasGroupAssigned = $detai->phieuDangKys()
-            ->where('TrangThai', 'Đã duyệt')
-            ->whereNotNull('MaNhom')
-            ->exists();
-
+        // 1. Ràng buộc: Đề tài phải có nhóm sinh viên đăng ký
+        $dangKyApproved = $detai->dangKyDeTais->where('TrangThai', 'Đã duyệt')->first();
+        $hasGroupAssigned = !empty($dangKyApproved) && !empty($dangKyApproved->nhom);
         if (!$hasGroupAssigned) {
-            return redirect()->back()->withErrors('Đề tài này chưa được gán cho nhóm sinh viên nào! Chỉ được phép nộp đề cương sau khi đề tài đã có nhóm sinh viên đăng ký chính thức.');
+            return redirect()->back()->withErrors('Đề tài chưa có nhóm sinh viên đăng ký! Vui lòng chờ sinh viên đăng ký đề tài hoặc gán nhóm trước khi nộp đề cương.');
+        }
+
+        // 2. Ràng buộc: Khi đề cương đã hoàn tất thẩm định đạt và TBM đã duyệt chốt thì khóa nộp
+        $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
+        $isOutlineFinalized = !empty($detai->FileDeCuong) && $phanBien && $phanBien->KetQua === 'Đạt' && !empty($detai->NgayDuyetBM);
+        if ($isOutlineFinalized || $detai->TrangThai === 'Hoàn thành') {
+            return redirect()->back()->withErrors('Đề cương đã hoàn tất quy trình thẩm định và đã được phê duyệt chính thức. Đề cương hiện đã bị khóa chỉnh sửa.');
         }
 
         $allowedStates = [
@@ -204,10 +289,13 @@ class DeTaiController extends Controller
             'Trưởng khoa đã duyệt', 
             'Đã duyệt',
             'Đang phản biện đề cương',
-            'Đã cập nhật đề cương - Chờ phản biện lại'
+            'Đã cập nhật đề cương - Chờ phản biện lại',
+            'Đã nộp đề cương - Chờ phân công PB',
+            'Đã phản biện - Chờ duyệt BM',
+            'Đã phản biện - Chờ TBM duyệt đề cương'
         ];
         if (!in_array($detai->TrangThai, $allowedStates)) {
-            return redirect()->back()->withErrors('Đề tài hiện tại không ở trạng thái được phép nộp đề cương chi tiết.');
+            return redirect()->back()->withErrors('Đề tài hiện tại chưa được phê duyệt đề xuất hoặc không ở trạng thái được phép nộp đề cương chi tiết.');
         }
 
         $request->validate([
@@ -221,6 +309,21 @@ class DeTaiController extends Controller
         $file = $request->file('FileDeCuong');
         $filename = 'de_cuong_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('de_cuong', $filename, 'public');
+
+        $isNopLai = in_array($detai->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
+        $lanNop = \App\Models\TaiLieuNop::where('MaDeTai', $detai->MaDeTai)->where('LoaiTaiLieu', 'Đề cương chi tiết')->count() + 1;
+
+        // Lưu vết lịch sử nộp tài liệu đề cương
+        \App\Models\TaiLieuNop::create([
+            'MaTaiLieu'   => 'TL_' . strtoupper(Str::random(8)),
+            'TenTaiLieu'  => $file->getClientOriginalName(),
+            'DuongDan'    => 'storage/' . $path,
+            'LoaiTaiLieu' => 'Đề cương chi tiết',
+            'LanNop'      => $lanNop,
+            'NgayNop'     => now(),
+            'GhiChu'      => $isNopLai ? 'Nộp lại đề cương sau khi chỉnh sửa theo góp ý phản biện' : 'Nộp đề cương chi tiết lần ' . $lanNop,
+            'MaDeTai'     => $detai->MaDeTai,
+        ]);
 
         // Kiểm tra xem đề tài đã có Giảng viên phản biện chưa
         $phanCongPB = PhanCongPhanBien::with('giangVien')
@@ -272,7 +375,7 @@ class DeTaiController extends Controller
                 );
             }
 
-            return redirect()->back()->with('success', "Đã nộp lại Đề cương chi tiết đã chỉnh sửa cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
+            return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp lại Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
         } else {
             // Nộp lần đầu
             $detai->update([
@@ -295,12 +398,12 @@ class DeTaiController extends Controller
                 ThongBaoService::guiDen(
                     $tbmUser->MaTK,
                     '📄 Giảng viên đã nộp đề cương chi tiết',
-                    "Giảng viên {$gv->HoTen} vừa nộp file Đề cương chi tiết cho đề tài '{$detai->TenDeTai}'. Vui lòng tiến hành phân công Giảng viên phản biện.",
+                    "Giảng viên {$gv->HoTen} vừa nộp file Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}'. Vui lòng tiến hành phân công Giảng viên phản biện.",
                     'Đề tài'
                 );
             }
 
-            return redirect()->back()->with('success', "Đã nộp Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' thành công! Đề cương đã được chuyển tới Trưởng bộ môn để phân công phản biện.");
+            return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' thành công! Đề cương đã được chuyển tới Trưởng bộ môn để phân công phản biện.");
         }
     }
 
@@ -313,17 +416,19 @@ class DeTaiController extends Controller
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
+        // Lấy danh sách Học phần thuộc Bộ môn của GV kèm các Học kỳ đang mở (HocPhan_HocKy)
+        // Chỉ lấy học phần cho Khóa luận tốt nghiệp
         $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
                 $q->where('TrangThai', 'Đang mở');
             }])
-            ->where('TrangThai', 'Đang áp dụng')
-            ->where(function($q) use ($gv) {
-                $q->whereNull('MaBoMon');
-                if ($gv && $gv->MaBoMon) {
-                    $q->orWhere('MaBoMon', $gv->MaBoMon);
-                }
+            ->where('LoaiHocPhan', 'Khóa luận')
+            ->where(function($q) {
+                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
+                  ->orWhere('TrangThai', true);
             })
-            ->orderByRaw('MaBoMon IS NOT NULL')
+            ->when($gv && $gv->MaBoMon, function($q) use ($gv) {
+                $q->where('MaBoMon', $gv->MaBoMon);
+            })
             ->orderBy('TenHocPhan')
             ->get();
 
@@ -342,7 +447,6 @@ class DeTaiController extends Controller
             'TenDeTai' => 'required|string|max:300',
             'MaHocKy' => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
-            'SoLuongSinhVienToiDa' => 'required|integer|min:1|max:3',
             'MoTa' => 'nullable|string',
             'YeuCau' => 'nullable|string',
             'LinhVuc' => 'nullable|string|max:150',
@@ -352,10 +456,14 @@ class DeTaiController extends Controller
             'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'SoLuongSinhVienToiDa.required' => 'Vui lòng nhập số sinh viên tối đa.',
         ]);
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
+
+        // Kiểm tra quyền bộ môn: học phần phải thuộc bộ môn của GV
+        if ($gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn " . ($gv->boMon->TenBoMon ?? $gv->MaBoMon) . " của bạn!");
+        }
 
         // Kiểm tra học phần có được mở trong học kỳ này không
         $isOpened = \App\Models\HocPhanHocKy::where('MaHocKy', $request->MaHocKy)
@@ -364,11 +472,7 @@ class DeTaiController extends Controller
             ->exists();
 
         if (!$isOpened) {
-            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không được mở trong học kỳ đã chọn!");
-        }
-
-        if ($hocPhan->MaBoMon !== null && $gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
-            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn được gán của bạn!");
+            return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' hiện chưa được mở trong học kỳ đã chọn!");
         }
 
         $data = [
@@ -377,7 +481,7 @@ class DeTaiController extends Controller
             'MaHocPhan' => $hocPhan->MaHocPhan,
             'HocPhan' => $hocPhan->TenHocPhan,
             'MaNganh' => null,
-            'SoLuongSinhVienToiDa' => (int)$request->SoLuongSinhVienToiDa,
+            'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
             'MoTa' => $request->MoTa,
             'YeuCau' => $request->YeuCau,
             'LinhVuc' => $request->LinhVuc,
@@ -415,14 +519,44 @@ class DeTaiController extends Controller
             }
         }
 
-        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Từ chối', 'Không đạt phản biện'])) {
+        $actionType = $request->input('action_type', 'resubmit');
+
+        if ($actionType === 'draft') {
+            $detai->update($data);
+            return redirect()->route('giangvien.detai.index')
+                ->with('success', "Đã lưu bản nháp đề tài '{$detai->TenDeTai}' thành công! Đề tài vẫn ở trạng thái hiện tại để bạn tiếp tục chỉnh sửa trước khi nộp lại.");
+        }
+
+        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Từ chối', 'Không đạt phản biện', 'Chờ duyệt cấp Bộ môn'])) {
             $data['TrangThai'] = 'Chờ duyệt cấp Bộ môn';
             $data['NgayDeXuat'] = now();
+            $data['LyDoTuChoi'] = null;
         }
 
         $detai->update($data);
 
-        return redirect()->route('giangvien.detai.index')->with('success', 'Cập nhật đề tài thành công!' . ($detai->wasChanged('TrangThai') ? ' Đề tài đã được nộp lại cho Trưởng bộ môn xem xét.' : ''));
+        // Gửi thông báo đến Trưởng Bộ Môn khi nộp lại phê duyệt
+        $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
+        $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                $q->where('MaVaiTro', 'VT04')
+                  ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+            })
+            ->where(function($q) use ($maBoMon) {
+                if ($maBoMon) {
+                    $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                }
+            })->first();
+
+        if ($tbmUser) {
+            \App\Services\ThongBaoService::guiDen(
+                $tbmUser->MaTK,
+                '📝 Đề tài đã được nộp lại phê duyệt',
+                "Giảng viên {$gv->HoTen} đã chỉnh sửa và nộp lại đề tài '{$detai->TenDeTai}' để Trưởng bộ môn phê duyệt.",
+                'Đề tài'
+            );
+        }
+
+        return redirect()->route('giangvien.detai.index')->with('success', "Đã nộp lại yêu cầu phê duyệt đề tài '{$detai->TenDeTai}' thành công! Hồ sơ đã được chuyển tới Trưởng bộ môn xem xét.");
     }
 
     public function destroy($id)
@@ -468,10 +602,10 @@ class DeTaiController extends Controller
 
         $nhom = Nhom::with('thanhViens')->findOrFail($request->MaNhom);
 
-        // Quy định: Nhóm từ 1 đến 3 thành viên
+        // Quy định: Chỉ được phép gán khi nhóm đã có đủ 3 thành viên
         $countMembers = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
-        if ($countMembers < 1 || $countMembers > 3) {
-            return redirect()->back()->withErrors("Quy định: Nhóm phải có từ 1 đến 3 thành viên. Nhóm '{$nhom->TenNhom}' hiện có {$countMembers} thành viên!");
+        if ($countMembers < 3) {
+            return redirect()->back()->withErrors("Quy định: Chỉ được phép gán nhóm khi nhóm đã có đủ 3 thành viên theo quy định! Nhóm '{$nhom->TenNhom}' hiện chỉ có {$countMembers}/3 thành viên.");
         }
         $maxSV = $detai->SoLuongSinhVienToiDa ?? 3;
         if ($countMembers > $maxSV) {

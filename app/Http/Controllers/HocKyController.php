@@ -17,10 +17,14 @@ class HocKyController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('MaHocKy', 'like', "%{$s}%")
                   ->orWhere('TenHocKy', 'like', "%{$s}%")
                   ->orWhere('NamHoc', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaHocKy', 'like', "%{$sClean}%");
+                }
             });
         }
 
@@ -122,6 +126,17 @@ class HocKyController extends Controller
             'NgayKetThuc' => $request->NgayKetThuc,
             'TrangThai' => $trangThai,
         ]);
+
+        // Tự động mở các học phần dùng chung toàn khoa cho học kỳ mới
+        $commonHps = HocPhan::whereNull('MaBoMon')->where(function($q) {
+            $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])->orWhere('TrangThai', true);
+        })->pluck('MaHocPhan');
+        foreach ($commonHps as $hpCode) {
+            \App\Models\HocPhanHocKy::updateOrCreate(
+                ['MaHocPhan' => $hpCode, 'MaHocKy' => $maHK],
+                ['TrangThai' => 'Đang mở', 'GhiChu' => 'Mở tự động cho học kỳ mới']
+            );
+        }
 
         return redirect()->route('hocky.index')->with('success', "Thêm học kỳ '{$request->TenHocKy}' ({$maHK}) thành công!");
     }

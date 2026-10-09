@@ -18,10 +18,15 @@ class LopController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('MaLop', 'like', "%{$s}%")
                   ->orWhere('TenLop', 'like', "%{$s}%")
                   ->orWhere('KhoaHoc', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaLop', 'like', "%{$sClean}%")
+                      ->orWhere('TenLop', 'like', "%{$sClean}%");
+                }
             });
         }
 

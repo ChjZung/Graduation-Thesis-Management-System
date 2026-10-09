@@ -52,41 +52,76 @@
                 ->count();
         @endphp
 
-        <ul class="list-unstyled components">
-            <li class="nav-section-label">Tổng Quan</li>
-            <li class="{{ request()->routeIs('truongkhoa.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('truongkhoa.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
-                </a>
-            </li>
+        <div class="px-2 py-2">
+            <!-- 1. TỔNG QUAN -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isTkTongQuan = request()->routeIs('truongkhoa.dashboard') || request()->routeIs('thongbao.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isTkTongQuan ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-tongquan" aria-expanded="{{ $isTkTongQuan ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Tổng Quan</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isTkTongQuan ? 'show' : '' }}" id="sub-tk-tongquan">
+                    <a href="{{ route('truongkhoa.dashboard') }}" class="submenu-link {{ request()->routeIs('truongkhoa.dashboard') ? 'active-sub' : '' }}">
+                        <span>Bảng tổng quan</span>
+                    </a>
+                    <a href="{{ route('thongbao.index') }}" class="submenu-link {{ request()->routeIs('thongbao.*') ? 'active-sub' : '' }}">
+                        <span>Thông báo hệ thống</span>
+                    </a>
+                </div>
+            </div>
 
-            <li class="nav-section-label">Quản Lý Đề Tài</li>
-            <li class="{{ request()->routeIs('truongkhoa.duyet_detai.*') ? 'active' : '' }}">
-                <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-stamp"></i> Phê duyệt đề tài</span>
-                    @if($countChoDuyetKhoa > 0)
-                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">{{ $countChoDuyetKhoa }}</span>
-                    @endif
-                </a>
-            </li>
+            <!-- 2. QUẢN LÝ & PHÊ DUYỆT ĐỀ TÀI -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isTkDeTai = request()->routeIs('truongkhoa.duyet_detai.*') || request()->routeIs('truongkhoa.theodoi.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isTkDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-detai" aria-expanded="{{ $isTkDeTai ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-stamp"></i>
+                        <span>Quản Lý Đề Tài</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isTkDeTai ? 'show' : '' }}" id="sub-tk-detai">
+                    <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.duyet_detai.*') ? 'active-sub' : '' }}">
+                        <span>Phê duyệt đề tài</span>
+                        @if($countChoDuyetKhoa > 0)
+                            <span class="badge bg-danger rounded-pill" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countChoDuyetKhoa }}</span>
+                        @endif
+                    </a>
+                    <a href="{{ route('truongkhoa.theodoi.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.theodoi.*') ? 'active-sub' : '' }}">
+                        <span>Theo dõi tiến độ</span>
+                    </a>
+                </div>
+            </div>
 
-            <li class="nav-section-label">Quản Lý Cấp Khoa</li>
-            <li class="{{ request()->routeIs('truongkhoa.theodoi.*') ? 'active' : '' }}">
-                <a href="{{ route('truongkhoa.theodoi.index') }}">
-                    <i class="fa-solid fa-chart-line"></i> Theo dõi tiến độ
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('truongkhoa.kehoach.*') ? 'active' : '' }}">
-                <a href="{{ route('truongkhoa.kehoach.index') }}">
-                    <i class="fa-solid fa-calendar-check"></i> Kế hoạch khóa luận
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('truongkhoa.ketqua.*') ? 'active' : '' }}">
-                <a href="{{ route('truongkhoa.ketqua.index') }}">
-                    <i class="fa-solid fa-award"></i> Kết quả khóa luận
-                </a>
-            </li>
-        </ul>
+            <!-- 3. KẾ HOẠCH & KẾT QUẢ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isTkKeHoach ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-kehoach" aria-expanded="{{ $isTkKeHoach ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Kế Hoạch &amp; Kết Quả</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isTkKeHoach ? 'show' : '' }}" id="sub-tk-kehoach">
+                    <a href="{{ route('truongkhoa.kehoach.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.kehoach.*') ? 'active-sub' : '' }}">
+                        <span>Kế hoạch khóa luận</span>
+                    </a>
+                    <a href="{{ route('truongkhoa.ketqua.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.ketqua.*') ? 'active-sub' : '' }}">
+                        <span>Kết quả khóa luận</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </nav>
     <!-- /SIDEBAR -->
 
@@ -107,38 +142,12 @@
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-3">
                     @php
-                        $unreadTkNoti = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->count();
                         $tkGv = \App\Models\GiangVien::getLoggedInGiangVien();
                         $tkName = $tkGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Khoa');
                     @endphp
 
-                    <!-- Notification Bell Dropdown -->
-                    <div class="dropdown">
-                        <a href="#" class="position-relative text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--huit-blue);">
-                            <i class="fa-solid fa-bell" style="font-size: 1.15rem;"></i>
-                            @if($unreadTkNoti > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 3px 5px;">{{ $unreadTkNoti }}</span>
-                            @endif
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow" style="width: 360px; max-height: 420px; overflow-y: auto; border-radius: 12px;">
-                            <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                <strong style="font-size: .85rem; color: #003b73;">Thông Báo Hệ Thống</strong>
-                                <span class="badge bg-danger rounded-pill small">{{ $unreadTkNoti }}</span>
-                            </div>
-                            @php
-                                $recentNotifications = \App\Models\ThongBao::where('TrangThai', 'Đã phát hành')->latest()->limit(5)->get();
-                            @endphp
-                            @forelse($recentNotifications as $nb)
-                            <div class="px-3 py-2 border-bottom">
-                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">{{ $nb->TieuDe }}</div>
-                                <div class="text-muted" style="font-size: 0.72rem;">{{ \Illuminate\Support\Str::limit($nb->NoiDung, 75) }}</div>
-                                <div class="text-secondary mt-1" style="font-size: 0.68rem;"><i class="fa-regular fa-clock me-1"></i>{{ $nb->created_at ? $nb->created_at->diffForHumans() : '' }}</div>
-                            </div>
-                            @empty
-                            <div class="text-center py-4 text-muted small">Không có thông báo mới.</div>
-                            @endforelse
-                        </div>
-                    </div>
+                    <!-- Notification Bell Dropdown Unified -->
+                    @include('partials.header_notifications')
 
                     <!-- User Dropdown -->
                     <div class="dropdown">

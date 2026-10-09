@@ -87,7 +87,8 @@ class CalendarController extends Controller
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
         $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones);
 
-        return view('giangvien.calendar', array_merge([
+        return view('calendar.index', array_merge([
+            'layout'        => 'layouts.giangvien',
             'events'        => $events,
             'nextMilestone' => $nextMilestone,
             'allMilestones' => $allMilestones,
@@ -104,7 +105,7 @@ class CalendarController extends Controller
         $allMilestones = MocThoiGianKhoaLuan::with('keHoach')->orderBy('NgayBatDau', 'asc')->get();
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
-        $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones);
+        $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones, 'SINH_VIEN');
 
         return view('calendar.index', array_merge([
             'layout'        => 'layouts.sinhvien',
@@ -117,7 +118,7 @@ class CalendarController extends Controller
         ], $weeklyData));
     }
 
-    private function buildWeeklyScheduleData(Request $request, $allMilestones): array
+    private function buildWeeklyScheduleData(Request $request, $allMilestones, string $role = 'ADMIN'): array
     {
         // 1. Xác định ngày tham chiếu (Target Date)
         $dateParam = $request->input('date');
@@ -279,7 +280,11 @@ class CalendarController extends Controller
                     $matched = true;
                 }
                 if (str_contains($doiTuong, 'gvhd') || str_contains($doiTuong, 'giảng viên')) {
-                    $shiftEvents['GIANG_VIEN'][] = $item;
+                    if ($role === 'SINH_VIEN') {
+                        $shiftEvents['SINH_VIEN'][] = $item;
+                    } else {
+                        $shiftEvents['GIANG_VIEN'][] = $item;
+                    }
                     $matched = true;
                 }
                 if (str_contains($doiTuong, 'khoa') || str_contains($doiTuong, 'giáo vụ') || str_contains($doiTuong, 'hội đồng')) {
@@ -291,6 +296,88 @@ class CalendarController extends Controller
                         $shiftEvents['KHOA_HDS'][] = $item;
                     } else {
                         $shiftEvents['SINH_VIEN'][] = $item;
+                    }
+                }
+            }
+        }
+
+        // Với Sinh viên: Chỉ giữ hàng Sinh Viên (Lịch báo cáo với GV & Kế hoạch) và Hội Đồng
+        if ($role === 'SINH_VIEN') {
+            $shifts = [
+                'SINH_VIEN' => [
+                    'name'  => 'Lịch Báo Cáo Với GV & Kế Hoạch',
+                    'icon'  => 'fa-solid fa-user-graduate',
+                    'desc'  => 'Mốc kế hoạch & Lịch nộp báo cáo GVHD',
+                    'bg'    => '#f0f9ff',
+                    'color' => '#0369a1',
+                ],
+                'KHOA_HDS' => [
+                    'name'  => 'Lịch Báo Cáo Hội Đồng',
+                    'icon'  => 'fa-solid fa-building-columns',
+                    'desc'  => 'Nộp hồ sơ & Lịch chấm Hội đồng',
+                    'bg'    => '#fffbeb',
+                    'color' => '#854d0e',
+                ],
+            ];
+            unset($shiftEvents['GIANG_VIEN']);
+
+            // Tích hợp thêm lịch hẹn gặp hướng dẫn thực tế của nhóm sinh viên (nếu có)
+            if (Auth::check()) {
+                $u = Auth::user();
+                $svUser = \App\Models\SinhVien::where('MaTK', $u->MaTK)->first();
+                if ($svUser) {
+                    $tvUser = \App\Models\ThanhVienNhom::where('MaSV', $svUser->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+                    if ($tvUser) {
+                        $lichGaps = \App\Models\LichGapHuongDan::where('MaNhom', $tvUser->MaNhom)
+                            ->whereBetween('ThoiGianBatDau', [$startOfWeek->format('Y-m-d 00:00:00'), $endOfWeek->format('Y-m-d 23:59:59')])
+                            ->get();
+                        foreach ($lichGaps as $lg) {
+                            $lgStart = \Carbon\Carbon::parse($lg->ThoiGianBatDau);
+                            $col = (int) $startOfWeek->diffInDays($lgStart);
+                            $shiftEvents['SINH_VIEN'][] = [
+                                'moc_index'  => 'Hẹn GV',
+                                'ma_moc'     => $lg->MaLichGap,
+                                'title'      => 'Gặp GVHD: ' . ($lg->NoiDung ?? 'Trao đổi tiến độ'),
+                                'col_start'  => $col,
+                                'col_end'    => $col,
+                                'span'       => 1,
+                                'time_slot'  => $lgStart->format('H:i') . ' - ' . \Carbon\Carbon::parse($lg->ThoiGianKetThuc)->format('H:i'),
+                                'room'       => $lg->DiaDiem ?? 'Văn phòng bộ môn',
+                                'palette'    => [
+                                    'bg' => '#ecfdf5', 'border' => '#10b981', 'text' => '#065f46', 'badge' => '#059669', 'badge_bg' => '#d1fae5'
+                                ],
+                                'is_start'   => true,
+                                'is_end'     => true,
+                                'date_range' => $lgStart->format('d/m'),
+                                'days_count' => 1,
+                            ];
+                        }
+
+                        // Lịch bảo vệ Hội đồng của nhóm (nếu có)
+                        $hoSo = \App\Models\HoSoBaoVe::with('hoiDong')->where('MaNhom', $tvUser->MaNhom)->first();
+                        if ($hoSo && $hoSo->hoiDong && $hoSo->hoiDong->ThoiGianBatDau) {
+                            $hdStart = \Carbon\Carbon::parse($hoSo->hoiDong->ThoiGianBatDau);
+                            if ($hdStart->between($startOfWeek, $endOfWeek)) {
+                                $colHd = (int) $startOfWeek->diffInDays($hdStart);
+                                $shiftEvents['KHOA_HDS'][] = [
+                                    'moc_index'  => 'Hội Đồng',
+                                    'ma_moc'     => $hoSo->hoiDong->MaHoiDong,
+                                    'title'      => 'Bảo vệ: ' . $hoSo->hoiDong->TenHoiDong,
+                                    'col_start'  => $colHd,
+                                    'col_end'    => $colHd,
+                                    'span'       => 1,
+                                    'time_slot'  => $hdStart->format('H:i'),
+                                    'room'       => $hoSo->hoiDong->DiaDiem ?? 'Phòng bảo vệ',
+                                    'palette'    => [
+                                        'bg' => '#faf5ff', 'border' => '#a855f7', 'text' => '#6b21a8', 'badge' => '#9333ea', 'badge_bg' => '#f3e8ff'
+                                    ],
+                                    'is_start'   => true,
+                                    'is_end'     => true,
+                                    'date_range' => $hdStart->format('d/m'),
+                                    'days_count' => 1,
+                                ];
+                            }
+                        }
                     }
                 }
             }

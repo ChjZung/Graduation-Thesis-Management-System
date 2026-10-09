@@ -240,6 +240,12 @@ class ThongBaoController extends Controller
             }
         }
 
-        return view('giangvien.thongbao.show', compact('thongBao', 'fileUrl', 'fileType'));
+        return view('thongbao.show', array_merge(
+            compact('thongBao', 'fileUrl', 'fileType'),
+            [
+                'layout'  => 'layouts.giangvien',
+                'backUrl' => route('giangvien.thongbao.index')
+            ]
+        ));
     }
 }

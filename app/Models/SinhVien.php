@@ -106,4 +106,25 @@ class SinhVien extends Model
     {
         return $this->isDuDieuKien();
     }
+
+    /**
+     * Xác định Mã Bộ Môn tương ứng theo Ngành học của sinh viên
+     */
+    public function getMaBoMon(): string
+    {
+        $nganh = $this->nganh ?? ($this->lop?->nganh);
+        $tenNganh = mb_strtolower($nganh?->TenNganh ?? '');
+        $maNganh = $nganh?->MaNganh ?? $this->MaNganh;
+
+        if ($maNganh === '7480104' || str_contains($tenNganh, 'hệ thống thông tin')) {
+            return 'BM_HTTT';
+        }
+        if ($maNganh === '7480202' || str_contains($tenNganh, 'an toàn')) {
+            return 'BM_ATTT';
+        }
+        if ($maNganh === '7480101' || str_contains($tenNganh, 'khoa học máy tính')) {
+            return 'BM_KHMT';
+        }
+        return 'BM_CNPM';
+    }
 }

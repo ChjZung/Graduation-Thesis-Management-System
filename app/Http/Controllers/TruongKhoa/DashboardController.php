@@ -91,6 +91,32 @@ class DashboardController extends Controller
             'tu_choi'             => $tuChoi,
         ];
 
-        return view('truongkhoa.dashboard', compact('khoa', 'stats', 'deTaiCanDuyet', 'ketQuaXepLoai'));
+        // Thống kê phân bổ đề tài theo Bộ môn
+        $boMonList = BoMon::where('MaKhoa', $maKhoa)->get();
+        $chartBmLabels = [];
+        $chartBmCounts = [];
+        foreach ($boMonList as $bm) {
+            $chartBmLabels[] = $bm->TenBoMon;
+            $chartBmCounts[] = DeTai::whereHas('giangVien', fn($q) => $q->where('MaBoMon', $bm->MaBoMon))->count();
+        }
+
+        // Thống kê trạng thái đề tài toàn Khoa
+        $chartStatusKhoa = [
+            'cho_duyet_khoa'    => $choDuyetKhoa,
+            'truong_khoa_duyet' => $truongKhoaDaDuyet,
+            'da_cong_bo'        => $daCongBo,
+            'dang_xu_ly_bm'     => $choDuyetBM + $dangPhanBien,
+            'can_sua_tu_choi'   => $yeuCauSua + $tuChoi,
+        ];
+
+        return view('truongkhoa.dashboard', compact(
+            'khoa', 
+            'stats', 
+            'deTaiCanDuyet', 
+            'ketQuaXepLoai',
+            'chartBmLabels',
+            'chartBmCounts',
+            'chartStatusKhoa'
+        ));
     }
 }

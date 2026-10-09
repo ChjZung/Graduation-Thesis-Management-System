@@ -22,8 +22,8 @@ class TheoDoiController extends Controller
             if ($bm) return $bm;
         }
 
-        if ($user && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->first();
+        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
             if ($bm) return $bm;
         }
 
@@ -33,7 +33,7 @@ class TheoDoiController extends Controller
     public function index(Request $request)
     {
         $boMon = $this->getBoMon();
-        $maBoMon = $boMon ? $boMon->MaBoMon : 'CNPM';
+        $maBoMon = $boMon ? $boMon->MaBoMon : 'BM_CNPM';
 
         // Lấy danh sách GV thuộc Bộ môn kèm thống kê đề tài và nhóm hướng dẫn
         $giangViens = GiangVien::where('MaBoMon', $maBoMon)
@@ -75,11 +75,26 @@ class TheoDoiController extends Controller
         // Tìm kiếm tự do
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $queryNhoms->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $queryNhoms->where(function ($q) use ($s, $sClean) {
                 $q->where('TenNhom', 'like', "%{$s}%")
                   ->orWhere('MaNhom', 'like', "%{$s}%")
-                  ->orWhereHas('deTai', fn($dq) => $dq->where('TenDeTai', 'like', "%{$s}%"))
-                  ->orWhereHas('truongNhom', fn($sq) => $sq->where('HoTen', 'like', "%{$s}%")->orWhere('MaSV', 'like', "%{$s}%"));
+                  ->orWhereHas('deTai', function($dq) use ($s, $sClean) {
+                      $dq->where('TenDeTai', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $dq->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                      }
+                  })
+                  ->orWhereHas('thanhViens.sinhVien', function($sq) use ($s, $sClean) {
+                      $sq->where('HoTen', 'like', "%{$s}%")
+                         ->orWhere('MaSV', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $sq->orWhere('MaSV', 'like', "%{$sClean}%");
+                      }
+                  });
+                if (!empty($sClean)) {
+                    $q->orWhere('MaNhom', 'like', "%{$sClean}%");
+                }
             });
         }
 

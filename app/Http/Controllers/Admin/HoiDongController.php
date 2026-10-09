@@ -20,11 +20,15 @@ class HoiDongController extends Controller
             ->orderBy('ThoiGianBatDau', 'desc');
 
         if ($request->filled('search')) {
-            $s = $request->search;
-            $query->where(function($q) use ($s) {
+            $s = trim($request->search);
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function($q) use ($s, $sClean) {
                 $q->where('TenHoiDong', 'like', "%{$s}%")
                   ->orWhere('MaHoiDong', 'like', "%{$s}%")
                   ->orWhere('DiaDiem', 'like', "%{$s}%");
+                if (!empty($sClean)) {
+                    $q->orWhere('MaHoiDong', 'like', "%{$sClean}%");
+                }
             });
         }
 

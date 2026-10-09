@@ -316,6 +316,8 @@
         </div>
     </div>
     @endif
+</div>
+
 <!-- MODAL XỬ LÝ NGOẠI LỆ TẠI VĂN PHÒNG KHOA (MỐC 12/08) -->
 <div class="modal fade" id="modalNgoaiLeVPK" tabindex="-1" aria-labelledby="modalNgoaiLeVPKLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">

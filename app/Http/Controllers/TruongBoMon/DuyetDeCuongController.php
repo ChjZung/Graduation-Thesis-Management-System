@@ -24,8 +24,8 @@ class DuyetDeCuongController extends Controller
             if ($bm) return $bm;
         }
 
-        if ($user && preg_match('/^TBM_[A-Z0-9]+_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->first();
+        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
+            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
             if ($bm) return $bm;
         }
 
@@ -35,7 +35,7 @@ class DuyetDeCuongController extends Controller
     public function index(Request $request)
     {
         $boMon = $this->getBoMon();
-        $maBoMon = $boMon ? $boMon->MaBoMon : 'CNPM';
+        $maBoMon = $boMon ? $boMon->MaBoMon : 'BM_CNPM';
 
         $giangViens = GiangVien::where('MaBoMon', $maBoMon)->orderBy('HoTen')->get();
         $gvIds = $giangViens->pluck('MaGV');
@@ -47,7 +47,10 @@ class DuyetDeCuongController extends Controller
 
         // Base query các đề tài có file đề cương hoặc bước phản biện / duyệt đề cương
         $baseQuery = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy', 'phanCongPhanBiens.giangVien'])
-            ->whereIn('MaGV', $gvIds)
+            ->where(function($q) use ($gvIds, $maBoMon) {
+                $q->whereIn('MaGV', $gvIds)
+                  ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $maBoMon));
+            })
             ->where(function($q) {
                 $q->whereNotNull('FileDeCuong')
                   ->orWhereIn('TrangThai', [

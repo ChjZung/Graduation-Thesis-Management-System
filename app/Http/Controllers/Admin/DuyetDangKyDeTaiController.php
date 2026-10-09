@@ -45,23 +45,38 @@ class DuyetDangKyDeTaiController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function($q) use ($search) {
+            $cleanSearch = preg_replace('/[^A-Za-z0-9]/', '', $search);
+            $query->where(function($q) use ($search, $cleanSearch) {
                 $q->where('MaDangKy', 'LIKE', "%{$search}%")
                   ->orWhere('MaNhom', 'LIKE', "%{$search}%")
-                  ->orWhere('MaDeTai', 'LIKE', "%{$search}%")
-                  ->orWhereHas('nhom', function($nq) use ($search) {
-                      $nq->where('TenNhom', 'LIKE', "%{$search}%")
-                         ->orWhereHas('sinhViens', function($sq) use ($search) {
-                             $sq->where('HoTen', 'LIKE', "%{$search}%")
-                                ->orWhere('MaSV', 'LIKE', "%{$search}%");
-                         });
-                  })
-                  ->orWhereHas('deTai', function($dq) use ($search) {
-                      $dq->where('TenDeTai', 'LIKE', "%{$search}%")
-                         ->orWhereHas('giangVien', function($gq) use ($search) {
-                             $gq->where('HoTen', 'LIKE', "%{$search}%");
-                         });
-                  });
+                  ->orWhere('MaDeTai', 'LIKE', "%{$search}%");
+                if (!empty($cleanSearch)) {
+                    $q->orWhere('MaDangKy', 'LIKE', "%{$cleanSearch}%")
+                      ->orWhere('MaNhom', 'LIKE', "%{$cleanSearch}%")
+                      ->orWhere('MaDeTai', 'LIKE', "%{$cleanSearch}%");
+                }
+                $q->orWhereHas('nhom', function($nq) use ($search, $cleanSearch) {
+                    $nq->where('TenNhom', 'LIKE', "%{$search}%")
+                       ->orWhereHas('sinhViens', function($sq) use ($search, $cleanSearch) {
+                           $sq->where('HoTen', 'LIKE', "%{$search}%")
+                              ->orWhere('MaSV', 'LIKE', "%{$search}%");
+                           if (!empty($cleanSearch)) {
+                               $sq->orWhere('MaSV', 'LIKE', "%{$cleanSearch}%");
+                           }
+                       });
+                })
+                ->orWhereHas('deTai', function($dq) use ($search, $cleanSearch) {
+                    $dq->where('TenDeTai', 'LIKE', "%{$search}%");
+                    if (!empty($cleanSearch)) {
+                        $dq->orWhere('MaDeTai', 'LIKE', "%{$cleanSearch}%");
+                    }
+                    $dq->orWhereHas('giangVien', function($gq) use ($search, $cleanSearch) {
+                        $gq->where('HoTen', 'LIKE', "%{$search}%");
+                        if (!empty($cleanSearch)) {
+                            $gq->orWhere('MaGV', 'LIKE', "%{$cleanSearch}%");
+                        }
+                    });
+                });
             });
         }
 

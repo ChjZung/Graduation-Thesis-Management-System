@@ -20,24 +20,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert" style="background-color: #ecfdf5; border-left: 4px solid #10b981 !important; color: #065f46;">
-            <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important; color: #991b1b;">
-            <div class="fw-bold mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Có lỗi xảy ra:</div>
-            <ul class="mb-0 ps-3">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-header bg-white border-bottom py-3">
@@ -105,7 +87,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-dark">Trạng thái</label>
                         <select name="TrangThai" class="form-select form-select-sm">
-                            <option value="Đang sử dụng" {{ old('TrangThai', $hocphan->TrangThai) === 'Đang sử dụng' || old('TrangThai', $hocphan->TrangThai) === 'Đang áp dụng' ? 'selected' : '' }}>Đang sử dụng</option>
+                            <option value="Đang sử dụng" {{ old('TrangThai', $hocphan->TrangThai) === 'Đang sử dụng' || old('TrangThai', $hocphan->TrangThai) === 'Đang áp dụng' || $hocphan->TrangThai == '1' || $hocphan->TrangThai === true ? 'selected' : '' }}>Đang sử dụng</option>
                             <option value="Ngừng sử dụng" {{ old('TrangThai', $hocphan->TrangThai) === 'Ngừng sử dụng' || old('TrangThai', $hocphan->TrangThai) === 'Tạm ngưng' ? 'selected' : '' }}>Ngừng sử dụng</option>
                         </select>
                     </div>

@@ -28,15 +28,32 @@ class HoSoBaoVeController extends Controller
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
+            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
+            $query->where(function ($q) use ($s, $sClean) {
                 $q->where('MaHoSo', 'like', "%{$s}%")
-                  ->orWhereHas('nhom', function ($qn) use ($s) {
+                  ->orWhereHas('nhom', function ($qn) use ($s, $sClean) {
                       $qn->where('TenNhom', 'like', "%{$s}%")
-                         ->orWhere('MaNhom', 'like', "%{$s}%");
+                         ->orWhere('MaNhom', 'like', "%{$s}%")
+                         ->orWhereHas('thanhViens.sinhVien', function($sq) use ($s, $sClean) {
+                             $sq->where('HoTen', 'like', "%{$s}%")
+                                ->orWhere('MaSV', 'like', "%{$s}%");
+                             if (!empty($sClean)) {
+                                 $sq->orWhere('MaSV', 'like', "%{$sClean}%");
+                             }
+                         });
+                      if (!empty($sClean)) {
+                          $qn->orWhere('MaNhom', 'like', "%{$sClean}%");
+                      }
                   })
-                  ->orWhereHas('nhom.deTai', function ($qd) use ($s) {
+                  ->orWhereHas('nhom.deTai', function ($qd) use ($s, $sClean) {
                       $qd->where('TenDeTai', 'like', "%{$s}%");
+                      if (!empty($sClean)) {
+                          $qd->orWhere('MaDeTai', 'like', "%{$sClean}%");
+                      }
                   });
+                if (!empty($sClean)) {
+                    $q->orWhere('MaHoSo', 'like', "%{$sClean}%");
+                }
             });
         }
 

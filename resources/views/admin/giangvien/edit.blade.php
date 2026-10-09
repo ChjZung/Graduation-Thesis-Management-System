@@ -61,8 +61,9 @@
                             <input type="email" name="Email" class="form-control form-control-huit" value="{{ old('Email', $giangvien->Email) }}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label-huit">Số Điện Thoại</label>
-                            <input type="text" name="SoDienThoai" class="form-control form-control-huit" value="{{ old('SoDienThoai', $giangvien->SoDienThoai) }}">
+                            <label class="form-label-huit">Số Điện Thoại (10 số)</label>
+                            <input type="text" name="SoDienThoai" class="form-control form-control-huit" value="{{ old('SoDienThoai', $giangvien->SoDienThoai) }}" placeholder="0912345678" minlength="10" maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải có đúng 10 chữ số bắt đầu bằng số 0">
+                            <div class="form-text small text-muted">Số điện thoại phải có đúng 10 chữ số (min=10, max=10).</div>
                         </div>
                     </div>
 

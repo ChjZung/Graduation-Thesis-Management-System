@@ -177,7 +177,7 @@
                             @endif
                         </div>
                         <div class="text-muted mt-1" style="font-size: 0.74rem;">
-                            Thành viên: {{ $nhom->thanhViens->count() + 1 }}/3 sinh viên
+                            Thành viên: {{ $nhom->thanhViens->count() }}/3 sinh viên
                         </div>
                     </td>
 
@@ -204,52 +204,23 @@
 
                     {{-- 6 Giai Đoạn Tiến Độ Track --}}
                     <td>
-                        <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.78rem;">
-                            <span class="fw-bold text-primary">
-                                Đang ở: GĐ {{ $nhom->current_stage }} ({{ $nhom->current_stage_label }})
+                        <div class="d-flex align-items-center justify-content-between mb-1.5" style="font-size: 0.82rem;">
+                            <span class="fw-bold text-dark text-truncate" style="max-width: 190px;" title="GĐ {{ $nhom->current_stage }}: {{ $nhom->current_stage_label }}">
+                                <span class="text-primary fw-bold">GĐ {{ $nhom->current_stage }}/6:</span> {{ $nhom->current_stage_label }}
                             </span>
-                            <span class="fw-bold text-dark">
-                                {{ $nhom->completed_stages }}/6 GĐ ({{ $nhom->progress_percent }}%)
+                            <span class="badge bg-light text-primary border rounded-pill fw-bold px-2 py-1" style="font-size: 0.76rem;">
+                                {{ $nhom->progress_percent }}%
                             </span>
                         </div>
-
-                        {{-- 6 Steps Visual Stepper Track --}}
-                        <div class="d-flex align-items-center gap-1 mb-2">
-                            @foreach($nhom->stages as $stIndex => $stInfo)
-                                @php
-                                    $stepColor = '#94a3b8'; // gray default
-                                    $stepBg = '#f1f5f9';
-                                    if ($stInfo['status'] === 'DAT') {
-                                        $stepColor = '#10b981'; // green
-                                        $stepBg = '#dcfce7';
-                                    } elseif ($stInfo['status'] === 'CHO_DUYET') {
-                                        $stepColor = '#f59e0b'; // amber
-                                        $stepBg = '#fef3c7';
-                                    } elseif ($stInfo['status'] === 'NOP_LAI') {
-                                        $stepColor = '#0ea5e9'; // blue
-                                        $stepBg = '#e0f2fe';
-                                    } elseif ($stIndex === $nhom->current_stage) {
-                                        $stepColor = '#0284c7';
-                                        $stepBg = '#e0f2fe';
-                                    }
-                                @endphp
-                                <div class="flex-grow-1 text-center py-1 rounded" 
-                                     style="background: {{ $stepBg }}; border: 1px solid {{ $stepColor }};"
-                                     title="{{ $stInfo['name'] }}: {{ $stInfo['status_label'] }}">
-                                    <span style="font-size: 0.68rem; font-weight: 700; color: {{ $stepColor }};">
-                                        @if($stInfo['status'] === 'DAT')
-                                            ✓ {{ $stIndex }}
-                                        @else
-                                            {{ $stIndex }}
-                                        @endif
-                                    </span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="progress rounded-pill shadow-none" style="height: 5px; background: #e2e8f0;">
+                        <div class="progress rounded-pill shadow-none" style="height: 8px; background: #e2e8f0;">
                             <div class="progress-bar rounded-pill {{ $nhom->progress_percent >= 100 ? 'bg-success' : ($nhom->status_code == 'QUA_HAN' ? 'bg-danger' : 'bg-primary') }}" 
                                  style="width: {{ $nhom->progress_percent }}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 0.72rem;">
+                            <span>Hoàn thành: <strong>{{ $nhom->completed_stages }}/6</strong> mốc</span>
+                            <span class="fw-medium {{ $nhom->status_code === 'QUA_HAN' ? 'text-danger' : ($nhom->status_code === 'SAP_DEN_HAN' ? 'text-warning' : 'text-success') }}">
+                                {{ $nhom->status_label }}
+                            </span>
                         </div>
                     </td>
 
@@ -265,21 +236,12 @@
                             <span class="badge-status-blue">{{ $nhom->status_label }}</span>
                         @endif
                     </td>
-                    </td>
 
                     {{-- Thao tác --}}
                     <td class="text-center">
-                        <div class="d-inline-flex gap-1">
-                            <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" class="btn-action-icon btn-action-view" title="Xem chi tiết tiến độ">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                            <form action="{{ route('admin.theodoi.remind', $nhom->MaNhom) }}" method="POST" class="d-inline" onsubmit="return confirm('Gửi thông báo nhắc nhở tiến độ tới nhóm {{ $nhom->MaNhom }} và GVHD?');">
-                                @csrf
-                                <button type="submit" class="btn-action-icon btn-action-edit" title="Gửi nhắc nhở">
-                                    <i class="fa-solid fa-bell"></i>
-                                </button>
-                            </form>
-                        </div>
+                        <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" style="font-size: 0.8rem;" title="Xem chi tiết tiến độ">
+                            <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                        </a>
                     </td>
                 </tr>
                 @empty

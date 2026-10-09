@@ -4,11 +4,22 @@
 
 @section('content')
 
-{{-- ── HÀNG 1: 4 CARD KPI CHUẨN FIGMA ── --}}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">
+            <i class="fa-solid fa-chart-pie me-2 text-primary"></i> Tổng Quan Khóa Luận Tốt Nghiệp
+        </h4>
+        <div class="text-muted small">
+            Dữ liệu tổng hợp theo <span class="badge bg-light text-primary border"><i class="fa-regular fa-calendar-check me-1"></i>Học kỳ hiện tại</span>
+        </div>
+    </div>
+</div>
+
+{{-- ── HÀNG 1: 4 CARD KPI ĐỒNG BỘ CHUẨN HỌC THUẬT ── --}}
 <div class="row g-3 mb-4">
     <!-- Sinh Viên -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card border-accent-blue">
+        <div class="admin-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="kpi-title">Sinh Viên</div>
@@ -17,7 +28,7 @@
                         Sinh viên tham gia
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #e0f2fe; color: #0284c7;">
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
             </div>
@@ -26,14 +37,14 @@
 
     <!-- Giảng Viên -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card border-accent-green">
+        <div class="admin-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="kpi-title">Giảng Viên</div>
                     <div class="kpi-value">{{ $soGiangVien }}</div>
                     <div class="kpi-subtext text-muted">Cán bộ hướng dẫn</div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #dcfce7; color: #16a34a;">
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
                     <i class="fa-solid fa-chalkboard-user"></i>
                 </div>
             </div>
@@ -42,7 +53,7 @@
 
     <!-- Đề Tài Khóa Luận -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card border-accent-amber">
+        <div class="admin-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="kpi-title">Đề Tài Khóa Luận</div>
@@ -51,7 +62,7 @@
                         {{ $deTaiDaDuyet }} đề tài đã duyệt
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #fef3c7; color: #d97706;">
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
                     <i class="fa-solid fa-book-open"></i>
                 </div>
             </div>
@@ -60,7 +71,7 @@
 
     <!-- Nhóm Khóa Luận -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card border-accent-purple">
+        <div class="admin-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="kpi-title">Nhóm Khóa Luận</div>
@@ -69,7 +80,7 @@
                         Nhóm sinh viên
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #ede9fe; color: #7c3aed;">
+                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
                     <i class="fa-solid fa-users"></i>
                 </div>
             </div>

@@ -44,7 +44,7 @@
     <div class="col-md-5">
         <div class="card card-premium h-100">
             <div class="card-header-premium">
-                <span><i class="fa-solid fa-users me-2 text-primary"></i> Thành Viên Nhóm ({{ $nhom->thanhViens->count() + 1 }} SV)</span>
+                <span><i class="fa-solid fa-users me-2 text-primary"></i> Thành Viên Nhóm ({{ $nhom->thanhViens->count() }} SV)</span>
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">

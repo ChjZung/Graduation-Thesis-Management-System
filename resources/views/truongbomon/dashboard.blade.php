@@ -16,11 +16,11 @@
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
-                <i class="fa-solid fa-user-plus me-1"></i> Phân Công PB ({{ $stats['cho_duyet_bm'] }})
+            <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'Chờ duyệt cấp Bộ môn']) }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
+                <i class="fa-solid fa-clipboard-check me-1"></i> Duyệt Đề Tài ({{ $stats['cho_duyet_bm'] }})
             </a>
-            <a href="{{ route('truongbomon.duyet_detai.index') }}" class="btn btn-outline-primary btn-sm rounded-3 fw-semibold">
-                <i class="fa-solid fa-clipboard-check me-1"></i> Duyệt Đề Tài ({{ $stats['da_phan_bien'] }})
+            <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-outline-primary btn-sm rounded-3 fw-semibold">
+                <i class="fa-solid fa-user-plus me-1"></i> Phân Công PB ({{ $stats['cho_phan_cong_pb'] }})
             </a>
             <a href="{{ route('truongbomon.theodoi.index') }}" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold">
                 <i class="fa-solid fa-list-check me-1"></i> Theo Dõi Tiến Độ
@@ -31,75 +31,67 @@
         </div>
     </div>
 
-    <!-- KPI Metric Cards -->
+    <!-- KPI Metric Cards (Đồng bộ chuẩn học thuật - Không màu sặc sỡ) -->
     <div class="row g-3 mb-4">
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ffc107 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Chờ Phân Công Phản Biện</div>
-                            <h3 class="fw-bold my-1 text-warning">{{ $stats['cho_duyet_bm'] }}</h3>
-                            <a href="{{ route('truongbomon.phancong.index') }}" class="small text-decoration-none text-warning fw-semibold">
-                                Phân công ngay <i class="fa-solid fa-arrow-right"></i>
-                            </a>
-                        </div>
-                        <div class="p-3 bg-warning-subtle text-warning rounded-circle">
-                            <i class="fa-solid fa-user-plus fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Chờ Duyệt Đề Tài (Bộ Môn)</div>
+                        <div class="kpi-value">{{ $stats['cho_duyet_bm'] }}</div>
+                        <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'Chờ duyệt cấp Bộ môn']) }}" class="small text-decoration-none text-primary fw-semibold">
+                            Duyệt đề tài ngay <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-clipboard-check"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0dcaf0 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Đang Phản Biện Đề Cương</div>
-                            <h3 class="fw-bold my-1 text-info">{{ $stats['dang_phan_bien'] }}</h3>
-                            <div class="small text-muted">Chờ GV phản biện cho ý kiến</div>
-                        </div>
-                        <div class="p-3 bg-info-subtle text-info rounded-circle">
-                            <i class="fa-solid fa-file-pen fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Chờ Phân Công Phản Biện</div>
+                        <div class="kpi-value">{{ $stats['cho_phan_cong_pb'] }}</div>
+                        <a href="{{ route('truongbomon.phancong.index') }}" class="small text-decoration-none text-primary fw-semibold">
+                            Phân công ngay <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-user-plus"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #198754 !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Đã Phản Biện Xong</div>
-                            <h3 class="fw-bold my-1 text-success">{{ $stats['da_phan_bien'] }}</h3>
-                            <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'Đã phản biện - Chờ duyệt BM']) }}" class="small text-decoration-none text-success fw-semibold">
-                                Xem & duyệt ngay <i class="fa-solid fa-arrow-right"></i>
-                            </a>
-                        </div>
-                        <div class="p-3 bg-success-subtle text-success rounded-circle">
-                            <i class="fa-solid fa-circle-check fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Đang Phản Biện Đề Cương</div>
+                        <div class="kpi-value">{{ $stats['dang_phan_bien'] }}</div>
+                        <div class="kpi-subtext text-muted">Chờ GV phản biện đánh giá</div>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-file-pen"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0d6efd !important; border-radius: 12px;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="text-muted small fw-semibold text-uppercase">Đã Chuyển Lên Khoa</div>
-                            <h3 class="fw-bold my-1 text-primary">{{ $stats['cho_duyet_khoa'] }}</h3>
-                            <div class="small text-muted">Chờ Trưởng khoa duyệt</div>
-                        </div>
-                        <div class="p-3 bg-primary-subtle text-primary rounded-circle">
-                            <i class="fa-solid fa-stamp fa-2x"></i>
-                        </div>
+            <div class="admin-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="kpi-title">Đã Chuyển Lên Khoa</div>
+                        <div class="kpi-value">{{ $stats['cho_duyet_khoa'] }}</div>
+                        <div class="kpi-subtext text-muted">Chờ Trưởng khoa duyệt</div>
+                    </div>
+                    <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                        <i class="fa-solid fa-stamp"></i>
                     </div>
                 </div>
             </div>
@@ -138,19 +130,64 @@
         </div>
     </div>
 
+    <!-- Biểu đồ phân tích & Thống kê Bộ môn -->
+    <div class="row g-4 mb-4">
+        <!-- Biểu đồ 1: Phân bổ trạng thái đề tài -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+                        Phân Bổ Trạng Thái Đề Tài
+                    </h6>
+                    <span class="badge bg-light text-secondary border rounded-pill small">Bộ Môn</span>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 p-md-4">
+                    <div style="position: relative; height: 230px; width: 100%;">
+                        <canvas id="tbmStatusChart"></canvas>
+                    </div>
+                    <div class="mt-3 small text-muted text-center">
+                        Tổng hợp toàn bộ {{ $stats['total_de_tai'] }} đề tài thuộc Bộ môn
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ 2: Đề tài theo Giảng viên -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-chart-simple text-primary me-2"></i>
+                        Đề Tài Theo Giảng Viên Hướng Dẫn
+                    </h6>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small">Bộ Môn</span>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <div style="position: relative; height: 230px; width: 100%;">
+                        <canvas id="tbmLecturerChart"></canvas>
+                    </div>
+                    <div class="mt-3 small text-muted text-center">
+                        Số lượng đề tài do các cán bộ/giảng viên trong bộ môn đảm nhiệm
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Urgent Action Section: Topics Requiring Processing -->
-    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom flex-wrap gap-2">
             <h6 class="fw-bold mb-0 text-dark">
                 <i class="fa-solid fa-triangle-exclamation text-primary me-2"></i>
                 Đề Tài Cần Xử Lý Ngay Tại Bộ Môn
             </h6>
             <div class="d-flex gap-2">
-                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-outline-primary rounded-3 fw-semibold">
-                    Phân Công PB <i class="fa-solid fa-arrow-right ms-1"></i>
-                </a>
-                <a href="{{ route('truongbomon.duyet_detai.index') }}" class="btn btn-sm btn-primary rounded-3 fw-semibold">
+                <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'can_duyet']) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
                     Duyệt Đề Tài <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                    Phân Công PB <i class="fa-solid fa-arrow-right ms-1"></i>
                 </a>
             </div>
         </div>
@@ -170,7 +207,7 @@
                                 <th>GV Đề Xuất</th>
                                 <th>Trạng Thái</th>
                                 <th>Phản Biện Đề Cương</th>
-                                <th class="text-end" style="width: 190px;">Thao Tác</th>
+                                <th class="text-end" style="width: 220px;">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -187,40 +224,50 @@
                                     <td>{{ $dt->giangVien->HoTen ?? 'Chưa xác định' }}</td>
                                     <td>
                                         @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fa-solid fa-clock me-1"></i> Chờ duyệt BM</span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-clock me-1"></i> Chờ duyệt BM</span>
                                         @elseif($dt->TrangThai === 'Đang phản biện đề cương')
-                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="fa-solid fa-spinner me-1"></i> Đang phản biện</span>
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-spinner me-1"></i> Đang phản biện</span>
                                         @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-check-double me-1"></i> Đã phản biện</span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-check-double me-1"></i> Đã phản biện</span>
                                         @else
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ $dt->TrangThai }}</span>
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1">{{ $dt->TrangThai }}</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($pb)
+                                        @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-clock me-1"></i> Chờ TBM duyệt đề xuất
+                                            </span>
+                                        @elseif($pb)
                                             <div class="small fw-semibold">{{ $pb->giangVien->HoTen ?? 'N/A' }}</div>
                                             @if($pb->KetQua === 'Đạt')
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
                                             @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
-                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 0.75rem;"><i class="fa-solid fa-pen me-1"></i> Cần sửa</span>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-pen me-1"></i> Cần sửa</span>
                                             @elseif($pb->KetQua === 'Không đạt')
-                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.75rem;"><i class="fa-solid fa-xmark me-1"></i> Không đạt</span>
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-xmark me-1"></i> Không đạt</span>
                                             @else
-                                                <span class="badge bg-light text-muted border" style="font-size: 0.75rem;"><i class="fa-solid fa-hourglass-start me-1"></i> Chờ đánh giá</span>
+                                                <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-hourglass-start me-1"></i> Chờ đánh giá</span>
                                             @endif
                                         @else
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa phân công</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa phân công PB</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        @if(!$pb)
-                                            <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-primary rounded-3 px-2 fw-semibold">
-                                                <i class="fa-solid fa-user-plus me-1"></i> Phân công PB
+                                        <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
+                                            @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn' || $dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
+                                                <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
+                                                    <i class="fa-solid fa-clipboard-check me-1"></i> Duyệt đề tài
+                                                </a>
+                                            @elseif(!$pb)
+                                                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-info text-white rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
+                                                    <i class="fa-solid fa-user-plus me-1"></i> Phân công PB
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-nowrap">
+                                                <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                             </a>
-                                        @endif
-                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2">
-                                            <i class="fa-solid fa-eye me-1"></i> Chi tiết
-                                        </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -232,6 +279,85 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Doughnut Chart: Trạng thái đề tài
+    const statusCtx = document.getElementById('tbmStatusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Chờ duyệt BM', 'Đang/Đã PB', 'Chờ Khoa duyệt', 'Đã duyệt / Công bố', 'Cần sửa / Từ chối'],
+                datasets: [{
+                    data: [
+                        {{ $chartStatusCounts['cho_duyet_bm'] ?? 0 }},
+                        {{ $chartStatusCounts['dang_phan_bien'] ?? 0 }},
+                        {{ $chartStatusCounts['cho_duyet_khoa'] ?? 0 }},
+                        {{ $chartStatusCounts['da_duyet_cong_bo'] ?? 0 }},
+                        {{ $chartStatusCounts['can_sua_tu_choi'] ?? 0 }}
+                    ],
+                    backgroundColor: ['#ffc107', '#0dcaf0', '#0d6efd', '#198754', '#dc3545'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // 2. Bar Chart: Đề tài theo giảng viên
+    const gvCtx = document.getElementById('tbmLecturerChart');
+    if (gvCtx) {
+        new Chart(gvCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($chartGvLabels ?? []) !!},
+                datasets: [{
+                    label: 'Số đề tài',
+                    data: {!! json_encode($chartGvCounts ?? []) !!},
+                    backgroundColor: '#002855',
+                    borderRadius: 6,
+                    maxBarThickness: 32
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            maxRotation: 30,
+                            minRotation: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+@endpush
 
 @push('styles')
 <style>
