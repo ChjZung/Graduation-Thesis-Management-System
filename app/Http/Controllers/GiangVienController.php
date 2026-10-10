@@ -7,6 +7,7 @@ use App\Http\Traits\HandlesExcelImport;
 use App\Models\GiangVien;
 use App\Models\BoMon;
 use App\Models\TaiKhoan;
+use App\Models\ChiTieuHuongDan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -67,17 +68,55 @@ class GiangVienController extends Controller
             }
         }
 
-        $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::orderBy('MaHocKy', 'desc')->first();
-        $currentMaHocKy = $currentHk?->MaHocKy;
+        $hocKys = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? $hocKys->first();
+        $selectedHocKy = $request->get('MaHocKy_filter', $currentHk?->MaHocKy ?? '');
+
+        // Lọc theo Học kỳ
+        if ($request->filled('MaHocKy_filter')) {
+            $hkFilter = $request->MaHocKy_filter;
+            $query->where(function($q) use ($hkFilter) {
+                $q->whereHas('deTais', fn($dt) => $dt->where('MaHocKy', $hkFilter))
+                  ->orWhereHas('phanCongPhanBiens.deTai', fn($dt) => $dt->where('MaHocKy', $hkFilter))
+                  ->orWhereHas('thanhVienHoiDongs.hoiDong', fn($hd) => $hd->where('MaHocKy', $hkFilter));
+            });
+        }
+
+        $scopedHocKy = $request->filled('MaHocKy_filter') ? $request->MaHocKy_filter : ($currentHk?->MaHocKy ?? null);
+
+        // Bộ lọc Tình trạng hướng dẫn (trong học kỳ)
+        if ($request->filled('tinh_trang_hd')) {
+            $statusHd = $request->tinh_trang_hd;
+            if ($statusHd === 'co_hd') {
+                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                });
+            } elseif ($statusHd === 'dat_dinh_muc') {
+                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                }, '>=', 5);
+            } elseif ($statusHd === 'chua_hd') {
+                $query->whereDoesntHave('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                });
+            }
+        }
 
         $totalGV = GiangVien::count();
-        $gvHuongDan = GiangVien::whereHas('deTais', function($q) use ($currentMaHocKy) {
+        $gvHuongDan = GiangVien::whereHas('deTais', function($q) use ($scopedHocKy) {
             $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-            if ($currentMaHocKy) {
-                $q->where('MaHocKy', $currentMaHocKy);
+            if ($scopedHocKy) {
+                $q->where('MaHocKy', $scopedHocKy);
             }
         })->count();
-        $gvHoiDong = GiangVien::has('thanhVienHoiDongs')->count();
+        $gvHoiDong = GiangVien::whereHas('thanhVienHoiDongs.hoiDong', function($q) use ($scopedHocKy) {
+            if ($scopedHocKy) {
+                $q->where('MaHocKy', $scopedHocKy);
+            }
+        })->count();
         $gvActive = GiangVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
 
         // Đếm số giảng viên đang giữ chức vụ
@@ -95,13 +134,13 @@ class GiangVienController extends Controller
         ];
 
         $giangviens = $query->withCount([
-            'deTais' => function($q) use ($currentMaHocKy) {
+            'deTais' => function($q) use ($scopedHocKy) {
                 $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                if ($currentMaHocKy) {
-                    $q->where('MaHocKy', $currentMaHocKy);
+                if ($scopedHocKy) {
+                    $q->where('MaHocKy', $scopedHocKy);
                 }
             }
-        ])->orderBy('MaGV')->paginate(10)->withQueryString();
+        ])->orderBy('MaGV')->paginate(15)->withQueryString();
         $bomons = BoMon::with('khoa')->orderBy('TenBoMon')->get();
 
         // Lấy danh sách các tài khoản chức vụ hiện có để đối chiếu nhanh
@@ -116,7 +155,9 @@ class GiangVienController extends Controller
             'stats',
             'truongKhoaNames',
             'truongBoMonNames',
-            'tkChucVus'
+            'tkChucVus',
+            'hocKys',
+            'selectedHocKy'
         ));
     }
 
@@ -146,7 +187,8 @@ class GiangVienController extends Controller
                 'string',
                 'regex:/^0[0-9]{9}$/',
                 'unique:GiangVien,SoDienThoai'
-            ]
+            ],
+            'MaHocKy'     => 'nullable|exists:HocKy,MaHocKy'
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập Mã giảng viên (MaGV).',
             'TenDangNhap.size'     => 'Mã giảng viên phải có đúng 10 ký tự (min=10, max=10, ví dụ: GV00000001).',
@@ -186,9 +228,26 @@ class GiangVienController extends Controller
                 'HocVi'       => trim($request->HocVi),
                 'TrangThai'   => 'Đang công tác',
             ]);
+
+            if ($request->filled('MaHocKy')) {
+                ChiTieuHuongDan::firstOrCreate([
+                    'MaHocKy' => $request->MaHocKy,
+                    'MaGV'    => $maGV,
+                ], [
+                    'MaChiTieu'   => 'CT_' . substr(md5($maGV . '_' . $request->MaHocKy . '_' . uniqid()), 0, 16),
+                    'SoNhomToiDa' => 5,
+                    'NgayPhanBo'  => now(),
+                ]);
+            }
         });
 
-        return redirect()->route('giangvien.index', ['tab' => 'danhsach'])->with('success', "Thêm giảng viên '{$request->HoTen}' (Mã GV: {$maGV}) thành công! (Mật khẩu mặc định: 123456)");
+        $redirectParams = ['tab' => 'danhsach'];
+        if ($request->filled('MaHocKy')) {
+            $redirectParams['MaHocKy_filter'] = $request->MaHocKy;
+        }
+
+        return redirect()->route('giangvien.index', $redirectParams)
+            ->with('success', "Thêm giảng viên '{$request->HoTen}' (Mã GV: {$maGV}) thành công! (Mật khẩu mặc định: 123456)");
     }
 
     public function show($id)
@@ -289,7 +348,9 @@ class GiangVienController extends Controller
 
     public function importExcel(Request $request)
     {
-        return $this->runImport($request, 'importGiangVien', [], 'Giảng viên');
+        $maHocKy = $request->input('MaHocKy');
+        $params = $maHocKy ? [$maHocKy] : [];
+        return $this->runImport($request, 'importGiangVien', $params, 'Giảng viên');
     }
 
     /**
@@ -506,7 +567,45 @@ class GiangVienController extends Controller
             $query->where('MaBoMon', $request->MaBoMon);
         }
 
-        $giangviens = $query->orderBy('MaGV')->get();
+        if ($request->filled('MaHocKy_filter')) {
+            $hkFilter = $request->MaHocKy_filter;
+            $query->where(function($q) use ($hkFilter) {
+                $q->whereHas('deTais', fn($dt) => $dt->where('MaHocKy', $hkFilter))
+                  ->orWhereHas('phanCongPhanBiens.deTai', fn($dt) => $dt->where('MaHocKy', $hkFilter))
+                  ->orWhereHas('thanhVienHoiDongs.hoiDong', fn($hd) => $hd->where('MaHocKy', $hkFilter));
+            });
+        }
+
+        $scopedHocKy = $request->filled('MaHocKy_filter') ? $request->MaHocKy_filter : null;
+
+        if ($request->filled('tinh_trang_hd')) {
+            $statusHd = $request->tinh_trang_hd;
+            if ($statusHd === 'co_hd') {
+                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                });
+            } elseif ($statusHd === 'dat_dinh_muc') {
+                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                }, '>=', 5);
+            } elseif ($statusHd === 'chua_hd') {
+                $query->whereDoesntHave('deTais', function($q) use ($scopedHocKy) {
+                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                });
+            }
+        }
+
+        $giangviens = $query->withCount([
+            'deTais' => function($q) use ($scopedHocKy) {
+                $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                if ($scopedHocKy) {
+                    $q->where('MaHocKy', $scopedHocKy);
+                }
+            }
+        ])->orderBy('MaGV')->get();
 
         $filename = "DS_GIANG_VIEN_KHOA_CNTT_" . date('Ymd_His') . ".csv";
 

@@ -8,8 +8,11 @@ use App\Models\DangKyDeTai;
 use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
+use App\Models\GiangVien;
+use App\Services\ChiTieuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DangKyDeTaiController extends Controller
@@ -157,105 +160,108 @@ class DangKyDeTaiController extends Controller
 
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $deTai = DeTai::findOrFail($request->MaDeTai);
 
-        // 0. Kiểm tra đề tài đã được công bố chính thức chưa
-        if ($deTai->TrangThai !== 'Đã công bố') {
-            return redirect()->back()->withErrors('Đề tài này chưa được công bố chính thức cho sinh viên đăng ký!');
-        }
+        try {
+            return DB::transaction(function () use ($request, $sinhVien) {
+                // 1. Khóa dòng đề tài để kiểm tra trạng thái và tránh race condition
+                $deTai = DeTai::where('MaDeTai', $request->MaDeTai)->lockForUpdate()->firstOrFail();
 
-        // 1. Kiểm tra sinh viên có thuộc nhóm chính thức tương ứng không
-        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia');
+                // Kiểm tra đề tài đã được công bố chính thức chưa
+                if ($deTai->TrangThai !== 'Đã công bố') {
+                    throw new \Exception('Đề tài này chưa được công bố chính thức cho sinh viên đăng ký!');
+                }
 
-        if ($deTai->MaHocPhan) {
-            $thanhVienQuery->whereHas('nhom', function($q) use ($deTai) {
-                $q->where('MaHocPhan', $deTai->MaHocPhan)->orWhereNull('MaHocPhan');
+                // 2. Kiểm tra sinh viên có thuộc nhóm chính thức tương ứng không
+                $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+                    ->where('TrangThai', 'da_tham_gia');
+
+                if ($deTai->MaHocPhan) {
+                    $thanhVienQuery->whereHas('nhom', function($q) use ($deTai) {
+                        $q->where('MaHocPhan', $deTai->MaHocPhan)->orWhereNull('MaHocPhan');
+                    });
+                }
+
+                $thanhVienRecord = $thanhVienQuery->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+
+                if (!$thanhVienRecord) {
+                    throw new \Exception('Bạn chưa có nhóm khóa luận cho môn học này! Vui lòng tạo nhóm hoặc gia nhập nhóm trước khi đăng ký đề tài.');
+                }
+
+                // 3. Khóa dòng nhóm
+                $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->lockForUpdate()->firstOrFail();
+
+                // Chỉ Trưởng nhóm được đăng ký
+                if ($nhom->MaTruongNhom != $sinhVien->MaSV) {
+                    throw new \Exception('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài!');
+                }
+
+                // QUY ĐỊNH: Nhóm phải có ĐỦ 3 THÀNH VIÊN chính thức mới được phép đăng ký đề tài
+                $countMembers = ThanhVienNhom::where('MaNhom', $nhom->MaNhom)
+                    ->where('TrangThai', 'da_tham_gia')
+                    ->count();
+
+                $minRequired = 3;
+                if ($countMembers < $minRequired) {
+                    throw new \Exception("Quy định: Nhóm phải có đủ {$minRequired} thành viên mới được phép đăng ký đề tài! Hiện tại nhóm của bạn có {$countMembers}/{$minRequired} thành viên. Vui lòng mời hoặc phê duyệt thêm thành viên trước khi đăng ký đề tài.");
+                }
+
+                $maxSV = $deTai->SoLuongSinhVienToiDa ?? 3;
+                if ($countMembers > $maxSV) {
+                    throw new \Exception("Đề tài '{$deTai->TenDeTai}' chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm của bạn hiện có {$countMembers} thành viên!");
+                }
+
+                // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (có khóa dòng)
+                $alreadyTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
+                    ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($alreadyTaken) {
+                    throw new \Exception('Đề tài này đã có nhóm khác đăng ký thành công. Vui lòng chọn đề tài khác!');
+                }
+
+                // 5. Kiểm tra nhóm đã đăng ký đề tài nào chưa (có khóa dòng)
+                $existingRegistration = DangKyDeTai::where('MaNhom', $nhom->MaNhom)
+                    ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingRegistration) {
+                    throw new \Exception('Nhóm của bạn đã đăng ký đề tài rồi! Mỗi nhóm chỉ được đăng ký 1 đề tài.');
+                }
+
+                // 6. Kiểm tra chỉ tiêu hướng dẫn của Giảng viên (P1: lấy từ DB qua ChiTieuService, khóa dòng, không hard-code 5)
+                $gvDeTai = $deTai->MaGV;
+                if ($gvDeTai) {
+                    $gvRecord = GiangVien::where('MaGV', $gvDeTai)->lockForUpdate()->first();
+                    $chiTieuStats = ChiTieuService::getChiTieuStats($gvDeTai, $deTai->MaHocKy, true);
+
+                    if ($chiTieuStats['is_full']) {
+                        $tenGV = $gvRecord?->HoTen ?? $gvDeTai;
+                        throw new \Exception("Giảng viên hướng dẫn ({$tenGV}) đã nhận đủ chỉ tiêu hướng dẫn ({$chiTieuStats['da_dung']}/{$chiTieuStats['tong']} nhóm) trong học kỳ này! Hết chỉ tiêu, vui lòng chọn đề tài của giảng viên khác.");
+                    }
+                }
+
+                $maDK = 'DK_' . Str::upper(Str::random(6));
+
+                // Đăng ký xong thì gán trực tiếp cho nhóm luôn, không cần ai duyệt nữa
+                DangKyDeTai::create([
+                    'MaDangKy'     => $maDK,
+                    'MaNhom'       => $nhom->MaNhom,
+                    'MaDeTai'      => $deTai->MaDeTai,
+                    'MaGVHuongDan' => $deTai->MaGV,
+                    'NgayDangKy'   => now(),
+                    'TrangThai'    => 'Đã duyệt',
+                    'NgayDuyet'    => now(),
+                ]);
+
+                $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
+
+                return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đề tài đã được gán trực tiếp cho nhóm của bạn.");
             });
+        } catch (\Throwable $e) {
+            return redirect()->back()->withErrors($e->getMessage());
         }
-
-        $thanhVienRecord = $thanhVienQuery->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
-
-        if (!$thanhVienRecord) {
-            return redirect()->back()->withErrors('Bạn chưa có nhóm khóa luận cho môn học này! Vui lòng tạo nhóm hoặc gia nhập nhóm trước khi đăng ký đề tài.');
-        }
-
-        $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->firstOrFail();
-
-        // 2. Chỉ Trưởng nhóm được đăng ký
-        if ($nhom->MaTruongNhom != $sinhVien->MaSV) {
-            return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền đại diện đăng ký đề tài!');
-        }
-
-        // 3. QUY ĐỊNH: Nhóm phải có ĐỦ 3 THÀNH VIÊN chính thức mới được phép đăng ký đề tài
-        $countMembers = ThanhVienNhom::where('MaNhom', $nhom->MaNhom)
-            ->where('TrangThai', 'da_tham_gia')
-            ->count();
-
-        $minRequired = 3;
-        if ($countMembers < $minRequired) {
-            return redirect()->back()->withErrors("Quy định: Nhóm phải có đủ {$minRequired} thành viên mới được phép đăng ký đề tài! Hiện tại nhóm của bạn có {$countMembers}/{$minRequired} thành viên. Vui lòng mời hoặc phê duyệt thêm thành viên trước khi đăng ký đề tài.");
-        }
-
-        $maxSV = $deTai->SoLuongSinhVienToiDa ?? 3;
-        if ($countMembers > $maxSV) {
-            return redirect()->back()->withErrors("Đề tài '{$deTai->TenDeTai}' chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm của bạn hiện có {$countMembers} thành viên!");
-        }
-
-        // 4. Kiểm tra đề tài đã được nhóm khác đăng ký chưa (Chặn nếu đã có nhóm đăng ký)
-        $alreadyTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
-            ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
-            ->exists();
-
-        if ($alreadyTaken) {
-            return redirect()->back()->withErrors('Đề tài này đã có nhóm khác đăng ký. Vui lòng chọn đề tài khác!');
-        }
-
-        // 5. Kiểm tra nhóm đã đăng ký đề tài nào chưa (Chặn nhóm đã đăng ký đề tài)
-        $existingRegistration = DangKyDeTai::where('MaNhom', $nhom->MaNhom)
-            ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
-            ->first();
-
-        if ($existingRegistration) {
-            return redirect()->back()->withErrors('Nhóm của bạn đã đăng ký đề tài rồi! Mỗi nhóm chỉ được đăng ký 1 đề tài.');
-        }
-
-        // 6. Kiểm tra giảng viên hướng dẫn đã nhận tối đa 5 nhóm trong học kỳ chưa
-        $gvDeTai = $deTai->MaGV;
-        if ($gvDeTai) {
-            $soNhomGv = DangKyDeTai::where('TrangThai', 'Đã duyệt')
-                ->where(function($q) use ($gvDeTai, $deTai) {
-                    $q->where('MaGVHuongDan', $gvDeTai)
-                      ->orWhereHas('deTai', function($dq) use ($gvDeTai, $deTai) {
-                          $dq->where('MaGV', $gvDeTai);
-                          if ($deTai->MaHocKy) {
-                              $dq->where('MaHocKy', $deTai->MaHocKy);
-                          }
-                      });
-                })
-                ->count();
-
-            if ($soNhomGv >= 5) {
-                return redirect()->back()->withErrors("Giảng viên hướng dẫn của đề tài này đã nhận đủ định mức tối đa 5 nhóm trong học kỳ! Vui lòng chọn đề tài khác.");
-            }
-        }
-
-        $maDK = 'DK_' . Str::upper(Str::random(6));
-
-        // Đăng ký xong thì gán trực tiếp cho nhóm luôn, không cần ai duyệt nữa
-        DangKyDeTai::create([
-            'MaDangKy'     => $maDK,
-            'MaNhom'       => $nhom->MaNhom,
-            'MaDeTai'      => $deTai->MaDeTai,
-            'MaGVHuongDan' => $deTai->MaGV,
-            'NgayDangKy'   => now(),
-            'TrangThai'    => 'Đã duyệt',
-            'NgayDuyet'    => now(),
-        ]);
-
-        $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
-
-        return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đề tài đã được gán trực tiếp cho nhóm của bạn.");
     }
 
     public function destroy($id)

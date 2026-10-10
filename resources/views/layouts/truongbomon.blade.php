@@ -95,7 +95,8 @@
             <!-- 2. QUẢN LÝ & XỬ LÝ ĐỀ TÀI -->
             <div class="sidebar-menu-group">
                 @php
-                    $isTbmDeTai = request()->routeIs('truongbomon.duyet_detai.*') || request()->routeIs('truongbomon.phancong.*') || request()->routeIs('truongbomon.duyet_decuong.*');
+                    $isPheDuyetDeTaiActive = request()->routeIs('truongbomon.phe_duyet_detai.*') || request()->routeIs('truongbomon.duyet_detai.*');
+                    $isTbmDeTai = $isPheDuyetDeTaiActive || request()->routeIs('truongbomon.phancong.*') || request()->routeIs('truongbomon.duyet_decuong.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isTbmDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tbm-detai" aria-expanded="{{ $isTbmDeTai ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -105,8 +106,8 @@
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
                 </button>
                 <div class="collapse submenu-collapse {{ $isTbmDeTai ? 'show' : '' }}" id="sub-tbm-detai">
-                    <a href="{{ route('truongbomon.duyet_detai.index') }}" class="submenu-link {{ request()->routeIs('truongbomon.duyet_detai.*') ? 'active-sub' : '' }}">
-                        <span>Duyệt đề xuất đề tài</span>
+                    <a href="{{ route('truongbomon.phe_duyet_detai.index') }}" class="submenu-link {{ $isPheDuyetDeTaiActive ? 'active-sub' : '' }}">
+                        <span>Phê duyệt đề tài</span>
                         @if($countChoDuyetDeXuat > 0)
                             <span class="badge bg-danger rounded-pill" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countChoDuyetDeXuat }}</span>
                         @endif

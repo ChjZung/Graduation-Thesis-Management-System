@@ -9,6 +9,8 @@ use App\Models\DeTai;
 use App\Models\GiangVien;
 use App\Models\HocKy;
 use App\Models\PhanCongPhanBien;
+use App\Models\ChiTietDuyetDeTai;
+use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +34,30 @@ class DuyetDeTaiController extends Controller
         }
 
         return Khoa::where('MaKhoa', 'CNTT')->first() ?? Khoa::first();
+    }
+
+    /**
+     * Ràng buộc phân quyền P0: Trưởng khoa chỉ được xem/duyệt đề tài thuộc Khoa mình phụ trách
+     */
+    private function assertDeTaiBelongsToKhoa(DeTai $detai, $khoa)
+    {
+        if (!$khoa) return;
+        $detai->loadMissing('giangVien.boMon.khoa');
+        $detaiMaKhoa = $detai->giangVien?->boMon?->MaKhoa;
+        if ($detaiMaKhoa && $detaiMaKhoa !== $khoa->MaKhoa) {
+            abort(403, "Bạn không có quyền quản lý hay phê duyệt đề tài không thuộc Khoa '{$khoa->TenKhoa}'.");
+        }
+    }
+
+    /**
+     * Ràng buộc phân quyền P0: Trưởng khoa chỉ được xem/quản lý Bộ môn thuộc Khoa mình phụ trách
+     */
+    private function assertBoMonBelongsToKhoa(BoMon $boMon, $khoa)
+    {
+        if (!$khoa) return;
+        if ($boMon->MaKhoa !== $khoa->MaKhoa) {
+            abort(403, "Bạn không có quyền quản lý hay xem dữ liệu của Bộ môn '{$boMon->TenBoMon}' không thuộc Khoa '{$khoa->TenKhoa}'.");
+        }
     }
 
     public function index(Request $request)
@@ -390,6 +416,8 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->findOrFail($id);
 
+        $this->assertDeTaiBelongsToKhoa($detai, $khoa);
+
         $phanBienHienTai = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
 
         return view('truongkhoa.duyet_detai.show', compact('khoa', 'detai', 'phanBienHienTai'));
@@ -399,31 +427,44 @@ class DuyetDeTaiController extends Controller
     {
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
+        $khoa = $this->getKhoa();
 
         $detai = DeTai::with('giangVien')->findOrFail($id);
+        $this->assertDeTaiBelongsToKhoa($detai, $khoa);
+
+        // Luồng duyệt P0: Trưởng khoa chỉ phê duyệt đề tài đã qua Trưởng bộ môn phê duyệt
+        if ($detai->TrangThai === 'Chờ duyệt cấp Bộ môn' || empty($detai->NgayDuyetBM)) {
+            return redirect()->back()->withErrors("Đề tài '{$detai->TenDeTai}' chưa được Trưởng bộ môn phê duyệt. Vui lòng chờ Trưởng bộ môn xét duyệt trước khi chuyển lên Trưởng khoa!");
+        }
 
         if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->with('info', "Đề tài '{$detai->TenDeTai}' đã được phê duyệt và công bố trước đó.");
         }
 
-        // Quy định: Giảng viên chỉ có thể được phê duyệt và công bố tối đa đúng 5 đề tài trong một học kỳ
-        $soDeTaiDaDuyet = DeTai::where('MaGV', $detai->MaGV)
-            ->where('MaHocKy', $detai->MaHocKy)
-            ->where('MaDeTai', '!=', $detai->MaDeTai)
-            ->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành'])
-            ->count();
-
-        if ($soDeTaiDaDuyet >= 5) {
-            $tenGV = $detai->giangVien?->HoTen ?? $detai->MaGV;
-            return redirect()->back()->withErrors("Giảng viên {$tenGV} đã đạt định mức tối đa 5 đề tài được phê duyệt & công bố trong học kỳ này! Không thể phê duyệt thêm đề tài thứ 6.");
-        }
+        // P1: TBM/TK được phép duyệt nhiều hơn chỉ tiêu của giảng viên (không chặn ở bước duyệt đề tài)
+        $oldStatus = $detai->TrangThai;
+        $newStatus = 'Đã công bố';
 
         $detai->update([
-            'TrangThai'       => 'Đã công bố',
+            'TrangThai'       => $newStatus,
             'NgayDuyetKhoa'   => now(),
             'NgayCongBo'      => now(),
             'NguoiDuyetKhoa'  => $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TK'),
             'LyDoTuChoi'      => null,
+        ]);
+
+        // Ghi lịch sử phê duyệt cấp Khoa vào ChiTietDuyetDeTai
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv?->MaGV,
+            'NguoiThucHien' => ($gv?->HoTen ? $gv->HoTen . ' (' . $gv->MaGV . ')' : $user->TenDangNhap) . ' - Trưởng Khoa',
+            'HanhDong'      => 'Phê duyệt',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => $newStatus,
+            'LyDo'          => 'Trưởng khoa đã phê duyệt và chính thức công bố đề tài.',
+            'NgayDuyet'     => now(),
         ]);
 
         // Gửi thông báo cho GV đề xuất
@@ -447,22 +488,43 @@ class DuyetDeTaiController extends Controller
             'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu điều chỉnh.',
         ]);
 
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        $khoa = $this->getKhoa();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToKhoa($detai, $khoa);
 
         if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->withErrors('Đề tài đã hoàn tất phê duyệt cấp Khoa và đã công bố chính thức. Không thể yêu cầu chỉnh sửa đề tài này.');
         }
 
+        $oldStatus = $detai->TrangThai;
+        $lyDo = trim($request->YeuCauSua);
+
         $detai->update([
             'TrangThai'  => 'Yêu cầu chỉnh sửa',
-            'LyDoTuChoi' => trim($request->YeuCauSua),
+            'LyDoTuChoi' => $lyDo,
+        ]);
+
+        // Ghi lịch sử yêu cầu chỉnh sửa cấp Khoa
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv?->MaGV,
+            'NguoiThucHien' => ($gv?->HoTen ? $gv->HoTen . ' (' . $gv->MaGV . ')' : $user->TenDangNhap) . ' - Trưởng Khoa',
+            'HanhDong'      => 'Yêu cầu chỉnh sửa',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => 'Yêu cầu chỉnh sửa',
+            'LyDo'          => $lyDo,
+            'NgayDuyet'     => now(),
         ]);
 
         if ($detai->giangVien && $detai->giangVien->MaTK) {
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
                 '⚠️ Yêu cầu chỉnh sửa đề tài từ Trưởng khoa',
-                "Đề tài '{$detai->TenDeTai}' có ý kiến chỉnh sửa từ Trưởng khoa: " . trim($request->YeuCauSua),
+                "Đề tài '{$detai->TenDeTai}' có ý kiến chỉnh sửa từ Trưởng khoa: " . $lyDo,
                 'Đề tài'
             );
         }
@@ -478,28 +540,49 @@ class DuyetDeTaiController extends Controller
             'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối.',
         ]);
 
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        $khoa = $this->getKhoa();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToKhoa($detai, $khoa);
 
         if ($detai->TrangThai === 'Đã công bố' && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->withErrors('Đề tài đã hoàn tất phê duyệt cấp Khoa và đã công bố chính thức. Không thể từ chối đề tài này.');
         }
 
+        $oldStatus = $detai->TrangThai;
+        $lyDo = trim($request->LyDoTuChoi);
+
         $detai->update([
             'TrangThai'  => 'Từ chối',
-            'LyDoTuChoi' => trim($request->LyDoTuChoi),
+            'LyDoTuChoi' => $lyDo,
+        ]);
+
+        // Ghi lịch sử từ chối cấp Khoa
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv?->MaGV,
+            'NguoiThucHien' => ($gv?->HoTen ? $gv->HoTen . ' (' . $gv->MaGV . ')' : $user->TenDangNhap) . ' - Trưởng Khoa',
+            'HanhDong'      => 'Từ chối',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => 'Từ chối',
+            'LyDo'          => $lyDo,
+            'NgayDuyet'     => now(),
         ]);
 
         $detai->loadMissing('giangVien.taiKhoan');
-        $gv = $detai->giangVien;
-        $maTK = $gv?->MaTK ?? $gv?->taiKhoan?->MaTK;
-        if (!$maTK && $gv) {
-            $maTK = \App\Models\TaiKhoan::where('TenDangNhap', $gv->MaGV)->orWhere('Email', $gv->Email)->value('MaTK');
+        $gvDeTai = $detai->giangVien;
+        $maTK = $gvDeTai?->MaTK ?? $gvDeTai?->taiKhoan?->MaTK;
+        if (!$maTK && $gvDeTai) {
+            $maTK = \App\Models\TaiKhoan::where('TenDangNhap', $gvDeTai->MaGV)->orWhere('Email', $gvDeTai->Email)->value('MaTK');
         }
         if ($maTK) {
             ThongBaoService::guiDen(
                 $maTK,
                 '❌ Đề tài bị Trưởng khoa từ chối',
-                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng khoa từ chối phê duyệt. Lý do: " . trim($request->LyDoTuChoi),
+                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng khoa từ chối phê duyệt. Lý do: " . $lyDo,
                 'Đề tài'
             );
         }

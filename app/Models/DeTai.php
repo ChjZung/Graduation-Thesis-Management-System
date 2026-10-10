@@ -80,6 +80,11 @@ class DeTai extends Model
         return $this->hasMany(ChiTietDuyetDeTai::class, 'MaDeTai', 'MaDeTai');
     }
 
+    public function chiTietDuyetDeTais()
+    {
+        return $this->hasMany(ChiTietDuyetDeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
     public function phanCongPhanBiens()
     {
         return $this->hasMany(PhanCongPhanBien::class, 'MaDeTai', 'MaDeTai');

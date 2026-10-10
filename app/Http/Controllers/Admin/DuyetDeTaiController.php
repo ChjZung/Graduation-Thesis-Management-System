@@ -348,23 +348,8 @@ class DuyetDeTaiController extends Controller
         }
 
         $count = 0;
-        $vuotDinhMucGV = [];
 
         foreach ($detais as $dt) {
-            $soDaCongBo = DeTai::where('MaGV', $dt->MaGV)
-                ->where('MaHocKy', $dt->MaHocKy)
-                ->where('MaDeTai', '!=', $dt->MaDeTai)
-                ->whereIn('TrangThai', ['Đã công bố', 'Đã đăng ký', 'Hoàn thành'])
-                ->count();
-
-            if ($soDaCongBo >= 5) {
-                $ten = $dt->giangVien?->HoTen ?? $dt->MaGV;
-                if (!in_array($ten, $vuotDinhMucGV)) {
-                    $vuotDinhMucGV[] = $ten;
-                }
-                continue;
-            }
-
             $dt->update([
                 'TrangThai'   => 'Đã công bố',
                 'NgayCongBo'  => now(),
@@ -389,12 +374,7 @@ class DuyetDeTaiController extends Controller
             // bỏ qua lỗi nếu có
         }
 
-        $msg = "Đã công bố chính thức {$count} đề tài Khóa luận cho sinh viên đăng ký!";
-        if (!empty($vuotDinhMucGV)) {
-            $msg .= " (Lưu ý: Bỏ qua đề tài của các GV đã đạt đủ 5 đề tài công bố: " . implode(', ', $vuotDinhMucGV) . ")";
-        }
-
-        return redirect()->back()->with('success', $msg);
+        return redirect()->back()->with('success', "Đã công bố chính thức {$count} đề tài Khóa luận cho sinh viên đăng ký!");
     }
 
     public function export(Request $request)

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DangKyDeTai;
 use App\Models\HocKy;
+use App\Services\ChiTieuService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DuyetDangKyDeTaiController extends Controller
 {
@@ -110,56 +112,55 @@ class DuyetDangKyDeTaiController extends Controller
             'MaDeTai.required' => 'Vui lòng chọn đề tài muốn gán.',
         ]);
 
-        $nhom = \App\Models\Nhom::findOrFail($request->MaNhom);
-        $deTai = \App\Models\DeTai::findOrFail($request->MaDeTai);
+        try {
+            return DB::transaction(function () use ($request) {
+                $nhom = \App\Models\Nhom::where('MaNhom', $request->MaNhom)->lockForUpdate()->firstOrFail();
+                $deTai = \App\Models\DeTai::where('MaDeTai', $request->MaDeTai)->lockForUpdate()->firstOrFail();
 
-        // Kiểm tra đề tài đã có nhóm khác chiếm chưa
-        $isTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
-            ->where('TrangThai', 'Đã duyệt')
-            ->exists();
+                // Kiểm tra đề tài đã có nhóm khác chiếm chưa
+                $isTaken = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
+                    ->where('TrangThai', 'Đã duyệt')
+                    ->lockForUpdate()
+                    ->exists();
 
-        if ($isTaken) {
-            return redirect()->back()->withErrors('Đề tài này vừa được gán cho một nhóm khác. Vui lòng chọn đề tài khác!');
+                if ($isTaken) {
+                    throw new \Exception('Đề tài này vừa được gán cho một nhóm khác. Vui lòng chọn đề tài khác!');
+                }
+
+                // Kiểm tra giảng viên hướng dẫn đã nhận đủ chỉ tiêu chưa
+                $gvDeTai = $deTai->MaGV;
+                if ($gvDeTai) {
+                    $gvRecord = \App\Models\GiangVien::where('MaGV', $gvDeTai)->lockForUpdate()->first();
+                    $chiTieuStats = ChiTieuService::getChiTieuStats($gvDeTai, $deTai->MaHocKy, true);
+
+                    if ($chiTieuStats['is_full']) {
+                        $tenGV = $gvRecord?->HoTen ?? $gvDeTai;
+                        throw new \Exception("Giảng viên hướng dẫn ({$tenGV}) đã nhận đủ chỉ tiêu hướng dẫn ({$chiTieuStats['da_dung']}/{$chiTieuStats['tong']} nhóm) trong học kỳ này! Hết chỉ tiêu.");
+                    }
+                }
+
+                // Tạo bản ghi duyệt chính thức
+                $maDK = 'DK_VPK_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(5));
+                DangKyDeTai::updateOrCreate(
+                    ['MaNhom' => $nhom->MaNhom],
+                    [
+                        'MaDangKy'     => $maDK,
+                        'MaDeTai'      => $deTai->MaDeTai,
+                        'MaGVHuongDan' => $deTai->MaGV,
+                        'NgayDangKy'   => now(),
+                        'TrangThai'    => 'Đã duyệt',
+                        'NgayDuyet'    => now(),
+                        'LyDoTuChoi'   => null,
+                    ]
+                );
+
+                $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
+
+                return redirect()->back()->with('success', "Xử lý ngoại lệ thành công! Đã gán đề tài '{$deTai->TenDeTai}' cho nhóm '{$nhom->TenNhom}'.");
+            });
+        } catch (\Throwable $e) {
+            return redirect()->back()->withErrors($e->getMessage());
         }
-
-        // Kiểm tra giảng viên hướng dẫn đã nhận đủ 5 nhóm chưa
-        $gvDeTai = $deTai->MaGV;
-        if ($gvDeTai) {
-            $soNhomGv = DangKyDeTai::where('TrangThai', 'Đã duyệt')
-                ->where(function($q) use ($gvDeTai, $deTai) {
-                    $q->where('MaGVHuongDan', $gvDeTai)
-                      ->orWhereHas('deTai', function($dq) use ($gvDeTai, $deTai) {
-                          $dq->where('MaGV', $gvDeTai);
-                          if ($deTai->MaHocKy) {
-                              $dq->where('MaHocKy', $deTai->MaHocKy);
-                          }
-                      });
-                })
-                ->count();
-
-            if ($soNhomGv >= 5) {
-                return redirect()->back()->withErrors("Giảng viên hướng dẫn của đề tài này (" . ($deTai->giangVien?->HoTen ?? $gvDeTai) . ") đã nhận đủ định mức tối đa 5 nhóm trong học kỳ!");
-            }
-        }
-
-        // Tạo bản ghi duyệt chính thức
-        $maDK = 'DK_VPK_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(5));
-        DangKyDeTai::updateOrCreate(
-            ['MaNhom' => $nhom->MaNhom],
-            [
-                'MaDangKy'     => $maDK,
-                'MaDeTai'      => $deTai->MaDeTai,
-                'MaGVHuongDan' => $deTai->MaGV,
-                'NgayDangKy'   => now(),
-                'TrangThai'    => 'Đã duyệt',
-                'NgayDuyet'    => now(),
-                'LyDoTuChoi'   => null,
-            ]
-        );
-
-        $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
-
-        return redirect()->back()->with('success', "Xử lý ngoại lệ thành công! Đã gán đề tài '{$deTai->TenDeTai}' cho nhóm '{$nhom->TenNhom}'.");
     }
 
     /**

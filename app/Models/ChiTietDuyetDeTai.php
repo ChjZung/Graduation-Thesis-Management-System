@@ -18,8 +18,11 @@ class ChiTietDuyetDeTai extends Model
         'MaDuyet',
         'NgayDuyet',
         'TrangThai',
+        'HanhDong',
+        'TrangThaiCu',
         'LyDo',
         'MaGV',
+        'NguoiThucHien',
         'MaDeTai',
     ];
 

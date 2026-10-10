@@ -8,6 +8,7 @@ use App\Models\DeTai;
 use App\Models\GiangVien;
 use App\Models\HocKy;
 use App\Models\PhanCongPhanBien;
+use App\Models\ChiTietDuyetDeTai;
 use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
@@ -32,6 +33,19 @@ class DuyetDeTaiController extends Controller
         }
 
         return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
+    }
+
+    /**
+     * Ràng buộc phân quyền P0: Trưởng bộ môn chỉ được xem/duyệt đề tài thuộc Bộ môn mình phụ trách
+     */
+    private function assertDeTaiBelongsToBoMon(DeTai $detai, $boMon)
+    {
+        if (!$boMon) return;
+        $detai->loadMissing('giangVien.boMon', 'hocPhanRef');
+        $detaiMaBoMon = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon;
+        if ($detaiMaBoMon && $detaiMaBoMon !== $boMon->MaBoMon) {
+            abort(403, "Bạn không có quyền quản lý hay phê duyệt đề tài không thuộc Bộ môn '{$boMon->TenBoMon}'.");
+        }
     }
 
     public function index(Request $request)
@@ -403,6 +417,8 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->findOrFail($id);
 
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
+
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
 
@@ -426,7 +442,9 @@ class DuyetDeTaiController extends Controller
             'MaGVPhanBien.required' => 'Vui lòng chọn Giảng viên phản biện đề cương.',
         ]);
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         if (!$detai->FileDeCuong) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
@@ -493,7 +511,9 @@ class DuyetDeTaiController extends Controller
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức, quyết định đã hoàn tất.');
@@ -525,31 +545,38 @@ class DuyetDeTaiController extends Controller
         $gv = GiangVien::getLoggedInGiangVien($user);
         $maGVTBM = $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TBM');
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::with('giangVien')->findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
         if (!$phanBien || $phanBien->KetQua !== 'Đạt') {
             return redirect()->back()->withErrors('Đề cương chưa có kết quả phản biện ĐẠT. Không thể duyệt công bố đề tài.');
         }
 
-        // Quy định: Giảng viên chỉ có thể được phê duyệt và công bố tối đa đúng 5 đề tài trong học kỳ
-        $soDeTaiDaDuyet = DeTai::where('MaGV', $detai->MaGV)
-            ->where('MaHocKy', $detai->MaHocKy)
-            ->where('MaDeTai', '!=', $detai->MaDeTai)
-            ->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành'])
-            ->count();
+        // P1: TBM được phép duyệt nhiều đề tài hơn số chỉ tiêu của giảng viên (không chặn ở bước duyệt đề tài)
+        $oldStatus = $detai->TrangThai;
+        $newStatus = 'Đã công bố';
 
-        if ($soDeTaiDaDuyet >= 5) {
-            $tenGV = $detai->giangVien?->HoTen ?? $detai->MaGV;
-            return redirect()->back()->withErrors("Giảng viên {$tenGV} đã đạt định mức tối đa 5 đề tài được duyệt & công bố trong học kỳ này! Không thể phê duyệt/công bố thêm đề tài thứ 6.");
-        }
-
-        DB::transaction(function () use ($detai, $maGVTBM) {
+        DB::transaction(function () use ($detai, $maGVTBM, $oldStatus, $newStatus) {
             $detai->update([
-                'TrangThai'    => 'Đã công bố',
+                'TrangThai'    => $newStatus,
                 'NgayCongBo'   => now(),
                 'NgayDuyetBM'  => now(),
                 'NguoiDuyetBM' => $maGVTBM,
+            ]);
+
+            $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => $maDuyet,
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $maGVTBM,
+                'NguoiThucHien' => $maGVTBM . ' - Trưởng Bộ Môn',
+                'HanhDong'      => 'Phê duyệt & Công bố',
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => $newStatus,
+                'LyDo'          => 'Trưởng bộ môn đã duyệt đề cương và công bố đề tài.',
+                'NgayDuyet'     => now(),
             ]);
         });
 
@@ -574,7 +601,9 @@ class DuyetDeTaiController extends Controller
             'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu Giảng viên chỉnh sửa.',
         ]);
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể yêu cầu chỉnh sửa đề tài này.');
@@ -605,7 +634,9 @@ class DuyetDeTaiController extends Controller
             'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối đề tài.',
         ]);
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         if (in_array($detai->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt']) && !empty($detai->NgayDuyetKhoa)) {
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể từ chối đề tài này.');

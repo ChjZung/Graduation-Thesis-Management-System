@@ -33,6 +33,20 @@ class PhanCongPhanBienController extends Controller
         return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
     }
 
+    /**
+     * Ràng buộc phân quyền P0: Trưởng bộ môn chỉ phân công đề tài thuộc Bộ môn mình phụ trách
+     */
+    private function assertDeTaiBelongsToBoMon(DeTai $detai, $boMon)
+    {
+        if (!$boMon) return;
+        $detai->loadMissing('giangVien', 'hocPhanRef');
+        $isGvInBoMon = $detai->giangVien && $detai->giangVien->MaBoMon === $boMon->MaBoMon;
+        $isHpInBoMon = $detai->hocPhanRef && $detai->hocPhanRef->MaBoMon === $boMon->MaBoMon;
+        if (!$isGvInBoMon && !$isHpInBoMon) {
+            abort(403, "Bạn không có quyền thao tác trên đề tài không thuộc Bộ môn '{$boMon->TenBoMon}'.");
+        }
+    }
+
     public function index(Request $request)
     {
         $boMon = $this->getBoMon();
@@ -146,7 +160,9 @@ class PhanCongPhanBienController extends Controller
             'MaGVPhanBien.required' => 'Vui lòng chọn Giảng viên phản biện đề cương.',
         ]);
 
+        $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
+        $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         if (!$detai->FileDeCuong) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');

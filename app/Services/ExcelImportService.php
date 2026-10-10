@@ -11,6 +11,7 @@ use App\Models\GiangVien;
 use App\Models\SinhVien;
 use App\Models\DeTai;
 use App\Models\HocKy;
+use App\Models\ChiTieuHuongDan;
 use App\Models\PhanCongHuongDanLop;
 use App\Models\NhomDoAn;
 use App\Models\ThanhVienNhom;
@@ -838,7 +839,7 @@ class ExcelImportService
     // ==========================================
     // 4. IMPORT GIẢNG VIÊN
     // ==========================================
-    public function importGiangVien($file): array
+    public function importGiangVien($file, ?string $maHocKy = null): array
     {
         $rows = $this->parseFile($file);
         $this->validateTemplateHeaders(
@@ -950,7 +951,7 @@ class ExcelImportService
         }
 
         if (!empty($validItems)) {
-            DB::transaction(function () use ($validItems) {
+            DB::transaction(function () use ($validItems, $maHocKy) {
                 foreach ($validItems as $item) {
                     $tk = TaiKhoan::create([
                         'MaTK'              => $item['maGV'],
@@ -976,6 +977,17 @@ class ExcelImportService
                         'HocVi'       => $item['hocVi'],
                         'TrangThai'   => $item['trangThai'],
                     ]);
+
+                    if (!empty($maHocKy)) {
+                        ChiTieuHuongDan::firstOrCreate([
+                            'MaHocKy' => $maHocKy,
+                            'MaGV'    => $item['maGV'],
+                        ], [
+                            'MaChiTieu'   => 'CT_' . substr(md5($item['maGV'] . '_' . $maHocKy . '_' . uniqid()), 0, 16),
+                            'SoNhomToiDa' => 5,
+                            'NgayPhanBo'  => now(),
+                        ]);
+                    }
                 }
             });
         }

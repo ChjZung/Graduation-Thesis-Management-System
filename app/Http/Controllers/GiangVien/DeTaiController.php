@@ -10,7 +10,10 @@ use App\Models\Nhom;
 use App\Models\DangKyDeTai;
 use App\Models\PhanCongPhanBien;
 use App\Models\ThanhVienNhom;
+use App\Models\ChiTietDuyetDeTai;
+use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
+use App\Services\ChiTieuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -183,6 +186,18 @@ class DeTaiController extends Controller
             'MaHocKy' => $request->MaHocKy,
             'TrangThai' => 'Chờ duyệt cấp Bộ môn',
             'NgayDeXuat' => now(),
+        ]);
+
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+            'MaDeTai'       => $maDT,
+            'MaGV'          => $gv->MaGV,
+            'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên',
+            'HanhDong'      => 'Gửi đề xuất mới',
+            'TrangThaiCu'   => 'Bản nháp',
+            'TrangThai'     => 'Chờ duyệt cấp Bộ môn',
+            'LyDo'          => 'Giảng viên đề xuất đề tài mới.',
+            'NgayDuyet'     => now(),
         ]);
 
         return redirect()->route('giangvien.detai.index')->with('success', "Đề xuất đề tài '{$request->TenDeTai}' cho môn {$hocPhan->TenHocPhan} thành công! Đề tài đã được chuyển tới Trưởng bộ môn phê duyệt.");
@@ -549,6 +564,7 @@ class DeTaiController extends Controller
             }
         }
 
+        $oldStatus = $detai->TrangThai;
         if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Chờ duyệt cấp Bộ môn'])) {
             $data['TrangThai'] = 'Chờ duyệt cấp Bộ môn';
             $data['NgayDeXuat'] = now();
@@ -556,6 +572,19 @@ class DeTaiController extends Controller
         }
 
         $detai->update($data);
+
+        // Ghi 1 dòng lịch sử xử lý khi giảng viên nộp lại đề tài
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv->MaGV,
+            'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên',
+            'HanhDong'      => 'Nộp lại đề tài',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => $data['TrangThai'] ?? 'Chờ duyệt cấp Bộ môn',
+            'LyDo'          => 'Giảng viên đã chỉnh sửa nội dung và nộp lại đề xuất đề tài.',
+            'NgayDuyet'     => now(),
+        ]);
 
         // Gửi thông báo đến Trưởng Bộ Môn khi nộp lại phê duyệt
         $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
@@ -652,21 +681,10 @@ class DeTaiController extends Controller
             return redirect()->back()->withErrors("Đề tài chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm hiện có {$countMembers} thành viên!");
         }
 
-        // Kiểm tra định mức tối đa 5 nhóm hướng dẫn của giảng viên
-        $soNhomDangHuongDan = DangKyDeTai::where('TrangThai', 'Đã duyệt')
-            ->where(function($q) use ($gv, $detai) {
-                $q->where('MaGVHuongDan', $gv->MaGV)
-                  ->orWhereHas('deTai', function($dq) use ($gv, $detai) {
-                      $dq->where('MaGV', $gv->MaGV);
-                      if ($detai->MaHocKy) {
-                          $dq->where('MaHocKy', $detai->MaHocKy);
-                      }
-                  });
-            })
-            ->count();
-
-        if ($soNhomDangHuongDan >= 5) {
-            return redirect()->back()->withErrors("Bạn đã đạt giới hạn tối đa 5 nhóm hướng dẫn trong học kỳ này! Không thể gán thêm nhóm mới.");
+        // Kiểm tra chỉ tiêu hướng dẫn của giảng viên trong học kỳ (P1)
+        $chiTieuStats = ChiTieuService::getChiTieuStats($gv->MaGV, $detai->MaHocKy, true);
+        if ($chiTieuStats['is_full']) {
+            return redirect()->back()->withErrors("Bạn đã đạt giới hạn tối đa chỉ tiêu hướng dẫn ({$chiTieuStats['da_dung']}/{$chiTieuStats['tong']} nhóm) trong học kỳ này! Không thể gán thêm nhóm mới.");
         }
 
         DB::transaction(function () use ($detai, $nhom, $gv) {

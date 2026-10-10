@@ -325,8 +325,18 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
 // ==========================================
 // TRƯỞNG BỘ MÔN ROUTES
 // ==========================================
+Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truong-bo-mon')->group(function () {
+    Route::get('/phe-duyet-de-tai', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'index'])->name('truongbomon.phe_duyet_detai.index');
+    Route::get('/phe-duyet-de-tai/giang-vien/{maGV}', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'danhSachDeTaiGV'])->name('truongbomon.phe_duyet_detai.giang_vien');
+    Route::get('/phe-duyet-de-tai/de-tai/{maDeTai}', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'chiTietDeTai'])->name('truongbomon.phe_duyet_detai.show');
+    Route::post('/phe-duyet-de-tai/de-tai/{maDeTai}/duyet', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'duyetDeTai'])->name('truongbomon.phe_duyet_detai.duyet');
+    Route::post('/phe-duyet-de-tai/de-tai/{maDeTai}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'yeuCauChinhSua'])->name('truongbomon.phe_duyet_detai.yeu_cau_sua');
+    Route::post('/phe-duyet-de-tai/de-tai/{maDeTai}/tu-choi', [\App\Http\Controllers\TruongBoMon\PheDuyetDeTaiController::class, 'tuChoi'])->name('truongbomon.phe_duyet_detai.tu_choi');
+});
+
 Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->group(function () {
     Route::get('/', [\App\Http\Controllers\TruongBoMon\DashboardController::class, 'index'])->name('truongbomon.dashboard');
+    Route::get('/phe-duyet-de-tai', fn() => redirect()->route('truongbomon.phe_duyet_detai.index'));
     Route::get('/duyet-detai/export', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'export'])->name('truongbomon.duyet_detai.export');
     Route::get('/duyet-detai', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'index'])->name('truongbomon.duyet_detai.index');
     Route::get('/duyet-detai/{id}', [\App\Http\Controllers\TruongBoMon\DuyetDeTaiController::class, 'show'])->name('truongbomon.duyet_detai.show');

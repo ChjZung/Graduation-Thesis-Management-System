@@ -275,4 +275,18 @@ class IdGenerator
             return 'HP' . str_pad($next, 2, '0', STR_PAD_LEFT);
         });
     }
+
+    /**
+     * Sinh mã Chi tiết duyệt đề tài: CTD000001, CTD000002...
+     */
+    public static function nextChiTietDuyetDeTai(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('ChiTietDuyetDeTai')
+                ->where('MaDuyet', 'REGEXP', '^CTD[0-9]+$')
+                ->max(DB::raw("CAST(SUBSTRING(MaDuyet, 4) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            return 'CTD' . str_pad($next, 6, '0', STR_PAD_LEFT);
+        });
+    }
 }
