@@ -31,40 +31,57 @@ class NhomController extends Controller
             ->with(['nhom.hocPhan', 'nhom.hocKy', 'nhom.dangKyDeTai.deTai'])
             ->get();
 
-        // Xác định Bộ môn chuyên ngành theo Ngành học của sinh viên
-        $svBoMon = $sinhVien->getMaBoMon();
-        $selectedBoMon = $svBoMon;
+        // Xác định nhóm ưu tiên (nếu sinh viên đã có nhóm chính thức)
+        // Xác định nhóm ưu tiên (nếu sinh viên đã có nhóm chính thức)
+        $userActiveGroup = $sinhVienAllGroups->first()?->nhom;
 
-        // Lấy danh sách Môn / Học phần đang mở THUỘC ĐÚNG BỘ MÔN CHUYÊN NGÀNH CỦA SINH VIÊN
-        $hocPhans = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
+        // Xác định Bộ môn chuyên ngành theo nhóm hiện tại hoặc theo Ngành học của sinh viên
+        $svBoMon = $sinhVien->getMaBoMon();
+        $requestedBoMon = $request->input('bo_mon');
+        // Nếu đã có nhóm chính thức: ưu tiên bộ môn của nhóm đó
+        // Nếu chưa có nhóm: nếu request có bo_mon thì lấy request, nếu không thì mặc định là 'ALL' để không chặn hiển thị các nhóm khác
+        if ($userActiveGroup && $userActiveGroup->hocPhan?->MaBoMon) {
+            $selectedBoMon = $requestedBoMon ?? $userActiveGroup->hocPhan->MaBoMon;
+        } else {
+            $selectedBoMon = $requestedBoMon ?? 'ALL';
+        }
+
+        // Lấy danh sách Môn / Học phần đang mở
+        $hocPhanQuery = \App\Models\HocPhan::with(['hocPhanHocKies' => function($q) {
                 $q->where('TrangThai', 'Đang mở');
             }])
             ->where(function($q) {
                 $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
                   ->orWhere('TrangThai', true);
-            })
-            ->where('MaBoMon', $svBoMon)
-            ->orderBy('TenHocPhan')
-            ->get();
+            });
+
+        if ($selectedBoMon && $selectedBoMon !== 'ALL') {
+            $hocPhanQuery->where(function($q) use ($selectedBoMon, $userActiveGroup) {
+                $q->where('MaBoMon', $selectedBoMon);
+                if ($userActiveGroup && $userActiveGroup->MaHocPhan) {
+                    $q->orWhere('MaHocPhan', $userActiveGroup->MaHocPhan);
+                }
+            });
+        }
+        $hocPhans = $hocPhanQuery->orderBy('TenHocPhan')->get();
 
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
 
         // 2. Phân giải môn học được chọn (selectedHocPhan)
-        $selectedHocPhan = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
-        $hpCheck = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan);
-        if (!$hpCheck) {
-            $groupHp = $sinhVienAllGroups->first()?->nhom?->MaHocPhan;
-            if ($groupHp && $hocPhans->firstWhere('MaHocPhan', $groupHp)) {
-                $selectedHocPhan = $groupHp;
-            } else {
-                $selectedHocPhan = $hocPhans->first()?->MaHocPhan;
-            }
+        $requestedHp = $request->input('hoc_phan') ?? $request->input('MaHocPhan');
+        if ($requestedHp && ($requestedHp === 'ALL' || $hocPhans->firstWhere('MaHocPhan', $requestedHp))) {
+            $selectedHocPhan = $requestedHp;
+        } elseif ($userActiveGroup && $userActiveGroup->MaHocPhan) {
+            $selectedHocPhan = $userActiveGroup->MaHocPhan;
+        } else {
+            // Khi chưa có nhóm: Mặc định là 'ALL' để sinh viên nhìn thấy toàn bộ các nhóm đang mở trong học kỳ
+            $selectedHocPhan = 'ALL';
         }
 
         // 2. Phân giải học kỳ (maHocKy):
         // Ưu tiên 1: Tham số truyền vào từ Request (?hoc_ky=...)
-        // Ưu tiên 2: Tự động nhận diện học kỳ của nhóm sinh viên đang tham gia ở môn học đang chọn
+        // Ưu tiên 2: Tự động nhận diện học kỳ của nhóm sinh viên đang tham gia
         // Ưu tiên 3: Học kỳ của Kế hoạch đang mở hoặc Học kỳ đang diễn ra
         $requestedHocKy = $request->input('hoc_ky') ?? $request->input('MaHocKy');
         $defaultHocKy = null;
@@ -78,30 +95,53 @@ class NhomController extends Controller
 
         if ($requestedHocKy) {
             $maHocKy = $requestedHocKy;
+        } elseif ($userActiveGroup && !empty($userActiveGroup->MaHocKy)) {
+            $maHocKy = $userActiveGroup->MaHocKy;
         } else {
-            $userGroupInThisHp = $sinhVienAllGroups->first(function($item) use ($selectedHocPhan) {
-                if (!$item->nhom) return false;
-                $hpNhom = $item->nhom->MaHocPhan ?? 'HP_KLCN';
-                return $hpNhom === $selectedHocPhan;
-            });
+            $maHocKy = $defaultHocKy;
+        }
 
-            if ($userGroupInThisHp && !empty($userGroupInThisHp->nhom->MaHocKy)) {
-                $maHocKy = $userGroupInThisHp->nhom->MaHocKy;
+        // 3. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo HỌC KỲ này (mỗi SV chỉ thuộc 1 nhóm/kỳ)
+        $nhomHocKyHienTai = $sinhVienAllGroups->first(function($item) use ($maHocKy) {
+            return $item->nhom && ($item->nhom->MaHocKy === $maHocKy || empty($maHocKy));
+        })?->nhom;
+
+        // KHI ĐÃ CÓ NHÓM: Lọc mỗi học phần của nhóm đã tạo/tham gia trong học kỳ đó
+        if ($nhomHocKyHienTai && $nhomHocKyHienTai->MaHocPhan) {
+            $selectedHocPhan = $nhomHocKyHienTai->MaHocPhan;
+            if ($nhomHocKyHienTai->hocPhan) {
+                $hocPhans = collect([$nhomHocKyHienTai->hocPhan]);
             } else {
-                $maHocKy = $defaultHocKy;
+                $hpObj = \App\Models\HocPhan::find($nhomHocKyHienTai->MaHocPhan);
+                $hocPhans = $hpObj ? collect([$hpObj]) : $hocPhans->where('MaHocPhan', $nhomHocKyHienTai->MaHocPhan)->values();
             }
         }
 
-        // 3. Kiểm tra nhóm mà sinh viên đang tham gia chính thức ('da_tham_gia') theo MÔN HỌC và HỌC KỲ này
+        // Lấy danh sách lời mời gia nhập nhóm gửi tới SV này ('cho_xac_nhan') (hiển thị xuyên suốt để SV biết và phản hồi)
+        $loiMois = ThanhVienNhom::with([
+                'nhom.truongNhom.taiKhoan',
+                'nhom.hocKy',
+                'nhom.hocPhan',
+                'nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien')
+            ])
+            ->where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'cho_xac_nhan')
+            ->whereHas('nhom', function($q) use ($maHocKy) {
+                if ($maHocKy && $maHocKy !== 'ALL') {
+                    $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+                }
+            })
+            ->get();
+
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
-                if ($maHocKy) {
+                if ($maHocKy && $maHocKy !== 'ALL') {
                     $q->where(function($sub) use ($maHocKy) {
                         $sub->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
                     });
                 }
-                if ($selectedHocPhan) {
+                if ($selectedHocPhan && $selectedHocPhan !== 'ALL') {
                     $q->where(function($sub) use ($selectedHocPhan) {
                         $sub->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
                     });
@@ -115,15 +155,6 @@ class NhomController extends Controller
         $isNhomLocked = false;
 
         if ($thanhVienRecord) {
-            // Khi SV ĐÃ CÓ NHÓM CHO MÔN NÀY & KỲ NÀY -> Dọn dẹp các lời mời hoặc yêu cầu khác của riêng MÔN NÀY & KỲ NÀY
-            ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-                ->where('TrangThai', '!=', 'da_tham_gia')
-                ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
-                    if ($maHocKy) $q->where('MaHocKy', $maHocKy);
-                    if ($selectedHocPhan) $q->where('MaHocPhan', $selectedHocPhan);
-                })
-                ->delete();
-
             $nhomCurrent = Nhom::with([
                     'deTai.giangVien.boMon',
                     'deTai.hocKy',
@@ -171,31 +202,10 @@ class NhomController extends Controller
             $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
             $isTaoNhomOpen = $groupPhaseState['is_open'];
 
-            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState'));
+            return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai', 'loiMois'));
         }
 
         // 2. KHI CHƯA CÓ NHÓM CHO MÔN NÀY:
-        // Lấy danh sách lời mời gia nhập nhóm gửi tới SV này ('cho_xac_nhan') theo đúng Học kỳ và Môn học được chọn
-        $loiMois = ThanhVienNhom::with([
-                'nhom.truongNhom.taiKhoan',
-                'nhom.hocKy',
-                'nhom.hocPhan',
-                'nhom.thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien')
-            ])
-            ->where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'cho_xac_nhan')
-            ->whereHas('nhom', function($q) use ($maHocKy, $selectedHocPhan) {
-                if ($maHocKy) {
-                    $q->where('MaHocKy', $maHocKy);
-                }
-                if ($selectedHocPhan) {
-                    $q->where(function($sub) use ($selectedHocPhan) {
-                        $sub->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
-                    });
-                }
-            })
-            ->get();
-
         // Lấy danh sách yêu cầu xin gia nhập mà SV này đã gửi đi ('xin_gia_nhap')
         $yeuCauDaGui = ThanhVienNhom::with(['nhom.truongNhom.taiKhoan'])
             ->where('MaSV', $sinhVien->MaSV)
@@ -203,14 +213,16 @@ class NhomController extends Controller
             ->get()
             ->keyBy('MaNhom');
 
-        // Danh sách tất cả các nhóm chưa khóa trong học kỳ hiện tại theo môn học
+        // Danh sách tất cả các nhóm chưa khóa trong học kỳ hiện tại (ưu tiên nhóm mới nhất lên đầu)
         $queryNhoms = Nhom::with([
                 'truongNhom.taiKhoan',
                 'truongNhom.lop.nganh',
                 'hocPhan',
                 'hocKy',
                 'thanhViens' => fn($q) => $q->where('TrangThai', 'da_tham_gia')->with('sinhVien.lop.nganh', 'sinhVien.taiKhoan')
-            ]);
+            ])
+            ->orderBy('created_at', 'desc')
+            ->orderBy('MaNhom', 'desc');
 
         if ($maHocKy) {
             $queryNhoms->where(function($q) use ($maHocKy) {
@@ -218,17 +230,11 @@ class NhomController extends Controller
             });
         }
 
-        if ($selectedHocPhan) {
-            $queryNhoms->where(function($q) use ($selectedHocPhan) {
-                $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
-            });
-        } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
-            $queryNhoms->whereHas('hocPhan', fn($q) => $q->where('MaBoMon', $selectedBoMon));
-        }
-
+        // Nhóm chưa khóa đề tài
         $queryNhoms->whereDoesntHave('phieuDangKys', fn($q) => $q->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']));
 
         if ($request->filled('q')) {
+            // Khi tìm kiếm: Tìm kiếm rộng trên toàn bộ học kỳ theo Tên nhóm, Mã nhóm, MSSV / Họ tên Trưởng nhóm hoặc Thành viên
             $search = trim($request->q);
             $sClean = preg_replace('/[^A-Za-z0-9]/', '', $search);
             $queryNhoms->where(function ($q) use ($search, $sClean) {
@@ -256,13 +262,25 @@ class NhomController extends Controller
                     }
                 });
             });
+        } else {
+            // Khi không tìm kiếm theo từ khóa 'q': Lọc theo học phần được chọn (nếu khác 'ALL')
+            if ($selectedHocPhan && $selectedHocPhan !== 'ALL') {
+                $queryNhoms->where(function($q) use ($selectedHocPhan) {
+                    $q->where('MaHocPhan', $selectedHocPhan)->orWhereNull('MaHocPhan');
+                    if (in_array($selectedHocPhan, ['HP_KLCN', 'HP_KLCN_CNPM', 'HP_KLCN_HTTT', 'HP_KLCN_KTPM', 'HP_KLCN_MMT', 'HP_KLCN_ATTT', 'HP_KLCN_KHMT'])) {
+                        $q->orWhereIn('MaHocPhan', ['HP_KLCN', 'HP_KLCN_CNPM', 'HP_KLCN_HTTT', 'HP_KLCN_KTPM', 'HP_KLCN_MMT', 'HP_KLCN_ATTT', 'HP_KLCN_KHMT']);
+                    }
+                });
+            } elseif ($selectedBoMon && $selectedBoMon !== 'ALL') {
+                $queryNhoms->whereHas('hocPhan', fn($q) => $q->where('MaBoMon', $selectedBoMon));
+            }
         }
 
         $nhomsOpen = $queryNhoms->get();
         $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
         $isTaoNhomOpen = $groupPhaseState['is_open'];
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState') + ['NhomOpen' => $nhomsOpen]);
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**
@@ -317,16 +335,20 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Bạn chưa đủ điều kiện xét duyệt học vụ để tạo nhóm!');
         }
 
-        // 3. Kiểm tra SV đã ở trong nhóm nào chính thức của MÔN NÀY trong HỌC KỲ NÀY chưa
+        // 3. RÀNG BUỘC: Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một đợt/học kỳ khóa luận
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
-            ->whereHas('nhom', function($q) use ($maHocKy, $maHocPhan) {
-                $q->where('MaHocKy', $maHocKy)->where('MaHocPhan', $maHocPhan);
+            ->whereHas('nhom', function($q) use ($maHocKy) {
+                $q->where('MaHocKy', $maHocKy);
             })
-            ->exists();
+            ->with(['nhom.hocPhan'])
+            ->first();
 
         if ($alreadyInGroup) {
-            return redirect()->back()->withErrors("Bạn đã tham gia một nhóm của môn '{$hocPhan->TenHocPhan}' trong học kỳ {$hocKy->TenHocKy} rồi!");
+            $nhomCu = $alreadyInGroup->nhom;
+            $tenNhomCu = $nhomCu->TenNhom ?? $nhomCu->MaNhom;
+            $tenHPCu = $nhomCu->hocPhan->TenHocPhan ?? $nhomCu->MaHocPhan;
+            return redirect()->back()->withErrors("Bạn đã tham gia nhóm '{$tenNhomCu}' (Môn: {$tenHPCu}) trong học kỳ {$hocKy->TenHocKy}. Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một học kỳ khóa luận!");
         }
 
         // Tên nhóm gán mặc định là: "Nhóm " + MSSV
@@ -505,22 +527,19 @@ class NhomController extends Controller
                 $statusText = '🔴 Chưa đủ điều kiện làm khóa luận (Tích lũy < 115 tín chỉ hoặc CPA < 2.0).';
                 $badgeClass = 'bg-danger';
             } else {
-                $inGroup = ThanhVienNhom::with('nhom')
+                $inGroup = ThanhVienNhom::with('nhom.hocPhan')
                     ->where('MaSV', $sinhVien->MaSV)
                     ->where('TrangThai', 'da_tham_gia')
                     ->whereHas('nhom', function($q) use ($nhom) {
-                        if ($nhom) {
+                        if ($nhom && $nhom->MaHocKy) {
                             $q->where('MaHocKy', $nhom->MaHocKy);
-                            if ($nhom->MaHocPhan) {
-                                $q->where('MaHocPhan', $nhom->MaHocPhan);
-                            }
                         }
                     })
                     ->first();
 
                 if ($inGroup) {
                     $canInvite = false;
-                    $statusText = "🔴 Đã thuộc nhóm: \"{$inGroup->nhom->TenNhom}\" của môn này";
+                    $statusText = "🔴 Đã thuộc nhóm: \"{$inGroup->nhom->TenNhom}\" trong học kỳ này (mỗi SV chỉ thuộc 1 nhóm)";
                     $badgeClass = 'bg-danger';
                 }
                 // 2.3 Nhóm đã bị khóa do duyệt đề tài chưa?
@@ -627,19 +646,19 @@ class NhomController extends Controller
             return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} chưa đủ điều kiện làm khóa luận!");
         }
 
-        // Tái kiểm tra sinh viên được mời đã có nhóm của môn này chưa (Chống Race Condition)
+        // Tái kiểm tra sinh viên được mời đã có nhóm trong học kỳ này chưa (Chống Race Condition)
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $svThem->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($nhom) {
-                $q->where('MaHocKy', $nhom->MaHocKy);
-                if ($nhom->MaHocPhan) {
-                    $q->where('MaHocPhan', $nhom->MaHocPhan);
+                if ($nhom->MaHocKy) {
+                    $q->where('MaHocKy', $nhom->MaHocKy);
                 }
             })
-            ->exists();
+            ->with('nhom')
+            ->first();
 
         if ($alreadyInGroup) {
-            return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} đã thuộc một nhóm khác của môn học này!");
+            return redirect()->back()->withErrors("Sinh viên {$svThem->HoTen} đã thuộc nhóm '{$alreadyInGroup->nhom->TenNhom}' trong học kỳ này!");
         }
 
         DB::transaction(function () use ($nhom, $svThem, $sinhVien) {
@@ -681,13 +700,17 @@ class NhomController extends Controller
                 return;
             }
 
-            ThanhVienNhom::create([
-                'MaNhom'      => $nhom->MaNhom,
-                'MaSV'        => $svThem->MaSV,
-                'VaiTro'      => 'Thành viên',
-                'TrangThai'   => 'cho_xac_nhan',
-                'NgayThamGia' => null,
-            ]);
+            ThanhVienNhom::updateOrCreate(
+                [
+                    'MaNhom' => $nhom->MaNhom,
+                    'MaSV'   => $svThem->MaSV,
+                ],
+                [
+                    'VaiTro'      => 'Thành viên',
+                    'TrangThai'   => 'cho_xac_nhan',
+                    'NgayThamGia' => null,
+                ]
+            );
 
             // Gửi thông báo đến sinh viên được mời
             ThongBaoService::guiDen(
@@ -774,19 +797,19 @@ class NhomController extends Controller
 
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
 
-        // Kiểm tra SV đã có nhóm của môn này trong kỳ này chưa
+        // Kiểm tra SV đã có nhóm trong học kỳ này chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($nhom) {
-                $q->where('MaHocKy', $nhom->MaHocKy);
-                if ($nhom->MaHocPhan) {
-                    $q->where('MaHocPhan', $nhom->MaHocPhan);
+                if ($nhom->MaHocKy) {
+                    $q->where('MaHocKy', $nhom->MaHocKy);
                 }
             })
-            ->exists();
+            ->with('nhom')
+            ->first();
 
         if ($alreadyInGroup) {
-            return redirect()->back()->withErrors('Bạn đã thuộc một nhóm của môn học này trong kỳ rồi, không thể xin gia nhập nhóm khác.');
+            return redirect()->back()->withErrors("Bạn đã thuộc nhóm '{$alreadyInGroup->nhom->TenNhom}' trong học kỳ này rồi, không thể xin gia nhập nhóm khác.");
         }
 
         $isEligible = \App\Models\DanhSachSVDuDieuKien::where('MaSV', $sinhVien->MaSV)
@@ -879,14 +902,19 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Nhóm đã đủ 3 thành viên, không thể thêm thành viên mới!');
         }
 
-        // Kiểm tra sinh viên xin vào đã có nhóm khác chưa
+        // Kiểm tra sinh viên xin vào đã có nhóm khác trong học kỳ này chưa
         $alreadyInAnother = ThanhVienNhom::where('MaSV', $maSV)
             ->where('TrangThai', 'da_tham_gia')
+            ->whereHas('nhom', function($q) use ($nhom) {
+                if ($nhom->MaHocKy) {
+                    $q->where('MaHocKy', $nhom->MaHocKy);
+                }
+            })
             ->exists();
 
         if ($alreadyInAnother) {
             ThanhVienNhom::where('MaNhom', $maNhom)->where('MaSV', $maSV)->delete();
-            return redirect()->back()->withErrors('Sinh viên này đã tham gia một nhóm khác trước đó. Yêu cầu đã tự động bị hủy.');
+            return redirect()->back()->withErrors('Sinh viên này đã tham gia một nhóm khác trong học kỳ này. Yêu cầu đã tự động bị hủy.');
         }
 
         ThanhVienNhom::where('MaNhom', $maNhom)
@@ -942,21 +970,19 @@ class NhomController extends Controller
             return redirect()->back()->withErrors('Không tìm thấy lời mời này.');
         }
 
-        // 2. Kiểm tra SV đã thuộc nhóm khác của môn này trong kỳ này chưa
+        // 2. Kiểm tra SV đã thuộc nhóm khác trong học kỳ này chưa
         $alreadyInAnotherGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
             ->whereHas('nhom', function($q) use ($nhom) {
-                if ($nhom->MaHocKy) $q->where('MaHocKy', $nhom->MaHocKy);
-                if ($nhom->MaHocPhan) $q->where('MaHocPhan', $nhom->MaHocPhan);
+                if ($nhom->MaHocKy) {
+                    $q->where('MaHocKy', $nhom->MaHocKy);
+                }
             })
-            ->exists();
+            ->with('nhom')
+            ->first();
 
         if ($alreadyInAnotherGroup) {
-            ThanhVienNhom::where('MaNhom', $maNhom)
-                ->where('MaSV', $sinhVien->MaSV)
-                ->where('TrangThai', 'cho_xac_nhan')
-                ->delete();
-            return redirect()->back()->withErrors('Bạn đã thuộc một nhóm khóa luận của môn học này trong kỳ rồi. Lời mời này đã được hủy tự động.');
+            return redirect()->back()->withErrors("Bạn đã thuộc nhóm '{$alreadyInAnotherGroup->nhom->TenNhom}' trong học kỳ này rồi. Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một học kỳ!");
         }
 
         // 3. Kiểm tra số lượng thành viên hiện tại của nhóm
@@ -981,12 +1007,13 @@ class NhomController extends Controller
                 'NgayThamGia' => now(),
             ]);
 
-        // 5. Dọn dẹp tất cả các lời mời hoặc yêu cầu khác của sinh viên này ở các nhóm khác cùng môn và học kỳ
+        // 5. Dọn dẹp tất cả các lời mời hoặc yêu cầu khác của sinh viên này ở các nhóm khác trong cùng học kỳ
         ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('MaNhom', '!=', $maNhom)
             ->whereHas('nhom', function($q) use ($nhom) {
-                if ($nhom->MaHocKy) $q->where('MaHocKy', $nhom->MaHocKy);
-                if ($nhom->MaHocPhan) $q->where('MaHocPhan', $nhom->MaHocPhan);
+                if ($nhom->MaHocKy) {
+                    $q->where('MaHocKy', $nhom->MaHocKy);
+                }
             })
             ->delete();
 

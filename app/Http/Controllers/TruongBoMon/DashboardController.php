@@ -80,6 +80,7 @@ class DashboardController extends Controller
 
         $stats = [
             'total_de_tai'        => $totalDeTai,
+            'total_detai'         => $totalDeTai,
             'cho_duyet_bm'        => $choDuyetBM,
             'cho_phan_cong_pb'    => $choPhanCongPB,
             'dang_phan_bien'      => $dangPhanBien,

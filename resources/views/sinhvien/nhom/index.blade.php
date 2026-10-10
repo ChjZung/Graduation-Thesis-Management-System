@@ -8,7 +8,7 @@
     <div class="row g-2 align-items-center mb-2">
         <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ Lọc Nhóm Khóa Luận (Học kỳ ➔ Học phần chuyên ngành):</span>
-            <span class="small text-muted">1 sinh viên có thể tham gia nhiều môn (mỗi môn 1 nhóm theo học kỳ)</span>
+            <span class="small text-muted">Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một đợt/học kỳ khóa luận</span>
         </div>
     </div>
     <div class="row g-2 align-items-center">
@@ -16,7 +16,7 @@
         <div class="col-md-3">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_ky" onchange="applyCascadeFilter()">
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_ky" onchange="onHocKyFilterChange()">
                     @foreach($hocKies as $hk)
                         <option value="{{ $hk->MaHocKy }}" {{ $maHocKy == $hk->MaHocKy ? 'selected' : '' }}>
                             {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
@@ -30,10 +30,21 @@
         <div class="col-md-4">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
-                <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate">
-                    {{ $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành') }}
-                </span>
-                <input type="hidden" id="filter_bo_mon" value="{{ $selectedBoMon }}">
+                @if(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+                    <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate">
+                        {{ $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành') }}
+                    </span>
+                    <input type="hidden" id="filter_bo_mon" value="{{ $selectedBoMon }}">
+                @else
+                    <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_bo_mon" onchange="onBoMonChange()">
+                        <option value="ALL" {{ ($selectedBoMon === 'ALL' || !$selectedBoMon) ? 'selected' : '' }}>-- Tất cả bộ môn --</option>
+                        @foreach($boMons as $bm)
+                            <option value="{{ $bm->MaBoMon }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
+                                {{ $bm->TenBoMon }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
         </div>
 
@@ -41,72 +52,27 @@
         <div class="col-md-5">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="onHocPhanFilterChange()">
+                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" id="filter_hoc_phan" onchange="onHocPhanFilterChange()" {{ (isset($nhomHocKyHienTai) && $nhomHocKyHienTai) ? 'disabled' : '' }}>
+                    @if(!isset($nhomHocKyHienTai) || !$nhomHocKyHienTai)
+                        <option value="ALL" {{ ($selectedHocPhan == 'ALL' || !$selectedHocPhan) ? 'selected' : '' }}>
+                            -- Tất cả học phần (Xem tất cả nhóm) --
+                        </option>
+                    @endif
                     @foreach($hocPhans as $hp)
-                        @php
-                            $groupInThisHp = isset($sinhVienAllGroups) ? $sinhVienAllGroups->first(fn($g) => $g->nhom && ($g->nhom->MaHocPhan === $hp->MaHocPhan || (!$g->nhom->MaHocPhan && $hp->MaHocPhan === 'HP_KLCN'))) : null;
-                        @endphp
                         <option value="{{ $hp->MaHocPhan }}" {{ $selectedHocPhan == $hp->MaHocPhan ? 'selected' : '' }}>
-                            {{ $hp->TenHocPhan }}
+                            {{ $hp->TenHocPhan }} {{ (isset($nhomHocKyHienTai) && $nhomHocKyHienTai) ? '★ (Nhóm của bạn)' : '' }}
                         </option>
                     @endforeach
                 </select>
+                @if(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+                    <input type="hidden" id="filter_hoc_phan_fixed" value="{{ $selectedHocPhan }}">
+                @endif
             </div>
         </div>
     </div>
 </div>
 
-@if(!$nhomCurrent)
-<!-- ======================================================== -->
-<!-- 1. CHƯA CÓ NHÓM -> GIAO DIỆN TÌM KIẾM & DANH SÁCH NHÓM THEO PLAN -->
-<!-- ======================================================== -->
-
-<!-- HEADER: TIÊU ĐỀ & NÚT TẠO NHÓM NHANH -->
-<div class="card card-premium mb-4">
-    <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div>
-            <h4 class="fw-bold text-primary-custom mb-1"><i class="fa-solid fa-users me-2"></i>Nhóm Môn: {{ $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? 'Khóa Luận' }}</h4>
-            <p class="text-muted mb-0">Quản lý nhóm của bạn hoặc tìm kiếm nhóm đang mở để xin tham gia.</p>
-        </div>
-        <div>
-            @if(isset($isTaoNhomOpen) && $isTaoNhomOpen)
-                <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
-                    <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
-                </button>
-            @elseif(isset($groupPhaseState) && $groupPhaseState['code'] === 'CHUA_MO')
-                <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Cổng tạo nhóm chưa mở. Mở từ ngày {{ $groupPhaseState['start_date']->format('d/m/Y') }}">
-                    <i class="fa-solid fa-clock me-2"></i>Chưa Mở Cổng Tạo Nhóm
-                </button>
-            @else
-                <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Đã hết thời hạn tạo nhóm mới theo Kế hoạch">
-                    <i class="fa-solid fa-lock me-2"></i>Đã Khóa Tạo Nhóm (Hết Hạn)
-                </button>
-            @endif
-        </div>
-    </div>
-</div>
-
-@if(isset($groupPhaseState) && !$isTaoNhomOpen)
-    @if($groupPhaseState['code'] === 'CHUA_MO')
-        <div class="alert alert-info bg-info-subtle border-info shadow-sm mb-4 d-flex align-items-center gap-3">
-            <i class="fa-solid fa-calendar-day fs-3 text-primary"></i>
-            <div>
-                <strong class="text-primary fs-6">{{ $groupPhaseState['message'] }}</strong>
-                <div class="small text-muted">Hệ thống sẽ mở cổng tạo và ghép nhóm đúng mốc thời gian quy định theo Kế hoạch khóa luận.</div>
-            </div>
-        </div>
-    @else
-        <div class="alert alert-danger bg-danger-subtle border-danger shadow-sm mb-4 d-flex align-items-center gap-3">
-            <i class="fa-solid fa-clock-rotate-left fs-3 text-danger"></i>
-            <div>
-                <strong class="text-danger fs-6">{{ $groupPhaseState['message'] }}</strong>
-                <div class="small text-muted">Cơ cấu danh sách các nhóm đã được chốt để phục vụ cho các đợt đăng ký đề tài tiếp theo.</div>
-            </div>
-        </div>
-    @endif
-@endif
-
-<!-- LỜI MỜI GIA NHẬP NHÓM ĐANG CHỜ -->
+<!-- LỜI MỜI GIA NHẬP NHÓM ĐANG CHỜ (HIỂN THỊ NỔI BẬT NGAY TRÊN ĐẦU TRANG) -->
 @if(isset($loiMois) && $loiMois->count() > 0)
 <div class="alert alert-warning border-warning shadow-sm mb-4">
     <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-envelope-open-text me-2 text-warning"></i>Bạn có {{ $loiMois->count() }} lời mời tham gia nhóm khóa luận!</h5>
@@ -144,38 +110,113 @@
 </div>
 @endif
 
-<!-- KHUNG TÌM KIẾM & DANH SÁCH NHÓM -->
-<div class="card card-premium mb-4">
-    <!-- THANH TÌM KIẾM -->
-    <div class="card-header bg-white border-bottom p-3">
-        <form method="GET" action="{{ route('sinhvien.nhom.index') }}" class="row g-2 align-items-center">
+@if(!$nhomCurrent)
+<!-- ======================================================== -->
+<!-- 1. CHƯA CÓ NHÓM -> GIAO DIỆN TÌM KIẾM & DANH SÁCH NHÓM THEO PLAN -->
+<!-- ======================================================== -->
+
+<!-- HEADER: TIÊU ĐỀ & NÚT TẠO NHÓM NHANH & THANH TÌM KIẾM CHÍNH -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h4 class="fw-bold text-primary mb-1"><i class="fa-solid fa-users me-2"></i>Nhóm Môn: {{ $selectedHocPhan === 'ALL' ? 'Tất Cả Học Phần' : ($hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? 'Khóa Luận') }}</h4>
+                <p class="text-muted mb-0">Quản lý nhóm của bạn hoặc tìm kiếm nhóm đang mở để xin tham gia.</p>
+            </div>
+            <div>
+                @if(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+                    <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Bạn đã thuộc nhóm {{ $nhomHocKyHienTai->TenNhom }} trong học kỳ này">
+                        <i class="fa-solid fa-ban me-2"></i>Đã Có Nhóm ({{ $nhomHocKyHienTai->TenNhom }})
+                    </button>
+                @elseif(isset($isTaoNhomOpen) && $isTaoNhomOpen)
+                    <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
+                        <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
+                    </button>
+                @elseif(isset($groupPhaseState) && $groupPhaseState['code'] === 'CHUA_MO')
+                    <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Cổng tạo nhóm chưa mở. Mở từ ngày {{ $groupPhaseState['start_date']->format('d/m/Y') }}">
+                        <i class="fa-solid fa-clock me-2"></i>Chưa Mở Cổng Tạo Nhóm
+                    </button>
+                @else
+                    <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Đã hết thời hạn tạo nhóm mới theo Kế hoạch">
+                        <i class="fa-solid fa-lock me-2"></i>Đã Khóa Tạo Nhóm (Hết Hạn)
+                    </button>
+                @endif
+            </div>
+        </div>
+
+        <!-- THANH TÌM KIẾM NỔI BẬT ĐẶT NGAY TẠI HEADER -->
+        <form method="GET" action="{{ route('sinhvien.nhom.index') }}" class="row g-2 align-items-center bg-light p-3 rounded-3 border">
             <input type="hidden" name="hoc_phan" value="{{ $selectedHocPhan }}">
             <input type="hidden" name="hoc_ky" value="{{ $maHocKy }}">
             <input type="hidden" name="bo_mon" value="{{ $selectedBoMon }}">
-            <div class="col-md-9">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm tên nhóm hoặc MSSV / Tên nhóm trưởng..." value="{{ request('q') }}">
+            <div class="col-md-9 col-lg-10">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-end-0 text-primary"><i class="fa-solid fa-magnifying-glass fs-5"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0 ps-0 fw-semibold fs-6 input-search-sync" placeholder="🔍 Nhập MSSV hoặc tên nhóm (ví dụ: 2001210090, Nhóm 2001210090)..." value="{{ request('q') }}">
                 </div>
             </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
-                    <i class="fa-solid fa-filter me-1"></i>Tìm Kiếm
+            <div class="col-md-3 col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm">
+                    <i class="fa-solid fa-search me-1"></i>Tìm Kiếm
                 </button>
                 @if(request('q'))
-                <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy, 'bo_mon' => $selectedBoMon]) }}" class="btn btn-outline-secondary rounded-pill px-3" title="Xóa bộ lọc">
+                <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy, 'bo_mon' => $selectedBoMon]) }}" class="btn btn-outline-secondary btn-lg rounded-pill px-3" title="Xóa tìm kiếm">
                     <i class="fa-solid fa-rotate-left"></i>
                 </a>
                 @endif
             </div>
         </form>
     </div>
+</div>
 
+@if(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+    <div class="alert alert-warning border-warning shadow-sm mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <i class="fa-solid fa-circle-exclamation fs-3 text-warning"></i>
+            <div>
+                <strong class="text-dark">Bạn đã thuộc nhóm "{{ $nhomHocKyHienTai->TenNhom }}" (Môn: {{ $nhomHocKyHienTai->hocPhan->TenHocPhan ?? $nhomHocKyHienTai->MaHocPhan }}) trong học kỳ này!</strong>
+                <div class="small text-secondary">Quy định: Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một học kỳ khóa luận.</div>
+            </div>
+        </div>
+        <a href="{{ route('sinhvien.nhom.index', ['hocky' => $nhomHocKyHienTai->MaHocKy, 'hocphan' => $nhomHocKyHienTai->MaHocPhan]) }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-arrow-right me-1"></i>Xem Nhóm Của Bạn
+        </a>
+    </div>
+@endif
+
+@if(isset($groupPhaseState) && !$isTaoNhomOpen)
+    @if($groupPhaseState['code'] === 'CHUA_MO')
+        <div class="alert alert-info bg-info-subtle border-info shadow-sm mb-4 d-flex align-items-center gap-3">
+            <i class="fa-solid fa-calendar-day fs-3 text-primary"></i>
+            <div>
+                <strong class="text-primary fs-6">{{ $groupPhaseState['message'] }}</strong>
+                <div class="small text-muted">Hệ thống sẽ mở cổng tạo và ghép nhóm đúng mốc thời gian quy định theo Kế hoạch khóa luận.</div>
+            </div>
+        </div>
+    @else
+        <div class="alert alert-danger bg-danger-subtle border-danger shadow-sm mb-4 d-flex align-items-center gap-3">
+            <i class="fa-solid fa-clock-rotate-left fs-3 text-danger"></i>
+            <div>
+                <strong class="text-danger fs-6">{{ $groupPhaseState['message'] }}</strong>
+                <div class="small text-muted">Cơ cấu danh sách các nhóm đã được chốt để phục vụ cho các đợt đăng ký đề tài tiếp theo.</div>
+            </div>
+        </div>
+    @endif
+@endif
+
+
+<!-- KHUNG DANH SÁCH NHÓM -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
     <!-- DANH SÁCH CÁC NHÓM (GRID CARDS) -->
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-primary-custom mb-0"><i class="fa-solid fa-list-check me-2"></i>Danh Sách Nhóm Khóa Luận</h5>
-            <span class="badge bg-light text-dark border">Tìm thấy {{ count($nhomsOpen ?? []) }} nhóm</span>
+            <div>
+                <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-list-check me-2"></i>Danh Sách Nhóm Khóa Luận</h5>
+                @if(request('q'))
+                    <span class="small text-muted"><i class="fa-solid fa-magnifying-glass me-1"></i>Kết quả tìm kiếm cho từ khóa: "<strong>{{ request('q') }}</strong>"</span>
+                @endif
+            </div>
+            <span class="badge bg-light text-dark border fs-6 px-3 py-2" id="badge-group-count">Tìm thấy {{ count($nhomsOpen ?? []) }} nhóm</span>
         </div>
 
         <div class="row g-3">
@@ -184,11 +225,29 @@
                 $memberCount = $no->thanhViens->count();
                 $isFull = ($memberCount >= 3);
                 $hasRequestedThis = isset($yeuCauDaGui[$no->MaNhom]);
+                $hasInviteFromThis = isset($loiMois) && $loiMois->contains('MaNhom', $no->MaNhom);
             @endphp
-            <div class="col-lg-6">
-                <div class="card border rounded-3 p-3 h-100 shadow-sm hover-shadow transition">
+            <div class="col-lg-6 group-item-card">
+                <div class="card rounded-3 p-3 h-100 shadow-sm hover-shadow transition {{ $hasInviteFromThis ? 'border border-warning border-2 bg-warning-subtle bg-opacity-10' : 'border' }}">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="fw-bold text-primary mb-0">{{ $no->TenNhom }}</h5>
+                        <div>
+                            @if($hasInviteFromThis)
+                                <div class="mb-1"><span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="fa-solid fa-envelope-open-text me-1"></i>Đã mời bạn</span></div>
+                            @endif
+                            <h5 class="fw-bold text-primary mb-1">{{ $no->TenNhom }}</h5>
+                            <div class="d-flex flex-wrap gap-1 align-items-center mb-1">
+                                @if($no->hocPhan)
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">
+                                        <i class="fa-solid fa-graduation-cap me-1"></i>{{ $no->hocPhan->TenHocPhan }}
+                                    </span>
+                                @endif
+                                @if($no->hocKy)
+                                    <span class="badge bg-light text-secondary border small">
+                                        <i class="fa-solid fa-calendar me-1"></i>{{ $no->hocKy->TenHocKy }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
                         @if($isFull)
                             <span class="badge bg-secondary rounded-pill px-3 py-1"><i class="fa-solid fa-lock me-1"></i>Đã Đủ 3/3</span>
                         @else
@@ -216,7 +275,22 @@
                             <i class="fa-solid fa-eye me-1"></i>Xem Chi Tiết
                         </button>
 
-                        @if($hasRequestedThis)
+                        @if($hasInviteFromThis)
+                            <div class="d-flex gap-1">
+                                <form action="{{ route('sinhvien.nhom.xacNhanLoiMoi', $no->MaNhom) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
+                                        <i class="fa-solid fa-check me-1"></i>Chấp Nhận
+                                    </button>
+                                </form>
+                                <form action="{{ route('sinhvien.nhom.tuChoiLoiMoi', $no->MaNhom) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2">
+                                        Từ Chối
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif($hasRequestedThis)
                             <form action="{{ route('sinhvien.nhom.huyXinGiaNhap', $no->MaNhom) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 text-dark fw-bold">
@@ -230,6 +304,10 @@
                         @elseif(!($isTaoNhomOpen ?? true))
                             <button class="btn btn-secondary btn-sm rounded-pill px-3" disabled title="{{ $groupPhaseState['message'] ?? 'Cổng tạo và ghép nhóm chưa mở' }}">
                                 <i class="fa-solid fa-lock me-1"></i>Đã Khóa Xin Vào
+                            </button>
+                        @elseif(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+                            <button class="btn btn-secondary btn-sm rounded-pill px-3" disabled title="Bạn đã thuộc nhóm {{ $nhomHocKyHienTai->TenNhom }} trong học kỳ này">
+                                <i class="fa-solid fa-ban me-1"></i>Đã Có Nhóm
                             </button>
                         @else
                             <form action="{{ route('sinhvien.nhom.xinGiaNhap', $no->MaNhom) }}" method="POST">
@@ -865,6 +943,22 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    @if(isset($nhomHocKyHienTai) && $nhomHocKyHienTai)
+                        <div class="alert alert-warning border-warning shadow-sm rounded-3 mb-0 p-4 text-center">
+                            <i class="fa-solid fa-triangle-exclamation text-warning fs-1 mb-3 d-block"></i>
+                            <h5 class="fw-bold text-dark mb-2">Bạn đã có nhóm khóa luận trong học kỳ này!</h5>
+                            <p class="text-secondary mb-3">
+                                Hiện tại bạn đang là thành viên của nhóm <strong>{{ $nhomHocKyHienTai->TenNhom }}</strong> (Môn: <strong>{{ $nhomHocKyHienTai->hocPhan->TenHocPhan ?? $nhomHocKyHienTai->MaHocPhan }}</strong> - {{ $nhomHocKyHienTai->hocKy->TenHocKy ?? '' }}).
+                            </p>
+                            <div class="alert alert-light border small text-muted mb-3 text-start">
+                                <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                                <strong>Quy định:</strong> Mỗi sinh viên chỉ được tham gia tối đa 1 nhóm trong cùng một đợt/học kỳ khóa luận. Bạn không thể tạo thêm nhóm mới.
+                            </div>
+                            <a href="{{ route('sinhvien.nhom.index', ['hocky' => $nhomHocKyHienTai->MaHocKy, 'hocphan' => $nhomHocKyHienTai->MaHocPhan]) }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+                                <i class="fa-solid fa-users me-1"></i>Đến Trang Quản Lý Nhóm Của Bạn
+                            </a>
+                        </div>
+                    @else
                     <!-- Callout quy trình -->
                     <div class="alert alert-primary bg-primary-subtle border-0 rounded-3 mb-4 p-3 d-flex align-items-start gap-3">
                         <i class="fa-solid fa-circle-info fs-3 text-primary mt-1"></i>
@@ -938,15 +1032,18 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
 
                 <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                         Hủy Bỏ
                     </button>
-                    <button type="submit" id="btn_submit_create_group" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled>
-                        <i class="fa-solid fa-check-circle me-2"></i>Xác Nhận Tạo Nhóm
-                    </button>
+                    @if(!isset($nhomHocKyHienTai) || !$nhomHocKyHienTai)
+                        <button type="submit" id="btn_submit_create_group" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled>
+                            <i class="fa-solid fa-check-circle me-2"></i>Xác Nhận Tạo Nhóm
+                        </button>
+                    @endif
                 </div>
             </form>
         </div>
@@ -957,6 +1054,7 @@
 <script>
 // ── XỬ LÝ CASCADE FILTER: HỌC KỲ -> BỘ MÔN -> HỌC PHẦN TRÊN TRANG NHÓM ──
 const allHocPhansList = @json($hocPhans ?? []);
+const hasActiveGroupThisSemester = @json(isset($nhomHocKyHienTai) && $nhomHocKyHienTai ? true : false);
 const userGroupHpIds = @json(isset($sinhVienAllGroups) ? $sinhVienAllGroups->map(fn($g) => $g->nhom?->MaHocPhan ?? 'HP_KLCN')->values() : []);
 const groupSemestersMap = @json(isset($sinhVienAllGroups) ? $sinhVienAllGroups->filter(fn($g) => $g->nhom && $g->nhom->MaHocKy)->mapWithKeys(fn($g) => [$g->nhom->MaHocPhan ?? 'HP_KLCN' => $g->nhom->MaHocKy]) : []);
 
@@ -964,6 +1062,28 @@ function populateFilterHocPhans(selectedBm, currentHpVal) {
     const filterHocPhan = document.getElementById('filter_hoc_phan');
     if (!filterHocPhan) return;
     filterHocPhan.innerHTML = '';
+
+    // Nếu sinh viên đã có nhóm trong học kỳ: chỉ hiển thị duy nhất học phần của nhóm đã tạo
+    if (hasActiveGroupThisSemester && allHocPhansList.length > 0) {
+        allHocPhansList.forEach(hp => {
+            const opt = document.createElement('option');
+            opt.value = hp.MaHocPhan;
+            opt.textContent = hp.TenHocPhan + ' ★ (Nhóm của bạn)';
+            opt.selected = true;
+            filterHocPhan.appendChild(opt);
+        });
+        filterHocPhan.disabled = true;
+        return;
+    }
+
+    // Khi chưa có nhóm: Thêm lựa chọn Tất cả học phần lên đầu
+    const optAll = document.createElement('option');
+    optAll.value = 'ALL';
+    optAll.textContent = '-- Tất cả học phần (Xem tất cả nhóm) --';
+    if (!currentHpVal || currentHpVal === 'ALL') {
+        optAll.selected = true;
+    }
+    filterHocPhan.appendChild(optAll);
 
     let filtered = allHocPhansList;
     if (selectedBm && selectedBm !== 'ALL') {
@@ -979,6 +1099,14 @@ function populateFilterHocPhans(selectedBm, currentHpVal) {
         }
         filterHocPhan.appendChild(opt);
     });
+}
+
+function onHocKyFilterChange() {
+    const filterHocKy = document.getElementById('filter_hoc_ky');
+    const hk = filterHocKy ? filterHocKy.value : '';
+    const url = new URL("{{ route('sinhvien.nhom.index') }}", window.location.origin);
+    if (hk) url.searchParams.set('hoc_ky', hk);
+    window.location.href = url.toString();
 }
 
 function onHocPhanFilterChange() {
@@ -1003,7 +1131,7 @@ function onBoMonChange() {
 function applyCascadeFilter() {
     const filterHocKy = document.getElementById('filter_hoc_ky');
     const filterBoMon = document.getElementById('filter_bo_mon');
-    const filterHocPhan = document.getElementById('filter_hoc_phan');
+    const filterHocPhan = document.getElementById('filter_hoc_phan') || document.getElementById('filter_hoc_phan_fixed');
 
     const hk = filterHocKy ? filterHocKy.value : '';
     const bm = filterBoMon ? filterBoMon.value : '';
@@ -1019,6 +1147,39 @@ function applyCascadeFilter() {
 document.addEventListener('DOMContentLoaded', function() {
     // ── KHỞI TẠO OPTIONS BỘ LỌC HỌC PHẦN ──
     populateFilterHocPhans("{{ $selectedBoMon }}", "{{ $selectedHocPhan }}");
+
+    // ── LIVE SEARCH: LỌC TỨC THÌ CÁC THẺ NHÓM TRÊN GIAO DIỆN KHI GÕ TỪ KHÓA ──
+    const searchInputs = document.querySelectorAll('.input-search-sync');
+    function applyLiveFilter(keyword) {
+        const lowerKey = keyword.trim().toLowerCase();
+        const cards = document.querySelectorAll('.group-item-card');
+        let visibleCount = 0;
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (!lowerKey || text.includes(lowerKey)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        const badgeCount = document.getElementById('badge-group-count');
+        if (badgeCount) {
+            badgeCount.textContent = `Tìm thấy ${visibleCount} nhóm`;
+        }
+    }
+
+    searchInputs.forEach(inputEl => {
+        inputEl.addEventListener('input', function() {
+            const val = this.value;
+            // Đồng bộ giá trị sang ô tìm kiếm còn lại
+            searchInputs.forEach(other => {
+                if (other !== inputEl) other.value = val;
+            });
+            applyLiveFilter(val);
+        });
+    });
+
     // ── XỬ LÝ QUY TRÌNH 2 BƯỚC KHI TẠO NHÓM (HỌC KỲ -> HỌC PHẦN KHÓA LUẬN) ──
     const hocPhansData = @json($hocPhans ?? []);
     const selectHocKy = document.getElementById('create_group_hocky');

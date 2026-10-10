@@ -80,6 +80,8 @@ class DashboardController extends Controller
             'so_giang_vien'       => $soGiangVien,
             'so_sinh_vien'        => $soSinhVien,
             'so_de_tai'           => $soDeTai,
+            'total_detai'         => $soDeTai,
+            'total_de_tai'        => $soDeTai,
             'so_nhom'             => $soNhom,
             'so_hoi_dong'         => $soHoiDong,
             'cho_duyet_khoa'      => $choDuyetKhoa,

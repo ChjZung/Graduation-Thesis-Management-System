@@ -44,10 +44,24 @@ class DashboardController extends Controller
         }
         $isDuDieuKien = $dkRecord ? ($dkRecord->TrangThai === 'Đủ điều kiện') : $sinhVien->isDuDieuKien();
 
-        // 2. Lấy thông tin nhóm & đề tài
+        // 2. Lấy thông tin nhóm & đề tài KHÓA LUẬN (Chỉ tính khi đã chính thức thuộc nhóm: da_tham_gia)
+        // Nhóm phải thuộc Học phần Khóa luận và thuộc Học kỳ hiện tại / Kế hoạch mở
+        $hocKyMa = $hocKyHienTai?->MaHocKy;
         $thanhVienNhom = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'da_tham_gia')
-            ->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
+            ->whereHas('nhom', function($q) use ($hocKyMa) {
+                if ($hocKyMa) {
+                    $q->where(function($sub) use ($hocKyMa) {
+                        $sub->where('MaHocKy', $hocKyMa)->orWhereNull('MaHocKy');
+                    });
+                }
+                $q->whereHas('hocPhan', function($hp) {
+                    $hp->where('LoaiHocPhan', 'Khóa luận')
+                       ->orWhere('MaHocPhan', 'like', 'HP_KL%')
+                       ->orWhere('TenHocPhan', 'like', '%Khóa luận%');
+                });
+            })
+            ->first();
 
         $nhom = null;
         $phieuDangKy = null;
@@ -99,7 +113,7 @@ class DashboardController extends Controller
             }
         }
 
-        // 3. Lấy Kế hoạch khóa luận & Mốc thời gian
+        // 3. Lấy Kế hoạch khóa luận & Mốc thời gian (Chỉ hiển thị thời gian thực hiện khi sinh viên đã thuộc nhóm)
         $activePlan = KeHoachKhoaLuan::with(['mocThoiGians' => fn($q) => $q->orderBy('NgayBatDau')])
             ->where(function($q) use ($hocKyHienTai) {
                 if ($hocKyHienTai) {
@@ -112,22 +126,28 @@ class DashboardController extends Controller
         $allMocs = $activePlan ? $activePlan->mocThoiGians : collect();
         $today = now()->format('Y-m-d');
         
-        $nextMoc = $allMocs->first(function($m) use ($today) {
-            return $m->NgayKetThuc >= $today;
-        }) ?? $allMocs->last();
-
+        $nextMoc = null;
         $daysRemaining = null;
-        if ($nextMoc && $nextMoc->NgayKetThuc) {
-            $endCarbon = Carbon::parse($nextMoc->NgayKetThuc)->endOfDay();
-            $daysRemaining = (int) ceil(now()->diffInDays($endCarbon, false));
+
+        if ($nhom) {
+            $nextMoc = $allMocs->first(function($m) use ($today) {
+                return $m->NgayKetThuc >= $today;
+            }) ?? $allMocs->last();
+
+            if ($nextMoc && $nextMoc->NgayKetThuc) {
+                $endCarbon = Carbon::parse($nextMoc->NgayKetThuc)->endOfDay();
+                $daysRemaining = (int) ceil(now()->diffInDays($endCarbon, false));
+            }
         }
 
         // 4. Kết quả khóa luận (nếu có)
         $ketQua = KetQuaSinhVien::where('MaSV', $sinhVien->MaSV)->first();
 
-        // 5. Tính toán tiến độ chuẩn xác theo chu trình thực hiện
+        // 5. Tính toán tiến độ chuẩn xác theo chu trình thực hiện (Chỉ tính khi đã có nhóm)
         $soBaoCaoDat = $baoCaos->where('TrangThai', 'Đạt')->count();
-        if ($ketQua && $ketQua->DiemTongKet > 0) {
+        if (!$nhom) {
+            $tienDoPhanTram = 0;
+        } elseif ($ketQua && $ketQua->DiemTongKet > 0) {
             $tienDoPhanTram = 100;
         } elseif ($hoSoBaoVe && in_array($hoSoBaoVe->TrangThai, ['Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã bảo vệ'])) {
             $tienDoPhanTram = 90;
@@ -135,12 +155,8 @@ class DashboardController extends Controller
             $tienDoPhanTram = 80;
         } elseif ($deTai) {
             $tienDoPhanTram = min(75, 20 + ($soBaoCaoDat * 11));
-        } elseif ($nhom) {
-            $tienDoPhanTram = 15;
-        } elseif ($isDuDieuKien) {
-            $tienDoPhanTram = 10;
         } else {
-            $tienDoPhanTram = 0;
+            $tienDoPhanTram = 15;
         }
 
         // 6. Mốc báo cáo tiến độ tiếp theo cần nộp
@@ -157,6 +173,17 @@ class DashboardController extends Controller
         // 7. Nhận xét / Phản hồi mới nhất từ Giảng viên hướng dẫn
         $latestFeedback = $baoCaos->whereNotNull('NhanXet')->sortByDesc('updated_at')->first()
             ?? $baoCaos->sortByDesc('LanBaoCao')->first();
+
+        // 8. Lời mời gia nhập nhóm đang chờ (hiển thị thông báo trên Dashboard)
+        $loiMois = ThanhVienNhom::with(['nhom.truongNhom.taiKhoan', 'nhom.hocPhan', 'nhom.hocKy'])
+            ->where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'cho_xac_nhan')
+            ->whereHas('nhom', function($q) use ($hocKyMa) {
+                if ($hocKyMa) {
+                    $q->where('MaHocKy', $hocKyMa)->orWhereNull('MaHocKy');
+                }
+            })
+            ->get();
 
         return view('sinhvien.dashboard', compact(
             'sinhVien',
@@ -179,7 +206,8 @@ class DashboardController extends Controller
             'activePlan',
             'nextMoc',
             'daysRemaining',
-            'latestFeedback'
+            'latestFeedback',
+            'loiMois'
         ));
     }
 }

@@ -2044,7 +2044,7 @@ small, .small, .text-muted.small, .form-text, .pill-count,
 }
 
 /* 4. CARD Ô VUÔNG / KPI CARD ĐỒNG BỘ - KHÔNG DÙNG VIỀN MÀU SẶC SỠ */
-.admin-kpi-card, .kpi-metric-card, .stat-kpi-card, .card-premium, .dash-kpi-box {
+.admin-kpi-card, .kpi-metric-card, .stat-kpi-card, .dash-kpi-box {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
@@ -2067,7 +2067,7 @@ small, .small, .text-muted.small, .form-text, .pill-count,
     border-right: 1px solid #e2e8f0 !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
-.admin-kpi-card:hover, .kpi-metric-card:hover, .stat-kpi-card:hover, .card-premium:hover {
+.admin-kpi-card:hover, .kpi-metric-card:hover, .stat-kpi-card:hover {
     transform: translateY(-2px);
     border-color: #cbd5e1 !important;
     box-shadow: 0 6px 16px rgba(0, 51, 102, 0.08) !important;

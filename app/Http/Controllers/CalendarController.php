@@ -301,7 +301,7 @@ class CalendarController extends Controller
             }
         }
 
-        // Với Sinh viên: Chỉ giữ hàng Sinh Viên (Lịch báo cáo với GV & Kế hoạch) và Hội Đồng
+        $hasGroup = true;
         if ($role === 'SINH_VIEN') {
             $shifts = [
                 'SINH_VIEN' => [
@@ -327,6 +327,7 @@ class CalendarController extends Controller
                 $svUser = \App\Models\SinhVien::where('MaTK', $u->MaTK)->first();
                 if ($svUser) {
                     $tvUser = \App\Models\ThanhVienNhom::where('MaSV', $svUser->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+                    $hasGroup = !empty($tvUser);
                     if ($tvUser) {
                         $lichGaps = \App\Models\LichGapHuongDan::where('MaNhom', $tvUser->MaNhom)
                             ->whereBetween('ThoiGianBatDau', [$startOfWeek->format('Y-m-d 00:00:00'), $endOfWeek->format('Y-m-d 23:59:59')])
@@ -378,6 +379,9 @@ class CalendarController extends Controller
                                 ];
                             }
                         }
+                    } else {
+                        // Sinh viên chưa thuộc nhóm -> ẩn thông tin/banner thời gian thực hiện khóa luận
+                        $macroPhase = null;
                     }
                 }
             }
@@ -388,6 +392,7 @@ class CalendarController extends Controller
             'shifts'           => $shifts,
             'shiftEvents'      => $shiftEvents,
             'macroPhase'       => $macroPhase,
+            'hasGroup'         => $hasGroup,
             'milestonePalette' => $milestonePalette,
             'currentDate'      => $currentDate->format('Y-m-d'),
             'currentDateLabel' => $currentDate->format('d/m/Y'),

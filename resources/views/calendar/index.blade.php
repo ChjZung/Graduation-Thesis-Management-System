@@ -410,6 +410,13 @@
                 <i class="fa-solid fa-circle-check me-1"></i>Đang trong giai đoạn thực hiện đồ án
             </span>
         </div>
+        @elseif(($roleTitle ?? '') === 'Sinh Viên' && !($hasGroup ?? true))
+        <div class="alert alert-warning bg-warning-subtle border-warning d-flex align-items-center gap-3 py-2.5 px-3 rounded-3 mb-3 small">
+            <i class="fa-solid fa-users-slash text-warning fs-5"></i>
+            <div>
+                <strong>Bạn chưa có nhóm khóa luận:</strong> Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ áp dụng khi bạn đã thuộc một nhóm (đã tạo nhóm hoặc đã chấp nhận lời mời). <a href="{{ route('sinhvien.nhom.index') }}" class="fw-bold text-decoration-none text-primary ms-1">Đến trang Quản lý nhóm &rarr;</a>
+            </div>
+        </div>
         @endif
 
         {{-- Bảng Ma Trận Lịch Tuần (Table Grid với Spanning Bar) --}}

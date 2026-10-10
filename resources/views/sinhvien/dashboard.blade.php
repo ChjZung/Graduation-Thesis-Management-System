@@ -24,6 +24,25 @@
     </div>
 </div>
 
+{{-- ── THÔNG BÁO LỜI MỜI THAM GIA NHÓM ĐANG CHỜ ── --}}
+@if(isset($loiMois) && $loiMois->count() > 0)
+<div class="alert alert-warning border-warning shadow-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 rounded-3 p-3">
+    <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-envelope-open-text fs-2 text-warning"></i>
+        <div>
+            <h6 class="fw-bold mb-1 text-dark">Bạn có {{ $loiMois->count() }} lời mời tham gia nhóm khóa luận!</h6>
+            <div class="small text-secondary">
+                Lời mời từ Trưởng nhóm: <strong>{{ $loiMois->first()->nhom->truongNhom->HoTen ?? 'Bạn học' }}</strong> 
+                (Nhóm: <strong>{{ $loiMois->first()->nhom->TenNhom ?? '' }}</strong> - Môn: {{ $loiMois->first()->nhom->hocPhan->TenHocPhan ?? 'Khóa luận' }}).
+            </div>
+        </div>
+    </div>
+    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-xs">
+        <i class="fa-solid fa-users me-1"></i>Xem & Phản Hồi Ngay
+    </a>
+</div>
+@endif
+
 {{-- ── HÀNG 1: 4 CARD KPI ĐỒNG BỘ CHUẨN HỌC THUẬT HUIT ── --}}
 <div class="row g-3 mb-4">
     <!-- 1. Điều Kiện Khóa Luận -->
@@ -116,11 +135,15 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="kpi-title">Tiến Độ Hoàn Thành</div>
-                    <div class="kpi-value text-primary" style="font-size: 1.45rem !important;">
-                        {{ $tienDoPhanTram }}%
+                    <div class="kpi-value {{ $nhom ? 'text-primary' : 'text-muted' }}" style="font-size: 1.45rem !important;">
+                        {{ $nhom ? $tienDoPhanTram . '%' : '--' }}
                     </div>
                     <div class="kpi-subtext mt-1">
-                        @if($ketQua && $ketQua->DiemTongKet > 0)
+                        @if(!$nhom)
+                            <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
+                                Chưa có nhóm
+                            </span>
+                        @elseif($ketQua && $ketQua->DiemTongKet > 0)
                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
                                 Điểm TK: {{ $ketQua->DiemTongKet }} ({{ $ketQua->XepLoai }})
                             </span>
@@ -268,6 +291,7 @@
         </div>
 
         <!-- Tiến độ hoàn thành khóa luận -->
+        @if($nhom)
         <div class="mt-4 pt-3 border-top">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="small text-secondary fw-semibold">
@@ -281,6 +305,13 @@
                      aria-valuenow="{{ $tienDoPhanTram }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
+        @else
+        <div class="mt-4 pt-3 border-top text-center py-2">
+            <span class="small text-muted fst-italic">
+                <i class="fa-solid fa-circle-info me-1 text-primary"></i>Bạn chưa có nhóm. Tiến độ và thời gian thực hiện khóa luận chỉ hiển thị khi bạn đã thuộc một nhóm.
+            </span>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -294,36 +325,72 @@
                 <h6 class="fw-bold mb-0 text-dark">Kế Hoạch &amp; Việc Cần Làm Tiếp Theo</h6>
             </div>
             <div class="card-body p-4">
-                <!-- Action Box: Mốc Báo Cáo Kế Hoạch Hiện Tại -->
-                <div class="p-3 rounded-3 bg-light border mb-4" style="border-left: 4px solid #0072ce !important;">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small fw-bold">
-                            <i class="fa-regular fa-clock me-1"></i>Hạn chót: {{ $nextMoc ? \Carbon\Carbon::parse($nextMoc->NgayKetThuc)->format('d/m/Y') : 'Theo kế hoạch' }}
-                            @if($daysRemaining !== null)
-                                &bull; {{ $daysRemaining >= 0 ? "Còn lại {$daysRemaining} ngày" : "Đã quá hạn " . abs($daysRemaining) . " ngày" }}
+                @if($nhom && $nextMoc)
+                    <!-- Action Box: Mốc Báo Cáo Kế Hoạch Hiện Tại (Chỉ hiển thị khi đã có nhóm) -->
+                    <div class="p-3 rounded-3 bg-light border mb-4" style="border-left: 4px solid #0072ce !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small fw-bold">
+                                <i class="fa-regular fa-clock me-1"></i>Hạn chót: {{ \Carbon\Carbon::parse($nextMoc->NgayKetThuc)->format('d/m/Y') }}
+                                @if($daysRemaining !== null)
+                                    &bull; {{ $daysRemaining >= 0 ? "Còn lại {$daysRemaining} ngày" : "Đã quá hạn " . abs($daysRemaining) . " ngày" }}
+                                @endif
+                            </span>
+                            @if(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                                    Đợt {{ $mocTiepTheo }}
+                                </span>
+                            @else
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                                    {{ $nextMoc->LoaiGiaiDoan ?? 'Kế hoạch' }}
+                                </span>
                             @endif
-                        </span>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                            Đợt {{ $mocTiepTheo }}
-                        </span>
-                    </div>
+                        </div>
 
-                    <h6 class="fw-bold text-dark mb-2">
-                        {{ $nextMoc->TenMoc ?? ('Báo Cáo Tiến Độ Đợt ' . $mocTiepTheo . ': Triển khai & Kiểm thử hệ thống') }}
-                    </h6>
-                    <p class="small text-secondary mb-3" style="line-height: 1.5;">
-                        {{ $nextMoc->MoTa ?? 'Sinh viên cần nộp file báo cáo chi tiết kèm minh chứng công việc để Giảng viên hướng dẫn xem xét, chấm điểm và góp ý hoàn thiện đề tài.' }}
-                    </p>
+                        <h6 class="fw-bold text-dark mb-2">
+                            {{ $nextMoc->TenMoc ?? ('Báo Cáo Tiến Độ Đợt ' . $mocTiepTheo . ': Triển khai & Kiểm thử hệ thống') }}
+                        </h6>
+                        <p class="small text-secondary mb-3" style="line-height: 1.5;">
+                            {{ $nextMoc->MoTa ?? 'Sinh viên cần nộp file báo cáo chi tiết kèm minh chứng công việc để Giảng viên hướng dẫn xem xét, chấm điểm và góp ý hoàn thiện đề tài.' }}
+                        </p>
 
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                            <i class="fa-solid fa-upload me-1"></i> Nộp bài báo cáo ngay
-                        </a>
-                        <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
-                            <i class="fa-solid fa-calendar-week me-1"></i> Xem lịch báo cáo
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            @if(($nextMoc->LoaiGiaiDoan ?? '') === 'TAO_NHOM')
+                                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
+                                    <i class="fa-solid fa-users me-1"></i> Quản lý thành viên nhóm
+                                </a>
+                            @elseif(($nextMoc->LoaiGiaiDoan ?? '') === 'DANG_KY_DE_TAI')
+                                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
+                                    <i class="fa-solid fa-book-bookmark me-1"></i> Đăng ký đề tài khóa luận
+                                </a>
+                            @elseif(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
+                                <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
+                                    <i class="fa-solid fa-upload me-1"></i> Nộp bài báo cáo ngay
+                                </a>
+                            @else
+                                <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
+                                    <i class="fa-solid fa-calendar-check me-1"></i> Xem chi tiết kế hoạch
+                                </a>
+                            @endif
+                            <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
+                                <i class="fa-solid fa-calendar-week me-1"></i> Xem lịch báo cáo
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <!-- Thông báo khi chưa có nhóm: Ẩn thời gian thực hiện, hiển thị hướng dẫn -->
+                    <div class="p-4 rounded-3 bg-light border text-center mb-4">
+                        <div class="text-warning fs-1 mb-2">
+                            <i class="fa-solid fa-users-slash"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">Bạn chưa có nhóm khóa luận</h6>
+                        <p class="small text-muted mb-3" style="line-height: 1.5;">
+                            Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ hiển thị khi bạn đã thuộc một nhóm (đã tạo nhóm hoặc đã chấp nhận lời mời).
+                        </p>
+                        <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
+                            <i class="fa-solid fa-users me-1"></i> Đến trang Quản lý nhóm để tạo hoặc gia nhập
                         </a>
                     </div>
-                </div>
+                @endif
 
                 <!-- Lịch hẹn hướng dẫn với GVHD sắp tới -->
                 <div class="p-3 rounded-3 bg-white border">
