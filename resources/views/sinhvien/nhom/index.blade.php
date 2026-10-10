@@ -132,14 +132,6 @@
                     <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateGroup">
                         <i class="fa-solid fa-plus-circle me-2"></i>+ Tạo Nhóm
                     </button>
-                @elseif(isset($groupPhaseState) && $groupPhaseState['code'] === 'CHUA_MO')
-                    <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Cổng tạo nhóm chưa mở. Mở từ ngày {{ $groupPhaseState['start_date']->format('d/m/Y') }}">
-                        <i class="fa-solid fa-clock me-2"></i>Chưa Mở Cổng Tạo Nhóm
-                    </button>
-                @else
-                    <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled title="Đã hết thời hạn tạo nhóm mới theo Kế hoạch">
-                        <i class="fa-solid fa-lock me-2"></i>Đã Khóa Tạo Nhóm (Hết Hạn)
-                    </button>
                 @endif
             </div>
         </div>
@@ -324,8 +316,11 @@
             <div class="col-12">
                 <div class="text-center py-5 text-muted">
                     <i class="fa-solid fa-users-slash fs-1 opacity-50 mb-3 d-block"></i>
-                    <h5>Không tìm thấy nhóm khóa luận phù hợp</h5>
-                    <p class="small">Hãy thử tìm kiếm với từ khóa khác hoặc bấm nút <strong>"+ Tạo Nhóm"</strong> ở góc trên bên phải để khởi tạo nhóm của riêng bạn!</p>
+                    @if(isset($isTaoNhomOpen) && $isTaoNhomOpen)
+                        <p class="small">Hãy thử tìm kiếm với từ khóa khác hoặc bấm nút <strong>"+ Tạo Nhóm"</strong> ở góc trên bên phải để khởi tạo nhóm của riêng bạn!</p>
+                    @else
+                        <p class="small">Hãy thử tìm kiếm với từ khóa khác.</p>
+                    @endif
                 </div>
             </div>
             @endforelse
@@ -482,7 +477,7 @@
                             <a href="javascript:void(0)" class="btn-view-profile text-decoration-none fw-bold" 
                                data-mssv="{{ $tv->sinhVien->taiKhoan->TenDangNhap ?? $tv->MaSV }}"
                                title="Bấm để xem thông tin chi tiết">
-                                <span class="badge bg-light text-primary border"><code>{{ $tv->sinhVien->taiKhoan->TenDangNhap ?? $tv->MaSV }}</code> <i class="fa-solid fa-circle-info ms-1"></i></span>
+                                <span class="badge bg-light text-primary border"><code>{{ $tv->sinhVien->taiKhoan->TenDangNhap ?? $tv->MaSV }}</code></span>
                             </a>
                         </td>
                         <td>
@@ -495,7 +490,7 @@
                         </td>
                         <td class="text-center">
                             @if($tv->VaiTro === 'Trưởng nhóm')
-                                <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-crown me-1"></i>Trưởng nhóm</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3">Trưởng nhóm</span>
                             @else
                                 <span class="badge bg-secondary rounded-pill px-3">Thành viên</span>
                             @endif
@@ -958,6 +953,12 @@
                                 <i class="fa-solid fa-users me-1"></i>Đến Trang Quản Lý Nhóm Của Bạn
                             </a>
                         </div>
+                    @elseif(isset($isTaoNhomOpen) && !$isTaoNhomOpen)
+                        <div class="alert alert-danger border-danger shadow-sm rounded-3 mb-0 p-4 text-center">
+                            <i class="fa-solid fa-lock text-danger fs-1 mb-3 d-block"></i>
+                            <h5 class="fw-bold text-dark mb-2">{{ $groupPhaseState['message'] ?? 'Đã hết thời hạn tạo nhóm khóa luận!' }}</h5>
+                            <p class="text-secondary mb-0">Thời hạn tạo nhóm khóa luận đã kết thúc hoặc chưa mở theo Kế hoạch đào tạo.</p>
+                        </div>
                     @else
                     <!-- Callout quy trình -->
                     <div class="alert alert-primary bg-primary-subtle border-0 rounded-3 mb-4 p-3 d-flex align-items-start gap-3">
@@ -1039,7 +1040,7 @@
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                         Hủy Bỏ
                     </button>
-                    @if(!isset($nhomHocKyHienTai) || !$nhomHocKyHienTai)
+                    @if((!isset($nhomHocKyHienTai) || !$nhomHocKyHienTai) && (isset($isTaoNhomOpen) && $isTaoNhomOpen))
                         <button type="submit" id="btn_submit_create_group" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm" disabled>
                             <i class="fa-solid fa-check-circle me-2"></i>Xác Nhận Tạo Nhóm
                         </button>

@@ -120,7 +120,7 @@
             <ul class="nav nav-tabs border-bottom mb-3" id="gvTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active fw-bold px-4 py-2" id="topics-tab" data-bs-toggle="tab" data-bs-target="#topics-pane" type="button" role="tab">
-                        <i class="fa-solid fa-file-signature me-2 text-primary"></i>Đề Tài Hướng Dẫn ({{ $giangvien->deTais->count() }})
+                        <i class="fa-solid fa-file-signature me-2 text-primary"></i>Đề Tài Hướng Dẫn ({{ $stats['total_detai'] }}/5)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">

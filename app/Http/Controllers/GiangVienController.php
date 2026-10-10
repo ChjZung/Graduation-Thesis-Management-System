@@ -67,8 +67,16 @@ class GiangVienController extends Controller
             }
         }
 
+        $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::orderBy('MaHocKy', 'desc')->first();
+        $currentMaHocKy = $currentHk?->MaHocKy;
+
         $totalGV = GiangVien::count();
-        $gvHuongDan = GiangVien::has('deTais')->count();
+        $gvHuongDan = GiangVien::whereHas('deTais', function($q) use ($currentMaHocKy) {
+            $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+            if ($currentMaHocKy) {
+                $q->where('MaHocKy', $currentMaHocKy);
+            }
+        })->count();
         $gvHoiDong = GiangVien::has('thanhVienHoiDongs')->count();
         $gvActive = GiangVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
 
@@ -86,7 +94,14 @@ class GiangVienController extends Controller
             'chuc_vu'   => $gvChucVuCount,
         ];
 
-        $giangviens = $query->withCount('deTais')->orderBy('MaGV')->paginate(10)->withQueryString();
+        $giangviens = $query->withCount([
+            'deTais' => function($q) use ($currentMaHocKy) {
+                $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+                if ($currentMaHocKy) {
+                    $q->where('MaHocKy', $currentMaHocKy);
+                }
+            }
+        ])->orderBy('MaGV')->paginate(10)->withQueryString();
         $bomons = BoMon::with('khoa')->orderBy('TenBoMon')->get();
 
         // Lấy danh sách các tài khoản chức vụ hiện có để đối chiếu nhanh
@@ -185,20 +200,24 @@ class GiangVienController extends Controller
             'deTais.phieuDangKys.nhom.sinhViens',
             'thanhVienHoiDongs.hoiDong.hocKy',
             'chiTieuHuongDans.hocKy',
-        ])->withCount(['deTais', 'thanhVienHoiDongs'])->findOrFail($id);
+        ])->withCount([
+            'deTais' => fn($q) => $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']),
+            'thanhVienHoiDongs'
+        ])->findOrFail($id);
 
         $totalDeTai = $giangvien->de_tais_count;
         $totalHoiDong = $giangvien->thanh_vien_hoi_dongs_count;
-        $nhomHuongDan = \App\Models\Nhom::whereHas('phieuDangKys.deTai', function($q) use ($id) {
-            $q->where('MaGV', $id);
+        $nhomHuongDan = \App\Models\Nhom::whereHas('phieuDangKys', function($q) use ($id) {
+            $q->where('TrangThai', 'Đã duyệt')
+              ->whereHas('deTai', fn($dq) => $dq->where('MaGV', $id));
         })->count();
 
         $latestChiTieu = $giangvien->chiTieuHuongDans()->latest()->first();
         $chiTieuToiDa = $latestChiTieu ? $latestChiTieu->SoLuongToiDa : 5;
 
         $stats = [
-            'total_detai'    => $totalDeTai,
-            'nhom_huong_dan' => $nhomHuongDan,
+            'total_detai'    => min((int)$totalDeTai, 5),
+            'nhom_huong_dan' => min((int)$nhomHuongDan, 5),
             'chi_tieu_toida' => $chiTieuToiDa,
             'total_hoidong'  => $totalHoiDong,
         ];

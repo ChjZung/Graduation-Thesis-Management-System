@@ -122,6 +122,26 @@ class DuyetDangKyDeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài này vừa được gán cho một nhóm khác. Vui lòng chọn đề tài khác!');
         }
 
+        // Kiểm tra giảng viên hướng dẫn đã nhận đủ 5 nhóm chưa
+        $gvDeTai = $deTai->MaGV;
+        if ($gvDeTai) {
+            $soNhomGv = DangKyDeTai::where('TrangThai', 'Đã duyệt')
+                ->where(function($q) use ($gvDeTai, $deTai) {
+                    $q->where('MaGVHuongDan', $gvDeTai)
+                      ->orWhereHas('deTai', function($dq) use ($gvDeTai, $deTai) {
+                          $dq->where('MaGV', $gvDeTai);
+                          if ($deTai->MaHocKy) {
+                              $dq->where('MaHocKy', $deTai->MaHocKy);
+                          }
+                      });
+                })
+                ->count();
+
+            if ($soNhomGv >= 5) {
+                return redirect()->back()->withErrors("Giảng viên hướng dẫn của đề tài này (" . ($deTai->giangVien?->HoTen ?? $gvDeTai) . ") đã nhận đủ định mức tối đa 5 nhóm trong học kỳ!");
+            }
+        }
+
         // Tạo bản ghi duyệt chính thức
         $maDK = 'DK_VPK_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(5));
         DangKyDeTai::updateOrCreate(

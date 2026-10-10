@@ -525,11 +525,23 @@ class DuyetDeTaiController extends Controller
         $gv = GiangVien::getLoggedInGiangVien($user);
         $maGVTBM = $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TBM');
 
-        $detai = DeTai::findOrFail($id);
+        $detai = DeTai::with('giangVien')->findOrFail($id);
 
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
         if (!$phanBien || $phanBien->KetQua !== 'Đạt') {
             return redirect()->back()->withErrors('Đề cương chưa có kết quả phản biện ĐẠT. Không thể duyệt công bố đề tài.');
+        }
+
+        // Quy định: Giảng viên chỉ có thể được phê duyệt và công bố tối đa đúng 5 đề tài trong học kỳ
+        $soDeTaiDaDuyet = DeTai::where('MaGV', $detai->MaGV)
+            ->where('MaHocKy', $detai->MaHocKy)
+            ->where('MaDeTai', '!=', $detai->MaDeTai)
+            ->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành'])
+            ->count();
+
+        if ($soDeTaiDaDuyet >= 5) {
+            $tenGV = $detai->giangVien?->HoTen ?? $detai->MaGV;
+            return redirect()->back()->withErrors("Giảng viên {$tenGV} đã đạt định mức tối đa 5 đề tài được duyệt & công bố trong học kỳ này! Không thể phê duyệt/công bố thêm đề tài thứ 6.");
         }
 
         DB::transaction(function () use ($detai, $maGVTBM) {

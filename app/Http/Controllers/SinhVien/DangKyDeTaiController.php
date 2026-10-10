@@ -220,6 +220,26 @@ class DangKyDeTaiController extends Controller
             return redirect()->back()->withErrors('Nhóm của bạn đã đăng ký đề tài rồi! Mỗi nhóm chỉ được đăng ký 1 đề tài.');
         }
 
+        // 6. Kiểm tra giảng viên hướng dẫn đã nhận tối đa 5 nhóm trong học kỳ chưa
+        $gvDeTai = $deTai->MaGV;
+        if ($gvDeTai) {
+            $soNhomGv = DangKyDeTai::where('TrangThai', 'Đã duyệt')
+                ->where(function($q) use ($gvDeTai, $deTai) {
+                    $q->where('MaGVHuongDan', $gvDeTai)
+                      ->orWhereHas('deTai', function($dq) use ($gvDeTai, $deTai) {
+                          $dq->where('MaGV', $gvDeTai);
+                          if ($deTai->MaHocKy) {
+                              $dq->where('MaHocKy', $deTai->MaHocKy);
+                          }
+                      });
+                })
+                ->count();
+
+            if ($soNhomGv >= 5) {
+                return redirect()->back()->withErrors("Giảng viên hướng dẫn của đề tài này đã nhận đủ định mức tối đa 5 nhóm trong học kỳ! Vui lòng chọn đề tài khác.");
+            }
+        }
+
         $maDK = 'DK_' . Str::upper(Str::random(6));
 
         // Đăng ký xong thì gán trực tiếp cho nhóm luôn, không cần ai duyệt nữa

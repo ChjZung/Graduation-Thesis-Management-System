@@ -199,7 +199,7 @@ class NhomController extends Controller
                 }
             }
 
-            $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+            $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($maHocKy);
             $isTaoNhomOpen = $groupPhaseState['is_open'];
 
             return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'yeuCauXinVao', 'loiMoiDaGui', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai', 'loiMois'));
@@ -277,7 +277,7 @@ class NhomController extends Controller
         }
 
         $nhomsOpen = $queryNhoms->get();
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($maHocKy);
         $isTaoNhomOpen = $groupPhaseState['is_open'];
 
         return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai') + ['NhomOpen' => $nhomsOpen]);
@@ -288,12 +288,6 @@ class NhomController extends Controller
      */
     public function store(Request $request)
     {
-        // 0. Ràng buộc thời gian: Kiểm tra còn trong thời hạn tạo nhóm theo Kế hoạch không
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
-        if (!$groupPhaseState['is_open']) {
-            return redirect()->back()->withErrors($groupPhaseState['message']);
-        }
-
         $request->validate([
             'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
@@ -303,6 +297,12 @@ class NhomController extends Controller
             'MaHocPhan.required' => 'Vui lòng chọn học phần khóa luận muốn tạo nhóm.',
             'MaHocPhan.exists'   => 'Học phần được chọn không tồn tại trong hệ thống.',
         ]);
+
+        // 0. Ràng buộc thời gian: Kiểm tra server-side còn trong thời hạn tạo nhóm theo Kế hoạch không
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($request->MaHocKy);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withInput()->withErrors($groupPhaseState['message']);
+        }
 
         $sinhVien = SinhVien::with('taiKhoan')->where('MaTK', Auth::user()->MaTK)->firstOrFail();
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
@@ -593,12 +593,6 @@ class NhomController extends Controller
      */
     public function moiThanhVien(Request $request)
     {
-        // 0. Ràng buộc thời gian Kế hoạch
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
-        if (!$groupPhaseState['is_open']) {
-            return redirect()->back()->withErrors($groupPhaseState['message']);
-        }
-
         $request->validate([
             'MaNhom' => 'required|exists:Nhom,MaNhom',
             'MaSV'   => 'required|exists:SinhVien,MaSV',
@@ -607,9 +601,13 @@ class NhomController extends Controller
             'MaSV.required'   => 'Vui lòng tra cứu và chọn sinh viên muốn mời.',
         ]);
 
-        $currentUser = Auth::user();
-        $sinhVien = SinhVien::where('MaTK', $currentUser->MaTK)->firstOrFail();
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($request->MaNhom);
+
+        // 0. Ràng buộc thời gian Kế hoạch của học kỳ
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($nhom->MaHocKy);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
 
         // 1. Kiểm tra quyền của người gửi lời mời
         if ($nhom->MaTruongNhom !== $sinhVien->MaSV) {
@@ -729,14 +727,15 @@ class NhomController extends Controller
      */
     public function khaiTruThanhVien($maNhom, $maSV)
     {
-        // 0. Ràng buộc thời gian Kế hoạch
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
-        if (!$groupPhaseState['is_open']) {
-            return redirect()->back()->withErrors($groupPhaseState['message']);
-        }
         $currentUser = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $currentUser->MaTK)->firstOrFail();
         $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
+
+        // 0. Ràng buộc thời gian Kế hoạch
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($nhom->MaHocKy);
+        if (!$groupPhaseState['is_open']) {
+            return redirect()->back()->withErrors($groupPhaseState['message']);
+        }
 
         // 1. Chỉ Trưởng nhóm mới có quyền
         if ($nhom->MaTruongNhom !== $sinhVien->MaSV) {
@@ -788,14 +787,14 @@ class NhomController extends Controller
 
     public function xinGiaNhap(Request $request, $maNhom)
     {
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
+
+        // 0. Ràng buộc thời gian Kế hoạch
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($nhom->MaHocKy);
         if (!$groupPhaseState['is_open']) {
             return redirect()->back()->withErrors($groupPhaseState['message']);
         }
-
-        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
-
-        $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
 
         // Kiểm tra SV đã có nhóm trong học kỳ này chưa
         $alreadyInGroup = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
@@ -878,13 +877,13 @@ class NhomController extends Controller
 
     public function duyetYeuCauXinVao($maNhom, $maSV)
     {
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
+
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($nhom->MaHocKy);
         if (!$groupPhaseState['is_open']) {
             return redirect()->back()->withErrors($groupPhaseState['message']);
         }
-
-        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
-        $nhom = Nhom::with('dangKyDeTai')->findOrFail($maNhom);
 
         if ($nhom->MaTruongNhom !== $sinhVien->MaSV) {
             return redirect()->back()->withErrors('Chỉ Trưởng nhóm mới có quyền phê duyệt yêu cầu xin vào nhóm!');
@@ -952,13 +951,13 @@ class NhomController extends Controller
 
     public function xacNhanLoiMoi($maNhom)
     {
-        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState(null);
+        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
+        $nhom = Nhom::findOrFail($maNhom);
+
+        $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($nhom->MaHocKy);
         if (!$groupPhaseState['is_open']) {
             return redirect()->back()->withErrors($groupPhaseState['message']);
         }
-
-        $sinhVien = SinhVien::where('MaTK', Auth::user()->MaTK)->firstOrFail();
-        $nhom = Nhom::findOrFail($maNhom);
 
         // 1. Kiểm tra lời mời có tồn tại cho sinh viên này không
         $hasInvite = ThanhVienNhom::where('MaNhom', $maNhom)

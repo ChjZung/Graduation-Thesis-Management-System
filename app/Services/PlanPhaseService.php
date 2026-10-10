@@ -142,9 +142,9 @@ class PlanPhaseService
         // Ràng buộc thời gian chuyên biệt từng mốc:
         switch ($loaiGiaiDoan) {
             case 'TAO_NHOM':
-                // Thời gian tạo nhóm: từ 00:00:00 của NgayBatDau đến 23:59:59 của NgayKetThuc (ví dụ 10/08/2026)
+                // Thời gian tạo nhóm: từ 00:00:00 của NgayBatDau đến 23:59:00 của NgayKetThuc (ví dụ 10/08/2026)
                 $startLimit = Carbon::parse($moc->NgayBatDau . ' 00:00:00');
-                $endLimit   = Carbon::parse($moc->NgayKetThuc . ' 23:59:59');
+                $endLimit   = Carbon::parse($moc->NgayKetThuc . ' 23:59:00');
                 return ($now >= $startLimit && $now <= $endLimit);
 
             case 'DANG_KY_DE_TAI':
@@ -172,17 +172,60 @@ class PlanPhaseService
     /**
      * Xác định trạng thái của giai đoạn Tạo & Ghép Nhóm (Chưa mở, Đang mở, Đã đóng)
      */
-    public static function getGroupPhaseState(?KeHoachKhoaLuan $plan = null, $currentTime = null): array
+    public static function getGroupPhaseState($planOrHocKy = null, $currentTime = null): array
     {
-        $plan = $plan ?? self::getActivePlan();
+        if (is_string($planOrHocKy)) {
+            $maHocKy = $planOrHocKy;
+            $plan = KeHoachKhoaLuan::with('mocThoiGians')->where('MaHocKy', $maHocKy)->orderBy('created_at', 'desc')->first();
+        } else {
+            $plan = $planOrHocKy ?? self::getActivePlan();
+            $maHocKy = $plan?->MaHocKy;
+        }
+
         $now = $currentTime ? Carbon::parse($currentTime) : Carbon::now();
 
-        $mocTaoNhom = $plan ? $plan->mocThoiGians->first(fn($m) => 
-            $m->LoaiGiaiDoan === 'TAO_NHOM' || str_contains($m->MoTa ?? '', '[TAO_NHOM]') || str_contains(mb_strtoupper($m->TenMoc), 'TẠO NHÓM')
-        ) : null;
+        // 1. Tìm mốc từ relation mocThoiGians
+        $mocTaoNhom = null;
+        if ($plan && $plan->relationLoaded('mocThoiGians')) {
+            $mocTaoNhom = $plan->mocThoiGians->first(fn($m) => 
+                $m->LoaiGiaiDoan === 'TAO_NHOM' || str_contains($m->MoTa ?? '', '[TAO_NHOM]') || str_contains(mb_strtoupper($m->TenMoc), 'TẠO NHÓM')
+            );
+        }
 
-        $startDate = $mocTaoNhom ? Carbon::parse($mocTaoNhom->NgayBatDau . ' 00:00:00') : Carbon::parse('2026-08-10 00:00:00');
-        $endDate   = $mocTaoNhom ? Carbon::parse($mocTaoNhom->NgayKetThuc . ' 23:59:59') : Carbon::parse('2026-08-10 23:59:59');
+        // 2. Query trực tiếp từ DB theo MakeHoach hoặc MaHocKy nếu chưa có
+        if (!$mocTaoNhom && $plan) {
+            $mocTaoNhom = MocThoiGianKhoaLuan::where('MakeHoach', $plan->MakeHoach)
+                ->where(function($q) {
+                    $q->where('TenMoc', 'LIKE', '%tạo nhóm%')
+                      ->orWhere('TenMoc', 'LIKE', '%ghép nhóm%')
+                      ->orWhere('MoTa', 'LIKE', '%[TAO_NHOM]%');
+                })->first();
+        }
+
+        if (!$mocTaoNhom && $maHocKy) {
+            $mocTaoNhom = MocThoiGianKhoaLuan::whereHas('keHoach', fn($kq) => $kq->where('MaHocKy', $maHocKy))
+                ->where(function($q) {
+                    $q->where('TenMoc', 'LIKE', '%tạo nhóm%')
+                      ->orWhere('TenMoc', 'LIKE', '%ghép nhóm%')
+                      ->orWhere('MoTa', 'LIKE', '%[TAO_NHOM]%');
+                })->first();
+        }
+
+        if (!$mocTaoNhom) {
+            // Không có cấu hình mốc tạo nhóm trong DB -> Đóng cổng
+            return [
+                'code'          => 'CHUA_CAU_HINH',
+                'label'         => 'Chưa Mở Cổng Tạo Nhóm',
+                'badge'         => 'bg-secondary',
+                'is_open'       => false,
+                'start_date'    => null,
+                'end_date'      => null,
+                'message'       => 'Hiện chưa có mốc thời gian tạo nhóm được công bố trong Kế hoạch khóa luận của học kỳ này.',
+            ];
+        }
+
+        $startDate = Carbon::parse($mocTaoNhom->NgayBatDau . ' 00:00:00');
+        $endDate   = Carbon::parse($mocTaoNhom->NgayKetThuc . ' 23:59:00');
 
         if ($now < $startDate) {
             return [
@@ -192,7 +235,7 @@ class PlanPhaseService
                 'is_open'       => false,
                 'start_date'    => $startDate,
                 'end_date'      => $endDate,
-                'message'       => 'Cổng tạo nhóm khóa luận chưa mở. Thời gian mở: từ ngày ' . $startDate->format('d/m/Y') . ' đến 23:59 ngày ' . $endDate->format('d/m/Y') . '.',
+                'message'       => 'Cổng tạo nhóm khóa luận chưa mở. Thời gian mở từ: ' . $startDate->format('d/m/Y') . ' đến 23:59 ngày ' . $endDate->format('d/m/Y') . '.',
             ];
         }
 
@@ -215,7 +258,7 @@ class PlanPhaseService
             'is_open'       => false,
             'start_date'    => $startDate,
             'end_date'      => $endDate,
-            'message'       => 'Đã hết thời hạn tạo nhóm và ghép thành viên theo Kế hoạch khóa luận (Hạn chót: 23:59 ngày ' . $endDate->format('d/m/Y') . '). Hệ thống đã chốt danh sách nhóm.',
+            'message'       => 'Đã hết thời hạn tạo nhóm và ghép thành viên theo Kế hoạch khóa luận (Hạn chót: 23:59 ngày ' . $endDate->format('d/m/Y') . '). Hệ thống đã chốt danh sách nhóm và không cho phép tạo nhóm mới!',
         ];
     }
 

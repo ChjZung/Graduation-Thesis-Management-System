@@ -158,23 +158,8 @@ class DeTaiController extends Controller
             return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' hiện chưa được mở trong học kỳ đã chọn!");
         }
 
-        // Kiểm tra định mức chỉ tiêu đề tài của giảng viên trong học kỳ (tối đa 5 đề tài)
-        $maxDinhMuc = 5;
-        $chiTieuDb = \Illuminate\Support\Facades\DB::table('chitieuhuongdan')
-            ->where('MaGV', $gv->MaGV)
-            ->where('MaHocKy', $request->MaHocKy)
-            ->value('SoNhomToiDa');
-        if ($chiTieuDb && $chiTieuDb > 0) {
-            $maxDinhMuc = (int)$chiTieuDb;
-        }
-
-        $currentTopicsCount = DeTai::where('MaGV', $gv->MaGV)
-            ->where('MaHocKy', $request->MaHocKy)
-            ->count();
-
-        if ($currentTopicsCount >= $maxDinhMuc) {
-            return redirect()->back()->withInput()->withErrors("Bạn đã đề xuất đạt định mức chỉ tiêu tối đa ({$currentTopicsCount}/{$maxDinhMuc} đề tài) trong học kỳ này theo quy định của Khoa!");
-        }
+        // Lưu ý: Giảng viên có thể đề xuất nhiều đề tài để Khoa/Bộ môn thẩm định lựa chọn, 
+        // nhưng Khoa và Bộ môn chỉ phê duyệt và công bố tối đa đúng 5 đề tài cho mỗi giảng viên.
 
         $count = DeTai::count() + 1;
         $maDT = 'DT' . sprintf('%02d', $count);
@@ -665,6 +650,23 @@ class DeTaiController extends Controller
         $maxSV = $detai->SoLuongSinhVienToiDa ?? 3;
         if ($countMembers > $maxSV) {
             return redirect()->back()->withErrors("Đề tài chỉ tiếp nhận tối đa {$maxSV} sinh viên. Nhóm hiện có {$countMembers} thành viên!");
+        }
+
+        // Kiểm tra định mức tối đa 5 nhóm hướng dẫn của giảng viên
+        $soNhomDangHuongDan = DangKyDeTai::where('TrangThai', 'Đã duyệt')
+            ->where(function($q) use ($gv, $detai) {
+                $q->where('MaGVHuongDan', $gv->MaGV)
+                  ->orWhereHas('deTai', function($dq) use ($gv, $detai) {
+                      $dq->where('MaGV', $gv->MaGV);
+                      if ($detai->MaHocKy) {
+                          $dq->where('MaHocKy', $detai->MaHocKy);
+                      }
+                  });
+            })
+            ->count();
+
+        if ($soNhomDangHuongDan >= 5) {
+            return redirect()->back()->withErrors("Bạn đã đạt giới hạn tối đa 5 nhóm hướng dẫn trong học kỳ này! Không thể gán thêm nhóm mới.");
         }
 
         DB::transaction(function () use ($detai, $nhom, $gv) {

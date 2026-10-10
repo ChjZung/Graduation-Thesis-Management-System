@@ -197,7 +197,7 @@
                 <tbody class="border-top-0">
                     @forelse($giangviens as $gv)
                     @php
-                        $cnt = $gv->de_tais_count ?? $gv->deTais->count();
+                        $cnt = min((int)($gv->de_tais_count ?? 0), 5);
                         $dinhMucBadge = match(true) {
                             $cnt >= 5 => 'background: #fef3c7; color: #b45309;',
                             $cnt > 0  => 'background: #e6f9f0; color: #0d8a4f;',
@@ -212,25 +212,25 @@
                             <div class="fw-bold text-dark fs-6">
                                 {{ $gv->HocVi ? $gv->HocVi . '. ' : '' }}{{ $gv->HoTen }}
                             </div>
-                            <div class="text-muted small mt-0.5">
-                                <i class="fa-regular fa-envelope me-1"></i>{{ $gv->Email ?? 'chua_co@huit.edu.vn' }}
+                            <div class="text-muted small mt-0.5" style="font-size: 13px;">
+                                {{ $gv->Email ?? 'chua_co@huit.edu.vn' }}
                                 @if($gv->SoDienThoai)
-                                    &bull; <i class="fa-solid fa-phone ms-1 me-1"></i>{{ $gv->SoDienThoai }}
+                                    &bull; {{ $gv->SoDienThoai }}
                                 @endif
                             </div>
                         </td>
                         <td class="py-3">
                             <div class="fw-semibold text-dark">{{ $gv->boMon->TenBoMon ?? 'Chưa gán bộ môn' }}</div>
-                            <div class="text-muted small">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
+                            <div class="text-muted small" style="font-size: 13px;">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
                         </td>
                         <td class="text-center py-3">
-                            <span class="badge px-3 py-1.5 fw-semibold rounded-pill" style="{{ $dinhMucBadge }}">
-                                <i class="fa-solid fa-check me-1"></i> Đang nhận: {{ min($cnt, 5) }}/5 nhóm
+                            <span class="badge px-3 py-1.5 fw-semibold rounded-pill" style="{{ $dinhMucBadge }}; font-size: 13px;">
+                                Đang nhận: {{ $cnt }}/5 hướng dẫn
                             </span>
                         </td>
                         <td class="text-center py-3">
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> {{ $gv->TrangThai ?? 'Đang công tác' }}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 13px;">
+                                {{ $gv->TrangThai ?? 'Đang công tác' }}
                             </span>
                         </td>
                         <td class="text-center py-3">

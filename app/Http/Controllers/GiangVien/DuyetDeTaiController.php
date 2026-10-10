@@ -36,6 +36,24 @@ class DuyetDeTaiController extends Controller
         $lyDoTuChoi = $request->input('LyDoTuChoi') ?? $request->input('LyDo');
 
         if (in_array($trangThai, ['Đã duyệt', 'Từ chối'])) {
+            if ($trangThai == 'Đã duyệt') {
+                $soNhomDaDuyet = DangKyDeTai::where('TrangThai', 'Đã duyệt')
+                    ->where(function($q) use ($maGV, $dangky) {
+                        $q->where('MaGVHuongDan', $maGV)
+                          ->orWhereHas('deTai', function($dq) use ($maGV, $dangky) {
+                              $dq->where('MaGV', $maGV);
+                              if ($dangky->deTai?->MaHocKy) {
+                                  $dq->where('MaHocKy', $dangky->deTai->MaHocKy);
+                              }
+                          });
+                    })
+                    ->count();
+
+                if ($soNhomDaDuyet >= 5) {
+                    return redirect()->back()->withErrors('Bạn đã đạt định mức tối đa 5 nhóm hướng dẫn trong học kỳ này! Không thể duyệt thêm nhóm mới.');
+                }
+            }
+
             $dangky->update([
                 'TrangThai' => $trangThai,
                 'NgayDuyet' => date('Y-m-d'),
