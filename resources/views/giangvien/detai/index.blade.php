@@ -104,14 +104,21 @@
                         // 3. Quy trình chuẩn: Đề xuất duyệt 2 cấp -> SV tham gia đăng ký xong (hoặc GV gán nhóm) -> HIỆN NÚT NỘP ĐỀ CƯƠNG
                         $canNopDeCuong = $isProposalApproved && $hasGroupAssigned && !$isLocked;
                         $isNopLai = in_array($dt->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
-                        $canEdit = in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Từ chối']) && !$hasGroupAssigned;
+                        $canEdit = in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh']) && !$hasGroupAssigned && $dt->TrangThai !== 'Từ chối';
                     @endphp
                     <tr>
                         <td class="text-center">
                             <span class="badge bg-light text-dark fw-bold border font-monospace">{{ $dt->MaDeTai }}</span>
                         </td>
                         <td>
-                            <div class="fw-bold text-primary-custom mb-1">{{ $dt->TenDeTai }}</div>
+                            <div class="fw-bold text-primary-custom mb-1 d-flex align-items-center gap-1.5 flex-wrap">
+                                <span>{{ $dt->TenDeTai }}</span>
+                                @if($dt->hasDraft())
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border" title="Đang có bản nháp chỉnh sửa chưa nộp lại" style="font-size: 12px;">
+                                        <i class="fa-solid fa-file-pen me-1"></i>Có bản nháp
+                                    </span>
+                                @endif
+                            </div>
                             <div class="d-flex flex-wrap gap-1 align-items-center">
                                 <span class="badge bg-primary-subtle text-primary border">
                                     {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
@@ -215,15 +222,15 @@
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
 
-                                <!-- Nút Sửa Đề Tài -->
-                                @if(!$isDaCongBo && !$hasGroupAssigned)
+                                <!-- Nút Sửa Đề Tài (Ẩn nếu đề tài bị từ chối) -->
+                                @if(!$isDaCongBo && !$hasGroupAssigned && $dt->TrangThai !== 'Từ chối')
                                 <a href="{{ route('giangvien.detai.edit', $dt->MaDeTai) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Chỉnh sửa đề tài">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
                                 @endif
 
-                                <!-- Nút Xóa Đề Tài (Chỉ khi chưa duyệt/chưa có nhóm) -->
-                                @if(!$hasGroupAssigned && !in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']))
+                                <!-- Nút Xóa Đề Tài (Chỉ khi chưa duyệt/chưa có nhóm và không bị từ chối) -->
+                                @if(!$hasGroupAssigned && !in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố', 'Từ chối']))
                                 <form action="{{ route('giangvien.detai.destroy', $dt->MaDeTai) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này?');">
                                     @csrf
                                     @method('DELETE')

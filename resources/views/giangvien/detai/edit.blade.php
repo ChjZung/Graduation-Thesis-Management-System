@@ -90,13 +90,37 @@
                 </div>
                 @endif
 
+                @if($banNhap)
+                <div class="alert alert-info border-info d-flex align-items-center justify-content-between p-3 rounded-3 mb-4 shadow-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-file-pen text-info fs-3"></i>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 14px;">
+                                Bạn đang chỉnh sửa trên Bản Nháp (đã lưu lúc {{ $banNhap['saved_at'] ?? 'gần đây' }})
+                            </div>
+                            <div class="text-muted" style="font-size: 13px;">
+                                Bản chính ở mục nộp duyệt đề tài vẫn được giữ nguyên cho đến khi quý Thầy/Cô bấm <strong>"{{ $banNhap ? 'Nộp lại bản nháp để duyệt' : 'Nộp lại yêu cầu phê duyệt' }}"</strong>.
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" form="discard-draft-form" class="btn btn-outline-danger btn-sm rounded-pill px-3" style="font-size: 13px;">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Hủy bản nháp
+                        </button>
+                    </div>
+                </div>
+                <form id="discard-draft-form" action="{{ route('giangvien.detai.discard_draft', $detai->MaDeTai) }}" method="POST" class="d-none" onsubmit="return confirm('Bạn có chắc chắn muốn hủy bản nháp này và khôi phục dữ liệu bản chính?');">
+                    @csrf
+                </form>
+                @endif
+
                 <form action="{{ route('giangvien.detai.update', $detai->MaDeTai) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
                     <div class="mb-3">
                         <label for="TenDeTai" class="form-label fw-bold">Tên Đề Tài (Tiếng Việt) <span class="text-danger">*</span></label>
-                        <input type="text" name="TenDeTai" id="TenDeTai" class="form-control" value="{{ old('TenDeTai', $detai->TenDeTai) }}" required>
+                        <input type="text" name="TenDeTai" id="TenDeTai" class="form-control" value="{{ old('TenDeTai', $banNhap['TenDeTai'] ?? $detai->TenDeTai) }}" required>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -104,7 +128,7 @@
                             <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
                             <select name="MaHocKy" id="MaHocKy" class="form-select" required>
                                 @foreach($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy', $detai->MaHocKy) == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
+                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy', $banNhap['MaHocKy'] ?? $detai->MaHocKy) == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -126,17 +150,17 @@
 
                     <div class="mb-3">
                         <label for="LinhVuc" class="form-label fw-bold">Lĩnh Vực Nghiên Cứu / Hướng Đề Tài</label>
-                        <input type="text" name="LinhVuc" id="LinhVuc" class="form-control" value="{{ old('LinhVuc', $detai->LinhVuc) }}" placeholder="Ví dụ: AI, Web, Mobile...">
+                        <input type="text" name="LinhVuc" id="LinhVuc" class="form-control" value="{{ old('LinhVuc', $banNhap['LinhVuc'] ?? $detai->LinhVuc) }}" placeholder="Ví dụ: AI, Web, Mobile...">
                     </div>
 
                     <div class="mb-3">
                         <label for="MoTa" class="form-label fw-bold">Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu</label>
-                        <textarea name="MoTa" id="MoTa" class="form-control" rows="3">{{ old('MoTa', $detai->MoTa) }}</textarea>
+                        <textarea name="MoTa" id="MoTa" class="form-control" rows="3">{{ old('MoTa', $banNhap['MoTa'] ?? $detai->MoTa) }}</textarea>
                     </div>
 
                     <div class="mb-3">
                         <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Năng Lực Đối Với Sinh Viên</label>
-                        <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3">{{ old('YeuCau', $detai->YeuCau) }}</textarea>
+                        <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3">{{ old('YeuCau', $banNhap['YeuCau'] ?? $detai->YeuCau) }}</textarea>
                     </div>
 
                     <div class="mb-4 p-3 bg-light rounded-3 border">
@@ -147,12 +171,13 @@
                                     <strong>Đề cương chi tiết:</strong> Đề tài chưa được phê duyệt. Biểu mẫu và nộp đề cương sẽ mở tại trang <strong>Nộp đề cương</strong> sau khi đề tài được duyệt và có nhóm SV đăng ký.
                                 </span>
                             </div>
-                            @if($detai->FileDeCuong)
+                            @if(!empty($banNhap['FileDeCuong']) || $detai->FileDeCuong)
                                 @php
-                                    $filePathEdit = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $currOutline = $banNhap['FileDeCuong'] ?? $detai->FileDeCuong;
+                                    $filePathEdit = Str::startsWith($currOutline, ['http', 'storage/']) ? asset($currOutline) : asset('storage/' . $currOutline);
                                 @endphp
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
-                                        onclick="quickPreviewOutline('{{ $filePathEdit }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        onclick="quickPreviewOutline('{{ $filePathEdit }}', '{{ basename($currOutline) }}', '{{ addslashes($detai->TenDeTai) }}')">
                                     <i class="fa-solid fa-eye me-1"></i> Xem đề cương hiện tại
                                 </button>
                             @endif
@@ -160,13 +185,13 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 align-items-center pt-2">
-                        <button type="submit" name="action_type" value="draft" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu bản nháp
+                        <button type="submit" name="action_type" value="draft" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold" style="font-size: 13px;">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu bản nháp (Giữ nguyên bản chính)
                         </button>
-                        <button type="submit" name="action_type" value="resubmit" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-sm">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Nộp lại yêu cầu phê duyệt đề tài
+                        <button type="submit" name="action_type" value="resubmit" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-xs" style="font-size: 13px;">
+                            <i class="fa-solid fa-paper-plane me-1"></i> {{ $banNhap ? 'Nộp lại bản nháp để duyệt' : 'Nộp lại yêu cầu phê duyệt đề tài' }}
                         </button>
-                        <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 py-2 rounded-pill text-muted">Hủy bỏ</a>
+                        <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 py-2 rounded-pill text-muted" style="font-size: 13px;">Hủy bỏ</a>
                     </div>
                 </form>
             </div>
@@ -182,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectHocPhan = document.getElementById('MaHocPhan');
     const helpHocPhan = document.getElementById('MaHocPhan_help');
     const allHocPhans = @json($hocPhans ?? []);
-    const selectedMaHocPhan = @json(old('MaHocPhan', $detai->MaHocPhan ?? ($hocPhans->firstWhere('TenHocPhan', $detai->HocPhan)?->MaHocPhan)));
+    const selectedMaHocPhan = @json(old('MaHocPhan', $banNhap['MaHocPhan'] ?? ($detai->MaHocPhan ?? ($hocPhans->firstWhere('TenHocPhan', $detai->HocPhan)?->MaHocPhan))));
     const boMonTen = @json($gv->boMon->TenBoMon ?? 'Bộ môn trực thuộc');
 
     function updateHocPhanOptions() {

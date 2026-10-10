@@ -229,6 +229,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'showNopDeCuong'])->name('giangvien.detai.nop_decuong.show');
     Route::post('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'nopDeCuong'])->name('giangvien.detai.nopDeCuong');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
+    Route::post('detai/{id}/discard-draft', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'discardDraft'])->name('giangvien.detai.discard_draft');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 
     // Báo cáo tiến độ

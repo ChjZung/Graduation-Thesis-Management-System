@@ -32,6 +32,43 @@
             </div>
         </div>
 
+        @if($detai->TrangThai === 'Từ chối' || ($detai->LyDoTuChoi && in_array($detai->TrangThai, ['Từ chối', 'Không đạt phản biện'])))
+            <div class="alert alert-danger border-danger shadow-none mb-4 p-3 rounded-3">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                        <i class="fa-solid fa-circle-xmark fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading fw-bold text-danger mb-1" style="font-size: 15px;">ĐỀ TÀI ĐÃ BỊ TỪ CHỐI PHÊ DUYỆT</h6>
+                        <div class="text-dark" style="font-size: 13.5px; line-height: 1.5;">
+                            <strong>Lý do từ chối:</strong> 
+                            <span class="text-danger-emphasis">{{ $detai->LyDoTuChoi ?: 'Chưa có ghi chú lý do chi tiết từ cấp phê duyệt.' }}</span>
+                        </div>
+                        <div class="text-muted mt-1" style="font-size: 13px;">
+                            <i class="fa-solid fa-circle-info me-1"></i>Đề tài ở trạng thái bị từ chối chỉ hỗ trợ xem chi tiết lưu trữ, không thể chỉnh sửa, xóa hoặc nộp lại.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if($detai->hasDraft())
+            <div class="alert alert-warning border-warning shadow-none mb-4 p-3 rounded-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-file-pen text-warning fs-3"></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold text-dark mb-0" style="font-size: 14px;">Đề tài đang có một Bản Nháp chỉnh sửa chưa nộp lại</h6>
+                            <div class="text-muted" style="font-size: 13px;">Bản đang hiển thị dưới đây là bản chính thức hiện tại trên hệ thống. Bản chính chỉ cập nhật khi quý Thầy/Cô nộp lại bản nháp.</div>
+                        </div>
+                    </div>
+                    <a href="{{ route('giangvien.detai.edit', $detai->MaDeTai) }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold text-dark" style="font-size: 13px;">
+                        <i class="fa-solid fa-pen-to-square me-1"></i> Mở bản nháp chỉnh sửa
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <!-- Topic Details Card -->
         <div class="card card-premium mb-4">
             <div class="card-header-premium d-flex justify-content-between align-items-center">

@@ -477,9 +477,15 @@ class DuyetDeTaiController extends Controller
             'LyDoTuChoi' => trim($request->LyDoTuChoi),
         ]);
 
-        if ($detai->giangVien && $detai->giangVien->MaTK) {
+        $detai->loadMissing('giangVien.taiKhoan');
+        $gv = $detai->giangVien;
+        $maTK = $gv?->MaTK ?? $gv?->taiKhoan?->MaTK;
+        if (!$maTK && $gv) {
+            $maTK = \App\Models\TaiKhoan::where('TenDangNhap', $gv->MaGV)->orWhere('Email', $gv->Email)->value('MaTK');
+        }
+        if ($maTK) {
             ThongBaoService::guiDen(
-                $detai->giangVien->MaTK,
+                $maTK,
                 '❌ Đề tài bị Trưởng khoa từ chối',
                 "Đề tài '{$detai->TenDeTai}' đã bị Trưởng khoa từ chối phê duyệt. Lý do: " . trim($request->LyDoTuChoi),
                 'Đề tài'

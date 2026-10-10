@@ -27,9 +27,9 @@ class ThongBaoService
             'TieuDe'       => $tieuDe,
             'NoiDung'      => $noiDung,
             'LoaiThongBao' => $loai,
-            'DoiTuongNhan' => 'Cá nhân',
+            'DoiTuongNhan' => $maTK,
             'NgayTao'      => now(),
-            'TrangThai'    => 'Đã tạo',
+            'TrangThai'    => 'Đã phát hành',
         ]);
 
         // Tạo bản ghi người nhận nếu bảng tồn tại

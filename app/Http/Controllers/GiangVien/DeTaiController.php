@@ -414,6 +414,10 @@ class DeTaiController extends Controller
               ?? GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+        if ($detai->TrangThai === 'Từ chối') {
+            return redirect()->route('giangvien.detai.show', $detai->MaDeTai)
+                ->withErrors('Đề tài này đã bị từ chối phê duyệt. Bạn chỉ có thể xem chi tiết đề tài.');
+        }
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // Lấy danh sách Học phần thuộc Bộ môn của GV kèm các Học kỳ đang mở (HocPhan_HocKy)
@@ -432,7 +436,8 @@ class DeTaiController extends Controller
             ->orderBy('TenHocPhan')
             ->get();
 
-        return view('giangvien.detai.edit', compact('detai', 'hocKies', 'gv', 'hocPhans'));
+        $banNhap = $detai->ban_nhap_data;
+        return view('giangvien.detai.edit', compact('detai', 'hocKies', 'gv', 'hocPhans', 'banNhap'));
     }
 
     public function update(Request $request, $id)
@@ -442,6 +447,11 @@ class DeTaiController extends Controller
               ?? GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        if ($detai->TrangThai === 'Từ chối') {
+            return redirect()->route('giangvien.detai.show', $detai->MaDeTai)
+                ->withErrors('Đề tài này đã bị từ chối phê duyệt. Không thể chỉnh sửa hoặc nộp lại.');
+        }
 
         $request->validate([
             'TenDeTai' => 'required|string|max:300',
@@ -475,16 +485,51 @@ class DeTaiController extends Controller
             return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' hiện chưa được mở trong học kỳ đã chọn!");
         }
 
+        $actionType = $request->input('action_type', 'resubmit');
+
+        // NẾU LƯU BẢN NHÁP (DRAFT): CHỈ LƯU VÀO DuLieuNhap, BẢN CHÍNH Ở MỤC DUYỆT GIỮ NGUYÊN 100%
+        if ($actionType === 'draft') {
+            $draftData = [
+                'TenDeTai'    => $request->TenDeTai,
+                'MaHocKy'     => $request->MaHocKy,
+                'MaHocPhan'   => $hocPhan->MaHocPhan,
+                'HocPhan'     => $hocPhan->TenHocPhan,
+                'LinhVuc'     => $request->LinhVuc,
+                'MoTa'        => $request->MoTa,
+                'YeuCau'      => $request->YeuCau,
+                'saved_at'    => now()->format('H:i d/m/Y'),
+            ];
+
+            // Nếu có upload file đề cương mới trong bản nháp
+            if ($request->hasFile('FileDeCuong') && $request->file('FileDeCuong')->isValid()) {
+                $file = $request->file('FileDeCuong');
+                $filename = 'de_cuong_draft_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('de_cuong', $filename, 'public');
+                $draftData['FileDeCuong'] = 'storage/' . $path;
+            } else {
+                $draftData['FileDeCuong'] = $detai->ban_nhap_data['FileDeCuong'] ?? $detai->FileDeCuong;
+            }
+
+            $detai->update([
+                'DuLieuNhap' => json_encode($draftData, JSON_UNESCAPED_UNICODE),
+            ]);
+
+            return redirect()->route('giangvien.detai.index')
+                ->with('success', "Đã lưu các thay đổi vào Bản nháp thành công! Bản chính ở mục nộp duyệt vẫn được giữ nguyên cho đến khi bạn nộp lại bản nháp.");
+        }
+
+        // NẾU NỘP LẠI (RESUBMIT): ÁP DỤNG THAY ĐỔI VÀO BẢN CHÍNH VÀ XÓA BẢN NHÁP
         $data = [
-            'TenDeTai' => $request->TenDeTai,
-            'MaHocKy' => $request->MaHocKy,
-            'MaHocPhan' => $hocPhan->MaHocPhan,
-            'HocPhan' => $hocPhan->TenHocPhan,
-            'MaNganh' => null,
+            'TenDeTai'             => $request->TenDeTai,
+            'MaHocKy'              => $request->MaHocKy,
+            'MaHocPhan'            => $hocPhan->MaHocPhan,
+            'HocPhan'              => $hocPhan->TenHocPhan,
+            'MaNganh'              => null,
             'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
-            'MoTa' => $request->MoTa,
-            'YeuCau' => $request->YeuCau,
-            'LinhVuc' => $request->LinhVuc,
+            'MoTa'                 => $request->MoTa,
+            'YeuCau'               => $request->YeuCau,
+            'LinhVuc'              => $request->LinhVuc,
+            'DuLieuNhap'           => null, // Xóa bản nháp sau khi đã nộp chính thức
         ];
 
         $canUploadOutline = $detai->FileDeCuong || in_array($detai->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Yêu cầu chỉnh sửa đề cương', 'Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
@@ -519,15 +564,7 @@ class DeTaiController extends Controller
             }
         }
 
-        $actionType = $request->input('action_type', 'resubmit');
-
-        if ($actionType === 'draft') {
-            $detai->update($data);
-            return redirect()->route('giangvien.detai.index')
-                ->with('success', "Đã lưu bản nháp đề tài '{$detai->TenDeTai}' thành công! Đề tài vẫn ở trạng thái hiện tại để bạn tiếp tục chỉnh sửa trước khi nộp lại.");
-        }
-
-        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Từ chối', 'Không đạt phản biện', 'Chờ duyệt cấp Bộ môn'])) {
+        if (in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Chờ duyệt cấp Bộ môn'])) {
             $data['TrangThai'] = 'Chờ duyệt cấp Bộ môn';
             $data['NgayDeXuat'] = now();
             $data['LyDoTuChoi'] = null;
@@ -559,12 +596,30 @@ class DeTaiController extends Controller
         return redirect()->route('giangvien.detai.index')->with('success', "Đã nộp lại yêu cầu phê duyệt đề tài '{$detai->TenDeTai}' thành công! Hồ sơ đã được chuyển tới Trưởng bộ môn xem xét.");
     }
 
+    public function discardDraft($id)
+    {
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        if (!$gv) return redirect()->route('giangvien.dashboard');
+        $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        $detai->update(['DuLieuNhap' => null]);
+
+        return redirect()->route('giangvien.detai.edit', $detai->MaDeTai)
+            ->with('success', 'Đã hủy bản nháp thành công! Các thông tin đã được khôi phục về bản chính ban đầu.');
+    }
+
     public function destroy($id)
     {
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
+
+        // Chặn xóa nếu đề tài bị từ chối
+        if ($detai->TrangThai === 'Từ chối') {
+            return redirect()->back()->withErrors('Đề tài đã bị từ chối phê duyệt, chỉ được phép xem chi tiết và không thể xóa.');
+        }
 
         // Không cho phép xóa nếu đề tài đã được Trưởng khoa duyệt hoặc đã có nhóm đăng ký/gán
         if ($detai->dangKyDeTais()->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])->exists()) {

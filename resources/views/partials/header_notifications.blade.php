@@ -10,17 +10,26 @@
     }
 
     $notiQuery = \App\Models\ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'da_gui', 'ACTIVE', 'DaPhatHanh']);
+    $curUserMaTK = $curUser?->MaTK ?? '';
     if ($role === 'SinhVien') {
-        $notiQuery->where(function($q) {
+        $notiQuery->where(function($q) use ($curUserMaTK) {
             $q->where('DoiTuongNhan', 'Sinh viên')
               ->orWhere('DoiTuongNhan', 'Tất cả')
               ->orWhereNull('DoiTuongNhan');
+            if ($curUserMaTK) {
+                $q->orWhere('DoiTuongNhan', $curUserMaTK)
+                  ->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
+            }
         });
     } elseif (in_array($role, ['GiangVien', 'TruongBoMon', 'TruongKhoa'])) {
-        $notiQuery->where(function($q) {
+        $notiQuery->where(function($q) use ($curUserMaTK) {
             $q->where('DoiTuongNhan', 'Giảng viên')
               ->orWhere('DoiTuongNhan', 'Tất cả')
               ->orWhereNull('DoiTuongNhan');
+            if ($curUserMaTK) {
+                $q->orWhere('DoiTuongNhan', $curUserMaTK)
+                  ->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
+            }
         });
     }
 

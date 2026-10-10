@@ -36,7 +36,22 @@ class DeTai extends Model
         'NgayCongBo',
         'MaGV',
         'MaHocKy',
+        'DuLieuNhap',
     ];
+
+    public function getBanNhapDataAttribute(): ?array
+    {
+        if (empty($this->DuLieuNhap)) {
+            return null;
+        }
+        $data = json_decode($this->DuLieuNhap, true);
+        return is_array($data) ? $data : null;
+    }
+
+    public function hasDraft(): bool
+    {
+        return !empty($this->getBanNhapDataAttribute());
+    }
 
     public $timestamps = true;
 
