@@ -19,110 +19,92 @@
 <div class="wrapper d-flex">
 
     <!-- ═══ SIDEBAR ═══ -->
-    <nav id="sidebar">
-        <div class="sidebar-header">
-            <a href="{{ route('truongkhoa.dashboard') }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
-                <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
-                <div>
-                    <div class="sidebar-title">ĐH Công Thương<br>TP. Hồ Chí Minh</div>
-                    <span class="sidebar-subtitle">HUIT – Trưởng Khoa</span>
-                </div>
-            </a>
-        </div>
+    @php
+        $sidebarUser = Auth::user();
+        $sidebarGv = \App\Models\GiangVien::getLoggedInGiangVien($sidebarUser);
+        $sidebarKhoa = null;
+        if ($sidebarUser && preg_match('/^TK_([A-Z0-9]+)_/i', $sidebarUser->TenDangNhap, $m)) {
+            $sidebarKhoa = \App\Models\Khoa::where('MaKhoa', $m[1])->first();
+        } elseif ($sidebarGv && $sidebarGv->boMon && $sidebarGv->boMon->khoa) {
+            $sidebarKhoa = $sidebarGv->boMon->khoa;
+        }
+        $sidebarMaKhoa = $sidebarKhoa ? $sidebarKhoa->MaKhoa : 'CNTT';
+        $countChoDuyetKhoa = \App\Models\DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $sidebarMaKhoa))
+            ->where('TrangThai', 'Chờ duyệt cấp Khoa')
+            ->count();
 
-        <div class="px-3 pb-2">
-            <div class="role-badge">
-                <i class="fa-solid fa-graduation-cap"></i>
-                Trưởng Khoa
-            </div>
-        </div>
+        $isTkTongQuan = request()->routeIs('truongkhoa.dashboard') || request()->routeIs('thongbao.*');
+        $isPheDuyetTkActive = request()->routeIs('truongkhoa.duyet_detai.*') || request()->routeIs('truongkhoa.bomon.*') || request()->routeIs('truongkhoa.phe_duyet_detai.*') || request()->routeIs('truongkhoa.thongke.*');
+        $isTkDeTai = $isPheDuyetTkActive || request()->routeIs('truongkhoa.theodoi.*');
+        $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*');
 
-        @php
-            $sidebarUser = Auth::user();
-            $sidebarGv = \App\Models\GiangVien::getLoggedInGiangVien($sidebarUser);
-            $sidebarKhoa = null;
-            if ($sidebarUser && preg_match('/^TK_([A-Z0-9]+)_/i', $sidebarUser->TenDangNhap, $m)) {
-                $sidebarKhoa = \App\Models\Khoa::where('MaKhoa', $m[1])->first();
-            } elseif ($sidebarGv && $sidebarGv->boMon && $sidebarGv->boMon->khoa) {
-                $sidebarKhoa = $sidebarGv->boMon->khoa;
-            }
-            $sidebarMaKhoa = $sidebarKhoa ? $sidebarKhoa->MaKhoa : 'CNTT';
-            $countChoDuyetKhoa = \App\Models\DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $sidebarMaKhoa))
-                ->where('TrangThai', 'Chờ duyệt cấp Khoa')
-                ->count();
-        @endphp
+        $tkMenuGroups = [
+            [
+                'id' => 'sub-tk-tongquan',
+                'title' => 'Tổng Quan',
+                'icon' => 'fa-solid fa-chart-pie',
+                'active' => $isTkTongQuan,
+                'items' => [
+                    [
+                        'title' => 'Bảng tổng quan',
+                        'url' => route('truongkhoa.dashboard'),
+                        'active' => request()->routeIs('truongkhoa.dashboard'),
+                    ],
+                    [
+                        'title' => 'Thông báo hệ thống',
+                        'url' => route('thongbao.index'),
+                        'active' => request()->routeIs('thongbao.*'),
+                    ],
+                ],
+            ],
+            [
+                'id' => 'sub-tk-detai',
+                'title' => 'Quản Lý Đề Tài',
+                'icon' => 'fa-solid fa-stamp',
+                'active' => $isTkDeTai,
+                'items' => [
+                    [
+                        'title' => 'Phê duyệt đề tài',
+                        'url' => route('truongkhoa.duyet_detai.index'),
+                        'active' => $isPheDuyetTkActive,
+                        'badge_count' => $countChoDuyetKhoa,
+                        'badge_class' => 'bg-danger',
+                    ],
+                    [
+                        'title' => 'Theo dõi tiến độ',
+                        'url' => route('truongkhoa.theodoi.index'),
+                        'active' => request()->routeIs('truongkhoa.theodoi.*'),
+                    ],
+                ],
+            ],
+            [
+                'id' => 'sub-tk-kehoach',
+                'title' => 'Kế Hoạch & Kết Quả',
+                'icon' => 'fa-solid fa-calendar-check',
+                'active' => $isTkKeHoach,
+                'items' => [
+                    [
+                        'title' => 'Kế hoạch khóa luận',
+                        'url' => route('truongkhoa.kehoach.index'),
+                        'active' => request()->routeIs('truongkhoa.kehoach.*'),
+                    ],
+                    [
+                        'title' => 'Kết quả khóa luận',
+                        'url' => route('truongkhoa.ketqua.index'),
+                        'active' => request()->routeIs('truongkhoa.ketqua.*'),
+                    ],
+                ],
+            ],
+        ];
+    @endphp
 
-        <div class="px-2 py-2">
-            <!-- 1. TỔNG QUAN -->
-            <div class="sidebar-menu-group">
-                @php
-                    $isTkTongQuan = request()->routeIs('truongkhoa.dashboard') || request()->routeIs('thongbao.*');
-                @endphp
-                <button class="menu-parent-btn {{ $isTkTongQuan ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-tongquan" aria-expanded="{{ $isTkTongQuan ? 'true' : 'false' }}">
-                    <span class="parent-icon-title">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <span>Tổng Quan</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
-                </button>
-                <div class="collapse submenu-collapse {{ $isTkTongQuan ? 'show' : '' }}" id="sub-tk-tongquan">
-                    <a href="{{ route('truongkhoa.dashboard') }}" class="submenu-link {{ request()->routeIs('truongkhoa.dashboard') ? 'active-sub' : '' }}">
-                        <span>Bảng tổng quan</span>
-                    </a>
-                    <a href="{{ route('thongbao.index') }}" class="submenu-link {{ request()->routeIs('thongbao.*') ? 'active-sub' : '' }}">
-                        <span>Thông báo hệ thống</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- 2. QUẢN LÝ & PHÊ DUYỆT ĐỀ TÀI -->
-            <div class="sidebar-menu-group">
-                @php
-                    $isTkDeTai = request()->routeIs('truongkhoa.duyet_detai.*') || request()->routeIs('truongkhoa.theodoi.*');
-                @endphp
-                <button class="menu-parent-btn {{ $isTkDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-detai" aria-expanded="{{ $isTkDeTai ? 'true' : 'false' }}">
-                    <span class="parent-icon-title">
-                        <i class="fa-solid fa-stamp"></i>
-                        <span>Quản Lý Đề Tài</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
-                </button>
-                <div class="collapse submenu-collapse {{ $isTkDeTai ? 'show' : '' }}" id="sub-tk-detai">
-                    <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.duyet_detai.*') ? 'active-sub' : '' }}">
-                        <span>Phê duyệt đề tài</span>
-                        @if($countChoDuyetKhoa > 0)
-                            <span class="badge bg-danger rounded-pill" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countChoDuyetKhoa }}</span>
-                        @endif
-                    </a>
-                    <a href="{{ route('truongkhoa.theodoi.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.theodoi.*') ? 'active-sub' : '' }}">
-                        <span>Theo dõi tiến độ</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- 3. KẾ HOẠCH & KẾT QUẢ -->
-            <div class="sidebar-menu-group">
-                @php
-                    $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*');
-                @endphp
-                <button class="menu-parent-btn {{ $isTkKeHoach ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tk-kehoach" aria-expanded="{{ $isTkKeHoach ? 'true' : 'false' }}">
-                    <span class="parent-icon-title">
-                        <i class="fa-solid fa-calendar-check"></i>
-                        <span>Kế Hoạch &amp; Kết Quả</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
-                </button>
-                <div class="collapse submenu-collapse {{ $isTkKeHoach ? 'show' : '' }}" id="sub-tk-kehoach">
-                    <a href="{{ route('truongkhoa.kehoach.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.kehoach.*') ? 'active-sub' : '' }}">
-                        <span>Kế hoạch khóa luận</span>
-                    </a>
-                    <a href="{{ route('truongkhoa.ketqua.index') }}" class="submenu-link {{ request()->routeIs('truongkhoa.ketqua.*') ? 'active-sub' : '' }}">
-                        <span>Kết quả khóa luận</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('partials.sidebar_canbo', [
+        'dashboardRoute' => route('truongkhoa.dashboard'),
+        'roleSubtitle' => 'HUIT – Trưởng Khoa',
+        'roleBadgeIcon' => 'fa-solid fa-graduation-cap',
+        'roleBadgeText' => 'Trưởng Khoa',
+        'menuGroups' => $tkMenuGroups,
+    ])
     <!-- /SIDEBAR -->
 
     <!-- ═══ MAIN CONTENT ═══ -->
@@ -133,64 +115,66 @@
             <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
         </div>
 
-        <!-- Topbar -->
-        <nav class="navbar navbar-expand-lg navbar-custom">
-            <div class="container-fluid">
-                <div class="page-title-text">
-                    <i class="fa-solid fa-angle-right"></i>
-                    @yield('page_title', 'Dashboard')
-                </div>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    @php
-                        $tkGv = \App\Models\GiangVien::getLoggedInGiangVien();
-                        $tkName = $tkGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Khoa');
-                    @endphp
+        <!-- Topbar / Breadcrumb Bar -->
+        <div class="admin-top-bar">
+            <div class="admin-breadcrumb">
+                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
+                <a href="{{ route('truongkhoa.dashboard') }}">Trang chủ</a>
+                <span class="separator">&gt;</span>
+                <span>Khóa luận tốt nghiệp</span>
+                <span class="separator">&gt;</span>
+                <span class="current-page">@yield('page_title', 'Trưởng Khoa')</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                @php
+                    $tkGv = \App\Models\GiangVien::getLoggedInGiangVien();
+                    $tkName = $tkGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Khoa');
+                @endphp
 
-                    <!-- Notification Bell Dropdown Unified -->
-                    @include('partials.header_notifications')
+                <!-- Notification Bell Dropdown Unified -->
+                @include('partials.header_notifications')
 
-                    <!-- User Dropdown -->
-                    <div class="dropdown">
-                        <a class="user-avatar-btn dropdown-toggle text-decoration-none"
-                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           id="tkUserDropdown">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode($tkName) }}&background=FEE2E2&color=DC2626&bold=true&size=64"
-                                 alt="Avatar" class="rounded-circle">
-                            <span class="user-name d-none d-sm-inline">{{ $tkName }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="tkUserDropdown">
-                            <li>
-                                <div class="px-3 py-2 mb-1" style="border-bottom: 1px solid var(--columbia-blue);">
-                                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--huit-blue-dark);">Xin chào!</div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ $tkName }}</div>
-                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;"><i class="fa-solid fa-graduation-cap me-1 text-danger"></i>Trưởng Khoa</div>
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="fa-solid fa-user text-huit-blue"></i> Hồ sơ cá nhân
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('password.change') }}">
-                                    <i class="fa-solid fa-key text-huit-blue"></i> Đổi mật khẩu
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form-tk').submit();">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </a>
-                            </li>
-                            <form id="logout-form-tk" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </ul>
-                    </div>
+                <!-- User Profile Pill -->
+                <div class="dropdown">
+                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                       id="tkUserDropdown">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($tkName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                             alt="Avatar">
+                        <span>{{ $tkName }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="tkUserDropdown">
+                        <li>
+                            <div class="px-3 py-2 mb-1 border-bottom">
+                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $tkName }}</div>
+                                <div style="font-size: 13px; color: #dc2626; margin-top: 2px;"><i class="fa-solid fa-graduation-cap me-1"></i>Trưởng Khoa</div>
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-tk').submit();">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                    <form id="logout-form-tk" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
                 </div>
             </div>
-        </nav>
+        </div>
 
         <!-- Alerts + Content -->
         <div class="content-body">

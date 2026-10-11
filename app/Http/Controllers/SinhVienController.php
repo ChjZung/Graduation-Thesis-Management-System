@@ -25,19 +25,21 @@ class SinhVienController extends Controller
         // ══════════════════════════════════════════════════════════════
         // 1. DATA CHO TAB 1: QUẢN LÝ DANH MỤC SINH VIÊN
         // ══════════════════════════════════════════════════════════════
-        $querySv = SinhVien::with(['lop.nganh.khoa', 'taiKhoan', 'nhoms']);
+        $querySv = SinhVien::select('SinhVien.*')
+            ->distinct()
+            ->with(['lop.nganh.khoa', 'taiKhoan', 'nhoms']);
 
         if ($request->filled('search')) {
             $s = trim($request->search);
             $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
             $querySv->where(function ($q) use ($s, $sClean) {
-                $q->where('HoTen', 'LIKE', "%{$s}%")
-                  ->orWhere('Email', 'LIKE', "%{$s}%")
-                  ->orWhere('MaSV', 'LIKE', "%{$s}%")
-                  ->orWhere('SoDienThoai', 'LIKE', "%{$s}%");
+                $q->where('SinhVien.HoTen', 'LIKE', "%{$s}%")
+                  ->orWhere('SinhVien.Email', 'LIKE', "%{$s}%")
+                  ->orWhere('SinhVien.MaSV', 'LIKE', "%{$s}%")
+                  ->orWhere('SinhVien.SoDienThoai', 'LIKE', "%{$s}%");
                 if (!empty($sClean)) {
-                    $q->orWhere('MaSV', 'LIKE', "%{$sClean}%")
-                      ->orWhere('SoDienThoai', 'LIKE', "%{$sClean}%");
+                    $q->orWhere('SinhVien.MaSV', 'LIKE', "%{$sClean}%")
+                      ->orWhere('SinhVien.SoDienThoai', 'LIKE', "%{$sClean}%");
                 }
                 $q->orWhereHas('taiKhoan', function($t) use ($s, $sClean) {
                     $t->where('TenDangNhap', 'LIKE', "%{$s}%");
@@ -49,7 +51,7 @@ class SinhVienController extends Controller
         }
 
         if ($request->filled('MaLop')) {
-            $querySv->where('MaLop', $request->MaLop);
+            $querySv->where('SinhVien.MaLop', $request->MaLop);
         }
 
         if ($request->filled('MaHocKy_filter')) {
@@ -61,26 +63,26 @@ class SinhVienController extends Controller
         }
 
         if ($request->filled('trang_thai_hoc_tap')) {
-            $querySv->where('TrangThai', $request->trang_thai_hoc_tap);
+            $querySv->where('SinhVien.TrangThai', $request->trang_thai_hoc_tap);
         }
 
         if ($request->filled('dieu_kien')) {
             if ($request->dieu_kien === 'du') {
-                $querySv->where('SoTinChiTichLuy', '>=', 115)->where('DiemTichLuy', '>=', 2.0);
+                $querySv->where('SinhVien.SoTinChiTichLuy', '>=', 115)->where('SinhVien.DiemTichLuy', '>=', 2.0);
             } elseif ($request->dieu_kien === 'chua') {
                 $querySv->where(function($q) {
-                    $q->where('SoTinChiTichLuy', '<', 115)
-                      ->orWhereNull('SoTinChiTichLuy')
-                      ->orWhere('DiemTichLuy', '<', 2.0)
-                      ->orWhereNull('DiemTichLuy');
+                    $q->where('SinhVien.SoTinChiTichLuy', '<', 115)
+                      ->orWhereNull('SinhVien.SoTinChiTichLuy')
+                      ->orWhere('SinhVien.DiemTichLuy', '<', 2.0)
+                      ->orWhereNull('SinhVien.DiemTichLuy');
                 });
             }
         }
 
-        $totalSV = SinhVien::count();
-        $duDkSV = SinhVien::where('SoTinChiTichLuy', '>=', 115)->where('DiemTichLuy', '>=', 2.0)->count();
+        $totalSV = SinhVien::distinct('MaSV')->count('MaSV');
+        $duDkSV = SinhVien::where('SoTinChiTichLuy', '>=', 115)->where('DiemTichLuy', '>=', 2.0)->distinct('MaSV')->count('MaSV');
         $thieuDkSV = $totalSV - $duDkSV;
-        $activeSV = SinhVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->count();
+        $activeSV = SinhVien::whereHas('taiKhoan', fn($tk) => $tk->where('TrangThai', true))->distinct('MaSV')->count('MaSV');
 
         $statsSv = [
             'total'     => $totalSV,
@@ -90,21 +92,23 @@ class SinhVienController extends Controller
             'active'    => $activeSV,
         ];
 
-        $sinhviens = $querySv->orderBy('MaSV')->paginate(15, ['*'], 'page_sv')->withQueryString();
+        $sinhviens = $querySv->orderBy('SinhVien.MaSV')->paginate(15, ['*'], 'page_sv')->withQueryString();
 
         // ══════════════════════════════════════════════════════════════
         // 2. DATA CHO TAB 2: DANH SÁCH SV ĐỦ ĐIỀU KIỆN (THEO HỌC KỲ)
         // ══════════════════════════════════════════════════════════════
-        $queryDk = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh.khoa', 'sinhVien.nhoms', 'hocKy'])
-            ->where('MaHocKy', $selectedHocKy);
+        $queryDk = \App\Models\DanhSachSVDuDieuKien::select('DanhSachSVDuDieuKien.*')
+            ->distinct()
+            ->with(['sinhVien.lop.nganh.khoa', 'sinhVien.nhoms', 'hocKy'])
+            ->where('DanhSachSVDuDieuKien.MaHocKy', $selectedHocKy);
 
         if ($request->filled('search_dk')) {
             $s = trim($request->search_dk);
             $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
             $queryDk->where(function ($rootQ) use ($s, $sClean) {
-                $rootQ->where('MaSV', 'LIKE', "%{$s}%");
+                $rootQ->where('DanhSachSVDuDieuKien.MaSV', 'LIKE', "%{$s}%");
                 if (!empty($sClean)) {
-                    $rootQ->orWhere('MaSV', 'LIKE', "%{$sClean}%");
+                    $rootQ->orWhere('DanhSachSVDuDieuKien.MaSV', 'LIKE', "%{$sClean}%");
                 }
                 $rootQ->orWhereHas('sinhVien', function ($q) use ($s, $sClean) {
                     $q->where('HoTen', 'LIKE', "%{$s}%")
@@ -123,17 +127,17 @@ class SinhVienController extends Controller
         }
 
         if ($request->filled('trang_thai_dk')) {
-            $queryDk->where('TrangThai', $request->trang_thai_dk);
+            $queryDk->where('DanhSachSVDuDieuKien.TrangThai', $request->trang_thai_dk);
         }
 
-        $dsDuDieuKien = $queryDk->orderBy('NgayXetDuyet', 'desc')
-            ->orderBy('MaSV', 'asc')
+        $dsDuDieuKien = $queryDk->orderBy('DanhSachSVDuDieuKien.NgayXetDuyet', 'desc')
+            ->orderBy('DanhSachSVDuDieuKien.MaSV', 'asc')
             ->paginate(15, ['*'], 'page_dk')
             ->withQueryString();
 
-        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->count();
-        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Đủ điều kiện')->count();
-        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->count();
+        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->distinct('MaSV')->count('MaSV');
+        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Đủ điều kiện')->distinct('MaSV')->count('MaSV');
+        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->distinct('MaSV')->count('MaSV');
         $publishedCount = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->where('GhiChu', 'LIKE', '%Công bố%')->count();
 
         $statsDk = [
@@ -143,7 +147,7 @@ class SinhVienController extends Controller
             'is_published'    => $publishedCount > 0,
         ];
 
-        $allSinhViens = SinhVien::select('MaSV', 'HoTen', 'MaLop')->orderBy('HoTen')->get();
+        $allSinhViens = SinhVien::select('MaSV', 'HoTen', 'MaLop')->distinct()->orderBy('HoTen')->get();
 
         return view('admin.sinhvien.index', compact(
             'activeTab',
@@ -167,24 +171,28 @@ class SinhVienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'TenDangNhap' => 'required|string|max:50|unique:TaiKhoan,TenDangNhap|unique:SinhVien,MaSV',
-            'HoTen' => 'required|string|max:100',
+            'TenDangNhap' => ['required', 'string', 'max:20', 'regex:/^(SV\d{8}|\d{10})$/', 'unique:TaiKhoan,TenDangNhap', 'unique:SinhVien,MaSV'],
+            'HoTen' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s]+$/u'],
             'MaLop' => 'required|exists:Lop,MaLop',
             'Email' => 'required|email|max:100|unique:SinhVien,Email',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai'],
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/', 'unique:SinhVien,SoDienThoai'],
             'SoTinChiTichLuy' => 'nullable|integer|min:0',
             'DiemTichLuy' => 'nullable|numeric|min:0|max:4',
             'TrangThai' => 'nullable|string',
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập MSSV.',
+            'TenDangNhap.regex'    => 'Mã sinh viên phải có định dạng chuẩn (SV + 8 số hoặc 10 chữ số MSSV).',
             'TenDangNhap.unique'   => 'MSSV / Tên đăng nhập đã tồn tại trong hệ thống.',
-            'HoTen.required'       => 'Vui lòng nhập họ tên sinh viên.',
+            'HoTen.required'       => 'Vui lòng nhập họ và tên sinh viên.',
+            'HoTen.min'            => 'Họ và tên sinh viên phải có tối thiểu 2 ký tự.',
+            'HoTen.max'            => 'Họ và tên sinh viên không được vượt quá 100 ký tự.',
+            'HoTen.regex'          => 'Họ và tên chỉ được chứa chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt.',
             'MaLop.required'       => 'Vui lòng chọn lớp học.',
             'Email.required'       => 'Vui lòng nhập email.',
             'Email.email'          => 'Định dạng email không hợp lệ.',
             'Email.unique'         => 'Email đã được sử dụng.',
+            'SoDienThoai.regex'    => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
             'SoDienThoai.unique'   => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex'    => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
         ]);
 
         $mssv = trim($request->TenDangNhap);
@@ -270,18 +278,21 @@ class SinhVienController extends Controller
         $sinhvien = SinhVien::with('taiKhoan')->findOrFail($id);
 
         $request->validate([
-            'HoTen' => 'required|string|max:100',
+            'HoTen' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s]+$/u'],
             'MaLop' => 'required|exists:Lop,MaLop',
             'Email' => 'required|email|max:100|unique:SinhVien,Email,' . $id . ',MaSV',
-            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{8,10}$/', 'unique:SinhVien,SoDienThoai,' . $id . ',MaSV']
+            'SoDienThoai' => ['nullable', 'string', 'regex:/^0[0-9]{9}$/', 'unique:SinhVien,SoDienThoai,' . $id . ',MaSV']
         ], [
-            'HoTen.required' => 'Vui lòng nhập họ tên.',
-            'MaLop.required' => 'Vui lòng chọn lớp.',
-            'Email.required' => 'Vui lòng nhập email.',
-            'Email.email'    => 'Định dạng email không hợp lệ.',
-            'Email.unique'   => 'Email đã được sử dụng.',
+            'HoTen.required'     => 'Vui lòng nhập họ và tên sinh viên.',
+            'HoTen.min'          => 'Họ và tên sinh viên phải có tối thiểu 2 ký tự.',
+            'HoTen.max'          => 'Họ và tên sinh viên không được vượt quá 100 ký tự.',
+            'HoTen.regex'        => 'Họ và tên chỉ được chứa chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt.',
+            'MaLop.required'     => 'Vui lòng chọn lớp.',
+            'Email.required'     => 'Vui lòng nhập email.',
+            'Email.email'        => 'Định dạng email không hợp lệ.',
+            'Email.unique'       => 'Email đã được sử dụng.',
             'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex'  => 'Số điện thoại phải bắt đầu bằng số 0 và có từ 9-11 chữ số.',
+            'SoDienThoai.regex'  => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
         ]);
 
         $lop = Lop::findOrFail($request->MaLop);
@@ -636,9 +647,9 @@ class SinhVienController extends Controller
             ]);
 
         // 2. Thống kê số lượng sinh viên
-        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->count();
-        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Đủ điều kiện')->count();
-        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->count();
+        $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->distinct('MaSV')->count('MaSV');
+        $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Đủ điều kiện')->distinct('MaSV')->count('MaSV');
+        $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->distinct('MaSV')->count('MaSV');
 
         // 3. Tạo thông báo chính thức gửi đến toàn thể sinh viên
         $maGVu = Auth::user()->giaoVu->MaGVu ?? 'GVU01';
@@ -671,12 +682,16 @@ class SinhVienController extends Controller
 
     public function dieuKienExport(Request $request)
     {
-        $maHocKy = $request->get('MaHocKy');
-        $ds = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh', 'hocKy'])
-            ->when($maHocKy, fn($q) => $q->where('MaHocKy', $maHocKy))
+        $hocKys = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
+        $maHocKy = $request->get('MaHocKy', $hocKys->first()->MaHocKy ?? '');
+        $ds = \App\Models\DanhSachSVDuDieuKien::select('DanhSachSVDuDieuKien.*')
+            ->distinct()
+            ->with(['sinhVien.lop.nganh', 'hocKy'])
+            ->when($maHocKy, fn($q) => $q->where('DanhSachSVDuDieuKien.MaHocKy', $maHocKy))
+            ->orderBy('DanhSachSVDuDieuKien.MaSV')
             ->get();
 
-        $filename = 'Danh_Sach_SV_Du_Dieu_Kien_' . ($maHocKy ?? 'All') . '.csv';
+        $filename = 'Danh_Sach_SV_Du_Dieu_Kien_' . ($maHocKy ?: 'All') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"$filename\"",

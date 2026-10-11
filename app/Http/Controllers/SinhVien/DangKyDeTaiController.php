@@ -27,66 +27,22 @@ class DangKyDeTaiController extends Controller
                 ->with('error', 'Hồ sơ sinh viên chưa được thiết lập. Vui lòng liên hệ Giáo vụ Khoa.');
         }
 
-        // Lấy học kỳ
-        $requestedHocKy = $request->input('MaHocKy') ?? $request->input('HocKy') ?? $request->input('hoc_ky');
-        $activePlan = \App\Services\PlanPhaseService::getActivePlan();
-        $defaultHocKy = $activePlan ? $activePlan->MaHocKy : null;
-        if (!$defaultHocKy) {
-            $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
-            $defaultHocKy = $currentHk?->MaHocKy;
-        }
-        $maHocKy = $requestedHocKy ?? $defaultHocKy;
-
-        // Xác định Bộ môn theo Ngành học của sinh viên
-        $svBoMon = $sinhVien->getMaBoMon();
-        $selectedBoMon = $svBoMon;
-
-        // 2. Lấy danh sách Môn / Học phần thuộc đúng Bộ môn của sinh viên
-        $hocPhans = \App\Models\HocPhan::where(function($q) {
-                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
-                  ->orWhere('TrangThai', true);
-            })
-            ->where('MaBoMon', $svBoMon)
-            ->orderBy('TenHocPhan')
-            ->get();
-        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
-
-        $selectedHocPhan = $request->input('HocPhan') ?? $request->input('hoc_phan') ?? $request->input('MaHocPhan');
-        if ($selectedHocPhan && !$hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)) {
-            $selectedHocPhan = null;
-        }
-
-        // 1. Kiểm tra Nhóm của sinh viên theo môn và học kỳ
-        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('TrangThai', 'da_tham_gia');
-
-        if ($selectedHocPhan) {
-            $thanhVienQuery->whereHas('nhom', function($q) use ($selectedHocPhan, $maHocKy) {
-                if ($maHocKy) {
-                    $q->where(function($sq) use ($maHocKy) {
-                        $sq->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
-                    });
-                }
-                $q->where(function($sq) use ($selectedHocPhan) {
-                    $sq->where('MaHocPhan', $selectedHocPhan)
-                      ->orWhereHas('hocPhan', fn($hpq) => $hpq->where('TenHocPhan', $selectedHocPhan));
-                });
-            });
-        } elseif ($maHocKy) {
-            $thanhVienQuery->whereHas('nhom', function($q) use ($maHocKy) {
-                $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
-            });
-        }
-
-        $thanhVienRecord = $thanhVienQuery->first() ?? ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->first();
+        // 1. Kiểm tra nhóm của sinh viên (ưu tiên nhóm mà sinh viên đã tham gia chính thức)
+        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+            ->where('TrangThai', 'da_tham_gia')
+            ->with(['nhom.thanhViens', 'nhom.hocPhan', 'nhom.hocKy'])
+            ->latest('created_at')
+            ->first();
 
         $nhom = null;
         $dangKyCurrent = null;
         $soThanhVien = 0;
+        $isGroupLocked = false;
 
         if ($thanhVienRecord) {
-            $nhom = Nhom::with(['thanhViens', 'hocPhan'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
+            $nhom = Nhom::with(['thanhViens', 'hocPhan', 'hocKy'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
             if ($nhom) {
+                $isGroupLocked = true;
                 $soThanhVien = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
                 $dangKyCurrent = DangKyDeTai::with('deTai.giangVien')
                     ->where('MaNhom', $nhom->MaNhom)
@@ -95,8 +51,52 @@ class DangKyDeTaiController extends Controller
             }
         }
 
+        // Lấy học kỳ
+        $activePlan = \App\Services\PlanPhaseService::getActivePlan();
+        $defaultHocKy = $activePlan ? $activePlan->MaHocKy : null;
+        if (!$defaultHocKy) {
+            $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
+            $defaultHocKy = $currentHk?->MaHocKy;
+        }
+
+        $svBoMon = $sinhVien->getMaBoMon();
+
+        if ($isGroupLocked) {
+            // P3 -> B2: Sau khi tạo nhóm, khóa bộ lọc ở trang đăng ký đề tài;
+            // Bộ lọc cố định tương đồng với bộ lọc của học phần và học kỳ của nhóm đó.
+            $selectedHocKy = $nhom->MaHocKy ?: $defaultHocKy;
+            $maHocKy = $selectedHocKy;
+            $selectedHocPhan = $nhom->MaHocPhan;
+            $selectedBoMon = $nhom->hocPhan?->MaBoMon ?: $svBoMon;
+        } else {
+            // Khi chưa tạo nhóm: Cho phép lọc tự do theo request
+            $requestedHocKy = $request->input('MaHocKy') ?? $request->input('HocKy') ?? $request->input('hoc_ky');
+            $selectedHocKy = $requestedHocKy ?? $defaultHocKy;
+            $maHocKy = $selectedHocKy;
+            $selectedBoMon = $svBoMon;
+            $selectedHocPhan = $request->input('HocPhan') ?? $request->input('hoc_phan') ?? $request->input('MaHocPhan');
+        }
+
+        // 2. Lấy danh sách Môn / Học phần
+        $hocPhans = \App\Models\HocPhan::where(function($q) {
+                $q->whereIn('TrangThai', ['Đang sử dụng', 'Đang áp dụng', '1'])
+                  ->orWhere('TrangThai', true);
+            })
+            ->where(function($q) use ($selectedBoMon, $selectedHocPhan) {
+                $q->where('MaBoMon', $selectedBoMon);
+                if ($selectedHocPhan) {
+                    $q->orWhere('MaHocPhan', $selectedHocPhan);
+                }
+            })
+            ->orderBy('TenHocPhan')
+            ->get();
+
+        if (!$isGroupLocked && $selectedHocPhan && !$hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)) {
+            $selectedHocPhan = null;
+        }
+
+        $boMons = \App\Models\BoMon::where('MaKhoa', 'CNTT')->orderBy('TenBoMon')->get();
         $hocKies = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
-        $selectedHocKy = $requestedHocKy ?? ($nhom?->MaHocKy ?? $maHocKy);
 
         // 3. Lọc danh sách đề tài theo học kỳ, bộ môn và môn học đã công bố
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocPhanRef', 'hocKy'])->where('TrangThai', 'Đã công bố');
@@ -105,16 +105,19 @@ class DangKyDeTaiController extends Controller
             $query->where('MaHocKy', $selectedHocKy);
         }
 
-        // Lọc theo bộ môn chuyên ngành của sinh viên
-        $query->where(function($q) use ($svBoMon) {
-            $q->whereHas('giangVien', fn($gv) => $gv->where('MaBoMon', $svBoMon))
-              ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $svBoMon));
+        // Lọc theo bộ môn chuyên ngành của sinh viên / học phần
+        $query->where(function($q) use ($selectedBoMon) {
+            $q->whereHas('giangVien', fn($gv) => $gv->where('MaBoMon', $selectedBoMon))
+              ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $selectedBoMon));
         });
 
         if ($selectedHocPhan) {
-            $query->where(function($q) use ($selectedHocPhan) {
+            $query->where(function($q) use ($selectedHocPhan, $nhom) {
                 $q->where('MaHocPhan', $selectedHocPhan)
                   ->orWhere('HocPhan', $selectedHocPhan);
+                if ($nhom && $nhom->hocPhan && $nhom->hocPhan->TenHocPhan) {
+                    $q->orWhere('HocPhan', $nhom->hocPhan->TenHocPhan);
+                }
             });
         }
 
@@ -141,7 +144,11 @@ class DangKyDeTaiController extends Controller
 
         $regState = \App\Services\PlanPhaseService::getRegistrationState();
 
-        return view('sinhvien.dangky.index', compact('detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'hocKies', 'boMons', 'selectedHocKy', 'maHocKy', 'regState'));
+        return view('sinhvien.dangky.index', compact(
+            'detais', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien',
+            'deTaiDaDangKys', 'hocPhans', 'selectedHocPhan', 'selectedBoMon',
+            'hocKies', 'boMons', 'selectedHocKy', 'maHocKy', 'regState', 'isGroupLocked'
+        ));
     }
 
     public function store(Request $request)
@@ -189,6 +196,15 @@ class DangKyDeTaiController extends Controller
 
                 // 3. Khóa dòng nhóm
                 $nhom = Nhom::where('MaNhom', $thanhVienRecord->MaNhom)->lockForUpdate()->firstOrFail();
+
+                // Kiểm tra tương thích Học Phần & Học Kỳ giữa Nhóm và Đề Tài (B2)
+                if (!empty($nhom->MaHocPhan) && !empty($deTai->MaHocPhan) && $nhom->MaHocPhan !== $deTai->MaHocPhan) {
+                    throw new \Exception("Không thể đăng ký: Đề tài này thuộc học phần '{$deTai->MaHocPhan}', nhưng nhóm của bạn được tạo cho học phần '{$nhom->MaHocPhan}'. Vui lòng chỉ chọn đề tài thuộc đúng học phần của nhóm.");
+                }
+
+                if (!empty($nhom->MaHocKy) && !empty($deTai->MaHocKy) && $nhom->MaHocKy !== $deTai->MaHocKy) {
+                    throw new \Exception("Không thể đăng ký: Đề tài này thuộc học kỳ '{$deTai->MaHocKy}', nhưng nhóm của bạn thuộc học kỳ '{$nhom->MaHocKy}'.");
+                }
 
                 // Chỉ Trưởng nhóm được đăng ký
                 if ($nhom->MaTruongNhom != $sinhVien->MaSV) {

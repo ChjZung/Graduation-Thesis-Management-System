@@ -326,4 +326,187 @@ class ChiTieuHuongDanTest extends TestCase
             ChiTieuHuongDan::where('MaChiTieu', 'CT_TEST_FULL')->delete();
         }
     }
+
+    /**
+     * P4: Giáo vụ / Admin truy cập màn hình chỉ tiêu hướng dẫn thành công
+     */
+    public function test_giao_vu_truy_cap_man_hinh_chi_tieu_thanh_cong()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $this->assertNotNull($admin);
+
+        $response = $this->actingAs($admin)->get('/admin/chi-tieu-huong-dan');
+        $response->assertStatus(200);
+        $response->assertViewIs('admin.chi_tieu_huong_dan.index');
+        $response->assertViewHasAll(['giangviens', 'kpiStats', 'hocKys', 'selectedHocKy']);
+    }
+
+    /**
+     * P4: Role khác (Sinh viên, Giảng viên thông thường) bị chặn 403
+     */
+    public function test_role_khac_bi_chan_khi_truy_cap_man_hinh_chi_tieu()
+    {
+        $sv = TaiKhoan::where('TenDangNhap', '2001210001')->first();
+        $this->assertNotNull($sv);
+        $svOrig = $sv->TrangThaiMatKhau;
+        $sv->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => 0]);
+
+        try {
+            $resSv = $this->actingAs($sv->fresh())->get('/admin/chi-tieu-huong-dan');
+            $resSv->assertStatus(403);
+        } finally {
+            $sv->update(['TrangThaiMatKhau' => $svOrig]);
+        }
+
+        $gv = TaiKhoan::where('TenDangNhap', 'GV00000003')->first();
+        if ($gv) {
+            $gvOrig = $gv->TrangThaiMatKhau;
+            $gv->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => 0]);
+            try {
+                $resGv = $this->actingAs($gv->fresh())->get('/admin/chi-tieu-huong-dan');
+                $resGv->assertStatus(403);
+            } finally {
+                $gv->update(['TrangThaiMatKhau' => $gvOrig]);
+            }
+        }
+    }
+
+    /**
+     * P4: Giáo vụ thiết lập chỉ tiêu thành công khi số nguyên >= 0
+     */
+    public function test_giao_vu_thiet_lap_chi_tieu_thanh_cong_khi_so_nguyen_lon_hon_hoac_bang_khong()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $maHocKy = 'HK2627_2';
+        $maGV = 'GV00000002';
+
+        // 1. Cập nhật chỉ tiêu = 7 nhóm
+        $response = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 7,
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('ChiTieuHuongDan', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 7,
+        ]);
+        $this->assertEquals(7, ChiTieuService::getChiTieuTong($maGV, $maHocKy));
+
+        // 2. Cập nhật chỉ tiêu = 0 nhóm (giảng viên đi học/nghỉ phép không nhận nhóm)
+        $responseZero = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 0,
+        ]);
+
+        $responseZero->assertSessionHas('success');
+        $this->assertDatabaseHas('ChiTieuHuongDan', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 0,
+        ]);
+        $this->assertEquals(0, ChiTieuService::getChiTieuTong($maGV, $maHocKy));
+
+        // Dọn dẹp
+        ChiTieuHuongDan::where('MaGV', $maGV)->where('MaHocKy', $maHocKy)->delete();
+    }
+
+    /**
+     * P4: Validate nghiêm ngặt: từ chối số âm (< 0), số thập phân hoặc để trống
+     */
+    public function test_validate_tu_choi_chi_tieu_khong_hop_le()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $maHocKy = 'HK2627_2';
+        $maGV = 'GV00000002';
+
+        // 1. Số âm: -1 -> Phải bị từ chối
+        $resNegative = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => -1,
+        ]);
+        $resNegative->assertSessionHasErrors('SoNhomToiDa');
+
+        // 2. Số thập phân: 3.5 -> Phải bị từ chối
+        $resDecimal = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 3.5,
+        ]);
+        $resDecimal->assertSessionHasErrors('SoNhomToiDa');
+
+        // 3. Để trống -> Phải bị từ chối
+        $resEmpty = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => '',
+        ]);
+        $resEmpty->assertSessionHasErrors('SoNhomToiDa');
+    }
+
+    /**
+     * P4: Khôi phục chỉ tiêu về mặc định hệ thống
+     */
+    public function test_khoi_phuc_chi_tieu_ve_mac_dinh()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $maHocKy = 'HK2627_2';
+        $maGV = 'GV00000004';
+
+        // Tạo bản ghi riêng = 8 nhóm
+        $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/update', [
+            'MaGV'        => $maGV,
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => 8,
+        ]);
+        $this->assertDatabaseHas('ChiTieuHuongDan', ['MaGV' => $maGV, 'MaHocKy' => $maHocKy, 'SoNhomToiDa' => 8]);
+
+        // Bấm khôi phục
+        $resReset = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/reset', [
+            'MaGV'    => $maGV,
+            'MaHocKy' => $maHocKy,
+        ]);
+        $resReset->assertSessionHas('success');
+
+        // Bản ghi riêng đã bị xóa, getChiTieuTong trả về 5 (mặc định)
+        $this->assertDatabaseMissing('ChiTieuHuongDan', ['MaGV' => $maGV, 'MaHocKy' => $maHocKy]);
+        $this->assertEquals(5, ChiTieuService::getChiTieuTong($maGV, $maHocKy));
+    }
+
+    /**
+     * P4: Thiết lập hàng loạt thành công và validate số nguyên >= 0
+     */
+    public function test_thiet_lap_hang_loat_thanh_cong_va_validate_so_nguyen()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $maHocKy = 'HK2627_2';
+
+        // 1. Thử số âm -> Bị từ chối
+        $resNegative = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/bulk', [
+            'MaHocKy'     => $maHocKy,
+            'SoNhomToiDa' => -2,
+            'apply_scope' => 'all',
+        ]);
+        $resNegative->assertSessionHasErrors('SoNhomToiDa');
+
+        // 2. Thử thành công với số 6 cho bộ môn BM_CNPM
+        $resSuccess = $this->actingAs($admin)->post('/admin/chi-tieu-huong-dan/bulk', [
+            'MaHocKy'     => $maHocKy,
+            'MaBoMon'     => 'BM_CNPM',
+            'SoNhomToiDa' => 6,
+            'apply_scope' => 'all',
+        ]);
+        $resSuccess->assertSessionHas('success');
+
+        // Kiểm tra giảng viên thuộc BM_CNPM nhận chỉ tiêu 6
+        $this->assertEquals(6, ChiTieuService::getChiTieuTong('GV00000001', $maHocKy));
+        $this->assertEquals(6, ChiTieuService::getChiTieuTong('GV00000007', $maHocKy));
+
+        // Dọn dẹp
+        ChiTieuHuongDan::where('MaHocKy', $maHocKy)->whereIn('MaGV', ['GV00000001', 'GV00000007'])->delete();
+    }
 }

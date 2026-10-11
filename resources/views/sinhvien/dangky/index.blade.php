@@ -139,35 +139,56 @@
 @endif
 
 <!-- BƯỚC 1: LỌC DANH SÁCH ĐỀ TÀI THEO: HỌC KỲ -> HỌC PHẦN CHUYÊN NGÀNH -->
-<div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-light">
+<div class="card border mb-3 p-3 bg-light" style="font-size: 13px;">
     <div class="row g-2 align-items-center mb-2">
         <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
                 <span class="fw-bold text-dark"><i class="fa-solid fa-filter text-primary me-2"></i>Bước 1: Lọc Đề Tài (Học kỳ ➔ Học phần chuyên ngành):</span>
-                <div class="small text-muted">Lọc danh sách đề tài chính thức theo học kỳ và học phần chuyên ngành</div>
+                <div class="small text-muted mt-1">
+                    @if(!empty($isGroupLocked) && isset($nhom))
+                        Bộ lọc đã được cố định tự động theo nhóm <strong>{{ $nhom->TenNhom }}</strong> (học kỳ và học phần đã đăng ký).
+                    @else
+                        Lọc danh sách đề tài chính thức theo học kỳ và học phần chuyên ngành
+                    @endif
+                </div>
             </div>
+            @if(!empty($isGroupLocked) && isset($nhom))
+                <div>
+                    <span class="badge bg-secondary text-white border px-3 py-2 fw-semibold" style="font-size: 13px;" title="Bộ lọc đã được khóa theo nhóm {{ $nhom->TenNhom }}">
+                        <i class="fa-solid fa-lock me-1"></i>Đã khóa bộ lọc theo nhóm: <strong>{{ $nhom->TenNhom }}</strong>
+                    </span>
+                </div>
+            @endif
         </div>
     </div>
     <div class="row g-2 align-items-center">
         <!-- 1. HỌC KỲ -->
         <div class="col-md-3">
             <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
-                    @foreach($hocKies as $hk)
-                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $hk->MaHocKy, 'HocPhan' => $selectedHocPhan]) }}" {{ ($selectedHocKy == $hk->MaHocKy || $maHocKy == $hk->MaHocKy) ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '🔥' : '' }}
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0" style="font-size: 13px;"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ:</span>
+                @if(!empty($isGroupLocked))
+                    <select class="form-select form-select-sm fw-semibold border-start-0 bg-light text-muted" disabled style="font-size: 13px;" title="Bộ lọc học kỳ đã khóa theo nhóm {{ $nhom->TenNhom ?? '' }}">
+                        <option selected>
+                            {{ $hocKies->firstWhere('MaHocKy', $selectedHocKy)->TenHocKy ?? $selectedHocKy }} (Khóa theo nhóm)
                         </option>
-                    @endforeach
-                </select>
+                    </select>
+                @else
+                    <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" style="font-size: 13px;" onchange="window.location.href=this.value;">
+                        @foreach($hocKies as $hk)
+                            <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $hk->MaHocKy, 'HocPhan' => $selectedHocPhan]) }}" {{ ($selectedHocKy == $hk->MaHocKy || $maHocKy == $hk->MaHocKy) ? 'selected' : '' }}>
+                                {{ $hk->TenHocKy }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
         </div>
 
         <!-- 2. BỘ MÔN CHUYÊN NGÀNH CỦA SINH VIÊN -->
         <div class="col-md-4">
             <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
-                <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate">
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0" style="font-size: 13px;"><i class="fa-solid fa-sitemap text-primary me-1"></i>Bộ môn:</span>
+                <span class="form-control form-control-sm bg-light fw-bold text-primary text-truncate" style="font-size: 13px;">
                     {{ $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành') }}
                 </span>
             </div>
@@ -176,20 +197,28 @@
         <!-- 3. CHỌN HỌC PHẦN (DROPDOWN GỌN GÀNG) -->
         <div class="col-md-5">
             <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white fw-bold text-secondary border-end-0"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
-                <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" onchange="window.location.href=this.value;">
-                    <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy]) }}">-- Tất cả học phần của ngành --</option>
-                    @foreach($hocPhans as $hp)
-                        @php
-                            $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
-                            $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
-                            $isSelected = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
-                        @endphp
-                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'HocPhan' => $hpCode]) }}" {{ $isSelected ? 'selected' : '' }}>
-                            {{ $hpName }}
+                <span class="input-group-text bg-white fw-bold text-secondary border-end-0" style="font-size: 13px;"><i class="fa-solid fa-graduation-cap text-primary me-1"></i>Học phần:</span>
+                @if(!empty($isGroupLocked))
+                    <select class="form-select form-select-sm fw-semibold border-start-0 bg-light text-muted" disabled style="font-size: 13px;" title="Bộ lọc học phần đã khóa theo nhóm {{ $nhom->TenNhom ?? '' }}">
+                        <option selected>
+                            {{ $nhom->hocPhan->TenHocPhan ?? ($hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? $selectedHocPhan) }} (Khóa theo nhóm)
                         </option>
-                    @endforeach
-                </select>
+                    </select>
+                @else
+                    <select class="form-select form-select-sm fw-semibold border-start-0 bg-white" style="font-size: 13px;" onchange="window.location.href=this.value;">
+                        <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy]) }}">-- Tất cả học phần của ngành --</option>
+                        @foreach($hocPhans as $hp)
+                            @php
+                                $hpCode = is_object($hp) ? $hp->MaHocPhan : $hp;
+                                $hpName = is_object($hp) ? $hp->TenHocPhan : $hp;
+                                $isSelected = ($selectedHocPhan === $hpCode || $selectedHocPhan === $hpName);
+                            @endphp
+                            <option value="{{ route('sinhvien.dangky.index', ['HocKy' => $selectedHocKy, 'HocPhan' => $hpCode]) }}" {{ $isSelected ? 'selected' : '' }}>
+                                {{ $hpName }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
         </div>
     </div>
@@ -198,12 +227,19 @@
 <div class="card card-premium">
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Bước 2: Danh Sách Đề Tài Đã Công Bố ({{ $detais->total() }} đề tài)</span>
-        @if($selectedHocPhan)
-            @php
-                $selHpName = $hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? $selectedHocPhan;
-            @endphp
-            <span class="badge bg-primary rounded-pill px-3 py-1">{{ $selHpName }}</span>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            @if($selectedHocPhan)
+                @php
+                    $selHpName = $nhom?->hocPhan?->TenHocPhan ?? ($hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? $selectedHocPhan);
+                @endphp
+                <span class="badge bg-primary rounded-pill px-3 py-1">{{ $selHpName }}</span>
+            @endif
+            @if(!empty($isGroupLocked))
+                <span class="badge bg-secondary text-white rounded-pill px-3 py-1" style="font-size: 12px;">
+                    <i class="fa-solid fa-lock me-1"></i>Khóa theo nhóm
+                </span>
+            @endif
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

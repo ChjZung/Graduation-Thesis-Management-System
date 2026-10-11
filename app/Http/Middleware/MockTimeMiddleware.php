@@ -16,6 +16,10 @@ class MockTimeMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         $mockTime = null;
         $mockFilePath = storage_path('framework/mock_time.txt');
 

@@ -58,7 +58,8 @@ body {
     z-index: 1050;
     overflow-y: auto;
     overflow-x: hidden;
-    box-shadow: 4px 0 20px rgba(0, 34, 68, 0.35);
+    box-shadow: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     transition: var(--transition);
     display: flex;
     flex-direction: column;
@@ -103,8 +104,8 @@ body {
 }
 
 #sidebar .sidebar-subtitle {
-    font-size: 0.68rem;
-    color: rgba(255,255,255,0.65);
+    font-size: 13px !important;
+    color: rgba(255,255,255,0.75);
     display: block;
     margin-top: 2px;
     font-weight: 400;
@@ -115,14 +116,14 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px 8px;
+    padding: 6px 14px 7px;
     margin: 0 14px 4px;
     background: rgba(255,255,255,0.1);
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 13px !important;
     font-weight: 600;
     color: var(--columbia-blue);
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
@@ -172,7 +173,6 @@ body {
     color: #fff;
     background: rgba(255,255,255,0.13);
     border-left-color: var(--light-sky);
-    transform: translateX(3px);
 }
 
 #sidebar ul li.active > a,
@@ -181,7 +181,7 @@ body {
     background: #0072ce !important;
     border-left: none !important;
     font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0, 114, 206, 0.4);
+    box-shadow: none !important;
 }
 
 #sidebar ul li.active > a i,
@@ -1957,7 +1957,9 @@ body {
    ============================================================ */
 
 /* 1. ĐẢM BẢO TẤT CẢ NÚT TOÀN HỆ THỐNG KHÔNG BỊ XUỐNG DÒNG */
-.btn, button, a.btn, .btn-sm, .btn-lg, .action-btn, [class*="btn-"],
+.btn:not(.menu-parent-btn),
+button:not(.menu-parent-btn):not(#sidebar button),
+a.btn, .btn-sm:not(.menu-parent-btn), .btn-lg, .action-btn,
 .btn-primary, .btn-outline-primary, .btn-success, .btn-outline-success,
 .btn-secondary, .btn-outline-secondary, .btn-danger, .btn-outline-danger,
 .btn-warning, .btn-outline-warning, .btn-info, .btn-outline-info {
@@ -2108,47 +2110,60 @@ small, .small, .text-muted.small, .form-text, .pill-count,
 #sidebar .sidebar-menu-group {
     margin-bottom: 4px;
 }
-#sidebar .menu-parent-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 16px);
-    margin: 2px 8px;
-    padding: 9.5px 14px;
-    color: rgba(255, 255, 255, 0.85);
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
+#sidebar .menu-parent-btn,
+#sidebar button.menu-parent-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: calc(100% - 16px) !important;
+    margin: 2px 8px !important;
+    padding: 9.5px 14px !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    text-align: left !important;
     cursor: pointer;
     transition: var(--transition);
+    white-space: normal !important;
 }
-#sidebar .menu-parent-btn:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.12);
+#sidebar .menu-parent-btn:hover,
+#sidebar button.menu-parent-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
 }
-#sidebar .menu-parent-btn.active-parent {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.16);
-    font-weight: 700;
+#sidebar .menu-parent-btn.active-parent,
+#sidebar button.menu-parent-btn.active-parent {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    font-weight: 700 !important;
 }
 #sidebar .menu-parent-btn .parent-icon-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
 }
 #sidebar .menu-parent-btn .parent-icon-title i {
-    width: 20px;
-    text-align: center;
-    font-size: 14px;
+    width: 20px !important;
+    text-align: center !important;
+    font-size: 14px !important;
     opacity: 0.9;
+    flex-shrink: 0 !important;
+}
+#sidebar .menu-parent-btn .parent-icon-title span {
+    text-align: left !important;
 }
 #sidebar .menu-parent-btn .chevron-arrow {
-    font-size: 11px;
+    font-size: 11px !important;
     transition: transform 0.25s ease;
     opacity: 0.7;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
 }
 #sidebar .menu-parent-btn:not(.collapsed) .chevron-arrow {
     transform: rotate(180deg);
@@ -2163,28 +2178,31 @@ small, .small, .text-muted.small, .form-text, .pill-count,
     padding-bottom: 2px;
 }
 #sidebar .submenu-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 7px 12px;
-    font-size: 13px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 7px 12px !important;
+    font-size: 13px !important;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.75);
-    text-decoration: none;
+    color: rgba(255, 255, 255, 0.75) !important;
+    text-decoration: none !important;
     border-radius: 6px;
     margin: 2px 0;
     transition: var(--transition);
+    text-align: left !important;
+}
+#sidebar .submenu-link span {
+    text-align: left !important;
 }
 #sidebar .submenu-link:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
-    transform: translateX(3px);
 }
 #sidebar .submenu-link.active-sub {
     color: #ffffff !important;
     background: #0072ce !important;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 114, 206, 0.4);
+    box-shadow: none !important;
 }
 
 /* ============================================================
@@ -2235,5 +2253,204 @@ select.rounded-pill[name*="MaHocKy"],
 select.rounded-pill[name*="hoc_ky"] {
     min-width: 320px !important;
 }
+
+/* ============================================================
+   7. CHUẨN HÓA TOÀN BỘ HỆ THỐNG THEO CHUẨN G
+   - Không box-shadow (viền nhẹ phẳng #e2e8f0)
+   - Font size tối thiểu 13px toàn hệ thống
+   - Sidebar căn trái toàn bộ
+   - Header theo chuẩn Admin
+   - Không icon trong dropdown, bảng, biểu mẫu (chỉ giữ icon nút thao tác)
+   ============================================================ */
+
+/* 7.1. KHÔNG BOX-SHADOW TOÀN BỘ HỆ THỐNG */
+*, *::before, *::after {
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+
+.shadow, .shadow-sm, .shadow-lg, .shadow-none {
+    box-shadow: none !important;
+}
+
+.card, .card-huit, .admin-kpi-card, .table-container, .alert, .modal-content, .dropdown-menu {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.dropdown-menu {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+/* 7.2. FONT SIZE TỐI THIỂU 13PX */
+body, button, input, select, textarea, table, th, td, p, span, a, label, li, div, dt, dd {
+    font-size: 13px;
+}
+
+small, .small, .text-muted, .badge, .badge-code, .kpi-label, .kpi-subtext,
+.admin-breadcrumb, .nav-section-label, .form-text, .invalid-feedback, .valid-feedback,
+.dropdown-item, .nav-link, .pagination .page-link,
+#sidebar .sidebar-subtitle, #sidebar .role-badge, #sidebar .menu-parent-btn, #sidebar .submenu-link,
+.card-footer, .card-header, .table th, .table td, .empty-state-box p {
+    font-size: 13px !important;
+}
+
+.badge {
+    font-size: 13px !important;
+    font-weight: 500;
+}
+
+/* 7.3. SIDEBAR CĂN TRÁI TOÀN BỘ */
+#sidebar {
+    text-align: left !important;
+}
+
+#sidebar .sidebar-header,
+#sidebar .sidebar-brand {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+#sidebar .sidebar-title,
+#sidebar .sidebar-subtitle {
+    text-align: left !important;
+}
+
+#sidebar .role-badge {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+#sidebar .menu-parent-btn,
+#sidebar button.menu-parent-btn {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+#sidebar .menu-parent-btn .parent-icon-title {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    flex: 1;
+}
+
+#sidebar .menu-parent-btn .parent-icon-title span {
+    text-align: left !important;
+}
+
+#sidebar .submenu-link {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+#sidebar .submenu-link span {
+    text-align: left !important;
+}
+
+#sidebar ul.components li a {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+/* 7.4. HEADER THEO ADMIN TOÀN HỆ THỐNG */
+.admin-top-bar,
+.navbar-custom {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 10px 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-shadow: none !important;
+    min-height: 58px;
+}
+
+.admin-breadcrumb {
+    font-size: 13px !important;
+    color: #475569 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+.admin-breadcrumb a {
+    font-size: 13px !important;
+    color: #64748b !important;
+    text-decoration: none !important;
+}
+
+.admin-breadcrumb a:hover {
+    color: #0072ce !important;
+}
+
+.admin-breadcrumb .separator {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+}
+
+.admin-breadcrumb .current-page {
+    color: #0072ce !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+.admin-user-pill,
+.user-avatar-btn {
+    border: 1px solid #bfdbfe !important;
+    background: #e0f2fe !important;
+    border-radius: 9999px !important;
+    padding: 5px 14px 5px 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #003b73 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+.admin-user-pill:hover,
+.user-avatar-btn:hover {
+    background: #bae6fd !important;
+    color: #002244 !important;
+}
+
+.admin-user-pill img,
+.user-avatar-btn img {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+/* 7.5. LOẠI BỎ ICON TRONG DROPDOWN, BIỂU MẪU VÀ BẢNG DỮ LIỆU - CHỈ GIỮ ICON NÚT THAO TÁC */
+/* Form label: không icon */
+label.form-label i,
+.form-group label i,
+label i {
+    display: none !important;
+}
+
+/* Bảng dữ liệu: Loại bỏ icon trang trí trong các ô dữ liệu (TD), NGOẠI TRỪ các nút thao tác */
+table.table td:not(:last-child) > i:not(.btn i):not(.btn-action-circle i),
+table.table td:not(:last-child) span > i:not(.btn i):not(.btn-action-circle i),
+table.table td:not(:last-child) div > i:not(.btn i):not(.btn-action-circle i),
+table.table td:not(:last-child) a:not(.btn):not(.btn-action-circle) > i {
+    display: none !important;
+}
+
+/* Icon trong các nút thao tác (.btn, .btn-action-circle) và các thành phần chức năng luôn hiển thị */
+.btn i,
+.btn-action-circle i,
+.admin-breadcrumb i,
+.dropdown-item i,
+.nav-link i,
+#sidebar i,
+.alert i {
+    display: inline-block !important;
+}
+
 
 

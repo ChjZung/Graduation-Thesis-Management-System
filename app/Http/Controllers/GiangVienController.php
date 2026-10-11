@@ -8,6 +8,7 @@ use App\Models\GiangVien;
 use App\Models\BoMon;
 use App\Models\TaiKhoan;
 use App\Models\ChiTieuHuongDan;
+use App\Services\ChiTieuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -84,32 +85,42 @@ class GiangVienController extends Controller
 
         $scopedHocKy = $request->filled('MaHocKy_filter') ? $request->MaHocKy_filter : ($currentHk?->MaHocKy ?? null);
 
-        // Bộ lọc Tình trạng hướng dẫn (trong học kỳ)
+        // Bộ lọc Tình trạng hướng dẫn (trong học kỳ) chuẩn P1 & A3: Dùng chung quy tắc của ChiTieuService
         if ($request->filled('tinh_trang_hd')) {
             $statusHd = $request->tinh_trang_hd;
             if ($statusHd === 'co_hd') {
-                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                $query->whereHas('deTais.phieuDangKys', function($q) use ($scopedHocKy) {
+                    $q->where('TrangThai', 'Đã duyệt');
+                    if ($scopedHocKy) {
+                        $q->whereHas('deTai', fn($dq) => $dq->where('MaHocKy', $scopedHocKy));
+                    }
                 });
             } elseif ($statusHd === 'dat_dinh_muc') {
-                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
-                }, '>=', 5);
+                // Đạt tối đa / Hết chỉ tiêu: da_dung >= tong (chuẩn P1)
+                $allGvList = GiangVien::pluck('MaGV')->toArray();
+                $allStatsMap = ChiTieuService::getChiTieuStatsBatch($allGvList, $scopedHocKy);
+                $fullGvIds = [];
+                foreach ($allStatsMap as $mgv => $st) {
+                    if ($st['is_full']) {
+                        $fullGvIds[] = $mgv;
+                    }
+                }
+                $query->whereIn('MaGV', $fullGvIds);
             } elseif ($statusHd === 'chua_hd') {
-                $query->whereDoesntHave('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                $query->whereDoesntHave('deTais.phieuDangKys', function($q) use ($scopedHocKy) {
+                    $q->where('TrangThai', 'Đã duyệt');
+                    if ($scopedHocKy) {
+                        $q->whereHas('deTai', fn($dq) => $dq->where('MaHocKy', $scopedHocKy));
+                    }
                 });
             }
         }
 
         $totalGV = GiangVien::count();
-        $gvHuongDan = GiangVien::whereHas('deTais', function($q) use ($scopedHocKy) {
-            $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
+        $gvHuongDan = GiangVien::whereHas('deTais.phieuDangKys', function($q) use ($scopedHocKy) {
+            $q->where('TrangThai', 'Đã duyệt');
             if ($scopedHocKy) {
-                $q->where('MaHocKy', $scopedHocKy);
+                $q->whereHas('deTai', fn($dq) => $dq->where('MaHocKy', $scopedHocKy));
             }
         })->count();
         $gvHoiDong = GiangVien::whereHas('thanhVienHoiDongs.hoiDong', function($q) use ($scopedHocKy) {
@@ -141,6 +152,21 @@ class GiangVienController extends Controller
                 }
             }
         ])->orderBy('MaGV')->paginate(15)->withQueryString();
+
+        // Gắn thống kê chỉ tiêu chuẩn P1 dùng chung hàm ChiTieuService::getChiTieuStatsBatch
+        $pageGvIds = $giangviens->pluck('MaGV')->toArray();
+        $chiTieuStatsBatch = ChiTieuService::getChiTieuStatsBatch($pageGvIds, $scopedHocKy);
+        foreach ($giangviens as $gv) {
+            $gv->chi_tieu_stats = $chiTieuStatsBatch[$gv->MaGV] ?? [
+                'tong'       => 5,
+                'da_dung'    => 0,
+                'con_lai'    => 5,
+                'tinh_trang' => 'con_chi_tieu',
+                'is_full'    => false,
+                'label'      => '0/5',
+            ];
+        }
+
         $bomons = BoMon::with('khoa')->orderBy('TenBoMon')->get();
 
         // Lấy danh sách các tài khoản chức vụ hiện có để đối chiếu nhanh
@@ -174,11 +200,11 @@ class GiangVienController extends Controller
                 'required',
                 'string',
                 'size:10',
-                'regex:/^[A-Za-z0-9_]{10}$/',
+                'regex:/^GV\d{8}$/',
                 'unique:TaiKhoan,TenDangNhap',
                 'unique:GiangVien,MaGV'
             ],
-            'HoTen'       => 'required|string|max:100',
+            'HoTen'       => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s]+$/u'],
             'HocVi'       => 'required|string|max:50',
             'MaBoMon'     => 'required|exists:BoMon,MaBoMon',
             'Email'       => 'required|email|max:100|unique:GiangVien,Email',
@@ -191,17 +217,20 @@ class GiangVienController extends Controller
             'MaHocKy'     => 'nullable|exists:HocKy,MaHocKy'
         ], [
             'TenDangNhap.required' => 'Vui lòng nhập Mã giảng viên (MaGV).',
-            'TenDangNhap.size'     => 'Mã giảng viên phải có đúng 10 ký tự (min=10, max=10, ví dụ: GV00000001).',
-            'TenDangNhap.regex'    => 'Mã giảng viên chỉ gồm chữ và số, không chứa ký tự đặc biệt hay khoảng trắng.',
+            'TenDangNhap.size'     => 'Mã giảng viên phải có đúng 10 ký tự (ví dụ: GV00000001).',
+            'TenDangNhap.regex'    => 'Mã giảng viên phải có tiền tố GV theo sau bởi 8 chữ số (VD: GV00000001).',
             'TenDangNhap.unique'   => 'Mã giảng viên / Tên đăng nhập đã tồn tại trong hệ thống.',
-            'HoTen.required'       => 'Vui lòng nhập họ tên giảng viên.',
+            'HoTen.required'       => 'Vui lòng nhập họ và tên giảng viên.',
+            'HoTen.min'            => 'Họ và tên giảng viên phải có tối thiểu 2 ký tự.',
+            'HoTen.max'            => 'Họ và tên giảng viên không được vượt quá 100 ký tự.',
+            'HoTen.regex'          => 'Họ và tên chỉ được chứa chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt.',
             'HocVi.required'       => 'Vui lòng chọn hoặc nhập học vị.',
             'MaBoMon.required'     => 'Vui lòng chọn bộ môn.',
             'Email.required'       => 'Vui lòng nhập email.',
             'Email.email'          => 'Định dạng email không hợp lệ.',
             'Email.unique'         => 'Email đã được sử dụng bởi giảng viên khác.',
             'SoDienThoai.unique'   => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex'    => 'Số điện thoại phải có đúng 10 chữ số (bắt đầu bằng 0, min=10, max=10, ví dụ: 0912345678).',
+            'SoDienThoai.regex'    => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
         ]);
 
         $maGV = trim($request->TenDangNhap);
@@ -266,22 +295,25 @@ class GiangVienController extends Controller
 
         $totalDeTai = $giangvien->de_tais_count;
         $totalHoiDong = $giangvien->thanh_vien_hoi_dongs_count;
-        $nhomHuongDan = \App\Models\Nhom::whereHas('phieuDangKys', function($q) use ($id) {
-            $q->where('TrangThai', 'Đã duyệt')
-              ->whereHas('deTai', fn($dq) => $dq->where('MaGV', $id));
-        })->count();
 
-        $latestChiTieu = $giangvien->chiTieuHuongDans()->latest()->first();
-        $chiTieuToiDa = $latestChiTieu ? $latestChiTieu->SoLuongToiDa : 5;
+        $currentHk = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->first() ?? \App\Models\HocKy::latest('MaHocKy')->first();
+        $scopedHocKy = $currentHk?->MaHocKy;
+
+        // DÙNG CHUNG HÀM ĐẾM ChiTieuService (Chuẩn P1 / A3)
+        $chiTieuStats = ChiTieuService::getChiTieuStats($id, $scopedHocKy);
 
         $stats = [
-            'total_detai'    => min((int)$totalDeTai, 5),
-            'nhom_huong_dan' => min((int)$nhomHuongDan, 5),
-            'chi_tieu_toida' => $chiTieuToiDa,
-            'total_hoidong'  => $totalHoiDong,
+            'total_detai'    => (int)$totalDeTai,
+            'nhom_huong_dan' => $chiTieuStats['da_dung'],
+            'chi_tieu_toida' => $chiTieuStats['tong'],
+            'con_lai'        => $chiTieuStats['con_lai'],
+            'tinh_trang'     => $chiTieuStats['tinh_trang'],
+            'is_full'        => $chiTieuStats['is_full'],
+            'label'          => $chiTieuStats['label'],
+            'total_hoidong'  => (int)$totalHoiDong,
         ];
 
-        return view('admin.giangvien.show', compact('giangvien', 'stats'));
+        return view('admin.giangvien.show', compact('giangvien', 'stats', 'scopedHocKy'));
     }
 
     public function edit($id)
@@ -296,7 +328,7 @@ class GiangVienController extends Controller
         $giangvien = GiangVien::with('taiKhoan')->findOrFail($id);
 
         $request->validate([
-            'HoTen'       => 'required|string|max:100',
+            'HoTen'       => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s]+$/u'],
             'HocVi'       => 'required|string|max:50',
             'MaBoMon'     => 'required|exists:BoMon,MaBoMon',
             'Email'       => 'required|email|max:100|unique:GiangVien,Email,' . $id . ',MaGV',
@@ -307,14 +339,17 @@ class GiangVienController extends Controller
                 'unique:GiangVien,SoDienThoai,' . $id . ',MaGV'
             ]
         ], [
-            'HoTen.required'     => 'Vui lòng nhập họ tên.',
+            'HoTen.required'     => 'Vui lòng nhập họ và tên giảng viên.',
+            'HoTen.min'          => 'Họ và tên giảng viên phải có tối thiểu 2 ký tự.',
+            'HoTen.max'          => 'Họ và tên giảng viên không được vượt quá 100 ký tự.',
+            'HoTen.regex'        => 'Họ và tên chỉ được chứa chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt.',
             'HocVi.required'     => 'Vui lòng nhập học vị.',
             'MaBoMon.required'   => 'Vui lòng chọn bộ môn.',
             'Email.required'     => 'Vui lòng nhập email.',
             'Email.email'        => 'Định dạng email không hợp lệ.',
             'Email.unique'       => 'Email đã được sử dụng.',
             'SoDienThoai.unique' => 'Số điện thoại đã được sử dụng.',
-            'SoDienThoai.regex'  => 'Số điện thoại phải có đúng 10 chữ số (bắt đầu bằng số 0, min=10, max=10, ví dụ: 0912345678).',
+            'SoDienThoai.regex'  => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
         ]);
 
         $giangvien->update([
@@ -581,19 +616,28 @@ class GiangVienController extends Controller
         if ($request->filled('tinh_trang_hd')) {
             $statusHd = $request->tinh_trang_hd;
             if ($statusHd === 'co_hd') {
-                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                $query->whereHas('deTais.phieuDangKys', function($q) use ($scopedHocKy) {
+                    $q->where('TrangThai', 'Đã duyệt');
+                    if ($scopedHocKy) {
+                        $q->whereHas('deTai', fn($dq) => $dq->where('MaHocKy', $scopedHocKy));
+                    }
                 });
             } elseif ($statusHd === 'dat_dinh_muc') {
-                $query->whereHas('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
-                }, '>=', 5);
+                $allGvList = GiangVien::pluck('MaGV')->toArray();
+                $allStatsMap = ChiTieuService::getChiTieuStatsBatch($allGvList, $scopedHocKy);
+                $fullGvIds = [];
+                foreach ($allStatsMap as $mgv => $st) {
+                    if ($st['is_full']) {
+                        $fullGvIds[] = $mgv;
+                    }
+                }
+                $query->whereIn('MaGV', $fullGvIds);
             } elseif ($statusHd === 'chua_hd') {
-                $query->whereDoesntHave('deTais', function($q) use ($scopedHocKy) {
-                    $q->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành']);
-                    if ($scopedHocKy) $q->where('MaHocKy', $scopedHocKy);
+                $query->whereDoesntHave('deTais.phieuDangKys', function($q) use ($scopedHocKy) {
+                    $q->where('TrangThai', 'Đã duyệt');
+                    if ($scopedHocKy) {
+                        $q->whereHas('deTai', fn($dq) => $dq->where('MaHocKy', $scopedHocKy));
+                    }
                 });
             }
         }
@@ -607,6 +651,9 @@ class GiangVienController extends Controller
             }
         ])->orderBy('MaGV')->get();
 
+        $allExportGvIds = $giangviens->pluck('MaGV')->toArray();
+        $chiTieuStatsExport = ChiTieuService::getChiTieuStatsBatch($allExportGvIds, $scopedHocKy);
+
         $filename = "DS_GIANG_VIEN_KHOA_CNTT_" . date('Ymd_His') . ".csv";
 
         $headers = [
@@ -617,7 +664,7 @@ class GiangVienController extends Controller
             "Expires"             => "0"
         ];
 
-        $callback = function () use ($giangviens) {
+        $callback = function () use ($giangviens, $chiTieuStatsExport) {
             $file = fopen('php://output', 'w');
             // BOM UTF-8 để Microsoft Excel nhận diện tiếng Việt có dấu
             fputs($file, "\xEF\xBB\xBF");
@@ -635,7 +682,8 @@ class GiangVienController extends Controller
                 'Bộ Môn',
                 'Khoa',
                 'Vai Trò Portal',
-                'Số Đề Tài Hướng Dẫn',
+                'Định Mức Hướng Dẫn',
+                'Số Đề Tài Đề Xuất',
                 'Trạng Thái Công Tác',
                 'Tài Khoản Portal'
             ]);
@@ -644,6 +692,7 @@ class GiangVienController extends Controller
                 $tk = $gv->taiKhoan;
                 $vaiTro = $tk?->vaiTro?->TenVaiTro ?? 'Giảng viên';
                 $trangThaiTK = ($tk && $tk->TrangThai) ? 'Đang hoạt động' : 'Chưa kích hoạt / Khóa';
+                $ct = $chiTieuStatsExport[$gv->MaGV] ?? ['label' => '0/5'];
 
                 fputcsv($file, [
                     $idx + 1,
@@ -657,6 +706,7 @@ class GiangVienController extends Controller
                     $gv->boMon->TenBoMon ?? 'Chưa phân bổ',
                     $gv->boMon->khoa->TenKhoa ?? 'Khoa Công nghệ Thông tin',
                     $vaiTro,
+                    $ct['label'] . ' nhóm',
                     $gv->de_tais_count ?? 0,
                     $gv->TrangThai ?? 'Đang công tác',
                     $trangThaiTK

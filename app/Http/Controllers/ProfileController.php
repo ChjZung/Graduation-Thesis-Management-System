@@ -89,15 +89,18 @@ class ProfileController extends Controller
             }
 
             $validated = $request->validate([
-                'HoTen'       => 'required|string|max:255',
+                'HoTen'       => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s]+$/u'],
                 'Email'       => 'required|email|max:255|unique:GiaoVu,Email,' . $profile->MaGVu . ',MaGVu',
-                'SoDienThoai' => ['nullable', 'regex:/^(0[3|5|7|8|9])[0-9]{8}$/'],
+                'SoDienThoai' => ['nullable', 'regex:/^0[0-9]{9}$/'],
             ], [
                 'HoTen.required'    => 'Họ và tên không được để trống.',
+                'HoTen.min'         => 'Họ và tên phải có tối thiểu 2 ký tự.',
+                'HoTen.max'         => 'Họ và tên không được vượt quá 100 ký tự.',
+                'HoTen.regex'       => 'Họ và tên chỉ được chứa chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt.',
                 'Email.required'    => 'Email không được để trống.',
                 'Email.email'       => 'Email không đúng định dạng.',
                 'Email.unique'      => 'Email này đã được sử dụng bởi người khác.',
-                'SoDienThoai.regex' => 'Số điện thoại không hợp lệ (cần đúng 10 số, bắt đầu bằng 03, 05, 07, 08, 09).',
+                'SoDienThoai.regex' => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
             ]);
 
             $profile->update($validated);
@@ -110,14 +113,14 @@ class ProfileController extends Controller
 
             $validated = $request->validate([
                 'Email'       => 'required|email|max:255|unique:GiangVien,Email,' . $profile->MaGV . ',MaGV',
-                'SoDienThoai' => ['nullable', 'regex:/^(0[3|5|7|8|9])[0-9]{8}$/'],
+                'SoDienThoai' => ['nullable', 'regex:/^0[0-9]{9}$/'],
                 'GioiTinh'    => 'nullable|in:Nam,Nữ',
                 'NgaySinh'    => 'nullable|date|before:today',
             ], [
                 'Email.required'    => 'Email không được để trống.',
                 'Email.email'       => 'Email không đúng định dạng.',
                 'Email.unique'      => 'Email này đã được sử dụng bởi người khác.',
-                'SoDienThoai.regex' => 'Số điện thoại không hợp lệ (cần đúng 10 số, bắt đầu bằng 03, 05, 07, 08, 09).',
+                'SoDienThoai.regex' => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
                 'GioiTinh.in'       => 'Giới tính chỉ có thể là Nam hoặc Nữ.',
                 'NgaySinh.before'   => 'Ngày sinh không hợp lệ.',
             ]);
@@ -132,14 +135,14 @@ class ProfileController extends Controller
 
             $validated = $request->validate([
                 'Email'       => 'required|email|max:255|unique:SinhVien,Email,' . $profile->MaSV . ',MaSV',
-                'SoDienThoai' => ['nullable', 'regex:/^(0[3|5|7|8|9])[0-9]{8}$/'],
+                'SoDienThoai' => ['nullable', 'regex:/^0[0-9]{9}$/'],
                 'GioiTinh'    => 'nullable|in:Nam,Nữ',
                 'NgaySinh'    => 'nullable|date|before:today',
             ], [
                 'Email.required'    => 'Email không được để trống.',
                 'Email.email'       => 'Email không đúng định dạng.',
                 'Email.unique'      => 'Email này đã được sử dụng bởi người khác.',
-                'SoDienThoai.regex' => 'Số điện thoại không hợp lệ (cần đúng 10 số, bắt đầu bằng 03, 05, 07, 08, 09).',
+                'SoDienThoai.regex' => 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.',
                 'GioiTinh.in'       => 'Giới tính chỉ có thể là Nam hoặc Nữ.',
                 'NgaySinh.before'   => 'Ngày sinh không hợp lệ.',
             ]);

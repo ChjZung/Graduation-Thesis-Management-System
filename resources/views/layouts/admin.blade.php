@@ -122,7 +122,7 @@
             <!-- 4. NGƯỜI DÙNG & HỒ SƠ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isUserActive = request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') || request()->routeIs('giangvien.*') || request()->routeIs('admin.taikhoan.*') || request()->routeIs('admin.yeucau.*');
+                    $isUserActive = request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') || request()->routeIs('giangvien.*') || request()->routeIs('admin.chi_tieu_huong_dan.*') || request()->routeIs('admin.taikhoan.*') || request()->routeIs('admin.yeucau.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isUserActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-user" aria-expanded="{{ $isUserActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -135,8 +135,11 @@
                     <a href="{{ route('sinhvien.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.*') || request()->routeIs('admin.sinhvien.*') ? 'active-sub' : '' }}">
                         <span>Quản lý Sinh viên</span>
                     </a>
-                    <a href="{{ route('giangvien.index') }}" class="submenu-link {{ request()->routeIs('giangvien.*') ? 'active-sub' : '' }}">
+                    <a href="{{ route('giangvien.index') }}" class="submenu-link {{ request()->routeIs('giangvien.*') && !request()->routeIs('admin.chi_tieu_huong_dan.*') ? 'active-sub' : '' }}">
                         <span>Quản lý Giảng viên</span>
+                    </a>
+                    <a href="{{ route('admin.chi_tieu_huong_dan.index') }}" class="submenu-link {{ request()->routeIs('admin.chi_tieu_huong_dan.*') ? 'active-sub' : '' }}">
+                        <span>Chỉ tiêu hướng dẫn</span>
                     </a>
                     <a href="{{ route('admin.taikhoan.index') }}" class="submenu-link {{ request()->routeIs('admin.taikhoan.*') ? 'active-sub' : '' }}">
                         <span>Tài khoản hệ thống</span>
@@ -216,12 +219,12 @@
                              alt="Avatar">
                         <span>{{ Auth::user()->TenDangNhap ?? 'Admin' }}</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; min-width: 220px;" aria-labelledby="adminUserDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="adminUserDropdown">
                         <li>
                             <div class="px-3 py-2 mb-1 border-bottom">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Xin chào!</div>
-                                <div style="font-size: 0.88rem; font-weight: 700; color: #003b73;">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
-                                <div style="font-size: 0.72rem; color: #10b981; margin-top: 1px;"><i class="fa-solid fa-shield-halved me-1"></i>Quản trị viên</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
+                                <div style="font-size: 13px; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-shield-halved me-1"></i>Quản trị viên</div>
                             </div>
                         </li>
                         <li>

@@ -122,60 +122,64 @@
             <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
         </div>
 
-        <!-- Topbar -->
-        <nav class="navbar navbar-expand-lg navbar-custom">
-            <div class="container-fluid">
-                <div class="page-title-text">
-                    <i class="fa-solid fa-angle-right"></i>
-                    @yield('page_title', 'Dashboard')
-                </div>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Dropdown Unified -->
-                    @include('partials.header_notifications')
+        <!-- Topbar / Breadcrumb Bar -->
+        <div class="admin-top-bar">
+            <div class="admin-breadcrumb">
+                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
+                <a href="{{ route('sinhvien.dashboard') }}">Trang chủ</a>
+                <span class="separator">&gt;</span>
+                <span>Khóa luận tốt nghiệp</span>
+                <span class="separator">&gt;</span>
+                <span class="current-page">@yield('page_title', 'Sinh Viên')</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notification Bell Dropdown Unified -->
+                @include('partials.header_notifications')
 
-
-                    <!-- User Dropdown -->
-                    <div class="dropdown">
-                        <a class="user-avatar-btn dropdown-toggle text-decoration-none"
-                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           id="svUserDropdown">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->sinhVien->HoTen ?? Auth::user()->TenDangNhap) }}&background=E5F0FA&color=0072CE&bold=true&size=64"
-                                 alt="Avatar" class="rounded-circle">
-                            <span class="user-name d-none d-sm-inline">{{ Auth::user()->sinhVien->HoTen ?? Auth::user()->TenDangNhap }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="svUserDropdown">
-                            <li>
-                                <div class="px-3 py-2 mb-1" style="border-bottom: 1px solid var(--columbia-blue);">
-                                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--huit-blue-dark);">Xin chào!</div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ Auth::user()->sinhVien->HoTen ?? Auth::user()->TenDangNhap }}</div>
-                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;"><i class="fa-solid fa-user-graduate me-1" style="color: var(--huit-blue);"></i>Sinh Viên</div>
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="fa-solid fa-user text-huit-blue"></i> Hồ sơ cá nhân
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('password.change') }}">
-                                    <i class="fa-solid fa-key text-huit-blue"></i> Đổi mật khẩu
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form-sv').submit();">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </a>
-                            </li>
-                            <form id="logout-form-sv" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </ul>
-                    </div>
+                @php
+                    $svDisplayName = Auth::user()->sinhVien->HoTen ?? Auth::user()->TenDangNhap;
+                @endphp
+                <!-- User Profile Pill -->
+                <div class="dropdown">
+                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                       id="svUserDropdown">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($svDisplayName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                             alt="Avatar">
+                        <span>{{ $svDisplayName }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="svUserDropdown">
+                        <li>
+                            <div class="px-3 py-2 mb-1 border-bottom">
+                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $svDisplayName }}</div>
+                                <div style="font-size: 13px; color: #0284c7; margin-top: 2px;"><i class="fa-solid fa-user-graduate me-1"></i>Sinh viên</div>
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-sv').submit();">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                    <form id="logout-form-sv" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
                 </div>
             </div>
-        </nav>
+        </div>
 
         <!-- Alerts + Content -->
         <div class="content-body">

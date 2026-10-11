@@ -37,49 +37,6 @@
             </div>
         </div>
 
-        <ul class="list-unstyled components">
-            <!-- 0. Tổng quan -->
-            <li class="{{ request()->routeIs('giangvien.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.dashboard') }}">
-                    <i class="fa-solid fa-chart-pie"></i> Tổng quan
-                </a>
-            </li>
-
-            <!-- 1. Công việc hướng dẫn -->
-            <li class="{{ request()->routeIs('giangvien.my_tasks') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.my_tasks') }}">
-                    <i class="fa-solid fa-bars-staggered"></i> Công việc hướng dẫn
-                </a>
-            </li>
-
-            <!-- 2. Lịch công việc -->
-            <li class="{{ request()->routeIs('giangvien.calendar') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.calendar') }}">
-                    <i class="fa-regular fa-calendar-days"></i> Lịch công việc
-                </a>
-            </li>
-
-            <!-- 3. Đề tài của tôi -->
-            <li class="{{ request()->routeIs('giangvien.detai.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.detai.index') }}">
-                    <i class="fa-solid fa-folder-open"></i> Đề tài của tôi
-                </a>
-            </li>
-
-            <!-- 4. Duyệt báo cáo tiến độ -->
-            <li class="{{ request()->routeIs('giangvien.baocao.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.baocao.index') }}">
-                    <i class="fa-solid fa-clipboard-check"></i> Duyệt báo cáo tiến độ
-                </a>
-            </li>
-
-            <!-- 5. Chấm Điểm Hội Đồng -->
-            <li class="{{ request()->routeIs('giangvien.chamdiem.*') ? 'active' : '' }}">
-                <a href="{{ route('giangvien.chamdiem.index') }}">
-                    <i class="fa-solid fa-star"></i> Chấm Điểm Hội Đồng
-                </a>
-            </li>
-
         @php
             $currentGvUser = Auth::user();
             $currentGvModel = $currentGvUser ? \App\Models\GiangVien::getLoggedInGiangVien($currentGvUser) : null;
@@ -186,59 +143,64 @@
             <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
         </div>
 
-        <!-- Topbar -->
-        <nav class="navbar navbar-expand-lg navbar-custom">
-            <div class="container-fluid">
-                <div class="page-title-text">
-                    <i class="fa-solid fa-angle-right"></i>
-                    @yield('page_title', 'Giảng Viên')
-                </div>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    <!-- Notification Bell Dropdown Unified -->
-                    @include('partials.header_notifications')
+        <!-- Topbar / Breadcrumb Bar -->
+        <div class="admin-top-bar">
+            <div class="admin-breadcrumb">
+                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
+                <a href="{{ route('giangvien.dashboard') }}">Trang chủ</a>
+                <span class="separator">&gt;</span>
+                <span>Khóa luận tốt nghiệp</span>
+                <span class="separator">&gt;</span>
+                <span class="current-page">@yield('page_title', 'Giảng Viên')</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notification Bell Dropdown Unified -->
+                @include('partials.header_notifications')
 
-                    <!-- User Dropdown -->
-                    <div class="dropdown">
-                        <a class="user-avatar-btn dropdown-toggle text-decoration-none"
-                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           id="gvUserDropdown">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap) }}&background=E5F0FA&color=0072CE&bold=true&size=64"
-                                 alt="Avatar" class="rounded-circle">
-                            <span class="user-name d-none d-sm-inline">{{ Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="gvUserDropdown">
-                            <li>
-                                <div class="px-3 py-2 mb-1" style="border-bottom: 1px solid var(--columbia-blue);">
-                                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--huit-blue-dark);">Xin chào!</div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">{{ Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap }}</div>
-                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;"><i class="fa-solid fa-chalkboard-user me-1" style="color: var(--huit-blue);"></i>Giảng Viên</div>
-                                </div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="fa-solid fa-user text-huit-blue"></i> Hồ sơ cá nhân
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('password.change') }}">
-                                    <i class="fa-solid fa-key text-huit-blue"></i> Đổi mật khẩu
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form-gv').submit();">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </a>
-                            </li>
-                            <form id="logout-form-gv" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </ul>
-                    </div>
+                @php
+                    $gvDisplayName = Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap;
+                @endphp
+                <!-- User Profile Pill -->
+                <div class="dropdown">
+                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                       id="gvUserDropdown">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($gvDisplayName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                             alt="Avatar">
+                        <span>{{ $gvDisplayName }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="gvUserDropdown">
+                        <li>
+                            <div class="px-3 py-2 mb-1 border-bottom">
+                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $gvDisplayName }}</div>
+                                <div style="font-size: 13px; color: #0284c7; margin-top: 2px;"><i class="fa-solid fa-chalkboard-user me-1"></i>Giảng viên</div>
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-gv').submit();">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                    <form id="logout-form-gv" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
                 </div>
             </div>
-        </nav>
+        </div>
 
         <!-- Alerts + Content -->
         <div class="content-body">

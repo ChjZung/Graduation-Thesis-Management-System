@@ -7,8 +7,8 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-sm btn-outline-secondary mb-2">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách đề tài
+            <a href="{{ request('return_url', route('truongkhoa.duyet_detai.bomon', ['maBoMon' => $detai->giangVien?->MaBoMon, 'MaHocKy' => $detai->MaHocKy])) }}" class="btn btn-sm btn-outline-secondary mb-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách đề tài bộ môn
             </a>
             <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-stamp me-2 text-primary"></i>
@@ -320,7 +320,8 @@
                             <form action="{{ route('truongkhoa.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
                                   onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề xuất đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nSau khi phê duyệt, đề tài sẽ được công bố chính thức để sinh viên đăng ký theo kế hoạch.');">
                                 @csrf
-                                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold shadow-sm rounded-pill">
+                                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+                                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold rounded-pill">
                                     <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt &amp; Công Bố Đề Tài
                                 </button>
                             </form>
@@ -375,6 +376,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <form action="{{ route('truongkhoa.duyet_detai.yeuCauChinhSua', $detai->MaDeTai) }}" method="POST">
                 @csrf
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">
                         <i class="fa-solid fa-pen-to-square text-warning me-2"></i>
@@ -406,6 +408,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <form action="{{ route('truongkhoa.duyet_detai.tuChoi', $detai->MaDeTai) }}" method="POST">
                 @csrf
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold text-danger">
                         <i class="fa-solid fa-circle-xmark me-2"></i>

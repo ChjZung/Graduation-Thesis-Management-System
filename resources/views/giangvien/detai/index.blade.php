@@ -271,21 +271,21 @@
                                                     if (!empty($dt->MaHocPhan) && !empty($n->MaHocPhan) && $n->MaHocPhan !== $dt->MaHocPhan) {
                                                         return false;
                                                     }
-                                                    return true;
+                                                    $soTV = $n->thanhViens->where('TrangThai', 'da_tham_gia')->count();
+                                                    return $soTV >= 3;
                                                 });
                                             @endphp
-                                            <select name="MaNhom" class="form-select" required>
+                                            <select name="MaNhom" class="form-select" required style="font-size: 13px;">
                                                 <option value="">-- Chọn nhóm sinh viên --</option>
                                                 @forelse($dsNhoms as $nhomOption)
                                                     @php
                                                         $soTV = $nhomOption->thanhViens->where('TrangThai', 'da_tham_gia')->count();
-                                                        $isDuThanhVien = ($soTV >= 3);
                                                     @endphp
-                                                    <option value="{{ $nhomOption->MaNhom }}" {{ !$isDuThanhVien ? 'disabled class=text-muted' : '' }}>
-                                                        {{ $nhomOption->TenNhom }} (Trưởng nhóm: {{ $nhomOption->truongNhom->HoTen ?? 'Chưa rõ' }} - {{ $soTV }}/3 SV){{ !$isDuThanhVien ? ' ❌ [Chưa đủ 3 SV - Không thể gán]' : ' ✅ [Đủ 3 SV]' }}
+                                                    <option value="{{ $nhomOption->MaNhom }}">
+                                                        {{ $nhomOption->TenNhom }} (Trưởng nhóm: {{ $nhomOption->truongNhom->HoTen ?? 'Chưa rõ' }} - {{ $soTV }}/3 SV)
                                                     </option>
                                                 @empty
-                                                    <option value="" disabled>Không tìm thấy nhóm phù hợp trong học kỳ này</option>
+                                                    <option value="" disabled>Không tìm thấy nhóm đủ 3 thành viên phù hợp trong học kỳ này</option>
                                                 @endforelse
                                             </select>
                                         </div>

@@ -55,9 +55,12 @@ class DeTaiController extends Controller
         $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        // Danh sách các nhóm chưa có đề tài đã duyệt
+        // B3: Danh sách các nhóm chưa có đề tài đã duyệt VÀ ĐỦ 3 SINH VIÊN
         $nhomsChuaCoDeTai = Nhom::with(['truongNhom.taiKhoan', 'thanhViens.sinhVien', 'hocKy', 'hocPhan'])
             ->whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))
+            ->whereHas('thanhViens', function($q) {
+                $q->where('TrangThai', 'da_tham_gia');
+            }, '>=', 3)
             ->get();
 
         return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'nhomsChuaCoDeTai') + ['NhomChuaCoDeTai' => $nhomsChuaCoDeTai]);
@@ -131,17 +134,23 @@ class DeTaiController extends Controller
         }
 
         $request->validate([
-            'TenDeTai' => 'required|string|max:300',
-            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'TenDeTai'  => 'required|string|min:10|max:300',
+            'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
-            'MoTa' => 'nullable|string',
-            'YeuCau' => 'nullable|string',
-            'LinhVuc' => 'nullable|string|max:150',
+            'MoTa'      => 'nullable|string|min:30|max:2000',
+            'YeuCau'    => 'nullable|string|min:15|max:1000',
+            'LinhVuc'   => 'nullable|string|max:150',
         ], [
-            'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
-            'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
+            'TenDeTai.required'  => 'Vui lòng nhập tên đề tài.',
+            'TenDeTai.min'       => 'Tên đề tài phải có tối thiểu 10 ký tự.',
+            'TenDeTai.max'       => 'Tên đề tài không được vượt quá 300 ký tự.',
+            'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
-            'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
+            'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
+            'MoTa.min'           => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.',
+            'MoTa.max'           => 'Mô tả đề tài không được vượt quá 2000 ký tự.',
+            'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
+            'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
@@ -454,18 +463,24 @@ class DeTaiController extends Controller
         }
 
         $request->validate([
-            'TenDeTai' => 'required|string|max:300',
-            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
-            'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
-            'MoTa' => 'nullable|string',
-            'YeuCau' => 'nullable|string',
-            'LinhVuc' => 'nullable|string|max:150',
+            'TenDeTai'    => 'required|string|min:10|max:300',
+            'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
+            'MaHocPhan'   => 'required|exists:HocPhan,MaHocPhan',
+            'MoTa'        => 'nullable|string|min:30|max:2000',
+            'YeuCau'      => 'nullable|string|min:15|max:1000',
+            'LinhVuc'     => 'nullable|string|max:150',
             'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ], [
-            'TenDeTai.required' => 'Vui lòng nhập tên đề tài.',
-            'MaHocKy.required' => 'Vui lòng chọn học kỳ áp dụng.',
+            'TenDeTai.required'  => 'Vui lòng nhập tên đề tài.',
+            'TenDeTai.min'       => 'Tên đề tài phải có tối thiểu 10 ký tự.',
+            'TenDeTai.max'       => 'Tên đề tài không được vượt quá 300 ký tự.',
+            'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
-            'MaHocPhan.exists' => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
+            'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
+            'MoTa.min'           => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.',
+            'MoTa.max'           => 'Mô tả đề tài không được vượt quá 2000 ký tự.',
+            'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
+            'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);

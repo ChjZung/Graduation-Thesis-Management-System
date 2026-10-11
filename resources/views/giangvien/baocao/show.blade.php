@@ -107,6 +107,97 @@
     </div>
 </div>
 
+<!-- DÒNG THỜI GIAN CÁC LẦN NỘP (TIMELINE) CỦA MỐC NÀY -->
+@if($baoCao->khoiBaoCaos && $baoCao->khoiBaoCaos->isNotEmpty())
+<div class="card card-premium shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="fa-solid fa-timeline text-primary"></i>
+            <span>Lịch Sử Các Khối Nộp Bài & Nhận Xét (Timeline) — Mốc {{ $baoCao->LanBaoCao }}</span>
+        </h6>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-primary border fw-semibold" style="font-size: 12px;">
+                Tổng cộng: {{ $baoCao->khoiBaoCaos->count() }} lần nộp
+            </span>
+            <span class="badge {{ $baoCao->TrangThai === 'Đạt' ? 'bg-success' : ($baoCao->TrangThai === 'Chờ duyệt' ? 'bg-warning text-dark' : 'bg-info text-dark') }} rounded-pill px-3 py-1 fw-bold">
+                Mới nhất: {{ $baoCao->TrangThai }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body p-4 bg-light">
+        <div class="position-relative ps-3" style="border-left: 2px solid #cbd5e1; margin-left: 10px;">
+            @foreach($baoCao->khoiBaoCaos as $khoi)
+            @php $isLatestKhoi = ($khoi->LanNop === $baoCao->khoiBaoCaos->max('LanNop')); @endphp
+            <div class="position-relative mb-3 pb-1">
+                <!-- Nút tròn timeline -->
+                <div class="position-absolute rounded-circle {{ $khoi->TrangThai === 'Đạt' ? 'bg-success' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'bg-warning' : 'bg-primary') }}" 
+                     style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid #fff;"></div>
+                <div class="card border bg-white p-3 rounded-2 shadow-none {{ $isLatestKhoi ? 'border-primary' : '' }}" style="font-size: 13px;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge {{ $isLatestKhoi ? 'bg-primary' : 'bg-secondary' }} text-white fw-bold">
+                                Khối #{{ $khoi->LanNop }} (Lần nộp {{ $khoi->LanNop }})
+                            </span>
+                            @if($isLatestKhoi)
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Mới nhất</span>
+                            @endif
+                            <span class="text-muted small">
+                                <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
+                            </span>
+                        </div>
+                        <div>
+                            @if($khoi->TrangThai === 'Đạt')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">✅ Đạt</span>
+                            @elseif($khoi->TrangThai === 'Yêu cầu nộp lại')
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">🔄 Yêu cầu chỉnh sửa</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary border fw-bold">⏳ Đang chờ GVHD đánh giá</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        @if($khoi->TenFile)
+                            <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 small">
+                                <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile }} (Mở xem)
+                            </a>
+                            <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" download class="btn btn-xs btn-light border rounded-pill px-2 py-1 small">
+                                <i class="fa-solid fa-download me-1"></i>Tải về
+                            </a>
+                        @endif
+                        @if($khoi->LinkCode)
+                            <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-xs btn-outline-dark rounded-pill px-2 py-1 small">
+                                <i class="fa-brands fa-github me-1"></i>Source Code: {{ Str::limit($khoi->LinkCode, 35) }}
+                            </a>
+                        @endif
+                    </div>
+                    @if($khoi->NoiDungBaoCao)
+                        <div class="small text-secondary mb-1">
+                            <strong>Ghi chú của sinh viên:</strong> {{ $khoi->NoiDungBaoCao }}
+                        </div>
+                    @endif
+                    @if($khoi->NhanXetGV)
+                        <div class="mt-2 p-2 rounded bg-light border-start border-3 {{ $khoi->TrangThai === 'Đạt' ? 'border-success' : 'border-warning' }}">
+                            <div class="small fw-bold text-dark">
+                                <i class="fa-solid fa-comment-dots text-primary me-1"></i>Đánh giá của bạn 
+                                @if($khoi->NgayNhanXet)
+                                    <span class="text-muted fw-normal">({{ \Carbon\Carbon::parse($khoi->NgayNhanXet)->format('H:i d/m/Y') }})</span>
+                                @endif:
+                            </div>
+                            <div class="small text-dark mt-1"><em>"{{ $khoi->NhanXetGV }}"</em></div>
+                        </div>
+                    @elseif($isLatestKhoi && $khoi->TrangThai === 'Chờ duyệt')
+                        <div class="mt-2 p-2 rounded bg-warning bg-opacity-10 border border-warning-subtle small text-warning-emphasis">
+                            <i class="fa-solid fa-hourglass-half me-1"></i>Bản nộp này đang chờ bạn đánh giá ở biểu mẫu bên dưới.
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Split View: Left (PDF Preview & Student Submission) | Right (AI Summary & Feedback) -->
 <div class="row g-4">
     <!-- Cột Trái (58%): Bản xem trước tài liệu PDF & Nội dung nộp -->

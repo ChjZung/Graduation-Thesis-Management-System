@@ -30,6 +30,13 @@ class AuthTest extends TestCase
 
         $response->assertSessionHasErrors();
         $this->assertGuest();
+
+        // Reset lại để không làm tích lũy số lần sai dẫn tới khóa tài khoản admin
+        TaiKhoan::where('TenDangNhap', 'admin')->update([
+            'SoLanDangNhapSai' => 0,
+            'TrangThai' => true,
+            'NgayKhoa' => null
+        ]);
     }
 
     /**

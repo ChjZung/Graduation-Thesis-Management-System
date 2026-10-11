@@ -79,4 +79,57 @@ class AdminGiangVienSemesterFilterTest extends TestCase
         $response->assertSee('Import Danh Sách Giảng Viên');
         $response->assertSee('Thêm Mới Giảng Viên');
     }
+
+    /**
+     * A3: Rà soát admin hiển thị chỉ tiêu khớp quy tắc P1, dùng chung ChiTieuService,
+     * không còn hiển thị "6/5 đề tài" hay "6/5 hướng dẫn" khi giảng viên có 6 đề tài.
+     */
+    public function test_a3_admin_giangvien_uses_chitieuservice_and_never_shows_6_over_5()
+    {
+        $admin = TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $maGV = 'GV00000001';
+        $maHocKy = 'HK2627_2';
+
+        $initialTopicCount = \App\Models\DeTai::where('MaGV', $maGV)
+            ->whereIn('TrangThai', ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt', 'Đã đăng ký', 'Hoàn thành'])
+            ->count();
+        $expectedTotalTopics = $initialTopicCount + 6;
+
+        // 1. Tạo 6 đề tài đã duyệt cho GV00000001
+        $createdTopics = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $createdTopics[] = \App\Models\DeTai::create([
+                'MaDeTai' => "DT_A3_TEST_{$i}",
+                'TenDeTai' => "Đề tài A3 test {$i}",
+                'MaGV' => $maGV,
+                'MaHocKy' => $maHocKy,
+                'TrangThai' => 'Đã công bố',
+            ]);
+        }
+
+        try {
+            // 2. Truy cập màn hình /admin/giangvien
+            $response = $this->actingAs($admin)->get("/admin/giangvien?search={$maGV}&MaHocKy_filter={$maHocKy}");
+            $response->assertStatus(200);
+
+            // TUYỆT ĐỐI không hiển thị "6/5"
+            $response->assertDontSee('6/5 đề tài');
+            $response->assertDontSee('6/5 hướng dẫn');
+
+            // Hiển thị định mức nhóm theo đúng ChiTieuService (số nhóm sinh viên đã duyệt trên tổng số nhóm chỉ tiêu)
+            $stats = \App\Services\ChiTieuService::getChiTieuStats($maGV, $maHocKy);
+            $response->assertSee("{$stats['label']} nhóm");
+
+            // 3. Kiểm tra trang chi tiết /admin/giangvien/{id}
+            $showRes = $this->actingAs($admin)->get("/admin/giangvien/{$maGV}");
+            $showRes->assertStatus(200);
+            $showRes->assertDontSee('/5 đề tài');
+            $showRes->assertSeeText("{$stats['da_dung']} / {$stats['tong']} nhóm tối đa");
+            $showRes->assertSeeText("Đề Tài Đề Xuất ({$expectedTotalTopics})");
+        } finally {
+            foreach ($createdTopics as $dt) {
+                $dt->delete();
+            }
+        }
+    }
 }

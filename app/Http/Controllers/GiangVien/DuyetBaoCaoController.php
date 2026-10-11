@@ -4,6 +4,7 @@ namespace App\Http\Controllers\GiangVien;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaoCaoTienDo;
+use App\Models\KhoiBaoCaoTienDo;
 use App\Models\GiangVien;
 use App\Models\Nhom;
 use App\Models\PhieuDangKy;
@@ -57,6 +58,7 @@ class DuyetBaoCaoController extends Controller
         $baoCao = BaoCaoTienDo::with([
             'deTai.giangVien',
             'tomTatBaoCao',
+            'khoiBaoCaos',
         ])->findOrFail($id);
 
         if (!$baoCao->deTai || $baoCao->deTai->MaGV !== $giangVien->MaGV) {
@@ -80,6 +82,7 @@ class DuyetBaoCaoController extends Controller
 
         // Lấy tất cả 5 mốc của đề tài này để hiển thị trên bảng lộ trình chi tiết
         $allBaoCaos = BaoCaoTienDo::where('MaDeTai', $baoCao->MaDeTai)
+            ->with('khoiBaoCaos')
             ->orderBy('LanBaoCao')
             ->get()
             ->keyBy('LanBaoCao');
@@ -137,6 +140,37 @@ class DuyetBaoCaoController extends Controller
         }
 
         $isFirstReview = ($baoCao->TrangThai === 'Chờ duyệt');
+
+        // Cập nhật khối báo cáo mới nhất của đợt nộp này
+        $khoiMoiNhat = KhoiBaoCaoTienDo::where('MaBaoCao', $baoCao->MaBaoCao)->latest('LanNop')->first();
+        $nguoiNhanXet = ($giangVien->HocHam ? $giangVien->HocHam . '.' : '') . ($giangVien->HocVi ? $giangVien->HocVi . '. ' : '') . $giangVien->HoTen;
+
+        if ($khoiMoiNhat) {
+            $khoiMoiNhat->update([
+                'TrangThai'    => $request->LoaiNhanXet,
+                'NhanXetGV'    => $request->NoiDung,
+                'NguoiNhanXet' => $nguoiNhanXet,
+                'NgayNhanXet'  => now(),
+            ]);
+        } else {
+            KhoiBaoCaoTienDo::create([
+                'MaKhoi'       => 'KHOI_' . $baoCao->MaBaoCao . '_1',
+                'MaBaoCao'     => $baoCao->MaBaoCao,
+                'MaDeTai'      => $baoCao->MaDeTai,
+                'LanBaoCao'    => $baoCao->LanBaoCao,
+                'LanNop'       => 1,
+                'TieuDe'       => $baoCao->TieuDe,
+                'NoiDungBaoCao'=> $baoCao->NoiDungBaoCao,
+                'TenFile'      => $baoCao->TenFile,
+                'DuongDanFile' => $baoCao->DuongDanFile,
+                'LinkCode'     => $baoCao->LinkCode,
+                'TrangThai'    => $request->LoaiNhanXet,
+                'NhanXetGV'    => $request->NoiDung,
+                'NguoiNhanXet' => $nguoiNhanXet,
+                'NgayNop'      => $baoCao->NgayNop ?? now(),
+                'NgayNhanXet'  => now(),
+            ]);
+        }
 
         $baoCao->update([
             'TrangThai' => $request->LoaiNhanXet,

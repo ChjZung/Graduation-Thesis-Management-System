@@ -9,6 +9,7 @@ use App\Models\KeHoachKhoaLuan;
 use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
+use App\Models\KhoiBaoCaoTienDo;
 use App\Helpers\IdGenerator;
 use App\Jobs\GenerateAiSummaryJob;
 use Illuminate\Http\Request;
@@ -67,7 +68,7 @@ class BaoCaoController extends Controller
             ]);
         }
 
-        $baoCaos = BaoCaoTienDo::with('tomTatBaoCao')
+        $baoCaos = BaoCaoTienDo::with(['tomTatBaoCao', 'khoiBaoCaos'])
             ->where('MaDeTai', $nhom->deTai->MaDeTai)
             ->orderBy('LanBaoCao')
             ->get()
@@ -88,10 +89,12 @@ class BaoCaoController extends Controller
         if ($mocHienTai > 6) $mocHienTai = 6;
 
         // Lấy deadline các mốc từ KeHoach để hiển thị cảnh báo
+        $maKH = $nhom->deTai?->hocKy?->keHoachKhoaLuan?->MakeHoach;
+        $timeCheckHienTai = $this->checkThoiGianNopBaoCao($mocHienTai, $maKH);
         $mocDeadlines = $this->getMocDeadlines();
 
         return view('sinhvien.baocao.index', compact(
-            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines'
+            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines', 'timeCheckHienTai'
         ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
@@ -101,7 +104,7 @@ class BaoCaoController extends Controller
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
-        $nhom = Nhom::with('deTai')->findOrFail($thanhVienRecord->MaNhom);
+        $nhom = Nhom::with(['deTai.hocKy.keHoachKhoaLuan'])->findOrFail($thanhVienRecord->MaNhom);
         $deTai = $nhom->deTai;
 
         if (!$deTai) {
@@ -115,6 +118,13 @@ class BaoCaoController extends Controller
             return back()->with('error', 'Giai đoạn báo cáo không hợp lệ.');
         }
 
+        // C1: Kiểm tra mốc thời gian nộp báo cáo tiến độ theo DB (chặn server-side)
+        $maKH = $deTai->hocKy?->keHoachKhoaLuan?->MakeHoach;
+        $timeCheck = $this->checkThoiGianNopBaoCao($lan, $maKH);
+        if (!$timeCheck['is_open']) {
+            return back()->withErrors(['error' => $timeCheck['message']])->with('error', $timeCheck['message'])->withInput();
+        }
+
         // Validate theo loại mốc
         $rules = ['LanBaoCao' => 'required|integer|min:1|max:6'];
         $messages = [];
@@ -122,6 +132,8 @@ class BaoCaoController extends Controller
         $existing = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)
             ->where('LanBaoCao', $lan)
             ->first();
+
+        $isResubmit = ($existing && $existing->TrangThai === 'Yêu cầu nộp lại');
 
         if (in_array($mocInfo['loai'], ['pdf', 'pdf_git'])) {
             // Nếu đã có file trước đó và đang chỉnh sửa thì không bắt buộc upload lại file mới
@@ -135,6 +147,10 @@ class BaoCaoController extends Controller
             $rules['LinkCode'] = 'nullable|url';
             $messages['LinkCode.url'] = 'Link Code phải là URL hợp lệ (bắt đầu https://).';
         }
+
+        $rules['NoiDungBaoCao'] = 'nullable|string|min:20|max:5000';
+        $messages['NoiDungBaoCao.min'] = 'Nội dung tóm tắt tiến độ báo cáo phải có tối thiểu 20 ký tự.';
+        $messages['NoiDungBaoCao.max'] = 'Nội dung tóm tắt tiến độ báo cáo không được vượt quá 5000 ký tự.';
 
         $request->validate($rules, $messages);
 
@@ -154,10 +170,12 @@ class BaoCaoController extends Controller
         }
 
         $maBaoCao = null;
+        $lanNop = 1;
 
-        DB::transaction(function () use ($request, $nhom, $deTai, $lan, $mocInfo, $existing, &$maBaoCao) {
+        DB::transaction(function () use ($request, $nhom, $deTai, $lan, $mocInfo, $existing, $timeCheck, $isResubmit, &$maBaoCao, &$lanNop) {
             $tenFile = $existing?->TenFile;
             $duongDanFile = $existing?->DuongDanFile;
+            $linkCode = $request->input('LinkCode');
             if ($request->hasFile('FileBaoCao')) {
                 $file = $request->file('FileBaoCao');
                 $tenFile = $file->getClientOriginalName();
@@ -165,23 +183,89 @@ class BaoCaoController extends Controller
             }
 
             $tieuDe = $request->input('TieuDe') ?: $mocInfo['ten'];
-            $noiDung = $request->input('NoiDungBaoCao') . ($request->input('LinkCode') ? "\nLink Code: " . $request->input('LinkCode') : '');
+            $noiDung = $request->input('NoiDungBaoCao') . ($linkCode ? "\nLink Code: " . $linkCode : '');
 
             if ($existing) {
+                $maBaoCao = $existing->MaBaoCao;
                 // Xóa tóm tắt AI cũ nếu có
                 $existing->tomTatBaoCao()?->delete();
 
-                $existing->update([
-                    'TieuDe'        => $tieuDe,
-                    'NoiDungBaoCao' => $noiDung,
-                    'NgayNop'       => now()->toDateString(),
-                    'TenFile'       => $tenFile,
-                    'DuongDanFile'  => $duongDanFile,
-                    'TrangThai'     => 'Chờ duyệt',
-                    'NhanXet'       => null,
-                ]);
-                $maBaoCao = $existing->MaBaoCao;
+                if ($isResubmit) {
+                    // C2: GIẢNG VIÊN YÊU CẦU CHỈNH SỬA -> SINH VIÊN NỘP LẠI TẠO KHỐI MỚI (IMMUTABLE BLOCK)
+                    $maxLanNop = KhoiBaoCaoTienDo::where('MaBaoCao', $existing->MaBaoCao)->max('LanNop') ?? 1;
+                    $lanNop = $maxLanNop + 1;
+                    $maKhoi = 'KHOI_' . $existing->MaBaoCao . '_' . $lanNop;
+
+                    KhoiBaoCaoTienDo::create([
+                        'MaKhoi'        => $maKhoi,
+                        'MaBaoCao'      => $existing->MaBaoCao,
+                        'MaDeTai'       => $deTai->MaDeTai,
+                        'LanBaoCao'     => $lan,
+                        'LanNop'        => $lanNop,
+                        'TieuDe'        => $tieuDe,
+                        'NoiDungBaoCao' => $noiDung,
+                        'TenFile'       => $tenFile,
+                        'DuongDanFile'  => $duongDanFile,
+                        'LinkCode'      => $linkCode,
+                        'TrangThai'     => 'Chờ duyệt',
+                        'NhanXetGV'     => null,
+                        'NguoiNhanXet'  => null,
+                        'NgayNop'       => now(),
+                    ]);
+
+                    $existing->update([
+                        'TieuDe'        => $tieuDe,
+                        'NoiDungBaoCao' => $noiDung,
+                        'NgayNop'       => now()->toDateString(),
+                        'TenFile'       => $tenFile,
+                        'DuongDanFile'  => $duongDanFile,
+                        'TrangThai'     => 'Chờ duyệt',
+                        'NhanXet'       => null,
+                        'MaMoc'         => $timeCheck['ma_moc'] ?? $existing->MaMoc,
+                    ]);
+                } else {
+                    // Đang ở trạng thái Chờ duyệt: Cập nhật khối hiện tại
+                    $existing->update([
+                        'TieuDe'        => $tieuDe,
+                        'NoiDungBaoCao' => $noiDung,
+                        'NgayNop'       => now()->toDateString(),
+                        'TenFile'       => $tenFile,
+                        'DuongDanFile'  => $duongDanFile,
+                        'TrangThai'     => 'Chờ duyệt',
+                        'NhanXet'       => null,
+                        'MaMoc'         => $timeCheck['ma_moc'] ?? $existing->MaMoc,
+                    ]);
+
+                    $khoiHienTai = KhoiBaoCaoTienDo::where('MaBaoCao', $existing->MaBaoCao)->latest('LanNop')->first();
+                    if ($khoiHienTai) {
+                        $lanNop = $khoiHienTai->LanNop;
+                        $khoiHienTai->update([
+                            'TieuDe'        => $tieuDe,
+                            'NoiDungBaoCao' => $noiDung,
+                            'TenFile'       => $tenFile,
+                            'DuongDanFile'  => $duongDanFile,
+                            'LinkCode'      => $linkCode,
+                            'NgayNop'       => now(),
+                        ]);
+                    } else {
+                        KhoiBaoCaoTienDo::create([
+                            'MaKhoi'        => 'KHOI_' . $existing->MaBaoCao . '_1',
+                            'MaBaoCao'      => $existing->MaBaoCao,
+                            'MaDeTai'       => $deTai->MaDeTai,
+                            'LanBaoCao'     => $lan,
+                            'LanNop'        => 1,
+                            'TieuDe'        => $tieuDe,
+                            'NoiDungBaoCao' => $noiDung,
+                            'TenFile'       => $tenFile,
+                            'DuongDanFile'  => $duongDanFile,
+                            'LinkCode'      => $linkCode,
+                            'TrangThai'     => 'Chờ duyệt',
+                            'NgayNop'       => now(),
+                        ]);
+                    }
+                }
             } else {
+                // Lần đầu nộp bài cho giai đoạn này: Tạo BaoCaoTienDo và Khối 1
                 $maBaoCao = IdGenerator::nextBaoCao();
                 BaoCaoTienDo::create([
                     'MaBaoCao'      => $maBaoCao,
@@ -193,6 +277,22 @@ class BaoCaoController extends Controller
                     'TenFile'       => $tenFile,
                     'DuongDanFile'  => $duongDanFile,
                     'TrangThai'     => 'Chờ duyệt',
+                    'MaMoc'         => $timeCheck['ma_moc'] ?? null,
+                ]);
+
+                KhoiBaoCaoTienDo::create([
+                    'MaKhoi'        => 'KHOI_' . $maBaoCao . '_1',
+                    'MaBaoCao'      => $maBaoCao,
+                    'MaDeTai'       => $deTai->MaDeTai,
+                    'LanBaoCao'     => $lan,
+                    'LanNop'        => 1,
+                    'TieuDe'        => $tieuDe,
+                    'NoiDungBaoCao' => $noiDung,
+                    'TenFile'       => $tenFile,
+                    'DuongDanFile'  => $duongDanFile,
+                    'LinkCode'      => $linkCode,
+                    'TrangThai'     => 'Chờ duyệt',
+                    'NgayNop'       => now(),
                 ]);
             }
         });
@@ -200,8 +300,90 @@ class BaoCaoController extends Controller
         // BƯỚC 5: Dispatch Queue Job bất đồng bộ
         GenerateAiSummaryJob::dispatch($maBaoCao);
 
-        return redirect()->route('sinhvien.baocao.index')
-            ->with('success', "Nộp và lưu thông tin tiến độ GĐ {$lan} thành công! Hệ thống đã kích hoạt trợ lý AI phân tích và tóm tắt nội dung báo cáo.");
+        $successMsg = $isResubmit
+            ? "Nộp lại báo cáo tiến độ GĐ {$lan} thành công (Lần nộp {$lanNop})! Hệ thống đã tạo khối nộp bài mới và gửi đến Giảng viên hướng dẫn."
+            : "Nộp và lưu thông tin tiến độ GĐ {$lan} thành công! Hệ thống đã kích hoạt trợ lý AI phân tích và tóm tắt nội dung báo cáo.";
+
+        return redirect()->route('sinhvien.baocao.index')->with('success', $successMsg);
+    }
+
+    /**
+     * C1: Kiểm tra mốc thời gian nộp báo cáo tiến độ theo DB.
+     * Quy tắc C1:
+     * - Chỉ được nộp báo cáo tiến độ đợt 1 từ ngày 15/9 trở đi (gồm 15/9).
+     * - Lưu mốc ngày trong DB (có ngày bắt đầu/kết thúc, NULL = không giới hạn).
+     * - Chặn server-side nếu chưa đến ngày bắt đầu hoặc đã quá ngày kết thúc.
+     */
+    public function checkThoiGianNopBaoCao(int $lan, ?string $maKeHoach = null, $nowDate = null): array
+    {
+        $now = $nowDate ? Carbon::parse($nowDate) : Carbon::now();
+        $today = $now->format('Y-m-d');
+
+        // Tìm mốc trong DB
+        $mocQuery = MocThoiGianKhoaLuan::query();
+        if ($maKeHoach) {
+            $mocQuery->where('MakeHoach', $maKeHoach);
+        } else {
+            $activePlan = \App\Services\PlanPhaseService::getActivePlan();
+            if ($activePlan) {
+                $mocQuery->where('MakeHoach', $activePlan->MakeHoach);
+            }
+        }
+
+        $moc = $mocQuery->where(function($q) use ($lan) {
+            $q->where('MoTa', 'LIKE', "%[BAO_CAO_TIEN_DO_{$lan}]%")
+              ->orWhere('TenMoc', 'LIKE', "%báo cáo tiến độ đợt {$lan}%")
+              ->orWhere('TenMoc', 'LIKE', "%tiến độ đợt {$lan}%")
+              ->orWhere('TenMoc', 'LIKE', "%GĐ {$lan}%")
+              ->orWhere('TenMoc', 'LIKE', "%Giai đoạn {$lan}%");
+        })->first();
+
+        // Mặc định cho đợt 1 nếu chưa cấu hình mốc trong DB: từ 15/09/2026 trở đi (gồm 15/9), kết thúc NULL (không giới hạn)
+        $startDate = $moc ? $moc->NgayBatDau : ($lan === 1 ? '2026-09-15' : null);
+        $endDate   = $moc ? $moc->NgayKetThuc : null;
+        $maMoc     = $moc?->MaMoc;
+
+        // 1. Kiểm tra ngày bắt đầu (Nếu có ngày bắt đầu, trước ngày này sẽ chặn; gồm ngày bắt đầu)
+        if (!empty($startDate)) {
+            $startFormatted = Carbon::parse($startDate)->format('Y-m-d');
+            if ($today < $startFormatted) {
+                $displayDate = Carbon::parse($startDate)->format('d/m/Y');
+                return [
+                    'is_open'    => false,
+                    'code'       => 'CHUA_DEN_HAN_NOP',
+                    'start_date' => $startDate,
+                    'end_date'   => $endDate,
+                    'ma_moc'     => $maMoc,
+                    'message'    => "Chỉ được nộp báo cáo tiến độ đợt {$lan} từ ngày {$displayDate} trở đi (gồm cả ngày {$displayDate})! Hiện tại hệ thống chưa mở nhận bài.",
+                ];
+            }
+        }
+
+        // 2. Kiểm tra ngày kết thúc (NULL = không giới hạn)
+        if (!empty($endDate)) {
+            $endFormatted = Carbon::parse($endDate)->format('Y-m-d');
+            if ($today > $endFormatted) {
+                $displayDate = Carbon::parse($endDate)->format('d/m/Y');
+                return [
+                    'is_open'    => false,
+                    'code'       => 'QUA_HAN_NOP',
+                    'start_date' => $startDate,
+                    'end_date'   => $endDate,
+                    'ma_moc'     => $maMoc,
+                    'message'    => "Đã quá hạn nộp báo cáo tiến độ đợt {$lan}! Hạn cuối nộp bài là 23:59 ngày {$displayDate}.",
+                ];
+            }
+        }
+
+        // 3. Trong khung thời gian hợp lệ (hoặc không giới hạn)
+        return [
+            'is_open'    => true,
+            'code'       => 'DANG_MO',
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+            'ma_moc'     => $maMoc,
+            'message'    => "Đang mở nộp báo cáo tiến độ đợt {$lan}." . (!empty($startDate) ? " (Mở từ ngày " . Carbon::parse($startDate)->format('d/m/Y') . ")" : ""),
+        ];
     }
 
     /**
@@ -210,28 +392,8 @@ class BaoCaoController extends Controller
      */
     private function checkDeadline(int $lan): ?string
     {
-        // Lấy kế hoạch khóa luận đang hiện hành
-        $keHoach = KeHoachKhoaLuan::where('TrangThai', 'Đang thực hiện')->first();
-        if (!$keHoach) return null; // Không có kế hoạch → bỏ qua kiểm tra
-
-        $moc = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)
-            ->where(function($q) use ($lan) {
-                $q->where('TenMoc', 'LIKE', "%Mốc {$lan}%")
-                  ->orWhere('TenMoc', 'LIKE', "%Moc {$lan}%")
-                  ->orWhere('TenMoc', 'LIKE', "%GĐ {$lan}%")
-                  ->orWhere('TenMoc', 'LIKE', "%Giai đoạn {$lan}%");
-            })
-            ->first();
-
-        if (!$moc) return null; // Chưa cấu hình mốc → bỏ qua
-
-        $ngayKetThuc = Carbon::parse($moc->NgayKetThuc)->endOfDay();
-
-        if (now()->greaterThan($ngayKetThuc)) {
-            return "Đã quá hạn nộp Giai đoạn {$lan}! Hạn cuối là " . $ngayKetThuc->format('d/m/Y H:i') . ". Vui lòng liên hệ Giáo vụ Khoa nếu cần gia hạn.";
-        }
-
-        return null;
+        $timeCheck = $this->checkThoiGianNopBaoCao($lan);
+        return $timeCheck['is_open'] ? null : $timeCheck['message'];
     }
 
     /**
@@ -239,14 +401,15 @@ class BaoCaoController extends Controller
      */
     private function getMocDeadlines(): array
     {
-        $keHoach = KeHoachKhoaLuan::where('TrangThai', 'Đang thực hiện')->first();
+        $keHoach = KeHoachKhoaLuan::where('TrangThai', 'Đang thực hiện')->first()
+            ?? KeHoachKhoaLuan::whereIn('TrangThai', ['ĐÃ CÔNG BỐ', 'Đang thực hiện', 'Đã công bố'])->latest()->first();
         if (!$keHoach) return [];
 
-        $mocs = MocThoiGianKhoaLuan::where('MaKeHoach', $keHoach->MaKeHoach)->get();
+        $mocs = MocThoiGianKhoaLuan::where('MakeHoach', $keHoach->MakeHoach)->get();
         $map = [];
         foreach ($mocs as $moc) {
             foreach (range(1, 6) as $lan) {
-                if (str_contains($moc->TenMoc, "Mốc {$lan}") || str_contains($moc->TenMoc, "GĐ {$lan}") || str_contains($moc->TenMoc, "Giai đoạn {$lan}")) {
+                if (str_contains($moc->TenMoc, "Mốc {$lan}") || str_contains($moc->TenMoc, "GĐ {$lan}") || str_contains($moc->TenMoc, "Giai đoạn {$lan}") || str_contains($moc->TenMoc, "đợt {$lan}") || str_contains($moc->MoTa ?? '', "[BAO_CAO_TIEN_DO_{$lan}]")) {
                     $map[$lan] = $moc->NgayKetThuc;
                 }
             }

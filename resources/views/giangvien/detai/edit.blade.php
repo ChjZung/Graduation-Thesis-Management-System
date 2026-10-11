@@ -120,23 +120,32 @@
 
                     <div class="mb-3">
                         <label for="TenDeTai" class="form-label fw-bold">Tên Đề Tài (Tiếng Việt) <span class="text-danger">*</span></label>
-                        <input type="text" name="TenDeTai" id="TenDeTai" class="form-control" value="{{ old('TenDeTai', $banNhap['TenDeTai'] ?? $detai->TenDeTai) }}" required>
+                        <input type="text" name="TenDeTai" id="TenDeTai" class="form-control @error('TenDeTai') is-invalid @enderror" value="{{ old('TenDeTai', $banNhap['TenDeTai'] ?? $detai->TenDeTai) }}" minlength="10" maxlength="300" placeholder="Nhập tên đề tài khóa luận (tối thiểu 10 ký tự)..." required>
+                        @error('TenDeTai')
+                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
-                            <select name="MaHocKy" id="MaHocKy" class="form-select" required>
+                            <select name="MaHocKy" id="MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror" required>
                                 @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy', $banNhap['MaHocKy'] ?? $detai->MaHocKy) == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
                                 @endforeach
                             </select>
+                            @error('MaHocKy')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-5">
                             <label for="MaHocPhan" class="form-label fw-bold">Môn / Học Phần Áp Dụng <span class="text-danger">*</span></label>
-                            <select name="MaHocPhan" id="MaHocPhan" class="form-select" required>
+                            <select name="MaHocPhan" id="MaHocPhan" class="form-select @error('MaHocPhan') is-invalid @enderror" required>
                                 <option value="">-- Vui lòng chọn học kỳ trước --</option>
                             </select>
+                            @error('MaHocPhan')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                             <div class="form-text text-muted small" id="MaHocPhan_help">
                                 Chỉ hiển thị các môn được mở trong học kỳ đã chọn theo Bộ môn <strong>{{ $gv->boMon->TenBoMon ?? 'trực thuộc' }}</strong>.
                             </div>
@@ -150,17 +159,26 @@
 
                     <div class="mb-3">
                         <label for="LinhVuc" class="form-label fw-bold">Lĩnh Vực Nghiên Cứu / Hướng Đề Tài</label>
-                        <input type="text" name="LinhVuc" id="LinhVuc" class="form-control" value="{{ old('LinhVuc', $banNhap['LinhVuc'] ?? $detai->LinhVuc) }}" placeholder="Ví dụ: AI, Web, Mobile...">
+                        <input type="text" name="LinhVuc" id="LinhVuc" class="form-control @error('LinhVuc') is-invalid @enderror" value="{{ old('LinhVuc', $banNhap['LinhVuc'] ?? $detai->LinhVuc) }}" placeholder="Ví dụ: AI, Web, Mobile...">
+                        @error('LinhVuc')
+                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label for="MoTa" class="form-label fw-bold">Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu</label>
-                        <textarea name="MoTa" id="MoTa" class="form-control" rows="3">{{ old('MoTa', $banNhap['MoTa'] ?? $detai->MoTa) }}</textarea>
+                        <textarea name="MoTa" id="MoTa" class="form-control @error('MoTa') is-invalid @enderror" rows="3" minlength="30" maxlength="2000" placeholder="Nhập mô tả chi tiết bài toán, phạm vi nghiên cứu, kết quả kỳ vọng (tối thiểu 30 ký tự)...">{{ old('MoTa', $banNhap['MoTa'] ?? $detai->MoTa) }}</textarea>
+                        @error('MoTa')
+                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Năng Lực Đối Với Sinh Viên</label>
-                        <textarea name="YeuCau" id="YeuCau" class="form-control" rows="3">{{ old('YeuCau', $banNhap['YeuCau'] ?? $detai->YeuCau) }}</textarea>
+                        <textarea name="YeuCau" id="YeuCau" class="form-control @error('YeuCau') is-invalid @enderror" rows="3" minlength="15" maxlength="1000" placeholder="Ví dụ: Thành thạo Laravel/Vue, kiến thức cơ sở dữ liệu vững vàng (tối thiểu 15 ký tự)...">{{ old('YeuCau', $banNhap['YeuCau'] ?? $detai->YeuCau) }}</textarea>
+                        @error('YeuCau')
+                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-4 p-3 bg-light rounded-3 border">

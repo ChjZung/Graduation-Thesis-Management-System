@@ -289,4 +289,23 @@ class IdGenerator
             return 'CTD' . str_pad($next, 6, '0', STR_PAD_LEFT);
         });
     }
+
+    /**
+     * Sinh mã Chỉ tiêu hướng dẫn: CT000001, CT000002...
+     */
+    public static function nextChiTieuHuongDan(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('ChiTieuHuongDan')
+                ->where('MaChiTieu', 'REGEXP', '^CT[0-9]+$')
+                ->max(DB::raw("CAST(SUBSTRING(MaChiTieu, 3) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            $id = 'CT' . str_pad($next, 6, '0', STR_PAD_LEFT);
+            while (DB::table('ChiTieuHuongDan')->where('MaChiTieu', $id)->exists()) {
+                $next++;
+                $id = 'CT' . str_pad($next, 6, '0', STR_PAD_LEFT);
+            }
+            return $id;
+        });
+    }
 }

@@ -513,20 +513,26 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">
-                            Chọn Giảng viên phản biện (Bộ môn {{ $detai->giangVien?->boMon?->TenBoMon ?? '' }}) <span class="text-danger">*</span>
+                            Chọn Giảng viên phản biện (Khoa {{ $detai->giangVien?->boMon?->khoa?->TenKhoa ?? ($maKhoa ?? 'CNTT') }}) <span class="text-danger">*</span>
                         </label>
                         <select name="MaGVPhanBien" class="form-select" required>
-                            <option value="">-- Chọn Giảng viên phản biện (Bộ môn {{ $detai->giangVien?->boMon?->TenBoMon ?? '' }}) --</option>
+                            <option value="">-- Chọn Giảng viên phản biện (Khoa {{ $maKhoa ?? 'CNTT' }}) --</option>
                             @foreach($allGiangViens as $gvOption)
-                                @if($gvOption->MaGV !== $detai->MaGV && (!$detai->giangVien || $gvOption->MaBoMon === $detai->giangVien->MaBoMon))
-                                    <option value="{{ $gvOption->MaGV }}" {{ ($phanBienHienTai && $phanBienHienTai->MaGV === $gvOption->MaGV) ? 'selected' : '' }}>
-                                        {{ $gvOption->HoTen }} ({{ $gvOption->MaGV }} - {{ $gvOption->boMon->TenBoMon ?? 'N/A' }})
+                                @php
+                                    $st = $statsPBMap[$gvOption->MaGV] ?? ['tong' => 5, 'da_dung' => 0, 'is_full' => false, 'label' => '0/5'];
+                                    $isAssigned = ($phanBienHienTai && $phanBienHienTai->MaGV === $gvOption->MaGV);
+                                @endphp
+                                @if($gvOption->MaGV !== $detai->MaGV)
+                                    <option value="{{ $gvOption->MaGV }}" 
+                                            {{ $isAssigned ? 'selected' : '' }}
+                                            {{ (!$isAssigned && $st['is_full']) ? 'disabled' : '' }}>
+                                        {{ $gvOption->HoTen }} ({{ $gvOption->boMon->TenBoMon ?? 'N/A' }}) — Đang PB: {{ $st['label'] }} {{ (!$isAssigned && $st['is_full']) ? ' [ĐÃ ĐẦY]' : '' }}
                                     </option>
                                 @endif
                             @endforeach
                         </select>
                         <div class="form-text text-muted mt-1">
-                            <i class="fa-solid fa-circle-info me-1 text-primary"></i> Chỉ hiển thị các Giảng viên thuộc Bộ môn {{ $detai->giangVien?->boMon?->TenBoMon ?? '' }}. Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
+                            <i class="fa-solid fa-circle-info me-1 text-primary"></i> Hiển thị Giảng viên cùng Khoa với đề tài. Giới hạn tối đa 5 đề tài/GV (có thể tùy chỉnh). Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
                         </div>
                     </div>
                 </div>

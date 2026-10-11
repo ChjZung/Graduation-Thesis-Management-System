@@ -62,6 +62,11 @@ class HocKy extends Model
         return $this->hasMany(KeHoachKhoaLuan::class, 'MaHocKy', 'MaHocKy');
     }
 
+    public function keHoachKhoaLuan()
+    {
+        return $this->hasOne(KeHoachKhoaLuan::class, 'MaHocKy', 'MaHocKy')->latest();
+    }
+
     public function hoiDongs()
     {
         return $this->hasMany(HoiDong::class, 'MaHocKy', 'MaHocKy');

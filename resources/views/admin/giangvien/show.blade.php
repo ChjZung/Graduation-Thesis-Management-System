@@ -62,10 +62,18 @@
                     <div>
                         <div class="text-muted small fw-medium">Nhóm Đang Hướng Dẫn</div>
                         <div class="fs-4 fw-bold text-dark mt-1">
-                            {{ $stats['nhom_huong_dan'] }} <span class="fs-6 fw-normal text-muted">/ {{ $stats['chi_tieu_toida'] }} tối đa</span>
+                            {{ $stats['nhom_huong_dan'] }} <span class="fs-6 fw-normal text-muted">/ {{ $stats['chi_tieu_toida'] }} nhóm tối đa</span>
                         </div>
-                        <div class="small text-success mt-1 fw-medium">
-                            <i class="fa-solid fa-check-circle me-1"></i>Đang trong tải cho phép
+                        <div class="small mt-1 fw-medium {{ $stats['tinh_trang'] === 'vuot_chi_tieu' ? 'text-danger' : ($stats['is_full'] ? 'text-warning-emphasis' : ($stats['nhom_huong_dan'] > 0 ? 'text-success' : 'text-muted')) }}">
+                            @if($stats['tinh_trang'] === 'vuot_chi_tieu')
+                                <i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i>Vượt chỉ tiêu hướng dẫn
+                            @elseif($stats['is_full'])
+                                <i class="fa-solid fa-circle-exclamation me-1"></i>Đã đạt định mức tối đa
+                            @elseif($stats['nhom_huong_dan'] > 0)
+                                <i class="fa-solid fa-check-circle me-1"></i>Đang trong tải (còn {{ $stats['con_lai'] }} nhóm)
+                            @else
+                                <i class="fa-solid fa-info-circle me-1"></i>Chưa nhận nhóm hướng dẫn
+                            @endif
                         </div>
                     </div>
                     <div class="kpi-icon-circle bg-success-subtle text-success">
@@ -120,7 +128,7 @@
             <ul class="nav nav-tabs border-bottom mb-3" id="gvTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active fw-bold px-4 py-2" id="topics-tab" data-bs-toggle="tab" data-bs-target="#topics-pane" type="button" role="tab">
-                        <i class="fa-solid fa-file-signature me-2 text-primary"></i>Đề Tài Hướng Dẫn ({{ $stats['total_detai'] }}/5)
+                        <i class="fa-solid fa-file-signature me-2 text-primary"></i>Đề Tài Đề Xuất ({{ $stats['total_detai'] }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">

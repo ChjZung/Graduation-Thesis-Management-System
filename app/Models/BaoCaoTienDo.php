@@ -62,6 +62,16 @@ class BaoCaoTienDo extends Model
         return $this->hasOneThrough(Nhom::class, PhieuDangKy::class, 'MaDeTai', 'MaNhom', 'MaDeTai', 'MaNhom');
     }
 
+    public function khoiBaoCaos()
+    {
+        return $this->hasMany(KhoiBaoCaoTienDo::class, 'MaBaoCao', 'MaBaoCao')->orderBy('LanNop', 'asc');
+    }
+
+    public function khoiMoiNhat()
+    {
+        return $this->hasOne(KhoiBaoCaoTienDo::class, 'MaBaoCao', 'MaBaoCao')->latestOfMany('LanNop');
+    }
+
     public function getLinkCodeAttribute()
     {
         if (preg_match('/Link Code:\s*(https?:\/\/[^\s\n\r]+)/i', $this->NoiDungBaoCao ?? '', $matches)) {

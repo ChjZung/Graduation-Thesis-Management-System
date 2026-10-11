@@ -109,6 +109,10 @@
                             <span class="badge bg-info text-dark rounded-pill small fw-bold" style="font-size: 0.68rem;">
                                 CẦN NỘP LẠI
                             </span>
+                        @elseif(isset($timeCheckHienTai) && !$timeCheckHienTai['is_open'])
+                            <span class="badge bg-secondary text-white rounded-pill small fw-bold" style="font-size: 0.68rem;">
+                                CHƯA MỞ
+                            </span>
                         @else
                             <span class="badge bg-primary text-white rounded-pill small fw-bold" style="font-size: 0.68rem;">
                                 ĐANG MỞ
@@ -157,21 +161,33 @@
             </h5>
         </div>
         <div class="d-flex gap-2 align-items-center">
-            @if($bcHienTai && $bcHienTai->TrangThai === 'Chờ duyệt')
-                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
+            @if(isset($timeCheckHienTai) && !$timeCheckHienTai['is_open'])
+                <span class="badge bg-secondary text-white rounded-pill px-3 py-2 fw-bold" style="font-size: 13px;">
+                    <i class="fa-solid fa-clock me-1"></i>Chưa mở nộp bài {{ !empty($timeCheckHienTai['start_date']) ? '(Từ ' . \Carbon\Carbon::parse($timeCheckHienTai['start_date'])->format('d/m/Y') . ')' : '' }}
+                </span>
+            @elseif($bcHienTai && $bcHienTai->TrangThai === 'Chờ duyệt')
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold" style="font-size: 13px;">
                     <i class="fa-solid fa-hourglass-half me-1"></i>Đang chờ GVHD đánh giá (Cho phép chỉnh sửa)
                 </span>
             @elseif($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
-                <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold">
+                <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold" style="font-size: 13px;">
                     <i class="fa-solid fa-rotate-left me-1"></i>GVHD yêu cầu nộp lại
                 </span>
             @else
-                <span class="badge bg-primary rounded-pill px-3 py-2 fw-bold">
+                <span class="badge bg-success rounded-pill px-3 py-2 fw-bold" style="font-size: 13px;">
                     <i class="fa-solid fa-lock-open me-1"></i>Đang mở nộp bài
                 </span>
             @endif
 
-            @if(isset($mocDeadlines[$mocHienTai]))
+            @if(!empty($timeCheckHienTai['end_date']))
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 small fw-bold">
+                    <i class="fa-regular fa-clock me-1"></i>Hạn nộp: {{ \Carbon\Carbon::parse($timeCheckHienTai['end_date'])->format('d/m/Y') }}
+                </span>
+            @elseif(isset($timeCheckHienTai) && empty($timeCheckHienTai['end_date']) && !empty($timeCheckHienTai['start_date']))
+                <span class="badge bg-light text-secondary border rounded-pill px-3 py-2 small fw-semibold">
+                    <i class="fa-solid fa-infinity me-1"></i>Không giới hạn hạn chót
+                </span>
+            @elseif(isset($mocDeadlines[$mocHienTai]))
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 small fw-bold">
                     <i class="fa-regular fa-clock me-1"></i>Hạn nộp: {{ \Carbon\Carbon::parse($mocDeadlines[$mocHienTai])->format('d/m/Y') }}
                 </span>
@@ -198,21 +214,100 @@
             </div>
         </div>
 
+        @if(isset($timeCheckHienTai) && !$timeCheckHienTai['is_open'])
+            <div class="alert alert-warning border mb-3" style="font-size: 13px;">
+                <i class="fa-solid fa-calendar-xmark text-warning me-2 fs-6"></i>
+                <strong>Thông báo mốc thời gian:</strong> {{ $timeCheckHienTai['message'] }}
+            </div>
+        @endif
+
+        @if($bcHienTai && $bcHienTai->khoiBaoCaos && $bcHienTai->khoiBaoCaos->isNotEmpty())
+            <!-- DÒNG THỜI GIAN CÁC LẦN NỘP (TIMELINE) CỦA GIAI ĐOẠN HIỆN TẠI -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-bold text-dark" style="font-size: 14px;">
+                        <i class="fa-solid fa-timeline text-primary me-1"></i>Lịch Sử Các Lần Nộp (Timeline) — GĐ {{ $mocHienTai }}
+                    </span>
+                    <span class="badge bg-light text-primary border" style="font-size: 12px;">
+                        Đã có {{ $bcHienTai->khoiBaoCaos->count() }} khối nộp bài
+                    </span>
+                </div>
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="position-relative ps-3" style="border-left: 2px solid #cbd5e1; margin-left: 10px;">
+                        @foreach($bcHienTai->khoiBaoCaos as $khoi)
+                        <div class="position-relative mb-3 pb-1">
+                            <!-- Nút tròn timeline -->
+                            <div class="position-absolute rounded-circle {{ $khoi->TrangThai === 'Đạt' ? 'bg-success' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'bg-warning' : 'bg-primary') }}" 
+                                 style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid #fff;"></div>
+                            <div class="card border bg-white p-3 rounded-2 shadow-none" style="font-size: 13px;">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary text-white fw-bold">Khối #{{ $khoi->LanNop }} (Lần nộp {{ $khoi->LanNop }})</span>
+                                        <span class="text-muted small">
+                                            <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        @if($khoi->TrangThai === 'Đạt')
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">✅ Đạt</span>
+                                        @elseif($khoi->TrangThai === 'Yêu cầu nộp lại')
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">🔄 Yêu cầu chỉnh sửa</span>
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary border fw-bold">⏳ Đang chờ GVHD đánh giá</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @if($khoi->TenFile)
+                                        <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 small">
+                                            <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile }}
+                                        </a>
+                                    @endif
+                                    @if($khoi->LinkCode)
+                                        <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-xs btn-outline-dark rounded-pill px-2 py-1 small">
+                                            <i class="fa-brands fa-github me-1"></i>Link Code
+                                        </a>
+                                    @endif
+                                </div>
+                                @if($khoi->NoiDungBaoCao)
+                                    <div class="small text-secondary mb-1">
+                                        <strong>Ghi chú nộp bài:</strong> {{ $khoi->NoiDungBaoCao }}
+                                    </div>
+                                @endif
+                                @if($khoi->NhanXetGV)
+                                    <div class="mt-2 p-2 rounded bg-light border-start border-3 {{ $khoi->TrangThai === 'Đạt' ? 'border-success' : 'border-warning' }}">
+                                        <div class="small fw-bold text-dark">
+                                            <i class="fa-solid fa-comment-dots text-primary me-1"></i>Đánh giá từ {{ $khoi->NguoiNhanXet ?? 'GVHD' }} 
+                                            @if($khoi->NgayNhanXet)
+                                                <span class="text-muted fw-normal">({{ \Carbon\Carbon::parse($khoi->NgayNhanXet)->format('H:i d/m/Y') }})</span>
+                                            @endif:
+                                        </div>
+                                        <div class="small text-dark mt-1"><em>"{{ $khoi->NhanXetGV }}"</em></div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if($bcHienTai && $bcHienTai->TrangThai === 'Chờ duyệt')
             <div class="alert alert-info border-info-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fa-solid fa-pen-to-square text-info fs-5"></i>
                     <div>
-                        <div class="fw-bold text-dark">Bạn đã nộp bài vào ngày {{ \Carbon\Carbon::parse($bcHienTai->NgayNop)->format('d/m/Y') }}</div>
-                        <div class="small text-muted">Trong khi chờ GVHD đánh giá, bạn có thể chỉnh sửa nội dung, ghi chú hoặc cập nhật file mới bất cứ lúc nào.</div>
+                        <div class="fw-bold text-dark">Bản nộp gần nhất đang chờ GVHD đánh giá</div>
+                        <div class="small text-muted">Trong khi chờ đánh giá, bạn có thể chỉnh sửa nội dung, ghi chú hoặc cập nhật file mới nếu cần thiết.</div>
                     </div>
                 </div>
                 <span class="badge bg-light text-primary border">Có thể chỉnh sửa</span>
             </div>
         @elseif($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
-            <div class="alert alert-warning border-warning-subtle mb-3">
-                <div class="fw-bold text-dark"><i class="fa-solid fa-comment-dots text-warning me-1"></i>Nhận xét yêu cầu chỉnh sửa từ GVHD:</div>
-                <div class="small text-dark mt-1"><em>"{{ $bcHienTai->NhanXet }}"</em></div>
+            <div class="alert alert-warning border mb-3" style="font-size: 13px;">
+                <div class="fw-bold text-dark"><i class="fa-solid fa-circle-exclamation text-warning me-1"></i>Giảng viên yêu cầu chỉnh sửa báo cáo!</div>
+                <div class="small text-dark mt-1">Hệ thống sẽ lưu lại khối nộp bài trước đó và tự động tạo <strong>Khối nộp bài mới (Lần nộp {{ $bcHienTai->khoiBaoCaos->max('LanNop') + 1 }})</strong> khi bạn nộp bản báo cáo cập nhật.</div>
             </div>
         @endif
 
@@ -257,8 +352,8 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-muted"><i class="fa-brands fa-github"></i></span>
                         <input type="url" name="LinkCode" class="form-control form-control-sm" 
-                               placeholder="https://github.com/username/repository" 
-                               value="{{ $bcHienTai?->LinkCode ?? '' }}">
+                                placeholder="https://github.com/username/repository" 
+                                value="{{ $bcHienTai?->LinkCode ?? '' }}">
                     </div>
                     <div class="form-text" style="font-size: 0.72rem;">Đường dẫn repository công khai hoặc branch đồ án</div>
                 </div>
@@ -269,17 +364,33 @@
                     <label class="form-label small fw-bold text-dark">
                         Nội dung chi tiết & Ghi chú gửi Giảng viên hướng dẫn
                     </label>
-                    <textarea name="NoiDungBaoCao" rows="3" class="form-control form-control-sm" 
-                              placeholder="Mô tả tóm tắt các kết quả đạt được, khó khăn hoặc câu hỏi dành cho thầy/cô hướng dẫn...">{{ $bcHienTai?->NoiDungBaoCao ?? '' }}</textarea>
+                    <textarea name="NoiDungBaoCao" rows="3" class="form-control form-control-sm @error('NoiDungBaoCao') is-invalid @enderror" 
+                              minlength="20" maxlength="5000"
+                              placeholder="Mô tả tóm tắt các kết quả đạt được, khó khăn hoặc câu hỏi dành cho thầy/cô hướng dẫn (tối thiểu 20 ký tự)...">{{ old('NoiDungBaoCao', $bcHienTai?->NoiDungBaoCao ?? '') }}</textarea>
+                    @error('NoiDungBaoCao')
+                        <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
             <div class="d-flex justify-content-end gap-2 pt-2 border-top">
-                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold d-inline-flex align-items-center gap-2"
-                        style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); border: none;">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>{{ $bcHienTai ? 'Lưu Thay Đổi & Cập Nhật Tiến Độ GĐ ' . $mocHienTai : 'Nộp Báo Cáo Tiến Độ GĐ ' . $mocHienTai }}</span>
-                </button>
+                @if(isset($timeCheckHienTai) && !$timeCheckHienTai['is_open'])
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" disabled style="font-size: 13px;" title="{{ $timeCheckHienTai['message'] }}">
+                        <i class="fa-solid fa-lock me-1"></i>Chưa Đến Hạn Nộp {{ !empty($timeCheckHienTai['start_date']) ? '(Mở từ ' . \Carbon\Carbon::parse($timeCheckHienTai['start_date'])->format('d/m/Y') . ')' : '' }}
+                    </button>
+                @else
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center gap-2"
+                            style="background: #2563eb; border: none; font-size: 13px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        @if($bcHienTai && $bcHienTai->TrangThai === 'Yêu cầu nộp lại')
+                            <span>Nộp Lại Báo Cáo Tiến Độ (Tạo Khối Mới — Lần nộp {{ ($bcHienTai->khoiBaoCaos->max('LanNop') ?? 1) + 1 }})</span>
+                        @elseif($bcHienTai)
+                            <span>Lưu Thay Đổi & Cập Nhật Tiến Độ GĐ {{ $mocHienTai }}</span>
+                        @else
+                            <span>Nộp Báo Cáo Tiến Độ GĐ {{ $mocHienTai }}</span>
+                        @endif
+                    </button>
+                @endif
             </div>
         </form>
     </div>
@@ -296,12 +407,12 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light small text-secondary">
                 <tr>
-                    <th class="ps-4" width="15%">Mốc nộp</th>
+                    <th class="ps-4" width="18%">Mốc nộp</th>
                     <th width="12%">Ngày nộp</th>
-                    <th width="28%">Tệp đính kèm & Mã nguồn</th>
-                    <th width="25%">Đánh giá của GVHD</th>
-                    <th width="10%">Tóm tắt AI</th>
-                    <th width="10%" class="text-end pe-4">Trạng thái</th>
+                    <th width="24%">Tệp đính kèm & Mã nguồn</th>
+                    <th width="22%">Đánh giá của GVHD</th>
+                    <th width="12%">Khối / Timeline</th>
+                    <th width="12%" class="text-end pe-4">Trạng thái</th>
                 </tr>
             </thead>
             <tbody>
@@ -345,15 +456,19 @@
                         @endif
                     </td>
                     <td>
-                        @if($bc->tomTatBaoCao)
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 small d-inline-flex align-items-center gap-1"
-                                    data-bs-toggle="modal" data-bs-target="#modalAi{{ $bc->MaBaoCao }}">
-                                <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
-                                <span>Xem AI</span>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 small d-inline-flex align-items-center gap-1"
+                                    data-bs-toggle="modal" data-bs-target="#modalTimeline{{ $bc->MaBaoCao }}" title="Xem toàn bộ các khối nộp bài">
+                                <i class="fa-solid fa-timeline"></i>
+                                <span>Timeline ({{ $bc->khoiBaoCaos->count() }})</span>
                             </button>
-                        @else
-                            <span class="text-muted small">Đang tạo...</span>
-                        @endif
+                            @if($bc->tomTatBaoCao)
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 small"
+                                        data-bs-toggle="modal" data-bs-target="#modalAi{{ $bc->MaBaoCao }}" title="Xem AI tóm tắt">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
+                                </button>
+                            @endif
+                        </div>
                     </td>
                     <td class="text-end pe-4">
                         @if($bc->TrangThai === 'Đạt')
@@ -365,6 +480,83 @@
                         @endif
                     </td>
                 </tr>
+
+                <!-- Modal Timeline cho từng Mốc Báo Cáo -->
+                <div class="modal fade" id="modalTimeline{{ $bc->MaBaoCao }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content border-0">
+                            <div class="modal-header bg-white border-bottom py-3">
+                                <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-timeline text-primary"></i>
+                                    <span>Lịch Sử Các Khối Nộp Bài (Timeline) — Mốc {{ $bc->LanBaoCao }}</span>
+                                </h6>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4 bg-light">
+                                <div class="position-relative ps-3" style="border-left: 2px solid #cbd5e1; margin-left: 10px;">
+                                    @forelse($bc->khoiBaoCaos as $khoi)
+                                    <div class="position-relative mb-3 pb-1">
+                                        <div class="position-absolute rounded-circle {{ $khoi->TrangThai === 'Đạt' ? 'bg-success' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'bg-warning' : 'bg-primary') }}" 
+                                             style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid #fff;"></div>
+                                        <div class="card border bg-white p-3 rounded-2 shadow-none" style="font-size: 13px;">
+                                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                                <div>
+                                                    <span class="badge bg-primary text-white fw-bold">Khối #{{ $khoi->LanNop }} (Lần nộp {{ $khoi->LanNop }})</span>
+                                                    <span class="text-muted small ms-2">
+                                                        <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    @if($khoi->TrangThai === 'Đạt')
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">✅ Đạt</span>
+                                                    @elseif($khoi->TrangThai === 'Yêu cầu nộp lại')
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">🔄 Yêu cầu chỉnh sửa</span>
+                                                    @else
+                                                        <span class="badge bg-secondary-subtle text-secondary border fw-bold">⏳ Đang chờ GVHD đánh giá</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                                @if($khoi->TenFile)
+                                                    <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 small">
+                                                        <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile }}
+                                                    </a>
+                                                @endif
+                                                @if($khoi->LinkCode)
+                                                    <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-xs btn-outline-dark rounded-pill px-2 py-1 small">
+                                                        <i class="fa-brands fa-github me-1"></i>Source Code
+                                                    </a>
+                                                @endif
+                                            </div>
+                                            @if($khoi->NoiDungBaoCao)
+                                                <div class="small text-secondary mb-1">
+                                                    <strong>Ghi chú nộp:</strong> {{ $khoi->NoiDungBaoCao }}
+                                                </div>
+                                            @endif
+                                            @if($khoi->NhanXetGV)
+                                                <div class="mt-2 p-2 rounded bg-light border-start border-3 {{ $khoi->TrangThai === 'Đạt' ? 'border-success' : 'border-warning' }}">
+                                                    <div class="small fw-bold text-dark">
+                                                        <i class="fa-solid fa-comment-dots text-primary me-1"></i>Đánh giá từ {{ $khoi->NguoiNhanXet ?? 'GVHD' }} 
+                                                        @if($khoi->NgayNhanXet)
+                                                            <span class="text-muted fw-normal">({{ \Carbon\Carbon::parse($khoi->NgayNhanXet)->format('H:i d/m/Y') }})</span>
+                                                        @endif:
+                                                    </div>
+                                                    <div class="small text-dark mt-1"><em>"{{ $khoi->NhanXetGV }}"</em></div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @empty
+                                    <div class="text-muted small">Chưa có khối nộp bài nào.</div>
+                                    @endforelse
+                                </div>
+                            </div>
+                            <div class="modal-footer py-2 bg-white">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Modal Tóm Tắt AI cho sinh viên -->
                 @if($bc->tomTatBaoCao)

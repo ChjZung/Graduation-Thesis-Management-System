@@ -129,6 +129,9 @@
             </p>
         </div>
         <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalThietLapChiTieu">
+                <i class="fa-solid fa-sliders me-1"></i> Tùy Chỉnh Hạn Mức PB
+            </button>
             <a href="{{ route('truongbomon.duyet_decuong.index') }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
                 <i class="fa-solid fa-file-circle-check me-1"></i> Sang Trang Duyệt Đề Cương
             </a>
@@ -410,21 +413,31 @@
                                                     <div class="small text-muted mt-1">GV Đề xuất: <strong>{{ $dt->giangVien->HoTen ?? 'N/A' }}</strong> ({{ $dt->giangVien->MaGV ?? '' }})</div>
                                                 </div>
                                                 <div class="mb-3">
+                                                    @php
+                                                        $dtKhoa = $dt->giangVien?->boMon?->MaKhoa ?? $dt->hocPhanRef?->boMon?->MaKhoa ?? $dt->nganh?->MaKhoa ?? $boMon?->MaKhoa ?? ($maKhoa ?? 'CNTT');
+                                                    @endphp
                                                     <label class="form-label fw-bold">
-                                                        Chọn Giảng viên phản biện (Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}) <span class="text-danger">*</span>
+                                                        Chọn Giảng viên phản biện (Khoa {{ $dtKhoa }}) <span class="text-danger">*</span>
                                                     </label>
                                                     <select name="MaGVPhanBien" class="form-select rounded-3" required>
-                                                        <option value="">-- Chọn Giảng viên phản biện (Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}) --</option>
+                                                        <option value="">-- Chọn Giảng viên phản biện (Khoa {{ $dtKhoa }}) --</option>
                                                         @foreach($allGiangViens as $gvOption)
-                                                            @if($gvOption->MaGV !== $dt->MaGV && (!$dt->giangVien || $gvOption->MaBoMon === $dt->giangVien->MaBoMon))
-                                                                <option value="{{ $gvOption->MaGV }}" {{ ($pb && $pb->MaGV === $gvOption->MaGV) ? 'selected' : '' }}>
-                                                                    {{ $gvOption->HoTen }} ({{ $gvOption->MaGV }} - {{ $gvOption->boMon->TenBoMon ?? 'N/A' }})
+                                                            @php
+                                                                $st = $statsPBMap[$gvOption->MaGV] ?? ['tong' => 5, 'da_dung' => 0, 'is_full' => false, 'label' => '0/5'];
+                                                                $isAssigned = ($pb && $pb->MaGV === $gvOption->MaGV);
+                                                                $isSameKhoa = (!$gvOption->boMon || $gvOption->boMon->MaKhoa === $dtKhoa);
+                                                            @endphp
+                                                            @if($gvOption->MaGV !== $dt->MaGV && $isSameKhoa)
+                                                                <option value="{{ $gvOption->MaGV }}" 
+                                                                        {{ $isAssigned ? 'selected' : '' }}
+                                                                        {{ (!$isAssigned && $st['is_full']) ? 'disabled' : '' }}>
+                                                                    {{ $gvOption->HoTen }} ({{ $gvOption->boMon->TenBoMon ?? 'N/A' }}) — Đang PB: {{ $st['label'] }} {{ (!$isAssigned && $st['is_full']) ? ' [ĐÃ ĐẦY]' : '' }}
                                                                 </option>
                                                             @endif
                                                         @endforeach
                                                     </select>
                                                     <div class="form-text text-muted mt-1">
-                                                        <i class="fa-solid fa-circle-info me-1 text-primary"></i> Chỉ hiển thị các Giảng viên thuộc Bộ môn {{ $dt->giangVien?->boMon?->TenBoMon ?? '' }}. Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
+                                                        <i class="fa-solid fa-circle-info me-1 text-primary"></i> Hiển thị Giảng viên cùng Khoa với đề tài. Giới hạn mặc định tối đa 5 đề tài/GV (có thể tùy chỉnh). Quy định BR07: GV đề xuất đề tài không được làm phản biện cho chính đề tài đó.
                                                     </div>
                                                 </div>
                                             </div>
@@ -552,6 +565,130 @@
                 </div>
             @endif
         @endif
+    </div>
+</div>
+
+<!-- Modal Thiết Lập Hạn Mức Phản Biện Của Giảng Viên (Chuẩn G) -->
+<div class="modal fade" id="modalThietLapChiTieu" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 15px;">
+                    <i class="fa-solid fa-sliders text-primary"></i> Tùy Chỉnh Hạn Mức Phản Biện Của Giảng Viên
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info border-0 rounded-3 small mb-3" style="font-size: 13px;">
+                    <i class="fa-solid fa-circle-info me-1"></i> Theo quy định mặc định, mỗi Giảng viên được phân công tối đa <strong>5 đề tài phản biện</strong> trong mỗi học kỳ. Trưởng bộ môn có thể tùy chỉnh nâng/hạ hạn mức cho từng Giảng viên cụ thể dưới đây.
+                </div>
+
+                <!-- Form cập nhật hạn mức -->
+                <form action="{{ route('truongbomon.phancong.updateChiTieu') }}" method="POST" class="border rounded-3 p-3 mb-4 bg-light">
+                    @csrf
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-dark mb-1" style="font-size: 13px;">Giảng viên <span class="text-danger">*</span></label>
+                            <select name="MaGV" class="form-select form-select-sm" required style="font-size: 13px;">
+                                <option value="">-- Chọn giảng viên trong Khoa --</option>
+                                @foreach($allGiangViens as $gvOption)
+                                    @php $st = $statsPBMap[$gvOption->MaGV] ?? ['tong' => 5, 'da_dung' => 0]; @endphp
+                                    <option value="{{ $gvOption->MaGV }}">
+                                        {{ $gvOption->HoTen }} ({{ $gvOption->boMon->TenBoMon ?? 'N/A' }}) - Hiện tại: {{ $st['tong'] }} ĐT (Đã PB: {{ $st['da_dung'] }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark mb-1" style="font-size: 13px;">Hạn mức mới <span class="text-danger">*</span></label>
+                            <input type="number" name="SoDeTaiToiDa" class="form-control form-control-sm" min="0" max="100" placeholder="Mặc định: 5" required style="font-size: 13px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark mb-1" style="font-size: 13px;">Học kỳ (để trống nếu áp dụng tất cả)</label>
+                            <select name="MaHocKy" class="form-select form-select-sm" style="font-size: 13px;">
+                                <option value="">Tất cả học kỳ</option>
+                                @foreach($hocKies as $hk)
+                                    <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
+                                        {{ $hk->TenHocKy }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small fw-bold text-dark mb-1" style="font-size: 13px;">Ghi chú (lý do thay đổi hạn mức)</label>
+                            <input type="text" name="GhiChu" class="form-control form-control-sm" placeholder="VD: Giảng viên tăng cường phản biện đợt 1" style="font-size: 13px;">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold" style="font-size: 13px;">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Hạn Mức
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Bảng danh sách hạn mức hiện tại của Giảng viên -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0" style="font-size: 13px;">Danh sách hạn mức &amp; tiến độ phản biện:</h6>
+                    <span class="text-muted small" style="font-size: 13px;">Tổng: {{ $allGiangViens->count() }} giảng viên</span>
+                </div>
+                <div class="table-responsive border rounded-3" style="max-height: 280px; overflow-y: auto;">
+                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 13px;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã GV</th>
+                                <th>Họ Tên</th>
+                                <th>Bộ Môn</th>
+                                <th class="text-center">Đã PB / Hạn mức</th>
+                                <th class="text-center">Tình trạng</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($allGiangViens as $gvOption)
+                                @php
+                                    $st = $statsPBMap[$gvOption->MaGV] ?? ['tong' => 5, 'da_dung' => 0, 'is_full' => false, 'label' => '0/5'];
+                                    $isCustom = ($st['tong'] !== 5);
+                                @endphp
+                                <tr>
+                                    <td><code>{{ $gvOption->MaGV }}</code></td>
+                                    <td class="fw-semibold text-dark">{{ $gvOption->HoTen }}</td>
+                                    <td>{{ $gvOption->boMon->TenBoMon ?? 'N/A' }}</td>
+                                    <td class="text-center fw-bold">
+                                        {{ $st['label'] }}
+                                        @if($isCustom)
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 11px;">Tùy chỉnh</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if($st['is_full'])
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Đã Đầy</span>
+                                        @else
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Còn {{ $st['con_lai'] }} chỗ</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if($isCustom)
+                                            <form action="{{ route('truongbomon.phancong.resetChiTieu') }}" method="POST" class="d-inline" onsubmit="return confirm('Khôi phục hạn mức của giảng viên {{ $gvOption->HoTen }} về mặc định 5 đề tài?');">
+                                                @csrf
+                                                <input type="hidden" name="MaGV" value="{{ $gvOption->MaGV }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 12px;" title="Đặt lại về mặc định 5">
+                                                    <i class="fa-solid fa-rotate-left me-1"></i> Mặc định
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-muted small" style="font-size: 12px;">Mặc định (5)</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-sm btn-secondary rounded-3 px-3" data-bs-dismiss="modal" style="font-size: 13px;">Đóng</button>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

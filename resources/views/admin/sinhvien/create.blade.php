@@ -24,19 +24,25 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
                             <label class="form-label-huit">Mã Số Sinh Viên (MSSV) <span class="text-danger">*</span></label>
-                            <input type="text" name="TenDangNhap" class="form-control form-control-huit" value="{{ old('TenDangNhap') }}" placeholder="22110001" required>
+                            <input type="text" name="TenDangNhap" class="form-control form-control-huit @error('TenDangNhap') is-invalid @enderror" value="{{ old('TenDangNhap') }}" placeholder="2211000001" pattern="^(SV[0-9]{8}|[0-9]{10})$" title="MSSV gồm 10 chữ số hoặc tiền tố SV + 8 chữ số" required>
+                            @error('TenDangNhap')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                             <div class="form-text small text-muted">MSSV dùng làm tài khoản đăng nhập. Mật khẩu mặc định: <code>123456</code></div>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label-huit">Họ Và Tên Sinh Viên <span class="text-danger">*</span></label>
-                            <input type="text" name="HoTen" class="form-control form-control-huit" value="{{ old('HoTen') }}" placeholder="Nguyễn Văn B" required>
+                            <input type="text" name="HoTen" class="form-control form-control-huit @error('HoTen') is-invalid @enderror" value="{{ old('HoTen') }}" placeholder="Nguyễn Văn B" minlength="2" maxlength="100" pattern="^[A-Za-zÀ-ỹ\s]+$" title="Họ tên chỉ được chứa chữ cái và khoảng trắng" required>
+                            @error('HoTen')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
                             <label class="form-label-huit">Lớp Sinh Hoạt <span class="text-danger">*</span></label>
-                            <select name="MaLop" class="form-select form-select-huit" required>
+                            <select name="MaLop" class="form-select form-select-huit @error('MaLop') is-invalid @enderror" required>
                                 <option value="">-- Chọn Lớp Học --</option>
                                 @foreach($lops as $l)
                                     <option value="{{ $l->MaLop }}" {{ old('MaLop') == $l->MaLop ? 'selected' : '' }}>
@@ -44,17 +50,26 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @error('MaLop')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label-huit">Email Liên Lạc <span class="text-danger">*</span></label>
-                            <input type="email" name="Email" class="form-control form-control-huit" value="{{ old('Email') }}" placeholder="sinhvien@huit.edu.vn" required>
+                            <input type="email" name="Email" class="form-control form-control-huit @error('Email') is-invalid @enderror" value="{{ old('Email') }}" placeholder="sinhvien@huit.edu.vn" required>
+                            @error('Email')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
                             <label class="form-label-huit">Số Điện Thoại</label>
-                            <input type="text" name="SoDienThoai" class="form-control form-control-huit" value="{{ old('SoDienThoai') }}" placeholder="0912345678">
+                            <input type="text" name="SoDienThoai" class="form-control form-control-huit @error('SoDienThoai') is-invalid @enderror" value="{{ old('SoDienThoai') }}" placeholder="0912345678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
+                            @error('SoDienThoai')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label-huit">Trạng Thái Học Tập</label>

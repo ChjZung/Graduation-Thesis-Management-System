@@ -4,7 +4,91 @@
 
 @push('styles')
 <style>
-    /* ── MAIN TABS SWITCHER ── */
+    /* Chuẩn giao diện Admin: flat, không box-shadow, font tối thiểu 13px */
+    body, .admin-table, .form-select, .form-control, .btn {
+        font-size: 13.5px;
+    }
+    .kpi-card-admin {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1rem 1.15rem;
+        height: 100%;
+        box-shadow: none !important;
+    }
+    .kpi-card-admin .kpi-label {
+        font-size: 13px;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+    .kpi-card-admin .kpi-number {
+        font-size: 1.65rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .kpi-card-admin .kpi-subtext {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+    .admin-table-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: none !important;
+    }
+    .admin-table-header {
+        padding: 12px 18px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .admin-table-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+    .admin-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    .admin-table thead th {
+        background-color: #f8fafc;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px;
+        white-space: nowrap;
+    }
+    .admin-table tbody td {
+        padding: 12px 14px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13.5px;
+        color: #1e293b;
+    }
+    .badge-code {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-family: monospace;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        font-size: 13px;
+    }
     #deTaiMainTabs {
         background: #f1f5f9;
         padding: 4px;
@@ -14,10 +98,11 @@
     #deTaiMainTabs .nav-link {
         color: #475569;
         font-weight: 700;
-        font-size: 0.88rem;
+        font-size: 13.5px;
         padding: 8px 24px;
         border-radius: 999px;
         border: none;
+        box-shadow: none !important;
         transition: all 0.2s ease;
     }
     #deTaiMainTabs .nav-link:hover {
@@ -27,178 +112,8 @@
     #deTaiMainTabs .nav-link.active {
         background: #002855;
         color: #ffffff;
-        box-shadow: 0 4px 10px rgba(0, 40, 85, 0.2);
+        box-shadow: none !important;
     }
-
-    /* ── KPI METRIC CARDS ── */
-    .kpi-metric-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 18px 20px;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.25s ease;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .kpi-metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 18px -2px rgba(0, 40, 85, 0.08);
-    }
-    .kpi-metric-card::before {
-        display: none !important;
-    }
-    .kpi-icon-box {
-        width: 44px;
-        height: 44px;
-        border-radius: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-    .kpi-label {
-        font-size: 0.73rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        color: #64748b;
-        margin-bottom: 5px;
-    }
-    .kpi-value {
-        font-size: 1.85rem;
-        font-weight: 800;
-        line-height: 1.1;
-        letter-spacing: -0.5px;
-        color: #0f172a;
-        margin-bottom: 6px;
-    }
-    .kpi-subtext {
-        font-size: 0.77rem;
-        color: #64748b;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-
-    /* ── ACADEMIC PILL TABS (SLEEK HORIZONTAL STATUS RIBBON) ── */
-    .admin-pill-tabs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: #ffffff;
-        padding: 8px 12px;
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        overflow-x: auto;
-        white-space: nowrap;
-        flex-wrap: nowrap;
-        scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 transparent;
-        -webkit-overflow-scrolling: touch;
-    }
-    .admin-pill-tabs::-webkit-scrollbar {
-        height: 5px;
-    }
-    .admin-pill-tabs::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .admin-pill-tabs::-webkit-scrollbar-thumb {
-        background-color: #cbd5e1;
-        border-radius: 999px;
-    }
-    .admin-pill-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 6px 13px;
-        font-size: 0.81rem;
-        font-weight: 600;
-        color: #475569;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        text-decoration: none;
-        white-space: nowrap;
-        flex-shrink: 0;
-        transition: all 0.18s ease;
-    }
-    .admin-pill-tab:hover {
-        background: #f1f5f9;
-        color: #002855;
-        border-color: #cbd5e1;
-    }
-    .admin-pill-tab.active {
-        background: #002855;
-        color: #ffffff;
-        border-color: #002855;
-        box-shadow: 0 2px 6px rgba(0, 40, 85, 0.18);
-    }
-    .admin-pill-tab .pill-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        flex-shrink: 0;
-    }
-    .admin-pill-tab .pill-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 20px;
-        height: 20px;
-        padding: 0 6px;
-        font-size: 0.73rem;
-        font-weight: 700;
-        border-radius: 999px;
-        background: #ffffff;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-        line-height: 1;
-    }
-    .admin-pill-tab.active .pill-count {
-        background: rgba(255, 255, 255, 0.22) !important;
-        color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
-    }
-
-    /* ── TABLE STYLING ── */
-    .badge-code {
-        font-family: 'Consolas', 'Courier New', monospace;
-        font-size: 0.78rem;
-        padding: 3px 8px;
-        border-radius: 6px;
-        background: #f1f5f9;
-        color: #0f172a;
-        font-weight: 600;
-        border: 1px solid #e2e8f0;
-    }
-    .table-academic thead th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 14px 16px;
-        border-bottom: 1px solid #e2e8f0;
-        white-space: nowrap;
-    }
-    .table-academic tbody td {
-        padding: 14px 16px;
-        border-bottom: 1px solid #f1f5f9;
-        color: #334155;
-        font-size: 0.88rem;
-    }
-    .table-academic tbody tr:hover {
-        background-color: #f8fafc;
-    }
-
-    /* ── STATS DASHBOARD CARDS & CHARTS ── */
     .stat-kpi-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -207,10 +122,7 @@
         transition: all 0.2s ease;
         position: relative;
         overflow: hidden;
-    }
-    .stat-kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        box-shadow: none !important;
     }
     .stat-kpi-icon {
         width: 44px;
@@ -228,7 +140,7 @@
         border-radius: 12px;
         padding: 20px;
         height: 100%;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        box-shadow: none !important;
     }
     .chart-box h6 {
         font-size: 0.95rem;
@@ -254,10 +166,10 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
         <h4 class="page-main-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-            <i class="fa-solid fa-stamp text-primary"></i> Quản Lý &amp; Phê Duyệt Đề Tài Khóa Luận
+            Quản Lý &amp; Phê Duyệt Đề Tài Khóa Luận
         </h4>
         <p class="text-muted small mb-0">
-            Theo dõi tiến độ xét duyệt chuyên môn, quản lý danh sách, phê duyệt đề tài và phân tích báo cáo thống kê theo học kỳ.
+            Theo dõi tiến độ xét duyệt chuyên môn theo bộ môn thuộc {{ $khoa->TenKhoa ?? 'Khoa' }} và phân tích báo cáo thống kê theo học kỳ.
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
@@ -279,7 +191,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link {{ request('tab', 'quanly') !== 'thongke' ? 'active' : '' }} text-nowrap" 
                     id="tab-quanly-btn" data-bs-toggle="pill" data-bs-target="#pane-quanly" type="button" role="tab" aria-controls="pane-quanly" aria-selected="{{ request('tab', 'quanly') !== 'thongke' ? 'true' : 'false' }}">
-                <i class="fa-solid fa-list-check me-2"></i>Quản Lý &amp; Phê Duyệt Đề Tài
+                <i class="fa-solid fa-list-check me-2"></i>Quản Lý Bộ Môn &amp; Phê Duyệt
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -295,344 +207,211 @@
 <div class="tab-content" id="deTaiMainTabContent">
 
     {{-- ══════════════════════════════════════════════════════════════════ --}}
-    {{-- TAB 1: QUẢN LÝ & PHÊ DUYỆT ĐỀ TÀI CẤP KHOA                         --}}
+    {{-- TAB 1: DANH SÁCH BỘ MÔN VÀ PHÊ DUYỆT ĐỀ TÀI CẤP KHOA (P3.2)         --}}
     {{-- ══════════════════════════════════════════════════════════════════ --}}
     <div class="tab-pane fade {{ request('tab', 'quanly') !== 'thongke' ? 'show active' : '' }}" id="pane-quanly" role="tabpanel" aria-labelledby="tab-quanly-btn">
 
-        {{-- ── KPI SUMMARY TIÊU ĐIỂM (SCOPED THEO HỌC KỲ / BỘ LỌC) ── --}}
+        {{-- ── 5 THẺ THỐNG KÊ PHÍA TRÊN (CHUẨN P3.2) ── --}}
         <div class="row g-3 mb-4">
-            {{-- Card 1: Tổng đề tài --}}
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="kpi-label">Tổng Đề Tài (Học Kỳ)</div>
-                            <div class="kpi-value">{{ $counts['total'] }}</div>
-                        </div>
-                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </div>
+            <!-- 1. Tổng số đề tài chờ phê duyệt cấp khoa -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="kpi-card-admin {{ $summaryKPIs['cho_duyet_khoa'] > 0 ? 'border-warning border-opacity-50' : '' }}" style="{{ $summaryKPIs['cho_duyet_khoa'] > 0 ? 'background: #fffdf5;' : '' }}">
+                    <div class="kpi-label {{ $summaryKPIs['cho_duyet_khoa'] > 0 ? 'text-warning-emphasis' : '' }}">Đề tài chờ duyệt cấp khoa</div>
+                    <div class="kpi-number {{ $summaryKPIs['cho_duyet_khoa'] > 0 ? 'text-warning-emphasis' : 'text-dark' }}">
+                        {{ $summaryKPIs['cho_duyet_khoa'] }}
                     </div>
-                    <div class="kpi-subtext mt-2">
-                        <span class="badge bg-light text-dark border"><i class="fa-regular fa-clock me-1 text-primary"></i>HK đang chọn</span>
-                        <span>Toàn bộ đề tài trong kỳ</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Card 2: Đã công bố cho SV --}}
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="kpi-label">Đã Công Bố Cho Sinh Viên</div>
-                            <div class="kpi-value">{{ $counts['da_cong_bo'] }}</div>
-                        </div>
-                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
-                            <i class="fa-solid fa-bullhorn"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-subtext mt-2">
-                        @php $pctCb = $counts['total'] > 0 ? round(($counts['da_cong_bo'] / $counts['total']) * 100, 1) : 0; @endphp
-                        <span class="badge bg-light text-primary border fw-semibold">{{ $pctCb }}%</span>
-                        <span>Sinh viên được phép đăng ký</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Card 3: Cần chỉnh sửa / Từ chối --}}
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="kpi-label">Cần Chỉnh Sửa / Từ Chối</div>
-                            <div class="kpi-value">{{ $counts['tu_choi_can_sua'] }}</div>
-                        </div>
-                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-subtext mt-2">
-                        @if($counts['tu_choi_can_sua'] > 0)
-                            <span class="badge bg-light text-danger border fw-semibold">Cần GV hoàn thiện</span>
+                    <div class="kpi-subtext">
+                        @if($summaryKPIs['cho_duyet_khoa'] > 0)
+                            <span class="text-danger fw-semibold">Cần thẩm định &amp; phê duyệt</span>
                         @else
-                            <span class="badge bg-light text-muted border">Không có đề tài lỗi</span>
+                            <span>Đã xét duyệt hết</span>
                         @endif
-                        <span>Chưa đạt yêu cầu</span>
                     </div>
                 </div>
             </div>
 
-            {{-- Card 4: Đang trong luồng duyệt --}}
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="kpi-metric-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="kpi-label">Đang Xét Duyệt Chuyên Môn</div>
-                            <div class="kpi-value">{{ $counts['cho_duyet'] }}</div>
-                        </div>
-                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
-                            <i class="fa-solid fa-hourglass-half"></i>
-                        </div>
+            <!-- 2. Tổng số bộ môn -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="kpi-card-admin">
+                    <div class="kpi-label">Tổng số bộ môn</div>
+                    <div class="kpi-number text-dark">{{ $summaryKPIs['tong_bo_mon'] }}</div>
+                    <div class="kpi-subtext">Trực thuộc {{ $khoa->TenKhoa ?? 'Khoa' }}</div>
+                </div>
+            </div>
+
+            <!-- 3. Số giảng viên tham gia đề xuất -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="kpi-card-admin">
+                    <div class="kpi-label">Giảng viên đề xuất</div>
+                    <div class="kpi-number text-dark">{{ $summaryKPIs['so_gv_de_xuat'] }}</div>
+                    <div class="kpi-subtext">Giảng viên có đề tài trong kỳ</div>
+                </div>
+            </div>
+
+            <!-- 4. Số đề tài đã được phê duyệt -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="kpi-card-admin">
+                    <div class="kpi-label text-success">Đề tài đã phê duyệt</div>
+                    <div class="kpi-number text-success">{{ $summaryKPIs['so_detai_da_duyet'] }}</div>
+                    <div class="kpi-subtext">Đã thông qua / Công bố</div>
+                </div>
+            </div>
+
+            <!-- 5. Số trường hợp cần xem xét -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="kpi-card-admin {{ $summaryKPIs['so_truong_hop_can_xem_xet'] > 0 ? 'border-danger border-opacity-50' : '' }}">
+                    <div class="kpi-label {{ $summaryKPIs['so_truong_hop_can_xem_xet'] > 0 ? 'text-danger' : '' }}">Cần xem xét</div>
+                    <div class="kpi-number {{ $summaryKPIs['so_truong_hop_can_xem_xet'] > 0 ? 'text-danger' : 'text-dark' }}">
+                        {{ $summaryKPIs['so_truong_hop_can_xem_xet'] }}
                     </div>
-                    <div class="kpi-subtext mt-2">
-                        <span class="badge bg-light text-secondary border fw-semibold">{{ $counts['cho_duyet_bm'] }} BM / {{ $counts['cho_duyet_khoa'] }} Khoa</span>
-                        <span>Đang xử lý thẩm định</span>
+                    <div class="kpi-subtext">
+                        @if($summaryKPIs['so_truong_hop_can_xem_xet'] > 0)
+                            <span class="text-danger fw-semibold">Cần sửa, từ chối hoặc vượt chỉ tiêu</span>
+                        @else
+                            <span>Không có trường hợp lỗi</span>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="admin-pill-tabs mb-4" role="navigation" aria-label="Bộ lọc trạng thái đề tài">
-            {{-- 1. Tất Cả --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'ALL', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'active' : '' }}" title="Xem toàn bộ đề tài trong học kỳ">
-                <i class="fa-solid fa-layer-group {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'text-white' : 'text-primary' }}"></i>
-                <span>Tất Cả Đề Tài</span>
-                <span class="pill-count">{{ $counts['total'] }}</span>
-            </a>
-
-            {{-- 2. Đang Xét Duyệt --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'dang_xet_duyet', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'dang_xet_duyet' || request('TrangThai') === 'cho_duyet' ? 'active' : '' }}" title="Đề tài đang trong quy trình thẩm định hoặc chờ Khoa phê chuẩn">
-                <span class="pill-dot" style="background:#f59e0b;"></span>
-                <span>Đang Xét Duyệt</span>
-                <span class="pill-count">{{ $counts['dang_xet_duyet'] }}</span>
-            </a>
-
-            {{-- 3. Đã Phê Duyệt & Công Bố --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_cong_bo', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'da_cong_bo' ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt / công bố cho sinh viên">
-                <span class="pill-dot" style="background:#10b981;"></span>
-                <span>Đã Công Bố &amp; Đã Duyệt</span>
-                <span class="pill-count">{{ $counts['da_cong_bo_tab'] }}</span>
-            </a>
-
-            {{-- 4. Cần Chỉnh Sửa / Từ Chối --}}
-            <a href="{{ route('truongkhoa.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'tu_choi_can_sua', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'tu_choi_can_sua' ? 'active' : '' }}" title="Đề tài có yêu cầu chỉnh sửa hoặc không đạt">
-                <span class="pill-dot" style="background:#ef4444;"></span>
-                <span>Cần Chỉnh Sửa / Từ Chối</span>
-                <span class="pill-count">{{ $counts['tu_choi_can_sua'] }}</span>
-            </a>
-        </div>
-
-        {{-- ── THANH BỘ LỌC TÌM KIẾM THỐNG NHẤT ── --}}
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
+        {{-- ── KHU VỰC TÌM KIẾM VÀ LỌC (CHUẨN P3.2) ── --}}
+        <div class="card border rounded-3 mb-4">
             <div class="card-body p-3">
                 <form method="GET" action="{{ route('truongkhoa.duyet_detai.index') }}" class="row g-2 align-items-center">
                     <input type="hidden" name="tab" value="quanly">
-                    @if(request('TrangThai') && request('TrangThai') !== 'ALL')
-                        <input type="hidden" name="TrangThai" value="{{ request('TrangThai') }}">
-                    @endif
 
-                    {{-- 1. Học kỳ --}}
-                    <div class="col-12 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-regular fa-calendar me-1"></i>Học Kỳ:</label>
+                    <!-- 1. Học kỳ -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Học kỳ:</label>
                         <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Hiện tại)' : '' }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- 2. Bộ môn --}}
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-sitemap me-1"></i>Bộ Môn:</label>
-                        <select name="MaBoMon" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Bộ Môn --</option>
-                            @foreach($boMons as $bm)
-                                <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>{{ $bm->TenBoMon }}</option>
-                            @endforeach
+                    <!-- 2. Tìm theo tên bộ môn -->
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm:</label>
+                        <input type="text" name="search" class="form-control form-control-sm" 
+                               placeholder="Nhập tên bộ môn hoặc mã bộ môn..." 
+                               value="{{ request('search') }}">
+                    </div>
+
+                    <!-- 3. Lọc theo tình trạng chỉ tiêu hướng dẫn -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Tình trạng chỉ tiêu:</label>
+                        <select name="tinh_trang_chi_tieu" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="tat_ca">Tất cả tình trạng chỉ tiêu</option>
+                            <option value="con_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'con_chi_tieu' ? 'selected' : '' }}>Còn chỉ tiêu</option>
+                            <option value="het_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'het_chi_tieu' ? 'selected' : '' }}>Hết chỉ tiêu</option>
+                            <option value="vuot_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'vuot_chi_tieu' ? 'selected' : '' }}>Vượt chỉ tiêu</option>
                         </select>
                     </div>
 
-                    {{-- 3. Lĩnh vực --}}
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-tags me-1"></i>Lĩnh Vực:</label>
-                        <select name="LinhVuc" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Lĩnh Vực --</option>
-                            @foreach($linhVucs as $lv)
-                                <option value="{{ $lv }}" {{ request('LinhVuc') == $lv ? 'selected' : '' }}>{{ $lv }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- 4. Môn học phần --}}
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-graduation-cap me-1"></i>Học Phần:</label>
-                        <select name="HocPhan" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Học Phần --</option>
-                            @foreach($hocPhans as $hp)
-                                <option value="{{ $hp }}" {{ request('HocPhan') == $hp ? 'selected' : '' }}>{{ $hp }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- 5. Tìm kiếm & Nút bấm --}}
-                    <div class="col-12 mt-2">
-                        <div class="d-flex flex-column flex-md-row gap-2 align-items-center">
-                            <div class="input-group input-group-sm flex-grow-1">
-                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                <input type="text" name="search" class="form-control border-start-0" 
-                                       placeholder="Tìm kiếm theo mã đề tài, tên đề tài, tên giảng viên hướng dẫn..." 
-                                       value="{{ request('search') }}">
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold">
-                                    <i class="fa-solid fa-filter me-1"></i> Lọc Dữ Liệu
-                                </button>
-                                <a href="{{ route('truongkhoa.duyet_detai.index', ['tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3">
-                                    <i class="fa-solid fa-rotate me-1"></i> Đặt Lại
-                                </a>
-                            </div>
-                        </div>
+                    <!-- Nút Thao Tác Tìm Kiếm / Xóa Lọc -->
+                    <div class="col-12 col-md-2 d-flex align-items-end gap-2 mt-md-auto">
+                        <button class="btn btn-sm btn-primary fw-semibold px-3 w-100" type="submit">
+                            <i class="fa-solid fa-filter me-1"></i> Lọc
+                        </button>
+                        @if(request()->anyFilled(['search', 'tinh_trang_chi_tieu']))
+                            <a href="{{ route('truongkhoa.duyet_detai.index', ['MaHocKy' => $selectedHocKy, 'tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary px-2" title="Đặt lại bộ lọc">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </a>
+                        @endif
                     </div>
                 </form>
             </div>
         </div>
 
-        {{-- ── BẢNG DANH SÁCH ĐỀ TÀI (5 ĐỀ TÀI / 1 TRANG THEO CHUẨN THỐNG NHẤT) ── --}}
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>
-                    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-table-list text-primary"></i> Danh Sách Đề Tài Khóa Luận
-                    </h5>
-                    <div class="text-muted small mt-1">
-                        @php
-                            $selectedHkObj = $hocKies->firstWhere('MaHocKy', $selectedHocKy);
-                        @endphp
-                        Hiển thị đề tài thuộc <strong>{{ $selectedHkObj?->TenHocKy ?? $selectedHocKy }}</strong> &bull; Phân trang chuẩn 5 đề tài/trang
-                    </div>
-                </div>
-                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
-                    Tổng: <strong>{{ $detais->total() }}</strong> đề tài
+        {{-- ── BẢNG DANH SÁCH BỘ MÔN THUỘC KHOA (CHUẨN P3.2) ── --}}
+        <div class="admin-table-card mb-4">
+            <div class="admin-table-header">
+                <h5 class="admin-table-title">
+                    Danh Sách Bộ Môn Trực Thuộc Khoa
+                </h5>
+                <span class="text-muted small">
+                    Hiển thị <strong>{{ $filteredBoMonRows->count() }}</strong> bộ môn
                 </span>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-academic table-hover align-middle mb-0">
+                <table class="table admin-table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th width="4%" class="text-center">#</th>
-                            <th width="10%">Mã Đề Tài</th>
-                            <th width="32%">Tên Đề Tài &amp; Lĩnh Vực</th>
-                            <th width="18%">Giảng Viên Hướng Dẫn</th>
-                            <th width="12%" class="text-center">Đăng Ký SV</th>
-                            <th width="12%" class="text-center">Trạng Thái</th>
-                            <th width="12%" class="text-center">Thao Tác</th>
+                            <th class="text-center" style="width: 50px;">#</th>
+                            <th style="width: 250px;">Tên Bộ Môn</th>
+                            <th class="text-center" style="width: 170px;">Giảng Viên Đề Xuất</th>
+                            <th class="text-center" style="width: 140px;">Tổng Số Đề Tài</th>
+                            <th class="text-center" style="width: 170px;">Chờ Duyệt Cấp Khoa</th>
+                            <th class="text-center" style="width: 190px;">Tình Trạng Chỉ Tiêu</th>
+                            <th class="text-center" style="width: 180px;">Thao Tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($detais as $idx => $dt)
+                        @forelse($filteredBoMonRows as $index => $row)
                         @php
-                            $maxSV = $dt->SoLuongSinhVienToiDa ?? 3;
-                            $regApproved = $dt->phieuDangKys ? $dt->phieuDangKys->where('TrangThai', 'Đã duyệt') : collect();
-                            $regNhom = $regApproved->first()?->nhom ?? $dt->phieuDangKys->first()?->nhom;
-                            $regSV = 0;
-                            if ($regNhom && $regNhom->thanhVienNhoms) {
-                                $regSV = $regNhom->thanhVienNhoms->count();
-                            } elseif ($regApproved->count() > 0) {
-                                $regSV = $regApproved->count();
-                            }
-                            $percent = min(100, round(($regSV / max(1, $maxSV)) * 100));
-
-                            $statusBadgeClass = match($dt->TrangThai) {
-                                'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
-                                'Đã nộp đề cương - Chờ phân công PB' => 'bg-info-subtle text-info-emphasis border border-info-subtle',
-                                'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                'Đã công bố'               => 'bg-success-subtle text-success border border-success-subtle',
-                                'Đã đăng ký'               => 'bg-indigo-subtle text-indigo border border-indigo-subtle',
-                                'Chờ duyệt cấp Khoa'       => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                'Chờ duyệt cấp Bộ môn'     => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                'Đang phản biện đề cương'  => 'bg-info-subtle text-info border border-info-subtle',
-                                'Hoàn thành'               => 'bg-dark-subtle text-dark border border-dark-subtle',
-                                'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương' => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                'Từ chối', 'Không đạt phản biện' => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                default                    => 'bg-light text-muted border',
+                            $badgeChiTieu = match($row['tinh_trang_chi_tieu']) {
+                                'vuot_chi_tieu' => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                'het_chi_tieu'  => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+                                default         => 'bg-success-subtle text-success border border-success-subtle',
                             };
                         @endphp
                         <tr>
-                            <td class="text-center fw-bold text-muted">{{ $detais->firstItem() + $idx }}</td>
+                            <td class="text-center fw-bold text-muted">{{ $loop->iteration }}</td>
                             <td>
-                                <span class="badge-code">{{ $dt->MaDeTai }}</span>
+                                <div class="fw-bold text-dark">{{ $row['TenBoMon'] }}</div>
+                                <div class="mt-1">
+                                    <span class="badge-code">{{ $row['MaBoMon'] }}</span>
+                                </div>
                             </td>
-                            <td>
-                                <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
-                                <div class="d-flex align-items-center gap-2 mt-1">
-                                    @if($dt->LinhVuc)
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-tag me-1 text-primary"></i>{{ $dt->LinhVuc }}
-                                        </span>
-                                    @endif
-                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
-                                        {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
+                            <td class="text-center">
+                                <span class="fw-semibold text-dark">{{ $row['so_gv_de_xuat'] }}</span>
+                                <span class="text-muted small">/ {{ $row['tong_so_gv'] }} GV</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold text-dark fs-6">{{ $row['tong_detai'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                @if($row['cho_duyet_khoa'] > 0)
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 fw-bold" style="font-size: 13px;">
+                                        {{ $row['cho_duyet_khoa'] }} đề tài
                                     </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-semibold text-dark">{{ $dt->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
-                                <div class="text-muted small" style="font-size: 0.78rem;">
-                                    {{ $dt->giangVien?->boMon?->TenBoMon ?? 'N/A' }} 
-                                    @if($dt->giangVien?->boMon?->khoa)
-                                        &bull; {{ $dt->giangVien->boMon->khoa->TenKhoa }}
-                                    @endif
-                                </div>
+                                @else
+                                    <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 13px;">
+                                        0
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-center">
-                                <div class="small fw-bold {{ $regSV >= $maxSV ? 'text-danger' : 'text-primary' }}">
-                                    {{ $regSV }}/{{ $maxSV }} SV
+                                <div class="small fw-semibold text-dark mb-1">
+                                    {{ $row['da_dung_chi_tieu'] }}/{{ $row['tong_chi_tieu'] }} chỉ tiêu
                                 </div>
-                                <div class="progress mt-1" style="height: 5px; width: 60px; margin: 0 auto;">
-                                    <div class="progress-bar {{ $regSV >= $maxSV ? 'bg-danger' : 'bg-primary' }}" 
-                                         role="progressbar" style="width: {{ $percent }}%"></div>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge {{ $statusBadgeClass }} px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">
-                                    {{ $dt->TrangThai }}
+                                <span class="badge {{ $badgeChiTieu }} px-2 py-0.5" style="font-size: 12.5px;">
+                                    {{ $row['tinh_trang_label'] }}
                                 </span>
                             </td>
                             <td class="text-center">
-                                @if($dt->TrangThai === 'Chờ duyệt cấp Khoa')
-                                    <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" 
-                                       class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold text-nowrap shadow-xs">
-                                        <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
-                                    </a>
-                                @else
-                                    <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" 
-                                       class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 text-nowrap">
-                                        <i class="fa-solid fa-eye me-1"></i> Chi Tiết
-                                    </a>
-                                @endif
+                                <a href="{{ route('truongkhoa.duyet_detai.bomon', ['maBoMon' => $row['MaBoMon'], 'MaHocKy' => $selectedHocKy]) }}" 
+                                   class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1">
+                                    <i class="fa-solid fa-list me-1"></i> Danh sách đề tài
+                                </a>
                             </td>
                         </tr>
                         @empty
                         <tr>
                             <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
-                                <h6 class="fw-semibold">Không tìm thấy đề tài nào phù hợp với bộ lọc hiện tại!</h6>
-                                <p class="small text-muted mb-0">Thử thay đổi học kỳ, bộ môn hoặc từ khóa tìm kiếm.</p>
+                                <h6 class="fw-semibold">Không tìm thấy bộ môn nào phù hợp với bộ lọc hiện tại!</h6>
+                                <p class="small text-muted mb-0">Thử thay đổi từ khóa tìm kiếm hoặc chọn tất cả tình trạng chỉ tiêu.</p>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
-            @if($detais->hasPages())
-            <div class="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="text-muted small">
-                    Hiển thị <strong>{{ $detais->firstItem() }}</strong> - <strong>{{ $detais->lastItem() }}</strong> trên tổng <strong>{{ $detais->total() }}</strong> đề tài
-                </div>
-                <div>
-                    {{ $detais->appends(request()->all())->links('pagination::bootstrap-5') }}
-                </div>
-            </div>
-            @endif
         </div>
 
     </div>

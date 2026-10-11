@@ -134,7 +134,7 @@
                             <option value="">-- Tất cả Học Kỳ --</option>
                             @foreach($hocKys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy_filter') == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★' : '' }}
+                                    {{ $hk->TenHocKy }}
                                 </option>
                             @endforeach
                         </select>
@@ -206,9 +206,9 @@
                             <td class="py-3">
                                 <a href="{{ route('sinhvien.show', $sv->MaSV) }}" class="fw-bold text-dark text-decoration-none hover-primary fs-6">{{ $sv->HoTen }}</a>
                                 <div class="text-muted small">
-                                    <i class="fa-regular fa-envelope me-1"></i>{{ $sv->Email ?? ($sv->MaSV . '@st.huit.edu.vn') }}
+                                    {{ $sv->Email ?? ($sv->MaSV . '@st.huit.edu.vn') }}
                                     @if($sv->SoDienThoai)
-                                        &bull; <i class="fa-solid fa-phone ms-1 me-1"></i>{{ $sv->SoDienThoai }}
+                                        &bull; {{ $sv->SoDienThoai }}
                                     @endif
                                 </div>
                             </td>
@@ -316,7 +316,7 @@
                 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                     <div class="d-flex flex-wrap align-items-center gap-3">
                         <div>
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Học Kỳ Xét Duyệt &amp; Quản Lý</label>
+                            <label class="form-label small fw-bold text-muted mb-1">Học Kỳ Xét Duyệt &amp; Quản Lý</label>
                             <form method="GET" action="{{ route('sinhvien.index') }}" id="formChonHocKy">
                                 <input type="hidden" name="tab" value="du_dieu_kien">
                                 <select name="MaHocKy" class="form-select form-select-sm rounded-pill fw-bold" style="min-width: 320px;" onchange="this.form.submit()">

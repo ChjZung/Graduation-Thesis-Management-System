@@ -458,15 +458,24 @@
                         <!-- Giáo vụ fields -->
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Họ và Tên <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="HoTen" value="{{ old('HoTen', $profile->HoTen ?? '') }}" required>
+                            <input type="text" class="form-control @error('HoTen') is-invalid @enderror" name="HoTen" value="{{ old('HoTen', $profile->HoTen ?? '') }}" minlength="2" maxlength="100" pattern="^[A-Za-zÀ-ỹ\s]+$" title="Họ tên chỉ được chứa chữ cái và khoảng trắng" required>
+                            @error('HoTen')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Email Liên Hệ <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            <input type="email" class="form-control @error('Email') is-invalid @enderror" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            @error('Email')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Số Điện Thoại</label>
-                            <input type="text" class="form-control" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="09xxxxxxxx (10 số)">
+                            <input type="text" class="form-control @error('SoDienThoai') is-invalid @enderror" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="0912345678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
+                            @error('SoDienThoai')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                     @elseif($role === 'Giảng viên')
                         <!-- Giảng viên fields -->
@@ -477,11 +486,17 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Email Liên Hệ <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            <input type="email" class="form-control @error('Email') is-invalid @enderror" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            @error('Email')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Số Điện Thoại</label>
-                            <input type="text" class="form-control" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="09xxxxxxxx (10 số)">
+                            <input type="text" class="form-control @error('SoDienThoai') is-invalid @enderror" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="0912345678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
+                            @error('SoDienThoai')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="row g-2">
                             <div class="col-6 mb-3">
@@ -506,11 +521,17 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Email Cá Nhân <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            <input type="email" class="form-control @error('Email') is-invalid @enderror" name="Email" value="{{ old('Email', $profile->Email ?? '') }}" required>
+                            @error('Email')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Số Điện Thoại</label>
-                            <input type="text" class="form-control" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="09xxxxxxxx (10 số)">
+                            <input type="text" class="form-control @error('SoDienThoai') is-invalid @enderror" name="SoDienThoai" value="{{ old('SoDienThoai', $profile->SoDienThoai ?? '') }}" placeholder="0912345678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
+                            @error('SoDienThoai')
+                                <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="row g-2">
                             <div class="col-6 mb-3">

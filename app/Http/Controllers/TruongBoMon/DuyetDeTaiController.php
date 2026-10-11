@@ -11,6 +11,7 @@ use App\Models\PhanCongPhanBien;
 use App\Models\ChiTietDuyetDeTai;
 use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
+use App\Services\ChiTieuPhanBienService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -414,7 +415,7 @@ class DuyetDeTaiController extends Controller
     public function show($id)
     {
         $boMon = $this->getBoMon();
-        $detai = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
+        $detai = DeTai::with(['giangVien.boMon', 'hocPhanRef.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
             ->findOrFail($id);
 
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
@@ -422,16 +423,17 @@ class DuyetDeTaiController extends Controller
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
 
-        $maBoMon = $detai->giangVien?->MaBoMon ?? ($boMon?->MaBoMon ?? 'CNPM');
+        $maKhoa = $detai->giangVien?->boMon?->MaKhoa ?? $detai->hocPhanRef?->boMon?->MaKhoa ?? $detai->nganh?->MaKhoa ?? $boMon?->MaKhoa ?? 'CNTT';
         $allGiangViens = GiangVien::with('boMon')
-            ->where('MaBoMon', $maBoMon)
+            ->whereHas('boMon', fn($b) => $b->where('MaKhoa', $maKhoa))
             ->where('MaGV', '!=', $detai->MaGV)
             ->when($currentGv, fn($q) => $q->where('MaGV', '!=', $currentGv->MaGV))
             ->orderBy('HoTen')
             ->get();
         $phanBienHienTai = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
+        $statsPBMap = ChiTieuPhanBienService::getChiTieuStatsBatch($allGiangViens->pluck('MaGV')->toArray(), $detai->MaHocKy);
 
-        return view('truongbomon.duyet_detai.show', compact('boMon', 'detai', 'allGiangViens', 'phanBienHienTai'));
+        return view('truongbomon.duyet_detai.show', compact('boMon', 'detai', 'allGiangViens', 'phanBienHienTai', 'statsPBMap', 'maKhoa'));
     }
 
     public function phanCongPhanBien(Request $request, $id)
@@ -443,29 +445,43 @@ class DuyetDeTaiController extends Controller
         ]);
 
         $boMon = $this->getBoMon();
-        $detai = DeTai::findOrFail($id);
+        $detai = DeTai::with(['giangVien.boMon', 'hocPhanRef.boMon', 'nganh'])->findOrFail($id);
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
+        // 1. Chỉ phân công đề tài đủ điều kiện phản biện (phải có file đề cương)
         if (!$detai->FileDeCuong) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
         }
 
-        // Trưởng bộ môn không được tự phân công phản biện cho bản thân
+        if (in_array($detai->TrangThai, ['Từ chối', 'Bị từ chối', 'Chờ duyệt', 'Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa'])) {
+            return redirect()->back()->withErrors('Đề tài chưa được duyệt đề xuất hoặc đã bị từ chối. Không đủ điều kiện phân công phản biện!');
+        }
+
+        // 2. Trưởng bộ môn không được tự phân công phản biện cho bản thân
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
         if ($currentGv && $request->MaGVPhanBien === $currentGv->MaGV) {
             return redirect()->back()->withErrors('Trưởng bộ môn không được tự phân công phản biện đề cương cho chính bản thân! Vui lòng phân công cho giảng viên khác trong bộ môn.');
         }
 
-        // Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó
+        // 3. Quy tắc BR07: GV đề xuất đề tài không được làm GV phản biện chính đề tài đó
         if ($detai->MaGV === $request->MaGVPhanBien) {
             return redirect()->back()->withErrors('Giảng viên đề xuất đề tài không được làm Giảng viên phản biện cho đề tài này!');
         }
 
-        // Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài
-        $gvPB = GiangVien::find($request->MaGVPhanBien);
-        if ($detai->giangVien && $gvPB && $gvPB->MaBoMon !== $detai->giangVien->MaBoMon) {
-            return redirect()->back()->withErrors('Giảng viên phản biện phải thuộc cùng Bộ môn với đề tài (' . ($detai->giangVien->boMon->TenBoMon ?? '') . ')!');
+        // 4. Chỉ GV cùng khoa với đề tài
+        $gvPB = GiangVien::with('boMon')->find($request->MaGVPhanBien);
+        $detaiKhoa = $detai->giangVien?->boMon?->MaKhoa ?? $detai->hocPhanRef?->boMon?->MaKhoa ?? $detai->nganh?->MaKhoa ?? $boMon?->MaKhoa;
+        $gvKhoa = $gvPB?->boMon?->MaKhoa;
+
+        if ($detaiKhoa && $gvKhoa && $detaiKhoa !== $gvKhoa) {
+            return redirect()->back()->withErrors("Giảng viên phản biện phải thuộc cùng Khoa với đề tài (Khoa {$detaiKhoa})!");
+        }
+
+        // 5. Chặn server-side: 1 GV tối đa phản biện 5 đề tài (cho phép tùy chỉnh qua ChiTieuPhanBienService)
+        $statsPB = ChiTieuPhanBienService::getChiTieuStats($request->MaGVPhanBien, $detai->MaHocKy, $detai->MaDeTai);
+        if ($statsPB['da_dung'] >= $statsPB['tong']) {
+            return redirect()->back()->withErrors("Giảng viên {$gvPB->HoTen} đã đạt tối đa hạn mức phản biện {$statsPB['tong']} đề tài trong học kỳ ({$statsPB['da_dung']}/{$statsPB['tong']})! Vui lòng chọn giảng viên khác hoặc nâng hạn mức.");
         }
 
         DB::transaction(function () use ($request, $detai) {
@@ -493,7 +509,6 @@ class DuyetDeTaiController extends Controller
         });
 
         // Gửi thông báo đến GV phản biện
-        $gvPB = GiangVien::find($request->MaGVPhanBien);
         if ($gvPB && $gvPB->MaTK) {
             ThongBaoService::guiDen(
                 $gvPB->MaTK,

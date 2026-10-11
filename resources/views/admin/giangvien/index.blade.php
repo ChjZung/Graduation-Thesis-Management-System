@@ -135,7 +135,7 @@
                     <option value="">-- Tất cả Học Kỳ --</option>
                     @foreach($hocKys as $hk)
                         <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy_filter') == $hk->MaHocKy ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★' : '' }}
+                            {{ $hk->TenHocKy }}
                         </option>
                     @endforeach
                 </select>
@@ -162,8 +162,8 @@
                 <!-- BỘ LỌC ĐỊNH MỨC HƯỚNG DẪN -->
                 <select name="tinh_trang_hd" class="form-select" style="min-width: 190px;" onchange="this.form.submit()">
                     <option value="">-- Tình trạng hướng dẫn --</option>
-                    <option value="co_hd" {{ request('tinh_trang_hd') == 'co_hd' ? 'selected' : '' }}>Có hướng dẫn (&ge; 1 ĐT)</option>
-                    <option value="dat_dinh_muc" {{ request('tinh_trang_hd') == 'dat_dinh_muc' ? 'selected' : '' }}>Đạt tối đa (5/5 ĐT)</option>
+                    <option value="co_hd" {{ request('tinh_trang_hd') == 'co_hd' ? 'selected' : '' }}>Có nhóm hướng dẫn (&ge; 1)</option>
+                    <option value="dat_dinh_muc" {{ request('tinh_trang_hd') == 'dat_dinh_muc' ? 'selected' : '' }}>Đạt định mức / Hết chỉ tiêu</option>
                     <option value="chua_hd" {{ request('tinh_trang_hd') == 'chua_hd' ? 'selected' : '' }}>Chưa nhận hướng dẫn</option>
                 </select>
 
@@ -207,7 +207,14 @@
                 <tbody class="border-top-0">
                     @forelse($giangviens as $gv)
                     @php
-                        $cnt = min((int)($gv->de_tais_count ?? 0), 5);
+                        $ct = $gv->chi_tieu_stats ?? [
+                            'tong'       => 5,
+                            'da_dung'    => 0,
+                            'con_lai'    => 5,
+                            'tinh_trang' => 'con_chi_tieu',
+                            'is_full'    => false,
+                            'label'      => '0/5',
+                        ];
                     @endphp
                     <tr>
                         <td class="ps-4 py-3">
@@ -218,9 +225,9 @@
                                 {{ $gv->HocVi ? $gv->HocVi . '. ' : '' }}{{ $gv->HoTen }}
                             </a>
                             <div class="text-muted small">
-                                <i class="fa-regular fa-envelope me-1"></i>{{ $gv->Email ?? 'chua_co@huit.edu.vn' }}
+                                {{ $gv->Email ?? 'chua_co@huit.edu.vn' }}
                                 @if($gv->SoDienThoai)
-                                    &bull; <i class="fa-solid fa-phone ms-1 me-1"></i>{{ $gv->SoDienThoai }}
+                                    &bull; {{ $gv->SoDienThoai }}
                                 @endif
                             </div>
                         </td>
@@ -229,16 +236,18 @@
                             <div class="small text-muted">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
                         </td>
                         <td class="text-center py-3">
-                            <div class="fw-bold {{ $cnt >= 5 ? 'text-warning-emphasis' : ($cnt > 0 ? 'text-success' : 'text-muted') }}">
-                                {{ $cnt }}/5 đề tài
+                            <div class="fw-bold {{ $ct['tinh_trang'] === 'vuot_chi_tieu' ? 'text-danger' : ($ct['is_full'] ? 'text-warning-emphasis' : ($ct['da_dung'] > 0 ? 'text-success' : 'text-muted')) }}">
+                                {{ $ct['label'] }} nhóm
                             </div>
-                            <div class="small text-muted">
-                                @if($cnt >= 5)
-                                    <span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-2 py-0.5">Đạt tối đa</span>
-                                @elseif($cnt > 0)
-                                    <span class="badge bg-success-subtle text-success border rounded-pill px-2 py-0.5">Còn {{ 5 - $cnt }} chỗ</span>
+                            <div class="small text-muted mt-1">
+                                @if($ct['tinh_trang'] === 'vuot_chi_tieu')
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5">Vượt chỉ tiêu</span>
+                                @elseif($ct['tinh_trang'] === 'het_chi_tieu')
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5">Đã đủ chỉ tiêu</span>
+                                @elseif($ct['da_dung'] > 0)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5">Còn {{ $ct['con_lai'] }} chỗ</span>
                                 @else
-                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5">Chưa hướng dẫn</span>
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5">Chưa có nhóm</span>
                                 @endif
                             </div>
                         </td>

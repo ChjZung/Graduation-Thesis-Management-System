@@ -100,7 +100,7 @@ class TruongBoMonPheDuyetDeTaiTest extends TestCase
 
         $this->assertNotNull($history);
         $this->assertEquals('Chờ duyệt cấp Khoa', $history->TrangThai);
-        $this->assertStringContainsString('Đồng ý thông qua', $history->LyDo);
+        $this->assertStringContainsStringIgnoringCase('đồng ý thông qua', $history->LyDo);
     }
 
     /**

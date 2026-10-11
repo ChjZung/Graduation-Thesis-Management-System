@@ -109,6 +109,12 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::resource('hocphan', \App\Http\Controllers\HocPhanController::class);
     Route::get('giangvien/export', [\App\Http\Controllers\GiangVienController::class, 'exportExcel'])->name('admin.giangvien.export');
     Route::resource('giangvien', \App\Http\Controllers\GiangVienController::class);
+
+    // Chỉ tiêu hướng dẫn (P4)
+    Route::get('chi-tieu-huong-dan', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'index'])->name('admin.chi_tieu_huong_dan.index');
+    Route::post('chi-tieu-huong-dan/update', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'update'])->name('admin.chi_tieu_huong_dan.update');
+    Route::post('chi-tieu-huong-dan/bulk', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'bulkUpdate'])->name('admin.chi_tieu_huong_dan.bulk_update');
+    Route::post('chi-tieu-huong-dan/reset', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'reset'])->name('admin.chi_tieu_huong_dan.reset');
     Route::get('sinhvien/du-dieu-kien', [\App\Http\Controllers\SinhVienController::class, 'dieuKienIndex'])->name('admin.sinhvien.dieu_kien');
     Route::post('sinhvien/du-dieu-kien/ra-soat', [\App\Http\Controllers\SinhVienController::class, 'dieuKienRaSoat'])->name('admin.sinhvien.ra_soat');
     Route::post('sinhvien/du-dieu-kien/them', [\App\Http\Controllers\SinhVienController::class, 'dieuKienThem'])->name('admin.sinhvien.them_dk');
@@ -349,6 +355,8 @@ Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->
 
     // Phân công phản biện đề cương riêng
     Route::get('/phan-cong-phan-bien', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'index'])->name('truongbomon.phancong.index');
+    Route::post('/phan-cong-phan-bien/thiet-lap-chi-tieu', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'updateChiTieu'])->name('truongbomon.phancong.updateChiTieu');
+    Route::post('/phan-cong-phan-bien/reset-chi-tieu', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'resetChiTieu'])->name('truongbomon.phancong.resetChiTieu');
     Route::post('/phan-cong-phan-bien/{id}', [\App\Http\Controllers\TruongBoMon\PhanCongPhanBienController::class, 'store'])->name('truongbomon.phancong.store');
 
     // Duyệt đề cương riêng biệt
@@ -375,6 +383,7 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::get('/', [\App\Http\Controllers\TruongKhoa\DashboardController::class, 'index'])->name('truongkhoa.dashboard');
     Route::get('/duyet-detai/export', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'export'])->name('truongkhoa.duyet_detai.export');
     Route::get('/duyet-detai', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'index'])->name('truongkhoa.duyet_detai.index');
+    Route::get('/duyet-detai/bo-mon/{maBoMon}', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'danhSachDeTaiBoMon'])->name('truongkhoa.duyet_detai.bomon');
     Route::get('/duyet-detai/{id}', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'show'])->name('truongkhoa.duyet_detai.show');
     Route::post('/duyet-detai/{id}/duyet', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'approve'])->name('truongkhoa.duyet_detai.duyet');
     Route::post('/duyet-detai/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'requestEdit'])->name('truongkhoa.duyet_detai.yeuCauChinhSua');
