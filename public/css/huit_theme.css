@@ -3253,6 +3253,18 @@ label .text-danger {
    all portal views (Admin, Giảng viên, Sinh viên, Trưởng BM/Khoa).
    ═══════════════════════════════════════════════════════════════════ */
 
+/* 0. HIDE REDUNDANT / INSTRUCTIONAL TEXTS */
+.page-description,
+.card-intro,
+.help-text-banner,
+.page-subtitle,
+.table-intro,
+.alert-info-guide,
+.guide-box,
+.instruction-text {
+    display: none !important;
+}
+
 /* 1. COMPACT STANDARDIZED TABLES & LISTS */
 .table,
 .table-huit,
@@ -3260,6 +3272,7 @@ label .text-danger {
 .table-topic,
 .admin-table,
 .table-hp,
+.table-academic,
 table.dataTable,
 .table-responsive > table {
     width: 100% !important;
@@ -3280,9 +3293,11 @@ table.dataTable,
 .admin-table td,
 .table-hp th,
 .table-hp td,
+.table-academic th,
+.table-academic td,
 table.dataTable th,
 table.dataTable td {
-    padding: 10px 12px !important;
+    padding: 8px 12px !important;
     vertical-align: middle !important;
     font-size: 13px !important;
     line-height: 1.4 !important;
@@ -3293,7 +3308,8 @@ table.dataTable td {
 .table-custom thead th,
 .table-topic thead th,
 .admin-table thead th,
-.table-hp thead th {
+.table-hp thead th,
+.table-academic thead th {
     background: #003366 !important;
     color: #ffffff !important;
     font-weight: 600 !important;
@@ -3308,7 +3324,8 @@ table.dataTable td {
 .table-custom tbody tr:hover,
 .table-topic tbody tr:hover,
 .admin-table tbody tr:hover,
-.table-hp tbody tr:hover {
+.table-hp tbody tr:hover,
+.table-academic tbody tr:hover {
     background-color: #f0f7ff !important;
 }
 
@@ -3317,7 +3334,8 @@ table.dataTable td {
 .table-custom tbody td,
 .table-topic tbody td,
 .admin-table tbody td,
-.table-hp tbody td {
+.table-hp tbody td,
+.table-academic tbody td {
     border-top: none !important;
     border-bottom: 1px solid #e2e8f0 !important;
     color: #1e293b !important;
@@ -3326,17 +3344,19 @@ table.dataTable td {
 /* 2. STANDARDIZED BUTTONS & ACTION BUTTONS IN TABLES */
 .btn-sm,
 .btn-action,
+.btn-action-circle,
 .table .btn,
 .table-huit .btn,
 .table-custom .btn,
 .table-topic .btn,
 .admin-table .btn,
 .table-hp .btn,
+.table-academic .btn,
 table.dataTable .btn {
-    padding: 5px 10px !important;
-    font-size: 13px !important;
+    padding: 4px 10px !important;
+    font-size: 12.5px !important;
     font-weight: 600 !important;
-    border-radius: 6px !important;
+    border-radius: 4px !important;
     line-height: 1.4 !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -3351,7 +3371,7 @@ table.dataTable .btn {
 .table-custom .btn i,
 .table-topic .btn i,
 .admin-table .btn i {
-    font-size: 12px !important;
+    font-size: 11.5px !important;
 }
 
 /* Primary Button Global Hover Effect */
@@ -3359,6 +3379,8 @@ table.dataTable .btn {
     background: linear-gradient(135deg, #0072CE 0%, #004A8F 100%) !important;
     border: none !important;
     color: #ffffff !important;
+    padding: 8px 16px;
+    border-radius: 6px !important;
     box-shadow: 0 2px 6px rgba(0, 114, 206, 0.25) !important;
     transition: all 0.2s ease !important;
 }
@@ -3430,7 +3452,7 @@ table.dataTable .btn {
     border: 1px solid #cbd5e1 !important;
 }
 
-/* 4. STANDARDIZED FORMS & MODALS */
+/* 4. STANDARDIZED FORMS & INPUTS */
 .form-control,
 .form-select,
 input.form-control,
@@ -3464,43 +3486,138 @@ textarea.form-control:focus {
     margin-bottom: 6px !important;
 }
 
+/* 5. STANDARDIZED MODALS (THÊM, SỬA, XÓA, CHI TIẾT) */
+.modal-dialog {
+    margin: 1.75rem auto !important;
+}
+
 .modal-content {
     border: none !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 25px rgba(0, 31, 63, 0.15) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 30px rgba(0, 31, 63, 0.25) !important;
     overflow: hidden !important;
 }
 
-.modal-header {
-    background: linear-gradient(135deg, #003366 0%, #0072CE 100%) !important;
+/* Tiêu đề Modal chuẩn đồng dạng màu Header (#003366 / #002855 / #0072ce) */
+.modal-header,
+.modal-header-huit,
+.modal-content > .modal-header,
+div[class*="modal-header"] {
+    background: linear-gradient(135deg, #002855 0%, #003366 55%, #0059A8 100%) !important;
     color: #ffffff !important;
-    padding: 12px 20px !important;
-    border-bottom: none !important;
+    padding: 10px 18px !important;
+    border-bottom: 2px solid #0072ce !important;
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
 }
 
-.modal-header .modal-title {
-    font-size: 15px !important;
+.modal-header .modal-title,
+.modal-header-huit .modal-title,
+.modal-header h5,
+.modal-header h4,
+.modal-header h6 {
+    font-size: 14.5px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 !important;
 }
 
-.modal-header .btn-close {
+.modal-header .modal-title i,
+.modal-header h5 i,
+.modal-header h6 i {
+    color: #38bdf8 !important;
+    font-size: 15px !important;
+}
+
+/* Modal Xóa / Xác nhận nguy hiểm (Xóa, Từ chối, Hủy) */
+.modal-header.bg-danger,
+.modal-header.modal-danger,
+.modal[id*="delete"] .modal-header,
+.modal[id*="Delete"] .modal-header,
+.modal[id*="xoa"] .modal-header,
+.modal[id*="Xoa"] .modal-header,
+.modal[id*="tuChoi"] .modal-header,
+.modal[id*="TuChoi"] .modal-header,
+.modal-confirm-delete .modal-header {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%) !important;
+    border-bottom: 2px solid #ef4444 !important;
+}
+
+.modal-header.bg-danger .modal-title,
+.modal-header.bg-danger .modal-title i,
+.modal[id*="delete"] .modal-header .modal-title i,
+.modal[id*="Delete"] .modal-header .modal-title i,
+.modal[id*="xoa"] .modal-header .modal-title i,
+.modal[id*="Xoa"] .modal-header .modal-title i,
+.modal[id*="tuChoi"] .modal-header .modal-title i,
+.modal[id*="TuChoi"] .modal-header .modal-title i {
+    color: #ffffff !important;
+}
+
+/* Modal Sửa / Cập nhật */
+.modal[id*="edit"] .modal-header,
+.modal[id*="Edit"] .modal-header,
+.modal[id*="sua"] .modal-header,
+.modal[id*="Sua"] .modal-header,
+.modal[id*="capNhat"] .modal-header,
+.modal[id*="CapNhat"] .modal-header {
+    background: linear-gradient(135deg, #002855 0%, #003366 50%, #0284c7 100%) !important;
+    border-bottom: 2px solid #38bdf8 !important;
+}
+
+/* Modal Chi tiết */
+.modal[id*="detail"] .modal-header,
+.modal[id*="Detail"] .modal-header,
+.modal[id*="chiTiet"] .modal-header,
+.modal[id*="ChiTiet"] .modal-header,
+.modal[id*="xem"] .modal-header,
+.modal[id*="Xem"] .modal-header {
+    background: linear-gradient(135deg, #002855 0%, #003366 50%, #0369a1 100%) !important;
+    border-bottom: 2px solid #0ea5e9 !important;
+}
+
+.modal-header .btn-close,
+.modal-header-huit .btn-close {
     filter: brightness(0) invert(1) !important;
-    opacity: 0.8 !important;
+    opacity: 0.85 !important;
+    padding: 0.5rem !important;
+    margin: 0 !important;
 }
 
-.modal-header .btn-close:hover {
+.modal-header .btn-close:hover,
+.modal-header-huit .btn-close:hover {
     opacity: 1 !important;
 }
 
 .modal-body {
-    padding: 20px !important;
+    padding: 16px 20px !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
 }
 
 .modal-footer {
-    padding: 12px 20px !important;
+    padding: 10px 18px !important;
     border-top: 1px solid #e2e8f0 !important;
     background-color: #f8fafc !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+}
+
+.modal-footer .btn {
+    padding: 5px 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
 }
 
 
