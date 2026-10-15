@@ -18,6 +18,7 @@ class TaiKhoan extends Authenticatable
     protected $fillable = [
         'MaTK',
         'MaVaiTro',
+        'MaGV',
         'TenDangNhap',
         'MatKhau',
         'TrangThai',
@@ -122,7 +123,37 @@ class TaiKhoan extends Authenticatable
 
     public function giangVien()
     {
-        return $this->hasOne(GiangVien::class, 'MaTK', 'MaTK');
+        return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
+
+    public function getGiangVienAttribute()
+    {
+        if ($this->relationLoaded('giangVien') && $this->getRelation('giangVien')) {
+            return $this->getRelation('giangVien');
+        }
+
+        $gv = null;
+        if (!empty($this->attributes['MaGV'])) {
+            $gv = GiangVien::with('boMon.khoa')->where('MaGV', $this->attributes['MaGV'])->first();
+        }
+        if (!$gv) {
+            $gv = GiangVien::with('boMon.khoa')
+                ->where('MaTK', $this->MaTK)
+                ->orWhere('MaGV', $this->TenDangNhap)
+                ->first();
+        }
+        if (!$gv && preg_match('/(GV\d+)/i', $this->TenDangNhap, $m)) {
+            $rawMa = strtoupper($m[1]);
+            $num = (int)preg_replace('/\D/', '', $rawMa);
+            $padded = 'GV' . str_pad($num, 8, '0', STR_PAD_LEFT);
+            $gv = GiangVien::with('boMon.khoa')->where('MaGV', $padded)->orWhere('MaGV', $rawMa)->first();
+        }
+
+        if ($gv) {
+            $this->setRelation('giangVien', $gv);
+        }
+
+        return $gv;
     }
 
     public function sinhVien()

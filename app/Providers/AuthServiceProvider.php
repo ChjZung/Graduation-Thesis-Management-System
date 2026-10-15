@@ -6,9 +6,11 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use App\Models\DeTai;
 use App\Models\BaoCaoTienDo;
 use App\Models\HoSoBaoVe;
+use App\Models\ThongBao;
 use App\Policies\DeTaiPolicy;
 use App\Policies\BaoCaoPolicy;
-use App\Policies\ChamDiemPolicy;
+use App\Policies\HoSoBaoVePolicy;
+use App\Policies\ThongBaoPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -18,7 +20,8 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         DeTai::class        => DeTaiPolicy::class,
         BaoCaoTienDo::class => BaoCaoPolicy::class,
-        HoSoBaoVe::class    => ChamDiemPolicy::class,
+        HoSoBaoVe::class    => HoSoBaoVePolicy::class,
+        ThongBao::class     => ThongBaoPolicy::class,
     ];
 
     public function boot(): void

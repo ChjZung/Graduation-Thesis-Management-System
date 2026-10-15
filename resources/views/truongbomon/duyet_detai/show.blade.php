@@ -44,66 +44,7 @@
         </div>
     </div>
 
-    <!-- Topic Lifecycle Workflow Progress Stepper -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-        <div class="card-body p-4">
-            <div class="row g-2 text-center position-relative">
-                @php
-                    $isProposed = true;
-                    $isBmApproved1 = in_array($detai->TrangThai, ['Chờ duyệt cấp Khoa', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Đang phản biện đề cương', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố']);
-                    $isKhoaApproved = in_array($detai->TrangThai, ['Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã nộp đề cương - Chờ phân công PB', 'Đang phản biện đề cương', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố']);
-                    $isOutlineSubmitted = (bool)$detai->FileDeCuong;
-                    $isReviewed = $phanBienHienTai && $phanBienHienTai->KetQua;
-                    $isPublished = $detai->TrangThai === 'Đã công bố';
-                @endphp
 
-                <!-- Step 1 -->
-                <div class="col">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white mb-2" style="width: 36px; height: 36px;">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                    <div class="small fw-bold text-dark">1. GV Đề Xuất</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">{{ $detai->NgayDeXuat ? \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') : ($detai->created_at ? $detai->created_at->format('d/m/Y') : 'Đã nộp') }}</div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="col">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle {{ $isBmApproved1 ? 'bg-success text-white' : 'bg-warning text-dark' }} mb-2" style="width: 36px; height: 36px;">
-                        <i class="fa-solid {{ $isBmApproved1 ? 'fa-check' : 'fa-building-columns' }}"></i>
-                    </div>
-                    <div class="small fw-bold text-dark">2. BM Duyệt Đề Xuất</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">{{ $detai->NgayDuyetBM ? \Carbon\Carbon::parse($detai->NgayDuyetBM)->format('d/m/Y') : 'Chờ TBM' }}</div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="col">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle {{ $isKhoaApproved ? 'bg-success text-white' : ($isBmApproved1 ? 'bg-warning text-dark' : 'bg-light text-muted border') }} mb-2" style="width: 36px; height: 36px;">
-                        <i class="fa-solid {{ $isKhoaApproved ? 'fa-check' : 'fa-stamp' }}"></i>
-                    </div>
-                    <div class="small fw-bold text-dark">3. Khoa Phê Duyệt</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">{{ $detai->NgayDuyetKhoa ? \Carbon\Carbon::parse($detai->NgayDuyetKhoa)->format('d/m/Y') : 'Chờ Khoa' }}</div>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="col">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle {{ $isReviewed ? 'bg-success text-white' : ($isOutlineSubmitted ? 'bg-info text-white' : 'bg-light text-muted border') }} mb-2" style="width: 36px; height: 36px;">
-                        <i class="fa-solid {{ $isReviewed ? 'fa-check' : 'fa-file-signature' }}"></i>
-                    </div>
-                    <div class="small fw-bold text-dark">4. Phản Biện Đề Cương</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">{{ $isReviewed ? $phanBienHienTai->KetQua : ($phanBienHienTai ? 'Đang phản biện' : ($isOutlineSubmitted ? 'Đã nộp ĐC' : 'Chờ nộp ĐC')) }}</div>
-                </div>
-
-                <!-- Step 5 -->
-                <div class="col">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle {{ $isPublished ? 'bg-success text-white' : 'bg-light text-muted border' }} mb-2" style="width: 36px; height: 36px;">
-                        <i class="fa-solid {{ $isPublished ? 'fa-check' : 'fa-bullhorn' }}"></i>
-                    </div>
-                    <div class="small fw-bold text-dark">5. BM Duyệt & Công Bố</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">{{ $detai->NgayCongBo ? \Carbon\Carbon::parse($detai->NgayCongBo)->format('d/m/Y') : 'Chờ công bố' }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="row g-4">
         <!-- Main Info Column -->
@@ -149,7 +90,7 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Mô tả tóm tắt nội dung chuyên môn:</label>
-                        <div class="p-3 bg-light rounded" style="white-space: pre-line; line-height: 1.6;">{{ $detai->MoTa ?? 'Chưa có mô tả chi tiết' }}</div>
+                        <div class="p-3 bg-light rounded" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa có mô tả chi tiết' !!}</div>
                     </div>
 
                     <div class="mb-3">

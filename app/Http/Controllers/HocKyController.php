@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Helpers\IdGenerator;
 use App\Models\HocKy;
+use App\Models\HocPhan;
+use App\Models\HocPhanHocKy;
 use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
 

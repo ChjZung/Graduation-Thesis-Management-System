@@ -18,21 +18,25 @@ class ChiTieuPhanBienService
      */
     public static function getChiTieuTong(string $maGV, ?string $maHocKy = null, bool $lockForUpdate = false): int
     {
-        $query = ChiTieuPhanBien::where('MaGV', $maGV);
+        try {
+            $query = ChiTieuPhanBien::where('MaGV', $maGV);
 
-        if ($maHocKy) {
-            $query->where(function ($q) use ($maHocKy) {
-                $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
-            })->orderByRaw('CASE WHEN MaHocKy = ? THEN 0 ELSE 1 END', [$maHocKy]);
+            if ($maHocKy) {
+                $query->where(function ($q) use ($maHocKy) {
+                    $q->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy');
+                })->orderByRaw('CASE WHEN MaHocKy = ? THEN 0 ELSE 1 END', [$maHocKy]);
+            }
+
+            if ($lockForUpdate) {
+                $query->lockForUpdate();
+            }
+
+            $row = $query->first();
+
+            return $row !== null ? (int)$row->SoDeTaiToiDa : self::DEFAULT_LIMIT;
+        } catch (\Throwable $e) {
+            return self::DEFAULT_LIMIT;
         }
-
-        if ($lockForUpdate) {
-            $query->lockForUpdate();
-        }
-
-        $row = $query->first();
-
-        return $row !== null ? (int)$row->SoDeTaiToiDa : self::DEFAULT_LIMIT;
     }
 
     /**
@@ -99,10 +103,14 @@ class ChiTieuPhanBienService
         }
 
         // 1. Chỉ tiêu tùy chỉnh từ bảng chitieuphanbien
-        $customLimits = ChiTieuPhanBien::whereIn('MaGV', $gvIds)
-            ->when($maHocKy, fn($q) => $q->where(fn($sub) => $sub->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy')))
-            ->get()
-            ->keyBy('MaGV');
+        try {
+            $customLimits = ChiTieuPhanBien::whereIn('MaGV', $gvIds)
+                ->when($maHocKy, fn($q) => $q->where(fn($sub) => $sub->where('MaHocKy', $maHocKy)->orWhereNull('MaHocKy')))
+                ->get()
+                ->keyBy('MaGV');
+        } catch (\Throwable $e) {
+            $customLimits = collect();
+        }
 
         // 2. Số lượng đề tài đã phân công phản biện
         $pcQuery = PhanCongPhanBien::whereIn('PhanCongPhanBien.MaGV', $gvIds)

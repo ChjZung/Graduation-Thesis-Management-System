@@ -1,0 +1,13 @@
+﻿MaHocPhan,TenHocPhan,SoTinChi,MaKhoa,MaBoMon,LoaiHocPhan,MoTa
+HP_KLCN_ATTT,"Khóa luận cử nhân - An toàn thông tin",10,CNTT,ATTT,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành An toàn thông tin và an ninh mạng (10 tín chỉ)."
+HP_KLCN_CNPM,"Khóa luận cử nhân - Công nghệ phần mềm",10,CNTT,CNPM,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành Công nghệ phần mềm (10 tín chỉ)."
+HP_KLCN_HTTT,"Khóa luận cử nhân - Hệ thống thông tin",10,CNTT,HTTT,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành Hệ thống thông tin quản lý và phân tích nghiệp vụ (10 tín chỉ)."
+HP_KLCN_KHDL,"Khóa luận cử nhân - Khoa học dữ liệu & AI",10,CNTT,KHDL,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành Khoa học dữ liệu và phân tích định lượng (10 tín chỉ)."
+HP_KLCN_KHMT,"Khóa luận cử nhân - Khoa học máy tính",10,CNTT,KHMT,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành Khoa học máy tính và thuật toán ứng dụng (10 tín chỉ)."
+HP_KLCN_MMT,"Khóa luận cử nhân - Mạng máy tính & Viễn thông",10,CNTT,MMT,"Khóa luận","Học phần Khóa luận tốt nghiệp hệ Cử nhân chuyên ngành Mạng máy tính và truyền thông dữ liệu (10 tín chỉ)."
+HP_KLTN_ATTT,"Khóa luận tốt nghiệp - An toàn thông tin",10,CNTT,ATTT,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành An toàn thông tin (10 tín chỉ)."
+HP_KLTN_CNPM,"Khóa luận tốt nghiệp - Công nghệ phần mềm",10,CNTT,CNPM,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành Công nghệ phần mềm (10 tín chỉ)."
+HP_KLTN_HTTT,"Khóa luận tốt nghiệp - Hệ thống thông tin",10,CNTT,HTTT,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành Hệ thống thông tin (10 tín chỉ)."
+HP_KLTN_KHDL,"Khóa luận tốt nghiệp - Khoa học dữ liệu & AI",10,CNTT,KHDL,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành Khoa học dữ liệu & Trí tuệ nhân tạo (10 tín chỉ)."
+HP_KLTN_KHMT,"Khóa luận tốt nghiệp - Khoa học máy tính",10,CNTT,KHMT,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành Khoa học máy tính (10 tín chỉ)."
+HP_KLTN_MMT,"Khóa luận tốt nghiệp - Mạng máy tính & Viễn thông",10,CNTT,MMT,"Khóa luận","Học phần Khóa luận tốt nghiệp chuyên ngành Mạng máy tính và Viễn thông (10 tín chỉ)."

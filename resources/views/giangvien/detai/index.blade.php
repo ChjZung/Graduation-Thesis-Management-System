@@ -4,6 +4,23 @@
 
 @section('content')
 
+@if(session('import_result'))
+    <div class="alert alert-{{ session('import_alert_type') == 'import_danger' ? 'danger' : (session('import_alert_type') == 'import_warning' ? 'warning' : 'success') }} alert-dismissible fade show shadow-sm mb-3" role="alert">
+        {!! session('import_result') !!}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(!($deXuatState['is_open'] ?? true))
+    <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 p-3 d-flex align-items-center gap-3">
+        <i class="fa-solid fa-clock-rotate-left fs-4 text-warning"></i>
+        <div>
+            <div class="fw-bold text-dark">Cổng Đề Xuất Đề Tài Đã Khóa</div>
+            <div class="small text-muted">{{ $deXuatState['message'] ?? 'Hiện đang trong thời gian sinh viên tạo nhóm và đăng ký đề tài. Cổng đề xuất đề tài của Giảng viên đã kết thúc!' }}</div>
+        </div>
+    </div>
+@endif
+
 <!-- Card Danh Sách Đề Tài -->
 <div class="card card-premium">
     <div class="card-header-premium d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -11,9 +28,23 @@
             <i class="fa-solid fa-folder-open text-primary fs-5"></i>
             <span class="fw-bold">Danh Sách Đề Tài Đề Xuất</span>
         </div>
-        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs">
-            <i class="fa-solid fa-plus me-1"></i> Đề Xuất Đề Tài Mới
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            @if($deXuatState['is_open'] ?? true)
+                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-xs" data-bs-toggle="modal" data-bs-target="#importDeTaiModal">
+                    <i class="fa-solid fa-file-excel me-1"></i> Import Excel
+                </button>
+                <a href="{{ route('giangvien.detai.create') }}" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs">
+                    <i class="fa-solid fa-plus me-1"></i> Đề Xuất Đề Tài Mới
+                </a>
+            @else
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs" disabled title="{{ $deXuatState['message'] ?? 'Đã hết thời hạn đề xuất' }}">
+                    <i class="fa-solid fa-lock me-1"></i> Import Excel
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3 shadow-xs" disabled title="{{ $deXuatState['message'] ?? 'Đã hết thời hạn đề xuất' }}">
+                    <i class="fa-solid fa-lock me-1"></i> Đã Hết Hạn Đề Xuất
+                </button>
+            @endif
+        </div>
     </div>
 
     <!-- Thanh Bộ Lọc Tìm Kiếm & Học Kỳ -->
@@ -210,9 +241,9 @@
                                     </span>
                                 @endif
 
-                                <!-- Gán Nhóm (Chỉ cho phép khi đề tài đã được duyệt/công bố và chưa có nhóm) -->
-                                @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$hasGroupAssigned)
-                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}" title="Gán nhóm cho đề tài này">
+                                <!-- Gán Nhóm (Chỉ cho phép khi đề tài đã được phê duyệt công bố và chưa có nhóm) -->
+                                @if($dt->TrangThai === 'Đã công bố' && !$hasGroupAssigned)
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}" title="Gán nhóm cho đề tài đã công bố này">
                                         <i class="fa-solid fa-user-check me-1"></i>Gán Nhóm
                                     </button>
                                 @endif
@@ -243,8 +274,8 @@
                         </td>
                     </tr>
 
-                    <!-- MODAL GÁN NHÓM CHO ĐỀ TÀI NÀY -->
-                    @if(in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố']) && !$dangKyApproved)
+                    <!-- MODAL GÁN NHÓM CHO ĐỀ TÀI NÀY (CHỈ KHI ĐỀ TÀI ĐÃ ĐƯỢC PHÊ DUYỆT CÔNG BỐ) -->
+                    @if($dt->TrangThai === 'Đã công bố' && !$dangKyApproved)
                     <div class="modal fade" id="modalGanNhom{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
@@ -318,5 +349,45 @@
         {{ $detais->links('pagination::bootstrap-5') }}
     </div>
     @endif
+</div>
+
+<!-- Modal Import Đề Tài -->
+<div class="modal fade" id="importDeTaiModal" tabindex="-1" aria-labelledby="importDeTaiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form action="{{ route('giangvien.detai.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fs-6 fw-bold" id="importDeTaiModalLabel">
+                        <i class="fa-solid fa-file-excel me-2"></i> Import Đề Tài Từ File Excel / CSV
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Tải danh sách đề tài khóa luận tốt nghiệp của bạn từ file Excel (.xlsx) hoặc CSV. Vui lòng sử dụng file mẫu chuẩn để đảm bảo tính toàn vẹn dữ liệu.
+                    </p>
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label fw-semibold small">Chọn tệp (.xlsx, .csv):</label>
+                        <input type="file" name="file" id="importFile" class="form-control" accept=".xlsx,.xls,.csv" required>
+                    </div>
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="small text-muted"><i class="fa-solid fa-download me-1 text-primary"></i> File mẫu chuẩn:</span>
+                            <a href="{{ asset('sample_imports/11_DeTai_KhoaLuan_Mau.xlsx') }}" download class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1">
+                                <i class="fa-solid fa-file-excel me-1"></i> Tải 11_DeTai_KhoaLuan_Mau.xlsx
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 shadow-sm">
+                        <i class="fa-solid fa-upload me-1"></i> Tiến Hành Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection

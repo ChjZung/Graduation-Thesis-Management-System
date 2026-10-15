@@ -174,7 +174,19 @@ class DashboardController extends Controller
         $latestFeedback = $baoCaos->whereNotNull('NhanXet')->sortByDesc('updated_at')->first()
             ?? $baoCaos->sortByDesc('LanBaoCao')->first();
 
-        // 8. Lời mời gia nhập nhóm đang chờ (hiển thị thông báo trên Dashboard)
+        // 8. Tự động dọn dẹp và chỉ lấy lời mời gia nhập nhóm đang chờ từ các nhóm CHƯA ĐỦ 3 thành viên
+        $fullNhomIds = ThanhVienNhom::where('TrangThai', 'da_tham_gia')
+            ->select('MaNhom')
+            ->groupBy('MaNhom')
+            ->havingRaw('COUNT(*) >= 3')
+            ->pluck('MaNhom');
+
+        if ($fullNhomIds->isNotEmpty()) {
+            ThanhVienNhom::whereIn('MaNhom', $fullNhomIds)
+                ->whereIn('TrangThai', ['cho_xac_nhan', 'xin_gia_nhap'])
+                ->delete();
+        }
+
         $loiMois = ThanhVienNhom::with(['nhom.truongNhom.taiKhoan', 'nhom.hocPhan', 'nhom.hocKy'])
             ->where('MaSV', $sinhVien->MaSV)
             ->where('TrangThai', 'cho_xac_nhan')
@@ -182,6 +194,9 @@ class DashboardController extends Controller
                 if ($hocKyMa) {
                     $q->where('MaHocKy', $hocKyMa)->orWhereNull('MaHocKy');
                 }
+                $q->whereHas('thanhViens', function($sq) {
+                    $sq->where('TrangThai', 'da_tham_gia');
+                }, '<', 3);
             })
             ->get();
 

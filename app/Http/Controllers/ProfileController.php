@@ -29,11 +29,6 @@ class ProfileController extends Controller
             $layout = 'layouts.admin';
             $profile = GiaoVu::with('khoa')->where('MaTK', $user->MaTK)->first();
 
-            // Fallback nếu tài khoản admin chưa gán MaTK trong bảng GiaoVu
-            if (!$profile) {
-                $profile = GiaoVu::with('khoa')->first();
-            }
-
             // Thống kê tổng quan cho Giáo vụ
             $extraData['totalDeTai'] = DeTai::count();
             $extraData['totalGiangVien'] = GiangVien::count();
@@ -82,10 +77,7 @@ class ProfileController extends Controller
         if (in_array($role, ['Admin', 'Giáo vụ'])) {
             $profile = GiaoVu::where('MaTK', $user->MaTK)->first();
             if (!$profile) {
-                $profile = GiaoVu::first();
-            }
-            if (!$profile) {
-                return back()->withErrors(['general' => 'Không tìm thấy thông tin cán bộ giáo vụ để cập nhật.']);
+                return back()->withErrors(['general' => 'Không tìm thấy thông tin cán bộ giáo vụ liên kết với tài khoản này để cập nhật.']);
             }
 
             $validated = $request->validate([
@@ -210,7 +202,11 @@ class ProfileController extends Controller
             return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không chính xác.']);
         }
 
-        // 2. Không cho phép đặt mật khẩu mới trùng với mật khẩu hiện tại
+        // 2. Không cho phép đặt mật khẩu mới trùng với mật khẩu hiện tại hoặc mật khẩu mặc định
+        if (in_array(strtolower($request->new_password), ['123456', '12345678', 'password', 'admin123'])) {
+            return back()->withErrors(['new_password' => 'Không được sử dụng mật khẩu mặc định hoặc mật khẩu quá phổ biến.']);
+        }
+
         if (Hash::check($request->new_password, $user->MatKhau)) {
             return back()->withErrors(['new_password' => 'Mật khẩu mới không được trùng với mật khẩu hiện tại đang dùng.']);
         }

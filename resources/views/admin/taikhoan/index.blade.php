@@ -401,7 +401,7 @@
                                 {{ $sv->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $sv->lop?->nganh?->khoa?->TenKhoa ?? $sv->khoa?->TenKhoa ?? $sv->MaKhoa ?? '---' }}
+                                {{ $sv->lop?->nganh?->khoa?->TenKhoa ?? $sv->khoa?->TenKhoa ?? ($sv->MaKhoa ? 'Khoa ' . $sv->MaKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
                                 {{ $sv->lop?->nganh?->TenNganh ?? $sv->nganh?->TenNganh ?? $sv->MaNganh ?? '---' }}
@@ -426,9 +426,9 @@
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu cho sinh viên {{ $sv->HoTen ?? $tk->TenDangNhap }} về 123456?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu cho sinh viên {{ $sv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (123456)">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
                                         </button>
                                     </form>
@@ -463,7 +463,7 @@
                                 {{ $gv->Email ?? '---' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : '---') }}
+                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
                                 {{ $gv->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
@@ -485,9 +485,9 @@
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu cho giảng viên {{ $gv->HoTen ?? $tk->TenDangNhap }} về 123456?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu cho giảng viên {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (123456)">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
                                         </button>
                                     </form>
@@ -516,7 +516,7 @@
                                 {{ $gv->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : '---') }}
+                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
                                 {{ $gv->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
@@ -540,9 +540,9 @@
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng bộ môn {{ $gv->HoTen ?? $tk->TenDangNhap }} về 123456?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng bộ môn {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (123456)">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
                                         </button>
                                     </form>
@@ -571,7 +571,7 @@
                                 {{ $gv->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : '---') }}
+                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="text-center py-3">
                                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 fw-bold">
@@ -592,9 +592,9 @@
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng khoa {{ $gv->HoTen ?? $tk->TenDangNhap }} về 123456?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng khoa {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (123456)">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
                                         </button>
                                     </form>
@@ -682,15 +682,15 @@
                     <div class="mb-4 p-3 rounded-3" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="small text-muted fw-bold text-uppercase">Tên đăng nhập hệ thống tự sinh:</span>
-                                <div class="form-preview-username mt-1" id="previewUsername">TBM_[KHOA]_[BM]_[MACB]</div>
+                                <span class="small text-muted fw-bold text-uppercase">Tên đăng nhập hệ thống:</span>
+                                <div class="form-preview-username mt-1" id="previewUsername">TBM_CNTT_BM_MACB</div>
                             </div>
                             <div class="text-end">
                                 <span class="badge bg-warning text-dark rounded-pill px-3 py-1.5" id="badgeRoleName">Vai trò: Trưởng bộ môn (VT04)</span>
                             </div>
                         </div>
                         <div class="small text-muted mt-2" id="ruleNote">
-                            <i class="fa-solid fa-circle-info me-1 text-primary"></i> Quy tắc: <code>TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>
+                            <i class="fa-solid fa-circle-info me-1 text-primary"></i> Quy tắc: Giảng viên giữ nguyên tài khoản giảng dạy (<code>GV...</code>) và có thêm tài khoản chức vụ riêng biệt (<code>TBM_...</code> hoặc <code>TK_...</code>).
                         </div>
                     </div>
 
@@ -865,7 +865,7 @@ function onLoaiCanBoChange() {
         selectBoMon.removeAttribute('required');
         badgeRole.className = 'badge bg-danger rounded-pill px-3 py-1.5';
         badgeRole.textContent = 'Vai trò: Trưởng khoa (VT05)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> <strong>Business rule:</strong> Chọn giảng viên từ danh sách. Một Khoa chỉ có một Trưởng khoa đang hoạt động. Quy tắc Username: <code>TK_{MA_KHOA}_{MA_CAN_BO}</code>';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> Cấp tài khoản chức vụ <strong>Trưởng khoa (VT05)</strong> riêng cho cán bộ (Username: <code>TK_{MA_KHOA}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
         onSelectGiangVienChange();
 
     } else if (isTBM) {
@@ -875,7 +875,7 @@ function onLoaiCanBoChange() {
         selectBoMon.setAttribute('required', 'required');
         badgeRole.className = 'badge bg-warning text-dark rounded-pill px-3 py-1.5';
         badgeRole.textContent = 'Vai trò: Trưởng bộ môn (VT04)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> <strong>Business rule:</strong> Chọn giảng viên từ danh sách. Một Bộ môn chỉ có một Trưởng bộ môn đang hoạt động. Quy tắc Username: <code>TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> Cấp tài khoản chức vụ <strong>Trưởng bộ môn (VT04)</strong> riêng cho cán bộ (Username: <code>TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
         onSelectGiangVienChange();
 
     } else {
@@ -888,7 +888,7 @@ function onLoaiCanBoChange() {
         selectBoMon.setAttribute('required', 'required');
         badgeRole.className = 'badge bg-primary rounded-pill px-3 py-1.5';
         badgeRole.textContent = 'Vai trò: Giảng viên (VT02)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-circle-info text-primary me-1"></i> Quy tắc Username: <code>GV_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-info text-primary me-1"></i> Tạo tài khoản <strong>Giảng viên (VT02)</strong>. Tên đăng nhập là Mã cán bộ (<code>GV...</code>), mật khẩu mặc định <code>Huit@2026</code>.';
         updateUsernamePreview();
     }
 }
@@ -919,7 +919,7 @@ function onSelectGiangVienChange() {
 
     const badgeTk = document.getElementById('infoGvTrangThaiTK');
     if (opt.dataset.hastk === '1') {
-        badgeTk.textContent = 'Đã có TK: ' + (opt.dataset.username || '');
+        badgeTk.textContent = 'Đã có TK GV: ' + (opt.dataset.username || '');
         badgeTk.className = 'badge bg-info-subtle text-info border';
     } else {
         badgeTk.textContent = 'Chưa có tài khoản';
@@ -971,7 +971,7 @@ function updateUsernamePreview() {
     const isTK = document.getElementById('btnLoaiTK').checked;
 
     let maCanBo = (document.getElementById('inputMaCanBo').value || 'MACB').trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    let maKhoa = (document.getElementById('modalSelectKhoa').value || 'KHOA').trim().toUpperCase();
+    let maKhoa = (document.getElementById('modalSelectKhoa').value || 'CNTT').trim().toUpperCase();
     let maBoMon = (document.getElementById('modalSelectBoMon').value || 'BM').trim().toUpperCase();
 
     if (!isGV) {
@@ -990,10 +990,10 @@ function updateUsernamePreview() {
     } else if (isTBM) {
         username = `TBM_${maKhoa}_${maBoMon}_${maCanBo}`;
     } else {
-        username = `GV_${maKhoa}_${maBoMon}_${maCanBo}`;
+        username = maCanBo;
     }
 
-    document.getElementById('previewUsername').textContent = username;
+    document.getElementById('previewUsername').textContent = username || 'MÃ CÁN BỘ';
 }
 
 // Khởi chạy khi load trang

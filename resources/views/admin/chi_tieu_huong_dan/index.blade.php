@@ -5,27 +5,7 @@
 @section('content')
 <div class="container-fluid px-0" style="font-size: 13.5px;">
 
-    {{-- Alert thông báo thành công hoặc lỗi --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 rounded-2 mb-3 py-2 px-3" role="alert" style="background-color: #ecfdf5; color: #065f46; font-size: 13.5px;">
-            <div class="d-flex align-items-center justify-content-between">
-                <span>{{ session('success') }}</span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="font-size: 11px;"></button>
-            </div>
-        </div>
-    @endif
 
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show border-0 rounded-2 mb-3 py-2 px-3" role="alert" style="background-color: #fef2f2; color: #991b1b; font-size: 13.5px;">
-            <div class="fw-semibold mb-1">Đã có lỗi xảy ra khi lưu chỉ tiêu:</div>
-            <ul class="mb-0 ps-3">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="font-size: 11px;"></button>
-        </div>
-    @endif
 
     {{-- Tiêu đề trang & Thanh công cụ (Chuẩn G: không shadow) --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom">

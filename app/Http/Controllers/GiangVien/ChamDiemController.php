@@ -111,17 +111,31 @@ class ChamDiemController extends Controller
             abort(403, 'Bạn không thuộc Hội đồng bảo vệ này và không có quyền nhập điểm.');
         }
 
-        $hoSo = HoSoBaoVe::with('nhom.deTai')->findOrFail($request->MaHoSo);
+        $hoSo = HoSoBaoVe::with(['nhom.deTai', 'nhom.thanhViens'])->findOrFail($request->MaHoSo);
+
+        // Chống BOLA/IDOR: Xác thực Hồ sơ bảo vệ phải thuộc đúng Hội đồng đang chấm
+        if ($hoSo->MaHoiDong !== $request->MaHoiDong) {
+            abort(403, 'Hồ sơ bảo vệ này không thuộc Hội đồng bạn đang tham gia chấm điểm.');
+        }
+
+        // Danh sách sinh viên hợp lệ của nhóm
+        $validStudentIds = $hoSo->nhom?->thanhViens->pluck('MaSV')->toArray() ?? [];
+
         $deTai = $hoSo->nhom?->deTai;
         $maDeTai = $deTai?->MaDeTai ?? ($hoSo->MaDeTai ?? 'DT_CHUA_RO');
 
         $activeHocKy = HocKy::where('TrangThai', true)->first() ?? HocKy::latest()->first();
         $maHocKy = $hoSo->MaHocKy ?? ($activeHocKy?->MaHocKy ?? 'HK_DEF');
 
-        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy) {
+        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds) {
             foreach ($request->diems as $key => $diemData) {
                 $maSV = is_numeric($key) ? ($diemData['MaSV'] ?? null) : $key;
                 if (!$maSV) continue;
+
+                // Chặn BOLA: Không cho chấm điểm sinh viên không thuộc nhóm bảo vệ này
+                if (!in_array($maSV, $validStudentIds)) {
+                    abort(403, "Sinh viên [{$maSV}] không thuộc nhóm bảo vệ của hồ sơ này.");
+                }
 
                 $diemSo = floatval($diemData['Diem'] ?? 0);
                 $nhanXet = $diemData['NhanXet'] ?? null;

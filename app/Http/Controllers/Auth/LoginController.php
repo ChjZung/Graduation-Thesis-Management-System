@@ -130,6 +130,11 @@ class LoginController extends Controller implements HasMiddleware
         $inputUsername = trim($request->TenDangNhap);
         $taiKhoan = $this->findTaiKhoan($inputUsername);
 
+        // Chặn hoàn toàn việc đăng nhập bằng mật khẩu mặc định 123456
+        if ($request->get('password') === '123456') {
+            return false;
+        }
+
         // Nếu tài khoản bị khóa → từ chối ngay
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
             return false;
@@ -212,6 +217,12 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
     {
+        if ($request->get('password') === '123456') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $this->username() => ['Mật khẩu mặc định "123456" đã bị vô hiệu hóa vì lý do an toàn. Vui lòng sử dụng mật khẩu cá nhân mới hoặc gửi yêu cầu cấp lại mật khẩu.'],
+            ]);
+        }
+
         $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
         if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {

@@ -10,6 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class SinhVienController extends Controller
 {
@@ -197,12 +205,13 @@ class SinhVienController extends Controller
 
         $mssv = trim($request->TenDangNhap);
         $lop = Lop::with('nganh')->findOrFail($request->MaLop);
+        $initialPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
 
-        DB::transaction(function () use ($request, $mssv, $lop) {
+        DB::transaction(function () use ($request, $mssv, $lop, $initialPassword) {
             $tk = TaiKhoan::create([
                 'MaTK'              => $mssv,
                 'TenDangNhap'       => $mssv,
-                'MatKhau'           => Hash::make('123456'),
+                'MatKhau'           => Hash::make($initialPassword),
                 'MaVaiTro'          => 'VT03',
                 'TrangThai'         => true,
                 'TrangThaiMatKhau'  => 'INITIAL',
@@ -230,7 +239,7 @@ class SinhVienController extends Controller
             ]);
         });
 
-        return redirect()->route('sinhvien.index')->with('success', "Thêm sinh viên '{$request->HoTen}' (MSSV: {$mssv}) thành công! (Mật khẩu mặc định: 123456)");
+        return redirect()->route('sinhvien.index')->with('success', "Thêm sinh viên '{$request->HoTen}' (MSSV: {$mssv}) thành công! Mật khẩu khởi tạo tạm thời: [{$initialPassword}]. Người dùng bắt buộc đổi mật khẩu khi đăng nhập lần đầu.");
     }
 
     public function show($id)
@@ -477,12 +486,13 @@ class SinhVienController extends Controller
             $mssv = trim($request->TenDangNhap);
             $lop = Lop::with('nganh')->findOrFail($request->MaLop);
 
-            $sv = DB::transaction(function () use ($request, $mssv, $lop) {
-                // Tự động tạo tài khoản Portal cho sinh viên mới (Mật khẩu mặc định: 123456, VT03)
+            $initialPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+            $sv = DB::transaction(function () use ($request, $mssv, $lop, $initialPassword) {
+                // Tự động tạo tài khoản Portal cho sinh viên mới với mật khẩu ngẫu nhiên
                 $tk = TaiKhoan::create([
                     'MaTK'              => $mssv,
                     'TenDangNhap'       => $mssv,
-                    'MatKhau'           => Hash::make('123456'),
+                    'MatKhau'           => Hash::make($initialPassword),
                     'MaVaiTro'          => 'VT03',
                     'TrangThai'         => true,
                     'TrangThaiMatKhau'  => 'INITIAL',
@@ -531,7 +541,7 @@ class SinhVienController extends Controller
             );
 
             return redirect()->route('sinhvien.index', ['tab' => 'du_dieu_kien', 'MaHocKy' => $request->MaHocKy])
-                ->with('success', "Đã tạo sinh viên {$sv->HoTen} ({$sv->MaSV}), cấp tài khoản đăng nhập (Mật khẩu: 123456) và thêm vào học kỳ {$request->MaHocKy} thành công!");
+                ->with('success', "Đã tạo sinh viên {$sv->HoTen} ({$sv->MaSV}), cấp tài khoản đăng nhập (Mật khẩu tạm thời: [{$initialPassword}]) và thêm vào học kỳ {$request->MaHocKy} thành công!");
 
         } else {
             // Chọn sinh viên có sẵn trong hệ thống: TUYỆT ĐỐI KHÔNG TẠO MỚI TÀI KHOẢN (bảo toàn tài khoản & mật khẩu gốc)
@@ -549,12 +559,13 @@ class SinhVienController extends Controller
 
             // Đảm bảo sinh viên có tài khoản nhưng không ghi đè tài khoản sẵn có
             if (!$sv->MaTK || !TaiKhoan::where('MaTK', $sv->MaTK)->exists()) {
+                $tempPassExisting = \Illuminate\Support\Str::password(10, true, true, false, false);
                 $tk = TaiKhoan::firstOrCreate(
                     ['TenDangNhap' => $sv->MaSV],
                     [
                         'MaTK'              => $sv->MaSV,
                         'TenDangNhap'       => $sv->MaSV,
-                        'MatKhau'           => Hash::make('123456'),
+                        'MatKhau'           => Hash::make($tempPassExisting),
                         'MaVaiTro'          => 'VT03',
                         'TrangThai'         => true,
                         'TrangThaiMatKhau'  => 'INITIAL',
@@ -651,7 +662,10 @@ class SinhVienController extends Controller
         $totalEligible  = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Đủ điều kiện')->distinct('MaSV')->count('MaSV');
         $totalIneligible = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)->where('TrangThai', 'Chưa đủ điều kiện')->distinct('MaSV')->count('MaSV');
 
-        // 3. Tạo thông báo chính thức gửi đến toàn thể sinh viên
+        // 3. Tự động xuất file Excel danh sách sinh viên đủ điều kiện để đính kèm vào thông báo
+        $fileDinhKem = $this->generateDuDieuKienExcelFile($maHocKy);
+
+        // 4. Tạo thông báo chính thức gửi đến toàn thể sinh viên
         $maGVu = Auth::user()->giaoVu->MaGVu ?? 'GVU01';
         $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
         $maTB = substr('TB_DK_' . $shortHk, 0, 20);
@@ -660,6 +674,7 @@ class SinhVienController extends Controller
             . "• Tổng số sinh viên được rà soát: {$totalEvaluated} sinh viên\n"
             . "• Số lượng sinh viên ĐỦ ĐIỀU KIỆN: {$totalEligible} sinh viên (Đạt tích lũy >= 115 tín chỉ và ĐTB >= 2.0)\n"
             . "• Số lượng sinh viên CHƯA ĐỦ ĐIỀU KIỆN: {$totalIneligible} sinh viên\n\n"
+            . "Danh sách chi tiết được đính kèm trong tệp bảng tính Excel chính thức kèm theo thông báo này. "
             . "Sinh viên đủ điều kiện vui lòng chủ động tìm kiếm thành viên và tiến hành ghép nhóm (tối đa 3 SV/nhóm) tại phân hệ \"Nhóm Khóa Luận\", sau đó thực hiện đăng ký đề tài theo kế hoạch thời gian của Khoa.\n"
             . "Mọi thắc mắc hoặc khiếu nại về điều kiện khóa luận, sinh viên vui lòng liên hệ Văn phòng Giáo vụ Khoa trước thời hạn quy định.";
 
@@ -673,17 +688,182 @@ class SinhVienController extends Controller
                 'NgayTao'      => now(),
                 'TrangThai'    => 'Đã phát hành',
                 'MaGVu'        => $maGVu,
+                'FileDinhKem'  => $fileDinhKem,
             ]
         );
 
         return redirect()->route('sinhvien.index', ['tab' => 'du_dieu_kien', 'MaHocKy' => $maHocKy])
-            ->with('success', "Đã công bố danh sách chính thức ({$totalEligible} SV đủ điều kiện) và phát hành thông báo tới toàn thể sinh viên cho học kỳ {$tenHocKy}!");
+            ->with('success', "Đã công bố danh sách chính thức ({$totalEligible} SV đủ điều kiện), xuất file Excel đính kèm và phát hành thông báo thành công!");
+    }
+
+    /**
+     * Tạo file Excel danh sách sinh viên đủ điều kiện và lưu vào storage public announcements
+     */
+    public function generateDuDieuKienExcelFile(string $maHocKy): ?string
+    {
+        $hocKy = \App\Models\HocKy::find($maHocKy);
+        $tenHocKy = $hocKy ? "{$hocKy->TenHocKy} ({$hocKy->NamHoc})" : $maHocKy;
+        $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
+
+        $ds = \App\Models\DanhSachSVDuDieuKien::select('DanhSachSVDuDieuKien.*')
+            ->distinct()
+            ->with(['sinhVien.lop.nganh', 'hocKy'])
+            ->where('DanhSachSVDuDieuKien.MaHocKy', $maHocKy)
+            ->orderBy('DanhSachSVDuDieuKien.MaSV')
+            ->get();
+
+        if ($ds->isEmpty()) {
+            return null;
+        }
+
+        // Tạo thư mục announcements nếu chưa tồn tại
+        if (!Storage::disk('public')->exists('announcements')) {
+            Storage::disk('public')->makeDirectory('announcements');
+        }
+
+        $fileName = 'DanhSach_SV_DuDieuKien_' . $shortHk . '.xlsx';
+        $relativeStoragePath = 'announcements/' . $fileName;
+        $fullPath = storage_path('app/public/' . $relativeStoragePath);
+
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('DS_DuDieuKien');
+
+            // Banner tiêu đề trường / khoa
+            $sheet->setCellValue('A1', 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - KHOA CÔNG NGHỆ THÔNG TIN');
+            $sheet->mergeCells('A1:I1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(11)->getColor()->setRGB('1E3A8A');
+
+            // Tiêu đề báo cáo
+            $sheet->setCellValue('A2', "DANH SÁCH SINH VIÊN ĐỦ ĐIỀU KIỆN LÀM KHÓA LUẬN TỐT NGHIỆP - {$tenHocKy}");
+            $sheet->mergeCells('A2:I2');
+            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(13)->getColor()->setRGB('1E40AF');
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Thời gian và tiêu chuẩn
+            $sheet->setCellValue('A3', 'Ngày công bố: ' . now()->format('d/m/Y H:i') . ' | Tiêu chí: Tích lũy >= 115 tín chỉ, Điểm TB tích lũy >= 2.0');
+            $sheet->mergeCells('A3:I3');
+            $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(10)->getColor()->setRGB('64748B');
+            $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Header bảng
+            $headers = ['STT', 'Mã Sinh Viên', 'Họ Và Tên', 'Lớp', 'Ngành Học', 'Số Tín Chỉ TL', 'ĐTB Tích Lũy', 'Trạng Thái', 'Tiêu Chí & Ghi Chú'];
+            $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            foreach ($headers as $i => $h) {
+                $sheet->setCellValue($cols[$i] . '5', $h);
+            }
+
+            $sheet->getStyle('A5:I5')->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '1E40AF'],
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CBD5E1'],
+                    ],
+                ],
+            ]);
+            $sheet->getRowDimension(5)->setRowHeight(28);
+
+            // Dữ liệu từng sinh viên
+            $row = 6;
+            foreach ($ds as $idx => $item) {
+                $sv = $item->sinhVien;
+                $sheet->setCellValue('A' . $row, $idx + 1);
+                $sheet->setCellValueExplicit('B' . $row, $item->MaSV, DataType::TYPE_STRING);
+                $sheet->setCellValue('C' . $row, $sv->HoTen ?? '');
+                $sheet->setCellValue('D' . $row, $sv->lop->TenLop ?? '');
+                $sheet->setCellValue('E' . $row, $sv->lop->nganh->TenNganh ?? '');
+                $sheet->setCellValue('F' . $row, (int)($sv->SoTinChiTichLuy ?? 0));
+                $sheet->setCellValue('G' . $row, number_format((float)($sv->DiemTichLuy ?? 0), 2));
+                $sheet->setCellValue('H' . $row, $item->TrangThai);
+                $sheet->setCellValue('I' . $row, trim(($item->DieuKien ?? '') . ' (' . ($item->GhiChu ?? '') . ')'));
+
+                // Căn lề
+                $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('B' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('F' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Màu sắc trạng thái
+                if ($item->TrangThai === 'Đủ điều kiện') {
+                    $sheet->getStyle('H' . $row)->getFont()->setBold(true)->getColor()->setRGB('15803D');
+                    $sheet->getStyle('H' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCFCE7');
+                } else {
+                    $sheet->getStyle('H' . $row)->getFont()->setBold(true)->getColor()->setRGB('B91C1C');
+                    $sheet->getStyle('H' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FEE2E2');
+                }
+
+                $sheet->getStyle("A{$row}:I{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('E2E8F0');
+                $sheet->getRowDimension($row)->setRowHeight(22);
+                $row++;
+            }
+
+            // Tự động căn chỉnh độ rộng cột
+            foreach ($cols as $c) {
+                $sheet->getColumnDimension($c)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($fullPath);
+
+            return $relativeStoragePath;
+        } catch (\Throwable $e) {
+            \Log::error('Lỗi khi xuất file Excel đủ điều kiện: ' . $e->getMessage());
+
+            // Fallback tạo file CSV có BOM
+            $csvFileName = 'DanhSach_SV_DuDieuKien_' . $shortHk . '.csv';
+            $csvRelPath = 'announcements/' . $csvFileName;
+            $csvFullPath = storage_path('app/public/' . $csvRelPath);
+
+            $file = fopen($csvFullPath, 'w');
+            if ($file) {
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($file, ['STT', 'MSSV', 'Họ Và Tên', 'Lớp', 'Ngành', 'Số Tín Chỉ', 'ĐTB Tích Lũy', 'Trạng Thái', 'Tiêu Chí / Ghi Chú']);
+                foreach ($ds as $idx => $item) {
+                    $sv = $item->sinhVien;
+                    fputcsv($file, [
+                        $idx + 1,
+                        $item->MaSV,
+                        $sv->HoTen ?? '',
+                        $sv->lop->TenLop ?? '',
+                        $sv->lop->nganh->TenNganh ?? '',
+                        $sv->SoTinChiTichLuy ?? 0,
+                        $sv->DiemTichLuy ?? 0.0,
+                        $item->TrangThai,
+                        $item->DieuKien . ' (' . $item->GhiChu . ')',
+                    ]);
+                }
+                fclose($file);
+                return $csvRelPath;
+            }
+
+            return null;
+        }
     }
 
     public function dieuKienExport(Request $request)
     {
         $hocKys = \App\Models\HocKy::orderBy('MaHocKy', 'desc')->get();
         $maHocKy = $request->get('MaHocKy', $hocKys->first()->MaHocKy ?? '');
+
+        // Ưu tiên xuất file Excel .xlsx chuẩn
+        $excelPath = $this->generateDuDieuKienExcelFile($maHocKy);
+        if ($excelPath && file_exists(storage_path('app/public/' . $excelPath))) {
+            return response()->download(storage_path('app/public/' . $excelPath), 'Danh_Sach_SV_Du_Dieu_Kien_' . ($maHocKy ?: 'All') . '.xlsx');
+        }
+
+        // Fallback CSV
         $ds = \App\Models\DanhSachSVDuDieuKien::select('DanhSachSVDuDieuKien.*')
             ->distinct()
             ->with(['sinhVien.lop.nganh', 'hocKy'])

@@ -53,6 +53,6 @@ class QuenMatKhauController extends Controller
             'NgayGui' => now(),
         ]);
 
-        return redirect()->route('login')->with('success', "Đã gửi yêu cầu cấp lại mật khẩu cho {$request->Role}: {$request->HoTen} ({$tenDangNhap}) thành công! Vui lòng chờ Giáo vụ Khoa phê duyệt (mật khẩu sẽ được reset về 123456).");
+        return redirect()->route('login')->with('success', "Đã gửi yêu cầu cấp lại mật khẩu cho {$request->Role}: {$request->HoTen} ({$tenDangNhap}) thành công! Vui lòng chờ Giáo vụ Khoa phê duyệt và cấp mật khẩu tạm thời mới.");
     }
 }

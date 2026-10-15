@@ -81,12 +81,11 @@
                 @endif
 
                 @if($gv && $gv->boMon)
-                <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center justify-content-between rounded-3 border">
+                <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center rounded-3 border">
                     <div>
                         <i class="fa-solid fa-building-user me-2 text-primary"></i>
                         Giảng viên: <strong>{{ $gv->HoTen }}</strong> &mdash; Bộ môn: <span class="badge bg-primary fs-7">{{ $gv->boMon->TenBoMon }}</span>
                     </div>
-                    <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Học phần tự động lọc theo bộ môn trực thuộc</span>
                 </div>
                 @endif
 
@@ -165,13 +164,13 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label for="MoTa" class="form-label fw-bold">Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu</label>
-                        <textarea name="MoTa" id="MoTa" class="form-control @error('MoTa') is-invalid @enderror" rows="3" minlength="30" maxlength="2000" placeholder="Nhập mô tả chi tiết bài toán, phạm vi nghiên cứu, kết quả kỳ vọng (tối thiểu 30 ký tự)...">{{ old('MoTa', $banNhap['MoTa'] ?? $detai->MoTa) }}</textarea>
-                        @error('MoTa')
-                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @include('partials.rich_text_editor', [
+                        'name' => 'MoTa',
+                        'id' => 'MoTa',
+                        'value' => old('MoTa', $banNhap['MoTa'] ?? $detai->MoTa),
+                        'label' => 'Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu',
+                        'required' => false
+                    ])
 
                     <div class="mb-3">
                         <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Năng Lực Đối Với Sinh Viên</label>

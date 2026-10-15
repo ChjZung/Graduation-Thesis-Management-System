@@ -24,9 +24,9 @@ class DuyetDeTaiController extends Controller
         $gv = \App\Models\GiangVien::where('MaTK', Auth::user()->MaTK)->first();
         $maGV = $gv ? $gv->MaGV : null;
 
-        // Xác minh quyền
-        if ($dangky->deTai && $dangky->deTai->MaGV != $maGV) {
-            abort(403);
+        // Xác minh quyền: Chỉ chính Giảng viên hướng dẫn của đề tài mới được duyệt/từ chối
+        if (!$gv || !$dangky->deTai || $dangky->deTai->MaGV !== $gv->MaGV) {
+            abort(403, 'Bạn không phải Giảng viên hướng dẫn của đề tài này và không có quyền phê duyệt.');
         }
         
         $trangThai = $request->input('TrangThai');

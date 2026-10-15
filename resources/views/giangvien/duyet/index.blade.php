@@ -1,6 +1,12 @@
 @extends('layouts.giangvien')
 @section('page_title', 'Duyệt Nhóm Đăng Ký Đề Tài')
 @section('content')
+<div class="alert alert-info border-0 rounded-3 mb-3 d-flex align-items-center gap-2">
+    <i class="fa-solid fa-circle-info fs-5 text-primary"></i>
+    <div>
+        <strong>Quy định đăng ký đề tài:</strong> Khi nhóm sinh viên có đủ 3 thành viên đăng ký đề tài đã công bố còn trống, đề tài sẽ được tự động gán trực tiếp cho nhóm và chuyển sang trạng thái <strong>Đã duyệt</strong> mà không cần Giảng viên hướng dẫn phải phê duyệt thủ công từng đơn.
+    </div>
+</div>
 <div class="card card-premium">
     <div class="card-body">
         <table class="table table-hover align-middle">

@@ -52,8 +52,8 @@
                     ],
                     [
                         'title' => 'Thông báo hệ thống',
-                        'url' => route('thongbao.index'),
-                        'active' => request()->routeIs('thongbao.*'),
+                        'url' => route('truongkhoa.thongbao.index'),
+                        'active' => request()->routeIs('truongkhoa.thongbao.*') || request()->routeIs('thongbao.*'),
                     ],
                 ],
             ],

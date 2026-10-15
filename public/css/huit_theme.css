@@ -2254,6 +2254,17 @@ select.rounded-pill[name*="hoc_ky"] {
     min-width: 320px !important;
 }
 
+/* Đảm bảo form-select nằm trong hệ thống cột lưới Bootstrap Grid hoặc thanh filter không bao giờ bị tràn ra ngoài đè lên các nút hoặc cột bên cạnh */
+.row > [class*="col-"] > .form-select,
+.row > [class*="col-"] .form-select,
+.row > [class*="col-"] select,
+.admin-filter-bar .row [class*="col-"] .form-select,
+.admin-filter-bar .row [class*="col-"] select {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
 /* ============================================================
    7. CHUẨN HÓA TOÀN BỘ HỆ THỐNG THEO CHUẨN G
    - Không box-shadow (viền nhẹ phẳng #e2e8f0)
@@ -2451,6 +2462,792 @@ table.table td:not(:last-child) a:not(.btn):not(.btn-action-circle) > i {
 .alert i {
     display: inline-block !important;
 }
+
+/* ============================================================
+   8. CHUẨN HÓA VÀ NÂNG CẤP TOÀN DIỆN GIAO DIỆN (UI/UX)
+   - Nút bấm (Buttons): Kích thước lớn hơn, đệm êm ái (touch-friendly), bo góc 10px, hiệu ứng hover/active nổi bật
+   - Hộp thoại (Modals): Bo góc 16px, gradient header, nút đóng tinh tế, padding body và footer chuẩn mực
+   - Tiêu đề trang chi tiết & Card Header: Đồng bộ hierarchy, badge trạng thái, action toolbars
+   - Form controls & Validation: Dấu sao bắt buộc đỏ, trạng thái is-invalid/is-valid, feedback nổi bật
+   - Responsive Media Queries (>=992px, <=768px, <=576px): Không tràn vỡ bảng, nút bấm stack thông minh trên mobile
+   ============================================================ */
+
+/* 8.1. HỆ THỐNG NÚT BẤM (BUTTONS) HIỆN ĐẠI, KÍCH THƯỚC LỚN HƠN, TOUCH-FRIENDLY */
+.btn {
+    min-height: 42px;
+    padding: 9px 20px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    letter-spacing: 0.2px;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap;
+    border: 1px solid transparent !important;
+}
+
+.btn:hover {
+    transform: translateY(-2px) !important;
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.98) !important;
+}
+
+.btn:disabled, .btn.disabled {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Button Variants */
+.btn-primary {
+    background: linear-gradient(135deg, #0072ce 0%, #005a9e 100%) !important;
+    border-color: #005a9e !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 114, 206, 0.25) !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(135deg, #005a9e 0%, #004a8f 100%) !important;
+    border-color: #004a8f !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(0, 114, 206, 0.35) !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+.btn-success:hover, .btn-success:focus {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35) !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+}
+.btn-danger:hover, .btn-danger:focus {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35) !important;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
+}
+.btn-warning:hover, .btn-warning:focus {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    border-color: #b45309 !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35) !important;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+.btn-info:hover, .btn-info:focus {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+    border-color: #075985 !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35) !important;
+}
+
+.btn-secondary {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Outline Buttons */
+.btn-outline-primary {
+    background: #ffffff !important;
+    border-color: #0072ce !important;
+    color: #0072ce !important;
+}
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+    background: #0072ce !important;
+    border-color: #0072ce !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 114, 206, 0.25) !important;
+}
+
+.btn-outline-secondary {
+    background: #ffffff !important;
+    border-color: #94a3b8 !important;
+    color: #475569 !important;
+}
+.btn-outline-secondary:hover, .btn-outline-secondary:focus {
+    background: #f1f5f9 !important;
+    border-color: #64748b !important;
+    color: #1e293b !important;
+}
+
+.btn-outline-danger {
+    background: #ffffff !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+.btn-outline-danger:hover, .btn-outline-danger:focus {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+}
+
+.btn-outline-success {
+    background: #ffffff !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+}
+.btn-outline-success:hover, .btn-outline-success:focus {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Sizes */
+.btn-sm {
+    min-height: 34px !important;
+    padding: 6px 14px !important;
+    font-size: 12.5px !important;
+    border-radius: 8px !important;
+    gap: 6px !important;
+}
+
+.btn-lg {
+    min-height: 48px !important;
+    padding: 12px 28px !important;
+    font-size: 15px !important;
+    border-radius: 12px !important;
+    gap: 10px !important;
+}
+
+/* Action Circle Buttons inside tables */
+.btn-action-circle {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 13.5px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.btn-action-circle:hover {
+    transform: translateY(-2px) scale(1.08) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+}
+
+/* 8.2. CHUẨN HÓA GIAO DIỆN HỘP THOẠI (MODAL SYSTEM) */
+.modal-content {
+    border-radius: 16px !important;
+    border: 1px solid rgba(0, 114, 206, 0.15) !important;
+    box-shadow: 0 20px 45px -10px rgba(0, 34, 68, 0.2), 0 8px 16px -6px rgba(0, 34, 68, 0.1) !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #0072ce 0%, #004a8f 100%) !important;
+    color: #ffffff !important;
+    padding: 18px 24px !important;
+    border-bottom: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.modal-header .modal-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    letter-spacing: 0.2px;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.85 !important;
+    transition: transform 0.25s ease, opacity 0.2s ease !important;
+    margin: 0 !important;
+    padding: 8px !important;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1 !important;
+    transform: rotate(90deg) scale(1.1) !important;
+}
+
+.modal-body {
+    padding: 24px !important;
+    background-color: #f8fafc !important;
+    max-height: calc(85vh - 140px);
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 16px 24px !important;
+    background-color: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+}
+
+/* 8.3. TIÊU ĐỀ TRANG CHI TIẾT & CARD HEADER ĐỒNG BỘ */
+.page-header-zone,
+.huit-page-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 22px !important;
+    flex-wrap: wrap !important;
+    background: #ffffff;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.page-header-zone .page-title,
+.huit-page-header .page-title {
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    color: #003366 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.page-header-zone .page-actions,
+.huit-page-header .page-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.card-header-huit,
+.card-header-custom {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%) !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding: 14px 20px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    color: #003366 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+/* 8.4. CHUẨN HÓA QUY TẮC HIỂN THỊ FORM VÀ THÔNG BÁO LỖI (VALIDATION) */
+.required-star,
+.form-label .text-danger,
+label .text-danger {
+    color: #ef4444 !important;
+    font-weight: 700 !important;
+    margin-left: 3px !important;
+}
+
+.form-label {
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    margin-bottom: 7px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.form-control,
+.form-select {
+    min-height: 42px !important;
+    padding: 8px 14px !important;
+    border-radius: 9px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0072ce !important;
+    box-shadow: 0 0 0 3px rgba(0, 114, 206, 0.18) !important;
+    outline: none !important;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.invalid-feedback {
+    display: block !important;
+    color: #ef4444 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    margin-top: 5px !important;
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+
+/* 8.5. MEDIA QUERIES ĐÁP ỨNG TOÀN DIỆN (RESPONSIVE) */
+/* Tablet & Medium Screens (<= 992px) */
+@media (max-width: 992px) {
+    .page-header-zone,
+    .huit-page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .page-header-zone .page-actions,
+    .huit-page-header .page-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .table-responsive {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+}
+
+/* Mobile Devices (<= 768px) */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 12px auto !important;
+        max-width: calc(100% - 24px) !important;
+    }
+
+    .modal-body {
+        padding: 16px !important;
+    }
+
+    .modal-footer {
+        padding: 12px 16px !important;
+        flex-direction: column-reverse !important;
+        gap: 8px !important;
+    }
+
+    .modal-footer > * {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .page-header-zone .page-actions,
+    .huit-page-header .page-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .page-header-zone .page-actions > *,
+    .huit-page-header .page-actions > * {
+        width: 100% !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+
+    .filter-card .row > div {
+        margin-bottom: 10px !important;
+    }
+
+    .card-body {
+        padding: 16px !important;
+    }
+}
+
+/* Small Smart Phones (<= 576px) */
+@media (max-width: 576px) {
+    .btn {
+        min-height: 42px !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+    }
+
+    .btn-action-circle {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 12.5px !important;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+    }
+
+    .modal-header {
+        padding: 14px 18px !important;
+    }
+
+    .modal-header .modal-title {
+        font-size: 15px !important;
+    }
+
+    .page-header-zone .page-title,
+    .huit-page-header .page-title {
+        font-size: 17px !important;
+    }
+}
+
+/* ============================================================
+   HUIT UNIFIED DESIGN SYSTEM — AUTHENTIC PALETTE & PROFESSIONAL COMPONENTS
+   Base: Deep Teal Navy (#004E64), Ocean Cyan (#00838C), Persian Green (#25A18E)
+   ============================================================ */
+
+/* ── Global Color Tokens ── */
+:root {
+    --sv-primary:         #004E64;
+    --sv-primary-hover:   #003F5F;
+    --sv-secondary:       #00838C;
+    --sv-secondary-hover: #006d75;
+    --sv-accent:          #25A18E;
+    --sv-accent-hover:    #1e8575;
+    --sv-light:           #e6f7fa;
+    --sv-mint:            #e8f8f2;
+    --sv-dark:            #002B36;
+    --sv-border:          #cbd5e1;
+    --sv-slate:           #64748b;
+    --sv-surface:         #ffffff;
+}
+
+/* ── 1. Unified Button Matrix ── */
+.btn {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary, .btn-theme-primary {
+    background-color: var(--sv-primary) !important;
+    border-color: var(--sv-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 78, 100, 0.15);
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+.btn-theme-primary:hover, .btn-theme-primary:focus, .btn-theme-primary:active {
+    background-color: var(--sv-primary-hover) !important;
+    border-color: var(--sv-primary-hover) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 63, 95, 0.25);
+}
+
+.btn-outline-primary {
+    color: var(--sv-primary) !important;
+    border-color: var(--sv-primary) !important;
+    background-color: transparent !important;
+}
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    background-color: var(--sv-primary) !important;
+    border-color: var(--sv-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 78, 100, 0.2);
+}
+
+.btn-success, .btn-theme-success {
+    background-color: var(--sv-accent) !important;
+    border-color: var(--sv-accent) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(37, 161, 142, 0.2);
+}
+.btn-success:hover, .btn-success:focus, .btn-success:active,
+.btn-theme-success:hover, .btn-theme-success:focus, .btn-theme-success:active {
+    background-color: var(--sv-accent-hover) !important;
+    border-color: var(--sv-accent-hover) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(30, 133, 117, 0.28);
+}
+
+.btn-outline-success {
+    color: var(--sv-accent) !important;
+    border-color: var(--sv-accent) !important;
+    background-color: transparent !important;
+}
+.btn-outline-success:hover, .btn-outline-success:focus, .btn-outline-success:active {
+    background-color: var(--sv-accent) !important;
+    border-color: var(--sv-accent) !important;
+    color: #ffffff !important;
+}
+
+.btn-info, .btn-theme-info {
+    background-color: var(--sv-secondary) !important;
+    border-color: var(--sv-secondary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 131, 140, 0.2);
+}
+.btn-info:hover, .btn-info:focus, .btn-info:active,
+.btn-theme-info:hover, .btn-theme-info:focus, .btn-theme-info:active {
+    background-color: var(--sv-secondary-hover) !important;
+    border-color: var(--sv-secondary-hover) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 109, 117, 0.28);
+}
+
+.btn-outline-info {
+    color: var(--sv-secondary) !important;
+    border-color: var(--sv-secondary) !important;
+    background-color: transparent !important;
+}
+.btn-outline-info:hover, .btn-outline-info:focus, .btn-outline-info:active {
+    background-color: var(--sv-secondary) !important;
+    border-color: var(--sv-secondary) !important;
+    color: #ffffff !important;
+}
+
+.btn-secondary {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+}
+
+.btn-outline-secondary {
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+    background-color: transparent !important;
+}
+.btn-outline-secondary:hover, .btn-outline-secondary:focus {
+    background-color: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+}
+
+/* ── 2. Unified Badges & Status Indicators ── */
+.badge.bg-success, .badge.bg-success-subtle {
+    background-color: #e8f8f2 !important;
+    color: #0f766e !important;
+    border: 1px solid #a7f3d0 !important;
+}
+.badge.bg-warning, .badge.bg-warning-subtle {
+    background-color: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+}
+.badge.bg-danger, .badge.bg-danger-subtle {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+}
+.badge.bg-info, .badge.bg-info-subtle {
+    background-color: #e6f7fa !important;
+    color: #006d75 !important;
+    border: 1px solid #a5f3fc !important;
+}
+.badge.bg-primary, .badge.bg-primary-subtle {
+    background-color: #f0f7f9 !important;
+    color: #004E64 !important;
+    border: 1px solid #bce1e8 !important;
+}
+.badge.bg-secondary, .badge.bg-secondary-subtle {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* ── 3. Professional Modal Architecture ── */
+.modal-dialog {
+    margin: 1.75rem auto;
+}
+.modal-content {
+    border: 0 !important;
+    border-radius: 1rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 45px rgba(0, 43, 54, 0.18) !important;
+    background-color: #ffffff !important;
+}
+.modal-header {
+    background: linear-gradient(135deg, #004E64 0%, #003F5F 100%) !important;
+    color: #ffffff !important;
+    padding: 16px 24px !important;
+    border-bottom: none !important;
+}
+.modal-header .modal-title {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-header .btn-close {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.85 !important;
+    transition: opacity 0.15s ease;
+}
+.modal-header .btn-close:hover {
+    opacity: 1 !important;
+}
+.modal-body {
+    padding: 24px !important;
+    background: #ffffff !important;
+    font-size: 14px !important;
+    line-height: 1.55;
+    color: #1e293b;
+}
+.modal-footer {
+    padding: 14px 24px !important;
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+/* ── 4. Unified Workspace Tab Pills ── */
+.workspace-tabs, .nav-pills.workspace-tabs {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 4px;
+    display: inline-flex;
+    gap: 4px;
+}
+.workspace-tabs .nav-link, .nav-pills.workspace-tabs .nav-link {
+    color: #475569;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+}
+.workspace-tabs .nav-link:hover, .nav-pills.workspace-tabs .nav-link:hover {
+    color: #004E64;
+    background-color: #e2e8f0;
+}
+.workspace-tabs .nav-link.active, .nav-pills.workspace-tabs .nav-link.active {
+    color: #ffffff !important;
+    background-color: #004E64 !important;
+    box-shadow: 0 2px 6px rgba(0, 78, 100, 0.22);
+}
+
+/* ── 5. System-wide Smooth Page Transition & Action Continuity ── */
+.page-transition,
+.admin-page-transition,
+.workspace-transition {
+    animation: workspaceFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes workspaceFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(3px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Đảm bảo toàn hệ thống: Modal luôn nổi trên Backdrop mờ, không bao giờ bị đè */
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+.modal {
+    z-index: 1055 !important;
+}
+
+/* Hiệu ứng chuyển động mượt cho bảng và card */
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+.table-hover tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* Thanh cuộn mượt đồng bộ chuẩn màu biển */
+.smooth-scroll,
+.content-body,
+.table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #00838C #f1f5f9;
+}
+.smooth-scroll::-webkit-scrollbar,
+.content-body::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.smooth-scroll::-webkit-scrollbar-track,
+.content-body::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.smooth-scroll::-webkit-scrollbar-thumb,
+.content-body::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #00838C;
+    border-radius: 4px;
+}
+.smooth-scroll::-webkit-scrollbar-thumb:hover,
+.content-body::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #004E64;
+}
+
+/* Top progress bar cho cảm giác thao tác liên tiếp, không giựt */
+#huit-top-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #004E64, #00838C, #25A18E);
+    z-index: 99999;
+    transition: width 0.25s ease, opacity 0.25s ease;
+    pointer-events: none;
+    opacity: 0;
+}
+
+
 
 
 

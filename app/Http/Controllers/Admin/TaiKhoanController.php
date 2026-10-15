@@ -144,17 +144,11 @@ class TaiKhoanController extends Controller
             }
             // 2. Khoa
             if ($request->filled('ma_khoa')) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $request->ma_khoa))
-                      ->orWhere('TenDangNhap', 'LIKE', "TBM_{$request->ma_khoa}_%");
-                });
+                $query->whereHas('giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $request->ma_khoa));
             }
             // 3. Bộ môn
             if ($request->filled('ma_bomon')) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('giangVien', fn($g) => $g->where('MaBoMon', $request->ma_bomon))
-                      ->orWhere('TenDangNhap', 'LIKE', "%_{$request->ma_bomon}_%");
-                });
+                $query->whereHas('giangVien', fn($g) => $g->where('MaBoMon', $request->ma_bomon));
             }
             // 4. Trạng thái
             if ($request->filled('trang_thai')) {
@@ -185,10 +179,7 @@ class TaiKhoanController extends Controller
             }
             // 2. Khoa
             if ($request->filled('ma_khoa')) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $request->ma_khoa))
-                      ->orWhere('TenDangNhap', 'LIKE', "TK_{$request->ma_khoa}_%");
-                });
+                $query->whereHas('giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $request->ma_khoa));
             }
             // 3. Trạng thái
             if ($request->filled('trang_thai')) {
@@ -220,13 +211,10 @@ class TaiKhoanController extends Controller
     }
 
     /**
-     * Tạo tài khoản cán bộ: Giảng viên, Trưởng bộ môn, Trưởng khoa
-     * - Trưởng bộ môn & Trưởng khoa: Lấy thông tin từ danh sách giảng viên đã có, chỉ bổ nhiệm/thêm vai trò
-     * - Giảng viên: Cấp tài khoản mới hoặc chọn từ danh sách giảng viên
-     * Username được hệ thống sinh tự động theo quy tắc:
-     * - Giảng viên: GV_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}
-     * - Trưởng bộ môn: TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO} (Business rule: 1 BM chỉ 1 TBM active)
-     * - Trưởng khoa: TK_{MA_KHOA}_{MA_CAN_BO} (Business rule: 1 Khoa chỉ 1 TK active)
+     * Tạo hoặc Bổ nhiệm tài khoản cán bộ: Giảng viên, Trưởng bộ môn, Trưởng khoa
+     * Quy tắc chuẩn: Mỗi cán bộ sở hữu DUY NHẤT 1 tài khoản với TenDangNhap = MaGV.
+     * - Trưởng bộ môn & Trưởng khoa: Bổ nhiệm vai trò VT04 / VT05 trực tiếp trên tài khoản của giảng viên
+     * - Mật khẩu khởi tạo: Mặc định Huit@2026, bắt buộc đổi mật khẩu lần đầu
      */
     public function storeCanBo(Request $request)
     {
@@ -252,7 +240,7 @@ class TaiKhoanController extends Controller
             $email   = $gv->Email;
             $sdt     = $gv->SoDienThoai;
             $maBoMon = $gv->MaBoMon ?: ($request->filled('ma_bomon') ? strtoupper(trim($request->ma_bomon)) : null);
-            $maKhoa  = $gv->boMon?->MaKhoa ?: ($request->filled('ma_khoa') ? strtoupper(trim($request->ma_khoa)) : null);
+            $maKhoa  = $gv->boMon?->MaKhoa ?: ($request->filled('ma_khoa') ? strtoupper(trim($request->ma_khoa)) : 'CNTT');
             $hocVi   = $gv->HocVi;
         } else {
             // Trường hợp nhập giảng viên mới
@@ -283,10 +271,13 @@ class TaiKhoanController extends Controller
             $hocVi   = $request->input('hoc_vi', 'Thạc sĩ');
         }
 
-        $password = $request->filled('mat_khau') ? $request->mat_khau : '123456';
-        $batBuocDoiMK = $request->has('bat_buoc_doi_mat_khau');
+        $isManualPassword = $request->filled('mat_khau');
+        $password = $isManualPassword ? $request->mat_khau : 'Huit@2026';
+        $batBuocDoiMK = true;
 
-        // Business Rule & Sinh Tên Đăng Nhập
+        // Business Rule & Tên Đăng Nhập (Chuẩn hóa duy nhất 1 tài khoản = MaCanBo)
+        $username = $maCanBo;
+
         if ($loai === 'TRUONG_BO_MON') {
             if (!$maBoMon) {
                 return redirect()->back()->withInput()->withErrors('Giảng viên này chưa được phân bổ vào Bộ môn nào. Vui lòng phân bổ bộ môn cho giảng viên.');
@@ -298,11 +289,11 @@ class TaiKhoanController extends Controller
             // Rule: Mỗi Bộ môn chỉ có duy nhất một Trưởng bộ môn đang hoạt động
             $existingTBM = TaiKhoan::where('MaVaiTro', 'VT04')
                 ->where('TrangThai', 1)
-                ->where(function($q) use ($maBoMon) {
-                    $q->whereHas('giangVien', fn($g) => $g->where('MaBoMon', $maBoMon))
-                      ->orWhere('TenDangNhap', 'LIKE', "%_{$maBoMon}_%");
+                ->where(function($q) use ($maBoMon, $gv, $maCanBo) {
+                    $q->where('MaGV', $maCanBo)
+                      ->orWhereHas('giangVien', fn($g) => $g->where('MaBoMon', $maBoMon));
                 })
-                ->when($gv && $gv->MaTK, fn($q) => $q->where('MaTK', '!=', $gv->MaTK))
+                ->when($gv, fn($q) => $q->where('MaGV', '!=', $gv->MaGV))
                 ->first();
 
             if ($existingTBM) {
@@ -319,17 +310,17 @@ class TaiKhoanController extends Controller
 
         } elseif ($loai === 'TRUONG_KHOA') {
             if (!$maKhoa) {
-                return redirect()->back()->withInput()->withErrors('Giảng viên này chưa thuộc Khoa nào. Vui lòng kiểm tra lại thông tin khoa.');
+                $maKhoa = BoMon::where('MaBoMon', $maBoMon)->value('MaKhoa') ?? 'CNTT';
             }
 
             // Rule: Mỗi Khoa chỉ có duy nhất một Trưởng khoa đang hoạt động
             $existingTK = TaiKhoan::where('MaVaiTro', 'VT05')
                 ->where('TrangThai', 1)
-                ->where(function($q) use ($maKhoa) {
-                    $q->whereHas('giangVien.boMon', fn($b) => $b->where('MaKhoa', $maKhoa))
-                      ->orWhere('TenDangNhap', 'LIKE', "TK_{$maKhoa}_%");
+                ->where(function($q) use ($maKhoa, $gv, $maCanBo) {
+                    $q->where('MaGV', $maCanBo)
+                      ->orWhereHas('giangVien.boMon', fn($b) => $b->where('MaKhoa', $maKhoa));
                 })
-                ->when($gv && $gv->MaTK, fn($q) => $q->where('MaTK', '!=', $gv->MaTK))
+                ->when($gv, fn($q) => $q->where('MaGV', '!=', $gv->MaGV))
                 ->first();
 
             if ($existingTK) {
@@ -348,32 +339,25 @@ class TaiKhoanController extends Controller
             if (!$maKhoa && $maBoMon) {
                 $maKhoa = BoMon::where('MaBoMon', $maBoMon)->value('MaKhoa') ?? 'CNTT';
             }
-            $username = "GV_{$maKhoa}_{$maBoMon}_{$maCanBo}";
+            $username = $maCanBo;
             $maVaiTro = 'VT02';
             $redirectTab = 'giangvien';
         }
 
-        // Kiểm tra username trùng lặp nếu là tài khoản mới hoàn toàn
-        if ((!$gv || !$gv->taiKhoan) && TaiKhoan::where('TenDangNhap', $username)->exists()) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors("Tên đăng nhập '{$username}' đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.");
-        }
-
         try {
             DB::transaction(function () use ($username, $password, $maVaiTro, $batBuocDoiMK, $maCanBo, $hoTen, $email, $sdt, $maKhoa, $maBoMon, $hocVi, $loai, $gv, $request) {
-                // 1. Cập nhật hoặc Khởi tạo Tài Khoản
-                if ($gv && $gv->taiKhoan) {
-                    $tk = $gv->taiKhoan;
+                // 1. Cập nhật hoặc Khởi tạo Tài Khoản (Liên kết trực tiếp MaGV của giảng viên)
+                $tk = TaiKhoan::where('TenDangNhap', $username)->orWhere('MaTK', $username)->first();
+                if ($tk) {
                     $tkUpdate = [
-                        'TenDangNhap'       => $username,
-                        'MaVaiTro'          => $maVaiTro,
-                        'TrangThai'         => true,
-                        'BatBuocDoiMatKhau' => $batBuocDoiMK,
+                        'MaVaiTro'  => $maVaiTro,
+                        'MaGV'      => $maCanBo,
+                        'TrangThai' => true,
                     ];
                     if ($request->filled('mat_khau')) {
                         $tkUpdate['MatKhau'] = Hash::make($password);
                         $tkUpdate['TrangThaiMatKhau'] = 'INITIAL';
+                        $tkUpdate['BatBuocDoiMatKhau'] = $batBuocDoiMK;
                     }
                     $tk->update($tkUpdate);
                 } else {
@@ -382,6 +366,7 @@ class TaiKhoanController extends Controller
                         'TenDangNhap'       => $username,
                         'MatKhau'           => Hash::make($password),
                         'MaVaiTro'          => $maVaiTro,
+                        'MaGV'              => $maCanBo,
                         'TrangThai'         => true,
                         'TrangThaiMatKhau'  => 'INITIAL',
                         'BatBuocDoiMatKhau' => $batBuocDoiMK,
@@ -392,26 +377,27 @@ class TaiKhoanController extends Controller
                 // 2. Tạo hoặc Cập nhật Giảng viên
                 $targetBM = $maBoMon;
                 if (!$targetBM) {
-                    $targetBM = BoMon::where('MaKhoa', $maKhoa)->value('MaBoMon');
+                    $targetBM = BoMon::where('MaKhoa', $maKhoa)->value('MaBoMon') ?? 'CNPM';
                 }
 
                 if ($gv) {
                     $gv->update([
-                        'MaTK'        => $tk->MaTK,
-                        'MaBoMon'     => $targetBM ?: $gv->MaBoMon,
-                        'TrangThai'   => 'Đang công tác',
+                        'MaBoMon'   => $targetBM ?: $gv->MaBoMon,
+                        'TrangThai' => 'Đang công tác',
                     ]);
                 } else {
-                    GiangVien::create([
-                        'MaGV'        => $maCanBo,
-                        'MaTK'        => $tk->MaTK,
-                        'HoTen'       => $hoTen,
-                        'Email'       => $email,
-                        'SoDienThoai' => $sdt,
-                        'HocVi'       => $hocVi ?: 'Thạc sĩ',
-                        'MaBoMon'     => $targetBM,
-                        'TrangThai'   => 'Đang công tác',
-                    ]);
+                    GiangVien::updateOrCreate(
+                        ['MaGV' => $maCanBo],
+                        [
+                            'MaTK'        => $maCanBo,
+                            'HoTen'       => $hoTen,
+                            'Email'       => $email,
+                            'SoDienThoai' => $sdt,
+                            'HocVi'       => $hocVi ?: 'Thạc sĩ',
+                            'MaBoMon'     => $targetBM,
+                            'TrangThai'   => 'Đang công tác',
+                        ]
+                    );
                 }
 
                 // 3. Cập nhật tên chức vụ vào bảng Khoa hoặc Bộ môn
@@ -464,7 +450,8 @@ class TaiKhoanController extends Controller
         ]);
 
         $username = trim($request->TenDangNhap);
-        $password = $request->filled('MatKhau') ? $request->MatKhau : '123456';
+        $isManualPassword = $request->filled('MatKhau');
+        $password = $isManualPassword ? $request->MatKhau : \Illuminate\Support\Str::password(12, true, true, false, false);
 
         DB::transaction(function () use ($request, $username, $password) {
             $tk = TaiKhoan::create([
@@ -594,15 +581,18 @@ class TaiKhoanController extends Controller
     public function resetPassword(Request $request, $id)
     {
         $taiKhoan = TaiKhoan::findOrFail($id);
+        $tempPassword = 'Huit@2026';
 
         $taiKhoan->update([
-            'MatKhau'           => Hash::make('123456'),
+            'MatKhau'           => Hash::make($tempPassword),
             'TrangThaiMatKhau'  => 'INITIAL',
             'BatBuocDoiMatKhau' => true,
             'SoLanDangNhapSai'  => 0,
         ]);
 
-        return redirect()->back()->with('success', "Đã đặt lại mật khẩu của tài khoản '{$taiKhoan->TenDangNhap}' về mặc định: 123456 (Bắt buộc đổi khi đăng nhập)!");
+        return redirect()->back()
+            ->with('temp_password', $tempPassword)
+            ->with('success', "Đã đặt lại mật khẩu cho tài khoản '{$taiKhoan->TenDangNhap}' thành công về mặc định: [ {$tempPassword} ] (Người dùng được yêu cầu đổi mật khẩu ở lần đăng nhập tiếp theo).");
     }
 
     public function importExcel(Request $request)

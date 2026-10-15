@@ -107,25 +107,8 @@
         </div>
     </div>
 
-    <!-- Thông Báo Kết Quả / Flash Message -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-xs mb-4" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-xs mb-4" role="alert">
-            <div class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Đã xảy ra lỗi:</div>
-            <ul class="mb-0 ps-3 small">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+
 
     @php
         $statusClass = 'badge-status-choduyet';
@@ -237,22 +220,16 @@
                     <!-- Mô tả đề tài -->
                     <div class="mb-4">
                         <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">1. Mô Tả Đề Tài:</h6>
-                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="white-space: pre-line; line-height: 1.6;">
-                            {{ $detai->MoTa ?: 'Chưa có thông tin mô tả chi tiết.' }}
+                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="line-height: 1.6;">
+                            {!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa có thông tin mô tả chi tiết.' !!}
                         </div>
                     </div>
 
-                    <!-- Mục tiêu đề tài -->
-                    <div class="mb-4">
-                        <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">2. Mục Tiêu Đạt Được:</h6>
-                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="white-space: pre-line; line-height: 1.6;">
-                            {{ $detai->MucTieu ?: ($detai->MoTa ? 'Xem chi tiết trong phần mô tả đề tài.' : 'Chưa có thông tin mục tiêu.') }}
-                        </div>
-                    </div>
+
 
                     <!-- Yêu cầu đối với sinh viên -->
                     <div class="mb-0">
-                        <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">3. Yêu Cầu Đối Với Sinh Viên Thực Hiện:</h6>
+                        <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">2. Yêu Cầu Đối Với Sinh Viên Thực Hiện:</h6>
                         <div class="p-3 bg-light rounded-3 text-dark mt-2" style="white-space: pre-line; line-height: 1.6;">
                             {{ $detai->YeuCau ?: 'Kiến thức chuyên ngành phù hợp, tinh thần tự giác, hoàn thành đúng tiến độ theo quy định của Khoa & Bộ môn.' }}
                         </div>

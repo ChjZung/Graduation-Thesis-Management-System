@@ -89,13 +89,23 @@ class ExcelTemplateService
             ],
             'giangvien' => [
                 'filename' => 'Template_GiangVien.xlsx',
-                'title'    => 'MẪU DỮ LIỆU GIẢNG VIÊN',
-                'headers'  => ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai'],
+                'title'    => 'MẪU DỮ LIỆU GIẢNG VIÊN THEO HỌC KỲ',
+                'headers'  => ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai', 'MaHocKy', 'SoNhomToiDa'],
                 'examples' => [
-                    ['GV91', 'Vũ Thị Thanh Mai', 'gv91_test@huit.edu.vn', '0981112233', '1982-04-12', 'Nữ', '', 'Tiến sĩ', 'BMANH', 'Đang công tác'],
-                    ['GV92', 'Đỗ Quốc Bảo', 'gv92_test@huit.edu.vn', '0982223344', '1979-09-25', 'Nam', 'Phó Giáo sư', 'Tiến sĩ', 'BMQTKD', 'Đang công tác'],
+                    ['GV91', 'Vũ Thị Thanh Mai', 'gv91_test@huit.edu.vn', '0981112233', '1982-04-12', 'Nữ', '', 'Tiến sĩ', 'CNPM', 'Đang công tác', 'HK2627_2', 5],
+                    ['GV92', 'Đỗ Quốc Bảo', 'gv92_test@huit.edu.vn', '0982223344', '1979-09-25', 'Nam', 'Phó Giáo sư', 'Tiến sĩ', 'KHMT', 'Đang công tác', 'HK2627_2', 5],
                 ],
-                'note'     => 'Lưu ý: MaGV, HoTen và MaBoMon là bắt buộc. MaGV là duy nhất. Email nên dùng đuôi @huit.edu.vn. MaBoMon có thể điền Mã Bộ Môn (BMANH...) hoặc Tên Bộ Môn. Định dạng ngày YYYY-MM-DD. Hệ thống tự động tạo Tài khoản đăng nhập từ MaGV (Mật khẩu mặc định: 123456).'
+                'note'     => 'Lưu ý: MaGV, HoTen và MaBoMon là bắt buộc. MaGV là duy nhất. Hệ thống hỗ trợ import mới và import lại để cập nhật hồ sơ giảng viên. Cột MaHocKy và SoNhomToiDa là tùy chọn (nếu có sẽ tự động phân bổ chỉ tiêu hướng dẫn cho học kỳ đó). Tự động tạo Tài khoản Portal cho giảng viên mới (Hệ thống khởi tạo mật khẩu tạm thời an toàn, bắt buộc đổi mật khẩu khi đăng nhập lần đầu).'
+            ],
+            'giangvien_hocky' => [
+                'filename' => 'Template_GiangVien_TheoHocKy.xlsx',
+                'title'    => 'MẪU DỮ LIỆU GIẢNG VIÊN THEO HỌC KỲ',
+                'headers'  => ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai', 'MaHocKy', 'SoNhomToiDa'],
+                'examples' => [
+                    ['GV91', 'Vũ Thị Thanh Mai', 'gv91_test@huit.edu.vn', '0981112233', '1982-04-12', 'Nữ', '', 'Tiến sĩ', 'CNPM', 'Đang công tác', 'HK2627_2', 5],
+                    ['GV92', 'Đỗ Quốc Bảo', 'gv92_test@huit.edu.vn', '0982223344', '1979-09-25', 'Nam', 'Phó Giáo sư', 'Tiến sĩ', 'KHMT', 'Đang công tác', 'HK2627_2', 5],
+                ],
+                'note'     => 'Lưu ý: MaGV, HoTen và MaBoMon là bắt buộc. Cột MaHocKy và SoNhomToiDa là tùy chọn.'
             ],
             'sinhvien' => [
                 'filename' => 'Template_SinhVien.xlsx',
@@ -105,28 +115,28 @@ class ExcelTemplateService
                     ['2001240001', 'Nguyễn Hoàng Long', '2001240001@st.huit.edu.vn', '0971234567', '2003-05-10', 'Nam', '15DHNNA01', '2024-2028', 95, 3.25, 'Đang học'],
                     ['2001240002', 'Trần Khánh Linh', '2001240002@st.huit.edu.vn', '0972345678', '2003-11-28', 'Nữ', '15DHQTKD01', '2024-2028', 90, 3.40, 'Đang học'],
                 ],
-                'note'     => 'Lưu ý: MSSV, HoTen và MaLop là bắt buộc. MSSV là duy nhất. Email dùng đuôi @st.huit.edu.vn. MaLop có thể điền Mã Lớp hoặc Tên Lớp. Hệ thống tự động liên kết Khoa và Ngành từ Lớp học và tạo Tài khoản sinh viên (Mật khẩu mặc định: 123456).'
+                'note'     => 'Lưu ý: MSSV, HoTen và MaLop là bắt buộc. MSSV là duy nhất. Email dùng đuôi @st.huit.edu.vn. MaLop có thể điền Mã Lớp hoặc Tên Lớp. Hệ thống tự động liên kết Khoa và Ngành từ Lớp học và tạo Tài khoản sinh viên (Hệ thống khởi tạo mật khẩu tạm thời an toàn, bắt buộc đổi mật khẩu khi đăng nhập lần đầu).'
             ],
             'sinhvien_hocky' => [
                 'filename' => 'Template_SinhVien_TheoHocKy.xlsx',
                 'title'    => 'MẪU DANH SÁCH SINH VIÊN THAM GIA KHÓA LUẬN THEO HỌC KỲ',
-                'headers'  => ['MSSV', 'HoTen', 'TrangThai', 'GhiChu'],
+                'headers'  => ['MSSV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'MaLop', 'KhoaHoc', 'SoTinChiTichLuy', 'DiemTichLuy', 'TrangThai', 'GhiChu'],
                 'examples' => [
-                    ['2001210041', 'Châu Gia Hưng', 'Đủ điều kiện', 'Đủ điều kiện làm khóa luận tốt nghiệp'],
-                    ['2001210042', 'Nguyễn Thị Hoa', 'Chưa đủ điều kiện', 'Thiếu tín chỉ tích lũy (105/115)'],
-                    ['2001210043', 'Trần Văn Nam', '', ''],
+                    ['2001210041', 'Châu Gia Hưng', '2001210041@st.huit.edu.vn', '0971000041', '2003-04-15', 'Nam', '12DHCNTT01', '2021-2025', 125, 3.25, 'Đủ điều kiện', 'Đủ điều kiện làm khóa luận tốt nghiệp'],
+                    ['2001210042', 'Nguyễn Thị Hoa', '2001210042@st.huit.edu.vn', '0971000042', '2003-08-20', 'Nữ', '12DHCNTT01', '2021-2025', 105, 2.10, 'Chưa đủ điều kiện', 'Thiếu tín chỉ tích lũy (105/115)'],
+                    ['2001210043', 'Trần Văn Nam', '2001210043@st.huit.edu.vn', '0971000043', '2003-11-05', 'Nam', '12DHCNTT02', '2021-2025', 118, 2.85, 'Đủ điều kiện', 'Đủ điều kiện làm khóa luận tốt nghiệp'],
                 ],
-                'note'     => 'Lưu ý: MSSV là bắt buộc. HoTen là tùy chọn nếu sinh viên đã có trong hệ thống. Cột TrangThai có thể điền "Đủ điều kiện" hoặc "Chưa đủ điều kiện" (nếu để trống, hệ thống sẽ tự động rà soát chuẩn Tín chỉ >= 115 và ĐTB >= 2.0). Cột GhiChu là tùy chọn.'
+                'note'     => 'Lưu ý: MSSV và HoTen là bắt buộc khi thêm mới sinh viên. MaLop có thể điền Mã Lớp hoặc Tên Lớp. Cột TrangThai có thể điền "Đủ điều kiện" hoặc "Chưa đủ điều kiện" (nếu để trống, hệ thống sẽ tự động rà soát chuẩn Tín chỉ >= 115 và ĐTB >= 2.0). Hệ thống tự tạo tài khoản Portal cho sinh viên mới (Hệ thống khởi tạo mật khẩu tạm thời an toàn, bắt buộc đổi mật khẩu khi đăng nhập lần đầu).'
             ],
             'taikhoan' => [
                 'filename' => 'Template_TaiKhoan.xlsx',
                 'title'    => 'MẪU NHẬP LIỆU TÀI KHOẢN NGƯỜI DÙNG',
                 'headers'  => ['TenDangNhap', 'HoTen', 'Email', 'MaVaiTro', 'MatKhau'],
                 'examples' => [
-                    ['giaovu_cntt', 'Nguyễn Thị Giáo Vụ', 'giaovu_cntt@huit.edu.vn', 'VT01', '123456'],
-                    ['gv_hoangnam', 'ThS. Hoàng Nam', 'namh@huit.edu.vn', 'VT02', '123456'],
+                    ['giaovu_cntt', 'Nguyễn Thị Giáo Vụ', 'giaovu_cntt@huit.edu.vn', 'VT01', ''],
+                    ['gv_hoangnam', 'ThS. Hoàng Nam', 'namh@huit.edu.vn', 'VT02', ''],
                 ],
-                'note'     => 'Lưu ý: TenDangNhap là bắt buộc và duy nhất. MaVaiTro: VT01 (Admin/Giáo vụ), VT02 (Giảng viên), VT03 (Sinh viên). Mật khẩu để trống sẽ lấy mặc định 123456.'
+                'note'     => 'Lưu ý: TenDangNhap là bắt buộc và duy nhất. MaVaiTro: VT01 (Admin/Giáo vụ), VT02 (Giảng viên), VT03 (Sinh viên). Cột MatKhau để trống hoặc hệ thống sẽ tự khởi tạo mật khẩu tạm thời ngẫu nhiên an toàn và yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên.'
             ],
             'lophocphan' => [
                 'filename' => 'Template_LopHocPhan.xlsx',
@@ -139,23 +149,26 @@ class ExcelTemplateService
                 'note'     => 'Lưu ý: TenLopHP bắt buộc không trùng. MaMon (ID hoặc Tên môn), MaHocKy (ID hoặc Tên học kỳ), MaGV (ID hoặc Mã GV/Tên GV).'
             ],
             'detai' => [
-                'filename' => 'Template_DeTai.xlsx',
-                'title'    => 'MẪU NHẬP LIỆU ĐỀ TÀI ĐỒ ÁN',
-                'headers'  => ['TenDeTai', 'MaLopHP', 'MaMon', 'MaHocKy', 'MoTa', 'YeuCau', 'HanDangKy', 'HanBaoCao', 'HanNopSanPham'],
+                'filename' => '11_DeTai_KhoaLuan_Mau.xlsx',
+                'title'    => 'MẪU NHẬP LIỆU ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP',
+                'headers'  => ['MaDeTai', 'TenDeTai', 'MoTa', 'YeuCau', 'LinhVuc', 'MaHocPhan', 'TenHocPhan', 'MaGV', 'TenGV', 'MaHocKy', 'SoLuongSinhVienToiDa', 'TrangThai'],
                 'examples' => [
                     [
-                        'Xây Dựng Hệ Thống Quản Lý Đồ Án Tín Chỉ',
-                        '21DTH01_WEB_N01',
-                        'Đồ Án Chuyên Ngành Web',
-                        'Học kỳ 1',
-                        'Đề tài nghiên cứu và lập trình ứng dụng Web Laravel',
-                        'Sử dụng MySQL, Bootstrap 5 và Vite',
-                        '2026-08-10',
-                        '2026-08-25',
-                        '2026-09-05'
+                        'DT01',
+                        'Xây dựng hệ thống quản lý và hỗ trợ học tập trực tuyến tích hợp AI Assistant cho trường Đại học Công Thương TP.HCM',
+                        'Nghiên cứu thiết kế kiến trúc vi dịch vụ (Microservices), phát triển nền tảng học tập trực tuyến hỗ trợ tương tác thời gian thực, tích hợp trợ lý ảo AI giải đáp thắc mắc bài giảng.',
+                        'Thành thạo lập trình Web Fullstack (NodeJS/Laravel, ReactJS/VueJS), kiến thức về RESTful API, Docker và hiểu biết cơ bản về tích hợp LLM API.',
+                        'Công nghệ phần mềm',
+                        'HP_KL_CNPM',
+                        'Khóa luận tốt nghiệp - Công nghệ phần mềm',
+                        'GV00000002',
+                        'TS. Trần Anh Dũng',
+                        'HK2627_1',
+                        3,
+                        'Đã công bố'
                     ],
                 ],
-                'note'     => 'Lưu ý: TenDeTai bắt buộc. MaLopHP có thể nhập ID Lớp HP hoặc Tên Lớp HP.'
+                'note'     => 'Lưu ý: TenDeTai bắt buộc. MaGV hoặc TenGV bắt buộc. MaHocPhan có thể nhập mã hoặc tên học phần.'
             ],
             'nhom' => [
                 'filename' => 'Template_NhomDoAn.xlsx',
@@ -176,6 +189,23 @@ class ExcelTemplateService
                     ['Lớp Học Phần', 'GV002', '14DHTH005', 'Học kỳ 1', date('Y-m-d')],
                 ],
                 'note'     => 'Lưu ý: LoaiPhanCong ("Lớp Hành Chính" hoặc "Lớp Học Phần"). MaGV (ID, Mã GV hoặc Họ Tên).'
+            ],
+            'hocphan' => [
+                'filename' => 'Template_HocPhan.xlsx',
+                'title'    => 'MẪU DỮ LIỆU HỌC PHẦN KHÓA LUẬN VÀ CHUYÊN NGÀNH',
+                'headers'  => ['MaHocPhan', 'TenHocPhan', 'SoTinChi', 'MaKhoa', 'MaBoMon', 'LoaiHocPhan', 'MoTa'],
+                'examples' => [
+                    ['HP_KLTN', 'Khóa luận tốt nghiệp', 10, 'CNTT', '', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp (KLTN) cử nhân hệ chính quy khoa CNTT.'],
+                    ['HP_KLKS', 'Khóa luận kỹ sư', 10, 'CNTT', '', 'Khóa luận', 'Học phần Khóa luận kỹ sư chuyên sâu thực hành khoa CNTT.'],
+                    ['HP_KLCN', 'Khóa luận cử nhân', 10, 'CNTT', '', 'Khóa luận', 'Học phần Khóa luận cử nhân khoa CNTT.'],
+                    ['HP_KL_CNPM', 'Khóa luận tốt nghiệp - CNPM', 10, 'CNTT', 'CNPM', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành Công nghệ phần mềm.'],
+                    ['HP_KL_HTTT', 'Khóa luận tốt nghiệp - HTTT', 10, 'CNTT', 'HTTT', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành Hệ thống thông tin.'],
+                    ['HP_KL_ATTT', 'Khóa luận tốt nghiệp - ATTT', 10, 'CNTT', 'ATTT', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành An toàn thông tin.'],
+                    ['HP_KL_MMT',  'Khóa luận tốt nghiệp - MMT',  10, 'CNTT', 'MMT',  'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành Mạng máy tính.'],
+                    ['HP_KL_KHMT', 'Khóa luận tốt nghiệp - KHMT', 10, 'CNTT', 'KHMT', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành Khoa học máy tính.'],
+                    ['HP_KL_KHDL', 'Khóa luận tốt nghiệp - KHDL', 10, 'CNTT', 'KHDL', 'Khóa luận', 'Học phần Khóa luận tốt nghiệp chuyên ngành Khoa học dữ liệu.'],
+                ],
+                'note'     => 'Lưu ý: TenHocPhan là bắt buộc. SoTinChi mặc định 10 cho Khóa luận (hoặc 3 cho môn chuyên ngành). MaKhoa mặc định CNTT. MaBoMon để trống nếu là học phần dùng chung toàn khoa hoặc điền mã bộ môn (CNPM, HTTT, ATTT, MMT, KHMT, KHDL). LoaiHocPhan điền "Khóa luận" hoặc "Chuyên ngành".'
             ]
         ];
     }
@@ -208,6 +238,14 @@ class ExcelTemplateService
             'lop-hoc-phans'       => 'lophocphan',
             'sinhvien_lophocphan' => 'sinhvien_lophocphan',
             'sinhvien-lophocphan' => 'sinhvien_lophocphan',
+            'sinhvien_hocky'      => 'sinhvien_hocky',
+            'sinhvien-hocky'      => 'sinhvien_hocky',
+            'giangvien_hocky'     => 'giangvien_hocky',
+            'giangvien-hocky'     => 'giangvien_hocky',
+            'hocphan'             => 'hocphan',
+            'hocphans'            => 'hocphan',
+            'hoc-phan'            => 'hocphan',
+            'hoc-phans'           => 'hocphan',
         ];
 
         $key = $aliasMap[strtolower($key)] ?? strtolower($key);

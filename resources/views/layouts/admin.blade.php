@@ -253,7 +253,7 @@
         </div>
 
         <!-- Alerts + Content -->
-        <div class="content-body">
+        <div class="content-body admin-page-transition">
 
             @if (isset($errors) && $errors->any())
 
@@ -312,8 +312,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Auto-hide success alerts after 5s
+    // Auto-hide success alerts after 5s & safely move modals to document.body
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.modal').forEach(function(modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+
         setTimeout(function () {
             document.querySelectorAll('.alert-success').forEach(function (el) {
                 let a = bootstrap.Alert.getOrCreateInstance(el);
@@ -335,6 +341,29 @@
                     }, 30);
                 }
             });
+        });
+
+        // Hiệu ứng mượt mà liên tiếp khi chuyển trang / thao tác trên Admin
+        let progressBar = document.getElementById('huit-top-progress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'huit-top-progress';
+            document.body.prepend(progressBar);
+        }
+
+        document.querySelectorAll('a[href]:not([target="_blank"]):not([href^="#"]):not([href^="javascript"]):not([data-bs-toggle])').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                progressBar.style.opacity = '1';
+                progressBar.style.width = '70%';
+            });
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (progressBar) {
+                progressBar.style.opacity = '1';
+                progressBar.style.width = '100%';
+            }
         });
     });
 </script>

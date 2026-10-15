@@ -1,551 +1,523 @@
 @extends('layouts.sinhvien')
 
-@section('page_title', 'Bảng Tổng Quan Khóa Luận')
+@section('page_title', 'Tổng Quan Khóa Luận')
 
 @section('content')
-{{-- ── TIÊU ĐỀ TRANG CHUẨN ADMIN ── --}}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div>
-        <h4 class="fw-bold mb-1 text-dark">
-            <i class="fa-solid fa-chart-pie me-2 text-primary"></i> Tổng Quan Khóa Luận Tốt Nghiệp
-        </h4>
-        <div class="text-muted small">
-            Sinh viên: <strong>{{ $sinhVien->HoTen }}</strong> &bull; MSSV: <strong>{{ $sinhVien->MaSV }}</strong> &bull; Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
-            <span class="badge bg-light text-primary border ms-2"><i class="fa-regular fa-calendar-check me-1"></i>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ hiện tại' }}</span>
-        </div>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-xs">
-            <i class="fa-solid fa-calendar-day me-1"></i> Lịch báo cáo
-        </a>
-        <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-xs">
-            <i class="fa-solid fa-upload me-1"></i> Nộp báo cáo tiến độ
-        </a>
-    </div>
-</div>
+<style>
+    /* Bảng màu chuẩn từ người dùng: Midnight Navy, Ocean Cyan, Persian Green, Mint */
+    .dashboard-container {
+        font-size: 13.5px;
+    }
+    .kpi-metric-box {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+    .kpi-metric-box:hover {
+        transform: translateY(-1.5px);
+        border-color: #00838C;
+        box-shadow: 0 4px 10px -2px rgba(0, 78, 100, 0.08);
+    }
+    .kpi-icon-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #e6f7fa;
+        color: #00838C;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .metric-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #52637a;
+    }
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #003F5F;
+        line-height: 1.2;
+    }
+    .dashboard-card-panel {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px 0 rgba(0, 63, 95, 0.04);
+        transition: border-color 0.16s ease;
+    }
+    .panel-header-compact {
+        padding: 10px 16px;
+        background-color: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .panel-body-compact {
+        padding: 14px 16px;
+    }
+    .progress-bar-cyan {
+        background: linear-gradient(90deg, #00838C 0%, #25A18E 100%);
+    }
+</style>
 
-{{-- ── THÔNG BÁO LỜI MỜI THAM GIA NHÓM ĐANG CHỜ ── --}}
-@if(isset($loiMois) && $loiMois->count() > 0)
-<div class="alert alert-warning border-warning shadow-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 rounded-3 p-3">
-    <div class="d-flex align-items-center gap-3">
-        <i class="fa-solid fa-envelope-open-text fs-2 text-warning"></i>
+<div class="dashboard-container">
+
+    {{-- ── 1. TIÊU ĐỀ VÀ THÔNG TIN SINH VIÊN (DẠNG THANH NGANG GỌN GÀNG) ── --}}
+    <div class="d-flex justify-content-between align-items-center mb-2.5 flex-wrap gap-2">
         <div>
-            <h6 class="fw-bold mb-1 text-dark">Bạn có {{ $loiMois->count() }} lời mời tham gia nhóm khóa luận!</h6>
-            <div class="small text-secondary">
-                Lời mời từ Trưởng nhóm: <strong>{{ $loiMois->first()->nhom->truongNhom->HoTen ?? 'Bạn học' }}</strong> 
-                (Nhóm: <strong>{{ $loiMois->first()->nhom->TenNhom ?? '' }}</strong> - Môn: {{ $loiMois->first()->nhom->hocPhan->TenHocPhan ?? 'Khóa luận' }}).
+            <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: #003F5F;">
+                <i class="fa-solid fa-chart-pie" style="color: #00838C;"></i>
+                <span>Tổng Quan Khóa Luận</span>
+                <span class="badge badge-neutral" style="font-size: 12px;">
+                    <i class="fa-regular fa-calendar-check me-1" style="color: #00838C;"></i>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ hiện tại' }}
+                </span>
+            </h5>
+            <div class="text-muted mt-0.5" style="font-size: 13px;">
+                Xin chào, <strong style="color: #003F5F;">{{ $sinhVien->HoTen }}</strong> &bull; MSSV: <code>{{ $sinhVien->MaSV }}</code> &bull; Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
             </div>
         </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-xs">
+                <i class="fa-solid fa-calendar-day me-1"></i>Lịch báo cáo
+            </a>
+            <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-xs">
+                <i class="fa-solid fa-upload me-1"></i>Nộp báo cáo
+            </a>
+        </div>
     </div>
-    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-xs">
-        <i class="fa-solid fa-users me-1"></i>Xem & Phản Hồi Ngay
-    </a>
-</div>
-@endif
 
-{{-- ── HÀNG 1: 4 CARD KPI ĐỒNG BỘ CHUẨN HỌC THUẬT HUIT ── --}}
-<div class="row g-3 mb-4">
-    <!-- 1. Điều Kiện Khóa Luận -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
+    {{-- ── 2. THÔNG BÁO LỜI MỜI NHÓM (NẾU CÓ - DẠNG THANH COMPACT) ── --}}
+    @if(isset($loiMois) && $loiMois->count() > 0)
+    <div class="alert alert-warning border-warning shadow-xs py-2 px-3 mb-2.5 d-flex justify-content-between align-items-center flex-wrap gap-2 rounded-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-envelope-open-text fs-5 text-warning"></i>
+            <div>
+                <strong class="text-dark">Bạn có {{ $loiMois->count() }} lời mời tham gia nhóm khóa luận:</strong>
+                <span class="text-muted" style="font-size: 13px;">
+                    Từ Trưởng nhóm <strong>{{ $loiMois->first()->nhom->truongNhom->HoTen ?? 'Bạn học' }}</strong> (Nhóm: {{ $loiMois->first()->nhom->TenNhom ?? '' }}).
+                </span>
+            </div>
+        </div>
+        <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-warning btn-sm rounded-pill px-3 py-1 fw-bold">
+            <i class="fa-solid fa-users me-1"></i>Xem &amp; Phản Hồi
+        </a>
+    </div>
+    @endif
+
+    {{-- ── 3. KHU VỰC 4 THẺ CHỈ SỐ NHANH (KPI METRIC STRIP - 72PX CAO ĐỒNG BỘ) ── --}}
+    <div class="row g-2 mb-3">
+        <!-- 1. Điều Kiện Khóa Luận -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-metric-box">
                 <div>
-                    <div class="kpi-title">Điều Kiện Khóa Luận</div>
-                    <div class="kpi-value text-dark" style="font-size: 1.45rem !important;">
+                    <div class="metric-title">Điều Kiện Khóa Luận</div>
+                    <div class="metric-value mt-0.5">
                         {{ $sinhVien->SoTinChiTichLuy ?? 0 }} <span class="fs-6 text-muted fw-normal">TC</span>
                     </div>
-                    <div class="kpi-subtext mt-1">
+                    <div class="mt-1">
                         @if($isDuDieuKien)
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
-                                <i class="fa-solid fa-circle-check me-1"></i>Đủ điều kiện (ĐTB: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }})
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0.5 px-2">
+                                <i class="fa-solid fa-circle-check me-1"></i>Đủ ĐK (GPA: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }})
                             </span>
                         @else
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
-                                <i class="fa-solid fa-circle-xmark me-1"></i>Chưa đủ điều kiện ({{ $sinhVien->SoTinChiTichLuy ?? 0 }}/115 TC)
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0.5 px-2">
+                                <i class="fa-solid fa-circle-xmark me-1"></i>Thiếu ({{ $sinhVien->SoTinChiTichLuy ?? 0 }}/115 TC)
                             </span>
                         @endif
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-circle">
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 2. Đề Tài Khóa Luận -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
+        <!-- 2. Đề Tài Khóa Luận -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-metric-box">
                 <div>
-                    <div class="kpi-title">Đề Tài Khóa Luận</div>
-                    <div class="kpi-value text-dark" style="font-size: 1.45rem !important;">
+                    <div class="metric-title">Đề Tài Khóa Luận</div>
+                    <div class="metric-value mt-0.5 text-truncate" style="max-width: 140px;" title="{{ $deTai ? $deTai->MaDeTai : '' }}">
                         {{ $deTai ? $deTai->MaDeTai : ($nhom ? 'Chờ đăng ký' : 'Chưa có') }}
                     </div>
-                    <div class="kpi-subtext mt-1">
+                    <div class="mt-1">
                         @if($deTai)
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
-                                <i class="fa-solid fa-check me-1"></i>Đã duyệt đề tài
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0.5 px-2">
+                                <i class="fa-solid fa-check me-1"></i>Đã duyệt
                             </span>
                         @elseif($nhom)
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
-                                <i class="fa-solid fa-users me-1"></i>Đã có nhóm &bull; Chọn đề tài
-                            </span>
+                            <a href="{{ route('sinhvien.dangky.index') }}" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill py-0.5 px-2 text-decoration-none">
+                                <i class="fa-solid fa-arrow-right me-1"></i>Đăng ký
+                            </a>
                         @else
-                            <a href="{{ route('sinhvien.nhom.index') }}" class="text-primary text-decoration-none fw-semibold small">
-                                <i class="fa-solid fa-user-plus me-1"></i>Tham gia nhóm &rarr;
+                            <a href="{{ route('sinhvien.nhom.index') }}" class="badge badge-neutral rounded-pill py-0.5 px-2 text-decoration-none">
+                                <i class="fa-solid fa-user-plus me-1"></i>Vào nhóm
                             </a>
                         @endif
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-circle">
                     <i class="fa-solid fa-book-open"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 3. Nhóm Khóa Luận -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
+        <!-- 3. Nhóm Khóa Luận -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-metric-box">
                 <div>
-                    <div class="kpi-title">Nhóm Khóa Luận</div>
-                    <div class="kpi-value text-dark" style="font-size: 1.45rem !important;">
-                        {{ $nhom ? $nhom->MaNhom : 'Chưa có nhóm' }}
+                    <div class="metric-title">Nhóm Khóa Luận</div>
+                    <div class="metric-value mt-0.5 text-truncate" style="max-width: 140px;" title="{{ $nhom ? $nhom->TenNhom : '' }}">
+                        {{ $nhom ? $nhom->TenNhom : 'Chưa có nhóm' }}
                     </div>
-                    <div class="kpi-subtext mt-1 text-muted small">
+                    <div class="mt-1">
                         @if($nhom)
-                            <span class="fw-semibold text-dark">{{ $nhom->TenNhom }}</span> &bull; {{ $thanhViens->count() }}/3 SV
+                            <span class="badge bg-primary-subtle rounded-pill py-0.5 px-2">
+                                <i class="fa-solid fa-users me-1"></i>{{ $thanhViens->count() }}/3 Thành viên
+                            </span>
                         @else
-                            <span class="text-secondary">Chưa tham gia nhóm nào</span>
+                            <a href="{{ route('sinhvien.nhom.index') }}" class="badge badge-neutral rounded-pill py-0.5 px-2 text-decoration-none">
+                                <i class="fa-solid fa-plus me-1"></i>Tạo nhóm
+                            </a>
                         @endif
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-circle">
                     <i class="fa-solid fa-users"></i>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 4. Tiến Độ & Bảo Vệ -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
+        <!-- 4. Tiến Độ Khóa Luận -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-metric-box">
                 <div>
-                    <div class="kpi-title">Tiến Độ Hoàn Thành</div>
-                    <div class="kpi-value {{ $nhom ? 'text-primary' : 'text-muted' }}" style="font-size: 1.45rem !important;">
+                    <div class="metric-title">Tiến Độ Khóa Luận</div>
+                    <div class="metric-value mt-0.5" style="color: {{ $nhom ? '#25A18E' : '#64748b' }};">
                         {{ $nhom ? $tienDoPhanTram . '%' : '--' }}
                     </div>
-                    <div class="kpi-subtext mt-1">
+                    <div class="mt-1">
                         @if(!$nhom)
-                            <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
-                                Chưa có nhóm
-                            </span>
+                            <span class="badge badge-neutral rounded-pill py-0.5 px-2">Chưa có nhóm</span>
                         @elseif($ketQua && $ketQua->DiemTongKet > 0)
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
-                                Điểm TK: {{ $ketQua->DiemTongKet }} ({{ $ketQua->XepLoai }})
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0.5 px-2">
+                                Điểm: {{ $ketQua->DiemTongKet }} ({{ $ketQua->XepLoai }})
                             </span>
                         @elseif($hoSoBaoVe)
-                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
+                            <span class="badge bg-primary-subtle rounded-pill py-0.5 px-2">
                                 {{ $hoSoBaoVe->TrangThai }}
                             </span>
                         @else
-                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
-                                {{ $soBaoCaoDat }}/5 đợt báo cáo đạt
+                            <span class="badge badge-neutral rounded-pill py-0.5 px-2">
+                                {{ $soBaoCaoDat }}/5 đợt đạt
                             </span>
                         @endif
                     </div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-circle">
                     <i class="fa-solid fa-bars-progress"></i>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-{{-- ── HÀNG 2: CARD HỒ SƠ ĐỀ TÀI & HƯỚNG DẪN (GIAO DIỆN SÁNG CHUẨN HUIT) ── --}}
-<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #e2e8f0 !important; border-top: 4px solid #003366 !important;">
-    <div class="card-body p-4 p-md-4">
-        <!-- Badge Header -->
-        <div class="mb-3 d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                @if($isDuDieuKien)
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-circle-check me-1"></i> ĐỦ ĐIỀU KIỆN LÀM KHÓA LUẬN ({{ $sinhVien->SoTinChiTichLuy ?? 0 }} TC &bull; GPA: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }})
-                    </span>
-                @else
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-circle-xmark me-1"></i> CHƯA ĐỦ ĐIỀU KIỆN ({{ $sinhVien->SoTinChiTichLuy ?? 0 }}/115 TC &bull; GPA: {{ number_format($sinhVien->DiemTichLuy ?? 0, 2) }}/2.0)
-                    </span>
-                @endif
+    {{-- ── 4. BỐ CỤC CHÍNH 2 CỘT TỐI ƯU 1 MÀN HÌNH (BALANCED DUAL-COLUMN) ── --}}
+    <div class="row g-2.5">
 
-                @if($deTai)
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-check me-1"></i> ĐÃ DUYỆT ĐỀ TÀI CHÍNH THỨC
-                    </span>
-                @elseif($nhom)
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-users me-1"></i> ĐÃ CÓ NHÓM &bull; CHỜ ĐĂNG KÝ ĐỀ TÀI
-                    </span>
-                @else
-                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-user me-1"></i> CHƯA CÓ NHÓM KHÓA LUẬN
-                    </span>
-                @endif
-            </div>
+        {{-- ── CỘT TRÁI (7 COLS): THÔNG TIN ĐỀ TÀI & HÀNH ĐỘNG TIẾP THEO ── --}}
+        <div class="col-12 col-lg-7 d-flex flex-column gap-2.5">
 
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-light text-secondary border rounded-pill px-3 py-1.5 small fw-medium">
-                    <i class="fa-regular fa-calendar me-1 text-primary"></i>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ hiện tại' }}
-                </span>
-                <span class="badge bg-light text-secondary border rounded-pill px-3 py-1.5 small fw-medium">
-                    <i class="fa-solid fa-graduation-cap me-1 text-primary"></i>{{ $sinhVien->lop->TenLop ?? 'Lớp' }}
-                </span>
-            </div>
-        </div>
+            <!-- CARD 1: THÔNG TIN ĐỀ TÀI & HƯỚNG DẪN -->
+            <div class="dashboard-card-panel flex-grow-1">
+                <div class="panel-header-compact">
+                    <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                        @if($deTai)
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                <i class="fa-solid fa-circle-check me-1"></i>Đã Phê Duyệt
+                            </span>
+                        @elseif($nhom)
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                                <i class="fa-solid fa-users me-1"></i>Đã Có Nhóm &bull; Chờ Đăng Ký
+                            </span>
+                        @else
+                            <span class="badge badge-neutral rounded-pill">
+                                <i class="fa-solid fa-circle-info me-1"></i>Chưa Có Nhóm
+                            </span>
+                        @endif
 
-        <!-- Tên Đề Tài Lớn -->
-        <h4 class="fw-bold text-dark mb-3" style="line-height: 1.35;">
-            {{ $deTai->TenDeTai ?? ($nhom ? 'Nhóm chưa đăng ký đề tài khóa luận chính thức' : 'Sinh viên chưa tham gia nhóm khóa luận') }}
-        </h4>
+                        @if($nhom && $nhom->hocPhan)
+                            <span class="badge bg-primary-subtle rounded-pill">
+                                <i class="fa-solid fa-book me-1"></i>{{ $nhom->hocPhan->TenHocPhan }}
+                            </span>
+                        @endif
 
-        <!-- Metadata tags -->
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            @if($deTai)
-                <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small">
-                    <i class="fa-solid fa-hashtag me-1 text-primary"></i>Mã đề tài: <strong class="text-dark">{{ $deTai->MaDeTai }}</strong>
-                </span>
-                @if($deTai->LinhVuc)
-                <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small">
-                    <i class="fa-solid fa-layer-group me-1 text-primary"></i>Lĩnh vực: <strong class="text-dark">{{ $deTai->LinhVuc }}</strong>
-                </span>
-                @endif
-            @endif
+                        <span class="badge badge-neutral rounded-pill">
+                            <i class="fa-solid fa-building-columns me-1" style="color: #00838C;"></i>{{ $sinhVien->lop->nganh->TenNganh ?? 'Công nghệ thông tin' }}
+                        </span>
+                    </div>
 
-            @if($nhom)
-                <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small">
-                    <i class="fa-solid fa-users me-1 text-primary"></i>Mã nhóm: <strong class="text-dark">{{ $nhom->MaNhom }} ({{ $nhom->TenNhom }})</strong>
-                </span>
-                @if($nhom->hocPhan)
-                <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small">
-                    <i class="fa-solid fa-book me-1 text-primary"></i>Học phần: <strong class="text-dark">{{ $nhom->hocPhan->TenHocPhan }}</strong>
-                </span>
-                @endif
-            @endif
-
-            <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small">
-                <i class="fa-solid fa-building-columns me-1 text-primary"></i>Ngành: <strong class="text-dark">{{ $sinhVien->lop->nganh->TenNganh ?? 'Công nghệ thông tin' }}</strong>
-            </span>
-        </div>
-
-        <!-- 2 Khối Thông Tin Chi Tiết: GVHD & Thành Viên -->
-        <div class="row g-3 pt-3 border-top">
-            <!-- Giảng viên hướng dẫn -->
-            <div class="col-12 col-md-5 border-end-md">
-                <div class="text-muted small fw-semibold mb-1">
-                    <i class="fa-solid fa-chalkboard-user me-1 text-primary"></i>Giảng viên hướng dẫn:
+                    <div class="fw-bold" style="color: #003F5F; font-size: 13px;">
+                        Tiến độ: <span style="color: #25A18E;">{{ $tienDoPhanTram }}%</span>
+                    </div>
                 </div>
-                <div class="fw-bold text-dark fs-6">
-                    @if($gvhd)
-                        {{ ($gvhd->HocHam ? $gvhd->HocHam . '.' : '') . ($gvhd->HocVi ? $gvhd->HocVi . '.' : '') . ' ' . $gvhd->HoTen }}
-                    @else
-                        <span class="text-muted fw-normal fst-italic">Chưa phân công giảng viên hướng dẫn</span>
+
+                <div class="panel-body-compact">
+                    <!-- Tên Đề Tài -->
+                    <h6 class="fw-bold mb-2 text-truncate-2" style="color: #003F5F; line-height: 1.35; min-height: 38px;">
+                        {{ $deTai->TenDeTai ?? ($nhom ? 'Nhóm chưa đăng ký đề tài khóa luận. Vui lòng chọn đề tài trong danh sách mở.' : 'Sinh viên chưa tham gia nhóm. Hãy tạo nhóm mới hoặc tìm kiếm nhóm mở.') }}
+                    </h6>
+
+                    <!-- 2 Cột nhỏ: GVHD & Thành Viên -->
+                    <div class="row g-2 pt-2 border-top">
+                        <!-- Giảng viên hướng dẫn -->
+                        <div class="col-12 col-sm-5 border-end-sm">
+                            <div class="text-muted fw-semibold mb-0.5" style="font-size: 12px;">
+                                <i class="fa-solid fa-chalkboard-user me-1" style="color: #00838C;"></i>GV Hướng dẫn:
+                            </div>
+                            <div class="fw-bold" style="color: #003F5F; font-size: 13.5px;">
+                                @if($gvhd)
+                                    {{ ($gvhd->HocHam ? $gvhd->HocHam . '.' : '') . ($gvhd->HocVi ? $gvhd->HocVi . '.' : '') . ' ' . $gvhd->HoTen }}
+                                @else
+                                    <span class="text-muted fw-normal fst-italic">Chưa phân công</span>
+                                @endif
+                            </div>
+                            <div class="text-muted mt-0.5 text-truncate" style="font-size: 12px;" title="{{ $gvhd->Email ?? '' }}">
+                                <i class="fa-regular fa-envelope me-1"></i>{{ $gvhd->Email ?? 'Chưa có email' }}
+                            </div>
+                        </div>
+
+                        <!-- Thành viên nhóm -->
+                        <div class="col-12 col-sm-7">
+                            <div class="text-muted fw-semibold mb-1" style="font-size: 12px;">
+                                <i class="fa-solid fa-user-group me-1" style="color: #00838C;"></i>Thành viên nhóm (Tối đa 3 SV):
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @if($truongNhom)
+                                    <span class="badge bg-primary-subtle rounded-pill py-0.5 px-2" style="font-size: 11.5px;">
+                                        👑 {{ $truongNhom->HoTen }} (Trưởng nhóm)
+                                    </span>
+                                @endif
+
+                                @forelse($thanhViens as $tv)
+                                    @if(!$truongNhom || $tv->MaSV !== $truongNhom->MaSV)
+                                        <span class="badge badge-neutral rounded-pill py-0.5 px-2" style="font-size: 11.5px;">
+                                            {{ $tv->sinhVien->HoTen ?? $tv->MaSV }}
+                                        </span>
+                                    @endif
+                                @empty
+                                    @if(!$truongNhom)
+                                        <span class="text-muted fst-italic" style="font-size: 12px;">Chưa có thành viên</span>
+                                    @endif
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thanh Progress Bar Mảnh -->
+                    @if($nhom)
+                    <div class="mt-2.5 pt-2 border-top">
+                        <div class="progress" style="height: 5px; background-color: #f1f5f9;">
+                            <div class="progress-bar progress-bar-cyan" role="progressbar" 
+                                 style="width: {{ $tienDoPhanTram }}%;"
+                                 aria-valuenow="{{ $tienDoPhanTram }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
                     @endif
                 </div>
-                <div class="small text-muted mt-1">
-                    <i class="fa-regular fa-envelope me-1"></i>{{ $gvhd->Email ?? 'Chưa cập nhật email' }}
-                    @if($gvhd && $gvhd->boMon)
-                        &bull; <span class="fw-medium text-secondary">{{ $gvhd->boMon->TenBoMon }}</span>
-                    @endif
-                </div>
             </div>
 
-            <!-- Thành viên nhóm -->
-            <div class="col-12 col-md-7">
-                <div class="text-muted small fw-semibold mb-1">
-                    <i class="fa-solid fa-user-group me-1 text-primary"></i>Thành viên nhóm (Tối đa 3 SV):
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    @if($truongNhom)
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1.5 rounded-pill small fw-semibold">
-                            👑 {{ $truongNhom->HoTen }} (Trưởng nhóm) - {{ $truongNhom->MaSV }}
+            <!-- CARD 2: KẾ HOẠCH & CÔNG VIỆC TIẾP THEO (GỌN GÀNG, HÀNH ĐỘNG NHANH) -->
+            <div class="dashboard-card-panel">
+                <div class="panel-header-compact">
+                    <div class="fw-bold d-flex align-items-center gap-1.5" style="color: #003F5F; font-size: 13.5px;">
+                        <i class="fa-solid fa-list-check" style="color: #00838C;"></i>
+                        <span>Kế Hoạch &amp; Công Việc Tiếp Theo</span>
+                    </div>
+
+                    @if($nhom && $nextMoc)
+                        <span class="badge {{ $daysRemaining !== null && $daysRemaining < 0 ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle' }} rounded-pill py-0.5 px-2.5" style="font-size: 12px;">
+                            <i class="fa-regular fa-clock me-1"></i>
+                            @if($daysRemaining !== null)
+                                {{ $daysRemaining >= 0 ? "Còn {$daysRemaining} ngày" : "Quá hạn " . abs($daysRemaining) . " ngày" }}
+                            @else
+                                Hạn: {{ \Carbon\Carbon::parse($nextMoc->NgayKetThuc)->format('d/m/Y') }}
+                            @endif
                         </span>
                     @endif
-
-                    @forelse($thanhViens as $tv)
-                        @if(!$truongNhom || $tv->MaSV !== $truongNhom->MaSV)
-                            <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill small fw-medium">
-                                {{ $tv->sinhVien->HoTen ?? $tv->MaSV }} (Thành viên) - {{ $tv->MaSV }}
-                            </span>
-                        @endif
-                    @empty
-                        @if(!$truongNhom)
-                            <span class="text-muted small fst-italic">Chưa có thành viên nào trong nhóm</span>
-                        @endif
-                    @endforelse
                 </div>
-            </div>
-        </div>
 
-        <!-- Tiến độ hoàn thành khóa luận -->
-        @if($nhom)
-        <div class="mt-4 pt-3 border-top">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-secondary fw-semibold">
-                    <i class="fa-solid fa-bars-progress me-1 text-primary"></i>Tiến độ thực hiện khóa luận:
-                </span>
-                <span class="fs-6 fw-bold text-primary">{{ $tienDoPhanTram }}%</span>
-            </div>
-            <div class="progress rounded-pill bg-light border" style="height: 10px;">
-                <div class="progress-bar rounded-pill" role="progressbar" 
-                     style="width: {{ $tienDoPhanTram }}%; background: linear-gradient(90deg, #0072ce 0%, #003366 100%);"
-                     aria-valuenow="{{ $tienDoPhanTram }}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        </div>
-        @else
-        <div class="mt-4 pt-3 border-top text-center py-2">
-            <span class="small text-muted fst-italic">
-                <i class="fa-solid fa-circle-info me-1 text-primary"></i>Bạn chưa có nhóm. Tiến độ và thời gian thực hiện khóa luận chỉ hiển thị khi bạn đã thuộc một nhóm.
-            </span>
-        </div>
-        @endif
-    </div>
-</div>
+                <div class="panel-body-compact">
+                    @if($nhom && $nextMoc)
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <div class="fw-bold mb-0.5" style="color: #003F5F; font-size: 13.5px;">
+                                    {{ $nextMoc->TenMoc ?? ('Báo Cáo Tiến Độ Đợt ' . $mocTiepTheo) }}
+                                </div>
+                                <div class="text-muted" style="font-size: 12.5px;">
+                                    <i class="fa-regular fa-calendar-xmark me-1 text-danger"></i>Hạn chót: <strong>{{ \Carbon\Carbon::parse($nextMoc->NgayKetThuc)->format('d/m/Y') }}</strong>
+                                    &bull; Giai đoạn: <span class="badge badge-neutral py-0 px-1.5" style="font-size: 11px;">{{ $nextMoc->LoaiGiaiDoan ?? 'Thực hiện' }}</span>
+                                </div>
+                            </div>
 
-{{-- ── HÀNG 3: 2 CỘT CHỨC NĂNG (KẾ HOẠCH BÁO CÁO & PHẢN HỒI GVHD) ── --}}
-<div class="row g-4">
-    <!-- Cột Trái (7 phần): Việc Cần Làm Tiếp Theo & Lịch Báo Cáo Sắp Tới -->
-    <div class="col-12 col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #e2e8f0 !important;">
-            <div class="card-header bg-white py-3 px-3 border-bottom d-flex align-items-center gap-2">
-                <i class="fa-solid fa-list-check text-primary fa-lg"></i>
-                <h6 class="fw-bold mb-0 text-dark">Kế Hoạch &amp; Việc Cần Làm Tiếp Theo</h6>
-            </div>
-            <div class="card-body p-4">
-                @if($nhom && $nextMoc)
-                    <!-- Action Box: Mốc Báo Cáo Kế Hoạch Hiện Tại (Chỉ hiển thị khi đã có nhóm) -->
-                    <div class="p-3 rounded-3 bg-light border mb-4" style="border-left: 4px solid #0072ce !important;">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small fw-bold">
-                                <i class="fa-regular fa-clock me-1"></i>Hạn chót: {{ \Carbon\Carbon::parse($nextMoc->NgayKetThuc)->format('d/m/Y') }}
-                                @if($daysRemaining !== null)
-                                    &bull; {{ $daysRemaining >= 0 ? "Còn lại {$daysRemaining} ngày" : "Đã quá hạn " . abs($daysRemaining) . " ngày" }}
+                            <div class="d-flex align-items-center gap-2">
+                                @if(($nextMoc->LoaiGiaiDoan ?? '') === 'TAO_NHOM')
+                                    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-xs">
+                                        <i class="fa-solid fa-users me-1"></i>Quản lý nhóm
+                                    </a>
+                                @elseif(($nextMoc->LoaiGiaiDoan ?? '') === 'DANG_KY_DE_TAI')
+                                    <a href="{{ route('sinhvien.dangky.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-xs">
+                                        <i class="fa-solid fa-book-bookmark me-1"></i>Đăng ký đề tài
+                                    </a>
+                                @elseif(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
+                                    <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-xs">
+                                        <i class="fa-solid fa-upload me-1"></i>Nộp báo cáo ngay
+                                    </a>
+                                @else
+                                    <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-xs">
+                                        <i class="fa-solid fa-calendar-check me-1"></i>Xem kế hoạch
+                                    </a>
                                 @endif
-                            </span>
-                            @if(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                                    Đợt {{ $mocTiepTheo }}
-                                </span>
-                            @else
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                                    {{ $nextMoc->LoaiGiaiDoan ?? 'Kế hoạch' }}
-                                </span>
-                            @endif
+                                <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                    <i class="fa-solid fa-calendar-week me-1"></i>Lịch
+                                </a>
+                            </div>
                         </div>
-
-                        <h6 class="fw-bold text-dark mb-2">
-                            {{ $nextMoc->TenMoc ?? ('Báo Cáo Tiến Độ Đợt ' . $mocTiepTheo . ': Triển khai & Kiểm thử hệ thống') }}
-                        </h6>
-                        <p class="small text-secondary mb-3" style="line-height: 1.5;">
-                            {{ $nextMoc->MoTa ?? 'Sinh viên cần nộp file báo cáo chi tiết kèm minh chứng công việc để Giảng viên hướng dẫn xem xét, chấm điểm và góp ý hoàn thiện đề tài.' }}
-                        </p>
-
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            @if(($nextMoc->LoaiGiaiDoan ?? '') === 'TAO_NHOM')
-                                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                                    <i class="fa-solid fa-users me-1"></i> Quản lý thành viên nhóm
-                                </a>
-                            @elseif(($nextMoc->LoaiGiaiDoan ?? '') === 'DANG_KY_DE_TAI')
-                                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                                    <i class="fa-solid fa-book-bookmark me-1"></i> Đăng ký đề tài khóa luận
-                                </a>
-                            @elseif(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
-                                <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                                    <i class="fa-solid fa-upload me-1"></i> Nộp bài báo cáo ngay
-                                </a>
-                            @else
-                                <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                                    <i class="fa-solid fa-calendar-check me-1"></i> Xem chi tiết kế hoạch
-                                </a>
-                            @endif
-                            <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
-                                <i class="fa-solid fa-calendar-week me-1"></i> Xem lịch báo cáo
+                    @else
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <div class="fw-bold mb-0.5" style="color: #003F5F;">Chưa có nhóm khóa luận</div>
+                                <div class="text-muted" style="font-size: 12.5px;">Thời hạn nộp báo cáo sẽ kích hoạt sau khi bạn tạo hoặc gia nhập nhóm.</div>
+                            </div>
+                            <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+                                <i class="fa-solid fa-users me-1"></i>Gia nhập nhóm
                             </a>
                         </div>
-                    </div>
-                @else
-                    <!-- Thông báo khi chưa có nhóm: Ẩn thời gian thực hiện, hiển thị hướng dẫn -->
-                    <div class="p-4 rounded-3 bg-light border text-center mb-4">
-                        <div class="text-warning fs-1 mb-2">
-                            <i class="fa-solid fa-users-slash"></i>
-                        </div>
-                        <h6 class="fw-bold text-dark mb-1">Bạn chưa có nhóm khóa luận</h6>
-                        <p class="small text-muted mb-3" style="line-height: 1.5;">
-                            Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ hiển thị khi bạn đã thuộc một nhóm (đã tạo nhóm hoặc đã chấp nhận lời mời).
-                        </p>
-                        <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs">
-                            <i class="fa-solid fa-users me-1"></i> Đến trang Quản lý nhóm để tạo hoặc gia nhập
-                        </a>
-                    </div>
-                @endif
-
-                <!-- Lịch hẹn hướng dẫn với GVHD sắp tới -->
-                <div class="p-3 rounded-3 bg-white border">
-                    <div class="fw-bold text-dark small mb-2 d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fa-regular fa-calendar-check text-success"></i>
-                            <span>Lịch hẹn gặp hướng dẫn sắp tới</span>
-                        </div>
-                        <a href="{{ route('sinhvien.calendar') }}" class="small text-primary text-decoration-none fw-semibold">
-                            Xem lịch &rarr;
-                        </a>
-                    </div>
-
-                    @forelse($lichGaps as $lg)
-                        <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                            <div class="p-2 rounded bg-success bg-opacity-10 text-success text-center" style="min-width: 52px;">
-                                <div class="fw-bold fs-6">{{ \Carbon\Carbon::parse($lg->ThoiGianBatDau)->format('d') }}</div>
-                                <div class="small fw-semibold text-uppercase" style="font-size: 0.68rem;">TH {{ \Carbon\Carbon::parse($lg->ThoiGianBatDau)->format('m') }}</div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="fw-semibold text-dark small">
-                                    {{ \Carbon\Carbon::parse($lg->ThoiGianBatDau)->isoFormat('dddd, DD/MM/YYYY (HH:mm)') }}
-                                </div>
-                                <div class="small text-muted mb-0.5">
-                                    <i class="fa-solid fa-location-dot text-danger me-1"></i>{{ $lg->DiaDiem ?? 'Văn phòng Bộ môn chuyên ngành' }}
-                                </div>
-                                <div class="small text-secondary">
-                                    Nội dung: {{ $lg->NoiDung ?? 'Trao đổi tiến độ đề tài khóa luận' }}
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-muted small py-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-info-circle text-primary"></i>
-                            <span>Chưa có lịch hẹn gặp trực tiếp mới với GVHD. Sinh viên có thể chủ động liên hệ GVHD qua email khi cần trao đổi.</span>
-                        </div>
-                    @endforelse
+                    @endif
                 </div>
             </div>
+
         </div>
-    </div>
 
-    <!-- Cột Phải (5 phần): Phản Hồi Từ GVHD & Lịch Bảo Vệ Hội Đồng -->
-    <div class="col-12 col-lg-5">
-        <!-- Card 1: Nhận Xét & Đánh Giá Mới Nhất Từ GVHD -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #e2e8f0 !important;">
-            <div class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-comment-dots text-primary fa-lg"></i>
-                    <h6 class="fw-bold mb-0 text-dark">Nhận Xét &amp; Đánh Giá Mới Nhất</h6>
-                </div>
-                <a href="{{ route('sinhvien.baocao.index') }}" class="small text-primary text-decoration-none fw-semibold">
-                    Lịch sử &rarr;
-                </a>
-            </div>
-            <div class="card-body p-4">
-                @if($latestFeedback && $latestFeedback->NhanXet)
-                    <div class="p-3 rounded-3 bg-light border mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                                Đợt {{ $latestFeedback->LanBaoCao }}: {{ $latestFeedback->TieuDe }}
-                            </span>
-                            @if($latestFeedback->TrangThai === 'Đạt')
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small fw-bold">
-                                    <i class="fa-solid fa-check me-1"></i>Đạt
+        {{-- ── CỘT PHẢI (5 COLS): NHẬN XÉT GVHD & LỊCH HẸN BẢO VỆ ── --}}
+        <div class="col-12 col-lg-5">
+            <div class="dashboard-card-panel h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="panel-header-compact">
+                        <div class="fw-bold d-flex align-items-center gap-1.5" style="color: #003F5F; font-size: 13.5px;">
+                            <i class="fa-solid fa-comments" style="color: #00838C;"></i>
+                            <span>Hoạt Động &amp; Nhận Xét GVHD</span>
+                        </div>
+                        <a href="{{ route('sinhvien.baocao.index') }}" class="text-decoration-none fw-semibold" style="font-size: 12.5px; color: #00838C;">
+                            Xem tất cả &rarr;
+                        </a>
+                    </div>
+
+                    <div class="panel-body-compact">
+                        <!-- PHẦN 1: NHẬN XÉT MỚI NHẤT -->
+                        <div class="p-2.5 rounded-3 border border-slate-200 mb-2.5" style="background-color: #f8fafc;">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <span class="badge bg-primary-subtle rounded-pill py-0.5 px-2" style="font-size: 11px;">
+                                    {{ $latestFeedback ? 'Đợt ' . $latestFeedback->LanBaoCao . ': ' . Str::limit($latestFeedback->TieuDe, 24) : 'Phản hồi mới nhất' }}
                                 </span>
+                                @if($latestFeedback && $latestFeedback->TrangThai === 'Đạt')
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0.5 px-2" style="font-size: 11px;">
+                                        <i class="fa-solid fa-check me-1"></i>Đạt
+                                    </span>
+                                @elseif($latestFeedback)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill py-0.5 px-2" style="font-size: 11px;">
+                                        {{ $latestFeedback->TrangThai }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if($latestFeedback && $latestFeedback->NhanXet)
+                                <div class="text-dark fst-italic" style="font-size: 13px; line-height: 1.45;">
+                                    "{!! Str::limit($latestFeedback->NhanXet, 120) !!}"
+                                </div>
+                                <div class="text-muted mt-1.5 d-flex justify-content-between align-items-center" style="font-size: 11.5px;">
+                                    <span><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($latestFeedback->updated_at)->format('H:i - d/m/Y') }}</span>
+                                    @if($latestFeedback->DiemSo)
+                                        <span class="fw-bold" style="color: #00838C;">Điểm: {{ $latestFeedback->DiemSo }}/10</span>
+                                    @endif
+                                </div>
                             @else
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small fw-bold">
-                                    {{ $latestFeedback->TrangThai }}
-                                </span>
+                                <div class="text-muted text-center py-2" style="font-size: 12.5px;">
+                                    <i class="fa-regular fa-comment-dots text-secondary me-1"></i>Chưa có nhận xét mới từ Giảng viên hướng dẫn.
+                                </div>
                             @endif
                         </div>
-                        <div class="small text-dark fst-italic" style="line-height: 1.5;">
-                            "{{ $latestFeedback->NhanXet }}"
+
+                        <!-- PHẦN 2: LỊCH HẸN GẶP & LỊCH HỘI ĐỒNG BẢO VỆ (KHUNG CUỘN MƯỢT TỐI ĐA 150PX) -->
+                        <div class="fw-semibold mb-1 d-flex align-items-center justify-content-between" style="font-size: 12.5px; color: #003F5F;">
+                            <span><i class="fa-regular fa-calendar-check me-1" style="color: #25A18E;"></i>Lịch hẹn gặp &amp; Bảo vệ Hội đồng:</span>
+                            <a href="{{ route('sinhvien.calendar') }}" class="text-muted text-decoration-none" style="font-size: 11.5px;">Lịch biểu &rarr;</a>
                         </div>
-                        <div class="text-muted small mt-2 d-flex justify-content-between align-items-center">
-                            <span><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($latestFeedback->updated_at)->format('H:i - d/m/Y') }}</span>
-                            @if($latestFeedback->DiemSo)
-                                <span class="fw-bold text-primary">Điểm: {{ $latestFeedback->DiemSo }}/10</span>
+
+                        <div class="sv-smooth-scroll" style="max-height: 145px; overflow-y: auto; padding-right: 4px;">
+                            <!-- Lịch Hội Đồng Bảo Vệ (Nếu có) -->
+                            @if($hoSoBaoVe && $hoSoBaoVe->hoiDong)
+                                <div class="p-2 rounded-2 border mb-1.5" style="background-color: #e6f7fa; border-color: #b3e5ed !important;">
+                                    <div class="d-flex justify-content-between align-items-center mb-0.5">
+                                        <strong style="color: #004E64; font-size: 12.5px;">
+                                            <i class="fa-solid fa-building-columns me-1"></i>{{ $hoSoBaoVe->hoiDong->TenHoiDong }}
+                                        </strong>
+                                        <span class="badge bg-success rounded-pill py-0.5 px-2" style="font-size: 11px;">Bảo Vệ</span>
+                                    </div>
+                                    <div class="text-dark" style="font-size: 12px;">
+                                        <span><i class="fa-regular fa-clock me-1 text-primary"></i>{{ $hoSoBaoVe->hoiDong->ThoiGianBatDau ? \Carbon\Carbon::parse($hoSoBaoVe->hoiDong->ThoiGianBatDau)->format('H:i - d/m/Y') : 'Chưa xếp lịch' }}</span>
+                                        &bull; <span>Phòng: <strong>{{ $hoSoBaoVe->hoiDong->DiaDiem ?? $hoSoBaoVe->PhongBaoVe ?? 'Chưa công bố' }}</strong></span>
+                                    </div>
+                                </div>
                             @endif
+
+                            <!-- Lịch Hướng Dẫn Sắp Tới -->
+                            @forelse($lichGaps as $lg)
+                                <div class="d-flex align-items-center gap-2 py-1.5 {{ !$loop->last ? 'border-bottom' : '' }}" style="font-size: 12.5px;">
+                                    <span class="badge badge-neutral py-1 px-1.5 rounded text-center" style="min-width: 42px; font-size: 11px;">
+                                        {{ \Carbon\Carbon::parse($lg->ThoiGianBatDau)->format('d/m') }}
+                                    </span>
+                                    <div class="flex-grow-1 text-truncate">
+                                        <div class="fw-semibold text-dark text-truncate">{{ $lg->NoiDung ?? 'Trao đổi tiến độ đề tài' }}</div>
+                                        <div class="text-muted text-truncate" style="font-size: 11.5px;">
+                                            <i class="fa-solid fa-location-dot text-danger me-1"></i>{{ $lg->DiaDiem ?? 'Bộ môn' }} &bull; {{ \Carbon\Carbon::parse($lg->ThoiGianBatDau)->format('H:i') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                @if(!$hoSoBaoVe || !$hoSoBaoVe->hoiDong)
+                                    <div class="text-muted text-center py-2" style="font-size: 12px;">
+                                        <i class="fa-solid fa-info-circle me-1" style="color: #00838C;"></i>Chưa có lịch hẹn gặp mới với GVHD.
+                                    </div>
+                                @endif
+                            @endforelse
                         </div>
                     </div>
-                @else
-                    <div class="text-center py-4 text-muted">
-                        <i class="fa-solid fa-comments text-muted mb-2" style="font-size: 2rem;"></i>
-                        <p class="small mb-1 fw-medium text-secondary">Chưa có nhận xét mới từ Giảng viên hướng dẫn</p>
-                        <p class="small text-muted mb-0">Sau khi nộp báo cáo tiến độ, giảng viên sẽ xem xét và phản hồi góp ý tại đây.</p>
-                    </div>
-                @endif
-
-                <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-semibold">
-                    <i class="fa-solid fa-clipboard-list me-1"></i> Xem chi tiết các đợt báo cáo tiến độ
-                </a>
-            </div>
-        </div>
-
-        <!-- Card 2: Lịch Báo Cáo Hội Đồng & Hồ Sơ Bảo Vệ -->
-        <div class="card border-0 shadow-sm rounded-4 bg-white" style="border: 1px solid #e2e8f0 !important;">
-            <div class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-building-columns text-primary fa-lg"></i>
-                    <h6 class="fw-bold mb-0 text-dark">Lịch Báo Cáo Hội Đồng</h6>
                 </div>
-                <a href="{{ route('sinhvien.hoso.index') }}" class="small text-primary text-decoration-none fw-semibold">
-                    Hồ sơ &rarr;
-                </a>
-            </div>
-            <div class="card-body p-4">
-                @if($hoSoBaoVe && $hoSoBaoVe->hoiDong)
-                    <div class="p-3 rounded-3 bg-light border mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-purple-subtle text-purple border rounded-pill px-2.5 py-1 small fw-bold" style="background: #f3e8ff; color: #7e22ce; border-color: #d8b4fe !important;">
-                                <i class="fa-solid fa-users-rectangle me-1"></i>{{ $hoSoBaoVe->hoiDong->TenHoiDong }}
-                            </span>
-                            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0.5 small fw-semibold">
-                                {{ $hoSoBaoVe->TrangThai }}
-                            </span>
-                        </div>
-                        <div class="small text-dark mb-1">
-                            <i class="fa-regular fa-calendar-check text-primary me-1"></i>Thời gian: <strong>{{ $hoSoBaoVe->hoiDong->ThoiGianBatDau ? \Carbon\Carbon::parse($hoSoBaoVe->hoiDong->ThoiGianBatDau)->format('H:i - d/m/Y') : 'Chưa xếp lịch' }}</strong>
-                        </div>
-                        <div class="small text-dark mb-2">
-                            <i class="fa-solid fa-location-dot text-danger me-1"></i>Địa điểm: <strong>{{ $hoSoBaoVe->hoiDong->DiaDiem ?? $hoSoBaoVe->PhongBaoVe ?? 'Chưa công bố phòng' }}</strong>
-                        </div>
-                        @if($hoSoBaoVe->hoiDong->thanhViens && $hoSoBaoVe->hoiDong->thanhViens->isNotEmpty())
-                            <div class="small text-muted border-top pt-2">
-                                Thành viên HĐ: 
-                                @foreach($hoSoBaoVe->hoiDong->thanhViens as $tvHd)
-                                    <span class="badge bg-white text-secondary border rounded-pill px-2 py-0.5">{{ $tvHd->giangVien->HoTen ?? '' }} ({{ $tvHd->VaiTro }})</span>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="p-3 rounded-3 bg-light border mb-3 text-center">
-                        <i class="fa-solid fa-file-shield text-muted mb-2" style="font-size: 1.8rem;"></i>
-                        <div class="small fw-semibold text-dark mb-1">
-                            {{ $hoSoBaoVe ? $hoSoBaoVe->TrangThai : 'Chưa nộp hồ sơ bảo vệ' }}
-                        </div>
-                        <div class="small text-muted">
-                            Lịch báo cáo Hội đồng sẽ được tự động cập nhật sau khi hoàn thành các đợt báo cáo tiến độ và được GVHD duyệt hồ sơ bảo vệ.
-                        </div>
-                    </div>
-                @endif
 
-                <div class="d-flex gap-2">
-                    <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-semibold">
-                        <i class="fa-solid fa-calendar-days me-1"></i> Xem lịch báo cáo
+                <div class="panel-header-compact border-top bg-light" style="border-bottom: none; border-radius: 0 0 12px 12px;">
+                    <a href="{{ route('sinhvien.hoso.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 w-50 justify-content-center">
+                        <i class="fa-solid fa-file-circle-check me-1"></i>Hồ sơ bảo vệ
                     </a>
-                    <a href="{{ route('sinhvien.hoso.index') }}" class="btn btn-primary btn-sm rounded-pill flex-grow-1 fw-semibold">
-                        <i class="fa-solid fa-file-circle-check me-1"></i> Chi tiết hồ sơ
+                    <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-3 w-50 justify-content-center">
+                        <i class="fa-solid fa-calendar-days me-1"></i>Xem toàn bộ lịch
                     </a>
                 </div>
             </div>
         </div>
+
     </div>
+
 </div>
 @endsection

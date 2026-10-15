@@ -27,15 +27,20 @@ class KetQuaController extends Controller
             if ($gv->boMon && $gv->boMon->khoa) {
                 return $gv->boMon->khoa;
             }
+            $byName = Khoa::where('TruongKhoa', 'like', '%' . ($gv->HoTen ?? '') . '%')->first();
+            if ($byName) return $byName;
         }
 
-        return Khoa::where('MaKhoa', 'CNTT')->first() ?? Khoa::first();
+        return null;
     }
 
     public function index(Request $request)
     {
         $khoa = $this->getKhoa();
-        $maKhoa = $khoa ? $khoa->MaKhoa : 'CNTT';
+        if (!$khoa) {
+            abort(403, 'Tài khoản Trưởng khoa chưa được liên kết với Khoa nào.');
+        }
+        $maKhoa = $khoa->MaKhoa;
 
         $boMons = BoMon::where('MaKhoa', $maKhoa)->orderBy('TenBoMon')->get();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();

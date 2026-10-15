@@ -73,10 +73,11 @@ class YeuCauDoiMatKhauController extends Controller
         $yeuCau = YeuCauDoiMatKhau::find($id);
 
         if ($yeuCau) {
+            $tempPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
             $tk = TaiKhoan::where('TenDangNhap', $yeuCau->TenDangNhap)->first();
             if ($tk) {
                 $tk->update([
-                    'MatKhau'           => Hash::make('123456'),
+                    'MatKhau'           => Hash::make($tempPassword),
                     'TrangThaiMatKhau'  => 'INITIAL',
                     'BatBuocDoiMatKhau' => true,
                     'SoLanDangNhapSai'  => 0,
@@ -90,20 +91,21 @@ class YeuCauDoiMatKhauController extends Controller
                 'NguoiDuyet'  => Auth::user()->TenDangNhap ?? 'admin',
             ]);
 
-            return redirect()->back()->with('success', "Đã duyệt yêu cầu của {$yeuCau->HoTen} ({$yeuCau->TenDangNhap}) và reset mật khẩu về '123456' thành công! Người dùng sẽ được yêu cầu đổi mật khẩu mới ở lần đăng nhập tiếp theo.");
+            return redirect()->back()->with('success', "Đã duyệt yêu cầu của {$yeuCau->HoTen} ({$yeuCau->TenDangNhap}) và cấp mật khẩu tạm thời mới: [{$tempPassword}]. Người dùng bắt buộc phải đổi mật khẩu khi đăng nhập.");
         }
 
         // Trường hợp reset trực tiếp từ danh sách tài khoản
+        $tempPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
         $tk = TaiKhoan::findOrFail($id);
         $tk->update([
-            'MatKhau'           => Hash::make('123456'),
+            'MatKhau'           => Hash::make($tempPassword),
             'TrangThaiMatKhau'  => 'INITIAL',
             'BatBuocDoiMatKhau' => true,
             'SoLanDangNhapSai'  => 0,
             'TrangThai'         => true,
         ]);
 
-        return redirect()->back()->with('success', "Đã reset mật khẩu tài khoản '{$tk->TenDangNhap}' về '123456' thành công! Người dùng sẽ được yêu cầu thiết lập mật khẩu cá nhân mới khi đăng nhập.");
+        return redirect()->back()->with('success', "Đã reset mật khẩu tài khoản '{$tk->TenDangNhap}' thành công! Cấp mật khẩu tạm thời mới: [{$tempPassword}]. Người dùng sẽ được yêu cầu thiết lập mật khẩu cá nhân mới khi đăng nhập.");
     }
 
     public function reject($id)

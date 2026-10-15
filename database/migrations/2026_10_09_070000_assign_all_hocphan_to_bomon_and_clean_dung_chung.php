@@ -13,7 +13,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Phân bổ toàn bộ 50 Giảng viên vào 4 Bộ môn (Không để MaBoMon null)
+        if (DB::table('BoMon')->count() === 0 || DB::table('Khoa')->count() === 0) {
+            return;
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
+        try {
+            // 1. Phân bổ toàn bộ 50 Giảng viên vào 4 Bộ môn (Không để MaBoMon null)
         $bmMapping = [
             'BM_CNPM' => [
                 'GV00000001', 'GV00000002', 'GV00000004', 'GV00000007', 
@@ -166,6 +172,9 @@ return new class extends Migration
                     'updated_at'  => now(),
                 ]
             );
+        }
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
         }
     }
 

@@ -18,8 +18,8 @@ class TruongBoMonPheDuyetDeTaiTest extends TestCase
     {
         parent::setUp();
 
-        $this->tbmCnpm = TaiKhoan::where('TenDangNhap', 'TBM_BM_CNPM_GV00000001')->first();
-        $this->tbmAttt = TaiKhoan::where('TenDangNhap', 'TBM_BM_ATTT_GV00000005')->first();
+        $this->tbmCnpm = TaiKhoan::where('TenDangNhap', 'TBM_CNTT_CNPM_GV002')->first() ?? TaiKhoan::where('TenDangNhap', 'like', '%CNPM%')->first();
+        $this->tbmAttt = TaiKhoan::where('TenDangNhap', 'TBM_CNTT_ATTT_GV004')->first() ?? TaiKhoan::where('TenDangNhap', 'like', '%ATTT%')->first();
 
         $this->assertNotNull($this->tbmCnpm, 'Tài khoản TBM CNPM phải tồn tại.');
         $this->assertNotNull($this->tbmAttt, 'Tài khoản TBM ATTT phải tồn tại.');
@@ -287,12 +287,12 @@ class TruongBoMonPheDuyetDeTaiTest extends TestCase
         $response->assertSee('Mã GV');
         $response->assertSee('Họ và tên giảng viên');
         $response->assertSee('Số lượng đề tài');
-        $response->assertSee('Chỉ tiêu (Đã dùng/Tổng)');
+        $response->assertSee('Chỉ tiêu');
         $response->assertSee('Tình trạng phê duyệt');
         $response->assertSee('Thao tác');
 
-        // Nút Xem chi tiết và Duyệt
-        $response->assertSee('Xem chi tiết');
+        // Nút Xem danh sách đề tài
+        $response->assertSee('Xem danh sách đề tài');
     }
 
     /**

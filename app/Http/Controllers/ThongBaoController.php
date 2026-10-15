@@ -23,7 +23,39 @@ class ThongBaoController extends Controller
         $user->loadMissing('vaiTro');
         $role = $user->vaiTro->TenVaiTro ?? '';
 
+        if ($role === 'Sinh viên') {
+            return redirect()->route('sinhvien.thongbao.index');
+        }
+
         $query = ThongBao::orderBy('created_at', 'desc');
+
+        // Phân quyền hiển thị: Người dùng không phải Admin/Giáo vụ chỉ thấy thông báo chung hoặc gửi đích danh cho mình
+        if ($role !== 'Admin' && $role !== 'Giáo vụ') {
+            $curMaTK = $user->MaTK ?? '';
+            $curMaGV = $user->MaGV ?? '';
+            $query->where(function($q) use ($role, $curMaTK, $curMaGV) {
+                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', 'Giảng viên');
+                if ($curMaTK) {
+                    $q->orWhere('DoiTuongNhan', $curMaTK);
+                }
+                if ($curMaGV) {
+                    $q->orWhere('DoiTuongNhan', $curMaGV);
+                }
+            });
+        } else {
+            // Admin và Giáo vụ quản lý các thông báo công khai / chính thức của hệ thống (Trường, Khoa, Kế hoạch, Bộ môn, GV, SV)
+            // Loại bỏ các thông báo cá nhân nội bộ (mời nhóm của SV, kết quả duyệt đề tài của GV) khỏi bảng quản lý của Admin
+            $query->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
+                  ->where(function($q) {
+                      $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
+                        ->orWhereNull('DoiTuongNhan')
+                        ->orWhere('DoiTuongNhan', '')
+                        ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                        ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+                  });
+        }
 
         if ($request->filled('search')) {
             $s = trim($request->search);
@@ -48,16 +80,31 @@ class ThongBaoController extends Controller
 
         $thongbaos = $query->paginate(10)->withQueryString();
 
+        $officialQuery = ThongBao::whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
+            ->where(function($q) {
+                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', '')
+                  ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+            });
+
         $stats = [
-            'total_thongbao' => ThongBao::count(),
-            'active_count' => ThongBao::whereIn('TrangThai', ['ĐÃ GỬI', 'ACTIVE'])->count(),
-            'target_all_count' => ThongBao::where('DoiTuongNhan', 'Tất cả')->count(),
-            'draft_schedule_count' => ThongBao::whereIn('TrangThai', ['NHÁP', 'ĐÃ LÊN LỊCH'])->count(),
+            'total_thongbao' => (clone $officialQuery)->count(),
+            'active_count' => (clone $officialQuery)->whereIn('TrangThai', ['ĐÃ GỬI', 'ACTIVE', 'Đã phát hành'])->count(),
+            'target_all_count' => (clone $officialQuery)->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể'])->count(),
+            'draft_schedule_count' => (clone $officialQuery)->whereIn('TrangThai', ['NHÁP', 'ĐÃ LÊN LỊCH'])->count(),
         ];
 
-        $layout = ($role === 'Admin' || $role === 'Giáo vụ') ? 'layouts.admin' : (($role === 'Giảng viên') ? 'layouts.giangvien' : 'layouts.sinhvien');
+        $layout = match($role) {
+            'Admin', 'Giáo vụ' => 'layouts.admin',
+            'Trưởng bộ môn'    => 'layouts.truongbomon',
+            'Trưởng khoa'      => 'layouts.truongkhoa',
+            'Giảng viên'       => 'layouts.giangvien',
+            default            => 'layouts.sinhvien',
+        };
 
-        return view('thongbao.index', compact('layout', 'thongbaos', 'stats'));
+        return view('thongbao.index', compact('layout', 'thongbaos', 'stats', 'role'));
     }
 
     /**
@@ -79,13 +126,13 @@ class ThongBaoController extends Controller
             'NoiDung'      => 'required',
             'LoaiThongBao' => 'required',
             'DoiTuongNhan' => 'required',
-            'FileDinhKem'  => 'nullable|file|mimes:pdf,docx,doc,zip,rar,png,jpg,jpeg|max:10240',
+            'FileDinhKem'  => 'nullable|file|mimes:pdf,docx,doc,zip,rar,png,jpg,jpeg,xlsx,xls,csv|max:10240',
         ], [
             'TieuDe.required'       => 'Vui lòng nhập tiêu đề thông báo.',
             'NoiDung.required'      => 'Vui lòng nhập nội dung thông báo.',
             'LoaiThongBao.required' => 'Vui lòng chọn loại thông báo.',
             'DoiTuongNhan.required' => 'Vui lòng chọn đối tượng nhận.',
-            'FileDinhKem.mimes'      => 'File đính kèm chỉ hỗ trợ định dạng PDF, DOCX, ZIP, RAR, HÌNH ẢNH.',
+            'FileDinhKem.mimes'      => 'File đính kèm chỉ hỗ trợ định dạng PDF, WORD (DOCX), EXCEL (XLSX, CSV), NÉN (ZIP, RAR), HÌNH ẢNH.',
         ]);
 
         $filePath = null;
@@ -124,7 +171,7 @@ class ThongBaoController extends Controller
             'TrangThai'    => $trangThai,
         ]);
 
-        // Nếu phát hành ngay $\rightarrow$ Phân phối notification tới người nhận
+        // Nếu phát hành ngay -> Phân phối notification tới người nhận
         if ($trangThai === 'ĐÃ GỬI') {
             $this->dispatchRecipients($thongBao);
         }
@@ -137,7 +184,28 @@ class ThongBaoController extends Controller
      */
     public function show($id)
     {
+        $user = Auth::user();
+        $user?->loadMissing('vaiTro');
+        if ($user?->vaiTro?->TenVaiTro === 'Sinh viên') {
+            return redirect()->route('sinhvien.thongbao.show', $id);
+        }
+
         $thongBao = ThongBao::with(['giaoVu', 'giangVien'])->where('MaThongBao', $id)->firstOrFail();
+
+        // Đánh dấu thông báo đã đọc trong session
+        $curMaTK = $user->MaTK ?? '';
+        $userKey = 'read_thong_bao_ids_' . ($curMaTK ?: 'guest');
+        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
+        if (!is_array($readIds)) {
+            $readIds = [];
+        }
+        if (!in_array($id, $readIds)) {
+            $readIds[] = $id;
+            session([
+                $userKey => $readIds,
+                'read_thong_bao_ids' => $readIds,
+            ]);
+        }
 
         // 1. Tự động kiểm tra file công văn đính kèm
         $fileUrl = $thongBao->FileDinhKem;
@@ -148,7 +216,24 @@ class ThongBaoController extends Controller
             }
         }
 
-        // Nếu thông báo chưa có file, tự động lấy file công văn từ kế hoạch khóa luận tương ứng hoặc mới nhất
+        // 2. Tự động kiểm tra và sinh file Excel danh sách nếu là thông báo công bố sinh viên đủ điều kiện (TB_DK_*)
+        if (str_starts_with($thongBao->MaThongBao, 'TB_DK_') && (empty($fileUrl) || !file_exists(public_path($fileUrl)))) {
+            $shortHk = substr($thongBao->MaThongBao, strlen('TB_DK_'));
+            $hocKy = \App\Models\HocKy::all()->first(function($hk) use ($shortHk) {
+                return preg_replace('/[^A-Za-z0-9]/', '', $hk->MaHocKy) === $shortHk;
+            }) ?? \App\Models\HocKy::latest('MaHocKy')->first();
+
+            if ($hocKy) {
+                $sinhVienController = app(\App\Http\Controllers\SinhVienController::class);
+                $relPath = $sinhVienController->generateDuDieuKienExcelFile($hocKy->MaHocKy);
+                if ($relPath) {
+                    $thongBao->update(['FileDinhKem' => $relPath]);
+                    $fileUrl = 'storage/' . $relPath;
+                }
+            }
+        }
+
+        // 3. Nếu thông báo chưa có file, tự động lấy file công văn từ kế hoạch khóa luận tương ứng hoặc mới nhất
         if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
             $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
             if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
@@ -159,7 +244,7 @@ class ThongBaoController extends Controller
             }
         }
 
-        // Xác định loại file (PDF hay Ảnh)
+        // 4. Xác định loại file (PDF, Ảnh, Excel)
         $fileType = 'other';
         if (!empty($fileUrl)) {
             $ext = strtolower(pathinfo($fileUrl, PATHINFO_EXTENSION));
@@ -167,6 +252,44 @@ class ThongBaoController extends Controller
                 $fileType = 'pdf';
             } elseif (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
                 $fileType = 'image';
+            } elseif (in_array($ext, ['xlsx', 'xls', 'csv'])) {
+                $fileType = 'excel';
+            }
+        }
+
+        // 5. Lấy dữ liệu danh sách sinh viên đủ điều kiện nếu là thông báo điều kiện
+        $duDieuKienList = collect();
+        $duDieuKienStats = null;
+        if (str_starts_with($thongBao->MaThongBao, 'TB_DK_')) {
+            $shortHk = substr($thongBao->MaThongBao, strlen('TB_DK_'));
+            $hocKy = \App\Models\HocKy::all()->first(function($hk) use ($shortHk) {
+                return preg_replace('/[^A-Za-z0-9]/', '', $hk->MaHocKy) === $shortHk;
+            }) ?? \App\Models\HocKy::latest('MaHocKy')->first();
+
+            if ($hocKy) {
+                $duDieuKienList = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh'])
+                    ->where('MaHocKy', $hocKy->MaHocKy)
+                    ->orderBy('MaSV')
+                    ->get();
+
+                $duDieuKienStats = [
+                    'total' => $duDieuKienList->count(),
+                    'eligible' => $duDieuKienList->where('TrangThai', 'Đủ điều kiện')->count(),
+                    'ineligible' => $duDieuKienList->where('TrangThai', '!=', 'Đủ điều kiện')->count(),
+                    'tenHocKy' => "{$hocKy->TenHocKy} ({$hocKy->NamHoc})",
+                ];
+            }
+        }
+
+        // Preview cho các file Excel đính kèm khác
+        $excelRows = [];
+        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && file_exists(public_path($fileUrl))) {
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(public_path($fileUrl));
+                $sheet = $spreadsheet->getActiveSheet();
+                $excelRows = array_slice($sheet->toArray(null, true, true, false), 0, 50);
+            } catch (\Throwable $e) {
+                \Log::warning('Lỗi đọc dữ liệu xem trước Excel: ' . $e->getMessage());
             }
         }
 
@@ -181,7 +304,22 @@ class ThongBaoController extends Controller
         $readCount = 0;
         $unreadCount = $totalSent;
 
-        return view('thongbao.show', compact('thongBao', 'fileUrl', 'fileType', 'totalSent', 'readCount', 'unreadCount'));
+        $user = Auth::user();
+        $user?->loadMissing('vaiTro');
+        $role = $user?->vaiTro?->TenVaiTro ?? '';
+
+        $layout = match($role) {
+            'Admin', 'Giáo vụ' => 'layouts.admin',
+            'Trưởng bộ môn'    => 'layouts.truongbomon',
+            'Trưởng khoa'      => 'layouts.truongkhoa',
+            'Giảng viên'       => 'layouts.giangvien',
+            default            => 'layouts.sinhvien',
+        };
+
+        return view('thongbao.show', compact(
+            'thongBao', 'fileUrl', 'fileType', 'totalSent', 'readCount', 'unreadCount',
+            'duDieuKienList', 'duDieuKienStats', 'excelRows', 'layout', 'role'
+        ));
     }
 
     /**
@@ -217,7 +355,7 @@ class ThongBaoController extends Controller
             'NoiDung'      => 'required',
             'LoaiThongBao' => 'required',
             'DoiTuongNhan' => 'required',
-            'FileDinhKem'  => 'nullable|file|mimes:pdf,docx,doc,zip,rar,png,jpg,jpeg|max:10240',
+            'FileDinhKem'  => 'nullable|file|mimes:pdf,docx,doc,zip,rar,png,jpg,jpeg,xlsx,xls,csv|max:10240',
         ]);
 
         $filePath = $thongBao->FileDinhKem;
@@ -328,5 +466,98 @@ class ThongBaoController extends Controller
                 );
             }
         }
+    }
+
+    /**
+     * Đánh dấu tất cả thông báo hệ thống là đã đọc cho người dùng hiện tại
+     */
+    public function markAllReadGlobal(Request $request)
+    {
+        $curUser = Auth::user();
+        if (!$curUser) {
+            return response()->json(['success' => false, 'message' => 'Chưa đăng nhập'], 401);
+        }
+
+        $curUser->loadMissing('vaiTro');
+        $role = $curUser->vaiTro?->TenVaiTro ?? '';
+        $curUserMaTK = $curUser->MaTK ?? '';
+        $curUserTen = $curUser->TenDangNhap ?? '';
+
+        $notiQuery = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'da_gui', 'ACTIVE', 'DaPhatHanh']);
+
+        if ($role === 'Sinh viên') {
+            $sv = \App\Models\SinhVien::where('MaTK', $curUserMaTK)->orWhere('MaSV', $curUserTen)->first();
+            $userNhomCodes = $sv ? \App\Models\ThanhVienNhom::where('MaSV', $sv->MaSV)->where('TrangThai', 'da_tham_gia')->pluck('MaNhom')->toArray() : [];
+
+            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $userNhomCodes) {
+                $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', '');
+                if ($curUserMaTK) {
+                    $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
+                }
+                if ($curUserTen) {
+                    $q->orWhere('DoiTuongNhan', $curUserTen)->orWhere('DoiTuongNhan', 'like', "%{$curUserTen}%");
+                }
+                if (!empty($userNhomCodes)) {
+                    $q->orWhere('DoiTuongNhan', 'like', '%Tất cả các nhóm%');
+                    foreach ($userNhomCodes as $code) {
+                        $q->orWhere('DoiTuongNhan', 'like', "%{$code}%");
+                    }
+                }
+            });
+        } elseif (in_array($role, ['Giảng viên', 'Trưởng bộ môn', 'Trưởng khoa'])) {
+            $gv = \App\Models\GiangVien::getLoggedInGiangVien($curUser);
+            $curMaGV = $gv?->MaGV ?? ($curUser?->MaGV ?? '');
+            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $curMaGV) {
+                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', '');
+                if ($curUserMaTK) {
+                    $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
+                }
+                if ($curUserTen) {
+                    $q->orWhere('DoiTuongNhan', $curUserTen)->orWhere('DoiTuongNhan', 'like', "%{$curUserTen}%");
+                }
+                if ($curMaGV) {
+                    $q->orWhere('DoiTuongNhan', $curMaGV)->orWhere('DoiTuongNhan', 'like', "%{$curMaGV}%");
+                }
+            });
+        } elseif (in_array($role, ['Admin', 'Giáo vụ'])) {
+            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen) {
+                $q->whereIn('DoiTuongNhan', ['Admin', 'Giáo vụ', 'Toàn thể', 'Tất cả', 'Toàn trường'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', '');
+                if ($curUserMaTK) {
+                    $q->orWhere('DoiTuongNhan', $curUserMaTK);
+                }
+                if ($curUserTen) {
+                    $q->orWhere('DoiTuongNhan', $curUserTen);
+                }
+            })->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);
+        }
+
+        $allIds = $notiQuery->pluck('MaThongBao')->toArray();
+        $userKey = 'read_thong_bao_ids_' . ($curUserMaTK ?: 'guest');
+        $existing = session()->get($userKey, session()->get('read_thong_bao_ids', []));
+        if (!is_array($existing)) {
+            $existing = [];
+        }
+        $merged = array_values(array_unique(array_merge($existing, $allIds)));
+
+        session([
+            $userKey => $merged,
+            'read_thong_bao_ids' => $merged,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã đánh dấu tất cả thông báo là đã đọc!',
+                'count'   => 0
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc!');
     }
 }

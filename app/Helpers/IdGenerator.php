@@ -308,4 +308,23 @@ class IdGenerator
             return $id;
         });
     }
+
+    /**
+     * Sinh mã Đề tài: DT01, DT02...
+     */
+    public static function nextDeTai(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('DeTai')
+                ->where('MaDeTai', 'REGEXP', '^DT[0-9]+$')
+                ->max(DB::raw("CAST(SUBSTRING(MaDeTai, 3) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            $id = 'DT' . str_pad($next, 2, '0', STR_PAD_LEFT);
+            while (DB::table('DeTai')->where('MaDeTai', $id)->exists()) {
+                $next++;
+                $id = 'DT' . str_pad($next, 2, '0', STR_PAD_LEFT);
+            }
+            return $id;
+        });
+    }
 }

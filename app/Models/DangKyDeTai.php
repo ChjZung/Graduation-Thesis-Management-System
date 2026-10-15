@@ -7,4 +7,5 @@ namespace App\Models;
  */
 class DangKyDeTai extends PhieuDangKy
 {
+    protected $table = 'PhieuDangKy';
 }

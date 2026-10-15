@@ -35,4 +35,21 @@ class FileUploadService
 
         return null;
     }
+
+    /**
+     * Upload trực tiếp một file tải lên vào storage
+     *
+     * @param \Illuminate\Http\UploadedFile|null $file
+     * @param string $folder
+     * @return string|null
+     */
+    public static function uploadFile($file, string $folder = 'uploads'): ?string
+    {
+        if ($file && $file->isValid()) {
+            $filename = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
+            $path = $file->storeAs("public/{$folder}", $filename);
+            return ltrim(Storage::url($path), '/');
+        }
+        return null;
+    }
 }

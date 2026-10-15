@@ -273,27 +273,29 @@ class DocumentPlanController extends Controller
                 );
             }
 
-            // 6. Gửi Thông Báo Tự Động cho Toàn Thể Hệ Thống (Sinh viên, Giảng viên & Cán bộ)
+            // 6. Gửi / Cập nhật Thông Báo Tự Động cho Toàn Thể Hệ Thống (Đồng bộ theo Học kỳ tránh tạo 2 thông báo)
+            $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
+            $maTB = substr('TB_KH_' . $shortHk, 0, 20);
+
             $isUpdate = !empty($previewData['is_version_update']);
-            $title = "[Khóa luận] " . ($isUpdate ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
-            $content = "Khoa đã ban hành " . ($header['SoThongBao'] ?? "văn bản thông báo") . " về kế hoạch thực hiện Khóa luận tốt nghiệp.\n\nFile gốc đính kèm: " . asset('storage/' . $permanentPath);
+            $title = "[KHOA CNTT] " . ($isUpdate ? "Thông báo ĐIỀU CHỈNH mốc thời gian Khóa luận" : "Thông báo chính thức Kế hoạch Khóa luận " . ($header['NamHoc'] ?? ''));
+            $content = "Khoa Công nghệ Thông tin chính thức công bố Kế hoạch Khóa luận tốt nghiệp (" . ($header['SoThongBao'] ?? "Văn bản thông báo chính thức") . ").\n\n"
+                . "Đề nghị toàn thể Giảng viên và Sinh viên theo dõi chi tiết các mốc thời gian quy trình và thực hiện theo đúng kế hoạch.\n\n"
+                . "📄 File gốc đính kèm: " . asset('storage/' . $permanentPath);
 
-            $maTB = 'TB_' . Str::upper(Str::random(7));
-            while (ThongBao::where('MaThongBao', $maTB)->exists()) {
-                $maTB = 'TB_' . Str::upper(Str::random(7));
-            }
-
-            ThongBao::create([
-                'MaThongBao'   => $maTB,
-                'TieuDe'       => $title,
-                'NoiDung'      => $content,
-                'LoaiThongBao' => 'Kế hoạch',
-                'DoiTuongNhan' => 'Toàn thể',
-                'NgayTao'      => now(),
-                'TrangThai'    => 'Đã phát hành',
-                'FileDinhKem'  => 'storage/' . $permanentPath,
-                'MaGVu'        => $maGVu,
-            ]);
+            ThongBao::updateOrCreate(
+                ['MaThongBao' => $maTB],
+                [
+                    'TieuDe'       => $title,
+                    'NoiDung'      => $content,
+                    'LoaiThongBao' => 'Kế hoạch',
+                    'DoiTuongNhan' => 'Toàn thể',
+                    'NgayTao'      => now(),
+                    'TrangThai'    => 'Đã phát hành',
+                    'FileDinhKem'  => 'storage/' . $permanentPath,
+                    'MaGVu'        => $maGVu,
+                ]
+            );
         });
 
         // Xóa dữ liệu tạm session
