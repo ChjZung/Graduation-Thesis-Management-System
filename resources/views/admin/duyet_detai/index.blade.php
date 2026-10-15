@@ -403,27 +403,27 @@
                 <span class="pill-count">{{ $counts['total'] }}</span>
             </a>
 
-            {{-- 2. Đang Xét Duyệt --}}
-            <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'dang_xet_duyet', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'dang_xet_duyet' ? 'active' : '' }}" title="Đề tài đang trong quy trình xét duyệt (Bộ môn, Phản biện, Khoa)">
+            {{-- 2. Chưa Phê Duyệt / Chờ Duyệt --}}
+            <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'chua_phe_duyet', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'cho_duyet', 'Chờ duyệt']) ? 'active' : '' }}" title="Đề tài chưa phê duyệt / đang trong quy trình xét duyệt (Bộ môn, Phản biện, Khoa)">
                 <span class="pill-dot" style="background:#f59e0b;"></span>
-                <span>Đang Xét Duyệt</span>
+                <span>Chưa Phê Duyệt / Chờ Duyệt</span>
                 <span class="pill-count">{{ $counts['dang_xet_duyet'] }}</span>
             </a>
 
-            {{-- 3. Đã Phê Duyệt & Công Bố --}}
-            <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_cong_bo', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'da_cong_bo' ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt & công bố chính thức cho sinh viên">
+            {{-- 3. Đã Phê Duyệt --}}
+            <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_phe_duyet', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_cong_bo', 'Đã công bố', 'da_duyet', 'Đã duyệt']) ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt & công bố chính thức cho sinh viên">
                 <span class="pill-dot" style="background:#10b981;"></span>
-                <span>Đã Công Bố &amp; Đã Duyệt</span>
+                <span>Đã Phê Duyệt</span>
                 <span class="pill-count">{{ $counts['da_cong_bo_tab'] }}</span>
             </a>
 
-            {{-- 4. Cần Chỉnh Sửa / Từ Chối --}}
+            {{-- 4. Yêu Cầu Chỉnh Sửa / Từ Chối --}}
             <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'tu_choi_can_sua', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'tu_choi_can_sua' ? 'active' : '' }}" title="Đề tài có yêu cầu chỉnh sửa hoặc không được thông qua">
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['tu_choi_can_sua', 'yeu_cau_chinh_sua', 'tu_choi']) ? 'active' : '' }}" title="Đề tài có yêu cầu chỉnh sửa hoặc không được thông qua">
                 <span class="pill-dot" style="background:#ef4444;"></span>
-                <span>Cần Chỉnh Sửa / Từ Chối</span>
+                <span>Yêu Cầu Chỉnh Sửa / Từ Chối</span>
                 <span class="pill-count">{{ $counts['tu_choi_can_sua'] }}</span>
             </a>
         </div>
@@ -452,9 +452,11 @@
                         <select name="TrangThai" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="ALL">-- Tất cả Trạng Thái --</option>
                             <optgroup label="Nhóm tổng hợp">
-                                <option value="dang_xet_duyet" {{ request('TrangThai') === 'dang_xet_duyet' ? 'selected' : '' }}>Đang xét duyệt chuyên môn</option>
-                                <option value="da_cong_bo" {{ request('TrangThai') === 'da_cong_bo' ? 'selected' : '' }}>Đã công bố &amp; Đã duyệt</option>
-                                <option value="tu_choi_can_sua" {{ request('TrangThai') === 'tu_choi_can_sua' ? 'selected' : '' }}>Cần chỉnh sửa / Từ chối</option>
+                                <option value="da_phe_duyet" {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
+                                <option value="chua_phe_duyet" {{ in_array(request('TrangThai'), ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'cho_duyet', 'Chờ duyệt']) ? 'selected' : '' }}>Chưa phê duyệt / Đang chờ duyệt</option>
+                                <option value="yeu_cau_chinh_sua" {{ in_array(request('TrangThai'), ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa']) ? 'selected' : '' }}>Yêu cầu chỉnh sửa</option>
+                                <option value="tu_choi" {{ in_array(request('TrangThai'), ['tu_choi', 'Từ chối']) ? 'selected' : '' }}>Từ chối</option>
+                                <option value="da_cong_bo" {{ in_array(request('TrangThai'), ['da_cong_bo', 'Đã công bố']) ? 'selected' : '' }}>Đã công bố &amp; Đã duyệt</option>
                             </optgroup>
                             <optgroup label="Trạng thái chi tiết">
                                 @foreach($danhSachTrangThai as $tt)

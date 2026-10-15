@@ -283,31 +283,40 @@ class DuyetDeTaiController extends Controller
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            if ($request->TrangThai === 'dang_xet_duyet' || $request->TrangThai === 'can_duyet') {
+            $tt = trim($request->TrangThai);
+            if (in_array($tt, ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt'])) {
+                $query->whereIn('TrangThai', [
+                    'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành'
+                ]);
+            } elseif (in_array($tt, ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'can_duyet', 'cho_duyet', 'Chờ duyệt'])) {
                 $query->whereIn('TrangThai', [
                     'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Chờ duyệt cấp Khoa',
                     'Đã nộp đề cương - Chờ phân công PB', 'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'
                 ]);
-            } elseif ($request->TrangThai === 'da_cong_bo') {
+            } elseif (in_array($tt, ['da_cong_bo', 'Đã công bố'])) {
                 $query->whereIn('TrangThai', [
                     'Đã công bố', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã đăng ký', 'Hoàn thành'
                 ]);
-            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+            } elseif (in_array($tt, ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa'])) {
+                $query->whereIn('TrangThai', [
+                    'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Yêu cầu điều chỉnh'
+                ]);
+            } elseif (in_array($tt, ['tu_choi', 'Từ chối'])) {
+                $query->whereIn('TrangThai', [
+                    'Từ chối', 'Không đạt phản biện'
+                ]);
+            } elseif ($tt === 'tu_choi_can_sua') {
                 $query->whereIn('TrangThai', [
                     'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện'
                 ]);
-            } elseif ($request->TrangThai === 'dang_phan_bien' || $request->TrangThai === 'Đang phản biện đề cương') {
+            } elseif ($tt === 'dang_phan_bien' || $tt === 'Đang phản biện đề cương') {
                 $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB']);
-            } elseif ($request->TrangThai === 'da_phan_bien' || $request->TrangThai === 'Đã phản biện - Chờ duyệt BM') {
+            } elseif ($tt === 'da_phan_bien' || $tt === 'Đã phản biện - Chờ duyệt BM') {
                 $query->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']);
-            } elseif ($request->TrangThai === 'Trưởng khoa đã duyệt') {
+            } elseif ($tt === 'Trưởng khoa đã duyệt') {
                 $query->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương']);
-            } elseif ($request->TrangThai === 'Yêu cầu chỉnh sửa') {
-                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương']);
-            } elseif ($request->TrangThai === 'Từ chối') {
-                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện']);
             } else {
-                $query->where('TrangThai', $request->TrangThai);
+                $query->where('TrangThai', $tt);
             }
         }
 

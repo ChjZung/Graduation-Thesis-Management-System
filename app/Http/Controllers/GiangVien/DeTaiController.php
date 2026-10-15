@@ -64,8 +64,31 @@ class DeTaiController extends Controller
             $query->where('MaHocKy', $request->MaHocKy);
         }
 
-        if ($request->filled('TrangThai')) {
-            $query->where('TrangThai', $request->TrangThai);
+        if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
+            $tt = trim($request->TrangThai);
+            if (in_array($tt, ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt'])) {
+                $query->whereIn('TrangThai', [
+                    'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 
+                    'Đã duyệt', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành'
+                ]);
+            } elseif (in_array($tt, ['chua_phe_duyet', 'Chưa phê duyệt', 'cho_duyet', 'Chờ duyệt', 'dang_xet_duyet'])) {
+                $query->whereIn('TrangThai', [
+                    'Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Chờ duyệt',
+                    'Đang phản biện đề cương', 'Đã nộp đề cương - Chờ phân công PB',
+                    'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương',
+                    'Đã cập nhật đề cương - Chờ phản biện lại'
+                ]);
+            } elseif (in_array($tt, ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa'])) {
+                $query->whereIn('TrangThai', [
+                    'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Yêu cầu điều chỉnh'
+                ]);
+            } elseif (in_array($tt, ['tu_choi', 'Từ chối'])) {
+                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện']);
+            } elseif (in_array($tt, ['da_cong_bo', 'Đã công bố'])) {
+                $query->whereIn('TrangThai', ['Đã công bố', 'Đã đăng ký', 'Hoàn thành']);
+            } else {
+                $query->where('TrangThai', $tt);
+            }
         }
 
         $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();

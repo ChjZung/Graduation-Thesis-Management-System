@@ -66,12 +66,7 @@
         })->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);
     }
 
-    $userKey = 'read_thong_bao_ids_' . ($curUserMaTK ?: 'guest');
-    $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-    if (!is_array($readIds)) {
-        $readIds = [];
-    }
-
+    $readIds = \App\Services\ThongBaoService::getReadIds($curUserMaTK);
     $unreadCount = (clone $notiQuery)->whereNotIn('MaThongBao', $readIds)->count();
     $recentNotis = (clone $notiQuery)->orderBy('created_at', 'desc')->limit(6)->get();
 @endphp
@@ -79,10 +74,17 @@
 <div class="dropdown" id="headerNotificationDropdown">
     <a href="#" class="position-relative text-decoration-none dropdown-toggle no-caret d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false" style="color: #004E64;">
         <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
-        <span id="headerNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
-              style="font-size: 11px !important; padding: 2px 6px !important; {{ $unreadCount > 0 ? '' : 'display: none !important;' }}">
-            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-        </span>
+        @if($unreadCount > 0)
+            <span id="headerNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                  style="font-size: 11px !important; padding: 2px 6px !important;">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+            </span>
+        @else
+            <span id="headerNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" 
+                  style="font-size: 11px !important; padding: 2px 6px !important; display: none !important;">
+                0
+            </span>
+        @endif
     </a>
     <div class="dropdown-menu dropdown-menu-end shadow border border-slate-200" style="width: 380px; max-height: 440px; overflow-y: auto; border-radius: 12px; z-index: 1060;">
         <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
@@ -111,7 +113,10 @@
                         default         => route('admin.thongbao.show', $noti->MaThongBao),
                     };
                 @endphp
-                <a href="{{ $itemShowUrl }}" class="dropdown-item px-3 py-2 border-bottom text-wrap text-decoration-none noti-dropdown-item {{ $isRead ? 'opacity-75' : 'bg-light-subtle' }}">
+                <a href="{{ $itemShowUrl }}" 
+                   data-noti-id="{{ $noti->MaThongBao }}"
+                   data-is-read="{{ $isRead ? '1' : '0' }}"
+                   class="dropdown-item px-3 py-2 border-bottom text-wrap text-decoration-none noti-dropdown-item {{ $isRead ? 'opacity-75' : 'bg-light-subtle' }}">
                     <div class="d-flex gap-2 align-items-start">
                         <i class="fa-solid fa-bullhorn {{ $isRead ? 'text-secondary' : 'text-primary' }} mt-1" style="font-size: 13px; flex-shrink: 0;"></i>
                         <div class="w-100">
@@ -144,50 +149,108 @@
 (function() {
     function initHeaderNoti() {
         const btnMarkAll = document.getElementById('btnMarkAllNotiRead');
-        if (!btnMarkAll || btnMarkAll.dataset.bound) return;
-        btnMarkAll.dataset.bound = 'true';
+        const badge = document.getElementById('headerNotificationBadge');
 
-        btnMarkAll.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        // 1. Xử lý click từng thông báo chưa đọc
+        document.querySelectorAll('.noti-dropdown-item').forEach(function(item) {
+            if (item.dataset.boundClick) return;
+            item.dataset.boundClick = 'true';
 
-            // 1. Ẩn badge ngay lập tức trên giao diện
-            const badge = document.getElementById('headerNotificationBadge');
-            if (badge) {
-                badge.style.setProperty('display', 'none', 'important');
-                badge.textContent = '0';
-            }
+            item.addEventListener('click', function(e) {
+                const notiId = this.dataset.notiId;
+                const isRead = this.dataset.isRead === '1';
 
-            // 2. Chuyển đổi trạng thái hiển thị của các thông báo trong dropdown
-            document.querySelectorAll('.unread-dot').forEach(function(el) {
-                el.remove();
-            });
-            document.querySelectorAll('.noti-dropdown-item').forEach(function(el) {
-                el.classList.add('opacity-75');
-                el.classList.remove('bg-light-subtle');
-                const title = el.querySelector('.noti-title');
-                if (title) {
-                    title.classList.remove('text-dark', 'fw-semibold');
-                    title.classList.add('text-secondary');
+                if (!isRead && notiId) {
+                    this.dataset.isRead = '1';
+                    this.classList.add('opacity-75');
+                    this.classList.remove('bg-light-subtle');
+                    const dot = this.querySelector('.unread-dot');
+                    if (dot) dot.remove();
+
+                    const title = this.querySelector('.noti-title');
+                    if (title) {
+                        title.classList.remove('text-dark', 'fw-semibold');
+                        title.classList.add('text-secondary');
+                    }
+
+                    // Giảm badge
+                    if (badge) {
+                        let currentCount = parseInt(badge.textContent.trim(), 10) || 0;
+                        let nextCount = Math.max(0, currentCount - 1);
+                        badge.textContent = nextCount > 99 ? '99+' : nextCount;
+                        if (nextCount <= 0) {
+                            badge.style.setProperty('display', 'none', 'important');
+                            badge.classList.add('d-none');
+                        }
+                    }
+
+                    // Gửi request đánh dấu đọc
+                    const markUrl = '{{ url("/thongbao/mark-read") }}/' + encodeURIComponent(notiId);
+                    if (navigator.sendBeacon) {
+                        const formData = new FormData();
+                        formData.append('_token', '{{ csrf_token() }}');
+                        navigator.sendBeacon(markUrl, formData);
+                    } else {
+                        fetch(markUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        }).catch(function() {});
+                    }
                 }
-            });
-
-            // 3. Phản hồi nút bấm
-            btnMarkAll.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>Đã đọc';
-            btnMarkAll.style.pointerEvents = 'none';
-
-            // 4. Gửi request đồng bộ session server-side
-            fetch('{{ route("thongbao.markAllReadGlobal") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            }).catch(function(err) {
-                console.warn('Lỗi lưu trạng thái đã đọc thông báo:', err);
             });
         });
+
+        // 2. Xử lý nút "Đọc hết"
+        if (btnMarkAll && !btnMarkAll.dataset.bound) {
+            btnMarkAll.dataset.bound = 'true';
+
+            btnMarkAll.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Ẩn badge ngay lập tức trên giao diện
+                if (badge) {
+                    badge.style.setProperty('display', 'none', 'important');
+                    badge.classList.add('d-none');
+                    badge.textContent = '0';
+                }
+
+                // Chuyển đổi trạng thái hiển thị của các thông báo trong dropdown
+                document.querySelectorAll('.unread-dot').forEach(function(el) {
+                    el.remove();
+                });
+                document.querySelectorAll('.noti-dropdown-item').forEach(function(el) {
+                    el.dataset.isRead = '1';
+                    el.classList.add('opacity-75');
+                    el.classList.remove('bg-light-subtle');
+                    const title = el.querySelector('.noti-title');
+                    if (title) {
+                        title.classList.remove('text-dark', 'fw-semibold');
+                        title.classList.add('text-secondary');
+                    }
+                });
+
+                // Phản hồi nút bấm
+                btnMarkAll.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>Đã đọc';
+                btnMarkAll.style.pointerEvents = 'none';
+
+                // Gửi request đồng bộ session & cache server-side
+                fetch('{{ route("thongbao.markAllReadGlobal") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                }).catch(function(err) {
+                    console.warn('Lỗi lưu trạng thái đã đọc thông báo:', err);
+                });
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
