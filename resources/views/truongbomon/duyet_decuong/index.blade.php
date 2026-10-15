@@ -7,13 +7,10 @@
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-file-circle-check text-primary me-2"></i>
-                Phê Duyệt Đề Cương Chi Tiết & Công Bố Đề Tài
+                Phê Duyệt Đề Cương Chi Tiết &amp; Công Bố Đề Tài
             </h4>
-            <p class="text-muted mb-0 small">
-                Thẩm tra kết quả đánh giá từ Giảng viên phản biện, kiểm tra nhanh nội dung đề cương và tiến hành phê duyệt công bố cho sinh viên đăng ký.
-            </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-semibold">

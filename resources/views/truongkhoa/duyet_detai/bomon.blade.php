@@ -79,12 +79,9 @@
                     Khoa: {{ $khoa->TenKhoa ?? '' }}
                 </span>
             </div>
-            <h4 class="fw-bold text-dark mb-1">
+            <h4 class="fw-bold text-dark mb-0">
                 Danh Sách Đề Tài &bull; Bộ Môn {{ $boMon->TenBoMon }}
             </h4>
-            <p class="text-muted small mb-0">
-                Mã bộ môn: <span class="badge-code">{{ $boMon->MaBoMon }}</span> &bull; Quản lý và phê duyệt đề tài cấp khoa
-            </p>
         </div>
     </div>
 

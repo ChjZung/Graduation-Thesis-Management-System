@@ -6,8 +6,7 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">Chỉnh Sửa Biểu Mẫu: {{ $bieuMau->MaBieuMau }}</h4>
-            <p class="text-muted small mb-0">Cập nhật tên biểu mẫu, kế hoạch áp dụng hoặc thay đổi file mẫu hướng dẫn.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;">Chỉnh Sửa Biểu Mẫu: {{ $bieuMau->MaBieuMau }}</h4>
         </div>
         <a href="{{ route('admin.bieumau.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm">
             <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Danh Sách

@@ -6,13 +6,10 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-award me-2 text-primary"></i>
-                Bảng Điểm & Xếp Loại Khóa Luận Tốt Nghiệp – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
+                Bảng Điểm &amp; Xếp Loại Khóa Luận Tốt Nghiệp – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Tra cứu kết quả điểm đánh giá của Giảng viên hướng dẫn, Phản biện và Hội đồng chấm bảo vệ toàn Khoa.
-            </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('truongkhoa.ketqua.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">

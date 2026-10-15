@@ -5,12 +5,9 @@
 <!-- Header Trang -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
-        <h4 class="fw-bold text-dark mb-1">
+        <h4 class="fw-bold text-dark mb-0">
             <i class="fa-solid fa-bell text-primary me-2"></i>Thông Báo Của Tôi
         </h4>
-        <p class="text-muted mb-0" style="font-size: 13.5px;">
-            Theo dõi kế hoạch khóa luận, văn bản chỉ đạo và thông báo từ Khoa/Bộ môn.
-        </p>
     </div>
     <form action="{{ route('sinhvien.thongbao.readAll') }}" method="POST">
         @csrf

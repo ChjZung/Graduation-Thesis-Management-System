@@ -6,13 +6,10 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-calendar-check me-2 text-primary"></i>
-                Kế Hoạch & Tiến Độ Khóa Luận – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
+                Kế Hoạch &amp; Tiến Độ Khóa Luận – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Theo dõi các kế hoạch khóa luận tốt nghiệp chính thức, lịch trình các mốc thời gian và quy định đào tạo của Khoa.
-            </p>
         </div>
     </div>
 

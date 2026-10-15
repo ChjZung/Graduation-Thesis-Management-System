@@ -3258,10 +3258,13 @@ label .text-danger {
 .card-intro,
 .help-text-banner,
 .page-subtitle,
+.page-main-subtitle,
 .table-intro,
 .alert-info-guide,
 .guide-box,
-.instruction-text {
+.instruction-text,
+.page-header-subtitle,
+.header-description {
     display: none !important;
 }
 

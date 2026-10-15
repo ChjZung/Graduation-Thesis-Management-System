@@ -8,12 +8,9 @@
 
 <!-- Page Header -->
 <div class="mb-4">
-    <h3 class="fw-bold mb-1 text-primary-custom">
+    <h3 class="fw-bold mb-0 text-primary-custom">
         <i class="fa-solid fa-list-check me-2 text-primary"></i>Duyệt Tiến Độ Báo Cáo
     </h3>
-    <div class="text-muted small">
-        Theo dõi tiến độ thực hiện và đánh giá các mốc báo cáo định kỳ của các nhóm sinh viên hướng dẫn
-    </div>
 </div>
 
 <!-- 4 Thẻ KPI Thống Kê Theo Mockup Figma (congviechuongdan) -->

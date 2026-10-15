@@ -7,13 +7,10 @@
     <!-- Header Greeting -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-building-columns me-2 text-primary"></i>
                 Bàn Làm Việc Trưởng Bộ Môn {{ $boMon->TenBoMon ?? '' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Kiểm soát chuyên môn, phân công phản biện đề cương, thẩm định phê duyệt đề tài và giám sát tiến độ thực hiện.
-            </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'Chờ duyệt cấp Bộ môn']) }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">

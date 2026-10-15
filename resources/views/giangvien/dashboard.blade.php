@@ -6,13 +6,9 @@
 <!-- Header & Welcome Banner -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
-        <h3 class="fw-bold mb-1 text-primary-custom">
+        <h3 class="fw-bold mb-0 text-primary-custom">
             <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>Tổng Quan Giảng Viên Hướng Dẫn
         </h3>
-        <p class="text-muted mb-0">
-            Chào mừng, <strong>{{ $giangVien->HocHam ? $giangVien->HocHam . '.' : '' }} {{ $giangVien->HocVi ? $giangVien->HocVi . '.' : '' }} {{ $giangVien->HoTen }}</strong> 
-            | <span class="badge bg-light text-dark border">{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ 1 (2026-2027)' }}</span>
-        </p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 shadow-sm">

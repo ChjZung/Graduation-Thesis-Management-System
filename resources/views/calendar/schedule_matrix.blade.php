@@ -6,8 +6,7 @@
 <!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="fw-bold text-primary-custom mb-1"><i class="fa-solid fa-calendar-week me-2"></i>Lịch Quy Trình Khóa Luận — Kế Hoạch vs Thực Tế</h4>
-        <p class="text-muted small mb-0">Ma trận đối chiếu giữa mốc thời gian Kế Hoạch và Tiến độ Thực Tế của từng nhóm thực hiện.</p>
+        <h4 class="fw-bold text-primary-custom mb-0"><i class="fa-solid fa-calendar-week me-2"></i>Lịch Quy Trình Khóa Luận — Kế Hoạch vs Thực Tế</h4>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.calendar') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">

@@ -99,12 +99,9 @@
     <!-- ═══ HEADER ═══ -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-primary"></i> Thống Kê Đề Tài Khóa Luận Tốt Nghiệp
             </h4>
-            <div class="text-muted small">
-                Theo dõi số lượng, trạng thái, lĩnh vực và tình hình đăng ký đề tài theo học kỳ, khoa và bộ môn.
-            </div>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ $manageRoute }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 shadow-sm fw-semibold">

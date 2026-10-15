@@ -4,12 +4,9 @@
 
 <!-- Header Trang -->
 <div class="mb-4">
-    <h4 class="fw-bold text-dark mb-1">
+    <h4 class="fw-bold text-dark mb-0">
         <i class="fa-solid fa-award text-primary me-2"></i>Kết Quả Khóa Luận Tốt Nghiệp
     </h4>
-    <p class="text-muted mb-0" style="font-size: 13.5px;">
-        Xem điểm đánh giá chính thức từ Hội đồng bảo vệ khóa luận và quy đổi thang điểm đào tạo.
-    </p>
 </div>
 
 @if(!$ketQua)

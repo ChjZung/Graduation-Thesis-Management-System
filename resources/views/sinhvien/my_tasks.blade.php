@@ -6,12 +6,9 @@
 
 <!-- Header Trang -->
 <div class="mb-4">
-    <h4 class="fw-bold text-dark mb-1">
+    <h4 class="fw-bold text-dark mb-0">
         <i class="fa-solid fa-list-check text-primary me-2"></i>Công Việc & Tiến Độ Khóa Luận
     </h4>
-    <p class="text-muted mb-0" style="font-size: 13.5px;">
-        Theo dõi mốc thời gian, tiến độ thực hiện và thời hạn nộp các báo cáo khóa luận.
-    </p>
 </div>
 
 @if($nhom)

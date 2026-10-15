@@ -35,13 +35,10 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-chart-line me-2 text-primary"></i>
-                Giám Sát Tiến Độ & Tình Hình Bảo Vệ – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
+                Giám Sát Tiến Độ &amp; Tình Hình Bảo Vệ – {{ $khoa->TenKhoa ?? 'Khoa CNTT' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Theo dõi tiến độ thực hiện đề tài của các nhóm, tình hình nộp báo cáo định kỳ, xác nhận hồ sơ và hội đồng bảo vệ toàn khoa.
-            </p>
         </div>
     </div>
 

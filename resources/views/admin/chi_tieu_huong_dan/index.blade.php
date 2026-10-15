@@ -17,12 +17,9 @@
                     <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Chỉ tiêu hướng dẫn</li>
                 </ol>
             </nav>
-            <h4 class="fw-bold text-dark mb-1" style="font-size: 1.25rem;">
+            <h4 class="fw-bold text-dark mb-0" style="font-size: 1.25rem;">
                 Thiết Lập &amp; Giám Sát Chỉ Tiêu Hướng Dẫn Giảng Viên
             </h4>
-            <div class="text-muted" style="font-size: 13px;">
-                Quản lý số nhóm khóa luận tối đa mỗi giảng viên được phân công hướng dẫn theo từng học kỳ (Định mức mặc định: 5 nhóm).
-            </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <button type="button" class="btn btn-outline-primary btn-sm rounded-2 px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#modalBulkUpdate" style="font-size: 13px;">

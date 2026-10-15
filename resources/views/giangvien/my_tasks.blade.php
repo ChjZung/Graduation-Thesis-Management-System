@@ -70,12 +70,9 @@
     <!-- HEADER TITLE & ACTION BUTTON -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h5 class="fw-bold text-dark mb-1" style="font-size: 1.25rem;">
+            <h5 class="fw-bold text-dark mb-0" style="font-size: 1.25rem;">
                 <i class="fa-solid fa-list-check text-primary me-2"></i>Công Việc Hướng Dẫn &amp; Tiến Độ Các Nhóm
             </h5>
-            <p class="text-muted small mb-0">
-                Hệ thống nhắc nhở công việc duyệt đề tài, nhận xét báo cáo tiến độ và xác nhận hồ sơ đủ điều kiện bảo vệ cho GVHD.
-            </p>
         </div>
         <div>
             <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-primary btn-sm px-3 shadow-sm rounded-2 fw-medium">
