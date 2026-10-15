@@ -163,7 +163,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                            <thead>
                                 <tr>
                                     <th class="ps-3 py-2.5">GIẢNG VIÊN</th>
                                     <th class="py-2.5 text-center" width="30%">VAI TRÒ</th>
@@ -323,7 +323,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                            <thead>
                                 <tr>
                                     <th class="ps-3 py-3" width="35%">NHÓM / ĐỀ TÀI</th>
                                     <th class="py-3 text-center" width="15%">TURNITIN</th>

@@ -167,7 +167,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th style="width: 100px;">Mã Nhóm</th>
                                     <th>Tên Đề Tài & Bộ Môn</th>
@@ -304,7 +304,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th style="width: 110px;">Mã Hồ Sơ</th>
                                     <th>Nhóm & Đề Tài Khóa Luận</th>

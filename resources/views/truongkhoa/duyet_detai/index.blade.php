@@ -62,21 +62,21 @@
         margin-bottom: 0;
     }
     .admin-table thead th {
-        background-color: #f8fafc;
-        color: #334155;
-        font-size: 13px;
+        background-color: #003366 !important;
+        color: #ffffff !important;
+        font-size: 12.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 1px solid #e2e8f0;
-        padding: 12px 14px;
+        padding: 10px 12px !important;
         white-space: nowrap;
     }
     .admin-table tbody td {
-        padding: 12px 14px;
+        padding: 10px 12px !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
-        font-size: 13.5px;
+        font-size: 13px;
         color: #1e293b;
     }
     .badge-code {

@@ -436,15 +436,15 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                <thead class="bg-light text-muted fw-semibold small text-uppercase">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3" width="10%">MÃ ĐỀ TÀI</th>
-                        <th class="py-3" width="30%">TÊN ĐỀ TÀI</th>
-                        <th class="py-3" width="18%">GIẢNG VIÊN HƯỚNG DẪN</th>
-                        <th class="py-3" width="14%">BỘ MÔN / KHOA</th>
-                        <th class="text-center py-3" width="12%">SỐ SV ĐĂNG KÝ</th>
-                        <th class="text-center py-3" width="10%">TRẠNG THÁI</th>
-                        <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                        <th class="ps-3" width="10%">MÃ ĐỀ TÀI</th>
+                        <th width="30%">TÊN ĐỀ TÀI</th>
+                        <th width="18%">GIẢNG VIÊN HƯỚNG DẪN</th>
+                        <th width="14%">BỘ MÔN / KHOA</th>
+                        <th class="text-center" width="12%">SỐ SV ĐĂNG KÝ</th>
+                        <th class="text-center" width="10%">TRẠNG THÁI</th>
+                        <th class="pe-3 text-center" width="8%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">

@@ -142,7 +142,7 @@
                                     </h6>
                                     <div class="table-responsive">
                                         <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 0.8rem;">
-                                            <thead class="table-light">
+                                            <thead>
                                                 <tr>
                                                     <th style="width: 50px;" class="text-center">STT</th>
                                                     <th>Nội Dung Giai Đoạn / Mốc Quy Trình</th>

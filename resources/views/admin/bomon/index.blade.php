@@ -141,15 +141,15 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                    <thead>
                         <tr>
-                            <th class="ps-4 py-3" width="14%">MÃ BỘ MÔN</th>
-                            <th class="py-3" width="26%">TÊN BỘ MÔN CHUYÊN MÔN</th>
-                            <th class="py-3" width="24%">TRƯỞNG BỘ MÔN</th>
-                            <th class="py-3" width="20%">KHOA TRỰC THUỘC</th>
-                            <th class="py-3 text-center" width="8%">SỐ GV</th>
-                            <th class="py-3 text-center" width="8%">TRẠNG THÁI</th>
-                            <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                            <th class="ps-3" width="14%">MÃ BỘ MÔN</th>
+                            <th width="26%">TÊN BỘ MÔN CHUYÊN MÔN</th>
+                            <th width="24%">TRƯỞNG BỘ MÔN</th>
+                            <th width="20%">KHOA TRỰC THUỘC</th>
+                            <th class="text-center" width="8%">SỐ GV</th>
+                            <th class="text-center" width="8%">TRẠNG THÁI</th>
+                            <th class="pe-3 text-center" width="8%">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">

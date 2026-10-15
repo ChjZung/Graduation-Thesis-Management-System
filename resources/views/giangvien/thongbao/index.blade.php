@@ -98,7 +98,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-secondary small">
+                    <thead>
                         <tr>
                             <th width="5%" class="text-center">STT</th>
                             <th width="35%">Tiêu Đề</th>

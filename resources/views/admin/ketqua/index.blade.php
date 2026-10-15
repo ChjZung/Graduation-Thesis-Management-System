@@ -140,16 +140,16 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                    <thead>
                         <tr>
-                            <th class="ps-4 py-3" style="width: 120px;">MSSV</th>
-                            <th class="py-3" style="min-width: 200px;">HỌ VÀ TÊN SINH VIÊN</th>
-                            <th class="py-3" style="min-width: 240px;">NHÓM &amp; ĐỀ TÀI</th>
-                            <th class="py-3 text-center" style="width: 130px;">LOẠI KHÓA LUẬN</th>
-                            <th class="py-3 text-center" style="width: 150px;">HỘI ĐỒNG (100%)</th>
-                            <th class="py-3 text-center" style="width: 120px;">ĐIỂM CHỮ</th>
-                            <th class="py-3 text-center" style="width: 140px;">XẾP LOẠI</th>
-                            <th class="pe-4 py-3 text-center" style="width: 90px;">PHIẾU CHẤM</th>
+                            <th style="width: 120px;">MSSV</th>
+                            <th style="min-width: 200px;">HỌ VÀ TÊN SINH VIÊN</th>
+                            <th style="min-width: 240px;">NHÓM &amp; ĐỀ TÀI</th>
+                            <th class="text-center" style="width: 130px;">LOẠI KHÓA LUẬN</th>
+                            <th class="text-center" style="width: 150px;">HỘI ĐỒNG (100%)</th>
+                            <th class="text-center" style="width: 120px;">ĐIỂM CHỮ</th>
+                            <th class="text-center" style="width: 140px;">XẾP LOẠI</th>
+                            <th class="text-center" style="width: 90px;">PHIẾU CHẤM</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">

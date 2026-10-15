@@ -137,15 +137,15 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3 text-center" width="5%">STT</th>
-                        <th class="py-3" width="13%">MÃ ĐỀ TÀI</th>
-                        <th class="py-3" width="34%">TÊN ĐỀ TÀI &amp; MÔN HỌC</th>
-                        <th class="py-3" width="16%">LĨNH VỰC</th>
-                        <th class="py-3 text-center" width="12%">NGÀY ĐỀ XUẤT</th>
-                        <th class="py-3 text-center" width="12%">TRẠNG THÁI</th>
-                        <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                        <th class="ps-3 text-center" width="5%">STT</th>
+                        <th width="13%">MÃ ĐỀ TÀI</th>
+                        <th width="34%">TÊN ĐỀ TÀI &amp; MÔN HỌC</th>
+                        <th width="16%">LĨNH VỰC</th>
+                        <th class="text-center" width="12%">NGÀY ĐỀ XUẤT</th>
+                        <th class="text-center" width="12%">TRẠNG THÁI</th>
+                        <th class="pe-3 text-center" width="8%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
@@ -204,9 +204,9 @@
                                 <i class="fa-solid {{ $iconStatus }} me-1"></i> {{ $statusLabel }}
                             </span>
                         </td>
-                        <td class="pe-4 py-3 text-center">
+                        <td class="pe-3 text-center">
                             <a href="{{ route('truongbomon.phe_duyet_detai.show', ['maDeTai' => $dt->MaDeTai, 'hocKy' => $selectedHocKy]) }}" 
-                               class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold text-nowrap">
+                               class="btn btn-sm btn-action btn-primary text-nowrap">
                                 <i class="fa-solid fa-eye me-1"></i> Xem chi tiết
                             </a>
                         </td>

@@ -3247,6 +3247,263 @@ label .text-danger {
     opacity: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   MASTER UI/UX DESIGN SYSTEM OVERRIDE - HUIT STANDARDIZATION 2026
+   Enforces uniform compact tables, buttons, forms, and badges across
+   all portal views (Admin, Giảng viên, Sinh viên, Trưởng BM/Khoa).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. COMPACT STANDARDIZED TABLES & LISTS */
+.table,
+.table-huit,
+.table-custom,
+.table-topic,
+.admin-table,
+.table-hp,
+table.dataTable,
+.table-responsive > table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.table th,
+.table td,
+.table-huit th,
+.table-huit td,
+.table-custom th,
+.table-custom td,
+.table-topic th,
+.table-topic td,
+.admin-table th,
+.admin-table td,
+.table-hp th,
+.table-hp td,
+table.dataTable th,
+table.dataTable td {
+    padding: 10px 12px !important;
+    vertical-align: middle !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+}
+
+.table thead th,
+.table-huit thead th,
+.table-custom thead th,
+.table-topic thead th,
+.admin-table thead th,
+.table-hp thead th {
+    background: #003366 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    letter-spacing: 0.3px !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+.table tbody tr:hover,
+.table-huit tbody tr:hover,
+.table-custom tbody tr:hover,
+.table-topic tbody tr:hover,
+.admin-table tbody tr:hover,
+.table-hp tbody tr:hover {
+    background-color: #f0f7ff !important;
+}
+
+.table tbody td,
+.table-huit tbody td,
+.table-custom tbody td,
+.table-topic tbody td,
+.admin-table tbody td,
+.table-hp tbody td {
+    border-top: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* 2. STANDARDIZED BUTTONS & ACTION BUTTONS IN TABLES */
+.btn-sm,
+.btn-action,
+.table .btn,
+.table-huit .btn,
+.table-custom .btn,
+.table-topic .btn,
+.admin-table .btn,
+.table-hp .btn,
+table.dataTable .btn {
+    padding: 5px 10px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    line-height: 1.4 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+.btn-sm i,
+.btn-action i,
+.table .btn i,
+.table-huit .btn i,
+.table-custom .btn i,
+.table-topic .btn i,
+.admin-table .btn i {
+    font-size: 12px !important;
+}
+
+/* Primary Button Global Hover Effect */
+.btn-primary {
+    background: linear-gradient(135deg, #0072CE 0%, #004A8F 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 114, 206, 0.25) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0059A8 0%, #003B73 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 114, 206, 0.35) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:active {
+    transform: translateY(0) !important;
+}
+
+/* 3. STANDARDIZED BADGES & STATUS */
+.badge,
+.badge-huit {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: 20px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+
+.badge-success,
+.bg-success {
+    background-color: #d1f2e1 !important;
+    color: #0d6035 !important;
+    border: 1px solid #a3e6be !important;
+}
+
+.badge-warning,
+.bg-warning {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeeba !important;
+}
+
+.badge-danger,
+.bg-danger {
+    background-color: #fde8ea !important;
+    color: #842029 !important;
+    border: 1px solid #f8d7da !important;
+}
+
+.badge-info,
+.bg-info {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+}
+
+.badge-primary,
+.bg-primary {
+    background-color: #e0f0ff !important;
+    color: #004A8F !important;
+    border: 1px solid #b8daff !important;
+}
+
+.badge-secondary,
+.bg-secondary {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* 4. STANDARDIZED FORMS & MODALS */
+.form-control,
+.form-select,
+input.form-control,
+select.form-select,
+textarea.form-control {
+    padding: 8px 12px !important;
+    font-size: 13.5px !important;
+    border: 1.5px solid #C8DFF7 !important;
+    border-radius: 6px !important;
+    color: #1e293b !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    line-height: 1.5 !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus {
+    border-color: #0072CE !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(0, 114, 206, 0.15) !important;
+    outline: none !important;
+}
+
+.form-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #003366 !important;
+    margin-bottom: 6px !important;
+}
+
+.modal-content {
+    border: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 31, 63, 0.15) !important;
+    overflow: hidden !important;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #003366 0%, #0072CE 100%) !important;
+    color: #ffffff !important;
+    padding: 12px 20px !important;
+    border-bottom: none !important;
+}
+
+.modal-header .modal-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.8 !important;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1 !important;
+}
+
+.modal-body {
+    padding: 20px !important;
+}
+
+.modal-footer {
+    padding: 12px 20px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+}
+
+
 
 
 

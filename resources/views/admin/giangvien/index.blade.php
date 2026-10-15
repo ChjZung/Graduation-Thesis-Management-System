@@ -200,7 +200,7 @@
 
                 <div class="table-responsive">
                     <table class="table admin-table table-hover align-middle mb-0">
-                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                        <thead>
                             <tr>
                                 <th class="ps-4 py-3" width="13%">MÃ GV</th>
                                 <th class="py-3" width="28%">HỌ TÊN, HỌC VỊ &amp; LIÊN HỆ</th>
@@ -482,7 +482,7 @@
 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                        <thead>
                             <tr>
                                 <th class="text-center ps-3 py-3" style="width: 50px;">STT</th>
                                 <th class="py-3" style="width: 120px;">MÃ GV</th>
@@ -707,7 +707,7 @@
 
                 <div class="table-responsive">
                     <table class="table admin-table table-hover align-middle mb-0">
-                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                        <thead>
                             <tr>
                                 <th class="ps-4 py-3" width="22%">GIẢNG VIÊN / MÃ GV</th>
                                 <th class="py-3" width="22%">TÀI KHOẢN GV GỐC (PORTAL GV)</th>

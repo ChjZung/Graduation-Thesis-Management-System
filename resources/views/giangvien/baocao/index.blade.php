@@ -159,7 +159,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light small text-secondary">
+                <thead>
                     <tr>
                         <th class="ps-4" width="20%">Mốc tiến độ</th>
                         <th width="12%" class="text-center">Trạng thái</th>

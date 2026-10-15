@@ -207,16 +207,16 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle mb-0">
-                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                        <thead>
                             <tr>
-                                <th class="text-center py-3" style="width: 50px;">STT</th>
-                                <th class="py-3" style="min-width: 320px;">NỘI DUNG ĐÁNH GIÁ</th>
-                                <th class="text-center py-3" style="width: 85px;">CLO</th>
-                                <th class="text-center py-3" style="width: 100px;">ĐIỂM TỐI ĐA</th>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th style="min-width: 320px;">NỘI DUNG ĐÁNH GIÁ</th>
+                                <th class="text-center" style="width: 85px;">CLO</th>
+                                <th class="text-center" style="width: 100px;">ĐIỂM TỐI ĐA</th>
                                 @foreach($sinhViens as $idx => $sv)
-                                <th class="text-center py-3" style="width: 130px; background: #f0f7ff;">
+                                <th class="text-center" style="width: 130px;">
                                     <div>SV{{ $idx + 1 }}</div>
-                                    <div class="text-primary fw-bold text-truncate" style="font-size: 0.72rem; max-width: 120px;" title="{{ $sv->HoTen }}">
+                                    <div class="text-white fw-bold text-truncate" style="font-size: 0.72rem; max-width: 120px;" title="{{ $sv->HoTen }}">
                                         {{ $sv->HoTen }}
                                     </div>
                                 </th>

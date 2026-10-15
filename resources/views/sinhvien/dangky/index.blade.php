@@ -67,19 +67,18 @@
         width: 100%;
         line-height: 36px;
     }
-    /* Bảng dữ liệu mật độ cao, hiển thị trọn vẹn */
     .table-topic th {
-        background-color: #f8fafc !important;
+        background-color: #003366 !important;
         font-weight: 700;
-        font-size: 13.5px !important;
-        padding: 12px 16px !important;
-        color: #334155 !important;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+        color: #ffffff !important;
         border-bottom: 1px solid #e2e8f0 !important;
         white-space: nowrap;
     }
     .table-topic td {
-        font-size: 13.5px !important;
-        padding: 12px 16px !important;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
         vertical-align: middle;
         line-height: 1.45;
         border-bottom: 1px solid #f1f5f9;

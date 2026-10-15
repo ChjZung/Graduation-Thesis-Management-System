@@ -147,7 +147,7 @@
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th style="width: 50px;">STT</th>
                                 <th style="width: 110px;">Mã SV</th>

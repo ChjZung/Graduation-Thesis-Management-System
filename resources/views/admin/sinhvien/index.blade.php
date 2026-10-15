@@ -153,15 +153,15 @@
 
         <div class="table-responsive">
             <table class="table admin-table table-hover align-middle mb-0">
-                <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3" width="13%">MSSV</th>
-                        <th class="py-3" width="24%">HỌ VÀ TÊN &amp; LIÊN LẠC</th>
-                        <th class="py-3" width="20%">LỚP / NGÀNH / KHÓA</th>
-                        <th class="py-3 text-center" width="15%">TÍN CHỈ / GPA</th>
-                        <th class="py-3 text-center" width="12%">TRẠNG THÁI</th>
-                        <th class="py-3 text-center" width="10%">ĐIỀU KIỆN KL</th>
-                        <th class="pe-4 py-3 text-center" width="6%">THAO TÁC</th>
+                        <th class="ps-3" width="13%">MSSV</th>
+                        <th width="24%">HỌ VÀ TÊN &amp; LIÊN LẠC</th>
+                        <th width="20%">LỚP / NGÀNH / KHÓA</th>
+                        <th class="text-center" width="15%">TÍN CHỈ / GPA</th>
+                        <th class="text-center" width="12%">TRẠNG THÁI</th>
+                        <th class="text-center" width="10%">ĐIỀU KIỆN KL</th>
+                        <th class="pe-3 text-center" width="6%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
