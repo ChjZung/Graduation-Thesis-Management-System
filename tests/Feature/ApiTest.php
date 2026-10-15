@@ -56,7 +56,8 @@ class ApiTest extends TestCase
      */
     public function test_api_create_detai_fails_with_missing_data()
     {
-        $response = $this->postJson('/api/detais', []);
+        $admin = \App\Models\TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $response = $this->actingAs($admin)->postJson('/api/detais', []);
 
         $response->assertStatus(422)
                  ->assertJson(['status' => 'error'])
@@ -68,7 +69,8 @@ class ApiTest extends TestCase
      */
     public function test_api_update_detai_returns_404_for_invalid_id()
     {
-        $response = $this->putJson('/api/detais/99999', [
+        $admin = \App\Models\TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $response = $this->actingAs($admin)->putJson('/api/detais/99999', [
             'TenDeTai' => 'Test Update'
         ]);
 
@@ -81,7 +83,8 @@ class ApiTest extends TestCase
      */
     public function test_api_delete_detai_returns_404_for_invalid_id()
     {
-        $response = $this->deleteJson('/api/detais/99999');
+        $admin = \App\Models\TaiKhoan::where('TenDangNhap', 'admin')->first();
+        $response = $this->actingAs($admin)->deleteJson('/api/detais/99999');
 
         $response->assertStatus(404)
                  ->assertJson(['status' => 'error']);

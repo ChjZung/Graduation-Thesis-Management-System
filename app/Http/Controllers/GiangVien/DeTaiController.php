@@ -14,6 +14,7 @@ use App\Models\ChiTietDuyetDeTai;
 use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use App\Services\ChiTieuService;
+use App\Http\Traits\HandlesExcelImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,21 @@ use Illuminate\Support\Str;
 
 class DeTaiController extends Controller
 {
+    use HandlesExcelImport;
+
+    public function importExcel(Request $request)
+    {
+        $deXuatState = \App\Services\PlanPhaseService::isDeXuatDeTaiOpen();
+        if (!$deXuatState['is_open']) {
+            return redirect()->back()->withErrors($deXuatState['message']);
+        }
+
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        $defaultMaGV = $gv?->MaGV;
+        $params = [$defaultMaGV];
+        return $this->runImport($request, 'importDeTai', $params, 'Đề tài khóa luận');
+    }
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -63,7 +79,9 @@ class DeTaiController extends Controller
             }, '>=', 3)
             ->get();
 
-        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'nhomsChuaCoDeTai') + ['NhomChuaCoDeTai' => $nhomsChuaCoDeTai]);
+        $deXuatState = \App\Services\PlanPhaseService::isDeXuatDeTaiOpen($request->MaHocKy);
+
+        return view('giangvien.detai.index', compact('detais', 'hocKies', 'gv', 'nhomsChuaCoDeTai', 'deXuatState') + ['NhomChuaCoDeTai' => $nhomsChuaCoDeTai]);
     }
 
     public function downloadTemplate(Request $request)
@@ -100,6 +118,11 @@ class DeTaiController extends Controller
 
     public function create()
     {
+        $deXuatState = \App\Services\PlanPhaseService::isDeXuatDeTaiOpen();
+        if (!$deXuatState['is_open']) {
+            return redirect()->route('giangvien.detai.index')->withErrors($deXuatState['message']);
+        }
+
         $user = Auth::user();
         $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
               ?? GiangVien::getLoggedInGiangVien($user);
@@ -116,7 +139,12 @@ class DeTaiController extends Controller
                   ->orWhere('TrangThai', true);
             })
             ->when($gv && $gv->MaBoMon, function($q) use ($gv) {
-                $q->where('MaBoMon', $gv->MaBoMon);
+                $q->where(function($subQ) use ($gv) {
+                    $subQ->where('MaBoMon', $gv->MaBoMon)
+                         ->orWhereNull('MaBoMon')
+                         ->orWhere('MaBoMon', '')
+                         ->orWhere('MaBoMon', 'DUNG_CHUNG');
+                });
             })
             ->orderBy('TenHocPhan')
             ->get();
@@ -126,6 +154,11 @@ class DeTaiController extends Controller
 
     public function store(Request $request)
     {
+        $deXuatState = \App\Services\PlanPhaseService::isDeXuatDeTaiOpen($request->MaHocKy);
+        if (!$deXuatState['is_open']) {
+            return redirect()->back()->withInput()->withErrors($deXuatState['message']);
+        }
+
         $user = Auth::user();
         $gv = GiangVien::with('boMon')->where('MaTK', $user->MaTK)->first() 
               ?? GiangVien::getLoggedInGiangVien($user);
@@ -137,7 +170,7 @@ class DeTaiController extends Controller
             'TenDeTai'  => 'required|string|min:10|max:300',
             'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
-            'MoTa'      => 'nullable|string|min:30|max:2000',
+            'MoTa'      => 'nullable|string',
             'YeuCau'    => 'nullable|string|min:15|max:1000',
             'LinhVuc'   => 'nullable|string|max:150',
         ], [
@@ -147,16 +180,23 @@ class DeTaiController extends Controller
             'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'MoTa.min'           => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.',
-            'MoTa.max'           => 'Mô tả đề tài không được vượt quá 2000 ký tự.',
             'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
             'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
 
+        $cleanedMoTa = \App\Helpers\HtmlHelper::clean($request->MoTa);
+        $plainMoTa = trim(strip_tags(html_entity_decode($cleanedMoTa, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainMoTa) < 30) {
+            return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.']);
+        }
+        if (mb_strlen($plainMoTa) > 10000) {
+            return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài không được vượt quá 10.000 ký tự.']);
+        }
+
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
 
-        // Kiểm tra quyền bộ môn: học phần phải thuộc đúng bộ môn của GV
-        if ($gv->MaBoMon && $hocPhan->MaBoMon !== $gv->MaBoMon) {
+        // Kiểm tra quyền bộ môn: học phần chuyên ngành phải thuộc đúng bộ môn của GV (nếu không phải học phần dùng chung toàn khoa)
+        if ($gv->MaBoMon && !empty($hocPhan->MaBoMon) && !in_array($hocPhan->MaBoMon, ['DUNG_CHUNG', 'ALL']) && $hocPhan->MaBoMon !== $gv->MaBoMon) {
             return redirect()->back()->withInput()->withErrors("Học phần '{$hocPhan->TenHocPhan}' không thuộc bộ môn " . ($gv->boMon->TenBoMon ?? $gv->MaBoMon) . " của bạn!");
         }
 
@@ -184,7 +224,7 @@ class DeTaiController extends Controller
             'MaDeTai' => $maDT,
             'MaGV' => $gv->MaGV,
             'TenDeTai' => $request->TenDeTai,
-            'MoTa' => $request->MoTa,
+            'MoTa' => $cleanedMoTa,
             'YeuCau' => $request->YeuCau,
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
             'MaHocPhan' => $hocPhan->MaHocPhan,
@@ -466,7 +506,7 @@ class DeTaiController extends Controller
             'TenDeTai'    => 'required|string|min:10|max:300',
             'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan'   => 'required|exists:HocPhan,MaHocPhan',
-            'MoTa'        => 'nullable|string|min:30|max:2000',
+            'MoTa'        => 'nullable|string',
             'YeuCau'      => 'nullable|string|min:15|max:1000',
             'LinhVuc'     => 'nullable|string|max:150',
             'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
@@ -477,11 +517,18 @@ class DeTaiController extends Controller
             'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'MoTa.min'           => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.',
-            'MoTa.max'           => 'Mô tả đề tài không được vượt quá 2000 ký tự.',
             'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
             'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
+
+        $cleanedMoTa = \App\Helpers\HtmlHelper::clean($request->MoTa);
+        $plainMoTa = trim(strip_tags(html_entity_decode($cleanedMoTa, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainMoTa) < 30) {
+            return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài phải có tối thiểu 30 ký tự để nêu rõ mục tiêu và phạm vi nghiên cứu.']);
+        }
+        if (mb_strlen($plainMoTa) > 10000) {
+            return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài không được vượt quá 10.000 ký tự.']);
+        }
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
 
@@ -510,7 +557,7 @@ class DeTaiController extends Controller
                 'MaHocPhan'   => $hocPhan->MaHocPhan,
                 'HocPhan'     => $hocPhan->TenHocPhan,
                 'LinhVuc'     => $request->LinhVuc,
-                'MoTa'        => $request->MoTa,
+                'MoTa'        => $cleanedMoTa,
                 'YeuCau'      => $request->YeuCau,
                 'saved_at'    => now()->format('H:i d/m/Y'),
             ];
@@ -541,7 +588,7 @@ class DeTaiController extends Controller
             'HocPhan'              => $hocPhan->TenHocPhan,
             'MaNganh'              => null,
             'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
-            'MoTa'                 => $request->MoTa,
+            'MoTa'                 => $cleanedMoTa,
             'YeuCau'               => $request->YeuCau,
             'LinhVuc'              => $request->LinhVuc,
             'DuLieuNhap'           => null, // Xóa bản nháp sau khi đã nộp chính thức
@@ -680,8 +727,8 @@ class DeTaiController extends Controller
         if (!$gv) return redirect()->route('giangvien.dashboard');
         $detai = DeTai::where('MaDeTai', $id)->where('MaGV', $gv->MaGV)->firstOrFail();
 
-        if (!in_array($detai->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố'])) {
-            return redirect()->back()->withErrors('Chỉ đề tài đã được Trưởng khoa phê duyệt hoặc Giáo vụ công bố mới có thể gán nhóm thực hiện!');
+        if ($detai->TrangThai !== 'Đã công bố') {
+            return redirect()->back()->withErrors('Quy định: Chức năng gán nhóm chỉ hoạt động khi đề tài đã được phê duyệt và công bố chính thức!');
         }
 
         $nhom = Nhom::with('thanhViens')->findOrFail($request->MaNhom);

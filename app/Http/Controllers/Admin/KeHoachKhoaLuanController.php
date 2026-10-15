@@ -268,22 +268,32 @@ class KeHoachKhoaLuanController extends Controller
 
         $maGVu = $keHoach->MaGVu ?? (Auth::user()?->giaoVu?->MaGVu ?? 'GVU01');
 
-        $maTB = 'TB_' . Str::upper(Str::random(7));
-        while (ThongBao::where('MaThongBao', $maTB)->exists()) {
-            $maTB = 'TB_' . Str::upper(Str::random(7));
-        }
+        $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $keHoach->MaHocKy ?? $keHoach->MakeHoach);
+        $maTB = substr('TB_KH_' . $shortHk, 0, 20);
 
-        ThongBao::create([
-            'MaThongBao'   => $maTB,
-            'TieuDe'       => $title,
-            'NoiDung'      => $noiDung,
-            'LoaiThongBao' => 'Kế hoạch',
-            'DoiTuongNhan' => 'Toàn thể',
-            'NgayTao'      => now(),
-            'TrangThai'    => 'Đã phát hành',
-            'FileDinhKem'  => $keHoach->FileDinhKem ? ('storage/' . $keHoach->FileDinhKem) : null,
-            'MaGVu'        => $maGVu,
-        ]);
+        ThongBao::updateOrCreate(
+            ['MaThongBao' => $maTB],
+            [
+                'TieuDe'       => $title,
+                'NoiDung'      => $noiDung,
+                'LoaiThongBao' => 'Kế hoạch',
+                'DoiTuongNhan' => 'Toàn thể',
+                'NgayTao'      => now(),
+                'TrangThai'    => 'Đã phát hành',
+                'FileDinhKem'  => $keHoach->FileDinhKem ? ('storage/' . $keHoach->FileDinhKem) : null,
+                'MaGVu'        => $maGVu,
+            ]
+        );
+
+        // Dọn dẹp các thông báo kế hoạch cũ trùng lặp nếu có
+        ThongBao::where('LoaiThongBao', 'Kế hoạch')
+            ->where('MaThongBao', '!=', $maTB)
+            ->where(function($q) use ($keHoach) {
+                if (!empty($keHoach->FileDinhKem)) {
+                    $q->where('FileDinhKem', 'LIKE', '%' . basename($keHoach->FileDinhKem) . '%');
+                }
+            })
+            ->delete();
     }
 
     public function destroy($id)

@@ -303,6 +303,12 @@
                                     <td>
                                         @php
                                             $bmBadges = [
+                                                'CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                                'HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
+                                                'ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
+                                                'KHMT' => 'bg-success-subtle text-success border border-success-subtle',
+                                                'MMT'  => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                                'KHDL' => 'bg-secondary-subtle text-dark border border-secondary-subtle',
                                                 'BM_CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
                                                 'BM_HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
                                                 'BM_ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
@@ -310,9 +316,19 @@
                                             ];
                                             $badgeClass = $bmBadges[$hp->MaBoMon] ?? 'bg-secondary-subtle text-secondary';
                                         @endphp
-                                        <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
-                                            {{ $hp->boMon->TenBoMon ?? $hp->MaBoMon }}
-                                        </span>
+                                        @if(!empty($hp->boMon))
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                                {{ $hp->boMon->TenBoMon }}
+                                            </span>
+                                        @elseif(!empty($hp->MaBoMon))
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                                {{ $hp->MaBoMon }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                                Dùng chung (Khoa CNTT)
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
@@ -471,6 +487,12 @@
                                 @php
                                     $isOpenedThisHk = $hp->hocPhanHocKies->where('TrangThai', 'Đang mở')->isNotEmpty();
                                     $bmBadges = [
+                                        'CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                                        'HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
+                                        'ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
+                                        'KHMT' => 'bg-success-subtle text-success border border-success-subtle',
+                                        'MMT'  => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                        'KHDL' => 'bg-secondary-subtle text-dark border border-secondary-subtle',
                                         'BM_CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
                                         'BM_HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
                                         'BM_ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
@@ -486,9 +508,19 @@
                                         <small class="text-muted">{{ $hp->MoTa ?? 'Môn học thuộc bộ môn ' . ($hp->boMon->TenBoMon ?? '') }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
-                                            {{ $hp->boMon->TenBoMon ?? $hp->MaBoMon }}
-                                        </span>
+                                        @if(!empty($hp->boMon))
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                                {{ $hp->boMon->TenBoMon }}
+                                            </span>
+                                        @elseif(!empty($hp->MaBoMon))
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                                {{ $hp->MaBoMon }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                                Dùng chung (Khoa CNTT)
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
@@ -753,8 +785,13 @@
                         <label class="form-label fw-semibold small text-dark">Chọn file Excel (.xlsx, .xls) *</label>
                         <input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls,.csv" required>
                     </div>
-                    <div class="small text-muted">
-                        Mẫu Excel cần có các cột: Mã học phần, Tên học phần, Số tín chỉ, Mã bộ môn, Loại học phần.
+                    <div class="small text-muted mb-3">
+                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Các cột trong file: <strong>MaHocPhan, TenHocPhan, SoTinChi, MaKhoa, MaBoMon, LoaiHocPhan, MoTa</strong>.
+                    </div>
+                    <div class="pt-2 border-top">
+                        <a href="{{ route('admin.import.template', ['type' => 'hocphan']) }}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fa-solid fa-download me-1"></i> Tải file Excel mẫu chuẩn (.xlsx)
+                        </a>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top py-2.5 px-4 d-flex justify-content-end gap-2">

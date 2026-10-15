@@ -255,9 +255,9 @@
                         <th style="width: 120px;">Mã GV</th>
                         <th style="width: 250px;">Họ và tên giảng viên</th>
                         <th class="text-center" style="width: 140px;">Số lượng đề tài</th>
-                        <th class="text-center" style="width: 160px;">Chỉ tiêu (Đã dùng/Tổng)</th>
+                        <th class="text-center" style="width: 120px;">Chỉ tiêu</th>
                         <th class="text-center" style="width: 160px;">Tình trạng phê duyệt</th>
-                        <th class="text-center" style="width: 220px;">Thao tác</th>
+                        <th class="text-center" style="width: 200px;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -308,15 +308,15 @@
                         <td class="text-center">
                             @if($ct['tinh_trang'] === 'con_chi_tieu')
                                 <span class="badge bg-success-subtle text-success-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã dùng {{ $ct['da_dung'] }} trên {{ $ct['tong'] }} nhóm chỉ tiêu">
-                                    {{ $ct['label'] }} (Còn {{ $ct['con_lai'] }})
+                                    {{ $ct['label'] }}
                                 </span>
                             @elseif($ct['tinh_trang'] === 'het_chi_tieu')
                                 <span class="badge bg-warning-subtle text-warning-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã nhận đủ chỉ tiêu hướng dẫn">
-                                    {{ $ct['label'] }} (Đã đủ)
+                                    {{ $ct['label'] }}
                                 </span>
                             @else
                                 <span class="badge bg-danger-subtle text-danger-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã nhận vượt chỉ tiêu">
-                                    {{ $ct['label'] }} (Vượt {{ $ct['da_dung'] - $ct['tong'] }})
+                                    {{ $ct['label'] }}
                                 </span>
                             @endif
                         </td>
@@ -348,20 +348,11 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <div class="d-inline-flex align-items-center gap-1.5">
-                                <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $gv->MaGV, 'hocKy' => $selectedHocKy]) }}" 
-                                   class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold text-nowrap"
-                                   title="Xem chi tiết danh sách đề tài của giảng viên này">
-                                    <i class="fa-solid fa-list-check me-1"></i>Xem chi tiết
-                                </a>
-                                @if($hasPending)
-                                <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $gv->MaGV, 'hocKy' => $selectedHocKy, 'trang_thai' => 'cho_duyet']) }}" 
-                                   class="btn btn-sm btn-warning rounded-pill px-2.5 py-1 fw-bold text-dark text-nowrap"
-                                   title="Phê duyệt các đề tài đang chờ">
-                                    <i class="fa-solid fa-check me-1"></i>Duyệt
-                                </a>
-                                @endif
-                            </div>
+                            <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $gv->MaGV, 'hocKy' => $selectedHocKy]) }}" 
+                               class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold text-nowrap"
+                               title="Xem danh sách đề tài của giảng viên này">
+                                <i class="fa-solid fa-list-check me-1"></i>Xem danh sách đề tài
+                            </a>
                         </td>
                     </tr>
                     @empty

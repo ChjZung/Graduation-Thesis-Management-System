@@ -96,10 +96,26 @@ class ApiController extends Controller
 
     /**
      * POST /api/detais
-     * Tạo đề tài mới qua API.
+     * Tạo đề tài mới.
      */
     public function storeDeTai(Request $request)
     {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Yêu cầu đăng nhập để thực hiện thao tác này.'
+            ], 401);
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $user->loadMissing('vaiTro');
+        if ($user->vaiTro?->TenVaiTro === 'Sinh viên') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Sinh viên không có quyền tạo đề tài.'
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'TenDeTai' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
@@ -115,7 +131,11 @@ class ApiController extends Controller
             ], 422);
         }
 
-        $detai = DeTai::create($request->only(['TenDeTai', 'MoTa', 'MaGV', 'MaHocKy']));
+        $data = $request->only(['TenDeTai', 'MaGV', 'MaHocKy']);
+        if ($request->has('MoTa')) {
+            $data['MoTa'] = \App\Helpers\HtmlHelper::clean($request->MoTa);
+        }
+        $detai = DeTai::create($data);
 
         return response()->json([
             'status' => 'success',
@@ -130,6 +150,13 @@ class ApiController extends Controller
      */
     public function updateDeTai(Request $request, $id)
     {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Yêu cầu đăng nhập để thực hiện thao tác này.'
+            ], 401);
+        }
+
         $detai = DeTai::find($id);
 
         if (!$detai) {
@@ -137,6 +164,14 @@ class ApiController extends Controller
                 'status' => 'error',
                 'message' => 'Không tìm thấy đề tài với mã ' . $id
             ], 404);
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (\Illuminate\Support\Facades\Gate::forUser($user)->denies('update', $detai)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bạn không có quyền cập nhật đề tài này.'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -152,7 +187,11 @@ class ApiController extends Controller
             ], 422);
         }
 
-        $detai->update($request->only(['TenDeTai', 'MoTa']));
+        $updateData = $request->only(['TenDeTai']);
+        if ($request->has('MoTa')) {
+            $updateData['MoTa'] = \App\Helpers\HtmlHelper::clean($request->MoTa);
+        }
+        $detai->update($updateData);
 
         return response()->json([
             'status' => 'success',
@@ -167,6 +206,13 @@ class ApiController extends Controller
      */
     public function destroyDeTai($id)
     {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Yêu cầu đăng nhập để thực hiện thao tác này.'
+            ], 401);
+        }
+
         $detai = DeTai::find($id);
 
         if (!$detai) {
@@ -174,6 +220,14 @@ class ApiController extends Controller
                 'status' => 'error',
                 'message' => 'Không tìm thấy đề tài với mã ' . $id
             ], 404);
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (\Illuminate\Support\Facades\Gate::forUser($user)->denies('delete', $detai)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bạn không có quyền xóa đề tài này.'
+            ], 403);
         }
 
         try {

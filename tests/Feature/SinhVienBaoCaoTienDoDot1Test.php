@@ -86,7 +86,7 @@ class SinhVienBaoCaoTienDoDot1Test extends TestCase
                 'TenMoc' => 'Báo cáo tiến độ đợt 1',
                 'DoiTuongThucHien' => 'Sinh viên',
                 'NgayBatDau' => '2026-09-15',
-                'NgayKetThuc' => null, // Không giới hạn
+                'NgayKetThuc' => '2026-12-31', // Mốc xa (không giới hạn)
                 'MoTa' => 'Báo cáo tiến độ đợt 1 [BAO_CAO_TIEN_DO_1]',
                 'MakeHoach' => $plan ? $plan->MakeHoach : 'KH_2026_R0JW',
             ]

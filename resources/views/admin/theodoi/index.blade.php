@@ -74,18 +74,17 @@
 </div>
 
 {{-- ── THANH TÌM KIẾM & BỘ LỌC DỮ LIỆU ── --}}
-<div class="admin-filter-bar">
-    <form method="GET" action="{{ route('admin.theodoi.index') }}" class="row g-2 align-items-center">
+<div class="admin-filter-bar mb-4">
+    <form method="GET" action="{{ route('admin.theodoi.index') }}" class="d-flex flex-wrap align-items-center gap-2 w-100">
         <input type="hidden" name="stage" value="{{ request('stage') }}">
         <input type="hidden" name="status_code" value="{{ request('status_code') }}">
-        <div class="col-12 col-md-5">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" name="search" class="form-control form-control-sm border-start-0" placeholder="Tìm theo tên nhóm, mã nhóm, tên đề tài..." value="{{ request('search') }}">
-            </div>
+        <div class="input-group input-group-sm flex-grow-1" style="min-width: 250px; max-width: 400px;">
+            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" name="search" class="form-control form-control-sm border-start-0 ps-0" placeholder="Tìm theo tên nhóm, mã nhóm, tên đề tài..." value="{{ request('search') }}">
         </div>
-        <div class="col-6 col-md-3">
-            <select name="MaGV" class="form-select form-select-sm">
+
+        <div style="min-width: 200px;">
+            <select name="MaGV" class="form-select form-select-sm" style="min-width: 190px;">
                 <option value="">-- Tất cả GVHD --</option>
                 @foreach($giangViens as $gv)
                     <option value="{{ $gv->MaGV }}" {{ request('MaGV') == $gv->MaGV ? 'selected' : '' }}>
@@ -94,9 +93,10 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-6 col-md-2">
-            <select name="MaHocKy" class="form-select form-select-sm">
-                <option value="">Tất cả Học kỳ</option>
+
+        <div style="min-width: 220px;">
+            <select name="MaHocKy" class="form-select form-select-sm" style="min-width: 210px;">
+                <option value="">-- Tất cả học kỳ --</option>
                 @foreach($hocKies as $hk)
                     <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
                         {{ $hk->TenHocKy }}
@@ -104,8 +104,9 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 flex-grow-1 fw-semibold" style="background: #0072ce; border-color: #0072ce;">
+
+        <div class="d-flex align-items-center gap-2 ms-auto flex-nowrap">
+            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap" style="background: #0072ce; border-color: #0072ce;">
                 <i class="fa-solid fa-bolt me-1"></i> Lọc Dữ Liệu
             </button>
             <a href="{{ route('admin.theodoi.index') }}" class="btn btn-sm btn-light border rounded-3 px-2 text-secondary" title="Tải lại">

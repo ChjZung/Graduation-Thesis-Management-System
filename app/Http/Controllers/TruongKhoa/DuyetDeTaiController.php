@@ -35,7 +35,10 @@ class DuyetDeTaiController extends Controller
             }
         }
 
-        return Khoa::where('MaKhoa', 'CNTT')->first() ?? Khoa::first();
+        $byName = Khoa::where('TruongKhoa', 'like', '%' . ($gv->HoTen ?? '') . '%')->first();
+        if ($byName) return $byName;
+
+        return null;
     }
 
     /**
@@ -43,10 +46,12 @@ class DuyetDeTaiController extends Controller
      */
     private function assertDeTaiBelongsToKhoa(DeTai $detai, $khoa)
     {
-        if (!$khoa) return;
+        if (!$khoa) {
+            abort(403, 'Bạn chưa được phân công phụ trách Khoa nào để thực hiện thao tác này.');
+        }
         $detai->loadMissing('giangVien.boMon.khoa');
         $detaiMaKhoa = $detai->giangVien?->boMon?->MaKhoa;
-        if ($detaiMaKhoa && $detaiMaKhoa !== $khoa->MaKhoa) {
+        if (!$detaiMaKhoa || $detaiMaKhoa !== $khoa->MaKhoa) {
             abort(403, "Bạn không có quyền quản lý hay phê duyệt đề tài không thuộc Khoa '{$khoa->TenKhoa}'.");
         }
     }
@@ -56,7 +61,9 @@ class DuyetDeTaiController extends Controller
      */
     private function assertBoMonBelongsToKhoa(BoMon $boMon, $khoa)
     {
-        if (!$khoa) return;
+        if (!$khoa) {
+            abort(403, 'Bạn chưa được phân công phụ trách Khoa nào để thực hiện thao tác này.');
+        }
         if ($boMon->MaKhoa !== $khoa->MaKhoa) {
             abort(403, "Bạn không có quyền quản lý hay xem dữ liệu của Bộ môn '{$boMon->TenBoMon}' không thuộc Khoa '{$khoa->TenKhoa}'.");
         }

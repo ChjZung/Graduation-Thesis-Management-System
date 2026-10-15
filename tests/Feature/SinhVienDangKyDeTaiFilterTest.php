@@ -39,6 +39,11 @@ class SinhVienDangKyDeTaiFilterTest extends TestCase
         $this->userWithGroup->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => false]);
         $this->svWithGroup = SinhVien::where('MaTK', $this->userWithGroup->MaTK)->firstOrFail();
         
+        \App\Models\HocKy::firstOrCreate(
+            ['MaHocKy' => 'HK2627_2'],
+            ['TenHocKy' => 'Học kỳ 2 (2026-2027)', 'NamHoc' => '2026-2027', 'TrangThai' => 'Đang diễn ra']
+        );
+
         $tvRecord = ThanhVienNhom::where('MaSV', $this->svWithGroup->MaSV)->where('TrangThai', 'da_tham_gia')->first();
         if (!$tvRecord) {
             $this->nhom = Nhom::create([

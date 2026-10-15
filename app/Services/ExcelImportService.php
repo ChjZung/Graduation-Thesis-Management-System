@@ -40,13 +40,17 @@ class ExcelImportService
      */
     private function parseFile($file): array
     {
-        if (!$file || !$file->isValid()) {
+        if (is_string($file) && file_exists($file)) {
+            $filePath  = $file;
+            $origName  = basename($file);
+            $ext       = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        } elseif (!$file || !$file->isValid()) {
             throw new Exception("File tải lên không hợp lệ hoặc không tồn tại.");
+        } else {
+            $filePath  = $file->getRealPath();
+            $origName  = $file->getClientOriginalName();
+            $ext       = strtolower($file->getClientOriginalExtension());
         }
-
-        $filePath  = $file->getRealPath();
-        $origName  = $file->getClientOriginalName();
-        $ext       = strtolower($file->getClientOriginalExtension());
 
         $spreadsheet = null;
 
@@ -79,7 +83,8 @@ class ExcelImportService
             'HanDangKy', 'HanBaoCao', 'HanNopSanPham',
             'MaKhoa', 'TenKhoa', 'TruongKhoa', 'MaBoMon', 'TruongBoMon', 'MaNganh', 'KhoaHoc',
             'NamHoc', 'NgayBatDau', 'NgayKetThuc', 'NgayDiHoc', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi',
-            'SoTinChiTichLuy', 'DiemTichLuy', 'TrangThai', 'MatKhau', 'MaVaiTro', 'LoaiPhanCong'
+            'SoTinChiTichLuy', 'DiemTichLuy', 'TrangThai', 'MatKhau', 'MaVaiTro', 'LoaiPhanCong',
+            'GhiChu', 'DieuKien', 'SoNhomToiDa', 'KetQua', 'GPA', 'DiemTB', 'TinChi', 'SoTinChi'
         ];
 
         // --- Strategy 3: Native PHP fgetcsv fallback (no extensions needed) ---
@@ -420,6 +425,14 @@ class ExcelImportService
             if ($gv) return $gv->MaGV;
         }
         return GiangVien::where('HoTen', 'LIKE', '%' . $valStr . '%')->value('MaGV');
+    }
+
+    private function resolveHocPhanId($val)
+    {
+        if (empty($val)) return null;
+        $valStr = trim((string)$val);
+        if (\App\Models\HocPhan::where('MaHocPhan', $valStr)->exists()) return $valStr;
+        return \App\Models\HocPhan::where('TenHocPhan', 'LIKE', '%' . $valStr . '%')->value('MaHocPhan');
     }
 
     private function resolveSinhVienId($val)
@@ -845,7 +858,7 @@ class ExcelImportService
         $this->validateTemplateHeaders(
             $rows,
             ['MaGV', 'HoTen', 'MaBoMon'],
-            ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai'],
+            ['MaGV', 'HoTen', 'Email', 'SoDienThoai', 'NgaySinh', 'GioiTinh', 'HocHam', 'HocVi', 'MaBoMon', 'TrangThai', 'MaHocKy', 'SoNhomToiDa'],
             'Giảng viên'
         );
 
@@ -867,6 +880,8 @@ class ExcelImportService
             $hocVi = trim($row['HocVi'] ?? 'Thạc sĩ');
             $maBoMonVal = trim($row['MaBoMon'] ?? '');
             $trangThai = trim($row['TrangThai'] ?? 'Đang công tác');
+            $rowMaHocKy = trim($row['MaHocKy'] ?? '') ?: $maHocKy;
+            $soNhomToiDa = (isset($row['SoNhomToiDa']) && is_numeric($row['SoNhomToiDa'])) ? (int)$row['SoNhomToiDa'] : 5;
 
             if (empty($maGV)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Mã giảng viên (MaGV) không được để trống', 'data' => $row];
@@ -916,75 +931,128 @@ class ExcelImportService
                 continue;
             }
 
-            if (TaiKhoan::where('TenDangNhap', $maGV)->orWhere('MaTK', $maGV)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên / Tài khoản '{$maGV}' đã tồn tại trong CSDL", 'data' => $row];
-                continue;
-            }
+            // Kiểm tra giảng viên đã tồn tại chưa (hỗ trợ import lại / cập nhật)
+            $existingGv = GiangVien::where('MaGV', $maGV)->first();
 
-            if (GiangVien::where('MaGV', $maGV)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Mã giảng viên '{$maGV}' đã tồn tại trong CSDL", 'data' => $row];
-                continue;
-            }
-
-            if (!empty($email) && GiangVien::where('Email', $email)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong CSDL", 'data' => $row];
-                continue;
-            }
-
-            if (!empty($phone) && GiangVien::where('SoDienThoai', $phone)->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' đã trùng lặp trong CSDL", 'data' => $row];
-                continue;
+            if ($existingGv) {
+                // Giảng viên đã có: kiểm tra email & phone không bị trùng với giảng viên KHÁC
+                if (!empty($email) && GiangVien::where('Email', $email)->where('MaGV', '!=', $maGV)->exists()) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã được sử dụng bởi giảng viên khác trong CSDL", 'data' => $row];
+                    continue;
+                }
+                if (!empty($phone) && GiangVien::where('SoDienThoai', $phone)->where('MaGV', '!=', $maGV)->exists()) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' đã được sử dụng bởi giảng viên khác trong CSDL", 'data' => $row];
+                    continue;
+                }
+            } else {
+                // Giảng viên mới: kiểm tra email & phone không bị trùng trong CSDL
+                if (!empty($email) && GiangVien::where('Email', $email)->exists()) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Email '{$email}' đã trùng lặp trong CSDL", 'data' => $row];
+                    continue;
+                }
+                if (!empty($phone) && GiangVien::where('SoDienThoai', $phone)->exists()) {
+                    $errors[] = ['row' => $rNum, 'reason' => "Số điện thoại '{$phone}' đã trùng lặp trong CSDL", 'data' => $row];
+                    continue;
+                }
             }
 
             $validItems[] = [
-                'maGV'      => $maGV,
-                'hoTen'     => $hoTen,
-                'email'     => $email,
-                'phone'     => !empty($phone) ? $phone : null,
-                'ngaySinh'  => $ngaySinh,
-                'gioiTinh'  => !empty($gioiTinh) ? $gioiTinh : null,
-                'hocHam'    => !empty($hocHam) ? $hocHam : null,
-                'hocVi'     => !empty($hocVi) ? $hocVi : 'Thạc sĩ',
-                'maBoMon'   => $maBoMon,
-                'trangThai' => !empty($trangThai) ? $trangThai : 'Đang công tác',
+                'exists'      => (bool)$existingGv,
+                'existingGv'  => $existingGv,
+                'maGV'        => $maGV,
+                'hoTen'       => $hoTen,
+                'email'       => $email,
+                'phone'       => !empty($phone) ? $phone : null,
+                'ngaySinh'    => $ngaySinh,
+                'gioiTinh'    => !empty($gioiTinh) ? $gioiTinh : null,
+                'hocHam'      => !empty($hocHam) ? $hocHam : null,
+                'hocVi'       => !empty($hocVi) ? $hocVi : 'Thạc sĩ',
+                'maBoMon'     => $maBoMon,
+                'trangThai'   => !empty($trangThai) ? $trangThai : 'Đang công tác',
+                'maHocKy'     => $rowMaHocKy,
+                'soNhomToiDa' => $soNhomToiDa,
+                'matKhau'     => trim($row['MatKhau'] ?? ''),
             ];
         }
 
         if (!empty($validItems)) {
-            DB::transaction(function () use ($validItems, $maHocKy) {
+            DB::transaction(function () use ($validItems) {
                 foreach ($validItems as $item) {
-                    $tk = TaiKhoan::create([
-                        'MaTK'              => $item['maGV'],
-                        'TenDangNhap'       => $item['maGV'],
-                        'MatKhau'           => Hash::make('123456'),
-                        'MaVaiTro'          => 'VT02',
-                        'TrangThai'         => true,
-                        'TrangThaiMatKhau'  => 'INITIAL',
-                        'BatBuocDoiMatKhau' => true,
-                        'SoLanDangNhapSai'  => 0,
-                    ]);
+                    $initialPassword = (!empty($item['matKhau']) && $item['matKhau'] !== '123456') ? $item['matKhau'] : 'Huit@2026';
 
-                    GiangVien::create([
-                        'MaGV'        => $item['maGV'],
-                        'MaTK'        => $tk->MaTK,
-                        'MaBoMon'     => $item['maBoMon'],
-                        'HoTen'       => $item['hoTen'],
-                        'NgaySinh'    => $item['ngaySinh'],
-                        'GioiTinh'    => $item['gioiTinh'],
-                        'Email'       => $item['email'],
-                        'SoDienThoai' => $item['phone'],
-                        'HocHam'      => $item['hocHam'],
-                        'HocVi'       => $item['hocVi'],
-                        'TrangThai'   => $item['trangThai'],
-                    ]);
+                    if ($item['exists']) {
+                        // 1. Cập nhật hồ sơ giảng viên đã có
+                        $gv = $item['existingGv'];
+                        $updateData = [
+                            'HoTen'     => $item['hoTen'],
+                            'MaBoMon'   => $item['maBoMon'],
+                            'Email'     => $item['email'],
+                            'HocVi'     => $item['hocVi'],
+                            'TrangThai' => $item['trangThai'],
+                        ];
+                        if ($item['phone']) $updateData['SoDienThoai'] = $item['phone'];
+                        if ($item['ngaySinh']) $updateData['NgaySinh'] = $item['ngaySinh'];
+                        if ($item['gioiTinh']) $updateData['GioiTinh'] = $item['gioiTinh'];
+                        if ($item['hocHam']) $updateData['HocHam'] = $item['hocHam'];
 
-                    if (!empty($maHocKy)) {
-                        ChiTieuHuongDan::firstOrCreate([
-                            'MaHocKy' => $maHocKy,
+                        $gv->update($updateData);
+
+                        // Đảm bảo có tài khoản Portal với TenDangNhap = MaGV
+                        $tk = TaiKhoan::firstOrCreate(
+                            ['TenDangNhap' => $item['maGV']],
+                            [
+                                'MaTK'              => $item['maGV'],
+                                'TenDangNhap'       => $item['maGV'],
+                                'MatKhau'           => Hash::make($initialPassword),
+                                'MaVaiTro'          => 'VT02',
+                                'TrangThai'         => true,
+                                'TrangThaiMatKhau'  => 'INITIAL',
+                                'BatBuocDoiMatKhau' => true,
+                                'SoLanDangNhapSai'  => 0,
+                            ]
+                        );
+                        if ($gv->MaTK !== $tk->MaTK) {
+                            $gv->update(['MaTK' => $tk->MaTK]);
+                        }
+                    } else {
+                        // 2. Tạo mới tài khoản và giảng viên
+                        $tk = TaiKhoan::firstOrCreate(
+                            ['TenDangNhap' => $item['maGV']],
+                            [
+                                'MaTK'              => $item['maGV'],
+                                'TenDangNhap'       => $item['maGV'],
+                                'MatKhau'           => Hash::make($initialPassword),
+                                'MaVaiTro'          => 'VT02',
+                                'TrangThai'         => true,
+                                'TrangThaiMatKhau'  => 'INITIAL',
+                                'BatBuocDoiMatKhau' => true,
+                                'SoLanDangNhapSai'  => 0,
+                            ]
+                        );
+
+                        GiangVien::create([
+                            'MaGV'        => $item['maGV'],
+                            'MaTK'        => $tk->MaTK,
+                            'MaBoMon'     => $item['maBoMon'],
+                            'HoTen'       => $item['hoTen'],
+                            'NgaySinh'    => $item['ngaySinh'],
+                            'GioiTinh'    => $item['gioiTinh'],
+                            'Email'       => $item['email'],
+                            'SoDienThoai' => $item['phone'],
+                            'HocHam'      => $item['hocHam'],
+                            'HocVi'       => $item['hocVi'],
+                            'TrangThai'   => $item['trangThai'],
+                        ]);
+                    }
+
+                    // Gán / Cập nhật chỉ tiêu hướng dẫn theo học kỳ nếu có
+                    if (!empty($item['maHocKy'])) {
+                        ChiTieuHuongDan::updateOrCreate([
+                            'MaHocKy' => $item['maHocKy'],
                             'MaGV'    => $item['maGV'],
                         ], [
-                            'MaChiTieu'   => 'CT_' . substr(md5($item['maGV'] . '_' . $maHocKy . '_' . uniqid()), 0, 16),
-                            'SoNhomToiDa' => 5,
+                            'MaChiTieu'   => 'CT_' . substr(md5($item['maGV'] . '_' . $item['maHocKy'] . '_' . uniqid()), 0, 16),
+                            'SoNhomToiDa' => $item['soNhomToiDa'] ?? 5,
                             'NgayPhanBo'  => now(),
                         ]);
                     }
@@ -1086,7 +1154,7 @@ class ExcelImportService
 
             $lop = Lop::with('nganh')->find($maLop);
             $maNganh = !empty($row['MaNganh']) ? $this->resolveNganhId($row['MaNganh']) : ($lop->MaNganh ?? null);
-            $maKhoa = !empty($row['MaKhoa']) ? $this->resolveKhoaId($row['MaKhoa']) : ($lop->MaKhoa ?? ($lop->nganh->MaKhoa ?? null));
+            $maKhoa = !empty($row['MaKhoa']) ? $this->resolveKhoaId($row['MaKhoa']) : ($lop->MaKhoa ?? ($lop->nganh->MaKhoa ?? 'CNTT'));
             $khoaHocFinal = !empty($khoaHoc) ? $khoaHoc : ($lop->KhoaHoc ?? '2023-2027');
 
             if (TaiKhoan::where('TenDangNhap', $mssv)->orWhere('MaTK', $mssv)->exists()) {
@@ -1123,16 +1191,19 @@ class ExcelImportService
                 'tinChi'      => max(0, $tinChi),
                 'diemTL'      => max(0.00, $diemTL),
                 'trangThai'   => !empty($trangThai) ? $trangThai : 'Đang học',
+                'matKhau'     => trim($row['MatKhau'] ?? ''),
             ];
         }
 
         if (!empty($validItems)) {
             DB::transaction(function () use ($validItems) {
                 foreach ($validItems as $item) {
+                    $initialPassword = (!empty($item['matKhau']) && $item['matKhau'] !== '123456') ? $item['matKhau'] : 'Huit@2026';
+
                     $tk = TaiKhoan::create([
                         'MaTK'              => $item['mssv'],
                         'TenDangNhap'       => $item['mssv'],
-                        'MatKhau'           => Hash::make('123456'),
+                        'MatKhau'           => Hash::make($initialPassword),
                         'MaVaiTro'          => 'VT03',
                         'TrangThai'         => true,
                         'TrangThaiMatKhau'  => 'INITIAL',
@@ -1172,80 +1243,223 @@ class ExcelImportService
     }
 
     // ==========================================
-    // 6. IMPORT ĐỀ TÀI (GIẢNG VIÊN THỰC HIỆN)
+    // 6. IMPORT ĐỀ TÀI KHÓA LUẬN
     // ==========================================
-    public function importDeTai($file, int $maTK, ?int $maLopPhanCong = null): array
+    public function importDeTai($file, ?string $defaultMaGV = null, ?string $defaultMaHocKy = null): array
     {
         $rows = $this->parseFile($file);
+        $this->validateTemplateHeaders(
+            $rows,
+            ['TenDeTai'],
+            ['MaDeTai', 'TenDeTai', 'MoTa', 'YeuCau', 'LinhVuc', 'MaHocPhan', 'TenHocPhan', 'MaGV', 'TenGV', 'MaHocKy', 'SoLuongSinhVienToiDa', 'TrangThai'],
+            'Đề tài'
+        );
+
         $success = 0;
         $errors = [];
         $seenDeTai = [];
 
+        $currentHocKy = $defaultMaHocKy 
+            ?? \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->value('MaHocKy') 
+            ?? 'HK2627_1';
+
+        $maxDT = DB::table('DeTai')
+            ->where('MaDeTai', 'REGEXP', '^DT[0-9]+$')
+            ->max(DB::raw("CAST(SUBSTRING(MaDeTai, 3) AS UNSIGNED)")) ?? 0;
+        $nextDTNum = (int)$maxDT;
+
         foreach ($rows as $row) {
             $rNum = $row['_row_num'];
             $tenDeTai = trim($row['TenDeTai'] ?? '');
-
-            // Thử resolve Lớp Học Phần
-            $maLopHP = $this->resolveLopHocPhanId($row['MaLopHP'] ?? $row['TenLopHP'] ?? null);
-            $lopHP = $maLopHP ? \App\Models\LopHocPhan::find($maLopHP) : null;
-
-            $maMon = $lopHP ? $lopHP->MaMon : $this->resolveMonHocId($row['MaMon'] ?? $row['TenMon'] ?? 1);
-            $maHocKy = $lopHP ? $lopHP->MaHocKy : $this->resolveHocKyId($row['MaHocKy'] ?? $row['TenHocKy'] ?? 1);
-            $maLop = $this->resolveLopId($row['MaLop'] ?? $row['TenLop'] ?? $maLopPhanCong ?? null);
+            $maDeTai = strtoupper(trim($row['MaDeTai'] ?? ''));
 
             if (empty($tenDeTai)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên đề tài không được để trống', 'data' => $row];
                 continue;
             }
 
-            $uniqueKey = mb_strtolower($tenDeTai) . '_' . ($maLopHP ?? $maLop ?? 0);
+            if (mb_strlen($tenDeTai) < 10) {
+                $errors[] = ['row' => $rNum, 'reason' => "Tên đề tài '{$tenDeTai}' quá ngắn (tối thiểu 10 ký tự)", 'data' => $row];
+                continue;
+            }
+
+            $uniqueKey = mb_strtolower($tenDeTai);
             if (in_array($uniqueKey, $seenDeTai)) {
                 $errors[] = ['row' => $rNum, 'reason' => "Tên đề tài '{$tenDeTai}' bị trùng lặp trong file Excel", 'data' => $row];
                 continue;
             }
             $seenDeTai[] = $uniqueKey;
 
-            // Kiểm tra trùng tên đề tài
-            $queryExists = DeTai::where('TenDeTai', $tenDeTai);
-            if ($maLopHP) {
-                $queryExists->where('MaLopHP', $maLopHP);
-            } elseif ($maLop) {
-                $queryExists->where('MaLop', $maLop);
-            }
-            if ($queryExists->exists()) {
-                $errors[] = ['row' => $rNum, 'reason' => "Đề tài '{$tenDeTai}' đã bị trùng lặp trong lớp/lớp học phần", 'data' => $row];
+            // Resolve Giảng viên
+            $maGV = $this->resolveGiangVienId($row['MaGV'] ?? $row['TenGV'] ?? $defaultMaGV);
+            if (empty($maGV)) {
+                $errors[] = ['row' => $rNum, 'reason' => "Không tìm thấy giảng viên '{$row['MaGV']}' / '{$row['TenGV']}' trong hệ thống", 'data' => $row];
                 continue;
+            }
+
+            // Resolve Học phần
+            $maHocPhan = $this->resolveHocPhanId($row['MaHocPhan'] ?? $row['TenHocPhan'] ?? null);
+            $hocPhanObj = $maHocPhan ? \App\Models\HocPhan::find($maHocPhan) : null;
+            if (!$hocPhanObj) {
+                $gvObj = \App\Models\GiangVien::find($maGV);
+                if ($gvObj && $gvObj->MaBoMon) {
+                    $hocPhanObj = \App\Models\HocPhan::where('MaBoMon', $gvObj->MaBoMon)->where('LoaiHocPhan', 'Khóa luận')->first();
+                }
+                if (!$hocPhanObj) {
+                    $hocPhanObj = \App\Models\HocPhan::where('LoaiHocPhan', 'Khóa luận')->first() ?? \App\Models\HocPhan::first();
+                }
+                $maHocPhan = $hocPhanObj?->MaHocPhan;
+            }
+
+            // Resolve Học kỳ
+            $maHocKy = $this->resolveHocKyId($row['MaHocKy'] ?? $currentHocKy) ?? $currentHocKy;
+
+            $soLuongSV = !empty($row['SoLuongSinhVienToiDa']) ? (int)$row['SoLuongSinhVienToiDa'] : 3;
+            if ($soLuongSV < 1 || $soLuongSV > 5) {
+                $soLuongSV = 3;
+            }
+
+            $trangThai = trim($row['TrangThai'] ?? 'Đã công bố');
+            if (empty($trangThai)) {
+                $trangThai = 'Đã công bố';
+            }
+
+            $moTa = trim($row['MoTa'] ?? '');
+            if (empty($moTa)) {
+                $moTa = "Đề tài nghiên cứu và phát triển giải pháp: {$tenDeTai}.";
+            }
+
+            $yeuCau = trim($row['YeuCau'] ?? '');
+            if (empty($yeuCau)) {
+                $yeuCau = 'Sinh viên nắm vững kiến thức chuyên ngành, có khả năng nghiên cứu độc lập và làm việc nhóm.';
+            }
+
+            $linhVuc = trim($row['LinhVuc'] ?? '');
+            if (empty($linhVuc)) {
+                $linhVuc = 'Công nghệ phần mềm';
+            }
+
+            // Kiểm tra xem đề tài đã tồn tại chưa (Hỗ trợ Upsert / cập nhật lại khi re-import)
+            $existingDT = DeTai::where('TenDeTai', $tenDeTai)
+                ->when(!empty($maDeTai), function($q) use ($maDeTai) {
+                    $q->orWhere('MaDeTai', $maDeTai);
+                })
+                ->first();
+
+            if ($existingDT) {
+                try {
+                    $existingDT->update([
+                        'TenDeTai'             => $tenDeTai,
+                        'MoTa'                 => $moTa,
+                        'YeuCau'               => $yeuCau,
+                        'LinhVuc'              => $linhVuc,
+                        'SoLuongSinhVienToiDa' => $soLuongSV,
+                        'MaGV'                 => $maGV,
+                        'MaHocKy'              => $maHocKy,
+                        'MaHocPhan'            => $maHocPhan,
+                        'HocPhan'              => $hocPhanObj?->TenHocPhan ?? $existingDT->HocPhan,
+                        'TrangThai'            => $trangThai,
+                        'NgayDuyet'            => ($trangThai === 'Đã công bố' || $trangThai === 'Đã duyệt') ? ($existingDT->NgayDuyet ?? now()) : $existingDT->NgayDuyet,
+                    ]);
+
+                    $gvProfile = \App\Models\GiangVien::find($maGV);
+                    \App\Models\ChiTietDuyetDeTai::create([
+                        'MaDuyet'       => \App\Helpers\IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                        'MaDeTai'       => $existingDT->MaDeTai,
+                        'MaGV'          => $maGV,
+                        'NguoiThucHien' => ($gvProfile->HoTen ?? $maGV) . ' - Giảng viên',
+                        'HanhDong'      => 'Cập nhật đề tài từ file Excel',
+                        'TrangThaiCu'   => $existingDT->TrangThai,
+                        'TrangThai'     => $trangThai,
+                        'LyDo'          => 'Cập nhật lại thông tin đề tài từ file mẫu.',
+                        'NgayDuyet'     => now(),
+                    ]);
+
+                    $success++;
+                } catch (\Exception $e) {
+                    $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
+                }
+                continue;
+            }
+
+            // Mã đề tài cho đề tài mới
+            if (empty($maDeTai)) {
+                $nextDTNum++;
+                $maDeTai = 'DT' . str_pad($nextDTNum, 2, '0', STR_PAD_LEFT);
+                while (DeTai::where('MaDeTai', $maDeTai)->exists()) {
+                    $nextDTNum++;
+                    $maDeTai = 'DT' . str_pad($nextDTNum, 2, '0', STR_PAD_LEFT);
+                }
+            }
+
+            $soLuongSV = !empty($row['SoLuongSinhVienToiDa']) ? (int)$row['SoLuongSinhVienToiDa'] : 3;
+            if ($soLuongSV < 1 || $soLuongSV > 5) {
+                $soLuongSV = 3;
+            }
+
+            $trangThai = trim($row['TrangThai'] ?? 'Đã công bố');
+            if (empty($trangThai)) {
+                $trangThai = 'Đã công bố';
+            }
+
+            $moTa = trim($row['MoTa'] ?? '');
+            if (empty($moTa)) {
+                $moTa = "Đề tài nghiên cứu và phát triển giải pháp: {$tenDeTai}.";
+            }
+
+            $yeuCau = trim($row['YeuCau'] ?? '');
+            if (empty($yeuCau)) {
+                $yeuCau = 'Sinh viên nắm vững kiến thức chuyên ngành, có khả năng nghiên cứu độc lập và làm việc nhóm.';
+            }
+
+            $linhVuc = trim($row['LinhVuc'] ?? '');
+            if (empty($linhVuc)) {
+                $linhVuc = 'Công nghệ phần mềm';
             }
 
             try {
                 DeTai::create([
-                    'MaTK' => $maTK,
-                    'MaMon' => $maMon ?? 1,
-                    'MaLop' => $maLop,
-                    'MaLopHP' => $maLopHP,
-                    'MaHocKy' => $maHocKy ?? 1,
-                    'TenDeTai' => $tenDeTai,
-                    'MoTa' => $row['MoTa'] ?? '',
-                    'YeuCau' => $row['YeuCau'] ?? '',
-                    'HanDangKy' => $row['HanDangKy'] ?? null,
-                    'HanBaoCao' => $row['HanBaoCao'] ?? null,
-                    'HanNopSanPham' => $row['HanNopSanPham'] ?? null,
-                    'TrangThai' => 'Đang mở đăng ký',
-                    'NgayTao' => now()->toDateString()
+                    'MaDeTai'              => $maDeTai,
+                    'TenDeTai'             => $tenDeTai,
+                    'MoTa'                 => $moTa,
+                    'YeuCau'               => $yeuCau,
+                    'LinhVuc'              => $linhVuc,
+                    'SoLuongSinhVienToiDa' => $soLuongSV,
+                    'MaGV'                 => $maGV,
+                    'MaHocKy'              => $maHocKy,
+                    'MaHocPhan'            => $maHocPhan,
+                    'HocPhan'              => $hocPhanObj?->TenHocPhan ?? 'Khóa luận tốt nghiệp',
+                    'TrangThai'            => $trangThai,
+                    'NgayDeXuat'           => now(),
+                    'NgayDuyet'            => ($trangThai === 'Đã công bố' || $trangThai === 'Đã duyệt') ? now() : null,
                 ]);
+
+                $gvProfile = \App\Models\GiangVien::find($maGV);
+                \App\Models\ChiTietDuyetDeTai::create([
+                    'MaDuyet'       => \App\Helpers\IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                    'MaDeTai'       => $maDeTai,
+                    'MaGV'          => $maGV,
+                    'NguoiThucHien' => ($gvProfile->HoTen ?? $maGV) . ' - Giảng viên',
+                    'HanhDong'      => 'Import đề tài từ file mẫu',
+                    'TrangThaiCu'   => 'Bản nháp',
+                    'TrangThai'     => $trangThai,
+                    'LyDo'          => 'Import danh sách đề tài khóa luận chính thức.',
+                    'NgayDuyet'     => now(),
+                ]);
+
                 $success++;
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $errors[] = ['row' => $rNum, 'reason' => $e->getMessage(), 'data' => $row];
             }
         }
 
         AuditLog::log('import_de_tai', 'DeTai', null, ['success' => $success, 'errors' => count($errors)]);
         return [
-            'total_count' => count($rows),
+            'total_count'   => count($rows),
             'success_count' => $success,
-            'error_count' => count($errors),
-            'errors' => $errors,
-            'error_file' => $this->generateErrorFile($errors)
+            'error_count'   => count($errors),
+            'errors'        => $errors,
+            'error_file'    => $this->generateErrorFile($errors)
         ];
     }
 
@@ -1842,6 +2056,12 @@ class ExcelImportService
             $maHocKy = trim($row['MaHocKy'] ?? $row['HocKy'] ?? $targetMaHocKy ?? '');
             $trangThaiDk = trim($row['TrangThai'] ?? $row['KetQua'] ?? '');
             $ghiChu = trim($row['GhiChu'] ?? $row['LyDo'] ?? '');
+            $emailInFile = trim($row['Email'] ?? '');
+            $phoneInFile = trim($row['SoDienThoai'] ?? $row['DienThoai'] ?? '');
+            $ngaySinhInFile = $this->parseDate($row['NgaySinh'] ?? null);
+            $gioiTinhInFile = trim($row['GioiTinh'] ?? '');
+            $maLopInFile = trim($row['MaLop'] ?? $row['TenLop'] ?? $row['Lop'] ?? '');
+            $khoaHocInFile = trim($row['KhoaHoc'] ?? '');
             $tinChiInFile = isset($row['SoTinChiTichLuy']) ? $row['SoTinChiTichLuy'] : (isset($row['SoTinChi']) ? $row['SoTinChi'] : (isset($row['TinChi']) ? $row['TinChi'] : null));
             $gpaInFile = isset($row['DiemTichLuy']) ? $row['DiemTichLuy'] : (isset($row['DiemTB']) ? $row['DiemTB'] : (isset($row['GPA']) ? $row['GPA'] : null));
 
@@ -1865,22 +2085,31 @@ class ExcelImportService
             $sv = SinhVien::where('MaSV', $mssv)->first();
             if (!$sv) {
                 if (!empty($hoTen)) {
-                    $maLop = trim($row['MaLop'] ?? $row['TenLop'] ?? '');
-                    $lopObj = null;
-                    if (!empty($maLop)) {
-                        $lopObj = Lop::where('MaLop', $maLop)->orWhere('TenLop', $maLop)->first();
+                    $resolvedLopId = !empty($maLopInFile) ? $this->resolveLopId($maLopInFile) : null;
+                    if (!$resolvedLopId) {
+                        $resolvedLopId = Lop::value('MaLop');
                     }
-                    if (!$lopObj) {
-                        $lopObj = Lop::first();
-                    }
+                    $lopObj = Lop::with('nganh')->find($resolvedLopId);
+
+                    $emailFinal = (!empty($emailInFile) && $this->isValidEmail($emailInFile))
+                        ? $emailInFile
+                        : (strtolower($mssv) . '@st.huit.edu.vn');
+
+                    $phoneFinal = (!empty($phoneInFile) && $this->isValidPhone($phoneInFile))
+                        ? $phoneInFile
+                        : (!empty($phoneInFile) ? $phoneInFile : null);
+
+                    $khoaHocFinal = !empty($khoaHocInFile) ? $khoaHocInFile : ($lopObj?->KhoaHoc ?? '2021-2025');
+                    $tinChiFinal = is_numeric($tinChiInFile) ? (int)$tinChiInFile : 120;
+                    $gpaFinal = is_numeric($gpaInFile) ? (float)$gpaInFile : 2.50;
 
                     try {
-                        // Tự động tạo tài khoản Portal cho sinh viên mới (Mật khẩu mặc định: 123456)
+                        // Tự động tạo tài khoản Portal cho sinh viên mới
                         $tk = TaiKhoan::firstOrCreate(
                             ['TenDangNhap' => $mssv],
                             [
                                 'MaTK'              => $mssv,
-                                'MatKhau'           => \Illuminate\Support\Facades\Hash::make('123456'),
+                                'MatKhau'           => \Illuminate\Support\Facades\Hash::make('Huit@2026'),
                                 'MaVaiTro'          => 'VT03',
                                 'TrangThai'         => true,
                                 'TrangThaiMatKhau'  => 'INITIAL',
@@ -1893,12 +2122,14 @@ class ExcelImportService
                             'MaSV'            => $mssv,
                             'MaTK'            => $tk->MaTK,
                             'HoTen'           => $hoTen,
-                            'Email'           => $mssv . '@st.huit.edu.vn',
-                            'SoDienThoai'     => '0900000000',
-                            'MaLop'           => $lopObj?->MaLop,
-                            'KhoaHoc'         => $lopObj?->KhoaHoc ?? '2021-2025',
-                            'SoTinChiTichLuy' => is_numeric($tinChiInFile) ? (int)$tinChiInFile : 120,
-                            'DiemTichLuy'     => is_numeric($gpaInFile) ? (float)$gpaInFile : 2.50,
+                            'Email'           => $emailFinal,
+                            'SoDienThoai'     => $phoneFinal,
+                            'NgaySinh'        => $ngaySinhInFile,
+                            'GioiTinh'        => !empty($gioiTinhInFile) ? $gioiTinhInFile : null,
+                            'MaLop'           => $resolvedLopId,
+                            'KhoaHoc'         => $khoaHocFinal,
+                            'SoTinChiTichLuy' => $tinChiFinal,
+                            'DiemTichLuy'     => $gpaFinal,
                             'TrangThai'       => 'Đang học',
                             'MaKhoa'          => $lopObj?->MaKhoa ?? 'CNTT',
                             'MaNganh'         => $lopObj?->MaNganh ?? '7480201',
@@ -1918,7 +2149,7 @@ class ExcelImportService
                         ['TenDangNhap' => $sv->MaSV],
                         [
                             'MaTK'              => $sv->MaSV,
-                            'MatKhau'           => \Illuminate\Support\Facades\Hash::make('123456'),
+                            'MatKhau'           => \Illuminate\Support\Facades\Hash::make('Huit@2026'),
                             'MaVaiTro'          => 'VT03',
                             'TrangThai'         => true,
                             'TrangThaiMatKhau'  => 'INITIAL',
@@ -1930,18 +2161,20 @@ class ExcelImportService
                     $sv->save();
                 }
 
-                $needsSave = false;
-                if (is_numeric($tinChiInFile)) {
-                    $sv->SoTinChiTichLuy = (int)$tinChiInFile;
-                    $needsSave = true;
+                // Cập nhật thông tin sinh viên từ file nếu được cung cấp
+                if (!empty($hoTen)) $sv->HoTen = $hoTen;
+                if (!empty($emailInFile) && $this->isValidEmail($emailInFile)) $sv->Email = $emailInFile;
+                if (!empty($phoneInFile)) $sv->SoDienThoai = $phoneInFile;
+                if ($ngaySinhInFile) $sv->NgaySinh = $ngaySinhInFile;
+                if (!empty($gioiTinhInFile)) $sv->GioiTinh = $gioiTinhInFile;
+                if (!empty($khoaHocInFile)) $sv->KhoaHoc = $khoaHocInFile;
+                if (!empty($maLopInFile)) {
+                    $resolvedLop = $this->resolveLopId($maLopInFile);
+                    if ($resolvedLop) $sv->MaLop = $resolvedLop;
                 }
-                if (is_numeric($gpaInFile)) {
-                    $sv->DiemTichLuy = (float)$gpaInFile;
-                    $needsSave = true;
-                }
-                if ($needsSave) {
-                    $sv->save();
-                }
+                if (is_numeric($tinChiInFile)) $sv->SoTinChiTichLuy = (int)$tinChiInFile;
+                if (is_numeric($gpaInFile)) $sv->DiemTichLuy = (float)$gpaInFile;
+                $sv->save();
             }
 
             // Đánh giá điều kiện
@@ -1986,6 +2219,7 @@ class ExcelImportService
             'success_count' => $success,
             'error_count' => count($errors),
             'errors' => $errors,
+            'error_file' => $this->generateErrorFile($errors)
         ];
     }
 
@@ -2035,10 +2269,14 @@ class ExcelImportService
 
                 try {
                     $tkObj = TaiKhoan::create([
-                        'TenDangNhap' => $mssv,
-                        'MatKhau' => Hash::make('123456'),
-                        'MaVaiTro' => $roleId,
-                        'TrangThai' => true
+                        'MaTK'              => $mssv,
+                        'TenDangNhap'       => $mssv,
+                        'MatKhau'           => Hash::make('Huit@2026'),
+                        'MaVaiTro'          => $roleId,
+                        'TrangThai'         => true,
+                        'TrangThaiMatKhau'  => 'INITIAL',
+                        'BatBuocDoiMatKhau' => true,
+                        'SoLanDangNhapSai'  => 0,
                     ]);
 
                     $hoTenStr = trim($row['HoTen'] ?? "Sinh Viên {$mssv}");
@@ -2139,8 +2377,8 @@ class ExcelImportService
             $username = trim($row['TenDangNhap'] ?? '');
             $hoTen = trim($row['HoTen'] ?? '');
             $email = trim($row['Email'] ?? '');
-            $vaiTro = trim($row['MaVaiTro'] ?? 'VT01');
-            $password = !empty($row['MatKhau']) ? trim($row['MatKhau']) : '123456';
+            $rawPass = trim($row['MatKhau'] ?? '');
+            $password = (!empty($rawPass) && $rawPass !== '123456') ? $rawPass : \Illuminate\Support\Str::password(12, true, true, false, false);
 
             if (empty($username)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên đăng nhập không được để trống', 'data' => $row];
@@ -2207,7 +2445,8 @@ class ExcelImportService
             $vaiTro = strtoupper(trim($row['MaVaiTro'] ?? ''));
             $maKhoa = trim($row['MaKhoa'] ?? '');
             $maBoMon = trim($row['MaBoMon'] ?? '');
-            $password = !empty($row['MatKhau']) ? trim($row['MatKhau']) : '123456';
+            $rawPass = trim($row['MatKhau'] ?? '');
+            $password = (!empty($rawPass) && $rawPass !== '123456') ? $rawPass : 'Huit@2026';
 
             if (empty($username) || empty($hoTen) || empty($maKhoa) || empty($vaiTro)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Thiếu các thông tin bắt buộc (TenDangNhap, HoTen, MaVaiTro, MaKhoa)', 'data' => $row];

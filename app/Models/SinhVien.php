@@ -117,14 +117,23 @@ class SinhVien extends Model
         $maNganh = $nganh?->MaNganh ?? $this->MaNganh;
 
         if ($maNganh === '7480104' || str_contains($tenNganh, 'hệ thống thông tin')) {
-            return 'BM_HTTT';
+            $bm = 'HTTT';
+        } elseif ($maNganh === '7480202' || str_contains($tenNganh, 'an toàn')) {
+            $bm = 'ATTT';
+        } elseif ($maNganh === '7480101' || str_contains($tenNganh, 'khoa học máy tính')) {
+            $bm = 'KHMT';
+        } elseif ($maNganh === '7460112' || str_contains($tenNganh, 'dữ liệu')) {
+            $bm = 'KHDL';
+        } elseif ($maNganh === '7480102' || str_contains($tenNganh, 'mạng máy tính') || str_contains($tenNganh, 'truyền thông')) {
+            $bm = 'MMT';
+        } else {
+            $bm = 'CNPM';
         }
-        if ($maNganh === '7480202' || str_contains($tenNganh, 'an toàn')) {
-            return 'BM_ATTT';
+
+        if (\App\Models\BoMon::where('MaBoMon', 'BM_' . $bm)->exists()) {
+            return 'BM_' . $bm;
         }
-        if ($maNganh === '7480101' || str_contains($tenNganh, 'khoa học máy tính')) {
-            return 'BM_KHMT';
-        }
-        return 'BM_CNPM';
+
+        return $bm;
     }
 }

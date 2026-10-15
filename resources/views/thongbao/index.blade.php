@@ -12,11 +12,13 @@
                 <i class="fa-solid fa-bullhorn text-primary me-2"></i>Quản Lý Thông Báo
             </h4>
         </div>
+        @if(in_array($role ?? '', ['Admin', 'Giáo vụ']))
         <div>
             <a href="{{ route('thongbao.create') }}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm fw-semibold">
                 <i class="fa-solid fa-plus me-1"></i> Tạo Thông Báo Mới
             </a>
         </div>
+        @endif
     </div>
 
     <!-- 4 KPI Cards gọn gàng -->
@@ -135,9 +137,13 @@
                                         <span class="badge bg-info-subtle text-info rounded-pill px-3 py-1" style="font-size: 0.78rem;">
                                             Sinh viên
                                         </span>
-                                    @else
+                                    @elseif(in_array($tb->DoiTuongNhan, ['Tất cả', 'Toàn thể']) || empty($tb->DoiTuongNhan))
                                         <span class="badge bg-light text-dark border rounded-pill px-3 py-1" style="font-size: 0.78rem;">
                                             Tất cả
+                                        </span>
+                                    @else
+                                        <span class="badge bg-warning-subtle text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.78rem;" title="Người nhận: {{ $tb->DoiTuongNhan }}">
+                                            <i class="fa-solid fa-user me-1 text-muted"></i>{{ $tb->DoiTuongNhan }}
                                         </span>
                                     @endif
                                 </td>
@@ -169,23 +175,26 @@
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
 
-                                        @if(in_array($tb->TrangThai, ['NHÁP', 'ĐÃ LÊN LỊCH']))
-                                            <a href="{{ route('thongbao.edit', $tb->MaThongBao) }}" class="btn btn-sm btn-light border text-warning px-2 py-1 rounded-3" title="Chỉnh sửa">
-                                                <i class="fa-solid fa-pen"></i>
-                                            </a>
-                                            <form action="{{ route('thongbao.sendNow', $tb->MaThongBao) }}" method="POST" class="d-inline" onsubmit="return confirm('Phát hành ngay thông báo này?');">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-light border text-success px-2 py-1 rounded-3" title="Phát hành">
-                                                    <i class="fa-solid fa-paper-plane"></i>
-                                                </button>
-                                            </form>
-                                        @endif
+                                        @if(in_array($role ?? '', ['Admin', 'Giáo vụ']))
+                                            @if(in_array($tb->TrangThai, ['NHÁP', 'ĐÃ LÊN LỊCH']))
+                                                <a href="{{ route('thongbao.edit', $tb->MaThongBao) }}" class="btn btn-sm btn-light border text-warning px-2 py-1 rounded-3" title="Chỉnh sửa">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <form action="{{ route('thongbao.sendNow', $tb->MaThongBao) }}" method="POST" class="d-inline" onsubmit="return confirm('Phát hành ngay thông báo này?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-light border text-success px-2 py-1 rounded-3" title="Phát hành">
+                                                        <i class="fa-solid fa-paper-plane"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
 
-                                        <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1 rounded-3" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $tb->MaThongBao }}" title="Xóa">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
+                                            <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1 rounded-3" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $tb->MaThongBao }}" title="Xóa">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        @endif
                                     </div>
 
+                                    @if(in_array($role ?? '', ['Admin', 'Giáo vụ']))
                                     <!-- Modal Delete Confirmation -->
                                     <div class="modal fade text-start" id="deleteModal{{ $tb->MaThongBao }}" tabindex="-1">
                                         <div class="modal-dialog modal-dialog-centered">
@@ -212,6 +221,7 @@
                                             </form>
                                         </div>
                                     </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

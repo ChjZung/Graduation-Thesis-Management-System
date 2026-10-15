@@ -85,7 +85,7 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Mô tả tóm tắt nội dung:</label>
-                        <div class="p-3 bg-light rounded" style="white-space: pre-line;">{{ $detai->MoTa ?? 'Chưa cập nhật' }}</div>
+                        <div class="p-3 bg-light rounded" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa cập nhật' !!}</div>
                     </div>
 
                     <div class="mb-3">

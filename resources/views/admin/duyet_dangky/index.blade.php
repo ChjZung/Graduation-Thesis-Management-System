@@ -12,7 +12,7 @@
             Xem & Quản Lý Đăng Ký Đề Tài Khóa Luận
         </h4>
         <p class="page-main-subtitle text-muted mb-0">
-            Theo dõi, tra cứu trạng thái đăng ký đề tài của các nhóm sinh viên theo kết quả phê duyệt từ Giảng viên hướng dẫn (GVHD).
+            Theo dõi, tra cứu trạng thái đăng ký đề tài của các nhóm sinh viên và tiến độ gán đề tài chính thức theo học kỳ.
         </p>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
@@ -39,20 +39,20 @@
        class="admin-pill-tab {{ request('TrangThai', 'ALL') === 'ALL' ? 'active' : '' }}">
         <span class="fw-bold">{{ $counts['total'] ?? 0 }}</span> Tất Cả Đơn
     </a>
-    <a href="{{ route('admin.duyet_dangky.index', array_merge(request()->except('page'), ['TrangThai' => 'Chờ duyệt'])) }}" 
-       class="admin-pill-tab {{ request('TrangThai') === 'Chờ duyệt' ? 'active' : '' }}">
-        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#f59e0b;"></span>
-        <span class="fw-bold">{{ $counts['cho_duyet'] ?? 0 }}</span> Chờ GVHD Duyệt
-    </a>
     <a href="{{ route('admin.duyet_dangky.index', array_merge(request()->except('page'), ['TrangThai' => 'Đã duyệt'])) }}" 
        class="admin-pill-tab {{ request('TrangThai') === 'Đã duyệt' ? 'active' : '' }}">
         <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#10b981;"></span>
-        <span class="fw-bold">{{ $counts['da_duyet'] ?? 0 }}</span> GVHD Đã Duyệt
+        <span class="fw-bold">{{ $counts['da_duyet'] ?? 0 }}</span> Đã Gán Nhóm
+    </a>
+    <a href="{{ route('admin.duyet_dangky.index', array_merge(request()->except('page'), ['TrangThai' => 'Chờ duyệt'])) }}" 
+       class="admin-pill-tab {{ request('TrangThai') === 'Chờ duyệt' ? 'active' : '' }}">
+        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#f59e0b;"></span>
+        <span class="fw-bold">{{ $counts['cho_duyet'] ?? 0 }}</span> Chờ Xử Lý
     </a>
     <a href="{{ route('admin.duyet_dangky.index', array_merge(request()->except('page'), ['TrangThai' => 'Từ chối'])) }}" 
        class="admin-pill-tab {{ request('TrangThai') === 'Từ chối' ? 'active' : '' }}">
         <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:#ef4444;"></span>
-        <span class="fw-bold">{{ $counts['tu_choi'] ?? 0 }}</span> GVHD Đã Từ Chối
+        <span class="fw-bold">{{ $counts['tu_choi'] ?? 0 }}</span> Từ Chối / Hủy
     </a>
 </div>
 
@@ -118,7 +118,7 @@
                     <th style="width: 220px;">Nhóm Sinh Viên</th>
                     <th style="min-width: 300px;">Đề Tài Đăng Ký</th>
                     <th style="min-width: 200px;">GV Hướng Dẫn</th>
-                    <th class="text-center" style="width: 150px;">Kết Quả Từ GVHD</th>
+                    <th class="text-center" style="width: 160px;">Trạng Thái Đăng Ký</th>
                     <th class="text-center" style="width: 130px;">Ngày ĐK</th>
                     <th class="text-center" style="width: 110px;">Thao Tác</th>
                 </tr>
@@ -156,22 +156,22 @@
                         </div>
                     </td>
 
-                    {{-- Trạng thái phê duyệt của GVHD --}}
+                    {{-- Trạng thái đăng ký / gán đề tài --}}
                     <td class="text-center">
                         @if($dk->TrangThai === 'Đã duyệt')
                             <span class="badge bg-success text-white rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle-check me-1"></i>GVHD đã duyệt
+                                <i class="fa-solid fa-circle-check me-1"></i>Đã gán cho nhóm
                             </span>
                             @if($dk->NgayDuyet)
                                 <div class="text-muted small mt-1" style="font-size: 0.72rem;">{{ \Carbon\Carbon::parse($dk->NgayDuyet)->format('d/m/Y') }}</div>
                             @endif
                         @elseif($dk->TrangThai === 'Từ chối')
                             <span class="badge bg-danger text-white rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle-xmark me-1"></i>GVHD từ chối
+                                <i class="fa-solid fa-circle-xmark me-1"></i>Từ chối / Hủy
                             </span>
                         @else
                             <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-clock me-1"></i>Chờ GVHD duyệt
+                                <i class="fa-solid fa-clock me-1"></i>Chờ xử lý
                             </span>
                         @endif
                     </td>
@@ -261,22 +261,22 @@
                                         <div class="p-3 rounded-3 border {{ $dk->TrangThai === 'Đã duyệt' ? 'bg-success-subtle border-success-subtle' : ($dk->TrangThai === 'Từ chối' ? 'bg-danger-subtle border-danger-subtle' : 'bg-warning-subtle border-warning-subtle') }}">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <span class="fw-bold">Trạng thái từ GVHD:</span>
+                                                    <span class="fw-bold">Trạng thái đăng ký:</span>
                                                     @if($dk->TrangThai === 'Đã duyệt')
-                                                        <span class="text-success fw-bold ms-1"><i class="fa-solid fa-check-circle me-1"></i>Đã phê duyệt chính thức</span>
+                                                        <span class="text-success fw-bold ms-1"><i class="fa-solid fa-check-circle me-1"></i>Đã gán chính thức cho nhóm</span>
                                                     @elseif($dk->TrangThai === 'Từ chối')
-                                                        <span class="text-danger fw-bold ms-1"><i class="fa-solid fa-times-circle me-1"></i>Đã từ chối đơn đăng ký</span>
+                                                        <span class="text-danger fw-bold ms-1"><i class="fa-solid fa-times-circle me-1"></i>Đã từ chối / Hủy</span>
                                                     @else
-                                                        <span class="text-warning-emphasis fw-bold ms-1"><i class="fa-solid fa-clock me-1"></i>Đang chờ GVHD xem xét</span>
+                                                        <span class="text-warning-emphasis fw-bold ms-1"><i class="fa-solid fa-clock me-1"></i>Đang chờ xử lý</span>
                                                     @endif
                                                 </div>
                                                 <div class="small text-muted">
-                                                    Ngày nộp đơn: {{ $dk->created_at ? $dk->created_at->format('d/m/Y H:i') : ($dk->NgayDangKy ?? 'N/A') }}
+                                                     Ngày nộp đơn: {{ $dk->created_at ? $dk->created_at->format('d/m/Y H:i') : ($dk->NgayDangKy ?? 'N/A') }}
                                                 </div>
                                             </div>
                                             @if($dk->TrangThai === 'Từ chối' && $dk->LyDoTuChoi)
                                                 <div class="mt-2 text-danger small">
-                                                    <strong>Lý do GVHD phản hồi:</strong> {{ $dk->LyDoTuChoi }}
+                                                    <strong>Lý do phản hồi:</strong> {{ $dk->LyDoTuChoi }}
                                                 </div>
                                             @endif
                                             @if($dk->NgayDuyet)

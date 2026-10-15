@@ -271,8 +271,6 @@ class DangKyDeTaiController extends Controller
                     'NgayDuyet'    => now(),
                 ]);
 
-                $nhom->update(['MaDeTai' => $deTai->MaDeTai]);
-
                 return redirect()->back()->with('success', "Đăng ký đề tài '{$deTai->TenDeTai}' thành công! Đề tài đã được gán trực tiếp cho nhóm của bạn.");
             });
         } catch (\Throwable $e) {

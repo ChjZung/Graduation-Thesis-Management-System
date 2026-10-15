@@ -5,16 +5,15 @@
 @section('content')
 
 {{-- ── THANH TÌM KIẾM & BỘ LỌC DỮ LIỆU ── --}}
-<div class="admin-filter-bar">
-    <form method="GET" action="{{ route('admin.kehoach.index') }}" class="row g-2 align-items-center">
-        <div class="col-12 col-md-5">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" name="search" class="form-control form-control-sm border-start-0" placeholder="Tìm theo tên hoặc mã kế hoạch..." value="{{ request('search') }}">
-            </div>
+<div class="admin-filter-bar mb-4">
+    <form method="GET" action="{{ route('admin.kehoach.index') }}" class="d-flex flex-wrap align-items-center gap-2 w-100">
+        <div class="input-group input-group-sm flex-grow-1" style="min-width: 250px; max-width: 420px;">
+            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" name="search" class="form-control form-control-sm border-start-0 ps-0" placeholder="Tìm theo tên hoặc mã kế hoạch..." value="{{ request('search') }}">
         </div>
-        <div class="col-6 col-md-3">
-            <select name="TrangThai" class="form-select form-select-sm">
+
+        <div style="min-width: 190px;">
+            <select name="TrangThai" class="form-select form-select-sm" style="min-width: 180px;">
                 <option value="">-- Tất cả trạng thái --</option>
                 <option value="ĐÃ CÔNG BỐ" {{ request('TrangThai') == 'ĐÃ CÔNG BỐ' ? 'selected' : '' }}>Đã công bố</option>
                 <option value="ĐANG THỰC HIỆN" {{ request('TrangThai') == 'ĐANG THỰC HIỆN' ? 'selected' : '' }}>Đang diễn ra</option>
@@ -23,8 +22,9 @@
                 <option value="HOÀN THÀNH" {{ request('TrangThai') == 'HOÀN THÀNH' ? 'selected' : '' }}>Hoàn thành</option>
             </select>
         </div>
-        <div class="col-6 col-md-2">
-            <select name="MaHocKy" class="form-select form-select-sm">
+
+        <div style="min-width: 230px;">
+            <select name="MaHocKy" class="form-select form-select-sm" style="min-width: 220px;">
                 <option value="">-- Tất cả học kỳ --</option>
                 @foreach($hocKies as $hk)
                     <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
@@ -33,8 +33,9 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 flex-grow-1 fw-semibold" style="background: #0072ce; border-color: #0072ce;">
+
+        <div class="d-flex align-items-center gap-2 ms-auto flex-nowrap">
+            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap" style="background: #0072ce; border-color: #0072ce;">
                 <i class="fa-solid fa-bolt me-1"></i> Lọc Dữ Liệu
             </button>
             <a href="{{ route('admin.kehoach.index') }}" class="btn btn-sm btn-light border rounded-3 px-2 text-secondary" title="Tải lại">

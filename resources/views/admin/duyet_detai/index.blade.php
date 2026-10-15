@@ -268,7 +268,7 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         {{-- Nút Xuất Danh Sách Đề Tài Đã Công Bố --}}
-        <a href="{{ route('admin.duyet_detai.export', ['TrangThai' => 'da_cong_bo', 'MaHocKy' => $selectedHocKy]) }}" class="btn btn-sm btn-success rounded-3 px-3 fw-semibold shadow-sm">
+        <a href="{{ route('admin.duyet_detai.export', array_merge(request()->all(), ['TrangThai' => 'da_cong_bo', 'MaHocKy' => $selectedHocKy])) }}" class="btn btn-sm btn-success rounded-3 px-3 fw-semibold shadow-sm" title="Xuất file Excel/CSV danh sách đề tài đã công bố theo bộ lọc hiện tại">
             <i class="fa-solid fa-file-excel me-1"></i> Xuất Đề Tài Đã Công Bố
         </a>
 
@@ -433,14 +433,11 @@
             <div class="card-body p-3">
                 <form method="GET" action="{{ route('admin.duyet_detai.index') }}" class="row g-2 align-items-center">
                     <input type="hidden" name="tab" value="quanly">
-                    @if(request('TrangThai') && request('TrangThai') !== 'ALL')
-                        <input type="hidden" name="TrangThai" value="{{ request('TrangThai') }}">
-                    @endif
 
                     {{-- 1. Học kỳ --}}
-                    <div class="col-12 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-regular fa-calendar me-1"></i>Học Kỳ:</label>
-                        <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-regular fa-calendar me-1"></i>Học Kỳ:</label>
+                        <select name="MaHocKy" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
                                     {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
@@ -449,10 +446,28 @@
                         </select>
                     </div>
 
-                    {{-- 2. Khoa --}}
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-landmark me-1"></i>Khoa:</label>
-                        <select name="MaKhoa" class="form-select form-select-sm" onchange="this.form.submit()">
+                    {{-- 2. Trạng thái (Thêm bộ lọc trạng thái chi tiết theo yêu cầu) --}}
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-circle-check me-1"></i>Trạng Thái:</label>
+                        <select name="TrangThai" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
+                            <option value="ALL">-- Tất cả Trạng Thái --</option>
+                            <optgroup label="Nhóm tổng hợp">
+                                <option value="dang_xet_duyet" {{ request('TrangThai') === 'dang_xet_duyet' ? 'selected' : '' }}>Đang xét duyệt chuyên môn</option>
+                                <option value="da_cong_bo" {{ request('TrangThai') === 'da_cong_bo' ? 'selected' : '' }}>Đã công bố &amp; Đã duyệt</option>
+                                <option value="tu_choi_can_sua" {{ request('TrangThai') === 'tu_choi_can_sua' ? 'selected' : '' }}>Cần chỉnh sửa / Từ chối</option>
+                            </optgroup>
+                            <optgroup label="Trạng thái chi tiết">
+                                @foreach($danhSachTrangThai as $tt)
+                                    <option value="{{ $tt }}" {{ request('TrangThai') === $tt ? 'selected' : '' }}>{{ $tt }}</option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    {{-- 3. Khoa --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-landmark me-1"></i>Khoa:</label>
+                        <select name="MaKhoa" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Khoa --</option>
                             @foreach($khoas as $k)
                                 <option value="{{ $k->MaKhoa }}" {{ request('MaKhoa') == $k->MaKhoa ? 'selected' : '' }}>{{ $k->TenKhoa }}</option>
@@ -460,10 +475,10 @@
                         </select>
                     </div>
 
-                    {{-- 3. Bộ môn --}}
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-sitemap me-1"></i>Bộ Môn:</label>
-                        <select name="MaBoMon" class="form-select form-select-sm" onchange="this.form.submit()">
+                    {{-- 4. Bộ môn --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-sitemap me-1"></i>Bộ Môn:</label>
+                        <select name="MaBoMon" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Bộ Môn --</option>
                             @foreach($boMons as $bm)
                                 <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>{{ $bm->TenBoMon }}</option>
@@ -471,10 +486,10 @@
                         </select>
                     </div>
 
-                    {{-- 4. Lĩnh vực --}}
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-tags me-1"></i>Lĩnh Vực:</label>
-                        <select name="LinhVuc" class="form-select form-select-sm" onchange="this.form.submit()">
+                    {{-- 5. Lĩnh vực --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-tags me-1"></i>Lĩnh Vực:</label>
+                        <select name="LinhVuc" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Lĩnh Vực --</option>
                             @foreach($linhVucs as $lv)
                                 <option value="{{ $lv }}" {{ request('LinhVuc') == $lv ? 'selected' : '' }}>{{ $lv }}</option>
@@ -482,31 +497,37 @@
                         </select>
                     </div>
 
-                    {{-- 5. Môn học phần --}}
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-graduation-cap me-1"></i>Học Phần:</label>
-                        <select name="HocPhan" class="form-select form-select-sm" onchange="this.form.submit()">
+                    {{-- 6. Môn học phần --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-graduation-cap me-1"></i>Học Phần:</label>
+                        <select name="HocPhan" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Học Phần --</option>
                             @foreach($hocPhans as $hp)
-                                <option value="{{ $hp }}" {{ request('HocPhan') == $hp ? 'selected' : '' }}>{{ $hp }}</option>
+                                @php
+                                    $hpVal = is_string($hp) ? $hp : ($hp->MaHocPhan ?? $hp->TenHocPhan);
+                                    $hpName = is_string($hp) ? $hp : ($hp->TenHocPhan ?? $hp->MaHocPhan);
+                                @endphp
+                                <option value="{{ $hpVal }}" {{ (request('HocPhan') == $hpVal || request('HocPhan') == $hpName) ? 'selected' : '' }}>
+                                    {{ $hpName }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- 6. Tìm kiếm & Nút bấm --}}
+                    {{-- 7. Tìm kiếm & Nút bấm --}}
                     <div class="col-12 mt-2">
                         <div class="d-flex flex-column flex-md-row gap-2 align-items-center">
                             <div class="input-group input-group-sm flex-grow-1">
                                 <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                <input type="text" name="search" class="form-control border-start-0" 
+                                <input type="text" name="search" class="form-control border-start-0" style="font-size: 13px;"
                                        placeholder="Tìm kiếm theo mã đề tài, tên đề tài, tên giảng viên hướng dẫn..." 
                                        value="{{ request('search') }}">
                             </div>
                             <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold">
+                                <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold" style="font-size: 13px;">
                                     <i class="fa-solid fa-filter me-1"></i> Lọc Dữ Liệu
                                 </button>
-                                <a href="{{ route('admin.duyet_detai.index', ['tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3">
+                                <a href="{{ route('admin.duyet_detai.index', ['tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3" style="font-size: 13px;">
                                     <i class="fa-solid fa-rotate me-1"></i> Đặt Lại
                                 </a>
                             </div>
@@ -523,9 +544,6 @@
                     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="fa-solid fa-table-list text-primary"></i> Danh Sách Đề Tài Khóa Luận
                     </h5>
-                    <div class="text-muted small mt-1">
-                        Hiển thị đề tài thuộc <strong>{{ $currentHocKy?->TenHocKy ?? $selectedHocKy }}</strong> &bull; Phân trang chuẩn 5 đề tài/trang
-                    </div>
                 </div>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
                     Tổng: <strong>{{ $detais->total() }}</strong> đề tài
@@ -581,18 +599,18 @@
                                 <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
                                 <div class="d-flex align-items-center gap-2 mt-1">
                                     @if($dt->LinhVuc)
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 13px;">
                                             <i class="fa-solid fa-tag me-1 text-primary"></i>{{ $dt->LinhVuc }}
                                         </span>
                                     @endif
-                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 13px;">
                                         {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
                                     </span>
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-semibold text-dark">{{ $dt->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
-                                <div class="text-muted small" style="font-size: 0.78rem;">
+                                <div class="fw-semibold text-dark" style="font-size: 13.5px;">{{ $dt->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
+                                <div class="text-muted" style="font-size: 13px;">
                                     {{ $dt->giangVien?->boMon?->TenBoMon ?? 'N/A' }} 
                                     @if($dt->giangVien?->boMon?->khoa)
                                         &bull; {{ $dt->giangVien->boMon->khoa->TenKhoa }}
@@ -600,7 +618,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <div class="fw-bold {{ $regSV >= $maxSV ? 'text-success' : ($regSV > 0 ? 'text-primary' : 'text-muted') }}" style="font-size: 0.85rem;">
+                                <div class="fw-bold {{ $regSV >= $maxSV ? 'text-success' : ($regSV > 0 ? 'text-primary' : 'text-muted') }}" style="font-size: 13px;">
                                     {{ $regSV }} / {{ $maxSV }} SV
                                 </div>
                                 <div class="progress my-1 mx-auto" style="height: 5px; width: 75px;">
@@ -609,20 +627,20 @@
                                 </div>
                                 @if($regNhom)
                                     <div>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace" style="font-size: 0.72rem;" title="Mã & Tên nhóm: {{ $regNhom->MaNhom }}">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace" style="font-size: 13px;" title="Mã & Tên nhóm: {{ $regNhom->MaNhom }}">
                                             <i class="fa-solid fa-users me-1"></i>{{ $regNhom->MaNhom }}
                                         </span>
                                     </div>
                                 @else
                                     <div>
-                                        <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.68rem;">
+                                        <span class="badge bg-light text-muted border rounded-pill" style="font-size: 13px;">
                                             Chưa có nhóm
                                         </span>
                                     </div>
                                 @endif
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill px-2.5 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 0.75rem;">
+                                <span class="badge rounded-pill px-2.5 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 13px;">
                                     {{ $dt->TrangThai }}
                                 </span>
                             </td>
@@ -949,7 +967,7 @@
 
                 <div class="mb-3">
                     <div class="fw-bold small text-muted text-uppercase mb-1">Mục Tiêu &amp; Nội Dung Tóm Tắt:</div>
-                    <p class="text-dark small mb-0">{{ $dt->MoTa ?? 'Chưa cập nhật nội dung tóm tắt.' }}</p>
+                    <div class="text-dark small mb-0" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($dt->MoTa) ?: 'Chưa cập nhật nội dung tóm tắt.' !!}</div>
                 </div>
 
                 <div class="mb-3">

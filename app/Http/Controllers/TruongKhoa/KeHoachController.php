@@ -29,12 +29,18 @@ class KeHoachController extends Controller
             if ($khoa) return $khoa;
         }
 
-        return Khoa::first();
+        $byName = Khoa::where('TruongKhoa', 'like', '%' . ($gv->HoTen ?? '') . '%')->first();
+        if ($byName) return $byName;
+
+        return null;
     }
 
     public function index(Request $request)
     {
         $khoa = $this->getKhoa();
+        if (!$khoa) {
+            abort(403, 'Tài khoản Trưởng khoa chưa được liên kết với Khoa nào.');
+        }
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         $query = KeHoachKhoaLuan::with(['hocKy', 'mocThoiGians', 'quyDinhs', 'giaoVu']);

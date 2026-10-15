@@ -78,8 +78,14 @@ Route::middleware(['auth'])->group(function () {
     // Route aliases cho Đổi mật khẩu (tránh lỗi 404)
     Route::get('/doi-mat-khau', [\App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('password.doi');
     Route::post('/doi-mat-khau', [\App\Http\Controllers\ProfileController::class, 'changePassword']);
-    Route::get('/change-password', fn() => redirect()->route('password.change'));
-    Route::post('/change-password', [\App\Http\Controllers\ProfileController::class, 'changePassword']);
+    // Secure Document & File Download Endpoints (Bảo vệ file riêng tư theo Policy)
+    Route::get('/files/baocao/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCao'])->name('files.baocao.download');
+    Route::get('/files/hoso/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadHoSo'])->name('files.hoso.download');
+    Route::get('/files/decuong/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadDeCuong'])->name('files.decuong.download');
+    Route::get('/files/view', [\App\Http\Controllers\FileDownloadController::class, 'viewFile'])->name('files.view');
+
+    // Đánh dấu tất cả thông báo đã đọc (Dành cho tất cả vai trò)
+    Route::post('/thongbao/mark-all-read', [\App\Http\Controllers\ThongBaoController::class, 'markAllReadGlobal'])->name('thongbao.markAllReadGlobal');
 });
 
 // ==========================================
@@ -203,9 +209,11 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/hocky/import', [\App\Http\Controllers\HocKyController::class, 'importExcel'])->name('admin.hocky.import');
     Route::post('/hocphan/import', [\App\Http\Controllers\HocPhanController::class, 'importExcel'])->name('admin.hocphan.import');
 
-    // Thông báo
+    // Quản lý Thông báo (Xem, Tạo mới, Sửa, Xóa, Phát hành - dành cho Admin / Giáo vụ)
+    Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('admin.thongbao.index');
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('admin.thongbao.show');
     Route::post('/thongbao/{id}/send-now', [\App\Http\Controllers\ThongBaoController::class, 'sendNow'])->name('thongbao.sendNow');
-    Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class);
+    Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->except(['index', 'show']);
 
     // Thống kê Đề tài Khóa luận
     Route::get('/thongke/detai', [\App\Http\Controllers\ThongKeDeTaiController::class, 'index'])->name('admin.thongke.detai');
@@ -216,6 +224,14 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/giangvien/{id}/huy-bo-nhiem', [\App\Http\Controllers\GiangVienController::class, 'huyBoNhiem'])->name('admin.giangvien.huy_bo_nhiem');
     Route::delete('/giangvien/{id}/xoa-tai-khoan', [\App\Http\Controllers\GiangVienController::class, 'xoaTaiKhoanPortal'])->name('admin.giangvien.xoa_tai_khoan');
     Route::post('/giangvien/import-tbm-tk', [\App\Http\Controllers\GiangVienController::class, 'importTaiKhoanTBM_TK'])->name('admin.giangvien.import_tbm_tk');
+});
+
+// ==========================================
+// THÔNG BÁO HỆ THỐNG CHUNG (Xem danh sách & Chi tiết thông báo)
+// ==========================================
+Route::middleware(['auth', 'role:Admin,Giáo vụ,Trưởng khoa,Trưởng bộ môn,Giảng viên,Sinh viên'])->group(function () {
+    Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('thongbao.index');
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('thongbao.show');
 });
 
 
@@ -232,6 +248,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Đề tài
     Route::get('detai/bieu-mau-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'downloadTemplate'])->name('giangvien.detai.download_template');
+    Route::post('detai/import', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'importExcel'])->name('giangvien.detai.import');
     Route::get('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'showNopDeCuong'])->name('giangvien.detai.nop_decuong.show');
     Route::post('detai/{id}/nop-de-cuong', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'nopDeCuong'])->name('giangvien.detai.nopDeCuong');
     Route::resource('detai', \App\Http\Controllers\GiangVien\DeTaiController::class)->names('giangvien.detai');
@@ -246,6 +263,8 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
     Route::post('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store'])->name('giangvien.chamdiem.store');
+    Route::get('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index']);
+    Route::post('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store']);
 
     // Phê duyệt đăng ký đề tài của Sinh viên / Nhóm
     Route::get('/duyet-dangky-detai', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'index'])->name('giangvien.duyet_dangky.index');
@@ -370,6 +389,10 @@ Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->
     Route::get('/thongke/detai', fn() => redirect()->route('truongbomon.duyet_detai.index', ['view' => 'thongke']))->name('truongbomon.thongke.detai');
     Route::get('/thongke/detai/export', [\App\Http\Controllers\ThongKeDeTaiController::class, 'exportExcel'])->name('truongbomon.thongke.detai.export');
 
+    // Thông báo cho Trưởng bộ môn
+    Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('truongbomon.thongbao.index');
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('truongbomon.thongbao.show');
+
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
     Route::get('/change-password', fn() => redirect()->route('password.change'));
@@ -400,6 +423,10 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)
     Route::get('/thongke/detai', fn() => redirect()->route('truongkhoa.duyet_detai.index', ['view' => 'thongke']))->name('truongkhoa.thongke.detai');
     Route::get('/thongke/detai/export', [\App\Http\Controllers\ThongKeDeTaiController::class, 'exportExcel'])->name('truongkhoa.thongke.detai.export');
+
+    // Thông báo cho Trưởng khoa
+    Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('truongkhoa.thongbao.index');
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('truongkhoa.thongbao.show');
 
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));

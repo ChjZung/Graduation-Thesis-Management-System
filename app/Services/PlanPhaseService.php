@@ -263,6 +263,75 @@ class PlanPhaseService
     }
 
     /**
+     * Kiểm tra giai đoạn đề xuất đề tài của Giảng viên có đang mở hay không.
+     * Quy định Kế hoạch: Giảng viên chỉ đề xuất đề tài trước thời gian sinh viên tạo nhóm và đăng ký đề tài.
+     * Khi đã bước vào giai đoạn Tạo nhóm (TAO_NHOM - từ 00:00 ngày bắt đầu tạo nhóm) hoặc các giai đoạn sau,
+     * cổng đề xuất đề tài của Giảng viên bị khóa hoàn toàn.
+     */
+    public static function isDeXuatDeTaiOpen(?string $maHocKy = null, $currentTime = null): array
+    {
+        $plan = self::getActivePlan($maHocKy);
+        $now = $currentTime ? Carbon::parse($currentTime) : Carbon::now();
+
+        // 1. Tìm mốc Tạo nhóm (TAO_NHOM)
+        $mocTaoNhom = null;
+        if ($plan && $plan->relationLoaded('mocThoiGians')) {
+            $mocTaoNhom = $plan->mocThoiGians->first(fn($m) => 
+                $m->LoaiGiaiDoan === 'TAO_NHOM' || str_contains($m->MoTa ?? '', '[TAO_NHOM]') || str_contains(mb_strtoupper($m->TenMoc), 'TẠO NHÓM')
+            );
+        }
+        if (!$mocTaoNhom && $plan) {
+            $mocTaoNhom = MocThoiGianKhoaLuan::where('MakeHoach', $plan->MakeHoach)
+                ->where(function($q) {
+                    $q->where('TenMoc', 'LIKE', '%tạo nhóm%')
+                      ->orWhere('TenMoc', 'LIKE', '%ghép nhóm%')
+                      ->orWhere('MoTa', 'LIKE', '%[TAO_NHOM]%');
+                })->first();
+        }
+        if (!$mocTaoNhom && $maHocKy) {
+            $mocTaoNhom = MocThoiGianKhoaLuan::whereHas('keHoach', fn($kq) => $kq->where('MaHocKy', $maHocKy))
+                ->where(function($q) {
+                    $q->where('TenMoc', 'LIKE', '%tạo nhóm%')
+                      ->orWhere('TenMoc', 'LIKE', '%ghép nhóm%')
+                      ->orWhere('MoTa', 'LIKE', '%[TAO_NHOM]%');
+                })->first();
+        }
+
+        // Bắt đầu từ 00:00:00 của ngày bắt đầu tạo nhóm trở đi -> KHÓA ĐỀ XUẤT ĐỀ TÀI
+        if ($mocTaoNhom) {
+            $startTaoNhom = Carbon::parse($mocTaoNhom->NgayBatDau . ' 00:00:00');
+            if ($now >= $startTaoNhom) {
+                return [
+                    'is_open' => false,
+                    'message' => 'Hiện đang trong thời gian sinh viên tạo nhóm và đăng ký đề tài (bắt đầu từ ngày ' . $startTaoNhom->format('d/m/Y') . '). Cổng đề xuất đề tài của Giảng viên đã kết thúc!',
+                ];
+            }
+        }
+
+        // 2. Nếu có mốc riêng cho Đề xuất đề tài (DE_XUAT_DE_TAI), kiểm tra hạn chót
+        $mocDeXuat = null;
+        if ($plan && $plan->relationLoaded('mocThoiGians')) {
+            $mocDeXuat = $plan->mocThoiGians->first(fn($m) => 
+                $m->LoaiGiaiDoan === 'DE_XUAT_DE_TAI' || str_contains($m->MoTa ?? '', '[DE_XUAT_DE_TAI]') || str_contains(mb_strtoupper($m->TenMoc), 'ĐỀ XUẤT ĐỀ TÀI')
+            );
+        }
+        if ($mocDeXuat) {
+            $endDeXuat = Carbon::parse($mocDeXuat->NgayKetThuc . ' 23:59:59');
+            if ($now > $endDeXuat) {
+                return [
+                    'is_open' => false,
+                    'message' => 'Thời gian đề xuất đề tài cho Giảng viên đã kết thúc vào ngày ' . $endDeXuat->format('d/m/Y') . '!',
+                ];
+            }
+        }
+
+        return [
+            'is_open' => true,
+            'message' => 'Cổng đề xuất đề tài dành cho Giảng viên đang mở.',
+        ];
+    }
+
+    /**
      * Xác định trạng thái đăng ký đề tài của học kỳ (Chưa mở, Chính thức, Tạm khóa, Bổ sung, Đã kết thúc)
      */
     public static function getRegistrationState(?KeHoachKhoaLuan $plan = null, $currentTime = null): array

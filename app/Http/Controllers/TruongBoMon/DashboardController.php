@@ -17,18 +17,28 @@ class DashboardController extends Controller
     private function getBoMon()
     {
         $user = Auth::user();
+        if (!$user) return null;
+
         $gv = GiangVien::getLoggedInGiangVien($user);
         if ($gv && $gv->MaBoMon) {
             $bm = BoMon::where('MaBoMon', $gv->MaBoMon)->first();
             if ($bm) return $bm;
         }
 
-        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
-            if ($bm) return $bm;
+        $allBoMons = BoMon::all();
+        foreach ($allBoMons as $itemBm) {
+            $code = $itemBm->MaBoMon;
+            if (str_contains($user->TenDangNhap, '_' . $code . '_') || str_contains($user->TenDangNhap, '_' . $code) || str_contains($user->TenDangNhap, 'BM_' . $code)) {
+                return $itemBm;
+            }
         }
 
-        return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
+        if (!empty($gv?->HoTen)) {
+            $found = BoMon::where('TruongBoMon', 'like', '%' . $gv->HoTen . '%')->first();
+            if ($found) return $found;
+        }
+
+        return null;
     }
 
     public function index(Request $request)

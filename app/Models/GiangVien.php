@@ -51,6 +51,11 @@ class GiangVien extends Model
         return $this->belongsTo(TaiKhoan::class, 'MaTK', 'MaTK');
     }
 
+    public function taiKhoans()
+    {
+        return $this->hasMany(TaiKhoan::class, 'MaGV', 'MaGV');
+    }
+
     public function deTais()
     {
         return $this->hasMany(DeTai::class, 'MaGV', 'MaGV');
@@ -94,16 +99,31 @@ class GiangVien extends Model
         $user = $user ?? \Illuminate\Support\Facades\Auth::user();
         if (!$user) return null;
 
+        // 1. Kiểm tra trực tiếp trường MaGV lưu trên bảng TaiKhoan
+        if (!empty($user->MaGV)) {
+            $gv = static::with('boMon.khoa')->where('MaGV', $user->MaGV)->first();
+            if ($gv) return $gv;
+        }
+
+        // 2. Tra cứu qua MaTK hoặc TenDangNhap
         $gv = static::with('boMon.khoa')
             ->where('MaTK', $user->MaTK)
             ->orWhere('MaGV', $user->TenDangNhap)
             ->orWhere('MaGV', $user->MaTK)
             ->first();
+        if ($gv) return $gv;
 
-        if (!$gv && preg_match('/(GV\d+)/i', $user->TenDangNhap, $matches)) {
-            $gv = static::with('boMon.khoa')->where('MaGV', strtoupper($matches[1]))->first();
+        // 3. Tra cứu bằng số hiệu GV trong TenDangNhap (hỗ trợ cả GV002 và GV00000002)
+        if (preg_match('/GV0*(\d+)/i', $user->TenDangNhap, $matches)) {
+            $num = (int)$matches[1];
+            $formatted8 = sprintf('GV%08d', $num);
+            $gv = static::with('boMon.khoa')->where('MaGV', $formatted8)->first();
+            if ($gv) return $gv;
+
+            $gv = static::with('boMon.khoa')->where('MaGV', 'like', "%{$matches[1]}")->first();
+            if ($gv) return $gv;
         }
 
-        return $gv;
+        return null;
     }
 }

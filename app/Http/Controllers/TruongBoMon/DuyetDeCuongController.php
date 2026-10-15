@@ -18,18 +18,28 @@ class DuyetDeCuongController extends Controller
     private function getBoMon()
     {
         $user = Auth::user();
+        if (!$user) return null;
+
         $gv = GiangVien::getLoggedInGiangVien($user);
         if ($gv && $gv->MaBoMon) {
-            $bm = BoMon::where('MaBoMon', $gv->MaBoMon)->first();
+            $bm = BoMon::where('MaBoMon', $gv->MaBoMon)->orWhere('MaBoMon', 'BM_' . $gv->MaBoMon)->first();
             if ($bm) return $bm;
         }
 
-        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
-            if ($bm) return $bm;
+        $allBoMons = BoMon::all();
+        foreach ($allBoMons as $itemBm) {
+            $code = $itemBm->MaBoMon;
+            if (str_contains($user->TenDangNhap, '_' . $code . '_') || str_contains($user->TenDangNhap, '_' . $code) || str_contains($user->TenDangNhap, 'BM_' . $code)) {
+                return $itemBm;
+            }
         }
 
-        return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
+        if (!empty($gv?->HoTen)) {
+            $found = BoMon::where('TruongBoMon', 'like', '%' . $gv->HoTen . '%')->first();
+            if ($found) return $found;
+        }
+
+        return null;
     }
 
     /**
@@ -37,11 +47,15 @@ class DuyetDeCuongController extends Controller
      */
     private function assertDeTaiBelongsToBoMon(DeTai $detai, $boMon)
     {
-        if (!$boMon) return;
-        $detai->loadMissing('giangVien', 'hocPhanRef');
-        $isGvInBoMon = $detai->giangVien && $detai->giangVien->MaBoMon === $boMon->MaBoMon;
-        $isHpInBoMon = $detai->hocPhanRef && $detai->hocPhanRef->MaBoMon === $boMon->MaBoMon;
-        if (!$isGvInBoMon && !$isHpInBoMon) {
+        if (!$boMon) {
+            abort(403, 'Bạn chưa được phân công phụ trách Bộ môn nào để thực hiện thao tác này.');
+        }
+        $detai->loadMissing('giangVien.boMon', 'hocPhanRef');
+        $detaiMaBoMon = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon;
+        $cleanDtBm = str_replace('BM_', '', $detaiMaBoMon ?? '');
+        $cleanCurBm = str_replace('BM_', '', $boMon->MaBoMon ?? '');
+
+        if (!$cleanDtBm || $cleanDtBm !== $cleanCurBm) {
             abort(403, "Bạn không có quyền thao tác trên đề tài không thuộc Bộ môn '{$boMon->TenBoMon}'.");
         }
     }

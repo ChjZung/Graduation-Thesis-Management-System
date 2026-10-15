@@ -74,6 +74,14 @@ class PasswordSetupController extends Controller
             'new_password.confirmed' => 'Mật khẩu xác nhận chưa khớp với mật khẩu mới.',
         ]);
 
+        if (in_array(strtolower($request->new_password), ['123456', '12345678', 'password', 'admin123'])) {
+            return back()->withErrors(['new_password' => 'Không được sử dụng mật khẩu mặc định hoặc mật khẩu quá phổ biến.']);
+        }
+
+        if (Hash::check($request->new_password, $user->MatKhau)) {
+            return back()->withErrors(['new_password' => 'Mật khẩu mới không được trùng với mật khẩu tạm thời hiện tại.']);
+        }
+
         $tk = TaiKhoan::findOrFail($user->MaTK);
         $tk->update([
             'MatKhau'             => Hash::make($request->new_password),

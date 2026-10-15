@@ -161,4 +161,31 @@ class GiangVienGanNhomTest extends TestCase
             'TrangThai' => 'Đã duyệt',
         ]);
     }
+
+    public function test_chan_gan_nhom_khi_de_tai_chua_duoc_cong_bo()
+    {
+        $this->deTai->update(['TrangThai' => 'Chờ duyệt cấp Bộ môn']);
+
+        $response = $this->actingAs($this->userGV)
+            ->post(route('giangvien.detai.ganNhom', $this->deTai->MaDeTai), [
+                'MaNhom' => $this->nhomDu3->MaNhom,
+            ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseMissing('PhieuDangKy', [
+            'MaNhom' => $this->nhomDu3->MaNhom,
+            'MaDeTai' => $this->deTai->MaDeTai,
+        ]);
+    }
+
+    public function test_de_tai_chua_cong_bo_khong_hien_nut_gan_nhom_o_view()
+    {
+        $this->deTai->update(['TrangThai' => 'Chờ duyệt cấp Bộ môn']);
+
+        $response = $this->actingAs($this->userGV)
+            ->get(route('giangvien.detai.index'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('#modalGanNhom' . $this->deTai->MaDeTai);
+    }
 }

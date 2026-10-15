@@ -4,12 +4,13 @@
    Gọi JS: quickPreviewOutline(fileUrl, fileName, topicTitle)
 ======================================================== --}}
 
+@once('modal_preview_decuong')
 <div class="modal fade" id="modalQuickPreviewDeCuong" tabindex="-1" aria-labelledby="modalQuickPreviewLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 95vw; height: 92vh; margin: 4vh auto;">
         <div class="modal-content h-100 border-0 shadow-lg" style="border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
             
             <!-- Modal Header -->
-            <div class="modal-header py-2 px-3 text-white" style="background: linear-gradient(135deg, #00529b 0%, #003366 100%); flex-shrink: 0;">
+            <div class="modal-header py-3 px-4 text-white" style="background-color: #00529b; flex-shrink: 0;">
                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
                     <span class="badge bg-white text-primary fw-bold px-2 py-1" id="quickPreviewTypeBadge" style="font-size: 0.8rem;">
                         <i class="fa-solid fa-file me-1"></i> ĐỀ CƯƠNG
@@ -41,9 +42,59 @@
                     <div class="small text-muted mt-1">Hệ thống đang mở tài liệu trực tiếp trên trình duyệt</div>
                 </div>
 
-                <!-- PDF Preview Container -->
-                <div id="quickPreviewPdfContainer" class="w-100 h-100 d-none" style="position: absolute; top:0; left:0; right:0; bottom:0;">
-                    <iframe id="quickPreviewIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                <!-- PDF Preview Container (Mozilla PDF.js Canvas Renderer) -->
+                <div id="quickPreviewPdfContainer" class="w-100 h-100 d-none d-flex flex-column" style="position: absolute; top:0; left:0; right:0; bottom:0;">
+                    <!-- PDF Toolbar -->
+                    <div class="bg-dark text-white px-3 py-2 border-bottom d-flex justify-content-between align-items-center flex-shrink-0" style="font-size: 13px; z-index: 10;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger text-white"><i class="fa-solid fa-file-pdf me-1"></i> PDF</span>
+                            <span class="text-white-50">|</span>
+                            <span class="text-light">
+                                Trang <span id="pdfCurrentPage" class="fw-bold text-white">1</span> / <span id="pdfTotalPages" class="fw-bold text-white">1</span>
+                            </span>
+                            <div class="btn-group btn-group-sm ms-2">
+                                <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="pdfPrevPageBtn" title="Trang trước">
+                                    <i class="fa-solid fa-chevron-up"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="pdfNextPageBtn" title="Trang tiếp">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="btn-group btn-group-sm me-2">
+                                <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="pdfZoomOutBtn" title="Thu nhỏ">
+                                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                                </button>
+                                <span class="btn btn-outline-light btn-sm py-0 px-2 disabled text-white fw-bold" id="pdfZoomLevel" style="min-width: 55px;">100%</span>
+                                <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="pdfZoomInBtn" title="Phóng to">
+                                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="pdfFitWidthBtn" title="Vừa chiều ngang">
+                                    <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                                </button>
+                            </div>
+                            
+                            <a href="#" id="quickPreviewPdfOpenDirect" target="_blank" class="btn btn-sm btn-outline-info py-0.5 px-2.5 rounded-pill" style="font-size: 12px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab riêng
+                            </a>
+                            <a href="#" id="quickPreviewPdfDownloadDirect" download class="btn btn-sm btn-warning text-dark fw-bold py-0.5 px-2.5 rounded-pill" style="font-size: 12px;">
+                                <i class="fa-solid fa-download me-1"></i> Tải PDF
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PDF Canvas Scroll Area -->
+                    <div id="pdfViewerWrapper" class="flex-grow-1 overflow-auto text-center p-3" style="background-color: #525659; min-height: 0;">
+                        <div id="pdfPagesContainer" class="d-flex flex-column align-items-center gap-3">
+                            <!-- Pages will be rendered here as HTML5 canvases -->
+                        </div>
+                        <!-- Fallback iframe container -->
+                        <div id="pdfIframeFallback" class="w-100 h-100 d-none" style="min-height: 500px;">
+                            <iframe id="quickPreviewIframe" src="" style="width: 100%; height: 100%; min-height: 550px; border: none;"></iframe>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Word (.DOCX) Preview Container -->
@@ -138,12 +189,106 @@
     display: block;
     margin: 1rem auto;
 }
+.pdf-page-box {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    background-color: #ffffff;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.15s ease;
+}
+.pdf-page-box canvas {
+    display: block;
+    margin: 0 auto;
+}
 </style>
 
-<!-- Nạp thư viện Mammoth.js đọc file Word .docx trực tiếp phía trình duyệt -->
+<!-- Nạp thư viện Mammoth.js (Word .docx) và Mozilla PDF.js (PDF canvas) -->
 <script src="{{ asset('js/mammoth.browser.min.js') }}"></script>
+<script src="{{ asset('js/pdf.min.js') }}"></script>
 
 <script>
+let currentPdfDoc = null;
+let currentPdfScale = 'fit';
+let currentPdfNumPages = 0;
+let isRenderingPdf = false;
+
+// Cấu hình worker cho PDF.js
+if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('js/pdf.worker.min.js') }}";
+}
+
+/**
+ * Dựng toàn bộ các trang PDF thành Canvas chất lượng cao
+ */
+function renderAllPdfPages(pdfDoc, scale) {
+    const pagesContainer = document.getElementById('pdfPagesContainer');
+    if (!pagesContainer) return;
+    pagesContainer.innerHTML = '';
+
+    const wrapper = document.getElementById('pdfViewerWrapper');
+    const availableWidth = wrapper ? Math.max(wrapper.clientWidth - 56, 500) : 850;
+    const zoomEl = document.getElementById('pdfZoomLevel');
+    const dpr = window.devicePixelRatio || 1;
+
+    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'pdf-page-box';
+        pageDiv.id = 'pdf-page-' + pageNum;
+        pageDiv.dataset.page = pageNum;
+
+        const canvas = document.createElement('canvas');
+        pageDiv.appendChild(canvas);
+        pagesContainer.appendChild(pageDiv);
+
+        (function(num, c, div) {
+            pdfDoc.getPage(num).then(function(page) {
+                let actualScale = scale;
+                if (scale === 'fit' || !scale) {
+                    const unscaledViewport = page.getViewport({ scale: 1.0 });
+                    actualScale = Math.min(Math.max(availableWidth / unscaledViewport.width, 0.6), 2.2);
+                    if (zoomEl) zoomEl.textContent = Math.round(actualScale * 100) + '%';
+                } else if (zoomEl) {
+                    zoomEl.textContent = Math.round(scale * 100) + '%';
+                }
+
+                const viewport = page.getViewport({ scale: actualScale });
+                c.style.width = viewport.width + 'px';
+                c.style.height = viewport.height + 'px';
+
+                c.width = Math.floor(viewport.width * dpr);
+                c.height = Math.floor(viewport.height * dpr);
+
+                const ctx = c.getContext('2d');
+                ctx.scale(dpr, dpr);
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+            });
+        })(pageNum, canvas, pageDiv);
+    }
+}
+
+/**
+ * Hiển thị fallback sang iframe khi PDF.js không khởi tạo được
+ */
+function showPdfIframeFallback(url) {
+    const pagesContainer = document.getElementById('pdfPagesContainer');
+    const iframeFallback = document.getElementById('pdfIframeFallback');
+    const pdfIframe = document.getElementById('quickPreviewIframe');
+    const loadingEl = document.getElementById('quickPreviewLoading');
+    const pdfContainer = document.getElementById('quickPreviewPdfContainer');
+
+    if (pagesContainer) pagesContainer.innerHTML = '';
+    if (iframeFallback) iframeFallback.classList.remove('d-none');
+    if (pdfIframe) pdfIframe.src = url;
+
+    loadingEl.classList.add('d-none');
+    pdfContainer.classList.remove('d-none');
+}
+
 /**
  * Xem Nhanh Đề Cương Chi Tiết trong Modal
  * @param {string} fileUrl    Đường dẫn URL của file đề cương (PDF hoặc DOCX/DOC)
@@ -178,16 +323,42 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
     const fallbackMsg = document.getElementById('quickPreviewFallbackMsg');
     const fallbackOpenBtn = document.getElementById('quickPreviewFallbackOpenBtn');
     const fallbackDownloadBtn = document.getElementById('quickPreviewFallbackDownloadBtn');
+    const pagesContainer = document.getElementById('pdfPagesContainer');
+    const iframeFallback = document.getElementById('pdfIframeFallback');
 
-    // Cập nhật các liên kết mở tab và tải về
-    openTabBtn.href = fileUrl;
-    downloadBtn.href = fileUrl;
-    fallbackOpenBtn.href = fileUrl;
-    fallbackDownloadBtn.href = fileUrl;
+    // 1. Chuẩn hóa fileUrl: Nếu là full URL có cùng host hoặc localhost/127.0.0.1, chuyển về tương đối
+    let targetUrl = fileUrl;
+    try {
+        if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+            const urlObj = new URL(fileUrl, window.location.origin);
+            if (urlObj.hostname === window.location.hostname || 
+               (urlObj.hostname.match(/^(localhost|127\.0\.0\.1)$/) && window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/))) {
+                targetUrl = urlObj.pathname + urlObj.search;
+            }
+        } else if (!fileUrl.startsWith('/')) {
+            targetUrl = '/' + fileUrl;
+        }
+    } catch (e) {
+        targetUrl = fileUrl;
+    }
 
     const safeName = fileName || 'De_Cuong_Chi_Tiet';
+
+    // Cập nhật các liên kết mở tab và tải về
+    openTabBtn.href = targetUrl;
+    downloadBtn.href = targetUrl;
     downloadBtn.setAttribute('download', safeName);
+    fallbackOpenBtn.href = targetUrl;
+    fallbackDownloadBtn.href = targetUrl;
     fallbackDownloadBtn.setAttribute('download', safeName);
+
+    const directOpenPdf = document.getElementById('quickPreviewPdfOpenDirect');
+    const directDownloadPdf = document.getElementById('quickPreviewPdfDownloadDirect');
+    if (directOpenPdf) directOpenPdf.href = targetUrl;
+    if (directDownloadPdf) {
+        directDownloadPdf.href = targetUrl;
+        directDownloadPdf.setAttribute('download', safeName);
+    }
 
     // Tiêu đề modal
     titleEl.textContent = topicTitle ? ('Đề cương: ' + topicTitle) : ('Xem nhanh: ' + safeName);
@@ -198,11 +369,13 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
     pdfContainer.classList.add('d-none');
     docxContainer.classList.add('d-none');
     fallbackContainer.classList.add('d-none');
-    pdfIframe.src = '';
-    docxContent.innerHTML = '';
+    if (pagesContainer) pagesContainer.innerHTML = '';
+    if (iframeFallback) iframeFallback.classList.add('d-none');
+    if (pdfIframe) pdfIframe.src = '';
+    if (docxContent) docxContent.innerHTML = '';
 
     // Nhận diện phần mở rộng file
-    const cleanUrl = fileUrl.split('?')[0].toLowerCase();
+    const cleanUrl = targetUrl.split('?')[0].toLowerCase();
     const isPdf = cleanUrl.endsWith('.pdf');
     const isDocx = cleanUrl.endsWith('.docx');
     const isDoc = cleanUrl.endsWith('.doc');
@@ -213,24 +386,29 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
     if (isPdf) {
         badgeEl.className = 'badge bg-danger text-white fw-bold px-2 py-1';
         badgeEl.innerHTML = '<i class="fa-solid fa-file-pdf me-1"></i> PDF';
-        loadingText.textContent = 'Đang tải tài liệu PDF trực tiếp...';
+        loadingText.textContent = 'Đang đọc và dựng tài liệu PDF trực tiếp...';
 
-        let iframeLoaded = false;
-        pdfIframe.onload = function() {
-            iframeLoaded = true;
-            loadingEl.classList.add('d-none');
-            pdfContainer.classList.remove('d-none');
-        };
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('js/pdf.worker.min.js') }}";
+            pdfjsLib.getDocument(targetUrl).promise.then(function(pdfDoc) {
+                currentPdfDoc = pdfDoc;
+                currentPdfNumPages = pdfDoc.numPages;
+                currentPdfScale = 'fit';
 
-        // Fallback ẩn loading sau 600ms nếu trình duyệt nhúng plugin PDF không bắn sự kiện onload
-        setTimeout(function() {
-            if (!iframeLoaded) {
+                document.getElementById('pdfTotalPages').textContent = currentPdfNumPages;
+                document.getElementById('pdfCurrentPage').textContent = '1';
+
                 loadingEl.classList.add('d-none');
                 pdfContainer.classList.remove('d-none');
-            }
-        }, 800);
 
-        pdfIframe.src = fileUrl;
+                renderAllPdfPages(pdfDoc, 'fit');
+            }).catch(function(err) {
+                console.warn('Lỗi đọc PDF bằng PDF.js:', err);
+                showPdfIframeFallback(targetUrl);
+            });
+        } else {
+            showPdfIframeFallback(targetUrl);
+        }
     } else if (isDocx) {
         badgeEl.className = 'badge bg-primary text-white fw-bold px-2 py-1';
         badgeEl.innerHTML = '<i class="fa-solid fa-file-word me-1"></i> WORD (.DOCX)';
@@ -243,7 +421,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
             return;
         }
 
-        fetch(fileUrl)
+        fetch(targetUrl)
             .then(function(res) {
                 if (!res.ok) throw new Error('Không thể tải tệp từ máy chủ (Mã: ' + res.status + ')');
                 return res.arrayBuffer();
@@ -275,7 +453,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
     }
 }
 
-// Xóa nguồn iframe khi đóng modal để giải phóng tài nguyên
+// Thiết lập các sự kiện điều khiển PDF khi trang sẵn sàng
 document.addEventListener('DOMContentLoaded', function() {
     const modalEl = document.getElementById('modalQuickPreviewDeCuong');
     if (modalEl) {
@@ -284,7 +462,100 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pdfIframe) pdfIframe.src = '';
             const docxContent = document.getElementById('quickPreviewDocxContent');
             if (docxContent) docxContent.innerHTML = '';
+            const pagesContainer = document.getElementById('pdfPagesContainer');
+            if (pagesContainer) pagesContainer.innerHTML = '';
+            currentPdfDoc = null;
+        });
+
+        // Tự động căn chỉnh trang khi modal được mở hoàn toàn
+        modalEl.addEventListener('shown.bs.modal', function() {
+            if (currentPdfDoc) {
+                renderAllPdfPages(currentPdfDoc, currentPdfScale);
+            }
+        });
+    }
+
+    // Nút Zoom In
+    const zoomInBtn = document.getElementById('pdfZoomInBtn');
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', function() {
+            if (!currentPdfDoc) return;
+            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') ? 1.0 : currentPdfScale;
+            currentPdfScale = Math.min(curScale + 0.2, 2.5);
+            renderAllPdfPages(currentPdfDoc, currentPdfScale);
+        });
+    }
+
+    // Nút Zoom Out
+    const zoomOutBtn = document.getElementById('pdfZoomOutBtn');
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', function() {
+            if (!currentPdfDoc) return;
+            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') ? 1.0 : currentPdfScale;
+            currentPdfScale = Math.max(curScale - 0.2, 0.5);
+            renderAllPdfPages(currentPdfDoc, currentPdfScale);
+        });
+    }
+
+    // Nút Fit Width
+    const fitBtn = document.getElementById('pdfFitWidthBtn');
+    if (fitBtn) {
+        fitBtn.addEventListener('click', function() {
+            if (!currentPdfDoc) return;
+            currentPdfScale = 'fit';
+            renderAllPdfPages(currentPdfDoc, 'fit');
+        });
+    }
+
+    // Cuộn trang trước / sau
+    const prevBtn = document.getElementById('pdfPrevPageBtn');
+    const nextBtn = document.getElementById('pdfNextPageBtn');
+    const wrapper = document.getElementById('pdfViewerWrapper');
+
+    if (prevBtn && wrapper) {
+        prevBtn.addEventListener('click', function() {
+            const cur = parseInt(document.getElementById('pdfCurrentPage').textContent) || 1;
+            if (cur > 1) {
+                const targetEl = document.getElementById('pdf-page-' + (cur - 1));
+                if (targetEl) {
+                    wrapper.scrollTo({ top: targetEl.offsetTop - 15, behavior: 'smooth' });
+                    document.getElementById('pdfCurrentPage').textContent = cur - 1;
+                }
+            }
+        });
+    }
+
+    if (nextBtn && wrapper) {
+        nextBtn.addEventListener('click', function() {
+            const cur = parseInt(document.getElementById('pdfCurrentPage').textContent) || 1;
+            const total = parseInt(document.getElementById('pdfTotalPages').textContent) || 1;
+            if (cur < total) {
+                const targetEl = document.getElementById('pdf-page-' + (cur + 1));
+                if (targetEl) {
+                    wrapper.scrollTo({ top: targetEl.offsetTop - 15, behavior: 'smooth' });
+                    document.getElementById('pdfCurrentPage').textContent = cur + 1;
+                }
+            }
+        });
+    }
+
+    // Cập nhật số trang hiện tại khi cuộn
+    if (wrapper) {
+        wrapper.addEventListener('scroll', function() {
+            const pageBoxes = document.querySelectorAll('.pdf-page-box');
+            if (!pageBoxes.length) return;
+            const wrapperTop = wrapper.scrollTop;
+            let activePage = 1;
+
+            pageBoxes.forEach(function(box) {
+                if (box.offsetTop - wrapper.offsetTop <= wrapperTop + 100) {
+                    activePage = box.dataset.page;
+                }
+            });
+            const curPageEl = document.getElementById('pdfCurrentPage');
+            if (curPageEl) curPageEl.textContent = activePage;
         });
     }
 });
 </script>
+@endonce

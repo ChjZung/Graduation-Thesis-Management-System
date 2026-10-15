@@ -47,9 +47,12 @@ class ThongBaoController extends Controller
             $query = ThongBao::where('MaGV', $gv->MaGV)->orderBy('created_at', 'desc');
         } else {
             $query = ThongBao::where(function($q) use ($user) {
-                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể'])
+                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', ''])
+                  ->orWhereNull('DoiTuongNhan')
                   ->orWhere('DoiTuongNhan', $user->MaTK)
-                  ->orWhere('DoiTuongNhan', 'like', "%{$user->MaTK}%");
+                  ->orWhere('DoiTuongNhan', 'like', "%{$user->MaTK}%")
+                  ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
             })->where(function($q) use ($gv) {
                 $q->whereNull('MaGV')->orWhere('MaGV', '!=', $gv->MaGV);
             })->orderBy('created_at', 'desc');
@@ -213,6 +216,26 @@ class ThongBaoController extends Controller
     {
         $thongBao = ThongBao::with(['giangVien', 'giaoVu'])->where('MaThongBao', $id)->firstOrFail();
 
+        // Kiểm tra quyền truy cập thông báo theo Policy (Chống IDOR)
+        if (\Illuminate\Support\Facades\Gate::forUser(Auth::user())->denies('view', $thongBao)) {
+            abort(403, 'Bạn không có quyền xem thông báo này.');
+        }
+
+        // Đánh dấu thông báo đã đọc
+        $curUser = Auth::user();
+        $userKey = 'read_thong_bao_ids_' . ($curUser?->MaTK ?? 'guest');
+        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
+        if (!is_array($readIds)) {
+            $readIds = [];
+        }
+        if (!in_array($id, $readIds)) {
+            $readIds[] = $id;
+            session([
+                $userKey => $readIds,
+                'read_thong_bao_ids' => $readIds,
+            ]);
+        }
+
         $fileUrl = $thongBao->FileDinhKem;
         if (!empty($fileUrl)) {
             $fileUrl = ltrim($fileUrl, '/');
@@ -237,15 +260,63 @@ class ThongBaoController extends Controller
                 $fileType = 'pdf';
             } elseif (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
                 $fileType = 'image';
+            } elseif (in_array($ext, ['xlsx', 'xls', 'csv'])) {
+                $fileType = 'excel';
             }
         }
 
-        return view('thongbao.show', array_merge(
-            compact('thongBao', 'fileUrl', 'fileType'),
-            [
-                'layout'  => 'layouts.giangvien',
-                'backUrl' => route('giangvien.thongbao.index')
-            ]
-        ));
+        // Lấy dữ liệu danh sách sinh viên đủ điều kiện nếu là thông báo điều kiện
+        $duDieuKienList = collect();
+        $duDieuKienStats = null;
+        if (str_starts_with($thongBao->MaThongBao, 'TB_DK_')) {
+            $shortHk = substr($thongBao->MaThongBao, strlen('TB_DK_'));
+            $hocKy = \App\Models\HocKy::all()->first(function($hk) use ($shortHk) {
+                return preg_replace('/[^A-Za-z0-9]/', '', $hk->MaHocKy) === $shortHk;
+            }) ?? \App\Models\HocKy::latest('MaHocKy')->first();
+
+            if ($hocKy) {
+                $duDieuKienList = \App\Models\DanhSachSVDuDieuKien::with(['sinhVien.lop.nganh'])
+                    ->where('MaHocKy', $hocKy->MaHocKy)
+                    ->orderBy('MaSV')
+                    ->get();
+
+                $duDieuKienStats = [
+                    'total' => $duDieuKienList->count(),
+                    'eligible' => $duDieuKienList->where('TrangThai', 'Đủ điều kiện')->count(),
+                    'ineligible' => $duDieuKienList->where('TrangThai', '!=', 'Đủ điều kiện')->count(),
+                    'tenHocKy' => "{$hocKy->TenHocKy} ({$hocKy->NamHoc})",
+                ];
+            }
+        }
+
+        // Preview cho các file Excel đính kèm khác
+        $excelRows = [];
+        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && file_exists(public_path($fileUrl))) {
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(public_path($fileUrl));
+                $sheet = $spreadsheet->getActiveSheet();
+                $excelRows = array_slice($sheet->toArray(null, true, true, false), 0, 50);
+            } catch (\Throwable $e) {
+                \Log::warning('Lỗi đọc dữ liệu xem trước Excel: ' . $e->getMessage());
+            }
+        }
+
+        $totalSent = 0;
+        $readCount = 0;
+        $unreadCount = 0;
+
+        return view('thongbao.show', [
+            'thongBao'        => $thongBao,
+            'fileUrl'         => $fileUrl,
+            'fileType'        => $fileType,
+            'duDieuKienList'  => $duDieuKienList,
+            'duDieuKienStats' => $duDieuKienStats,
+            'excelRows'       => $excelRows,
+            'totalSent'       => $totalSent,
+            'readCount'       => $readCount,
+            'unreadCount'     => $unreadCount,
+            'layout'          => 'layouts.giangvien',
+            'backUrl'         => route('giangvien.thongbao.index')
+        ]);
     }
 }

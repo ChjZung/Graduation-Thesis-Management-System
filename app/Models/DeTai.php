@@ -65,6 +65,11 @@ class DeTai extends Model
         return $this->belongsTo(HocPhan::class, 'MaHocPhan', 'MaHocPhan');
     }
 
+    public function hocPhan()
+    {
+        return $this->belongsTo(HocPhan::class, 'MaHocPhan', 'MaHocPhan');
+    }
+
     public function hocKy()
     {
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');

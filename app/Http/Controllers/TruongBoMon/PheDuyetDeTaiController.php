@@ -23,19 +23,29 @@ class PheDuyetDeTaiController extends Controller
     private function getBoMon()
     {
         $user = Auth::user();
+        if (!$user) return null;
+
         $gv = GiangVien::getLoggedInGiangVien($user);
         if ($gv && $gv->MaBoMon) {
             $bm = BoMon::where('MaBoMon', $gv->MaBoMon)->first();
             if ($bm) return $bm;
         }
 
-        // Dự phòng parse từ username TBM_BM_CNPM_... hoặc TBM_CNPM_...
-        if ($user && preg_match('/^TBM_(?:BM_)?([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
-            $bm = BoMon::where('MaBoMon', $m[1])->orWhere('MaBoMon', 'BM_' . $m[1])->first();
-            if ($bm) return $bm;
+        // Dự phòng tìm theo mã bộ môn xuất hiện trong TenDangNhap (vd: TBM_CNTT_CNPM_GV002, TBM_BM_CNPM_...)
+        $allBoMons = BoMon::all();
+        foreach ($allBoMons as $itemBm) {
+            $code = $itemBm->MaBoMon;
+            if (str_contains($user->TenDangNhap, '_' . $code . '_') || str_contains($user->TenDangNhap, '_' . $code) || str_contains($user->TenDangNhap, 'BM_' . $code)) {
+                return $itemBm;
+            }
         }
 
-        return BoMon::where('TruongBoMon', 'like', '%' . ($gv->HoTen ?? '') . '%')->first() ?? BoMon::first();
+        if (!empty($gv?->HoTen)) {
+            $found = BoMon::where('TruongBoMon', 'like', '%' . $gv->HoTen . '%')->first();
+            if ($found) return $found;
+        }
+
+        return null;
     }
 
     /**
@@ -46,7 +56,9 @@ class PheDuyetDeTaiController extends Controller
         if (!$boMon) {
             abort(403, 'Không xác định được Bộ môn của tài khoản hiện tại.');
         }
-        if ($giangVien->MaBoMon !== $boMon->MaBoMon) {
+        $gvBm = str_replace('BM_', '', $giangVien->MaBoMon ?? '');
+        $curBm = str_replace('BM_', '', $boMon->MaBoMon ?? '');
+        if ($gvBm !== $curBm) {
             abort(403, "Bạn không có quyền xem thông tin hay đề tài của giảng viên thuộc Bộ môn khác ({$giangVien->MaBoMon}).");
         }
     }
@@ -61,7 +73,10 @@ class PheDuyetDeTaiController extends Controller
         }
         $detai->loadMissing('giangVien.boMon', 'hocPhanRef');
         $detaiMaBoMon = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon;
-        if ($detaiMaBoMon && $detaiMaBoMon !== $boMon->MaBoMon) {
+        $dtBm = str_replace('BM_', '', $detaiMaBoMon ?? '');
+        $curBm = str_replace('BM_', '', $boMon->MaBoMon ?? '');
+
+        if (!$dtBm || $dtBm !== $curBm) {
             abort(403, "Bạn không có quyền quản lý hay phê duyệt đề tài không thuộc Bộ môn '{$boMon->TenBoMon}'.");
         }
     }
@@ -379,7 +394,10 @@ class PheDuyetDeTaiController extends Controller
 
             return redirect()->route('truongbomon.phe_duyet_detai.show', $maDeTai)
                 ->with('success', "Đã phê duyệt đề tài thành công! Đề tài đã được chuyển tiếp lên Trưởng khoa.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
             return redirect()->back()->withErrors($e->getMessage());
         }
     }
@@ -453,7 +471,10 @@ class PheDuyetDeTaiController extends Controller
 
             return redirect()->route('truongbomon.phe_duyet_detai.show', $maDeTai)
                 ->with('success', "Đã gửi yêu cầu chỉnh sửa đề tài tới Giảng viên thành công.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
             return redirect()->back()->withErrors($e->getMessage());
         }
     }
@@ -527,7 +548,10 @@ class PheDuyetDeTaiController extends Controller
 
             return redirect()->route('truongbomon.phe_duyet_detai.show', $maDeTai)
                 ->with('success', "Đã từ chối đề tài thành công.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
             return redirect()->back()->withErrors($e->getMessage());
         }
     }

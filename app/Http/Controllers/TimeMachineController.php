@@ -12,6 +12,15 @@ class TimeMachineController extends Controller
      */
     public function setMockTime(Request $request)
     {
+        // Chặn lạm dụng đổi thời gian hệ thống từ bên ngoài
+        if (!app()->environment(['local', 'testing'])) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $user?->loadMissing('vaiTro');
+            if (!$user || !in_array($user->vaiTro?->TenVaiTro, ['Admin', 'Giáo vụ'])) {
+                abort(403, 'Chức năng điều chỉnh thời gian ảo chỉ dành cho quản trị viên thử nghiệm.');
+            }
+        }
+
         $request->validate([
             'mock_time' => 'required|string',
         ]);

@@ -27,3 +27,4 @@ Homestead.json
 Homestead.yaml
 /scratch/
 /storage/framework/mock_time.txt
+/database/backups/
