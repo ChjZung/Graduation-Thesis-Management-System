@@ -172,13 +172,24 @@ class DuyetDangKyDeTaiController extends Controller
         $tenHocKy = $hocKy ? $hocKy->TenHocKy : 'Học kỳ hiện tại';
 
         $soLuongNhom = DangKyDeTai::where('TrangThai', 'Đã duyệt')->count();
+        if ($soLuongNhom === 0) {
+            $soLuongNhom = DangKyDeTai::count();
+        }
 
-        // Tạo thông báo phát toàn trường
+        // Tự động chuyển các đề tài đã duyệt sang Đã công bố
+        \App\Models\DeTai::where('TrangThai', 'Trưởng khoa đã duyệt')->update([
+            'TrangThai'  => 'Đã công bố',
+            'NgayCongBo' => now(),
+        ]);
+
+        $hanLienHe = now()->addDays(3)->format('d/m/Y');
+
+        // Tạo thông báo phát cho tất cả các role (Toàn trường)
         $maTB = 'TB_' . date('Y') . '_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(4));
-        \App\Models\ThongBao::create([
+        $thongBao = \App\Models\ThongBao::create([
             'MaThongBao'   => $maTB,
             'TieuDe'       => "THÔNG BÁO CHÍNH THỨC: Danh sách Sinh viên đăng ký đề tài & GVHD {$tenHocKy}",
-            'NoiDung'      => "Khoa Công nghệ Thông tin thông báo chính thức danh sách {$soLuongNhom} nhóm sinh viên đã hoàn tất đăng ký đề tài và Giảng viên hướng dẫn (GVHD) trong {$tenHocKy}. Đề nghị các nhóm sinh viên chủ động liên hệ GVHD qua email trước ngày 17/08/2026 để trao đổi nội dung kế hoạch thực hiện đề tài. Nếu nhóm không liên hệ GVHD đúng hạn sẽ bị xem như không thực hiện khóa luận theo thông báo số 27/TB-KCNTT.",
+            'NoiDung'      => "Khoa Công nghệ Thông tin thông báo chính thức danh sách {$soLuongNhom} nhóm sinh viên đã hoàn tất đăng ký đề tài và Giảng viên hướng dẫn (GVHD) trong {$tenHocKy}. Đề nghị các nhóm sinh viên chủ động liên hệ GVHD qua email trước ngày {$hanLienHe} để trao đổi nội dung kế hoạch thực hiện đề tài. Nếu nhóm không liên hệ GVHD đúng hạn sẽ bị xem như không thực hiện khóa luận theo thông báo số 27/TB-KCNTT.",
             'LoaiThongBao' => 'Thông báo khóa luận',
             'DoiTuongNhan' => 'Toàn trường',
             'NgayTao'      => now()->toDateString(),
@@ -186,7 +197,10 @@ class DuyetDangKyDeTaiController extends Controller
             'MaGVu'        => 'GVU01',
         ]);
 
-        return redirect()->back()->with('success', "🎉 Đã công bố chính thức danh sách đề tài & GVHD! Hệ thống đã phát thông báo hướng dẫn liên hệ GVHD đến toàn thể Sinh viên và Giảng viên.");
+        // Tự động khởi tạo file Excel (.xlsx) chuẩn chính thức để đính kèm và xuất ra ngoài
+        \App\Services\ThongBaoService::generateOfficialExcelFile($thongBao);
+
+        return redirect()->back()->with('success', "🎉 Đã công bố chính thức danh sách đề tài & GVHD! Hệ thống đã phát thông báo toàn trường, đính kèm file Excel (.xlsx) chuẩn và tích hợp bảng tính xem nhanh.");
     }
 
     /**

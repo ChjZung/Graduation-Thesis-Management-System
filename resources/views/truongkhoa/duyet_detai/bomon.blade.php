@@ -129,10 +129,10 @@
                     <label class="form-label small fw-bold text-muted mb-1">Trạng thái TK:</label>
                     <select name="trang_thai_tk" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="ALL">Tất cả trạng thái TK</option>
-                        <option value="cho_duyet" {{ request('trang_thai_tk') === 'cho_duyet' ? 'selected' : '' }}>Chờ duyệt cấp Khoa</option>
-                        <option value="da_duyet" {{ request('trang_thai_tk') === 'da_duyet' ? 'selected' : '' }}>TK đã duyệt</option>
-                        <option value="yeu_cau_sua" {{ request('trang_thai_tk') === 'yeu_cau_sua' ? 'selected' : '' }}>TK yêu cầu sửa</option>
-                        <option value="tu_choi" {{ request('trang_thai_tk') === 'tu_choi' ? 'selected' : '' }}>TK từ chối</option>
+                        <option value="da_duyet" {{ in_array(request('trang_thai_tk'), ['da_duyet', 'da_phe_duyet', 'Đã phê duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
+                        <option value="cho_duyet" {{ in_array(request('trang_thai_tk'), ['cho_duyet', 'chua_phe_duyet', 'Chưa phê duyệt']) ? 'selected' : '' }}>Chưa duyệt / Chờ duyệt</option>
+                        <option value="yeu_cau_sua" {{ in_array(request('trang_thai_tk'), ['yeu_cau_sua', 'yeu_cau_chinh_sua']) ? 'selected' : '' }}>Yêu cầu chỉnh sửa</option>
+                        <option value="tu_choi" {{ in_array(request('trang_thai_tk'), ['tu_choi', 'Từ chối']) ? 'selected' : '' }}>Từ chối</option>
                     </select>
                 </div>
 

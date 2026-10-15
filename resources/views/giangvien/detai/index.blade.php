@@ -67,15 +67,27 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <select name="TrangThai" class="form-select form-select-sm">
+                <select name="TrangThai" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Chờ duyệt cấp Bộ môn" {{ request('TrangThai') == 'Chờ duyệt cấp Bộ môn' ? 'selected' : '' }}>Chờ duyệt cấp Bộ môn</option>
-                    <option value="Chờ duyệt cấp Khoa" {{ request('TrangThai') == 'Chờ duyệt cấp Khoa' ? 'selected' : '' }}>Chờ duyệt cấp Khoa</option>
-                    <option value="Trưởng khoa đã duyệt - Chờ nộp đề cương" {{ request('TrangThai') == 'Trưởng khoa đã duyệt - Chờ nộp đề cương' ? 'selected' : '' }}>Chờ nộp đề cương</option>
-                    <option value="Đã nộp đề cương - Chờ phân công PB" {{ request('TrangThai') == 'Đã nộp đề cương - Chờ phân công PB' ? 'selected' : '' }}>Đã nộp ĐC - Chờ PB</option>
-                    <option value="Đang phản biện đề cương" {{ request('TrangThai') == 'Đang phản biện đề cương' ? 'selected' : '' }}>Đang phản biện đề cương</option>
-                    <option value="Yêu cầu chỉnh sửa đề cương" {{ request('TrangThai') == 'Yêu cầu chỉnh sửa đề cương' ? 'selected' : '' }}>Yêu cầu chỉnh sửa đề cương</option>
-                    <option value="Đã công bố" {{ request('TrangThai') == 'Đã công bố' ? 'selected' : '' }}>Đã công bố chính thức</option>
+                    <optgroup label="Nhóm trạng thái chính">
+                        <option value="da_phe_duyet" {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
+                        <option value="chua_phe_duyet" {{ in_array(request('TrangThai'), ['chua_phe_duyet', 'Chưa phê duyệt', 'cho_duyet', 'Chờ duyệt', 'dang_xet_duyet']) ? 'selected' : '' }}>Chưa phê duyệt / Đang chờ duyệt</option>
+                        <option value="yeu_cau_chinh_sua" {{ in_array(request('TrangThai'), ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa']) ? 'selected' : '' }}>Yêu cầu chỉnh sửa</option>
+                        <option value="tu_choi" {{ in_array(request('TrangThai'), ['tu_choi', 'Từ chối']) ? 'selected' : '' }}>Từ chối</option>
+                        <option value="da_cong_bo" {{ in_array(request('TrangThai'), ['da_cong_bo', 'Đã công bố']) ? 'selected' : '' }}>Đã công bố chính thức</option>
+                    </optgroup>
+                    <optgroup label="Trạng thái chi tiết">
+                        <option value="Chờ duyệt cấp Bộ môn" {{ request('TrangThai') == 'Chờ duyệt cấp Bộ môn' ? 'selected' : '' }}>Chờ duyệt cấp Bộ môn</option>
+                        <option value="Chờ duyệt cấp Khoa" {{ request('TrangThai') == 'Chờ duyệt cấp Khoa' ? 'selected' : '' }}>Chờ duyệt cấp Khoa</option>
+                        <option value="Trưởng khoa đã duyệt - Chờ nộp đề cương" {{ request('TrangThai') == 'Trưởng khoa đã duyệt - Chờ nộp đề cương' ? 'selected' : '' }}>Trưởng khoa đã duyệt - Chờ nộp đề cương</option>
+                        <option value="Đã nộp đề cương - Chờ phân công PB" {{ request('TrangThai') == 'Đã nộp đề cương - Chờ phân công PB' ? 'selected' : '' }}>Đã nộp đề cương - Chờ phân công PB</option>
+                        <option value="Đang phản biện đề cương" {{ request('TrangThai') == 'Đang phản biện đề cương' ? 'selected' : '' }}>Đang phản biện đề cương</option>
+                        <option value="Đã phản biện - Chờ duyệt BM" {{ request('TrangThai') == 'Đã phản biện - Chờ duyệt BM' ? 'selected' : '' }}>Đã phản biện - Chờ duyệt BM</option>
+                        <option value="Trưởng khoa đã duyệt" {{ request('TrangThai') == 'Trưởng khoa đã duyệt' ? 'selected' : '' }}>Trưởng khoa đã duyệt</option>
+                        <option value="Yêu cầu chỉnh sửa đề cương" {{ request('TrangThai') == 'Yêu cầu chỉnh sửa đề cương' ? 'selected' : '' }}>Yêu cầu chỉnh sửa đề cương</option>
+                        <option value="Từ chối" {{ request('TrangThai') == 'Từ chối' ? 'selected' : '' }}>Từ chối</option>
+                        <option value="Đã công bố" {{ request('TrangThai') == 'Đã công bố' ? 'selected' : '' }}>Đã công bố</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-1">

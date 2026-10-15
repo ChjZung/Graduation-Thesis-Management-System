@@ -192,20 +192,9 @@ class ThongBaoController extends Controller
 
         $thongBao = ThongBao::with(['giaoVu', 'giangVien'])->where('MaThongBao', $id)->firstOrFail();
 
-        // Đánh dấu thông báo đã đọc trong session
+        // Đánh dấu thông báo đã đọc bền vững
         $curMaTK = $user->MaTK ?? '';
-        $userKey = 'read_thong_bao_ids_' . ($curMaTK ?: 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) {
-            $readIds = [];
-        }
-        if (!in_array($id, $readIds)) {
-            $readIds[] = $id;
-            session([
-                $userKey => $readIds,
-                'read_thong_bao_ids' => $readIds,
-            ]);
-        }
+        $readIds = \App\Services\ThongBaoService::markAsRead($curMaTK, $id);
 
         // 1. Tự động kiểm tra file công văn đính kèm
         $fileUrl = $thongBao->FileDinhKem;
@@ -316,9 +305,15 @@ class ThongBaoController extends Controller
             default            => 'layouts.sinhvien',
         };
 
+        $officialListData = \App\Services\ThongBaoService::getOfficialListData($thongBao);
+        if ($officialListData && !empty($officialListData['excelUrl'])) {
+            $fileUrl = $officialListData['excelUrl'];
+            $fileType = 'excel';
+        }
+
         return view('thongbao.show', compact(
             'thongBao', 'fileUrl', 'fileType', 'totalSent', 'readCount', 'unreadCount',
-            'duDieuKienList', 'duDieuKienStats', 'excelRows', 'layout', 'role'
+            'duDieuKienList', 'duDieuKienStats', 'excelRows', 'officialListData', 'layout', 'role'
         ));
     }
 
@@ -538,17 +533,8 @@ class ThongBaoController extends Controller
         }
 
         $allIds = $notiQuery->pluck('MaThongBao')->toArray();
-        $userKey = 'read_thong_bao_ids_' . ($curUserMaTK ?: 'guest');
-        $existing = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($existing)) {
-            $existing = [];
-        }
-        $merged = array_values(array_unique(array_merge($existing, $allIds)));
-
-        session([
-            $userKey => $merged,
-            'read_thong_bao_ids' => $merged,
-        ]);
+        $curUserMaTK = $curUser->MaTK ?? '';
+        $merged = \App\Services\ThongBaoService::markAsRead($curUserMaTK, $allIds);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -559,5 +545,25 @@ class ThongBaoController extends Controller
         }
 
         return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc!');
+    }
+
+    /**
+     * Đánh dấu 1 thông báo cụ thể là đã đọc cho người dùng hiện tại
+     */
+    public function markReadGlobal(Request $request, $id)
+    {
+        $curUser = Auth::user();
+        if (!$curUser) {
+            return response()->json(['success' => false, 'message' => 'Chưa đăng nhập'], 401);
+        }
+
+        $curUserMaTK = $curUser->MaTK ?? '';
+        $readIds = \App\Services\ThongBaoService::markAsRead($curUserMaTK, $id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã đánh dấu thông báo là đã đọc!',
+            'readIds' => $readIds
+        ]);
     }
 }

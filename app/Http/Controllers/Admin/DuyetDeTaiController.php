@@ -296,14 +296,19 @@ class DuyetDeTaiController extends Controller
         }
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
-            if ($request->TrangThai === 'dang_xet_duyet') {
-                $query->whereIn('TrangThai', $dangXetDuyetStatuses);
-            } elseif ($request->TrangThai === 'da_cong_bo') {
+            $tt = trim($request->TrangThai);
+            if (in_array($tt, ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt', 'da_cong_bo', 'Đã công bố'])) {
                 $query->whereIn('TrangThai', $daCongBoStatuses);
-            } elseif ($request->TrangThai === 'tu_choi_can_sua') {
+            } elseif (in_array($tt, ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'cho_duyet', 'Chờ duyệt'])) {
+                $query->whereIn('TrangThai', $dangXetDuyetStatuses);
+            } elseif (in_array($tt, ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa'])) {
+                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Yêu cầu điều chỉnh']);
+            } elseif (in_array($tt, ['tu_choi', 'Từ chối'])) {
+                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện']);
+            } elseif ($tt === 'tu_choi_can_sua') {
                 $query->whereIn('TrangThai', $tuChoiCanSuaStatuses);
             } else {
-                $query->where('TrangThai', $request->TrangThai);
+                $query->where('TrangThai', $tt);
             }
         }
 

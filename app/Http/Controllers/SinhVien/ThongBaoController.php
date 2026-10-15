@@ -11,9 +11,7 @@ class ThongBaoController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($user?->MaTK ?? 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) { $readIds = []; }
+        $readIds = \App\Services\ThongBaoService::getReadIds($user?->MaTK);
 
         $sv = \App\Models\SinhVien::where('MaTK', $user->MaTK)->first();
         $userNhomCodes = $sv ? \App\Models\ThanhVienNhom::where('MaSV', $sv->MaSV)->pluck('MaNhom')->toArray() : [];
@@ -57,25 +55,15 @@ class ThongBaoController extends Controller
     public function markRead($id)
     {
         $user = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($user?->MaTK ?? 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) { $readIds = []; }
-        if (!in_array($id, $readIds)) {
-            $readIds[] = $id;
-            session([$userKey => $readIds, 'read_thong_bao_ids' => $readIds]);
-        }
+        \App\Services\ThongBaoService::markAsRead($user?->MaTK, $id);
         return redirect()->back();
     }
 
     public function markAllRead()
     {
         $user = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($user?->MaTK ?? 'guest');
         $allIds = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])->pluck('MaThongBao')->toArray();
-        $existing = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($existing)) { $existing = []; }
-        $merged = array_values(array_unique(array_merge($existing, $allIds)));
-        session([$userKey => $merged, 'read_thong_bao_ids' => $merged]);
+        \App\Services\ThongBaoService::markAsRead($user?->MaTK, $allIds);
         return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc!');
     }
 
@@ -85,9 +73,7 @@ class ThongBaoController extends Controller
     public function unreadCount()
     {
         $user = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($user?->MaTK ?? 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) { $readIds = []; }
+        $readIds = \App\Services\ThongBaoService::getReadIds($user?->MaTK);
         $count = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])
             ->whereNotIn('MaThongBao', $readIds)
             ->count();
@@ -106,15 +92,9 @@ class ThongBaoController extends Controller
             abort(403, 'Bạn không có quyền xem thông báo này.');
         }
 
-        // Đánh dấu đã đọc
+        // Đánh dấu đã đọc bền vững
         $user = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($user?->MaTK ?? 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) { $readIds = []; }
-        if (!in_array($id, $readIds)) {
-            $readIds[] = $id;
-            session([$userKey => $readIds, 'read_thong_bao_ids' => $readIds]);
-        }
+        $readIds = \App\Services\ThongBaoService::markAsRead($user?->MaTK, $id);
 
         $fileUrl = $thongBao->FileDinhKem;
         if (!empty($fileUrl)) {
@@ -181,18 +161,25 @@ class ThongBaoController extends Controller
             }
         }
 
+        $officialListData = \App\Services\ThongBaoService::getOfficialListData($thongBao);
+        if ($officialListData && !empty($officialListData['excelUrl'])) {
+            $fileUrl = $officialListData['excelUrl'];
+            $fileType = 'excel';
+        }
+
         return view('thongbao.show', [
-            'thongBao'        => $thongBao,
-            'fileUrl'         => $fileUrl,
-            'fileType'        => $fileType,
-            'duDieuKienList'  => $duDieuKienList,
-            'duDieuKienStats' => $duDieuKienStats,
-            'excelRows'       => $excelRows,
-            'layout'          => 'layouts.sinhvien',
-            'backUrl'         => route('sinhvien.thongbao.index'),
-            'totalSent'       => 0,
-            'readCount'       => 0,
-            'unreadCount'     => 0,
+            'thongBao'          => $thongBao,
+            'fileUrl'           => $fileUrl,
+            'fileType'          => $fileType,
+            'duDieuKienList'    => $duDieuKienList,
+            'duDieuKienStats'   => $duDieuKienStats,
+            'excelRows'         => $excelRows,
+            'officialListData'  => $officialListData,
+            'layout'            => 'layouts.sinhvien',
+            'backUrl'           => route('sinhvien.thongbao.index'),
+            'totalSent'         => 0,
+            'readCount'         => 0,
+            'unreadCount'       => 0,
         ]);
     }
 }

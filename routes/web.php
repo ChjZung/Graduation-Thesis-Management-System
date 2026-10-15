@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Đánh dấu tất cả thông báo đã đọc (Dành cho tất cả vai trò)
     Route::post('/thongbao/mark-all-read', [\App\Http\Controllers\ThongBaoController::class, 'markAllReadGlobal'])->name('thongbao.markAllReadGlobal');
+    Route::post('/thongbao/mark-read/{id}', [\App\Http\Controllers\ThongBaoController::class, 'markReadGlobal'])->name('thongbao.markReadGlobal');
 });
 
 // ==========================================

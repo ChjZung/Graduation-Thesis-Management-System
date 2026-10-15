@@ -401,27 +401,27 @@
                 <span class="pill-count">{{ $counts['total'] }}</span>
             </a>
 
-            {{-- 2. Đang Xét Duyệt --}}
-            <a href="{{ route('truongbomon.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'dang_xet_duyet', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'dang_xet_duyet' || request('TrangThai') === 'can_duyet' ? 'active' : '' }}" title="Đề tài cần thẩm định, phân công PB hoặc chờ duyệt">
+            {{-- 2. Chưa Phê Duyệt / Chờ Duyệt --}}
+            <a href="{{ route('truongbomon.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'chua_phe_duyet', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'can_duyet', 'cho_duyet', 'Chờ duyệt']) ? 'active' : '' }}" title="Đề tài chưa phê duyệt / đang trong quy trình xét duyệt">
                 <span class="pill-dot" style="background:#f59e0b;"></span>
-                <span>Đang Xét Duyệt</span>
+                <span>Chưa Phê Duyệt / Chờ Duyệt</span>
                 <span class="pill-count">{{ $counts['dang_xet_duyet'] }}</span>
             </a>
 
-            {{-- 3. Đã Phê Duyệt & Công Bố --}}
-            <a href="{{ route('truongbomon.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_cong_bo', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'da_cong_bo' ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt / công bố cho sinh viên">
+            {{-- 3. Đã Phê Duyệt --}}
+            <a href="{{ route('truongbomon.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'da_phe_duyet', 'tab' => 'quanly'])) }}" 
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_cong_bo', 'Đã công bố', 'da_duyet', 'Đã duyệt']) ? 'active' : '' }}" title="Đề tài đã hoàn tất phê duyệt & công bố">
                 <span class="pill-dot" style="background:#10b981;"></span>
-                <span>Đã Công Bố &amp; Đã Duyệt</span>
+                <span>Đã Phê Duyệt</span>
                 <span class="pill-count">{{ $counts['da_cong_bo_tab'] }}</span>
             </a>
 
-            {{-- 4. Cần Chỉnh Sửa / Từ Chối --}}
+            {{-- 4. Yêu Cầu Chỉnh Sửa / Từ Chối --}}
             <a href="{{ route('truongbomon.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'tu_choi_can_sua', 'tab' => 'quanly'])) }}" 
-               class="admin-pill-tab {{ request('TrangThai') === 'tu_choi_can_sua' ? 'active' : '' }}" title="Đề tài yêu cầu chỉnh sửa hoặc từ chối">
+               class="admin-pill-tab {{ in_array(request('TrangThai'), ['tu_choi_can_sua', 'yeu_cau_chinh_sua', 'tu_choi']) ? 'active' : '' }}" title="Đề tài yêu cầu chỉnh sửa hoặc từ chối">
                 <span class="pill-dot" style="background:#ef4444;"></span>
-                <span>Cần Chỉnh Sửa / Từ Chối</span>
+                <span>Yêu Cầu Chỉnh Sửa / Từ Chối</span>
                 <span class="pill-count">{{ $counts['tu_choi_can_sua'] }}</span>
             </a>
         </div>
@@ -431,12 +431,9 @@
             <div class="card-body p-3">
                 <form method="GET" action="{{ route('truongbomon.duyet_detai.index') }}" class="row g-2 align-items-center">
                     <input type="hidden" name="tab" value="quanly">
-                    @if(request('TrangThai') && request('TrangThai') !== 'ALL')
-                        <input type="hidden" name="TrangThai" value="{{ request('TrangThai') }}">
-                    @endif
 
                     {{-- 1. Học kỳ --}}
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                         <label class="form-label small text-muted fw-bold mb-1"><i class="fa-regular fa-calendar me-1"></i>Học Kỳ:</label>
                         <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
@@ -447,8 +444,33 @@
                         </select>
                     </div>
 
-                    {{-- 2. Giảng viên đề xuất --}}
-                    <div class="col-6 col-md-3">
+                    {{-- 2. Trạng thái đề tài --}}
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-circle-check me-1"></i>Trạng Thái:</label>
+                        <select name="TrangThai" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="ALL">-- Tất cả Trạng Thái --</option>
+                            <optgroup label="Nhóm tổng hợp">
+                                <option value="da_phe_duyet" {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
+                                <option value="chua_phe_duyet" {{ in_array(request('TrangThai'), ['chua_phe_duyet', 'Chưa phê duyệt', 'dang_xet_duyet', 'can_duyet', 'cho_duyet', 'Chờ duyệt']) ? 'selected' : '' }}>Chưa phê duyệt / Đang chờ duyệt</option>
+                                <option value="yeu_cau_chinh_sua" {{ in_array(request('TrangThai'), ['yeu_cau_chinh_sua', 'yeu_cau_sua', 'Yêu cầu chỉnh sửa']) ? 'selected' : '' }}>Yêu cầu chỉnh sửa</option>
+                                <option value="tu_choi" {{ in_array(request('TrangThai'), ['tu_choi', 'Từ chối']) ? 'selected' : '' }}>Từ chối</option>
+                                <option value="da_cong_bo" {{ in_array(request('TrangThai'), ['da_cong_bo', 'Đã công bố']) ? 'selected' : '' }}>Đã công bố &amp; Đã duyệt</option>
+                            </optgroup>
+                            <optgroup label="Trạng thái chi tiết">
+                                <option value="Chờ duyệt cấp Bộ môn" {{ request('TrangThai') === 'Chờ duyệt cấp Bộ môn' ? 'selected' : '' }}>Chờ duyệt cấp Bộ môn</option>
+                                <option value="Đang phản biện đề cương" {{ request('TrangThai') === 'Đang phản biện đề cương' ? 'selected' : '' }}>Đang phản biện đề cương</option>
+                                <option value="Đã phản biện - Chờ duyệt BM" {{ request('TrangThai') === 'Đã phản biện - Chờ duyệt BM' ? 'selected' : '' }}>Đã phản biện - Chờ duyệt BM</option>
+                                <option value="Chờ duyệt cấp Khoa" {{ request('TrangThai') === 'Chờ duyệt cấp Khoa' ? 'selected' : '' }}>Chờ duyệt cấp Khoa</option>
+                                <option value="Trưởng khoa đã duyệt" {{ request('TrangThai') === 'Trưởng khoa đã duyệt' ? 'selected' : '' }}>Trưởng khoa đã duyệt</option>
+                                <option value="Yêu cầu chỉnh sửa đề cương" {{ request('TrangThai') === 'Yêu cầu chỉnh sửa đề cương' ? 'selected' : '' }}>Yêu cầu chỉnh sửa đề cương</option>
+                                <option value="Từ chối" {{ request('TrangThai') === 'Từ chối' ? 'selected' : '' }}>Từ chối</option>
+                                <option value="Đã công bố" {{ request('TrangThai') === 'Đã công bố' ? 'selected' : '' }}>Đã công bố</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    {{-- 3. Giảng viên đề xuất --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-3">
                         <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-chalkboard-user me-1"></i>GV Đề Xuất:</label>
                         <select name="MaGV" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">-- Tất cả GV trong Bộ môn --</option>
@@ -460,8 +482,8 @@
                         </select>
                     </div>
 
-                    {{-- 3. Lĩnh vực --}}
-                    <div class="col-6 col-md-3">
+                    {{-- 4. Lĩnh vực --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
                         <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-tags me-1"></i>Lĩnh Vực:</label>
                         <select name="LinhVuc" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">-- Tất cả Lĩnh Vực --</option>
@@ -471,8 +493,8 @@
                         </select>
                     </div>
 
-                    {{-- 4. Môn học phần --}}
-                    <div class="col-6 col-md-3">
+                    {{-- 5. Môn học phần --}}
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-2">
                         <label class="form-label small text-muted fw-bold mb-1"><i class="fa-solid fa-graduation-cap me-1"></i>Học Phần:</label>
                         <select name="HocPhan" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">-- Tất cả Học Phần --</option>

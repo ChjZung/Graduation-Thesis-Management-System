@@ -221,20 +221,9 @@ class ThongBaoController extends Controller
             abort(403, 'Bạn không có quyền xem thông báo này.');
         }
 
-        // Đánh dấu thông báo đã đọc
+        // Đánh dấu thông báo đã đọc bền vững
         $curUser = Auth::user();
-        $userKey = 'read_thong_bao_ids_' . ($curUser?->MaTK ?? 'guest');
-        $readIds = session()->get($userKey, session()->get('read_thong_bao_ids', []));
-        if (!is_array($readIds)) {
-            $readIds = [];
-        }
-        if (!in_array($id, $readIds)) {
-            $readIds[] = $id;
-            session([
-                $userKey => $readIds,
-                'read_thong_bao_ids' => $readIds,
-            ]);
-        }
+        $readIds = \App\Services\ThongBaoService::markAsRead($curUser?->MaTK, $id);
 
         $fileUrl = $thongBao->FileDinhKem;
         if (!empty($fileUrl)) {
@@ -305,18 +294,25 @@ class ThongBaoController extends Controller
         $readCount = 0;
         $unreadCount = 0;
 
+        $officialListData = \App\Services\ThongBaoService::getOfficialListData($thongBao);
+        if ($officialListData && !empty($officialListData['excelUrl'])) {
+            $fileUrl = $officialListData['excelUrl'];
+            $fileType = 'excel';
+        }
+
         return view('thongbao.show', [
-            'thongBao'        => $thongBao,
-            'fileUrl'         => $fileUrl,
-            'fileType'        => $fileType,
-            'duDieuKienList'  => $duDieuKienList,
-            'duDieuKienStats' => $duDieuKienStats,
-            'excelRows'       => $excelRows,
-            'totalSent'       => $totalSent,
-            'readCount'       => $readCount,
-            'unreadCount'     => $unreadCount,
-            'layout'          => 'layouts.giangvien',
-            'backUrl'         => route('giangvien.thongbao.index')
+            'thongBao'          => $thongBao,
+            'fileUrl'           => $fileUrl,
+            'fileType'          => $fileType,
+            'duDieuKienList'    => $duDieuKienList,
+            'duDieuKienStats'   => $duDieuKienStats,
+            'excelRows'         => $excelRows,
+            'officialListData'  => $officialListData,
+            'totalSent'         => $totalSent,
+            'readCount'         => $readCount,
+            'unreadCount'       => $unreadCount,
+            'layout'            => 'layouts.giangvien',
+            'backUrl'           => route('giangvien.thongbao.index')
         ]);
     }
 }
