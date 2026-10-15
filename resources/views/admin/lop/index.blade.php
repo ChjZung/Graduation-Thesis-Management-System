@@ -20,8 +20,7 @@
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-users-rectangle text-primary me-2"></i>Quản Lý Danh Sách Lớp Học Niên Khóa</h4>
-            <p class="text-muted small mb-0">Kiểm soát mã lớp, tên lớp sinh hoạt, sĩ số sinh viên và phân loại theo chuyên ngành đào tạo.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-users-rectangle text-primary me-2"></i>Quản Lý Danh Sách Lớp Học Niên Khóa</h4>
         </div>
     </div>
 

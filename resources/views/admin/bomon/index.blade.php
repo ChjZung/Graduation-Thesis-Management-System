@@ -20,8 +20,7 @@
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-layer-group text-primary me-2"></i>Quản Lý Danh Sách Bộ Môn Trực Thuộc Các Khoa Đào Tạo</h4>
-            <p class="text-muted small mb-0">Quản lý mã bộ môn, tên bộ môn chuyên môn, phân bổ giảng viên và liên kết đề tài tốt nghiệp cho sinh viên.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-layer-group text-primary me-2"></i>Quản Lý Danh Sách Bộ Môn Trực Thuộc Các Khoa Đào Tạo</h4>
         </div>
         <div>
             <div class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">

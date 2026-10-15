@@ -106,7 +106,6 @@
                 </span>
             </div>
             <h3 class="fw-bold text-dark mb-0">Phê duyệt đề tài</h3>
-            <p class="text-muted small mb-0">Quản lý, xem xét và phê duyệt đề tài theo từng giảng viên thuộc bộ môn phụ trách</p>
         </div>
 
         @if($hocKies->count() > 1)

@@ -4,8 +4,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="fw-bold mb-1"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Danh Sách Lớp Học Phần Phụ Trách</h4>
-        <p class="text-muted small mb-0">Danh sách các Lớp Học Phần (Lớp Tín Chỉ) do Ban Quản trị phân công bạn phụ trách và hướng dẫn đồ án.</p>
+        <h4 class="fw-bold mb-0"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Danh Sách Lớp Học Phần Phụ Trách</h4>
     </div>
 </div>
 

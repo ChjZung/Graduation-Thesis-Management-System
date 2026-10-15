@@ -11,7 +11,6 @@
             <h4 class="fw-bold mb-0 text-primary-custom">
                 <i class="fa-solid fa-bullhorn text-primary me-2"></i>Quản Lý Thông Báo & Nhắc Nhở Nhóm
             </h4>
-            <p class="text-muted small mb-0">Tạo và gửi thông báo nhắc nhở tiến độ đến tất cả các nhóm hoặc từng nhóm đồ án hướng dẫn.</p>
         </div>
         <div>
             <a href="{{ route('giangvien.thongbao.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold">

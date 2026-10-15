@@ -25,8 +25,7 @@
     <!-- Page Title & Header -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-university text-primary me-2"></i>Quản Lý Danh Sách Các Khoa Đào Tạo</h4>
-            <p class="text-muted small mb-0">Theo dõi mã khoa, tên khoa chuyên môn, trưởng khoa quản lý và tổng số ngành/bộ môn trực thuộc.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-university text-primary me-2"></i>Quản Lý Danh Sách Các Khoa Đào Tạo</h4>
         </div>
     </div>
 

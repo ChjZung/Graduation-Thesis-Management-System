@@ -9,10 +9,9 @@
     <!-- Header Section (Đồng bộ chuẩn Học Kỳ) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">
+            <h4 class="fw-bold mb-0" style="color: #00305a;">
                 <i class="fa-solid fa-folder-check text-primary me-2"></i>Quản Lý Hồ Sơ Bảo Vệ &amp; Thẩm Định Turnitin
             </h4>
-            <p class="text-muted small mb-0">Kiểm tra báo cáo toàn văn, kết quả quét trùng lặp Turnitin và phân bổ nhóm đủ điều kiện sang Hội đồng chấm bảo vệ.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-primary shadow-xs fw-semibold">

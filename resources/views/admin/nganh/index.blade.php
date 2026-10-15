@@ -20,8 +20,7 @@
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Quản Lý Danh Sách Ngành Đào Tạo Trực Thuộc Các Khoa</h4>
-            <p class="text-muted small mb-0">Theo dõi mã ngành, tên chuyên ngành, tổng số tín chỉ yêu cầu và phân bổ sinh viên thực hiện đồ án tốt nghiệp.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Quản Lý Danh Sách Ngành Đào Tạo Trực Thuộc Các Khoa</h4>
         </div>
     </div>
 

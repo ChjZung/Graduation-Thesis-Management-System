@@ -6,8 +6,7 @@
 <div class="container-fluid px-0">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>Quản Lý Giảng Viên &amp; Phân Bổ Hướng Dẫn</h4>
-            <p class="text-muted small mb-0">Quản lý hồ sơ giảng viên, kiểm soát định mức hướng dẫn đề tài khóa luận theo từng học kỳ và phân quyền tài khoản Portal.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-chalkboard-user text-primary me-2"></i>Quản Lý Giảng Viên &amp; Phân Bổ Hướng Dẫn</h4>
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-light text-primary border px-3 py-2 rounded-pill fw-semibold">

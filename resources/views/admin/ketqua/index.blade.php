@@ -9,10 +9,9 @@
     <!-- Header Section (Đồng bộ chuẩn Học Kỳ) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">
+            <h4 class="fw-bold mb-0" style="color: #00305a;">
                 <i class="fa-solid fa-chart-column text-primary me-2"></i>Quản Lý Bảng Điểm &amp; Kết Quả Khóa Luận
             </h4>
-            <p class="text-muted small mb-0">Tổng hợp điểm đánh giá của Hội đồng bảo vệ (100%), quy đổi thang điểm 4, xếp loại học lực và công bố điểm chính thức.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('admin.ketqua.export', request()->all()) }}" class="btn btn-outline-success shadow-xs fw-semibold">
