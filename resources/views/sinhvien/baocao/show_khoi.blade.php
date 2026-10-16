@@ -31,7 +31,7 @@
     </div>
 
     <!-- Trạng thái & Nhận xét của Giảng viên -->
-    <div class="card mb-4 border-0 shadow-xs" style="background: {{ $khoi->TrangThai === 'Đạt' ? '#f0fdf4' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? '#fffbeb' : '#f8fafc') }}; border-left: 5px solid {{ $khoi->TrangThai === 'Đạt' ? '#16a34a' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? '#d97706' : '#64748b') }} !important;">
+    <div class="card mb-4 border-0 shadow-xs" style="background: {{ $khoi->TrangThai === 'Đạt' ? 'var(--admin-success-soft)' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'var(--admin-warning-soft)' : 'var(--admin-neutral-soft)') }}; border-left: 5px solid {{ $khoi->TrangThai === 'Đạt' ? 'var(--admin-success)' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'var(--admin-warning-text)' : 'var(--admin-text-muted)') }} !important;">
         <div class="card-body p-3">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2">
