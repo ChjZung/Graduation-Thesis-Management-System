@@ -7,13 +7,7 @@
     <!-- Breadcrumb & Top Actions -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('hocky.index') }}" class="text-decoration-none">Khóa luận tốt nghiệp</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Thêm Mới Học Kỳ</li>
-                </ol>
-            </nav>
+           
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                 <i class="fa-solid fa-calendar-plus text-primary"></i>
                 <span>Thêm Mới Học Kỳ Đào Tạo</span>

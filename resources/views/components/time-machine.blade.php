@@ -29,7 +29,7 @@
     </div>
 
     <!-- Bảng Điều Khiển Mở Rộng -->
-    <div class="collapse mt-2 shadow-lg rounded-4 overflow-hidden border border-secondary border-opacity-25" id="timeMachinePanel" style="width: 380px; max-width: 90vw; background: #ffffff;">
+    <div class="collapse mt-2 shadow-lg rounded-4 overflow-hidden border border-secondary border-opacity-25" id="timeMachinePanel" style="width: 420px; max-width: 95vw; background: #ffffff;">
         <div class="card border-0 rounded-4">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2 px-3">
                 <div class="d-flex align-items-center gap-2">
@@ -42,7 +42,7 @@
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-toggle="collapse" data-bs-target="#timeMachinePanel"></button>
             </div>
 
-            <div class="card-body p-3" style="max-height: 480px; overflow-y: auto;">
+            <div class="card-body p-3" style="max-height: 75vh; overflow-y: auto;">
                 <!-- Trạng thái hiện tại -->
                 <div class="alert {{ $isMocked ? 'alert-warning border-warning' : 'alert-success border-success' }} py-2 px-3 mb-3 rounded-3" style="font-size: 0.85rem;">
                     <div class="d-flex justify-content-between">
@@ -130,13 +130,140 @@
                         </button>
                     </form>
 
-                    <!-- Mốc 5: Báo cáo tiến độ 1 -->
+                    <!-- PHẦN 2: CÁC MỐC BÁO CÁO TIẾN ĐỘ 6 GIAI ĐOẠN -->
+                    <div class="mt-2 pt-2 border-top">
+                        <label class="form-label fw-bold text-primary mb-1.5" style="font-size: 0.75rem; text-transform: uppercase;">
+                            📊 Mốc Báo Cáo Tiến Độ (6 Giai Đoạn)
+                        </label>
+                    </div>
+
+                    <!-- GĐ 1: Trước hạn (Chặn nộp) -->
                     <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
                         @csrf
-                        <input type="hidden" name="mock_time" value="2026-09-15 09:00:00">
-                        <button type="submit" class="btn btn-outline-dark btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
-                            <span><strong>15/09</strong> | 📊 Báo Cáo Tiến Độ 1</span>
-                            <span class="badge bg-secondary">Đề cương & CSDL</span>
+                        <input type="hidden" name="mock_time" value="2026-09-10 09:00:00">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong>10/09</strong> | 🔒 GĐ 1: Chưa mở nộp</span>
+                            <span class="badge bg-secondary">Chặn nộp</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 1: Đang mở (Đề cương & CSDL) -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-09-16 10:00:00">
+                        <button type="submit" class="btn btn-outline-success btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-success">16/09</strong> | 🟢 GĐ 1: Đang mở nộp</span>
+                            <span class="badge bg-success">Trong hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 1: Quá hạn -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-09-20 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">20/09</strong> | ⚠️ GĐ 1: Quá hạn nộp</span>
+                            <span class="badge bg-danger">Trễ hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 2: Đang mở (Thiết kế & Chức năng) -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-10-05 14:00:00">
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-primary">05/10</strong> | 🟢 GĐ 2: Thiết kế & Code</span>
+                            <span class="badge bg-primary">Trong hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 2: Quá hạn -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-10-18 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">18/10</strong> | ⚠️ GĐ 2: Quá hạn nộp</span>
+                            <span class="badge bg-danger">Trễ hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 3: Đang mở (Kiểm thử & Dự thảo) -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-10-30 09:30:00">
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-primary">30/10</strong> | 🟢 GĐ 3: Kiểm thử & Dự thảo</span>
+                            <span class="badge bg-primary">Trong hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 3: Quá hạn -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-11-08 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">08/11</strong> | ⚠️ GĐ 3: Quá hạn nộp</span>
+                            <span class="badge bg-danger">Trễ hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 4: Hồ sơ bảo vệ & Turnitin -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-11-20 09:00:00">
+                        <button type="submit" class="btn btn-outline-info text-dark btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-info text-dark">20/11</strong> | 📋 GĐ 4: Hồ sơ bảo vệ</span>
+                            <span class="badge bg-info text-dark">Turnitin</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 4: Quá hạn -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-11-29 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">29/11</strong> | ⚠️ GĐ 4: Quá hạn nộp</span>
+                            <span class="badge bg-danger">Trễ hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 5: Bảo vệ Hội đồng -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-12-10 08:30:00">
+                        <button type="submit" class="btn btn-outline-success btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-success">10/12</strong> | 🎓 GĐ 5: Bảo vệ Hội Đồng</span>
+                            <span class="badge bg-success">Hội đồng</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 5: Quá hạn -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-12-20 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">20/12</strong> | ⚠️ GĐ 5: Quá hạn bảo vệ</span>
+                            <span class="badge bg-danger">Trễ hạn</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 6: Nhận kết quả & Nộp bản hoàn chỉnh -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2026-12-25 09:00:00">
+                        <button type="submit" class="btn btn-outline-warning text-dark btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-warning text-dark">25/12</strong> | 🏆 GĐ 6: Nộp Bản Hoàn Chỉnh</span>
+                            <span class="badge bg-warning text-dark">Lưu chiểu</span>
+                        </button>
+                    </form>
+
+                    <!-- GĐ 6: Quá hạn nộp lưu chiểu -->
+                    <form action="{{ route('dev.mock-time') }}" method="POST" class="m-0">
+                        @csrf
+                        <input type="hidden" name="mock_time" value="2027-01-08 09:00:00">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
+                            <span><strong class="text-danger">08/01</strong> | ⚠️ GĐ 6: Quá hạn lưu chiểu</span>
+                            <span class="badge bg-danger">Khóa sổ</span>
                         </button>
                     </form>
                 </div>

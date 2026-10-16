@@ -2,6 +2,47 @@
 
 @section('page_title', 'Chi Tiết Đề Tài - ' . $detai->TenDeTai)
 
+@push('styles')
+<style>
+    :root {
+        --gv-border: #e2e8f0;
+        --gv-bg-subtle: #f8fafc;
+        --huit-primary: #00305a;
+        --huit-accent: #0284c7;
+    }
+
+    .card-dashboard {
+        background: #ffffff;
+        border: 1px solid var(--gv-border);
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .table-custom th {
+        background: var(--gv-bg-subtle);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--gv-border);
+        padding: 0.9rem 1.1rem;
+    }
+
+    .table-custom td {
+        padding: 1rem 1.1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .rich-content-display p:last-child {
+        margin-bottom: 0;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid px-0">
     @php
@@ -14,10 +55,10 @@
     @endphp
 
     <!-- HEADER & ACTION BAR -->
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('giangvien.detai.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại Đề tài của tôi
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{{ route('giangvien.detai.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold shadow-xs">
+                <i class="fa-solid fa-arrow-left me-1.5"></i> Quay lại Đề tài của tôi
             </a>
             <span class="badge bg-light text-secondary border rounded-pill px-3 py-1.5 font-monospace">
                 Mã ĐT: <strong class="text-dark">{{ $detai->MaDeTai }}</strong>
@@ -29,13 +70,13 @@
 
         <div class="d-flex align-items-center gap-2">
             @if($canEdit)
-                <a href="{{ route('giangvien.detai.edit', $detai->MaDeTai) }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold text-dark shadow-xs">
-                    <i class="fa-solid fa-pen-to-square me-1"></i> Chỉnh Sửa Đề Tài
+                <a href="{{ route('giangvien.detai.edit', $detai->MaDeTai) }}" class="btn btn-warning btn-sm rounded-pill px-3.5 py-1.5 fw-semibold text-dark shadow-xs">
+                    <i class="fa-solid fa-pen-to-square me-1.5"></i> Chỉnh Sửa Đề Tài
                 </a>
             @endif
             @if($canNop)
-                <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-xs">
-                    <i class="fa-solid fa-file-arrow-up me-1"></i> Trang Nộp Đề Cương
+                <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-primary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold shadow-xs">
+                    <i class="fa-solid fa-file-arrow-up me-1.5"></i> Trang Nộp Đề Cương
                 </a>
             @endif
         </div>
@@ -43,17 +84,14 @@
 
     <!-- CẢNH BÁO TỪ CHỐI (NẾU CÓ) -->
     @if($detai->TrangThai === 'Từ chối' || ($detai->LyDoTuChoi && in_array($detai->TrangThai, ['Từ chối', 'Không đạt phản biện'])))
-        <div class="alert alert-danger border-danger shadow-sm mb-4 p-3 rounded-3">
-            <div class="d-flex align-items-start gap-3">
-                <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
-                    <i class="fa-solid fa-circle-xmark fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="alert-heading fw-bold text-danger mb-1" style="font-size: 14.5px;">ĐỀ TÀI ĐÃ BỊ TỪ CHỐI PHÊ DUYỆT</h6>
-                    <div class="text-dark" style="font-size: 13.5px; line-height: 1.5;">
-                        <strong>Lý do từ chối:</strong> 
-                        <span class="text-danger-emphasis">{{ $detai->LyDoTuChoi ?: 'Chưa có ghi chú lý do chi tiết từ cấp phê duyệt.' }}</span>
-                    </div>
+        <div class="alert alert-danger border-0 shadow-sm mb-4 p-3.5 rounded-4 d-flex align-items-start gap-3 bg-danger-subtle text-danger-emphasis">
+            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-0.5" style="width: 36px; height: 36px;">
+                <i class="fa-solid fa-circle-xmark fs-5"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-1">ĐỀ TÀI ĐÃ BỊ TỪ CHỐI PHÊ DUYỆT</h6>
+                <div class="small" style="line-height: 1.5;">
+                    <strong>Lý do từ chối:</strong> {{ $detai->LyDoTuChoi ?: 'Chưa có ghi chú lý do chi tiết từ cấp phê duyệt.' }}
                 </div>
             </div>
         </div>
@@ -61,31 +99,30 @@
 
     <!-- CẢNH BÁO BẢN NHÁP (NẾU CÓ) -->
     @if($detai->hasDraft())
-        <div class="alert alert-warning border-warning shadow-sm mb-4 p-3 rounded-3">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-file-pen text-warning fs-3"></i>
-                    <div>
-                        <h6 class="alert-heading fw-bold text-dark mb-0" style="font-size: 14px;">Đề tài đang có một Bản Nháp chỉnh sửa chưa nộp lại</h6>
-                        <div class="text-muted small">Bản chính sẽ chỉ được cập nhật khi quý Thầy/Cô hoàn tất và nộp lại bản nháp.</div>
-                    </div>
+        <div class="alert alert-warning border-0 shadow-sm mb-4 p-3.5 rounded-4 d-flex align-items-center justify-content-between flex-wrap gap-3 bg-warning-subtle text-warning-emphasis">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                    <i class="fa-solid fa-file-pen fs-5"></i>
                 </div>
-                <a href="{{ route('giangvien.detai.edit', $detai->MaDeTai) }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-semibold text-dark shadow-xs" style="font-size: 13px;">
-                    <i class="fa-solid fa-pen-to-square me-1"></i> Mở bản nháp chỉnh sửa
-                </a>
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Đề tài đang có một Bản Nháp chỉnh sửa chưa nộp lại</h6>
+                    <div class="small text-muted">Bản chính sẽ chỉ được cập nhật khi quý Thầy/Cô hoàn tất và nộp lại bản nháp.</div>
+                </div>
             </div>
+            <a href="{{ route('giangvien.detai.edit', $detai->MaDeTai) }}" class="btn btn-warning btn-sm rounded-pill px-3.5 py-1.5 fw-semibold text-dark shadow-xs">
+                <i class="fa-solid fa-pen-to-square me-1.5"></i> Mở bản nháp
+            </a>
         </div>
     @endif
-
 
     <!-- MAIN TWO-COLUMN DASHBOARD LAYOUT (8 COLS LEFT / 4 COLS RIGHT) -->
     <div class="row g-4">
         <!-- CỘT TRÁI: THÔNG TIN CHUYÊN MÔN, MÔ TẢ ĐỀ TÀI & NHÓM SINH VIÊN (8 CỘT) -->
         <div class="col-lg-8">
             <!-- CARD 1: THÔNG TIN VÀ MÔ TẢ ĐỀ TÀI -->
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark fs-6">
+            <div class="card-dashboard mb-4">
+                <div class="bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">
                         <i class="fa-solid fa-file-lines text-primary me-2"></i> Thông Tin &amp; Nội Dung Đề Tài
                     </span>
                     <span class="badge bg-light text-secondary border font-monospace px-2.5 py-1">
@@ -98,37 +135,37 @@
 
                     <!-- Badges học phần, học kỳ, lĩnh vực, quy mô -->
                     <div class="d-flex flex-wrap gap-2 align-items-center mb-4 pb-3 border-bottom">
-                        <span class="badge bg-primary-subtle text-primary border px-3 py-1.5" style="font-size: 13px;">
+                        <span class="badge bg-primary-subtle text-primary border px-3 py-1.5 small fw-semibold">
                             <i class="fa-solid fa-book-open me-1.5"></i>{{ $detai->HocPhan ?? 'Khóa luận tốt nghiệp' }}
                         </span>
-                        <span class="badge bg-light text-dark border px-3 py-1.5" style="font-size: 13px;">
+                        <span class="badge bg-light text-dark border px-3 py-1.5 small fw-medium">
                             <i class="fa-regular fa-calendar-days text-primary me-1.5"></i>{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}
                         </span>
-                        <span class="badge bg-light text-secondary border px-3 py-1.5" style="font-size: 13px;">
+                        <span class="badge bg-light text-secondary border px-3 py-1.5 small fw-medium">
                             <i class="fa-solid fa-layer-group text-primary me-1.5"></i>{{ $detai->LinhVuc ?? 'CNTT' }}
                         </span>
-                        <span class="badge bg-light text-secondary border px-3 py-1.5" style="font-size: 13px;">
+                        <span class="badge bg-light text-secondary border px-3 py-1.5 small fw-medium">
                             <i class="fa-solid fa-users text-primary me-1.5"></i>Quy mô: 3 Sinh viên / nhóm
                         </span>
                     </div>
 
-                    <!-- VÙNG MÔ TẢ ĐỀ TÀI (HIỂN THỊ RICH TEXT AN TOÀN) -->
+                    <!-- VÙNG MÔ TẢ ĐỀ TÀI (Đã tăng padding thành p-4) -->
                     <div class="mb-4">
                         <div class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">
                             <i class="fa-solid fa-align-left text-primary me-1.5"></i> Mô Tả Chi Tiết Đề Tài:
                         </div>
-                        <div class="p-3.5 bg-light-subtle rounded-3 border text-dark rich-content-display" style="line-height: 1.7; font-size: 14px;">
+                        <div class="p-4 bg-light rounded-3 border text-dark rich-content-display" style="line-height: 1.7; font-size: 14px;">
                             {!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: '<em class="text-muted">Chưa cập nhật nội dung mô tả đề tài.</em>' !!}
                         </div>
                     </div>
 
-                    <!-- VÙNG YÊU CẦU ĐỐI VỚI SINH VIÊN -->
+                    <!-- VÙNG YÊU CẦU ĐỐI VỚI SINH VIÊN (Đã tăng padding thành p-4) -->
                     @if($detai->YeuCau)
                     <div class="mb-2">
                         <div class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">
                             <i class="fa-solid fa-list-check text-primary me-1.5"></i> Yêu Cầu Năng Lực Đối Với Sinh Viên:
                         </div>
-                        <div class="p-3 bg-light-subtle rounded-3 border text-dark" style="line-height: 1.6; font-size: 13.5px; white-space: pre-line;">
+                        <div class="p-4 bg-light rounded-3 border text-dark small" style="line-height: 1.7; white-space: pre-line; font-size: 14px;">
                             {{ $detai->YeuCau }}
                         </div>
                     </div>
@@ -141,15 +178,19 @@
                 $dangKy = $detai->dangKyDeTais->firstWhere('TrangThai', 'Đã duyệt') ?? $detai->dangKyDeTais->first();
                 $nhom = $dangKy?->nhom;
             @endphp
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark fs-6">
+            <div class="card-dashboard mb-4">
+                <div class="bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">
                         <i class="fa-solid fa-users-gear text-primary me-2"></i> Nhóm Sinh Viên Thực Hiện Đề Tài
                     </span>
                     @if($nhom)
-                        <span class="badge bg-success-subtle text-success border rounded-pill px-3 py-1">Đã gán nhóm</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold">
+                            <i class="fa-solid fa-circle-check me-1"></i> Đã gán nhóm
+                        </span>
                     @else
-                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">Chưa có nhóm</span>
+                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 small fw-normal">
+                            Chưa có nhóm
+                        </span>
                     @endif
                 </div>
                 <div class="card-body p-4">
@@ -158,89 +199,89 @@
                             <div>
                                 <h5 class="fw-bold text-dark mb-1">{{ $nhom->TenNhom }}</h5>
                                 <div class="small text-muted">
-                                    <i class="fa-solid fa-user-tie me-1 text-primary"></i>Trưởng nhóm: <strong>{{ $nhom->truongNhom->HoTen ?? 'Chưa rõ' }}</strong>
-                                    (MSSV: {{ $nhom->truongNhom->MaSV ?? '—' }})
+                                    <i class="fa-solid fa-user-tie me-1.5 text-primary"></i>Trưởng nhóm: <strong class="text-dark">{{ $nhom->truongNhom->HoTen ?? 'Chưa rõ' }}</strong>
+                                    (MSSV: <span class="font-monospace fw-semibold">{{ $nhom->truongNhom->MaSV ?? '—' }}</span>)
                                 </div>
                             </div>
-                            <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill" style="font-size: 13px;">
-                                <i class="fa-solid fa-user-check me-1"></i>{{ $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count() }}/3 thành viên chính thức
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small fw-semibold">
+                                <i class="fa-solid fa-user-check me-1.5"></i>{{ $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count() }}/3 thành viên chính thức
                             </span>
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-custom table-hover align-middle mb-0">
+                            <table class="table table-custom mb-0 align-middle">
                                 <thead>
                                     <tr>
-                                        <th width="10%">STT</th>
+                                        <th width="10%" class="ps-3">STT</th>
                                         <th width="20%">MSSV</th>
                                         <th width="35%">Họ Và Tên</th>
                                         <th width="20%">Vai Trò</th>
-                                        <th width="15%" class="text-center">Trạng Thái</th>
+                                        <th width="15%" class="text-center pe-3">Trạng Thái</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($nhom->thanhViens as $idx => $tv)
                                     <tr>
-                                        <td>{{ $idx + 1 }}</td>
-                                        <td class="font-monospace fw-semibold">{{ $tv->sinhVien->MaSV ?? '—' }}</td>
+                                        <td class="ps-3 fw-medium text-secondary">{{ $idx + 1 }}</td>
+                                        <td class="font-monospace fw-semibold text-dark">{{ $tv->sinhVien->MaSV ?? '—' }}</td>
                                         <td>
                                             <div class="fw-bold text-dark">{{ $tv->sinhVien->HoTen ?? '—' }}</div>
-                                            <div class="small text-muted">{{ $tv->sinhVien->taiKhoan->Email ?? '' }}</div>
+                                            <div class="small text-muted" style="font-size: 0.78rem;">{{ $tv->sinhVien->taiKhoan->Email ?? '' }}</div>
                                         </td>
                                         <td>
                                             @if($nhom->MaTruongNhom === $tv->MaSV)
-                                                <span class="badge bg-primary-subtle text-primary border rounded-pill">Trưởng nhóm</span>
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">Trưởng nhóm</span>
                                             @else
-                                                <span class="badge bg-light text-secondary border rounded-pill">Thành viên</span>
+                                                <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 small fw-normal">Thành viên</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center pe-3">
                                             @if($tv->TrangThai === 'da_tham_gia')
-                                                <span class="badge bg-success-subtle text-success border rounded-pill px-2.5">Đã tham gia</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">Đã tham gia</span>
                                             @else
-                                                <span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-2.5">Chờ xác nhận</span>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold">Chờ xác nhận</span>
                                             @endif
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="5" class="text-center py-3 text-muted">Chưa có thông tin thành viên.</td>
+                                        <td colspan="5" class="text-center py-4 text-muted">Chưa có thông tin thành viên.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                     @else
-                        <div class="alert alert-light border rounded-3 p-3 mb-0 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-users text-secondary fs-4"></i>
+                        <div class="alert alert-light border rounded-3 p-3.5 mb-0 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-users text-secondary fs-3"></i>
                             <div>
                                 <div class="fw-bold text-dark">Chưa có nhóm sinh viên đăng ký đề tài này</div>
-                                <div class="text-muted small">Đề tài đang ở trạng thái chờ sinh viên đăng ký hoặc Thầy/Cô có thể gán nhóm đủ 3 thành viên tại danh sách đề tài.</div>
+                                <div class="text-muted small">Đề tài đang ở trạng thái chờ sinh viên đăng ký hoặc Thầy/Cô có thể gán nhóm trực tiếp.</div>
                             </div>
                         </div>
                     @endif
                 </div>
             </div>
 
-            <!-- CARD 3: KẾT QUẢ THẨM ĐỊNH CỦA CÁN BỘ PHẢN BIỆN (HIỆN KHI CÓ PHÂN CÔNG PHẢN BIỆN) -->
+            <!-- CARD 3: KẾT QUẢ THẨM ĐỊNH CỦA CÁN BỘ PHẢN BIỆN -->
             @if($detai->phanCongPhanBiens && $detai->phanCongPhanBiens->count() > 0)
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark fs-6">
+            <div class="card-dashboard mb-4">
+                <div class="bg-white border-bottom py-3 px-4">
+                    <span class="fw-bold text-dark">
                         <i class="fa-solid fa-comment-dots text-primary me-2"></i> Kết Quả Thẩm Định Của Cán Bộ Phản Biện
                     </span>
                 </div>
                 <div class="card-body p-4">
                     @foreach($detai->phanCongPhanBiens as $pb)
-                    <div class="border rounded-3 p-3 bg-light-subtle mb-3">
-                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2 pb-2 border-bottom">
+                    <div class="border rounded-3 p-3.5 bg-light mb-3">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2 pb-2.5 border-bottom">
                             <div>
                                 <div class="fw-bold text-dark d-flex align-items-center gap-2">
                                     <i class="fa-solid fa-user-tie text-primary"></i>
                                     CB Phản Biện: {{ $pb->giangVien->HoTen ?? 'Chưa rõ' }}
                                 </div>
-                                <div class="small text-muted mt-0.5">
-                                    Vai trò: {{ $pb->VaiTro ?? 'Phản biện đề cương' }}
+                                <div class="small text-muted mt-1">
+                                    Vai trò: <span class="fw-medium text-dark">{{ $pb->VaiTro ?? 'Phản biện đề cương' }}</span>
                                     @if($pb->NgayDanhGia)
                                         &bull; Ngày thẩm định: {{ \Carbon\Carbon::parse($pb->NgayDanhGia)->format('d/m/Y H:i') }}
                                     @endif
@@ -248,18 +289,18 @@
                             </div>
                             <div>
                                 @if($pb->KetQua === 'Đạt')
-                                    <span class="badge bg-success text-white px-3 py-1.5 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i>Đạt</span>
+                                    <span class="badge bg-success text-white px-3 py-1.5 rounded-pill small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Đạt</span>
                                 @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
-                                    <span class="badge bg-warning text-dark px-3 py-1.5 rounded-pill"><i class="fa-solid fa-wrench me-1"></i>Yêu Cầu Chỉnh Sửa</span>
+                                    <span class="badge bg-warning text-dark px-3 py-1.5 rounded-pill small fw-semibold"><i class="fa-solid fa-wrench me-1"></i>Cần chỉnh sửa</span>
                                 @elseif($pb->KetQua === 'Không đạt')
-                                    <span class="badge bg-danger text-white px-3 py-1.5 rounded-pill"><i class="fa-solid fa-circle-xmark me-1"></i>Không Đạt</span>
+                                    <span class="badge bg-danger text-white px-3 py-1.5 rounded-pill small fw-semibold"><i class="fa-solid fa-circle-xmark me-1"></i>Không Đạt</span>
                                 @else
-                                    <span class="badge bg-secondary text-white px-3 py-1.5 rounded-pill">{{ $pb->KetQua ?? 'Đang thẩm định' }}</span>
+                                    <span class="badge bg-secondary text-white px-3 py-1.5 rounded-pill small fw-normal">{{ $pb->KetQua ?? 'Đang thẩm định' }}</span>
                                 @endif
                             </div>
                         </div>
                         <div>
-                            <div class="small text-muted fw-semibold mb-1">Nội dung nhận xét chi tiết:</div>
+                            <div class="small text-muted fw-semibold mb-1.5">Nội dung nhận xét chi tiết:</div>
                             <div class="p-3 bg-white rounded-3 border text-dark small" style="line-height: 1.6; white-space: pre-line;">{{ $pb->NhanXet ?: 'Chưa có nhận xét chi tiết.' }}</div>
                         </div>
                     </div>
@@ -272,9 +313,9 @@
         <!-- CỘT PHẢI: TRẠNG THÁI QUẢN TRỊ & FILE ĐỀ CƯƠNG (4 CỘT) -->
         <div class="col-lg-4">
             <!-- CARD QUẢN TRỊ & TRẠNG THÁI -->
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-white border-bottom py-3">
-                    <span class="fw-bold text-dark fs-6">
+            <div class="card-dashboard mb-4">
+                <div class="bg-white border-bottom py-3 px-4">
+                    <span class="fw-bold text-dark">
                         <i class="fa-solid fa-circle-info text-primary me-2"></i> Trạng Thái &amp; Phê Duyệt
                     </span>
                 </div>
@@ -282,63 +323,63 @@
                     @php
                         $tt = trim($detai->TrangThai ?? 'Chờ duyệt');
                         $statusBadgeMap = [
-                            'Chờ duyệt cấp Bộ môn' => ['class' => 'bg-warning text-dark', 'icon' => 'fa-solid fa-clock', 'text' => 'Chờ duyệt cấp BM'],
-                            'Chờ duyệt cấp Khoa'   => ['class' => 'bg-info text-white', 'icon' => 'fa-solid fa-paper-plane', 'text' => 'Chờ duyệt cấp Khoa'],
-                            'Trưởng khoa đã duyệt - Chờ nộp đề cương' => ['class' => 'bg-warning text-dark', 'icon' => 'fa-solid fa-file-arrow-up', 'text' => 'Chờ nộp đề cương'],
-                            'Đã nộp đề cương - Chờ phân công PB' => ['class' => 'bg-info text-white', 'icon' => 'fa-solid fa-file-circle-check', 'text' => 'Đã nộp ĐC - Chờ PB'],
-                            'Đang phản biện đề cương' => ['class' => 'bg-info text-white', 'icon' => 'fa-solid fa-spinner', 'text' => 'Đang phản biện'],
-                            'Đã cập nhật đề cương - Chờ phản biện lại' => ['class' => 'bg-primary text-white', 'icon' => 'fa-solid fa-rotate', 'text' => 'Đã nộp lại ĐC'],
-                            'Yêu cầu chỉnh sửa đề cương' => ['class' => 'bg-warning text-dark', 'icon' => 'fa-solid fa-triangle-exclamation', 'text' => 'Cần sửa đề cương'],
-                            'Đã duyệt'             => ['class' => 'bg-success text-white', 'icon' => 'fa-solid fa-circle-check', 'text' => 'Đã duyệt'],
-                            'Trưởng khoa đã duyệt' => ['class' => 'bg-success text-white', 'icon' => 'fa-solid fa-circle-check', 'text' => 'Trưởng khoa đã duyệt'],
-                            'Đã công bố'           => ['class' => 'bg-success text-white', 'icon' => 'fa-solid fa-bullhorn', 'text' => 'Đã công bố chính thức'],
-                            'Từ chối'              => ['class' => 'bg-danger text-white', 'icon' => 'fa-solid fa-xmark', 'text' => 'Từ chối'],
-                            'Không đạt phản biện'  => ['class' => 'bg-danger text-white', 'icon' => 'fa-solid fa-xmark', 'text' => 'Không đạt phản biện'],
+                            'Chờ duyệt cấp Bộ môn' => ['class' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle', 'icon' => 'fa-solid fa-clock', 'text' => 'Chờ duyệt cấp BM'],
+                            'Chờ duyệt cấp Khoa'   => ['class' => 'bg-info-subtle text-info border border-info-subtle', 'icon' => 'fa-solid fa-paper-plane', 'text' => 'Chờ duyệt cấp Khoa'],
+                            'Trưởng khoa đã duyệt - Chờ nộp đề cương' => ['class' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle', 'icon' => 'fa-solid fa-file-arrow-up', 'text' => 'Chờ nộp đề cương'],
+                            'Đã nộp đề cương - Chờ phân công PB' => ['class' => 'bg-info-subtle text-info border border-info-subtle', 'icon' => 'fa-solid fa-file-circle-check', 'text' => 'Đã nộp ĐC - Chờ PB'],
+                            'Đang phản biện đề cương' => ['class' => 'bg-info-subtle text-info border border-info-subtle', 'icon' => 'fa-solid fa-spinner fa-spin', 'text' => 'Đang phản biện'],
+                            'Đã cập nhật đề cương - Chờ phản biện lại' => ['class' => 'bg-primary-subtle text-primary border border-primary-subtle', 'icon' => 'fa-solid fa-rotate', 'text' => 'Đã nộp lại ĐC'],
+                            'Yêu cầu chỉnh sửa đề cương' => ['class' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle', 'icon' => 'fa-solid fa-triangle-exclamation', 'text' => 'Cần sửa đề cương'],
+                            'Đã duyệt'             => ['class' => 'bg-success-subtle text-success border border-success-subtle', 'icon' => 'fa-solid fa-circle-check', 'text' => 'Đã duyệt'],
+                            'Trưởng khoa đã duyệt' => ['class' => 'bg-success-subtle text-success border border-success-subtle', 'icon' => 'fa-solid fa-circle-check', 'text' => 'Trưởng khoa đã duyệt'],
+                            'Đã công bố'           => ['class' => 'bg-success-subtle text-success border border-success-subtle', 'icon' => 'fa-solid fa-bullhorn', 'text' => 'Đã công bố chính thức'],
+                            'Từ chối'              => ['class' => 'bg-danger-subtle text-danger border border-danger-subtle', 'icon' => 'fa-solid fa-xmark', 'text' => 'Từ chối'],
+                            'Không đạt phản biện'  => ['class' => 'bg-danger-subtle text-danger border border-danger-subtle', 'icon' => 'fa-solid fa-xmark', 'text' => 'Không đạt phản biện'],
                         ];
-                        $sCfg = $statusBadgeMap[$tt] ?? ['class' => 'bg-secondary text-white', 'icon' => 'fa-solid fa-circle-info', 'text' => $tt];
+                        $sCfg = $statusBadgeMap[$tt] ?? ['class' => 'bg-light text-secondary border', 'icon' => 'fa-solid fa-circle-info', 'text' => $tt];
                     @endphp
 
-                    <div class="mb-3">
-                        <div class="small text-muted fw-semibold mb-1.5">Trạng thái hiện tại:</div>
-                        <span class="badge {{ $sCfg['class'] }} px-3 py-2 fs-6 rounded-pill d-inline-flex align-items-center gap-1.5">
+                    <div class="mb-3.5">
+                        <div class="small text-muted fw-semibold mb-2">Trạng thái hiện tại:</div>
+                        <span class="badge {{ $sCfg['class'] }} px-3 py-2 small rounded-pill d-inline-flex align-items-center gap-2 fw-semibold">
                             <i class="{{ $sCfg['icon'] }}"></i> {{ $sCfg['text'] }}
                         </span>
                     </div>
 
                     @if(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương']) && $detai->LyDoTuChoi)
-                        <div class="alert alert-warning border-warning p-2.5 rounded-3 mb-3 small">
-                            <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>Ý kiến góp ý / Yêu cầu:</strong>
-                            <div class="text-danger fw-semibold">{{ $detai->LyDoTuChoi }}</div>
+                        <div class="alert alert-warning border-0 p-3 rounded-3 mb-3 small bg-warning-subtle text-warning-emphasis">
+                            <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>Ý kiến góp ý:</strong>
+                            <div class="fw-medium">{{ $detai->LyDoTuChoi }}</div>
                         </div>
                     @endif
 
                     <div class="small text-muted border-top pt-3 mt-3">
-                        <div class="mb-2 d-flex justify-content-between">
-                            <span><i class="fa-regular fa-user me-1.5 text-primary"></i>GV Hướng dẫn:</span>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-regular fa-user me-2 text-primary"></i>GV Hướng dẫn:</span>
                             <strong class="text-dark">{{ $gv->HoTen }}</strong>
                         </div>
                         @if($gv->boMon)
-                        <div class="mb-2 d-flex justify-content-between">
-                            <span><i class="fa-solid fa-building me-1.5 text-primary"></i>Bộ môn:</span>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-building me-2 text-primary"></i>Bộ môn:</span>
                             <strong class="text-dark">{{ $gv->boMon->TenBoMon }}</strong>
                         </div>
                         @endif
                         @if($detai->NgayDeXuat)
-                        <div class="mb-2 d-flex justify-content-between">
-                            <span><i class="fa-regular fa-calendar-plus me-1.5 text-primary"></i>Ngày đề xuất:</span>
-                            <span class="text-dark">{{ \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') }}</span>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-regular fa-calendar-plus me-2 text-primary"></i>Ngày đề xuất:</span>
+                            <span class="text-dark fw-medium">{{ \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') }}</span>
                         </div>
                         @endif
                         @if($detai->NgayDuyetBM)
-                        <div class="mb-2 d-flex justify-content-between">
-                            <span><i class="fa-solid fa-check me-1.5 text-success"></i>Ngày BM duyệt:</span>
-                            <span class="text-dark">{{ \Carbon\Carbon::parse($detai->NgayDuyetBM)->format('d/m/Y') }}</span>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-check me-2 text-success"></i>Ngày BM duyệt:</span>
+                            <span class="text-dark fw-medium">{{ \Carbon\Carbon::parse($detai->NgayDuyetBM)->format('d/m/Y') }}</span>
                         </div>
                         @endif
                         @if($detai->NgayCongBo)
-                        <div class="mb-0 d-flex justify-content-between">
-                            <span><i class="fa-solid fa-bullhorn me-1.5 text-success"></i>Ngày công bố:</span>
-                            <span class="text-dark">{{ \Carbon\Carbon::parse($detai->NgayCongBo)->format('d/m/Y') }}</span>
+                        <div class="mb-0 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-bullhorn me-2 text-success"></i>Ngày công bố:</span>
+                            <span class="text-dark fw-medium">{{ \Carbon\Carbon::parse($detai->NgayCongBo)->format('d/m/Y') }}</span>
                         </div>
                         @endif
                     </div>
@@ -346,15 +387,15 @@
             </div>
 
             <!-- CARD FILE ĐỀ CƯƠNG CHI TIẾT -->
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark fs-6">
+            <div class="card-dashboard mb-4">
+                <div class="bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">
                         <i class="fa-solid fa-paperclip text-primary me-2"></i> File Đề Cương Chi Tiết
                     </span>
                     @if($detai->FileDeCuong)
-                        <span class="badge bg-success-subtle text-success border">Đã có file</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle small fw-semibold">Đã có file</span>
                     @else
-                        <span class="badge bg-light text-muted border">Chưa nộp</span>
+                        <span class="badge bg-light text-muted border small fw-normal">Chưa nộp</span>
                     @endif
                 </div>
                 <div class="card-body p-4">
@@ -364,35 +405,37 @@
                             $fileName = basename($detai->FileDeCuong);
                         @endphp
                         <div class="p-3 bg-light rounded-3 border mb-3">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="fa-solid fa-file-word text-primary fs-3"></i>
+                            <div class="d-flex align-items-center gap-2.5 mb-3">
+                                <div class="bg-primary-subtle text-primary rounded p-2.5 d-flex align-items-center justify-content-center">
+                                    <i class="fa-solid fa-file-word fs-4"></i>
+                                </div>
                                 <div class="overflow-hidden">
                                     <div class="fw-semibold text-dark text-truncate small" title="{{ $fileName }}">
                                         {{ $fileName }}
                                     </div>
-                                    <span class="text-muted" style="font-size: 0.75rem;">Đề cương chính thức</span>
+                                    <span class="text-muted d-block mt-0.5" style="font-size: 0.75rem;">Đề cương chính thức</span>
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 flex-fill fw-semibold shadow-xs"
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 flex-fill fw-semibold shadow-xs small d-inline-flex align-items-center justify-content-center"
                                         onclick="quickPreviewOutline('{{ $filePathShow }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
-                                    <i class="fa-solid fa-eye me-1"></i> Xem Nhanh
+                                    <i class="fa-solid fa-eye me-1.5"></i> Xem Nhanh
                                 </button>
-                                <a href="{{ $filePathShow }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                    <i class="fa-solid fa-download me-1"></i> Tải Về
+                                <a href="{{ $filePathShow }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 small d-inline-flex align-items-center justify-content-center">
+                                    <i class="fa-solid fa-download me-1.5"></i> Tải Về
                                 </a>
                             </div>
                         </div>
                     @else
-                        <div class="text-muted small p-3 bg-light rounded-3 text-center mb-3">
-                            <i class="fa-solid fa-file-circle-xmark text-secondary fs-3 mb-1 d-block"></i>
+                        <div class="text-muted small p-4 bg-light rounded-3 text-center mb-3">
+                            <i class="fa-solid fa-file-circle-xmark text-secondary fs-2 mb-2 d-block opacity-50"></i>
                             Chưa nộp file đề cương chi tiết.
                         </div>
                     @endif
 
                     @if($canNop)
-                        <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold">
-                            <i class="fa-solid fa-file-arrow-up me-1"></i> Mở Trang Nộp Đề Cương
+                        <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill py-2 fw-semibold d-inline-flex align-items-center justify-content-center">
+                            <i class="fa-solid fa-file-arrow-up me-1.5"></i> Mở Trang Nộp Đề Cương
                         </a>
                     @endif
                 </div>

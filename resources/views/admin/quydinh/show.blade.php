@@ -7,13 +7,6 @@
     <!-- Breadcrumb & Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.quydinh.index') }}" class="text-decoration-none">Quy Định Khóa Luận</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $quyDinh->MaQuyDinh }}</li>
-                </ol>
-            </nav>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                 <i class="fa-solid fa-scale-balanced text-primary"></i>
                 <span>{{ $quyDinh->TenQuyDinh }}</span>

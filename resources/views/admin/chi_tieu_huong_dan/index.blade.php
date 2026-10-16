@@ -10,13 +10,6 @@
     {{-- Tiêu đề trang & Thanh công cụ (Chuẩn G: không shadow) --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small" style="font-size: 13px;">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('giangvien.index') }}" class="text-decoration-none text-muted">Quản lý Giảng viên</a></li>
-                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Chỉ tiêu hướng dẫn</li>
-                </ol>
-            </nav>
             <h4 class="fw-bold text-dark mb-0" style="font-size: 1.25rem;">
                 Thiết Lập &amp; Giám Sát Chỉ Tiêu Hướng Dẫn Giảng Viên
             </h4>

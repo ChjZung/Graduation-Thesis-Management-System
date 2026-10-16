@@ -7,13 +7,6 @@
     <!-- Breadcrumb & Actions Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('sinhvien.index') }}" class="text-decoration-none">Sinh Viên</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $sinhvien->MaSV }}</li>
-                </ol>
-            </nav>
             <div class="d-flex align-items-center gap-3">
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; font-size: 1.25rem; font-weight: bold;">
                     {{ mb_substr($sinhvien->HoTen, 0, 1) }}

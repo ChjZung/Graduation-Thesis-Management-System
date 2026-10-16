@@ -82,140 +82,8 @@ class TheoDoiDoAnController extends Controller
             6 => ['name' => 'GĐ 6: Nhận kết quả & Nộp lại kết quả hoàn chỉnh', 'short' => 'Kết quả & Nộp lại', 'icon' => 'fa-award'],
         ];
 
-        $processedNhoms = $allNhoms->map(function ($nhom) use ($activePlan, $stageDefinitions) {
-            $bcMap = $nhom->baoCaos->keyBy('LanBaoCao');
-            
-            // Đánh giá chi tiết 6 giai đoạn
-            $stages = [];
-            foreach ($stageDefinitions as $stNum => $stMeta) {
-                $bc = $bcMap[$stNum] ?? null;
-                $stStatus = 'CHUA_NOP';
-                $stStatusLabel = 'Chưa nộp';
-                $stBadge = 'bg-secondary';
-
-                if ($stNum <= 3) {
-                    if ($bc) {
-                        if ($bc->TrangThai === 'Đạt') {
-                            $stStatus = 'DAT';
-                            $stStatusLabel = 'Đạt';
-                            $stBadge = 'bg-success';
-                        } elseif ($bc->TrangThai === 'Chờ duyệt') {
-                            $stStatus = 'CHO_DUYET';
-                            $stStatusLabel = 'Chờ GVHD duyệt';
-                            $stBadge = 'bg-warning text-dark';
-                        } elseif ($bc->TrangThai === 'Yêu cầu nộp lại') {
-                            $stStatus = 'NOP_LAI';
-                            $stStatusLabel = 'Cần nộp lại';
-                            $stBadge = 'bg-info text-dark';
-                        }
-                    }
-                } elseif ($stNum === 4) {
-                    // GĐ 4: Hồ sơ bảo vệ
-                    if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->XacNhanGVHD) {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'GVHD đã duyệt hồ sơ';
-                        $stBadge = 'bg-success';
-                    } elseif ($nhom->hoSoBaoVe) {
-                        $stStatus = 'CHO_DUYET';
-                        $stStatusLabel = 'Chờ duyệt hồ sơ';
-                        $stBadge = 'bg-warning text-dark';
-                    } elseif ($bc && $bc->TrangThai === 'Đạt') {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'Đạt';
-                        $stBadge = 'bg-success';
-                    }
-                } elseif ($stNum === 5) {
-                    // GĐ 5: Bảo vệ Hội đồng
-                    if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->ThoiGianBaoVe) {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'Đã xếp lịch bảo vệ';
-                        $stBadge = 'bg-primary';
-                    } elseif ($bc && $bc->TrangThai === 'Đạt') {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'Đã bảo vệ';
-                        $stBadge = 'bg-success';
-                    }
-                } elseif ($stNum === 6) {
-                    // GĐ 6: Nhận kết quả & nộp lại kết quả
-                    if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->FileBanChinhSua) {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'Đã hoàn thiện sau bảo vệ';
-                        $stBadge = 'bg-success';
-                    } elseif ($nhom->TrangThai === 'Hoàn thành' || ($bc && $bc->TrangThai === 'Đạt')) {
-                        $stStatus = 'DAT';
-                        $stStatusLabel = 'Đã hoàn thành';
-                        $stBadge = 'bg-success';
-                    }
-                }
-
-                $stages[$stNum] = [
-                    'name'         => $stMeta['name'],
-                    'short'        => $stMeta['short'],
-                    'icon'         => $stMeta['icon'],
-                    'status'       => $stStatus,
-                    'status_label' => $stStatusLabel,
-                    'badge'        => $stBadge,
-                    'date'         => $bc?->NgayNop ? Carbon::parse($bc->NgayNop)->format('d/m/Y') : null,
-                ];
-            }
-
-            // Tính số giai đoạn đã hoàn thành & giai đoạn hiện tại
-            $completedStages = 0;
-            $currentStage = 1;
-            foreach ($stages as $stNum => $stInfo) {
-                if ($stInfo['status'] === 'DAT') {
-                    $completedStages++;
-                    $currentStage = min(6, $stNum + 1);
-                } else {
-                    $currentStage = $stNum;
-                    break;
-                }
-            }
-            if ($completedStages === 6) {
-                $currentStage = 6;
-            }
-
-            $progressPercent = (int) round(($completedStages / 6) * 100);
-
-            // Xác định trạng thái cảnh báo / tiến độ
-            $status = 'DUNG_TIEN_DO';
-            $statusLabel = 'Đúng tiến độ';
-            $statusBadge = 'bg-success';
-            $priority = 3;
-
-            if ($completedStages === 6 || $nhom->TrangThai === 'Hoàn thành') {
-                $status = 'HOAN_THANH';
-                $statusLabel = 'Đã hoàn thành';
-                $statusBadge = 'bg-primary';
-                $priority = 4;
-            } elseif ($currentStage === 1 && $stages[1]['status'] === 'CHUA_NOP' && Carbon::now()->format('Y-m-d') > '2026-09-18') {
-                $status = 'QUA_HAN';
-                $statusLabel = 'Trễ hạn GĐ 1';
-                $statusBadge = 'bg-danger';
-                $priority = 1;
-            } elseif ($currentStage === 2 && $stages[2]['status'] === 'CHUA_NOP' && Carbon::now()->format('Y-m-d') > '2026-10-16') {
-                $status = 'QUA_HAN';
-                $statusLabel = 'Trễ hạn GĐ 2';
-                $statusBadge = 'bg-danger';
-                $priority = 1;
-            } elseif ($stages[$currentStage]['status'] === 'NOP_LAI') {
-                $status = 'SAP_DEN_HAN';
-                $statusLabel = 'Cần nộp lại GĐ ' . $currentStage;
-                $statusBadge = 'bg-warning text-dark';
-                $priority = 2;
-            }
-
-            $nhom->stages = $stages;
-            $nhom->current_stage = $currentStage;
-            $nhom->current_stage_label = $stageDefinitions[$currentStage]['short'];
-            $nhom->completed_stages = $completedStages;
-            $nhom->progress_percent = min(100, $progressPercent);
-            $nhom->status_code = $status;
-            $nhom->status_label = $statusLabel;
-            $nhom->status_badge = $statusBadge;
-            $nhom->priority = $priority;
-
-            return $nhom;
+        $processedNhoms = $allNhoms->map(function ($nhom) use ($activePlan) {
+            return self::processNhomStageData($nhom, $activePlan);
         });
 
         // Lọc theo Giai đoạn nếu có
@@ -258,21 +126,196 @@ class TheoDoiDoAnController extends Controller
         ) + ['Khoa' => $khoas]);
     }
 
+    /**
+     * Chuẩn hóa logic đánh giá 6 giai đoạn giám sát tiến độ
+     */
+    public static function processNhomStageData($nhom, $activePlan = null)
+    {
+        $stageDefinitions = [
+            1 => ['name' => 'GĐ 1: Nhận đề cương & Thiết kế CSDL', 'short' => 'Đề cương & CSDL', 'icon' => 'fa-database'],
+            2 => ['name' => 'GĐ 2: Thiết kế hệ thống & Xây dựng chức năng', 'short' => 'Hệ thống & Chức năng', 'icon' => 'fa-code'],
+            3 => ['name' => 'GĐ 3: Kiểm thử hoàn thiện & Báo cáo dự thảo', 'short' => 'Kiểm thử & Báo cáo', 'icon' => 'fa-vial-circle-check'],
+            4 => ['name' => 'GĐ 4: Hoàn thiện hồ sơ bảo vệ', 'short' => 'Hồ sơ bảo vệ', 'icon' => 'fa-file-shield'],
+            5 => ['name' => 'GĐ 5: Tiến hành bảo vệ trước Hội đồng', 'short' => 'Bảo vệ Hội đồng', 'icon' => 'fa-chalkboard-user'],
+            6 => ['name' => 'GĐ 6: Nhận kết quả & Nộp lại kết quả hoàn chỉnh', 'short' => 'Kết quả & Nộp lại', 'icon' => 'fa-award'],
+        ];
+
+        $bcMap = $nhom->baoCaos ? $nhom->baoCaos->keyBy('LanBaoCao') : collect();
+        
+        $stages = [];
+        foreach ($stageDefinitions as $stNum => $stMeta) {
+            $bc = $bcMap[$stNum] ?? null;
+            $stStatus = 'CHUA_NOP';
+            $stStatusLabel = 'Chưa nộp';
+            $stBadge = 'bg-secondary';
+            $nx = $bc?->nhanXets?->first();
+
+            if ($stNum <= 3) {
+                if ($bc) {
+                    if ($bc->TrangThai === 'Đạt') {
+                        $stStatus = 'DAT';
+                        $stStatusLabel = 'Đạt yêu cầu';
+                        $stBadge = 'bg-success';
+                    } elseif ($bc->TrangThai === 'Chờ duyệt') {
+                        $stStatus = 'CHO_DUYET';
+                        $stStatusLabel = 'Chờ GVHD duyệt';
+                        $stBadge = 'bg-warning text-dark';
+                    } elseif ($bc->TrangThai === 'Yêu cầu nộp lại') {
+                        $stStatus = 'NOP_LAI';
+                        $stStatusLabel = 'Cần nộp lại';
+                        $stBadge = 'bg-info text-dark';
+                    }
+                }
+            } elseif ($stNum === 4) {
+                if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->XacNhanGVHD) {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'GVHD đã duyệt hồ sơ';
+                    $stBadge = 'bg-success';
+                } elseif ($nhom->hoSoBaoVe) {
+                    $stStatus = 'CHO_DUYET';
+                    $stStatusLabel = 'Chờ duyệt hồ sơ';
+                    $stBadge = 'bg-warning text-dark';
+                } elseif ($bc && $bc->TrangThai === 'Đạt') {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'Đạt yêu cầu';
+                    $stBadge = 'bg-success';
+                }
+            } elseif ($stNum === 5) {
+                if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->ThoiGianBaoVe) {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'Đã xếp lịch bảo vệ';
+                    $stBadge = 'bg-primary';
+                } elseif ($bc && $bc->TrangThai === 'Đạt') {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'Đã bảo vệ';
+                    $stBadge = 'bg-success';
+                }
+            } elseif ($stNum === 6) {
+                if ($nhom->hoSoBaoVe && $nhom->hoSoBaoVe->FileBanChinhSua) {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'Đã hoàn thiện sau BV';
+                    $stBadge = 'bg-success';
+                } elseif ($nhom->TrangThai === 'Hoàn thành' || ($bc && $bc->TrangThai === 'Đạt')) {
+                    $stStatus = 'DAT';
+                    $stStatusLabel = 'Đã hoàn thành';
+                    $stBadge = 'bg-success';
+                }
+            }
+
+            $stages[$stNum] = [
+                'name'             => $stMeta['name'],
+                'short'            => $stMeta['short'],
+                'icon'             => $stMeta['icon'],
+                'status'           => $stStatus,
+                'status_label'     => $stStatusLabel,
+                'badge'            => $stBadge,
+                'date'             => $bc?->NgayNop ? Carbon::parse($bc->NgayNop)->format('d/m/Y') : null,
+                'file'             => $bc?->FileBaoCao ?? null,
+                'nhan_xet'         => $nx?->NoiDung ?? null,
+                'gv_nhan_xet'      => $nx?->giangVien?->HoTen ?? null,
+                'ti_le_hoan_thanh' => $bc?->TiLeHoanThanh ?? null,
+            ];
+        }
+
+        $completedStages = 0;
+        $currentStage = 1;
+        foreach ($stages as $stNum => $stInfo) {
+            if ($stInfo['status'] === 'DAT') {
+                $completedStages++;
+                $currentStage = min(6, $stNum + 1);
+            } else {
+                $currentStage = $stNum;
+                break;
+            }
+        }
+        if ($completedStages === 6) {
+            $currentStage = 6;
+        }
+
+        $progressPercent = (int) round(($completedStages / 6) * 100);
+
+        $status = 'DUNG_TIEN_DO';
+        $statusLabel = 'Đúng tiến độ';
+        $statusBadge = 'bg-success';
+        $priority = 3;
+
+        $stageDeadlines = [
+            1 => '2026-09-18',
+            2 => '2026-10-16',
+            3 => '2026-11-06',
+            4 => '2026-11-27',
+            5 => '2026-12-18',
+            6 => '2027-01-05',
+        ];
+
+        $todayStr = Carbon::now()->format('Y-m-d');
+        $currentDeadline = $stageDeadlines[$currentStage] ?? null;
+
+        if ($completedStages === 6 || $nhom->TrangThai === 'Hoàn thành') {
+            $status = 'HOAN_THANH';
+            $statusLabel = 'Đã hoàn thành';
+            $statusBadge = 'bg-primary';
+            $priority = 4;
+        } elseif ($currentDeadline && $todayStr > $currentDeadline && ($stages[$currentStage]['status'] ?? '') !== 'DAT') {
+            $status = 'QUA_HAN';
+            $statusLabel = 'Trễ hạn GĐ ' . $currentStage;
+            $statusBadge = 'bg-danger';
+            $priority = 1;
+        } elseif (($stages[$currentStage]['status'] ?? '') === 'NOP_LAI') {
+            $status = 'SAP_DEN_HAN';
+            $statusLabel = 'Cần nộp lại GĐ ' . $currentStage;
+            $statusBadge = 'bg-warning text-dark';
+            $priority = 2;
+        }
+
+        $nhom->stages = $stages;
+        $nhom->current_stage = $currentStage;
+        $nhom->current_stage_label = $stageDefinitions[$currentStage]['short'];
+        $nhom->completed_stages = $completedStages;
+        $nhom->progress_percent = min(100, $progressPercent);
+        $nhom->status_code = $status;
+        $nhom->status_label = $statusLabel;
+        $nhom->status_badge = $statusBadge;
+        $nhom->priority = $priority;
+
+        return $nhom;
+    }
+
     public function show($id)
     {
         $nhom = Nhom::with([
-            'deTai',
-            'truongNhom',
-            'thanhViens.sinhVien',
-            'dangKyDeTai.giangVienHuongDan',
-            'baoCaos.nhanXets.giangVien',
+            'deTai.giangVien.boMon',
+            'truongNhom.lop.nganh.khoa',
+            'thanhViens.sinhVien.lop.nganh',
+            'dangKyDeTai.giangVienHuongDan.boMon',
+            'dangKyDeTai.deTai.giangVien.boMon',
+            'baoCaos.khoiBaoCaos.tomTat',
+            'baoCaos.tomTatBaoCao',
             'hoSoBaoVe.hoiDong',
+            'lichGaps.giangVien',
+            'hocKy',
         ])->findOrFail($id);
 
         $activePlan = PlanPhaseService::getActivePlan();
         $phases = $activePlan ? $activePlan->mocThoiGians : collect();
+        $currentPhase = PlanPhaseService::getCurrentPhase($activePlan);
 
-        return view('admin.theodoi.show', compact('nhom', 'activePlan', 'phases'));
+        $nhom = self::processNhomStageData($nhom, $activePlan);
+
+        // Thống kê nhanh cho header
+        $allNhoms = Nhom::with(['dangKyDeTai.deTai', 'deTai', 'hoSoBaoVe'])->get();
+        $processedAll = $allNhoms->map(function ($n) use ($activePlan) {
+            return self::processNhomStageData($n, $activePlan);
+        });
+
+        $stats = [
+            'total'        => $processedAll->count(),
+            'dung_tien_do' => $processedAll->where('status_code', 'DUNG_TIEN_DO')->count(),
+            'sap_den_han'  => $processedAll->where('status_code', 'SAP_DEN_HAN')->count(),
+            'qua_han'      => $processedAll->where('status_code', 'QUA_HAN')->count(),
+        ];
+
+        return view('admin.theodoi.show', compact('nhom', 'activePlan', 'phases', 'currentPhase', 'stats'));
     }
 
     /**

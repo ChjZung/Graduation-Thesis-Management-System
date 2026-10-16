@@ -16,13 +16,21 @@ class TomTatBaoCao extends Model
 
     protected $fillable = [
         'MaTomTat',
+        'MaBaoCao',
+        'MaKhoi',
+        'TenFile',
+        'DuongDanFile',
+        'SoTrang',
         'CongViecDaHoanThanh',
         'KhoKhan',
         'KeHoachTuanToi',
         'NoiDungAI',
+        'TomTatJson',
         'TrangThai',
+        'TrangThaiXuLy',
+        'ThoiGianXuLy',
+        'LoiXuLy',
         'NgayTomTat',
-        'MaBaoCao',
     ];
 
     public $timestamps = true;
@@ -31,12 +39,20 @@ class TomTatBaoCao extends Model
     {
         return [
             'NgayTomTat' => 'date',
+            'TomTatJson' => 'array',
+            'ThoiGianXuLy' => 'float',
+            'SoTrang' => 'integer',
         ];
     }
 
     public function baoCaoTienDo()
     {
         return $this->belongsTo(BaoCaoTienDo::class, 'MaBaoCao', 'MaBaoCao');
+    }
+
+    public function khoiBaoCao()
+    {
+        return $this->belongsTo(KhoiBaoCaoTienDo::class, 'MaKhoi', 'MaKhoi');
     }
 
     public function getDoTinCayAIAttribute()
@@ -46,7 +62,6 @@ class TomTatBaoCao extends Model
 
     public function setDoTinCayAIAttribute($value)
     {
-        // No-op or keep in attributes memory
         $this->attributes['DoTinCayAI'] = $value;
     }
 }

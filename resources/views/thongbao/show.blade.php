@@ -400,13 +400,18 @@
 
                 <div class="doc-viewer-body">
                     @if(isset($officialListData) && !empty($officialListData['isOfficial']))
+                        @php
+                            $isNhomOfficial = str_contains(mb_strtolower($thongBao->TieuDe ?? ''), 'sinh viên đăng ký') 
+                                || str_contains(mb_strtolower($thongBao->TieuDe ?? ''), 'danh sách nhóm') 
+                                || str_contains(mb_strtolower($thongBao->TieuDe ?? ''), 'nhóm');
+                        @endphp
                         {{-- Hiển thị trực tiếp Bảng Tính Excel Xem Nhanh (Đề Tài - Nhóm SV - GVHD) --}}
                         <div class="excel-window-container w-100 h-100">
                             <!-- Excel Formula Bar -->
                             <div class="excel-formula-bar">
                                 <div class="excel-name-box" id="paneActiveCell">A1</div>
                                 <div class="excel-fx-icon">fx</div>
-                                <div class="excel-formula-display" id="paneFormulaText">TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - KHOA CÔNG NGHỆ THÔNG TIN</div>
+                                <div class="excel-formula-display" id="paneFormulaText">{{ $isNhomOfficial ? 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD' : 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - KHOA CÔNG NGHỆ THÔNG TIN' }}</div>
                                 <div class="input-group input-group-sm ms-auto" style="max-width: 240px;">
                                     <span class="input-group-text bg-white border-end-0 py-0"><i class="fa-solid fa-magnifying-glass text-muted small"></i></span>
                                     <input type="text" id="paneExcelSearch" class="form-control form-control-sm border-start-0 py-1" placeholder="Tìm kiếm trong sheet..." onkeyup="filterPaneExcelTable()">
@@ -417,7 +422,7 @@
                             <div class="excel-canvas-scroll flex-grow-1 bg-white">
                                 <div class="tab-content h-100" id="paneExcelTabContent">
                                     <!-- SHEET 1: ĐỀ TÀI ĐĂNG KÝ -->
-                                    <div class="tab-pane fade show active" id="pane-sheet-detai" role="tabpanel">
+                                    <div class="tab-pane fade {{ !$isNhomOfficial ? 'show active' : '' }}" id="pane-sheet-detai" role="tabpanel">
                                         <table class="excel-sheet-table" id="paneTableSheet1">
                                             <thead>
                                                 <tr>
@@ -503,7 +508,7 @@
                                     </div>
 
                                     <!-- SHEET 2: NHÓM SINH VIÊN -->
-                                    <div class="tab-pane fade" id="pane-sheet-nhom" role="tabpanel">
+                                    <div class="tab-pane fade {{ $isNhomOfficial ? 'show active' : '' }}" id="pane-sheet-nhom" role="tabpanel">
                                         <table class="excel-sheet-table" id="paneTableSheet2">
                                             <thead>
                                                 <tr>
@@ -528,7 +533,7 @@
                                                 </tr>
                                                 <tr>
                                                     <td class="excel-row-num">2</td>
-                                                    <td colspan="11" class="excel-banner-title">DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI - {{ $officialListData['stats']['tenHocKy'] }}</td>
+                                                    <td colspan="11" class="excel-banner-title">DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI &amp; GVHD - {{ $officialListData['stats']['tenHocKy'] }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="excel-row-num">3</td>
@@ -556,8 +561,8 @@
                                                 @forelse($officialListData['nhomList'] as $nh)
                                                     @php
                                                         $pdk = $nh->dangKyDeTai;
-                                                        $deTai = $pdk?->deTai;
-                                                        $gv = $deTai?->giangVien;
+                                                        $deTai = $pdk?->deTai ?? $nh->deTai;
+                                                        $gv = $pdk?->giangVienHuongDan ?? $deTai?->giangVien;
                                                     @endphp
                                                     @if($nh->thanhViens && $nh->thanhViens->isNotEmpty())
                                                         @foreach($nh->thanhViens as $tv)
@@ -697,11 +702,11 @@
                                 <button type="button" class="excel-sheet-nav-btn" title="Tiếp"><i class="fa-solid fa-angle-right"></i></button>
                                 <button type="button" class="excel-sheet-nav-btn" title="Cuối cùng"><i class="fa-solid fa-angles-right"></i></button>
                                 <div class="d-flex align-items-center ms-2" role="tablist">
-                                    <button class="excel-sheet-tab-item active" id="pane-tab-btn-1" data-bs-toggle="tab" data-bs-target="#pane-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC', 'pane')">
-                                        <i class="fa-solid fa-file-excel text-success me-1"></i> 1. Đề Tài Đăng Ký
+                                    <button class="excel-sheet-tab-item {{ $isNhomOfficial ? 'active' : '' }}" id="pane-tab-btn-2" data-bs-toggle="tab" data-bs-target="#pane-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD', 'pane')">
+                                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
                                     </button>
-                                    <button class="excel-sheet-tab-item" id="pane-tab-btn-2" data-bs-toggle="tab" data-bs-target="#pane-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI', 'pane')">
-                                        <i class="fa-solid fa-file-excel text-success me-1"></i> 2. Nhóm Sinh Viên
+                                    <button class="excel-sheet-tab-item {{ !$isNhomOfficial ? 'active' : '' }}" id="pane-tab-btn-1" data-bs-toggle="tab" data-bs-target="#pane-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC', 'pane')">
+                                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
                                     </button>
                                     <button class="excel-sheet-tab-item" id="pane-tab-btn-3" data-bs-toggle="tab" data-bs-target="#pane-sheet-gvhd" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH GIẢNG VIÊN HƯỚNG DẪN KHÓA LUẬN', 'pane')">
                                         <i class="fa-solid fa-file-excel text-success me-1"></i> 3. GV Hướng Dẫn
@@ -929,6 +934,43 @@
                         </div>
                     </div>
 
+                    @if(isset($officialListData) && !empty($officialListData['isOfficial']))
+                    <!-- Thẻ Tóm Tắt Dữ Liệu Excel Chính Thức -->
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-dark small">
+                                <i class="fa-solid fa-file-excel text-success me-1.5"></i>
+                                Bảng Dữ Liệu Khóa Luận Chính Thức
+                            </span>
+                            @if(!empty($fileUrl))
+                                <a href="{{ asset($fileUrl) }}" download class="badge bg-success text-white text-decoration-none px-2.5 py-1">
+                                    <i class="fa-solid fa-download me-1"></i> Xuất .xlsx
+                                </a>
+                            @endif
+                        </div>
+                        <div class="row g-2 text-center small">
+                            <div class="col-4">
+                                <div class="p-2 bg-white rounded-2 border">
+                                    <div class="fw-bold text-primary fs-6">{{ $officialListData['stats']['soNhom'] }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">Nhóm Sinh Viên</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 bg-white rounded-2 border">
+                                    <div class="fw-bold text-success fs-6">{{ $officialListData['stats']['soDeTai'] }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">Đề Tài Đăng Ký</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 bg-white rounded-2 border">
+                                    <div class="fw-bold text-info fs-6">{{ $officialListData['stats']['soGVHD'] }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">GV Hướng Dẫn</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Nội dung thông báo chi tiết -->
                     <div class="mb-4">
                         <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
@@ -1024,7 +1066,7 @@
             <div class="excel-formula-bar">
                 <div class="excel-name-box" id="modalActiveCell">A1</div>
                 <div class="excel-fx-icon">fx</div>
-                <div class="excel-formula-display" id="modalFormulaText">TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - KHOA CÔNG NGHỆ THÔNG TIN</div>
+                <div class="excel-formula-display" id="modalFormulaText">{{ $isNhomOfficial ? 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD' : 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH - KHOA CÔNG NGHỆ THÔNG TIN' }}</div>
                 <div class="input-group input-group-sm ms-auto" style="max-width: 260px;">
                     <span class="input-group-text bg-white border-end-0 py-0"><i class="fa-solid fa-magnifying-glass text-muted small"></i></span>
                     <input type="text" id="modalExcelSearch" class="form-control form-control-sm border-start-0 py-1" placeholder="Tìm kiếm trong sheet..." onkeyup="filterModalExcelTable()">
@@ -1035,7 +1077,7 @@
             <div class="modal-body p-0 excel-canvas-scroll bg-white">
                 <div class="tab-content h-100" id="modalExcelTabContent">
                     <!-- SHEET 1: ĐỀ TÀI ĐĂNG KÝ -->
-                    <div class="tab-pane fade show active" id="modal-sheet-detai" role="tabpanel">
+                    <div class="tab-pane fade {{ !$isNhomOfficial ? 'show active' : '' }}" id="modal-sheet-detai" role="tabpanel">
                         <table class="excel-sheet-table" id="modalTableSheet1">
                             <thead>
                                 <tr>
@@ -1121,7 +1163,7 @@
                     </div>
 
                     <!-- SHEET 2: NHÓM SINH VIÊN -->
-                    <div class="tab-pane fade" id="modal-sheet-nhom" role="tabpanel">
+                    <div class="tab-pane fade {{ $isNhomOfficial ? 'show active' : '' }}" id="modal-sheet-nhom" role="tabpanel">
                         <table class="excel-sheet-table" id="modalTableSheet2">
                             <thead>
                                 <tr>
@@ -1146,7 +1188,7 @@
                                 </tr>
                                 <tr>
                                     <td class="excel-row-num">2</td>
-                                    <td colspan="11" class="excel-banner-title">DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI - {{ $officialListData['stats']['tenHocKy'] }}</td>
+                                    <td colspan="11" class="excel-banner-title">DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI &amp; GVHD - {{ $officialListData['stats']['tenHocKy'] }}</td>
                                 </tr>
                                 <tr>
                                     <td class="excel-row-num">3</td>
@@ -1174,8 +1216,8 @@
                                 @forelse($officialListData['nhomList'] as $nh)
                                     @php
                                         $pdk = $nh->dangKyDeTai;
-                                        $deTai = $pdk?->deTai;
-                                        $gv = $deTai?->giangVien;
+                                        $deTai = $pdk?->deTai ?? $nh->deTai;
+                                        $gv = $pdk?->giangVienHuongDan ?? $deTai?->giangVien;
                                     @endphp
                                     @if($nh->thanhViens && $nh->thanhViens->isNotEmpty())
                                         @foreach($nh->thanhViens as $tv)
@@ -1315,13 +1357,13 @@
                 <button type="button" class="excel-sheet-nav-btn" title="Tiếp"><i class="fa-solid fa-angle-right"></i></button>
                 <button type="button" class="excel-sheet-nav-btn" title="Cuối cùng"><i class="fa-solid fa-angles-right"></i></button>
                 <div class="d-flex align-items-center ms-2" role="tablist">
-                    <button class="excel-sheet-tab-item active" id="modal-tab-btn-1" data-bs-toggle="tab" data-bs-target="#modal-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC')">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> 1. Đề Tài Đăng Ký
+                    <button class="excel-sheet-tab-item {{ $isNhomOfficial ? 'active' : '' }}" id="modal-tab-btn-2" data-bs-toggle="tab" data-bs-target="#modal-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD', 'modal')">
+                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
                     </button>
-                    <button class="excel-sheet-tab-item" id="modal-tab-btn-2" data-bs-toggle="tab" data-bs-target="#modal-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI')">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> 2. Nhóm Sinh Viên
+                    <button class="excel-sheet-tab-item {{ !$isNhomOfficial ? 'active' : '' }}" id="modal-tab-btn-1" data-bs-toggle="tab" data-bs-target="#modal-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC', 'modal')">
+                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
                     </button>
-                    <button class="excel-sheet-tab-item" id="modal-tab-btn-3" data-bs-toggle="tab" data-bs-target="#modal-sheet-gvhd" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH GIẢNG VIÊN HƯỚNG DẪN KHÓA LUẬN')">
+                    <button class="excel-sheet-tab-item" id="modal-tab-btn-3" data-bs-toggle="tab" data-bs-target="#modal-sheet-gvhd" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH GIẢNG VIÊN HƯỚNG DẪN KHÓA LUẬN', 'modal')">
                         <i class="fa-solid fa-file-excel text-success me-1"></i> 3. GV Hướng Dẫn
                     </button>
                 </div>

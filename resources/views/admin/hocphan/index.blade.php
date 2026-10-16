@@ -4,7 +4,22 @@
 
 @push('styles')
 <style>
-    /* Styling chuẩn phong cách quản trị học vụ HUIT */
+    /* Hiệu ứng Fade-In mượt mà cho nội dung Tab khi reload */
+.tab-pane-fade {
+    animation: fadeInTab 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInTab {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+    /* Styling chuẩn phong cách quản trị học vụ HUIT - Đồng bộ 2 Tab */
     .hp-nav-tabs .nav-link {
         color: #475569;
         font-weight: 600;
@@ -79,7 +94,7 @@
         letter-spacing: 0.3px;
         font-weight: 600 !important;
         border: none !important;
-        padding: 10px 12px !important;
+        padding: 11px 12px !important;
         vertical-align: middle !important;
     }
     .table-hp td {
@@ -135,21 +150,20 @@
 @section('content')
 <div class="container-fluid px-0">
 
-
-
     <!-- 1. Tiêu đề trang -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
             <h4 class="fw-bold mb-0" style="color: #00305a;">Quản lý học phần</h4>
+            <p class="text-muted small mb-0">Quản lý danh mục học phần và phân bổ giảng dạy theo học kỳ</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-white text-secondary border px-3 py-2 rounded-2 shadow-xs small">
-                Khoa Công nghệ Thông tin
+                <i class="fa-solid fa-building-columns text-primary me-1"></i> Khoa Công nghệ Thông tin
             </span>
         </div>
     </div>
 
-    <!-- 2. Khu vực thống kê: 4 thẻ phân theo bộ môn -->
+    <!-- 2. Khu vực thống kê KPI -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="kpi-card-clean h-100 shadow-xs">
@@ -181,7 +195,7 @@
         </div>
     </div>
 
-    <!-- 3. Khu vực chuyển nhóm: 2 Tab lớn (1. Danh mục theo bộ môn, 2. Gán theo học kỳ) -->
+    <!-- 3. Khu vực chuyển nhóm: 2 Tab lớn -->
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-header bg-white border-bottom p-0">
             <ul class="nav hp-nav-tabs" role="tablist">
@@ -203,7 +217,7 @@
         </div>
 
         <div class="card-body p-4">
-
+<div class="tab-pane-fade">
             {{-- ═══════════════════════════════════════════════════════════════
                  TAB 1: DANH MỤC HỌC PHẦN (THEO BỘ MÔN)
             ═══════════════════════════════════════════════════════════════ --}}
@@ -231,20 +245,20 @@
                             <input type="hidden" name="ma_bomon" value="{{ request('ma_bomon') }}">
                         @endif
 
-                        <div class="input-group input-group-sm" style="max-width: 320px;">
+                        <div class="input-group input-group-sm" style="max-width: 280px;">
                             <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-magnifying-glass"></i></span>
                             <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0" placeholder="Tìm theo mã hoặc tên học phần...">
                         </div>
 
-                        <select name="loai_hocphan" class="form-select form-select-sm" style="max-width: 170px;" onchange="this.form.submit()">
+                        <select name="loai_hocphan" class="form-select form-select-sm" style="max-width: 160px;" onchange="this.form.submit()">
                             <option value="">-- Loại học phần --</option>
                             <option value="Khóa luận" {{ request('loai_hocphan') == 'Khóa luận' ? 'selected' : '' }}>Khóa luận</option>
                             <option value="Chuyên ngành" {{ request('loai_hocphan') == 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
                             <option value="Đồ án" {{ request('loai_hocphan') == 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
                         </select>
 
-                        <select name="trang_thai" class="form-select form-select-sm" style="max-width: 170px;" onchange="this.form.submit()">
-                            <option value="">-- Tất cả trạng thái --</option>
+                        <select name="trang_thai" class="form-select form-select-sm" style="max-width: 160px;" onchange="this.form.submit()">
+                            <option value="">-- Trạng thái --</option>
                             <option value="Đang sử dụng" {{ request('trang_thai') == 'Đang sử dụng' ? 'selected' : '' }}>Đang sử dụng</option>
                             <option value="Ngừng sử dụng" {{ request('trang_thai') == 'Ngừng sử dụng' ? 'selected' : '' }}>Ngừng sử dụng</option>
                         </select>
@@ -269,14 +283,14 @@
                     <table class="table table-hp align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="text-center" width="4%">STT</th>
+                                <th class="text-center" width="5%">STT</th>
                                 <th width="14%">MÃ HỌC PHẦN</th>
-                                <th width="26%">TÊN HỌC PHẦN</th>
+                                <th width="27%">TÊN HỌC PHẦN</th>
                                 <th width="18%">BỘ MÔN PHỤ TRÁCH</th>
-                                <th class="text-center" width="10%">LOẠI MÔN</th>
-                                <th class="text-end" width="8%">SỐ TC</th>
+                                <th class="text-center" width="11%">LOẠI MÔN</th>
+                                <th class="text-end" width="7%">SỐ TC</th>
                                 <th class="text-center" width="10%">TRẠNG THÁI</th>
-                                <th class="text-center" width="10%">THAO TÁC</th>
+                                <th class="text-center" width="8%">THAO TÁC</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -294,7 +308,7 @@
                                             @if($hp->MoTa)
                                                 <span>{{ Str::limit($hp->MoTa, 60) }}</span>
                                             @else
-                                                <span class="text-secondary fst-italic">LT: {{ $hp->SoTietLT }} tiết · TH: {{ $hp->SoTietTH }} tiết</span>
+                                                <span class="text-secondary fst-italic">LT: {{ $hp->SoTietLT ?? 0 }} tiết · TH: {{ $hp->SoTietTH ?? 0 }} tiết</span>
                                             @endif
                                         </div>
                                     </td>
@@ -305,12 +319,6 @@
                                                 'HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
                                                 'ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
                                                 'KHMT' => 'bg-success-subtle text-success border border-success-subtle',
-                                                'MMT'  => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                                'KHDL' => 'bg-secondary-subtle text-dark border border-secondary-subtle',
-                                                'BM_CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                                'BM_HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
-                                                'BM_ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
-                                                'BM_KHMT' => 'bg-success-subtle text-success border border-success-subtle',
                                             ];
                                             $badgeClass = $bmBadges[$hp->MaBoMon] ?? 'bg-secondary-subtle text-secondary';
                                         @endphp
@@ -324,7 +332,7 @@
                                             </span>
                                         @else
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
-                                                Dùng chung (Khoa CNTT)
+                                                Dùng chung
                                             </span>
                                         @endif
                                     </td>
@@ -341,7 +349,7 @@
                                         {{ $hp->SoTinChi }}
                                     </td>
                                     <td class="text-center">
-                                        @if($hp->TrangThai === 'Đang sử dụng' || $hp->TrangThai === 'Đang áp dụng' || $hp->TrangThai == '1' || $hp->TrangThai === true)
+                                        @if(in_array($hp->TrangThai, ['Đang sử dụng', 'Đang áp dụng', '1', true]))
                                             <span class="status-badge-active">Đang sử dụng</span>
                                         @else
                                             <span class="status-badge-inactive">Ngừng sử dụng</span>
@@ -379,7 +387,7 @@
                         Hiển thị {{ $hocPhanBoMons->firstItem() ?? 0 }}–{{ $hocPhanBoMons->lastItem() ?? 0 }} trên tổng số {{ $hocPhanBoMons->total() }} học phần
                     </div>
                     <div>
-                        {{ $hocPhanBoMons->links('pagination::bootstrap-5') }}
+                        {{ $hocPhanBoMons->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
 
@@ -392,7 +400,7 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div class="d-flex align-items-center gap-2 flex-grow-1 me-md-3" style="min-width: 380px;">
                             <label class="fw-bold text-dark small mb-0 text-nowrap"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Chọn Học Kỳ:</label>
-                            <select class="form-select form-select-sm fw-semibold flex-grow-1" style="min-width: 360px;" onchange="window.location.href='{{ route('hocphan.index') }}?tab=phan_bo_hocky&ma_hocky=' + this.value">
+                            <select class="form-select form-select-sm fw-semibold flex-grow-1" style="min-width: 320px;" onchange="window.location.href='{{ route('hocphan.index') }}?tab=phan_bo_hocky&ma_hocky=' + this.value">
                                 @foreach($hocKies as $hk)
                                     @php
                                         $namHocSuffix = (!empty($hk->NamHoc) && !str_contains($hk->TenHocKy, $hk->NamHoc)) ? ' (' . $hk->NamHoc . ')' : '';
@@ -405,15 +413,15 @@
                         </div>
 
                         <div class="d-flex align-items-center gap-2">
-                            <form method="POST" action="{{ route('admin.hocphan.bulk_hocky') }}" class="d-inline" onsubmit="return confirm('Xác nhận MỞ TẤT CẢ các học phần cho học kỳ {{ $currentHocKyObj?->TenHocKy }}?')">
+                            <form method="POST" action="{{ route('admin.hocphan.bulk_hocky') }}" class="d-inline" onsubmit="return confirm('Xác nhận MỞ TẤT CẢ các học phần cho học kỳ này?')">
                                 @csrf
                                 <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                 <input type="hidden" name="action" value="open_all">
                                 <button type="submit" class="btn btn-sm btn-success rounded-pill fw-semibold shadow-xs px-3">
-                                    <i class="fa-solid fa-check-double me-1"></i> Mở tất cả cho kỳ này
+                                    <i class="fa-solid fa-check-double me-1"></i> Mở tất cả
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('admin.hocphan.bulk_hocky') }}" class="d-inline" onsubmit="return confirm('Xác nhận ĐÓNG TẤT CẢ học phần trong học kỳ {{ $currentHocKyObj?->TenHocKy }}?')">
+                            <form method="POST" action="{{ route('admin.hocphan.bulk_hocky') }}" class="d-inline" onsubmit="return confirm('Xác nhận ĐÓNG TẤT CẢ học phần trong học kỳ này?')">
                                 @csrf
                                 <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                 <input type="hidden" name="action" value="close_all">
@@ -470,14 +478,14 @@
                     <table class="table table-hp align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="text-center" width="4%">STT</th>
+                                <th class="text-center" width="5%">STT</th>
                                 <th width="14%">MÃ HỌC PHẦN</th>
                                 <th width="28%">TÊN HỌC PHẦN</th>
                                 <th width="18%">BỘ MÔN PHỤ TRÁCH</th>
-                                <th class="text-center" width="10%">LOẠI MÔN</th>
-                                <th class="text-end" width="6%">SỐ TC</th>
+                                <th class="text-center" width="11%">LOẠI MÔN</th>
+                                <th class="text-end" width="7%">SỐ TC</th>
                                 <th class="text-center" width="10%">TRẠNG THÁI KỲ NÀY</th>
-                                <th class="text-center" width="10%">THAO TÁC</th>
+                                <th class="text-center" width="7%">THAO TÁC</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -489,12 +497,6 @@
                                         'HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
                                         'ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
                                         'KHMT' => 'bg-success-subtle text-success border border-success-subtle',
-                                        'MMT'  => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                        'KHDL' => 'bg-secondary-subtle text-dark border border-secondary-subtle',
-                                        'BM_CNPM' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                        'BM_HTTT' => 'bg-info-subtle text-dark border border-info-subtle',
-                                        'BM_ATTT' => 'bg-warning-subtle text-dark border border-warning-subtle',
-                                        'BM_KHMT' => 'bg-success-subtle text-success border border-success-subtle',
                                     ];
                                     $badgeClass = $bmBadges[$hp->MaBoMon] ?? 'bg-secondary-subtle text-secondary';
                                 @endphp
@@ -516,7 +518,7 @@
                                             </span>
                                         @else
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
-                                                Dùng chung (Khoa CNTT)
+                                                Dùng chung
                                             </span>
                                         @endif
                                     </td>
@@ -545,12 +547,12 @@
                                             <input type="hidden" name="MaHocPhan" value="{{ $hp->MaHocPhan }}">
                                             <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                             @if($isOpenedThisHk)
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 shadow-xs" title="Đóng học phần này trong học kỳ">
-                                                    <i class="fa-solid fa-lock me-1"></i> Đóng môn
+                                                <button type="submit" class="btn btn-sm btn-outline-danger px-2.5 py-1 rounded-pill" title="Đóng học phần trong học kỳ này">
+                                                    Đóng
                                                 </button>
                                             @else
-                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 py-1 shadow-xs" title="Bật mở học phần này trong học kỳ">
-                                                    <i class="fa-solid fa-unlock me-1"></i> Mở môn
+                                                <button type="submit" class="btn btn-sm btn-success px-2.5 py-1 rounded-pill" title="Mở học phần cho học kỳ này">
+                                                    Mở
                                                 </button>
                                             @endif
                                         </form>
@@ -559,7 +561,8 @@
                             @empty
                                 <tr>
                                     <td colspan="8" class="text-center py-4 text-muted">
-                                        Không có học phần nào phù hợp.
+                                        <i class="fa-regular fa-folder-open mb-2 d-block fs-3 text-secondary"></i>
+                                        Không tìm thấy học phần nào trong học kỳ này.
                                     </td>
                                 </tr>
                             @endforelse
@@ -567,238 +570,8 @@
                     </table>
                 </div>
             @endif
-
+</div>
         </div>
     </div>
 </div>
-
-{{-- ═══════════════════════════════════════════════════════════════════════════════
-     MODAL: THÊM HỌC PHẦN MỚI (BẮT BUỘC CHỌN BỘ MÔN)
-═══════════════════════════════════════════════════════════════════════════════ --}}
-<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-white border-bottom py-3">
-                <h5 class="modal-title fw-bold" style="color: #00305a;">Thêm học phần mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('hocphan.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="MaKhoa" value="CNTT">
-
-                <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold small text-dark">Mã học phần *</label>
-                            <input type="text" name="MaHocPhan" class="form-control form-control-sm" value="{{ old('MaHocPhan', $suggestedMaHocPhan ?? '') }}" required placeholder="VD: HP_CNPM03...">
-                        </div>
-                        <div class="col-md-7">
-                            <label class="form-label fw-semibold small text-dark">Tên học phần *</label>
-                            <input type="text" name="TenHocPhan" class="form-control form-control-sm" value="{{ old('TenHocPhan') }}" required placeholder="VD: Lập trình Web, Khóa luận cử nhân...">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-dark">Bộ môn phụ trách *</label>
-                            <select name="MaBoMon" class="form-select form-select-sm" required>
-                                <option value="">-- Chọn bộ môn --</option>
-                                @foreach($bomons as $bm)
-                                    <option value="{{ $bm->MaBoMon }}" {{ old('MaBoMon', request('ma_bomon')) == $bm->MaBoMon ? 'selected' : '' }}>
-                                        {{ $bm->TenBoMon }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-dark">Loại học phần *</label>
-                            <select name="LoaiHocPhan" class="form-select form-select-sm" required>
-                                <option value="Khóa luận" {{ old('LoaiHocPhan') == 'Khóa luận' ? 'selected' : '' }}>Khóa luận tốt nghiệp</option>
-                                <option value="Chuyên ngành" {{ old('LoaiHocPhan', 'Chuyên ngành') == 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
-                                <option value="Đồ án" {{ old('LoaiHocPhan') == 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-dark">Số tín chỉ *</label>
-                            <input type="number" name="SoTinChi" class="form-control form-control-sm" value="{{ old('SoTinChi', 3) }}" min="1" max="30" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Số tiết lý thuyết</label>
-                            <input type="number" name="SoTietLT" class="form-control form-control-sm" value="{{ old('SoTietLT', 30) }}" min="0">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Số tiết thực hành</label>
-                            <input type="number" name="SoTietTH" class="form-control form-control-sm" value="{{ old('SoTietTH', 30) }}" min="0">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-dark">Trạng thái</label>
-                            <select name="TrangThai" class="form-select form-select-sm">
-                                <option value="Đang sử dụng" selected>Đang sử dụng</option>
-                                <option value="Ngừng sử dụng">Ngừng sử dụng</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-secondary">Khoa quản lý</label>
-                            <input type="text" class="form-control form-control-sm bg-light" value="Khoa Công nghệ Thông tin" readonly>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-semibold small text-secondary">Mô tả</label>
-                            <textarea name="MoTa" rows="3" class="form-control form-control-sm" placeholder="Mô tả tóm tắt nội dung học phần...">{{ old('MoTa') }}</textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light border-top py-2.5 px-4 d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm btn-navy fw-semibold px-4">Lưu học phần</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- MODALS SỬA VÀ XÓA TỪNG HỌC PHẦN --}}
-@if(isset($hocPhanBoMons))
-    @foreach($hocPhanBoMons as $hp)
-        <!-- Modal Sửa -->
-        <div class="modal fade" id="editModal{{ $hp->MaHocPhan }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-white border-bottom py-3">
-                        <h5 class="modal-title fw-bold" style="color: #00305a;">Chỉnh sửa học phần: {{ $hp->MaHocPhan }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form action="{{ route('hocphan.update', $hp->MaHocPhan) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-5">
-                                    <label class="form-label fw-semibold small text-dark">Mã học phần</label>
-                                    <input type="text" class="form-control form-control-sm bg-light" value="{{ $hp->MaHocPhan }}" readonly>
-                                </div>
-                                <div class="col-md-7">
-                                    <label class="form-label fw-semibold small text-dark">Tên học phần *</label>
-                                    <input type="text" name="TenHocPhan" class="form-control form-control-sm" value="{{ old('TenHocPhan', $hp->TenHocPhan) }}" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small text-dark">Bộ môn phụ trách *</label>
-                                    <select name="MaBoMon" class="form-select form-select-sm" required>
-                                        @foreach($bomons as $bm)
-                                            <option value="{{ $bm->MaBoMon }}" {{ old('MaBoMon', $hp->MaBoMon) == $bm->MaBoMon ? 'selected' : '' }}>
-                                                {{ $bm->TenBoMon }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small text-dark">Loại học phần *</label>
-                                    <select name="LoaiHocPhan" class="form-select form-select-sm" required>
-                                        <option value="Khóa luận" {{ old('LoaiHocPhan', $hp->LoaiHocPhan) == 'Khóa luận' ? 'selected' : '' }}>Khóa luận tốt nghiệp</option>
-                                        <option value="Chuyên ngành" {{ old('LoaiHocPhan', $hp->LoaiHocPhan) == 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
-                                        <option value="Đồ án" {{ old('LoaiHocPhan', $hp->LoaiHocPhan) == 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold small text-dark">Số tín chỉ *</label>
-                                    <input type="number" name="SoTinChi" class="form-control form-control-sm" value="{{ old('SoTinChi', $hp->SoTinChi) }}" min="1" max="30" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold small text-secondary">Số tiết LT</label>
-                                    <input type="number" name="SoTietLT" class="form-control form-control-sm" value="{{ old('SoTietLT', $hp->SoTietLT ?? 0) }}" min="0">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold small text-secondary">Số tiết TH</label>
-                                    <input type="number" name="SoTietTH" class="form-control form-control-sm" value="{{ old('SoTietTH', $hp->SoTietTH ?? 0) }}" min="0">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small text-dark">Trạng thái</label>
-                                    <select name="TrangThai" class="form-select form-select-sm">
-                                        <option value="Đang sử dụng" {{ old('TrangThai', $hp->TrangThai) === 'Đang sử dụng' || old('TrangThai', $hp->TrangThai) === 'Đang áp dụng' || $hp->TrangThai == '1' || $hp->TrangThai === true ? 'selected' : '' }}>Đang sử dụng</option>
-                                        <option value="Ngừng sử dụng" {{ old('TrangThai', $hp->TrangThai) === 'Ngừng sử dụng' || old('TrangThai', $hp->TrangThai) === 'Tạm ngưng' ? 'selected' : '' }}>Ngừng sử dụng</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold small text-secondary">Khoa quản lý</label>
-                                    <input type="text" class="form-control form-control-sm bg-light" value="Khoa Công nghệ Thông tin" readonly>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label fw-semibold small text-secondary">Mô tả</label>
-                                    <textarea name="MoTa" rows="3" class="form-control form-control-sm">{{ old('MoTa', $hp->MoTa) }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-light border-top py-2.5 px-4 d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-sm btn-navy fw-semibold px-4">Cập nhật</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Xóa -->
-        <div class="modal fade" id="deleteModal{{ $hp->MaHocPhan }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-white border-bottom py-3">
-                        <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Xác nhận xóa</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form action="{{ route('hocphan.destroy', $hp->MaHocPhan) }}" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <div class="modal-body p-4 text-center">
-                            <p class="mb-1">Bạn có chắc chắn muốn xóa học phần này không?</p>
-                            <h6 class="fw-bold text-dark mt-2 mb-2">{{ $hp->TenHocPhan }} ({{ $hp->MaHocPhan }})</h6>
-                            <small class="text-muted">Bộ môn: {{ $hp->boMon->TenBoMon ?? '' }}</small>
-                        </div>
-                        <div class="modal-footer bg-light border-top py-2.5 px-4 d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-sm btn-danger fw-semibold px-4">Xác nhận xóa</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    @endforeach
-@endif
-
-{{-- MODAL IMPORT EXCEL --}}
-<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-white border-bottom py-3">
-                <h5 class="modal-title fw-bold" style="color: #00305a;">Import học phần từ Excel</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('admin.hocphan.import') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-dark">Chọn file Excel (.xlsx, .xls) *</label>
-                        <input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls,.csv" required>
-                    </div>
-                    <div class="small text-muted mb-3">
-                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Các cột trong file: <strong>MaHocPhan, TenHocPhan, SoTinChi, MaKhoa, MaBoMon, LoaiHocPhan, MoTa</strong>.
-                    </div>
-                    <div class="pt-2 border-top">
-                        <a href="{{ route('admin.import.template', ['type' => 'hocphan']) }}" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="fa-solid fa-download me-1"></i> Tải file Excel mẫu chuẩn (.xlsx)
-                        </a>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light border-top py-2.5 px-4 d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm btn-success fw-semibold px-4">Tải lên</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @endsection

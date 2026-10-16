@@ -260,6 +260,9 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/baocao', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'index'])->name('giangvien.baocao.index');
     Route::get('/baocao/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'show'])->name('giangvien.baocao.show');
     Route::post('/baocao/{maBaoCao}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXet'])->name('giangvien.baocao.nhanxet');
+    Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showKhoi'])->name('giangvien.baocao.show_khoi');
+    Route::post('/baocao/khoi/{id}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXetKhoi'])->name('giangvien.baocao.nhanxet_khoi');
+    Route::post('/baocao/{maBaoCao}/xac-nhan-giai-doan', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'xacNhanGiaiDoan'])->name('giangvien.baocao.xacnhan_giaidoan');
 
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
@@ -329,6 +332,13 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     // Báo cáo tiến độ
     Route::get('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'index'])->name('sinhvien.baocao.index');
     Route::post('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'store'])->name('sinhvien.baocao.store');
+    Route::get('/baocao/giai-doan/{lanBaoCao}/them-khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'createKhoi'])->name('sinhvien.baocao.create_khoi');
+    Route::post('/baocao/khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'storeKhoi'])->name('sinhvien.baocao.store_khoi');
+    Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showKhoi'])->name('sinhvien.baocao.show_khoi');
+    Route::get('/baocao/khoi/{id}/edit', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'editKhoi'])->name('sinhvien.baocao.edit_khoi');
+    Route::post('/baocao/khoi/{id}/update', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'updateKhoi'])->name('sinhvien.baocao.update_khoi');
+    Route::delete('/baocao/khoi/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'destroyKhoi'])->name('sinhvien.baocao.destroy_khoi');
+    Route::post('/baocao/ai-summary', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'ajaxAiSummary'])->name('sinhvien.baocao.ai_summary');
 
     // ── GĐ6: Hồ Sơ Bảo Vệ & Kết Quả ──
     Route::get('/ho-so-bao-ve', [\App\Http\Controllers\SinhVien\HoSoBaoVeController::class, 'index'])->name('sinhvien.hoso.index');
