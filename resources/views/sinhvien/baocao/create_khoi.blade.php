@@ -23,7 +23,7 @@
     </div>
 
     <!-- Thông tin đề tài & Giai đoạn -->
-    <div class="card border-0 shadow-xs mb-4" style="background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%); border-left: 4px solid var(--huit-blue, #004E64) !important;">
+    <div class="card border-0 shadow-xs mb-4" style="background: linear-gradient(135deg, var(--admin-primary-soft) 0%, var(--admin-page-bg) 100%); border-left: 4px solid var(--admin-primary) !important;">
         <div class="card-body p-3">
             <div class="row align-items-center">
                 <div class="col-md-8">

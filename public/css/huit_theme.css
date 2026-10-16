@@ -32,6 +32,81 @@
     --radius-lg:        16px;
     --sidebar-w:        260px;
     --transition:       all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shared palette used by the admin and student layouts. */
+    --admin-page-bg:            #E5F0FA;
+    --admin-sidebar-start:      #003366;
+    --admin-sidebar-end:        #002244;
+    --admin-primary:            #0072CE;
+    --admin-primary-dark:       #004A8F;
+    --admin-primary-hover:      #0059A8;
+    --admin-primary-hover-dark: #003B73;
+    --admin-primary-soft:       #E0F2FE;
+    --admin-primary-border:     #BFDBFE;
+    --admin-primary-button-soft:#F0F7FF;
+    --admin-user-text:          #003B73;
+    --admin-user-hover-bg:      #BAE6FD;
+    --admin-text-primary:       #1E293B;
+    --admin-body-text:          #1A2B4A;
+    --admin-text-secondary:     #475569;
+    --admin-text-muted:         #64748B;
+    --admin-text-light:         #94A3B8;
+    --admin-border:             #E2E8F0;
+    --admin-border-soft:        #F1F5F9;
+    --admin-border-input:       #C8DFF7;
+    --admin-surface:            #FFFFFF;
+    --admin-table-header:       #003366;
+    --admin-table-hover:        #F0F7FF;
+    --admin-success:            #10B981;
+    --admin-success-dark:       #059669;
+    --admin-success-soft:       #D1F2E1;
+    --admin-success-text:       #0D6035;
+    --admin-success-border:     #A3E6BE;
+    --admin-warning-soft:       #FFF3CD;
+    --admin-warning-text:       #856404;
+    --admin-warning-border:     #FFEEBA;
+    --admin-danger-soft:        #FDE8EA;
+    --admin-danger-text:        #842029;
+    --admin-danger-border:      #F8D7DA;
+    --admin-info-soft:          #E0F2FE;
+    --admin-info-text:          #0369A1;
+    --admin-info-border:        #BAE6FD;
+    --admin-neutral-soft:       #F1F5F9;
+    --admin-neutral-text:       #475569;
+    --admin-neutral-border:     #CBD5E1;
+    --admin-secondary-button-bg: #F8FAFC;
+    --admin-secondary-button-text:#334155;
+    --admin-secondary-button-hover:#475569;
+    --admin-secondary-button-shadow: rgba(71, 85, 105, 0.25);
+    --admin-badge-primary-bg:     #F0F7F9;
+    --admin-badge-primary-text:   #004E64;
+    --admin-badge-primary-border: #BCE1E8;
+    --admin-badge-success-bg:     #E8F8F2;
+    --admin-badge-success-text:   #0F766E;
+    --admin-badge-success-border:#A7F3D0;
+    --admin-badge-warning-bg:     #FFFBEB;
+    --admin-badge-warning-text:   #92400E;
+    --admin-badge-warning-border:#FDE68A;
+    --admin-badge-danger-bg:      #FEF2F2;
+    --admin-badge-danger-text:    #991B1B;
+    --admin-badge-danger-border:  #FECACA;
+    --admin-badge-info-bg:        #E6F7FA;
+    --admin-badge-info-text:      #006D75;
+    --admin-badge-info-border:    #A5F3FC;
+    --admin-alert-primary-bg:     #CFE2FF;
+    --admin-alert-primary-text:   #084298;
+    --admin-alert-primary-border: #B6D4FE;
+    --admin-alert-success-bg:     #D1E7DD;
+    --admin-alert-success-text:   #0A3622;
+    --admin-alert-success-border:#A3CFBB;
+    --admin-alert-warning-bg:     #FFF3CD;
+    --admin-alert-warning-text:   #664D03;
+    --admin-alert-warning-border:#FFE69C;
+    --admin-alert-info-bg:        #CFF4FC;
+    --admin-alert-info-text:      #055160;
+    --admin-alert-info-border:    #9EEAF9;
+    --admin-focus-ring:         rgba(0, 114, 206, 0.15);
+    --admin-scrollbar:           #00838C;
 }
 
 /* ── Reset & Base ── */
@@ -2961,23 +3036,23 @@ label .text-danger {
 
 /* ============================================================
    HUIT UNIFIED DESIGN SYSTEM — AUTHENTIC PALETTE & PROFESSIONAL COMPONENTS
-   Base: Deep Teal Navy (#004E64), Ocean Cyan (#00838C), Persian Green (#25A18E)
+   Base: Deep Teal Navy (var(--admin-primary-dark)), Ocean Cyan (var(--admin-primary)), Persian Green (var(--admin-success))
    ============================================================ */
 
 /* ── Global Color Tokens ── */
 :root {
-    --sv-primary:         #004E64;
-    --sv-primary-hover:   #003F5F;
-    --sv-secondary:       #00838C;
-    --sv-secondary-hover: #006d75;
-    --sv-accent:          #25A18E;
-    --sv-accent-hover:    #1e8575;
-    --sv-light:           #e6f7fa;
-    --sv-mint:            #e8f8f2;
-    --sv-dark:            #002B36;
-    --sv-border:          #cbd5e1;
-    --sv-slate:           #64748b;
-    --sv-surface:         #ffffff;
+    --sv-primary:         var(--admin-primary);
+    --sv-primary-hover:   var(--admin-primary-hover);
+    --sv-secondary:       var(--admin-primary);
+    --sv-secondary-hover: var(--admin-primary-hover);
+    --sv-accent:          var(--admin-success);
+    --sv-accent-hover:    var(--admin-success-dark);
+    --sv-light:           var(--admin-primary-soft);
+    --sv-mint:            var(--admin-success-soft);
+    --sv-dark:            var(--admin-primary-dark);
+    --sv-border:          var(--admin-border);
+    --sv-slate:           var(--admin-text-muted);
+    --sv-surface:         var(--admin-surface);
 }
 
 /* ── 1. Unified Button Matrix ── */
@@ -2990,15 +3065,15 @@ label .text-danger {
 .btn-primary, .btn-theme-primary {
     background-color: var(--sv-primary) !important;
     border-color: var(--sv-primary) !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 78, 100, 0.15);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 1px 3px var(--shadow-sm);
 }
 .btn-primary:hover, .btn-primary:focus, .btn-primary:active,
 .btn-theme-primary:hover, .btn-theme-primary:focus, .btn-theme-primary:active {
     background-color: var(--sv-primary-hover) !important;
     border-color: var(--sv-primary-hover) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(0, 63, 95, 0.25);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 2px 6px var(--shadow-sm);
 }
 
 .btn-outline-primary {
@@ -3009,22 +3084,22 @@ label .text-danger {
 .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
     background-color: var(--sv-primary) !important;
     border-color: var(--sv-primary) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(0, 78, 100, 0.2);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 2px 6px var(--shadow-sm);
 }
 
 .btn-success, .btn-theme-success {
     background-color: var(--sv-accent) !important;
     border-color: var(--sv-accent) !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(37, 161, 142, 0.2);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 1px 3px var(--shadow-sm);
 }
 .btn-success:hover, .btn-success:focus, .btn-success:active,
 .btn-theme-success:hover, .btn-theme-success:focus, .btn-theme-success:active {
     background-color: var(--sv-accent-hover) !important;
     border-color: var(--sv-accent-hover) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(30, 133, 117, 0.28);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 2px 6px var(--shadow-sm);
 }
 
 .btn-outline-success {
@@ -3035,21 +3110,21 @@ label .text-danger {
 .btn-outline-success:hover, .btn-outline-success:focus, .btn-outline-success:active {
     background-color: var(--sv-accent) !important;
     border-color: var(--sv-accent) !important;
-    color: #ffffff !important;
+    color: var(--admin-surface) !important;
 }
 
 .btn-info, .btn-theme-info {
     background-color: var(--sv-secondary) !important;
     border-color: var(--sv-secondary) !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 131, 140, 0.2);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 1px 3px var(--shadow-sm);
 }
 .btn-info:hover, .btn-info:focus, .btn-info:active,
 .btn-theme-info:hover, .btn-theme-info:focus, .btn-theme-info:active {
     background-color: var(--sv-secondary-hover) !important;
     border-color: var(--sv-secondary-hover) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(0, 109, 117, 0.28);
+    color: var(--admin-surface) !important;
+    box-shadow: 0 2px 6px var(--shadow-sm);
 }
 
 .btn-outline-info {
@@ -3060,60 +3135,60 @@ label .text-danger {
 .btn-outline-info:hover, .btn-outline-info:focus, .btn-outline-info:active {
     background-color: var(--sv-secondary) !important;
     border-color: var(--sv-secondary) !important;
-    color: #ffffff !important;
+    color: var(--admin-surface) !important;
 }
 
 .btn-secondary {
-    background-color: #64748b !important;
-    border-color: #64748b !important;
-    color: #ffffff !important;
+    background-color: var(--admin-text-muted) !important;
+    border-color: var(--admin-text-muted) !important;
+    color: var(--admin-surface) !important;
 }
 .btn-secondary:hover, .btn-secondary:focus {
-    background-color: #475569 !important;
-    border-color: #475569 !important;
+    background-color: var(--admin-text-secondary) !important;
+    border-color: var(--admin-text-secondary) !important;
 }
 
 .btn-outline-secondary {
-    color: #475569 !important;
-    border-color: #cbd5e1 !important;
+    color: var(--admin-text-secondary) !important;
+    border-color: var(--admin-neutral-border) !important;
     background-color: transparent !important;
 }
 .btn-outline-secondary:hover, .btn-outline-secondary:focus {
-    background-color: #f1f5f9 !important;
-    border-color: #94a3b8 !important;
-    color: #1e293b !important;
+    background-color: var(--admin-border-soft) !important;
+    border-color: var(--admin-text-light) !important;
+    color: var(--admin-text-primary) !important;
 }
 
 /* ── 2. Unified Badges & Status Indicators ── */
 .badge.bg-success, .badge.bg-success-subtle {
-    background-color: #e8f8f2 !important;
-    color: #0f766e !important;
-    border: 1px solid #a7f3d0 !important;
+    background-color: var(--admin-badge-success-bg) !important;
+    color: var(--admin-badge-success-text) !important;
+    border: 1px solid var(--admin-badge-success-border) !important;
 }
 .badge.bg-warning, .badge.bg-warning-subtle {
-    background-color: #fffbeb !important;
-    color: #92400e !important;
-    border: 1px solid #fde68a !important;
+    background-color: var(--admin-badge-warning-bg) !important;
+    color: var(--admin-badge-warning-text) !important;
+    border: 1px solid var(--admin-badge-warning-border) !important;
 }
 .badge.bg-danger, .badge.bg-danger-subtle {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
-    border: 1px solid #fecaca !important;
+    background-color: var(--admin-badge-danger-bg) !important;
+    color: var(--admin-badge-danger-text) !important;
+    border: 1px solid var(--admin-badge-danger-border) !important;
 }
 .badge.bg-info, .badge.bg-info-subtle {
-    background-color: #e6f7fa !important;
-    color: #006d75 !important;
-    border: 1px solid #a5f3fc !important;
+    background-color: var(--admin-badge-info-bg) !important;
+    color: var(--admin-badge-info-text) !important;
+    border: 1px solid var(--admin-badge-info-border) !important;
 }
 .badge.bg-primary, .badge.bg-primary-subtle {
-    background-color: #f0f7f9 !important;
-    color: #004E64 !important;
-    border: 1px solid #bce1e8 !important;
+    background-color: var(--admin-badge-primary-bg) !important;
+    color: var(--admin-badge-primary-text) !important;
+    border: 1px solid var(--admin-badge-primary-border) !important;
 }
 .badge.bg-secondary, .badge.bg-secondary-subtle {
-    background-color: #f1f5f9 !important;
-    color: #475569 !important;
-    border: 1px solid #cbd5e1 !important;
+    background-color: var(--admin-neutral-soft) !important;
+    color: var(--admin-neutral-text) !important;
+    border: 1px solid var(--admin-neutral-border) !important;
 }
 
 /* ── 3. Professional Modal Architecture ── */
@@ -3124,19 +3199,19 @@ label .text-danger {
     border: 0 !important;
     border-radius: 1rem !important;
     overflow: hidden !important;
-    box-shadow: 0 20px 45px rgba(0, 43, 54, 0.18) !important;
-    background-color: #ffffff !important;
+    box-shadow: 0 20px 45px var(--shadow-md) !important;
+    background-color: var(--admin-surface) !important;
 }
 .modal-header {
-    background: linear-gradient(135deg, #004E64 0%, #003F5F 100%) !important;
-    color: #ffffff !important;
+    background: linear-gradient(135deg, var(--admin-primary-dark) 0%, var(--admin-primary-hover-dark) 100%) !important;
+    color: var(--admin-surface) !important;
     padding: 16px 24px !important;
     border-bottom: none !important;
 }
 .modal-header .modal-title {
     font-size: 1.05rem !important;
     font-weight: 700 !important;
-    color: #ffffff !important;
+    color: var(--admin-surface) !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -3151,28 +3226,28 @@ label .text-danger {
 }
 .modal-body {
     padding: 24px !important;
-    background: #ffffff !important;
+    background: var(--admin-surface) !important;
     font-size: 14px !important;
     line-height: 1.55;
-    color: #1e293b;
+    color: var(--admin-text-primary);
 }
 .modal-footer {
     padding: 14px 24px !important;
-    background: #f8fafc !important;
-    border-top: 1px solid #e2e8f0 !important;
+    background: var(--admin-secondary-button-bg) !important;
+    border-top: 1px solid var(--admin-border) !important;
 }
 
 /* ── 4. Unified Workspace Tab Pills ── */
 .workspace-tabs, .nav-pills.workspace-tabs {
-    background-color: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    background-color: var(--admin-border-soft);
+    border: 1px solid var(--admin-border);
     border-radius: 9999px;
     padding: 4px;
     display: inline-flex;
     gap: 4px;
 }
 .workspace-tabs .nav-link, .nav-pills.workspace-tabs .nav-link {
-    color: #475569;
+    color: var(--admin-text-secondary);
     font-weight: 600;
     font-size: 13.5px;
     padding: 7px 18px;
@@ -3181,13 +3256,13 @@ label .text-danger {
     transition: all 0.18s ease;
 }
 .workspace-tabs .nav-link:hover, .nav-pills.workspace-tabs .nav-link:hover {
-    color: #004E64;
-    background-color: #e2e8f0;
+    color: var(--admin-primary-dark);
+    background-color: var(--admin-border);
 }
 .workspace-tabs .nav-link.active, .nav-pills.workspace-tabs .nav-link.active {
-    color: #ffffff !important;
-    background-color: #004E64 !important;
-    box-shadow: 0 2px 6px rgba(0, 78, 100, 0.22);
+    color: var(--admin-surface) !important;
+    background-color: var(--admin-primary-dark) !important;
+    box-shadow: 0 2px 6px var(--shadow-sm);
 }
 
 /* ── 5. System-wide Smooth Page Transition & Action Continuity ── */
@@ -3221,7 +3296,7 @@ label .text-danger {
     transition: background-color 0.15s ease;
 }
 .table-hover tbody tr:hover {
-    background-color: #f8fafc !important;
+    background-color: var(--admin-secondary-button-bg) !important;
 }
 
 .card {
@@ -3233,7 +3308,7 @@ label .text-danger {
 .content-body,
 .table-responsive {
     scrollbar-width: thin;
-    scrollbar-color: #00838C #f1f5f9;
+    scrollbar-color: var(--admin-primary) var(--admin-border-soft);
 }
 .smooth-scroll::-webkit-scrollbar,
 .content-body::-webkit-scrollbar,
@@ -3244,19 +3319,19 @@ label .text-danger {
 .smooth-scroll::-webkit-scrollbar-track,
 .content-body::-webkit-scrollbar-track,
 .table-responsive::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: var(--admin-border-soft);
     border-radius: 4px;
 }
 .smooth-scroll::-webkit-scrollbar-thumb,
 .content-body::-webkit-scrollbar-thumb,
 .table-responsive::-webkit-scrollbar-thumb {
-    background: #00838C;
+    background: var(--admin-primary);
     border-radius: 4px;
 }
 .smooth-scroll::-webkit-scrollbar-thumb:hover,
 .content-body::-webkit-scrollbar-thumb:hover,
 .table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #004E64;
+    background: var(--admin-primary-dark);
 }
 
 /* Top progress bar cho cảm giác thao tác liên tiếp, không giựt */
@@ -3266,7 +3341,7 @@ label .text-danger {
     left: 0;
     width: 0%;
     height: 3px;
-    background: linear-gradient(90deg, #004E64, #00838C, #25A18E);
+    background: linear-gradient(90deg, var(--admin-primary-dark), var(--admin-primary), var(--admin-success));
     z-index: 99999;
     transition: width 0.25s ease, opacity 0.25s ease;
     pointer-events: none;
@@ -3513,6 +3588,175 @@ textarea.form-control:focus {
     font-weight: 600 !important;
     color: #003366 !important;
     margin-bottom: 6px !important;
+}
+
+/* Shared admin palette: these values preserve the current admin appearance and
+   let the student portal consume the same design tokens. */
+body {
+    background-color: var(--admin-page-bg);
+    color: var(--admin-body-text);
+}
+
+#sidebar {
+    background: linear-gradient(180deg, var(--admin-sidebar-start) 0%, var(--admin-sidebar-end) 100%);
+}
+
+#sidebar ul li.active > a,
+#sidebar ul li a.active-link {
+    background: var(--admin-primary) !important;
+}
+
+.admin-top-bar,
+.navbar-custom {
+    background: var(--admin-surface) !important;
+    border-bottom-color: var(--admin-border) !important;
+}
+
+.admin-breadcrumb {
+    color: var(--admin-text-secondary) !important;
+}
+
+.admin-breadcrumb a {
+    color: var(--admin-text-muted) !important;
+}
+
+.admin-breadcrumb a:hover,
+.admin-breadcrumb .current-page {
+    color: var(--admin-primary) !important;
+}
+
+.admin-user-pill,
+.user-avatar-btn {
+    border-color: var(--admin-primary-border) !important;
+    background: var(--admin-primary-soft) !important;
+    color: var(--admin-user-text) !important;
+}
+
+.admin-user-pill:hover,
+.user-avatar-btn:hover {
+    background: var(--admin-user-hover-bg) !important;
+    color: var(--footer-darker) !important;
+}
+
+.admin-kpi-card,
+.admin-table-card,
+.card,
+.modal-content {
+    border-color: var(--admin-border) !important;
+    background-color: var(--admin-surface);
+}
+
+.admin-table-header {
+    background: var(--admin-surface);
+    border-bottom-color: var(--admin-border-soft);
+}
+
+.admin-table-header-title,
+.admin-table tbody td,
+.table tbody td,
+.table-academic tbody td {
+    color: var(--admin-text-primary);
+}
+
+.admin-table thead th,
+.table thead th,
+.table-huit thead th,
+.table-custom thead th,
+.table-topic thead th,
+.table-hp thead th,
+.table-academic thead th,
+table.dataTable thead th {
+    background: var(--admin-table-header) !important;
+    color: var(--admin-surface) !important;
+}
+
+.admin-table tbody tr:hover,
+.table tbody tr:hover,
+.table-huit tbody tr:hover,
+.table-custom tbody tr:hover,
+.table-topic tbody tr:hover,
+.table-hp tbody tr:hover,
+.table-academic tbody tr:hover {
+    background-color: var(--admin-table-hover) !important;
+}
+
+.admin-table tbody td,
+.table tbody td,
+.table-huit tbody td,
+.table-custom tbody td,
+.table-topic tbody td,
+.table-hp tbody td,
+.table-academic tbody td {
+    border-bottom-color: var(--admin-border) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%) !important;
+    border-color: var(--admin-primary-dark) !important;
+    box-shadow: 0 2px 6px rgba(0, 114, 206, 0.25) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: linear-gradient(135deg, var(--admin-primary-hover) 0%, var(--admin-primary-hover-dark) 100%) !important;
+    border-color: var(--admin-primary-hover-dark) !important;
+    box-shadow: 0 4px 12px rgba(0, 114, 206, 0.35) !important;
+}
+
+.btn-outline-primary {
+    color: var(--admin-primary) !important;
+    border-color: var(--admin-primary) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: var(--admin-primary) !important;
+    border-color: transparent !important;
+    color: var(--admin-surface) !important;
+}
+
+.form-control,
+.form-select,
+input.form-control,
+select.form-select,
+textarea.form-control {
+    border-color: var(--admin-border-input) !important;
+    color: var(--admin-text-primary) !important;
+    background-color: var(--admin-surface) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus {
+    border-color: var(--admin-primary) !important;
+    background-color: var(--admin-surface) !important;
+    box-shadow: 0 0 0 3px var(--admin-focus-ring) !important;
+}
+
+.pagination .page-link {
+    border-color: var(--uranian-blue);
+    color: var(--huit-blue-dark);
+}
+
+.pagination .page-link:hover {
+    background: var(--columbia-blue);
+    border-color: var(--light-sky);
+    color: var(--huit-blue-dark);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: var(--admin-surface);
+    box-shadow: 0 2px 10px rgba(0, 114, 206, 0.3);
+}
+
+.smooth-scroll,
+.content-body,
+.table-responsive {
+    scrollbar-color: var(--admin-scrollbar) var(--admin-border-soft);
 }
 
 /* 5. STANDARDIZED MODALS (THÊM, SỬA, XÓA, CHI TIẾT) */

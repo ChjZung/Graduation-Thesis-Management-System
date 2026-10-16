@@ -32,7 +32,7 @@
             };
         @endphp
         <div class="d-flex align-items-center justify-content-between px-4 py-3.5 border-bottom transition-all {{ $isUnread ? 'bg-light' : '' }}" 
-             style="{{ $isUnread ? 'background-color: #f8fbff !important;' : '' }}; font-size: 13.5px;">
+             style="{{ $isUnread ? 'background-color: var(--admin-primary-button-soft) !important;' : '' }}; font-size: 13.5px;">
             <div class="d-flex align-items-center gap-3 flex-grow-1 me-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $iconBg }}" 
                      style="width: 42px; height: 42px;">

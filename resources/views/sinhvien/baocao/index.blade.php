@@ -50,7 +50,7 @@
     <div class="card-body p-4">
         <div class="row g-2 text-center position-relative">
             <!-- Thanh nối ngang giữa các mốc -->
-            <div class="position-absolute top-50 start-0 translate-middle-y w-100 d-none d-md-block" style="height: 3px; background: #e2e8f0; z-index: 1; margin-top: -16px;">
+            <div class="position-absolute top-50 start-0 translate-middle-y w-100 d-none d-md-block" style="height: 3px; background: var(--admin-border); z-index: 1; margin-top: -16px;">
                 @php
                     $completedCount = 0;
                     for ($i = 1; $i <= 6; $i++) {
@@ -60,7 +60,7 @@
                     }
                     $progressPercent = ($completedCount / 6) * 100;
                 @endphp
-                <div style="height: 100%; width: {{ $progressPercent }}%; background: #004E64; transition: width 0.4s ease;"></div>
+                <div style="height: 100%; width: {{ $progressPercent }}%; background: var(--admin-primary-dark); transition: width 0.4s ease;"></div>
             </div>
 
             @foreach($mocs as $soMoc => $moc)
@@ -74,7 +74,7 @@
             <div class="col position-relative" style="z-index: 2;">
                 @if($isDone)
                     <div class="mx-auto rounded-circle text-white mb-2 shadow-xs"
-                         style="width: 40px; height: 40px; background-color: #25A18E; display: flex; align-items: center; justify-content: center;">
+                         style="width: 40px; height: 40px; background-color: var(--admin-success); display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-check fw-bold fs-6"></i>
                     </div>
                     <div class="fw-bold text-dark" style="font-size: 13px;">{{ $moc['ten'] }}</div>
@@ -83,7 +83,7 @@
                     </span>
                 @elseif($isCurrent)
                     <div class="mx-auto rounded-circle text-white mb-2 shadow-sm"
-                         style="width: 42px; height: 42px; background-color: {{ $isPending ? '#f59e0b' : ($isResubmit ? '#00838C' : '#004E64') }}; margin-top: -1px; display: flex; align-items: center; justify-content: center;">
+                         style="width: 42px; height: 42px; background-color: {{ $isPending ? 'var(--admin-warning-text)' : ($isResubmit ? 'var(--admin-primary)' : 'var(--admin-primary-dark)') }}; margin-top: -1px; display: flex; align-items: center; justify-content: center;">
                         @if($isPending)
                             <i class="fa-solid fa-hourglass-half fs-6"></i>
                         @elseif($isResubmit)
@@ -218,11 +218,11 @@
                     </span>
                 </div>
                 <div class="p-3 bg-light rounded-3 border">
-                    <div class="position-relative ps-3" style="border-left: 2px solid #cbd5e1; margin-left: 10px;">
+                    <div class="position-relative ps-3" style="border-left: 2px solid var(--admin-neutral-border); margin-left: 10px;">
                         @foreach($bcHienTai->khoiBaoCaos as $khoi)
                         <div class="position-relative mb-3 pb-1">
                             <div class="position-absolute rounded-circle {{ $khoi->TrangThai === 'Đạt' ? 'bg-success' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'bg-warning' : 'bg-primary') }}" 
-                                 style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid #fff;"></div>
+                                 style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid var(--admin-surface);"></div>
                             <div class="card border bg-white p-3 rounded-2 shadow-none" style="font-size: 13px;">
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                                     <div class="d-flex align-items-center gap-2">
@@ -471,11 +471,11 @@
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body p-4 bg-light">
-                                <div class="position-relative ps-3" style="border-left: 2px solid #cbd5e1; margin-left: 10px;">
+                                <div class="position-relative ps-3" style="border-left: 2px solid var(--admin-neutral-border); margin-left: 10px;">
                                     @forelse($bc->khoiBaoCaos as $khoi)
                                     <div class="position-relative mb-3 pb-1">
                                         <div class="position-absolute rounded-circle {{ $khoi->TrangThai === 'Đạt' ? 'bg-success' : ($khoi->TrangThai === 'Yêu cầu nộp lại' ? 'bg-warning' : 'bg-primary') }}" 
-                                             style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid #fff;"></div>
+                                             style="width: 14px; height: 14px; left: -24px; top: 6px; border: 2px solid var(--admin-surface);"></div>
                                         <div class="card border bg-white p-3 rounded-2 shadow-none" style="font-size: 13px;">
                                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                                                 <div>
@@ -539,7 +539,7 @@
                 <div class="modal fade" id="modalAi{{ $bc->MaBaoCao }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
-                            <div class="modal-header text-white py-3 px-4" style="background-color: #004E64;">
+                            <div class="modal-header text-white py-3 px-4" style="background-color: var(--admin-primary-dark);">
                                 <h6 class="modal-title fw-bold">
                                     <i class="fa-solid fa-file-lines me-2"></i>Trích Yếu Báo Cáo Tiến Độ — Mốc {{ $bc->LanBaoCao }}
                                 </h6>
@@ -556,19 +556,19 @@
                                 </div>
                                 <div class="row g-3" style="font-size: 14px;">
                                     <div class="col-12">
-                                        <div class="p-3.5 rounded-3 border-start border-success border-4" style="background: #f0fdf4; padding: 18px 20px;">
+                                        <div class="p-3.5 rounded-3 border-start border-success border-4" style="background: var(--admin-success-soft); padding: 18px 20px;">
                                             <div class="fw-bold text-success mb-1.5"><i class="fa-solid fa-circle-check me-1"></i>1. Nội dung đã thực hiện:</div>
                                             <div class="text-dark">{{ $tt->CongViecDaHoanThanh }}</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <div class="p-3.5 rounded-3 border-start border-warning border-4" style="background: #fffbeb; padding: 18px 20px;">
+                                        <div class="p-3.5 rounded-3 border-start border-warning border-4" style="background: var(--admin-surface)beb; padding: 18px 20px;">
                                             <div class="fw-bold text-warning-emphasis mb-1.5"><i class="fa-solid fa-triangle-exclamation me-1"></i>2. Khó khăn &amp; Vướng mắc:</div>
                                             <div class="text-dark">{{ $tt->KhoKhan }}</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <div class="p-3.5 rounded-3 border-start border-primary border-4" style="background: #eff6ff; padding: 18px 20px;">
+                                        <div class="p-3.5 rounded-3 border-start border-primary border-4" style="background: var(--admin-primary-soft); padding: 18px 20px;">
                                             <div class="fw-bold text-primary mb-1.5"><i class="fa-solid fa-calendar-check me-1"></i>3. Kế hoạch giai đoạn tiếp theo:</div>
                                             <div class="text-dark">{{ $tt->KeHoachTuanToi }}</div>
                                         </div>

@@ -72,7 +72,7 @@
 @endphp
 
 <div class="dropdown" id="headerNotificationDropdown">
-    <a href="#" class="position-relative text-decoration-none dropdown-toggle no-caret d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false" style="color: #004E64;">
+    <a href="#" class="position-relative text-decoration-none dropdown-toggle no-caret d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--admin-primary);">
         <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
         @if($unreadCount > 0)
             <span id="headerNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
@@ -88,12 +88,12 @@
     </a>
     <div class="dropdown-menu dropdown-menu-end shadow border border-slate-200" style="width: 380px; max-height: 440px; overflow-y: auto; border-radius: 12px; z-index: 1060;">
         <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
-            <strong style="font-size: 13px !important; color: #004E64;">
+            <strong style="font-size: 13px !important; color: var(--admin-primary);">
                 <i class="fa-solid fa-bell me-1 text-primary"></i> Thông Báo Hệ Thống
             </strong>
             <div class="d-flex align-items-center gap-2">
                 <button type="button" id="btnMarkAllNotiRead" class="btn btn-link p-0 text-decoration-none text-muted fw-semibold" style="font-size: 12px !important;" title="Đánh dấu tất cả thông báo là đã đọc">
-                    <i class="fa-solid fa-check-double text-success me-1"></i>Đọc hết
+                    <i class="fa-solid fa-check-double text-primary me-1"></i>Đọc hết
                 </button>
                 <span class="text-muted" style="font-size: 11px;">•</span>
                 <a href="{{ $allRoute }}" class="text-primary text-decoration-none fw-semibold" style="font-size: 12px !important;">
@@ -235,7 +235,7 @@
                 });
 
                 // Phản hồi nút bấm
-                btnMarkAll.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>Đã đọc';
+                btnMarkAll.innerHTML = '<i class="fa-solid fa-check text-primary me-1"></i>Đã đọc';
                 btnMarkAll.style.pointerEvents = 'none';
 
                 // Gửi request đồng bộ session & cache server-side
