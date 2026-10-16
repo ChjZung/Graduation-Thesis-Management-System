@@ -294,127 +294,15 @@
                         @endif
                     </td>
 
-                    {{-- 6. Thao Tác (Xem Nhanh Modal & Chi Tiết Đầy Đủ) --}}
+                    {{-- 6. Thao Tác (Chuyển trang Chi Tiết Đầy Đủ riêng biệt) --}}
                     <td class="text-center">
-                        <div class="d-flex align-items-center justify-content-center gap-1">
-                            <button type="button" class="btn btn-sm btn-action btn-outline-primary" 
-                                    data-bs-toggle="modal" data-bs-target="#modalDetail{{ $nhom->MaNhom }}" 
-                                    title="Xem nhanh chi tiết nhóm">
-                                <i class="fa-solid fa-eye me-1"></i> Chi tiết
-                            </button>
-                        </div>
+                        <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" 
+                           class="btn btn-sm btn-action btn-outline-primary text-nowrap" 
+                           title="Xem chi tiết tiến độ nhóm">
+                            <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                        </a>
                     </td>
                 </tr>
-
-                {{-- ── MODAL XEM NHANH CHI TIẾT TIẾN ĐỘ NHÓM ── --}}
-                <div class="modal fade" id="modalDetail{{ $nhom->MaNhom }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">
-                                    <i class="fa-solid fa-circle-info text-info me-2"></i>
-                                    Chi Tiết Tiến Độ Nhóm: {{ $nhom->TenNhom ?: $nhom->MaNhom }}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                            </div>
-                            <div class="modal-body p-3 p-md-4">
-                                {{-- Thông tin Đề tài & GVHD --}}
-                                <div class="p-3 rounded-3 bg-light border mb-3">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-primary rounded-pill px-2.5 py-1">{{ $nhom->MaNhom }}</span>
-                                        <span class="badge {{ $nhom->status_badge }} rounded-pill px-2.5 py-1">{{ $nhom->status_label }}</span>
-                                    </div>
-                                    <h5 class="fw-bold text-dark mb-2">{{ $nhom->deTai->TenDeTai ?? 'Chưa đăng ký đề tài' }}</h5>
-                                    <div class="row g-2 small text-muted">
-                                        <div class="col-sm-6">
-                                            <i class="fa-solid fa-chalkboard-user text-primary me-1"></i> <strong>GVHD:</strong> 
-                                            {{ $gvhd ? ($gvhd->HocHamHocVi ? $gvhd->HocHamHocVi . ' ' : '') . $gvhd->HoTen : 'Chưa phân công' }}
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <i class="fa-solid fa-building-columns text-info me-1"></i> <strong>Bộ môn:</strong> 
-                                            {{ $gvhd->boMon->TenBoMon ?? 'CNPM' }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- Danh Sách Thành Viên --}}
-                                <div class="mb-3">
-                                    <div class="fw-bold text-dark small mb-2 d-flex align-items-center gap-1.5">
-                                        <i class="fa-solid fa-users text-primary"></i> Danh Sách Thành Viên Nhóm ({{ $nhom->thanhViens->count() }} SV)
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 12.5px;">
-                                            <thead class="bg-light">
-                                                <tr>
-                                                    <th>MSSV</th>
-                                                    <th>Họ và Tên</th>
-                                                    <th>Vai Trò</th>
-                                                    <th>Email</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($nhom->thanhViens as $tv)
-                                                @php $sv = $tv->sinhVien; @endphp
-                                                <tr>
-                                                    <td><code>{{ $sv->MaSoSinhVien ?? $sv->MaSV ?? $tv->MaSV }}</code></td>
-                                                    <td class="fw-semibold">{{ $sv->HoTen ?? 'N/A' }}</td>
-                                                    <td>
-                                                        @if($nhom->MaTruongNhom === $tv->MaSV)
-                                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">👑 Trưởng nhóm</span>
-                                                        @else
-                                                            <span class="badge bg-light text-secondary border rounded-pill">Thành viên</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-muted small">{{ $sv->Email ?? '—' }}</td>
-                                                </tr>
-                                                @empty
-                                                <tr><td colspan="4" class="text-center text-muted">Chưa có thành viên nào.</td></tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {{-- Chi Tiết 6 Giai Đoạn Tiến Độ --}}
-                                <div>
-                                    <div class="fw-bold text-dark small mb-2 d-flex align-items-center gap-1.5">
-                                        <i class="fa-solid fa-bars-progress text-primary"></i> Tiến Độ Chi Tiết Từng Giai Đoạn ({{ $nhom->completed_stages }}/6 mốc)
-                                    </div>
-                                    <div class="list-group list-group-flush border rounded-3 overflow-hidden">
-                                        @foreach($nhom->stages as $sNum => $stageItem)
-                                        <div class="list-group-item d-flex align-items-center justify-content-between p-2.5">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge {{ $stageItem['status'] === 'DAT' ? 'bg-success' : ($stageItem['status'] === 'CHO_DUYET' ? 'bg-warning text-dark' : 'bg-light text-muted border') }} rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">
-                                                    {{ $sNum }}
-                                                </span>
-                                                <div>
-                                                    <div class="fw-bold text-dark small">{{ $stageItem['name'] }}</div>
-                                                    @if($stageItem['date'])
-                                                        <div class="text-muted" style="font-size: 11px;">
-                                                            <i class="fa-regular fa-calendar me-1"></i>Ngày nộp: {{ $stageItem['date'] }}
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <span class="badge {{ $stageItem['badge'] }} rounded-pill px-2.5 py-1 small">
-                                                    {{ $stageItem['status_label'] }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-between">
-                                <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Trang chi tiết đầy đủ
-                                </a>
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 @empty
                 <tr>
                     <td colspan="6" class="text-center text-muted py-5">
