@@ -79,7 +79,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead style="background: #f8fafc; font-size: 0.8rem;">
+                            <thead>
                                 <tr>
                                     <th class="ps-3 py-2">Mã ĐT</th>
                                     <th class="py-2">Tên Đề Tài</th>
@@ -115,7 +115,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead style="background: #f8fafc; font-size: 0.8rem;">
+                            <thead>
                                 <tr>
                                     <th class="ps-3 py-2">Mã Nhóm</th>
                                     <th class="py-2">Tên Nhóm</th>

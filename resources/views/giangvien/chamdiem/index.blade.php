@@ -34,12 +34,9 @@
     <!-- Header Section (Đồng bộ chuẩn Học Kỳ) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">
+            <h4 class="fw-bold mb-0" style="color: #00305a;">
                 <i class="fa-solid fa-file-signature text-primary me-2"></i>{{ $tenBieuMau }}
             </h4>
-            <p class="text-muted small mb-0">
-                Thang điểm Rubric chuẩn hóa Khoa CNTT — Trường ĐH Công Thương TP.HCM (Điểm khóa luận 100% do Hội đồng chấm).
-            </p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <!-- Toggle chọn mẫu KLCN hoặc KLKS -->
@@ -207,16 +204,16 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle mb-0">
-                        <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                        <thead>
                             <tr>
-                                <th class="text-center py-3" style="width: 50px;">STT</th>
-                                <th class="py-3" style="min-width: 320px;">NỘI DUNG ĐÁNH GIÁ</th>
-                                <th class="text-center py-3" style="width: 85px;">CLO</th>
-                                <th class="text-center py-3" style="width: 100px;">ĐIỂM TỐI ĐA</th>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th style="min-width: 320px;">NỘI DUNG ĐÁNH GIÁ</th>
+                                <th class="text-center" style="width: 85px;">CLO</th>
+                                <th class="text-center" style="width: 100px;">ĐIỂM TỐI ĐA</th>
                                 @foreach($sinhViens as $idx => $sv)
-                                <th class="text-center py-3" style="width: 130px; background: #f0f7ff;">
+                                <th class="text-center" style="width: 130px;">
                                     <div>SV{{ $idx + 1 }}</div>
-                                    <div class="text-primary fw-bold text-truncate" style="font-size: 0.72rem; max-width: 120px;" title="{{ $sv->HoTen }}">
+                                    <div class="text-white fw-bold text-truncate" style="font-size: 0.72rem; max-width: 120px;" title="{{ $sv->HoTen }}">
                                         {{ $sv->HoTen }}
                                     </div>
                                 </th>

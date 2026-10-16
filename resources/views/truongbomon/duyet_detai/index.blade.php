@@ -178,24 +178,25 @@
         border: 1px solid #e2e8f0;
     }
     .table-academic thead th {
-        background: #f8fafc;
-        color: #475569;
+        background: #003366 !important;
+        color: #ffffff !important;
         font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        padding: 14px 16px;
+        padding: 10px 12px !important;
         border-bottom: 1px solid #e2e8f0;
         white-space: nowrap;
     }
     .table-academic tbody td {
-        padding: 14px 16px;
+        padding: 10px 12px !important;
         border-bottom: 1px solid #f1f5f9;
         color: #334155;
-        font-size: 0.88rem;
+        font-size: 13px;
+        vertical-align: middle;
     }
     .table-academic tbody tr:hover {
-        background-color: #f8fafc;
+        background-color: #f0f7ff;
     }
 
     /* ── STATS DASHBOARD CARDS & CHARTS ── */

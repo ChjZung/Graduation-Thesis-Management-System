@@ -7,13 +7,10 @@
     <!-- Header Greeting -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-graduation-cap me-2 text-primary"></i>
                 Bàn Làm Việc Trưởng Khoa – {{ $khoa->TenKhoa ?? 'Khoa Công Nghệ Thông Tin' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Phê duyệt danh mục đề tài khóa luận cấp Khoa và giám sát chất lượng đào tạo, tiến độ, kết quả toàn khoa.
-            </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
@@ -196,7 +193,7 @@
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th style="width: 100px;">Mã ĐT</th>
                                 <th>Tên Đề Tài &amp; Bộ Môn</th>

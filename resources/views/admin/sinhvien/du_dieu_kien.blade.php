@@ -6,10 +6,9 @@
 <!-- Page Header -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
             <i class="fa-solid fa-user-check text-primary"></i> Rà Soát &amp; Lập Danh Sách Sinh Viên Đủ Điều Kiện Khóa Luận
         </h4>
-        <div class="text-muted small">Quy trình Giáo vụ rà soát điều kiện tích lũy tín chỉ (&ge; 115 TC), ĐTB (&ge; 2.0), cập nhật bổ sung và công bố danh sách chính thức theo học kỳ.</div>
     </div>
     <div class="d-flex align-items-center gap-2">
         <a href="{{ route('sinhvien.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm">

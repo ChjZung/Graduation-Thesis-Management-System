@@ -6,12 +6,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h4 class="fw-bold mb-1 text-dark">
+        <h4 class="fw-bold mb-0 text-dark">
             <i class="fa-solid fa-chart-pie me-2 text-primary"></i> Tổng Quan Khóa Luận Tốt Nghiệp
         </h4>
-        <div class="text-muted small">
-            Dữ liệu tổng hợp theo <span class="badge bg-light text-primary border"><i class="fa-regular fa-calendar-check me-1"></i>Học kỳ hiện tại</span>
-        </div>
     </div>
 </div>
 

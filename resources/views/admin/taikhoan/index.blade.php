@@ -102,12 +102,9 @@
     <!-- ═══ 1. HEADER ═══ -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <i class="fa-solid fa-users-gear text-primary"></i> Quản lý tài khoản
             </h4>
-            <div class="text-muted small">
-                Quản lý tài khoản người dùng trong hệ thống.
-            </div>
         </div>
         <div>
             <!-- Nút duy nhất góc phải: + Thêm tài khoản cán bộ -->

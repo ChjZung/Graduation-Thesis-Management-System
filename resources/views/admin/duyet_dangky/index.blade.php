@@ -7,13 +7,10 @@
 {{-- ── TIÊU ĐỀ TRANG & NÚT XUẤT FILE ── --}}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div>
-        <h4 class="page-main-title mb-1">
+        <h4 class="page-main-title mb-0">
             <i class="fa-solid fa-clipboard-list text-primary me-2"></i>
-            Xem & Quản Lý Đăng Ký Đề Tài Khóa Luận
+            Xem &amp; Quản Lý Đăng Ký Đề Tài Khóa Luận
         </h4>
-        <p class="page-main-subtitle text-muted mb-0">
-            Theo dõi, tra cứu trạng thái đăng ký đề tài của các nhóm sinh viên và tiến độ gán đề tài chính thức theo học kỳ.
-        </p>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
         <button type="button" class="btn btn-sm btn-warning text-dark rounded-3 px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNgoaiLeVPK">

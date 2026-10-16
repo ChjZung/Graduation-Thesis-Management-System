@@ -59,21 +59,21 @@
         margin-bottom: 0;
     }
     .admin-table thead th {
-        background-color: #f8fafc;
-        color: #334155;
-        font-size: 12px;
+        background-color: #003366 !important;
+        color: #ffffff !important;
+        font-size: 12.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 1px solid #e2e8f0;
-        padding: 11px 14px;
+        padding: 10px 12px !important;
         white-space: nowrap;
     }
     .admin-table tbody td {
-        padding: 12px 14px;
+        padding: 10px 12px !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
-        font-size: 13.5px;
+        font-size: 13px;
         color: #1e293b;
     }
     .badge-code {
@@ -106,7 +106,6 @@
                 </span>
             </div>
             <h3 class="fw-bold text-dark mb-0">Phê duyệt đề tài</h3>
-            <p class="text-muted small mb-0">Quản lý, xem xét và phê duyệt đề tài theo từng giảng viên thuộc bộ môn phụ trách</p>
         </div>
 
         @if($hocKies->count() > 1)
@@ -349,7 +348,7 @@
                         </td>
                         <td class="text-center">
                             <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $gv->MaGV, 'hocKy' => $selectedHocKy]) }}" 
-                               class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold text-nowrap"
+                               class="btn btn-sm btn-action btn-outline-primary text-nowrap"
                                title="Xem danh sách đề tài của giảng viên này">
                                 <i class="fa-solid fa-list-check me-1"></i>Xem danh sách đề tài
                             </a>

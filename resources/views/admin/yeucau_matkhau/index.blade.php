@@ -6,8 +6,7 @@
 <div class="container-fluid px-0">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Quản Lý An Toàn Mật Khẩu &amp; Trạng Thái Khóa / Mở Tài Khoản Portal</h4>
-            <p class="text-muted small mb-0">Kiểm soát yêu cầu cấp lại mật khẩu từ Giảng viên &amp; Sinh viên, chống brute-force và quản trị trạng thái tài khoản.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Quản Lý An Toàn Mật Khẩu &amp; Trạng Thái Khóa / Mở Tài Khoản Portal</h4>
         </div>
         <div class="d-flex align-items-center">
             <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
@@ -92,14 +91,14 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3" width="16%">MÃ SỐ (MSSV / GV)</th>
-                        <th class="py-3" width="24%">HỌ VÀ TÊN &amp; EMAIL</th>
-                        <th class="py-3" width="14%">VAI TRÒ</th>
-                        <th class="py-3" width="26%">LÝ DO YÊU CẦU</th>
-                        <th class="py-3" width="12%">THỜI GIAN GỬI</th>
-                        <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                        <th width="16%">MÃ SỐ (MSSV / GV)</th>
+                        <th width="24%">HỌ VÀ TÊN &amp; EMAIL</th>
+                        <th width="14%">VAI TRÒ</th>
+                        <th width="26%">LÝ DO YÊU CẦU</th>
+                        <th width="12%">THỜI GIAN GỬI</th>
+                        <th class="text-center" width="8%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
@@ -201,14 +200,14 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3" width="14%">MÃ TK</th>
-                        <th class="py-3" width="26%">TÊN ĐĂNG NHẬP</th>
-                        <th class="py-3" width="18%">VAI TRÒ HỆ THỐNG</th>
-                        <th class="py-3 text-center" width="14%">TRẠNG THÁI MK</th>
-                        <th class="py-3 text-center" width="14%">TÀI KHOẢN</th>
-                        <th class="pe-4 py-3 text-center" width="14%">THAO TÁC</th>
+                        <th width="14%">MÃ TK</th>
+                        <th width="26%">TÊN ĐĂNG NHẬP</th>
+                        <th width="18%">VAI TRÒ HỆ THỐNG</th>
+                        <th class="text-center" width="14%">TRẠNG THÁI MK</th>
+                        <th class="text-center" width="14%">TÀI KHOẢN</th>
+                        <th class="text-center" width="14%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">

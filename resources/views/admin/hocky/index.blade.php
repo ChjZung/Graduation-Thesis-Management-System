@@ -19,8 +19,7 @@
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Quản Lý Danh Sách Học Kỳ & Niên Khóa</h4>
-            <p class="text-muted small mb-0">Kiểm soát mã học kỳ, tên học kỳ, thời gian đào tạo và trạng thái mở đợt khóa luận tốt nghiệp.</p>
+            <h4 class="fw-bold mb-0" style="color: #00305a;"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Quản Lý Danh Sách Học Kỳ &amp; Niên Khóa</h4>
         </div>
     </div>
 
@@ -131,13 +130,13 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                    <thead>
                         <tr>
-                            <th class="ps-4 py-3" width="16%">MÃ HỌC KỲ</th>
-                            <th class="py-3" width="36%">TÊN HỌC KỲ &amp; NĂM HỌC</th>
-                            <th class="py-3" width="28%">THỜI GIAN ĐÀO TẠO</th>
-                            <th class="py-3 text-center" width="12%">TRẠNG THÁI</th>
-                            <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                            <th class="ps-3" width="16%">MÃ HỌC KỲ</th>
+                            <th width="36%">TÊN HỌC KỲ &amp; NĂM HỌC</th>
+                            <th width="28%">THỜI GIAN ĐÀO TẠO</th>
+                            <th class="text-center" width="12%">TRẠNG THÁI</th>
+                            <th class="pe-3 text-center" width="8%">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">

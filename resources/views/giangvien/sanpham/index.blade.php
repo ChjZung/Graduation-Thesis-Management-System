@@ -96,7 +96,7 @@
                             @else
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover align-middle mb-0">
-                                    <thead class="table-light">
+                                    <thead>
                                         <tr>
                                             <th>Lần</th>
                                             <th>Nội dung</th>
@@ -210,7 +210,7 @@
                             @else
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover align-middle mb-0">
-                                    <thead class="table-light">
+                                    <thead>
                                         <tr>
                                             <th>Tên sản phẩm / Source code</th>
                                             <th>Ngày nộp</th>

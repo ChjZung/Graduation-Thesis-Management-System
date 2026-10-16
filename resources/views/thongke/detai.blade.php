@@ -99,12 +99,9 @@
     <!-- ═══ HEADER ═══ -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-primary"></i> Thống Kê Đề Tài Khóa Luận Tốt Nghiệp
             </h4>
-            <div class="text-muted small">
-                Theo dõi số lượng, trạng thái, lĩnh vực và tình hình đăng ký đề tài theo học kỳ, khoa và bộ môn.
-            </div>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ $manageRoute }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 shadow-sm fw-semibold">
@@ -436,15 +433,15 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                <thead class="bg-light text-muted fw-semibold small text-uppercase">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3" width="10%">MÃ ĐỀ TÀI</th>
-                        <th class="py-3" width="30%">TÊN ĐỀ TÀI</th>
-                        <th class="py-3" width="18%">GIẢNG VIÊN HƯỚNG DẪN</th>
-                        <th class="py-3" width="14%">BỘ MÔN / KHOA</th>
-                        <th class="text-center py-3" width="12%">SỐ SV ĐĂNG KÝ</th>
-                        <th class="text-center py-3" width="10%">TRẠNG THÁI</th>
-                        <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                        <th class="ps-3" width="10%">MÃ ĐỀ TÀI</th>
+                        <th width="30%">TÊN ĐỀ TÀI</th>
+                        <th width="18%">GIẢNG VIÊN HƯỚNG DẪN</th>
+                        <th width="14%">BỘ MÔN / KHOA</th>
+                        <th class="text-center" width="12%">SỐ SV ĐĂNG KÝ</th>
+                        <th class="text-center" width="10%">TRẠNG THÁI</th>
+                        <th class="pe-3 text-center" width="8%">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">

@@ -4,8 +4,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h4 class="mb-1 text-primary-custom fw-bold"><i class="fa-solid fa-address-card me-2"></i>Hồ Sơ Cá Nhân</h4>
-        <p class="text-muted small mb-0">Quản lý thông tin định danh, liên hệ và trạng thái tài khoản hệ thống</p>
+        <h4 class="mb-0 text-primary-custom fw-bold"><i class="fa-solid fa-address-card me-2"></i>Hồ Sơ Cá Nhân</h4>
     </div>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#editProfileModal">

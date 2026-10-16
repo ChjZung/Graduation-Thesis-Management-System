@@ -42,24 +42,25 @@
         border: 1px solid #e2e8f0;
     }
     .table-academic thead th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 0.75rem;
+        background: #003366 !important;
+        color: #ffffff !important;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        padding: 12px 14px;
+        padding: 10px 12px !important;
         border-bottom: 1px solid #e2e8f0;
         white-space: nowrap;
     }
     .table-academic tbody td {
-        padding: 12px 14px;
+        padding: 10px 12px !important;
         border-bottom: 1px solid #f1f5f9;
         color: #334155;
-        font-size: 0.88rem;
+        font-size: 13px;
+        vertical-align: middle;
     }
     .table-academic tbody tr:hover {
-        background-color: #f8fafc;
+        background-color: #f0f7ff;
     }
 </style>
 @endpush
@@ -68,12 +69,9 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="page-main-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            <h4 class="page-main-title mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                 <i class="fa-solid fa-list-check text-primary"></i> Theo Dõi Tiến Độ Đề Tài &amp; GVHD – {{ $boMon->TenBoMon ?? 'Bộ Môn' }}
             </h4>
-            <p class="text-muted mb-0 small">
-                Giám sát việc thực hiện đề tài của các nhóm sinh viên, định mức hướng dẫn của Giảng viên và tiến độ hoàn thành khóa luận.
-            </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('truongbomon.duyet_detai.index', ['tab' => 'thongke']) }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-semibold">

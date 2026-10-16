@@ -59,8 +59,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1 text-primary-custom fw-bold"><i class="fa-solid fa-shield-halved me-2"></i>Thiết Lập Mật Khẩu Cá Nhân</h4>
-        <p class="text-muted small mb-0">Bước kích hoạt và bảo mật tài khoản cho lần đầu đăng nhập hệ thống</p>
+        <h4 class="mb-0 text-primary-custom fw-bold"><i class="fa-solid fa-shield-halved me-2"></i>Thiết Lập Mật Khẩu Cá Nhân</h4>
     </div>
     <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
         <i class="fa-solid fa-user-lock me-1"></i>Lần Đầu Đăng Nhập

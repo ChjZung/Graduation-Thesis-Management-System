@@ -12,12 +12,9 @@
 
 <!-- Tiêu đề trang -->
 <div class="mb-4">
-    <h4 class="fw-bold mb-1 text-dark" style="font-size: 1.5rem;">
+    <h4 class="fw-bold mb-0 text-dark" style="font-size: 1.5rem;">
         <i class="fa-solid fa-timeline me-2 text-primary"></i>Báo Cáo Tiến Độ Khóa Luận
     </h4>
-    <div class="text-muted" style="font-size: 13.5px;">
-        Lộ trình 5 mốc thực hiện và nộp báo cáo định kỳ cho Giảng viên hướng dẫn.
-    </div>
 </div>
 
 @if(isset($nhom) && $nhom && $nhom->deTai)

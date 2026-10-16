@@ -6,13 +6,10 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-user-check me-2 text-primary"></i>
                 Xác Nhận Điều Kiện Bảo Vệ Khóa Luận (Dành Cho GVHD)
             </h4>
-            <p class="text-muted mb-0 small">
-                Kiểm tra sản phẩm hoàn thiện và hồ sơ bảo vệ của các nhóm sinh viên quý Thầy/Cô hướng dẫn để xác nhận đủ điều kiện bảo vệ trước Hội đồng.
-            </p>
         </div>
     </div>
 
@@ -60,7 +57,7 @@
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th style="width: 100px;">Mã Hồ Sơ</th>
                                 <th style="min-width: 200px;">Nhóm Sinh Viên</th>

@@ -6,13 +6,10 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: var(--huit-blue-dark);">
+            <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-file-pen me-2 text-primary"></i>
                 Danh Sách Đề Tài Được Phân Công Phản Biện Đề Cương
             </h4>
-            <p class="text-muted mb-0 small">
-                Nhiệm vụ chuyên môn được Trưởng bộ môn phân công: Tải đề cương, đọc thẩm tra và đưa ra nhận xét, đánh giá kết quả (Đạt / Yêu cầu chỉnh sửa / Không đạt).
-            </p>
         </div>
     </div>
 
@@ -110,7 +107,7 @@
             @else
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th style="width: 120px;">Mã ĐT</th>
                                 <th style="min-width: 250px;">Tên Đề Tài & Ngành</th>
@@ -183,15 +180,15 @@
                                     </td>
                                     <td class="text-end">
                                         @if($isNopLai)
-                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary fw-bold shadow-sm">
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-action btn-primary fw-bold shadow-sm">
                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Phản biện lại
                                             </a>
                                         @elseif($pc->KetQua)
-                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-action btn-outline-primary">
                                                 <i class="fa-solid fa-eye me-1"></i> Xem lại
                                             </a>
                                         @else
-                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary">
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-action btn-primary">
                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Đánh giá
                                             </a>
                                         @endif

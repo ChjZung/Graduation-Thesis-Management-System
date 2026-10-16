@@ -43,17 +43,17 @@
 
     /* Bảng chuẩn phong cách nghiêm túc, trang nhã */
     .table-custom th {
-        background-color: #f8fafc !important;
+        background-color: #003366 !important;
         font-weight: 700;
         font-size: 13px !important;
-        padding: 14px 18px !important;
-        color: #334155 !important;
+        padding: 10px 12px !important;
+        color: #ffffff !important;
         border-bottom: 1px solid #e2e8f0 !important;
         letter-spacing: 0.01em;
     }
     .table-custom td {
-        font-size: 14px !important;
-        padding: 16px 18px !important;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
         vertical-align: middle;
         line-height: 1.5;
         color: #1e293b;

@@ -9,10 +9,9 @@
     <!-- Header Section (Đồng bộ chuẩn Học Kỳ) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1" style="color: #00305a;">
+            <h4 class="fw-bold mb-0" style="color: #00305a;">
                 <i class="fa-solid fa-folder-check text-primary me-2"></i>Quản Lý Hồ Sơ Bảo Vệ &amp; Thẩm Định Turnitin
             </h4>
-            <p class="text-muted small mb-0">Kiểm tra báo cáo toàn văn, kết quả quét trùng lặp Turnitin và phân bổ nhóm đủ điều kiện sang Hội đồng chấm bảo vệ.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-primary shadow-xs fw-semibold">
@@ -121,22 +120,22 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead style="background: #f8fafc; color: #334155; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;">
+                    <thead>
                         <tr>
-                            <th class="ps-4 py-3" style="width: 130px;">MÃ HỒ SƠ</th>
-                            <th class="py-3" style="min-width: 250px;">NHÓM / ĐỀ TÀI</th>
-                            <th class="py-3" style="width: 170px;">KHÓA LUẬN / BẢN NỘP</th>
-                            <th class="py-3 text-center" style="width: 140px;">TURNITIN %</th>
-                            <th class="py-3 text-center" style="width: 160px;">TRẠNG THÁI</th>
-                            <th class="py-3" style="min-width: 200px;">HỘI ĐỒNG BẢO VỆ</th>
-                            <th class="pe-4 py-3 text-center" style="width: 130px;">THAO TÁC</th>
+                            <th style="width: 130px;">MÃ HỒ SƠ</th>
+                            <th style="min-width: 250px;">NHÓM / ĐỀ TÀI</th>
+                            <th style="width: 170px;">KHÓA LUẬN / BẢN NỘP</th>
+                            <th class="text-center" style="width: 140px;">TURNITIN %</th>
+                            <th class="text-center" style="width: 160px;">TRẠNG THÁI</th>
+                            <th style="min-width: 200px;">HỘI ĐỒNG BẢO VỆ</th>
+                            <th class="text-center" style="width: 130px;">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
                         @forelse($hoSos as $hs)
                         <tr>
                             {{-- Mã HS --}}
-                            <td class="ps-4 py-3">
+                            <td>
                                 <span class="badge-code">{{ $hs->MaHoSo }}</span>
                                 <div class="small text-muted mt-1">{{ \Carbon\Carbon::parse($hs->NgayNop)->format('d/m/Y') }}</div>
                             </td>
