@@ -4,10 +4,10 @@
 
 @section('content')
 <style>
-    /* Bảng màu chuẩn: Midnight Navy (#003F5F), Ocean Cyan (#00838C), Persian Green (#25A18E), Mint (#E6F7FA) */
+    /* Bảng màu chuẩn: Midnight Navy (var(--admin-primary-dark)), Ocean Cyan (var(--admin-primary)), Persian Green (var(--admin-success)), Mint (var(--admin-info-soft)) */
     .nhom-page-root {
         font-size: 0.875rem;
-        color: #334155;
+        color: var(--admin-body-text);
         padding: 8px 4px 24px 4px; /* Bổ sung padding tổng thể cho toàn trang */
     }
     .nhom-page-root .small, 
@@ -20,31 +20,31 @@
     /* Thẻ bao quát và hiệu ứng bóng đổ tự nhiên */
     .nhom-panel-card {
         border-radius: 14px;
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 12px rgba(0, 63, 95, 0.05);
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 12px var(--shadow-sm);
     }
     .group-item-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
         border-radius: 12px;
         transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-        box-shadow: 0 2px 6px rgba(0, 63, 95, 0.03);
+        box-shadow: 0 2px 6px var(--shadow-sm);
     }
     .group-item-card:hover {
         transform: translateY(-2px);
-        border-color: #00838C;
-        box-shadow: 0 8px 20px -4px rgba(0, 131, 140, 0.12);
+        border-color: var(--admin-primary);
+        box-shadow: 0 8px 20px -4px var(--shadow-md);
     }
 
     /* Bảng dữ liệu chuẩn chỉnh với padding thoáng */
     .table-custom th {
-        background-color: #003F5F !important;
+        background-color: var(--admin-table-header) !important;
         font-weight: 700;
         font-size: 0.775rem !important;
         padding: 14px 16px !important;
-        color: #ffffff !important;
-        border-bottom: 1px solid #e2e8f0 !important;
+        color: var(--admin-surface) !important;
+        border-bottom: 1px solid var(--admin-border) !important;
         text-transform: uppercase;
         letter-spacing: 0.03em;
     }
@@ -53,30 +53,30 @@
         padding: 14px 16px !important;
         vertical-align: middle;
         line-height: 1.6;
-        color: #334155;
-        border-bottom: 1px solid #f1f5f9;
+        color: var(--admin-body-text);
+        border-bottom: 1px solid var(--admin-border-soft);
     }
 
     /* Bộ lọc toàn cục có padding cân đối */
     .filter-item-box {
         display: flex;
         align-items: center;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-secondary-button-bg);
+        border: 1px solid var(--admin-border);
         border-radius: 10px;
         height: 44px;
         padding: 0 14px;
         transition: all 0.15s ease;
     }
     .filter-item-box:hover, .filter-item-box:focus-within {
-        border-color: #00838C;
-        background-color: #ffffff;
-        box-shadow: 0 2px 6px rgba(0, 131, 140, 0.08);
+        border-color: var(--admin-primary);
+        background-color: var(--admin-surface);
+        box-shadow: 0 2px 6px var(--shadow-sm);
     }
     .filter-item-label {
         font-size: 0.825rem;
         font-weight: 600;
-        color: #475569;
+        color: var(--admin-text-secondary);
         white-space: nowrap;
         margin-right: 10px;
         display: flex;
@@ -87,7 +87,7 @@
         background-color: transparent !important;
         font-size: 0.875rem;
         font-weight: 600;
-        color: #003F5F;
+        color: var(--admin-primary-dark);
         padding: 0 4px;
         box-shadow: none !important;
         cursor: pointer;
@@ -110,14 +110,14 @@
 
     /* Thanh điều hướng Tab có padding rộng rãi */
     .workspace-nav-pills {
-        background-color: #f1f5f9;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-border-soft);
+        border: 1px solid var(--admin-border);
         gap: 8px;
         padding: 8px;
         border-radius: 50rem !important;
     }
     .workspace-nav-pills .nav-link {
-        color: #475569;
+        color: var(--admin-text-secondary);
         background-color: transparent;
         border: 1px solid transparent;
         transition: all 0.18s ease;
@@ -127,31 +127,39 @@
         border-radius: 50rem !important;
     }
     .workspace-nav-pills .nav-link:hover {
-        color: #003F5F;
-        background-color: #e2e8f0;
+        color: var(--admin-primary-dark);
+        background-color: var(--admin-border);
+    }
+    .workspace-nav-pills .nav-link .nav-icon {
+        color: var(--admin-primary);
     }
     .workspace-nav-pills .nav-link.active {
-        color: #ffffff !important;
-        background-color: #003F5F !important;
-        box-shadow: 0 4px 10px rgba(0, 63, 95, 0.25);
-        border-color: #003F5F !important;
+        color: var(--admin-surface) !important;
+        background-color: var(--admin-primary) !important;
+        box-shadow: 0 4px 10px var(--shadow-md);
+        border-color: var(--admin-primary-dark) !important;
     }
     .workspace-nav-pills .nav-link.active .nav-icon {
-        color: #25A18E !important;
+        color: var(--admin-surface) !important;
+    }
+    .workspace-nav-pills .badge.bg-secondary {
+        background-color: var(--admin-neutral-soft) !important;
+        color: var(--admin-neutral-text) !important;
+        border: 1px solid var(--admin-neutral-border) !important;
     }
 
     /* Tiến độ Timeline / Milestones tăng padding */
     .milestone-step-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
         border-radius: 12px;
         padding: 16px 12px;
         position: relative;
         transition: all 0.16s ease;
     }
     .milestone-step-card:hover {
-        border-color: #00838C;
-        background-color: #f8fafc;
+        border-color: var(--admin-primary);
+        background-color: var(--admin-secondary-button-bg);
     }
     .milestone-icon-circle {
         width: 42px;
@@ -170,7 +178,7 @@
         overflow-x: hidden;
         padding-right: 8px;
         scrollbar-width: thin;
-        scrollbar-color: #00838C #f1f5f9;
+        scrollbar-color: var(--admin-primary) var(--admin-border-soft);
     }
     .loi-moi-scroll-container { max-height: 240px; }
     .nhom-open-scroll-container { max-height: 450px; }
@@ -181,39 +189,39 @@
     }
     .loi-moi-scroll-container::-webkit-scrollbar-track,
     .nhom-open-scroll-container::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: var(--admin-border-soft);
         border-radius: 4px;
     }
     .loi-moi-scroll-container::-webkit-scrollbar-thumb,
     .nhom-open-scroll-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: var(--admin-neutral-border);
         border-radius: 4px;
     }
 
     .badge-neutral {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-border-soft);
+        color: var(--admin-text-secondary);
+        border: 1px solid var(--admin-border);
     }
 
     /* Button Custom Cyan */
     .btn-cyan {
-        background-color: #00838C;
-        border-color: #00838C;
-        color: #ffffff;
+        background-color: var(--admin-primary);
+        border-color: var(--admin-primary);
+        color: var(--admin-surface);
     }
     .btn-cyan:hover, .btn-cyan:focus {
-        background-color: #006b73;
-        border-color: #006b73;
-        color: #ffffff;
+        background-color: var(--admin-primary-hover);
+        border-color: var(--admin-primary-hover);
+        color: var(--admin-surface);
     }
     .btn-outline-cyan {
-        border-color: #00838C;
-        color: #00838C;
+        border-color: var(--admin-primary);
+        color: var(--admin-primary);
     }
     .btn-outline-cyan:hover {
-        background-color: #00838C;
-        color: #ffffff;
+        background-color: var(--admin-primary);
+        color: var(--admin-surface);
     }
 </style>
 
@@ -300,8 +308,8 @@
     <div class="card border border-slate-200 shadow-xs rounded-4 mb-4 p-4 bg-white">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-2.5 flex-wrap">
-                <span class="fw-bold text-dark d-flex align-items-center" style="color: #003F5F !important;">
-                    <i class="fa-solid fa-layer-group me-2" style="color: #00838C;"></i>Không Gian Nhóm:
+                <span class="fw-bold text-dark d-flex align-items-center" style="color: var(--admin-primary-dark) !important;">
+                    <i class="fa-solid fa-layer-group me-2" style="color: var(--admin-primary);"></i>Không Gian Nhóm:
                 </span>
                 
                 @if(isset($sinhVienAllGroups) && $sinhVienAllGroups->count() > 0)
@@ -366,8 +374,8 @@
         <div class="card-header bg-white border-bottom p-4">
             <div class="d-flex justify-content-between align-items-center mb-3.5 px-1 flex-wrap gap-2">
                 <div>
-                    <h5 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: #003F5F;">
-                        <i class="fa-solid fa-users-gear" style="color: #00838C;"></i>
+                    <h5 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--admin-primary-dark);">
+                        <i class="fa-solid fa-users-gear" style="color: var(--admin-primary);"></i>
                         <span>Quản Trị Nhóm Của Bạn</span>
                     </h5>
                     <div class="text-muted mt-1" style="font-size: 0.85rem;">Không gian điều phối thông tin nhóm, đề tài và thành viên khóa luận</div>
@@ -436,8 +444,8 @@
                         <!-- 📊 TIẾN ĐỘ & BẢNG SỰ KIỆN QUA CÁC GIAI ĐOẠN (TIMELINE / MILESTONES) -->
                         <div class="card border border-slate-200 shadow-xs rounded-4 overflow-hidden mb-4">
                             <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0" style="color: #003F5F; font-size: 0.9rem;">
-                                    <i class="fa-solid fa-chart-line me-2" style="color: #00838C;"></i>TIẾN ĐỘ &amp; CÁC GIAI ĐOẠN KHÓA LUẬN (TIMELINE)
+                                <h6 class="fw-bold mb-0" style="color: var(--admin-primary-dark); font-size: 0.9rem;">
+                                    <i class="fa-solid fa-chart-line me-2" style="color: var(--admin-primary);"></i>TIẾN ĐỘ &amp; CÁC GIAI ĐOẠN KHÓA LUẬN (TIMELINE)
                                 </h6>
                                 <span class="badge badge-neutral px-3 py-1.5" style="font-size: 0.75rem;">Quy trình chuẩn</span>
                             </div>
@@ -449,7 +457,7 @@
                                             <div class="milestone-icon-circle bg-success text-white">
                                                 <i class="fa-solid fa-users"></i>
                                             </div>
-                                            <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.85rem;">1. Mở Nhóm</div>
+                                            <div class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 0.85rem;">1. Mở Nhóm</div>
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">
                                                 <i class="fa-solid fa-check me-1"></i>Hoàn thành
                                             </span>
@@ -467,7 +475,7 @@
                                             <div class="milestone-icon-circle {{ $isFullGroup ? 'bg-success text-white' : 'bg-warning text-dark' }}">
                                                 <i class="fa-solid {{ $isFullGroup ? 'fa-user-check' : 'fa-user-clock' }}"></i>
                                             </div>
-                                            <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.85rem;">2. Đủ 3 SV</div>
+                                            <div class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 0.85rem;">2. Đủ 3 SV</div>
                                             @if($isFullGroup)
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">
                                                     <i class="fa-solid fa-check me-1"></i>Đủ 3/3 SV
@@ -491,7 +499,7 @@
                                             <div class="milestone-icon-circle {{ $currentDeTai ? 'bg-success text-white' : ($isFullGroup ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-muted border') }}">
                                                 <i class="fa-solid fa-book-bookmark"></i>
                                             </div>
-                                            <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.85rem;">3. Đăng Ký Đề Tài</div>
+                                            <div class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 0.85rem;">3. Đăng Ký Đề Tài</div>
                                             @if($currentDeTai)
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">
                                                     <i class="fa-solid fa-check me-1"></i>Đã duyệt
@@ -519,7 +527,7 @@
                                             <div class="milestone-icon-circle {{ ($currentDeTai && $currentDeTai->FileDeCuong) ? 'bg-success text-white' : ($currentDeTai ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-light text-muted border') }}">
                                                 <i class="fa-solid fa-file-signature"></i>
                                             </div>
-                                            <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.85rem;">4. Nộp Báo Cáo</div>
+                                            <div class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 0.85rem;">4. Nộp Báo Cáo</div>
                                             @if($currentDeTai && $currentDeTai->FileDeCuong)
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">
                                                     <i class="fa-solid fa-check me-1"></i>Có đề cương
@@ -547,7 +555,7 @@
                                             <div class="milestone-icon-circle bg-light text-secondary border">
                                                 <i class="fa-solid fa-graduation-cap"></i>
                                             </div>
-                                            <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.85rem;">5. Bảo Vệ</div>
+                                            <div class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 0.85rem;">5. Bảo Vệ</div>
                                             <span class="badge badge-neutral rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">
                                                 <i class="fa-solid fa-lock me-1"></i>Giai đoạn cuối
                                             </span>
@@ -564,8 +572,8 @@
                             <div class="col-12 col-lg-6">
                                 <div class="card border border-slate-200 shadow-xs rounded-4 h-100 overflow-hidden">
                                     <div class="card-header bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0" style="color: #003F5F; font-size: 0.9rem;">
-                                            <i class="fa-solid fa-id-card me-2" style="color: #00838C;"></i>THÔNG TIN NHÓM &amp; GVHD
+                                        <h6 class="fw-bold mb-0" style="color: var(--admin-primary-dark); font-size: 0.9rem;">
+                                            <i class="fa-solid fa-id-card me-2" style="color: var(--admin-primary);"></i>THÔNG TIN NHÓM &amp; GVHD
                                         </h6>
                                         <span class="badge {{ $isNhomLocked ? 'bg-secondary' : ($isFullGroup ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle') }} rounded-pill px-3 py-1" style="font-size: 0.725rem;">
                                             <i class="fa-solid {{ $isNhomLocked ? 'fa-lock' : 'fa-users' }} me-1"></i>
@@ -575,20 +583,20 @@
                                     <div class="card-body p-4">
                                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                             <div>
-                                                <h5 class="fw-bold mb-1" style="color: #003F5F; font-size: 1rem;">
-                                                    <i class="fa-solid fa-users me-1.5" style="color: #00838C;"></i>{{ $nhomCurrent->TenNhom }}
+                                                <h5 class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 1rem;">
+                                                    <i class="fa-solid fa-users me-1.5" style="color: var(--admin-primary);"></i>{{ $nhomCurrent->TenNhom }}
                                                 </h5>
                                                 <div class="text-muted" style="font-size: 0.8rem;">Mã nhóm: <code>{{ $nhomCurrent->MaNhom }}</code></div>
                                             </div>
                                             <div class="d-flex gap-1.5 flex-wrap">
                                                 @if($nhomCurrent->hocKy)
                                                     <span class="badge badge-neutral px-2.5 py-1" style="font-size: 0.75rem;">
-                                                        <i class="fa-solid fa-calendar me-1" style="color: #00838C;"></i>{{ $nhomCurrent->hocKy->TenHocKy }}
+                                                        <i class="fa-solid fa-calendar me-1" style="color: var(--admin-primary);"></i>{{ $nhomCurrent->hocKy->TenHocKy }}
                                                     </span>
                                                 @endif
                                                 @if($nhomCurrent->hocPhan)
                                                     <span class="badge badge-neutral px-2.5 py-1" style="font-size: 0.75rem;">
-                                                        <i class="fa-solid fa-book me-1" style="color: #00838C;"></i>{{ $nhomCurrent->hocPhan->TenHocPhan }}
+                                                        <i class="fa-solid fa-book me-1" style="color: var(--admin-primary);"></i>{{ $nhomCurrent->hocPhan->TenHocPhan }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -598,11 +606,11 @@
                                             <div class="row g-3">
                                                 <div class="col-sm-6">
                                                     <span class="text-muted d-block mb-1" style="font-size: 0.775rem;"><i class="fa-solid fa-crown text-warning me-1"></i>Trưởng nhóm:</span>
-                                                    <strong style="color: #003F5F; font-size: 0.875rem;">{{ $nhomCurrent->truongNhom->HoTen ?? 'Chưa rõ' }}</strong>
+                                                    <strong style="color: var(--admin-primary-dark); font-size: 0.875rem;">{{ $nhomCurrent->truongNhom->HoTen ?? 'Chưa rõ' }}</strong>
                                                     <div class="text-muted mt-1" style="font-size: 0.775rem;">MSSV: <code>{{ $nhomCurrent->truongNhom->taiKhoan->TenDangNhap ?? $nhomCurrent->MaTruongNhom }}</code></div>
                                                 </div>
                                                 <div class="col-sm-6">
-                                                    <span class="text-muted d-block mb-1" style="font-size: 0.775rem;"><i class="fa-solid fa-chalkboard me-1" style="color: #00838C;"></i>Lớp &amp; Ngành:</span>
+                                                    <span class="text-muted d-block mb-1" style="font-size: 0.775rem;"><i class="fa-solid fa-chalkboard me-1" style="color: var(--admin-primary);"></i>Lớp &amp; Ngành:</span>
                                                     <div class="fw-semibold text-dark" style="font-size: 0.875rem;">{{ $nhomCurrent->truongNhom->lop->TenLop ?? 'Chưa rõ' }}</div>
                                                     <div class="text-muted mt-1" style="font-size: 0.775rem;">{{ $nhomNganh ?? 'Công nghệ thông tin' }}</div>
                                                 </div>
@@ -610,9 +618,9 @@
                                         </div>
 
                                         <div class="p-3 bg-white rounded-3 border border-slate-200">
-                                            <span class="text-muted d-block mb-1" style="font-size: 0.775rem;"><i class="fa-solid fa-chalkboard-user me-1" style="color: #00838C;"></i>Giảng viên hướng dẫn (GVHD):</span>
+                                            <span class="text-muted d-block mb-1" style="font-size: 0.775rem;"><i class="fa-solid fa-chalkboard-user me-1" style="color: var(--admin-primary);"></i>Giảng viên hướng dẫn (GVHD):</span>
                                             @if($currentDeTai && $currentDeTai->giangVien)
-                                                <div class="fw-bold" style="color: #003F5F; font-size: 0.925rem;">{{ $currentDeTai->giangVien->HoTen }}</div>
+                                                <div class="fw-bold" style="color: var(--admin-primary-dark); font-size: 0.925rem;">{{ $currentDeTai->giangVien->HoTen }}</div>
                                                 <div class="text-muted mt-1" style="font-size: 0.8rem;">
                                                     <span>{{ $currentDeTai->giangVien->HocVi ?? 'Giảng viên' }}</span>
                                                     <span class="mx-1">&bull;</span>
@@ -623,7 +631,7 @@
                                                 @endif
                                             @else
                                                 <div class="text-muted fst-italic" style="font-size: 0.8rem;">
-                                                    <i class="fa-solid fa-circle-info me-1" style="color: #00838C;"></i>Chưa gán GVHD. Giảng viên sẽ được phân công sau khi hoàn tất đăng ký đề tài.
+                                                    <i class="fa-solid fa-circle-info me-1" style="color: var(--admin-primary);"></i>Chưa gán GVHD. Giảng viên sẽ được phân công sau khi hoàn tất đăng ký đề tài.
                                                 </div>
                                             @endif
                                         </div>
@@ -641,8 +649,8 @@
                             <div class="col-12 col-lg-6">
                                 <div class="card border border-slate-200 shadow-xs rounded-4 h-100 overflow-hidden">
                                     <div class="card-header bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0" style="color: #003F5F; font-size: 0.9rem;">
-                                            <i class="fa-solid fa-book-bookmark me-2" style="color: #00838C;"></i>THÔNG TIN ĐỀ TÀI KHÓA LUẬN
+                                        <h6 class="fw-bold mb-0" style="color: var(--admin-primary-dark); font-size: 0.9rem;">
+                                            <i class="fa-solid fa-book-bookmark me-2" style="color: var(--admin-primary);"></i>THÔNG TIN ĐỀ TÀI KHÓA LUẬN
                                         </h6>
                                         @if($currentDeTai)
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1" style="font-size: 0.725rem;">
@@ -660,7 +668,7 @@
                                                     @endif
                                                 </div>
                                                 <h5 class="fw-bold mb-2 text-dark" style="line-height: 1.45; font-size: 1rem;">
-                                                    <a href="javascript:void(0)" class="text-decoration-none" style="color: #003F5F;" data-bs-toggle="modal" data-bs-target="#modalTopicDetail" title="Xem chi tiết đề tài">
+                                                    <a href="javascript:void(0)" class="text-decoration-none" style="color: var(--admin-primary-dark);" data-bs-toggle="modal" data-bs-target="#modalTopicDetail" title="Xem chi tiết đề tài">
                                                         {{ $currentDeTai->TenDeTai }} <i class="fa-solid fa-arrow-up-right-from-square ms-1 text-muted" style="font-size: 0.75rem;"></i>
                                                     </a>
                                                 </h5>
@@ -670,7 +678,7 @@
 
                                                 <!-- Đề cương chi tiết -->
                                                 <div class="p-3 rounded-3 border border-slate-200 mb-3 bg-light">
-                                                    <div class="fw-bold mb-1.5" style="color: #003F5F; font-size: 0.85rem;">
+                                                    <div class="fw-bold mb-1.5" style="color: var(--admin-primary-dark); font-size: 0.85rem;">
                                                         <i class="fa-solid {{ $currentDeTai->FileDeCuong ? 'fa-file-circle-check text-success' : 'fa-file-circle-question text-secondary' }} me-1"></i>
                                                         Đề Cương Chi Tiết:
                                                     </div>
@@ -685,7 +693,7 @@
                                                         <div class="d-flex gap-2 flex-wrap">
                                                             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold bg-white"
                                                                     onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($currentDeTai->TenDeTai ?? '') }}')" style="font-size: 0.8rem;">
-                                                                <i class="fa-solid fa-eye me-1" style="color: #00838C;"></i>Xem nhanh
+                                                                <i class="fa-solid fa-eye me-1" style="color: var(--admin-primary);"></i>Xem nhanh
                                                             </button>
                                                             <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold bg-white" style="font-size: 0.8rem;">
                                                                 <i class="fa-solid fa-download me-1"></i>Tải về
@@ -701,7 +709,7 @@
 
                                             <div class="pt-3 border-top d-flex justify-content-between align-items-center">
                                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 fw-semibold bg-white" data-bs-toggle="modal" data-bs-target="#modalTopicDetail" style="font-size: 0.8rem;">
-                                                    <i class="fa-solid fa-circle-info me-1" style="color: #00838C;"></i>Chi tiết đề tài
+                                                    <i class="fa-solid fa-circle-info me-1" style="color: var(--admin-primary);"></i>Chi tiết đề tài
                                                 </button>
                                             </div>
                                         @else
@@ -755,7 +763,7 @@
                             <div class="avatar-circle bg-light text-secondary border fs-1 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
                                 <i class="fa-solid fa-users-slash"></i>
                             </div>
-                            <h5 class="fw-bold mb-2" style="color: #003F5F;">Bạn Chưa Có Nhóm Cho Học Phần Này</h5>
+                            <h5 class="fw-bold mb-2" style="color: var(--admin-primary-dark);">Bạn Chưa Có Nhóm Cho Học Phần Này</h5>
                             <p class="text-muted mb-4 px-3" style="max-width: 520px; margin: 0 auto; font-size: 0.875rem;">
                                 Bạn hiện chưa thuộc nhóm nào cho học phần này trong học kỳ đang chọn. Hãy tạo nhóm mới hoặc tìm kiếm nhóm mở để tham gia.
                             </p>
@@ -784,8 +792,8 @@
                     @if($nhomCurrent)
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                             <div>
-                                <h5 class="fw-bold mb-1" style="color: #003F5F; font-size: 1rem;">
-                                    <i class="fa-solid fa-user-group me-2" style="color: #00838C;"></i>Quản Trị Thành Viên Nhóm ({{ $nhomCurrent->thanhViens->count() }}/3)
+                                <h5 class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 1rem;">
+                                    <i class="fa-solid fa-user-group me-2" style="color: var(--admin-primary);"></i>Quản Trị Thành Viên Nhóm ({{ $nhomCurrent->thanhViens->count() }}/3)
                                 </h5>
                                 <div class="text-muted" style="font-size: 0.85rem;">Danh sách thành viên chính thức và chức năng mời thành viên cùng ngành</div>
                             </div>
@@ -858,8 +866,8 @@
                         <!-- KHU VỰC TRƯỞNG NHÓM MỜI THÀNH VIÊN -->
                         @if($nhomCurrent->MaTruongNhom === $sinhVien->MaSV && !$isNhomLocked && $nhomCurrent->thanhViens->count() < 3)
                             <div class="card border border-slate-200 shadow-xs rounded-4 p-4 mt-4 bg-white">
-                                <h6 class="fw-bold mb-3" style="color: #003F5F; font-size: 0.95rem;">
-                                    <i class="fa-solid fa-user-plus me-2" style="color: #00838C;"></i>Mời Sinh Viên Cùng Ngành Vào Nhóm Bằng MSSV
+                                <h6 class="fw-bold mb-3" style="color: var(--admin-primary-dark); font-size: 0.95rem;">
+                                    <i class="fa-solid fa-user-plus me-2" style="color: var(--admin-primary);"></i>Mời Sinh Viên Cùng Ngành Vào Nhóm Bằng MSSV
                                 </h6>
 
                                 @if(!($isTaoNhomOpen ?? false))
@@ -882,7 +890,7 @@
                                             </button>
                                         </div>
                                         <div class="form-text text-muted mt-2" style="font-size: 0.8rem;">
-                                            <i class="fa-solid fa-shield-halved me-1" style="color: #00838C;"></i>Hệ thống tự động kiểm tra điều kiện cùng ngành và điều kiện làm khóa luận trước khi mời.
+                                            <i class="fa-solid fa-shield-halved me-1" style="color: var(--admin-primary);"></i>Hệ thống tự động kiểm tra điều kiện cùng ngành và điều kiện làm khóa luận trước khi mời.
                                         </div>
                                         <div id="searchErrorMessage" class="alert alert-danger p-3 mt-3 d-none" style="font-size: 0.85rem;"></div>
                                     </div>
@@ -891,7 +899,7 @@
                                     <div id="stepVerificationCard" class="d-none mt-4">
                                         <div class="card border border-slate-300 bg-light p-4 rounded-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3 pb-2.5 border-bottom">
-                                                <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;"><i class="fa-solid fa-id-card me-2" style="color: #00838C;"></i>Xác Nhận Sinh Viên</h6>
+                                                <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;"><i class="fa-solid fa-id-card me-2" style="color: var(--admin-primary);"></i>Xác Nhận Sinh Viên</h6>
                                                 <span id="cardBadgeStatus" class="badge rounded-pill px-3 py-1" style="font-size: 0.75rem;"></span>
                                             </div>
                                             <div class="mb-3">
@@ -948,7 +956,7 @@
                 <!-- ################################################################## -->
                 <div class="tab-pane fade" id="tab-loimoi" role="tabpanel">
                     <div class="mb-4">
-                        <h5 class="fw-bold mb-1" style="color: #003F5F; font-size: 1rem;"><i class="fa-solid fa-envelope-open-text me-2" style="color: #00838C;"></i>Quản Trị Lời Mời &amp; Yêu Cầu Ghép Nhóm</h5>
+                        <h5 class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 1rem;"><i class="fa-solid fa-envelope-open-text me-2" style="color: var(--admin-primary);"></i>Quản Trị Lời Mời &amp; Yêu Cầu Ghép Nhóm</h5>
                         <div class="text-muted" style="font-size: 0.85rem;">Theo dõi và phản hồi các lời mời gia nhập nhóm hoặc yêu cầu xin vào nhóm</div>
                     </div>
 
@@ -980,7 +988,7 @@
                                         </div>
                                         <div class="d-flex gap-2 mt-2 mt-sm-0">
                                             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 btn-view-group-detail bg-white" data-manhom="{{ $lm->MaNhom }}" style="font-size: 0.8rem;">
-                                                <i class="fa-solid fa-eye me-1" style="color: #00838C;"></i>Xem
+                                                <i class="fa-solid fa-eye me-1" style="color: var(--admin-primary);"></i>Xem
                                             </button>
                                             <form action="{{ route('sinhvien.nhom.xacNhanLoiMoi', $lm->MaNhom) }}" method="POST">
                                                 @csrf
@@ -1104,8 +1112,8 @@
                 <div class="tab-pane fade" id="tab-timnhom" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                         <div>
-                            <h5 class="fw-bold mb-1" style="color: #003F5F; font-size: 1rem;">
-                                <i class="fa-solid fa-users-viewfinder me-2" style="color: #00838C;"></i>Danh Sách Nhóm Khóa Luận Đang Mở
+                            <h5 class="fw-bold mb-1" style="color: var(--admin-primary-dark); font-size: 1rem;">
+                                <i class="fa-solid fa-users-viewfinder me-2" style="color: var(--admin-primary);"></i>Danh Sách Nhóm Khóa Luận Đang Mở
                             </h5>
                             <div class="text-muted" style="font-size: 0.85rem;">Danh sách các nhóm khóa luận cùng ngành đang mở và còn trống chỗ</div>
                         </div>
@@ -1175,7 +1183,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-2.5">
                                 <div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1.5">
-                                        <h6 class="fw-bold mb-0 text-dark" style="color: #003F5F !important; font-size: 0.95rem;">{{ $no->TenNhom }}</h6>
+                                        <h6 class="fw-bold mb-0 text-dark" style="color: var(--admin-primary-dark) !important; font-size: 0.95rem;">{{ $no->TenNhom }}</h6>
                                         @if($isMyGroup)
                                             <span class="badge bg-secondary text-white rounded-pill px-2.5 py-1" style="font-size: 0.725rem;">Nhóm của bạn</span>
                                         @endif
@@ -1212,7 +1220,7 @@
 
                             <div class="d-flex justify-content-between align-items-center pt-2.5 border-top flex-wrap gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 btn-view-group-detail bg-white" data-manhom="{{ $no->MaNhom }}" style="font-size: 0.8rem;">
-                                    <i class="fa-solid fa-eye me-1" style="color: #00838C;"></i>Chi tiết
+                                    <i class="fa-solid fa-eye me-1" style="color: var(--admin-primary);"></i>Chi tiết
                                 </button>
 
                                 @if($isMyGroup)
@@ -1272,7 +1280,7 @@
 <div class="modal fade" id="modalGroupDetail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="font-size: 0.875rem;">
-            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: #003F5F !important;">
+            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: var(--admin-primary-dark) !important;">
                 <div>
                     <h5 class="modal-title fw-bold" id="groupDetailName"><i class="fa-solid fa-users me-2"></i>Nhóm Khóa Luận</h5>
                     <div class="opacity-75" id="groupDetailSub" style="font-size: 0.8rem;">Chi tiết thành viên trong nhóm</div>
@@ -1319,7 +1327,7 @@
 <div class="modal fade" id="modalStudentProfile" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="font-size: 0.875rem;">
-            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: #003F5F !important;">
+            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: var(--admin-primary-dark) !important;">
                 <h6 class="modal-title fw-bold" id="modalProfileTitle"><i class="fa-solid fa-user-graduate me-2"></i>Hồ Sơ Sinh Viên</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1367,7 +1375,7 @@
 <div class="modal fade" id="modalTopicDetail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="font-size: 0.875rem;">
-            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: #003F5F !important;">
+            <div class="modal-header text-white py-3.5 px-4.5" style="background-color: var(--admin-primary-dark) !important;">
                 <div>
                     <h5 class="modal-title fw-bold">
                         <i class="fa-solid fa-book-bookmark me-2"></i>Chi Tiết Đề Tài Khóa Luận
@@ -1385,7 +1393,7 @@
                             <span class="badge badge-neutral px-2.5 py-1">{{ $dtDetail->LinhVuc }}</span>
                         @endif
                     </div>
-                    <h5 class="fw-bold text-dark mb-1.5" style="color: #003F5F !important; font-size: 1.05rem;">{{ $dtDetail->TenDeTai }}</h5>
+                    <h5 class="fw-bold text-dark mb-1.5" style="color: var(--admin-primary-dark) !important; font-size: 1.05rem;">{{ $dtDetail->TenDeTai }}</h5>
                     @if($dtDetail->TenDeTaiTiengAnh)
                         <div class="text-secondary fst-italic" style="font-size: 0.85rem;">{{ $dtDetail->TenDeTaiTiengAnh }}</div>
                     @endif
@@ -1435,7 +1443,7 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="font-size: 0.875rem;">
             <form action="{{ route('sinhvien.nhom.store') }}" method="POST" id="formCreateGroup">
                 @csrf
-                <div class="modal-header border-bottom px-4.5 py-3.5 text-white" style="background-color: #003F5F !important;">
+                <div class="modal-header border-bottom px-4.5 py-3.5 text-white" style="background-color: var(--admin-primary-dark) !important;">
                     <h5 class="modal-title fw-bold text-white">
                         <i class="fa-solid fa-users-gear me-2"></i>Tạo Nhóm Khóa Luận / Đồ Án Mới
                     </h5>
@@ -1478,8 +1486,8 @@
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div>
                                 <span class="text-muted d-block mb-1" style="font-size: 0.8rem;">Tên nhóm tự sinh:</span>
-                                <div class="fw-bold text-dark fs-6" style="color: #003F5F !important;">
-                                    <i class="fa-solid fa-users-rectangle me-1.5" style="color: #00838C;"></i>Nhóm {{ $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV }}
+                                <div class="fw-bold text-dark fs-6" style="color: var(--admin-primary-dark) !important;">
+                                    <i class="fa-solid fa-users-rectangle me-1.5" style="color: var(--admin-primary);"></i>Nhóm {{ $sinhVien->taiKhoan->TenDangNhap ?? $sinhVien->MaSV }}
                                 </div>
                             </div>
                             <div class="text-end">

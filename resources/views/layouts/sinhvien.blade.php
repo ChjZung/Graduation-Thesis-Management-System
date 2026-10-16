@@ -12,26 +12,26 @@
     <!-- HUIT Theme -->
     <link rel="stylesheet" href="{{ asset('css/huit_theme.css') }}">
     
-    <!-- Student Portal Unified Theme (Tone Màu Thủy Triều Hải Quân - Teal/Cyan/Slate Chuẩn Theo Bảng Màu) -->
+    <!-- Student component overrides and aliases to the shared admin palette -->
     <style>
         :root {
-            /* Tone màu người dùng cung cấp: Deep Teal / Ocean Cyan / Persian Green / Mint / Slate Matrix */
-            --sv-midnight:       #004E64; /* Xanh ngọc bóng đêm / Tiêu đề chính */
-            --sv-navy-dark:      #003F5F; /* Xanh than thủy triều / Text nhấn mạnh */
-            --sv-slate-teal:     #00617A; /* Xanh slate than / Tiêu đề phụ */
-            --sv-cyan-btn:       #00838C; /* Xanh đại dương trầm / Nút bấm chính & Icon */
-            --sv-pacific-cyan:   #00A5CF; /* Xanh Thái Bình Dương / Nút bấm hành động */
-            --sv-teal:           #25A18E; /* Xanh Ba Tư / Trạng thái thành công & Tiến độ */
-            --sv-mint:           #78C59B; /* Xanh bạc hà dịu / Điểm nhấn nhẹ nhàng */
-            --sv-light-green:    #7AE582; /* Xanh non tươi mới */
-            --sv-aquamarine:     #9FFFCB; /* Xanh ngọc pastel */
-            --sv-pastel-yellow:  #FFFFAB; /* Vàng kem dịu / Chờ duyệt */
-            --sv-cyan-bg:        #e6f7fa; /* Nền xanh pastel dịu mắt */
-            --sv-mint-bg:        #e8f8f2; /* Nền xanh mint pastel */
-            --sv-warm-bg:        #fefce8; /* Nền cảnh báo pastel nhẹ */
-            --sv-border:         #e2e8f0;
-            --sv-text-main:      #1e293b;
-            --sv-text-muted:     #52637a;
+            /* Keep component aliases pointed at the shared admin palette. */
+            --sv-midnight:       var(--admin-primary-dark);
+            --sv-navy-dark:      var(--admin-text-primary);
+            --sv-slate-teal:     var(--admin-primary);
+            --sv-cyan-btn:       var(--admin-primary);
+            --sv-pacific-cyan:   var(--admin-primary-hover);
+            --sv-teal:           var(--admin-success);
+            --sv-mint:           #34D399;
+            --sv-light-green:    #7AE582;
+            --sv-aquamarine:     #9FFFCB;
+            --sv-pastel-yellow:  #FFFFAB;
+            --sv-cyan-bg:        var(--admin-primary-soft);
+            --sv-mint-bg:        var(--admin-success-soft);
+            --sv-warm-bg:        var(--admin-warning-soft);
+            --sv-border:         var(--admin-border);
+            --sv-text-main:      var(--admin-body-text);
+            --sv-text-muted:     var(--admin-text-secondary);
         }
 
         html {
@@ -39,7 +39,7 @@
         }
 
         body {
-            background-color: #f8fafc;
+            background-color: var(--admin-page-bg);
             color: var(--sv-text-main);
             font-size: 14px;
         }
@@ -57,15 +57,15 @@
 
         /* Thẻ Card: Nhỏ gọn, đường viền thanh lịch, không bị thô dày */
         .card, .admin-kpi-card, .card-premium {
-            border: 1px solid var(--sv-border) !important;
+            border: 1px solid var(--admin-border) !important;
             border-radius: 12px !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 63, 95, 0.04), 0 1px 2px -1px rgba(0, 63, 95, 0.02) !important;
-            background: #ffffff;
+            box-shadow: none !important;
+            background: var(--admin-surface);
             transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         }
         .card-header, .card-header-premium {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #f1f5f9 !important;
+            background-color: var(--admin-surface) !important;
+            border-bottom: 1px solid var(--admin-border-soft) !important;
             padding: 12px 18px !important;
             font-weight: 600;
         }
@@ -78,7 +78,7 @@
             }
         }
 
-        /* Typography - Tông màu trầm sang trọng từ bảng màu người dùng */
+        /* Typography uses the shared admin text and primary colors. */
         h1, h2, h3, h4, h5, h6 {
             color: var(--sv-navy-dark);
             letter-spacing: -0.01em;
@@ -101,25 +101,25 @@
             margin-bottom: 0;
         }
         .table thead th {
-            background-color: #f8fafc !important;
-            color: var(--sv-slate-teal) !important;
+            background-color: var(--admin-table-header) !important;
+            color: var(--admin-surface) !important;
             font-weight: 700 !important;
             font-size: 13px !important;
             text-transform: uppercase;
             letter-spacing: 0.02em;
             padding: 12px 16px !important;
-            border-bottom: 1px solid var(--sv-border) !important;
+            border-bottom: 1px solid var(--admin-border) !important;
         }
         .table tbody td {
             padding: 12px 16px !important;
             font-size: 13.5px !important;
             color: var(--sv-text-main);
             vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9 !important;
+            border-bottom: 1px solid var(--admin-border) !important;
             line-height: 1.5;
         }
 
-        /* Nút Bấm: Chuẩn tone màu Teal / Ocean Cyan, không dùng màu AI */
+        /* Nút giữ hình dạng hiện tại, dùng màu primary chung với admin. */
         .btn {
             font-size: 13.5px !important;
             font-weight: 600;
@@ -140,48 +140,53 @@
             font-size: 14px !important;
         }
         .btn-primary, .btn-primary-custom {
-            background-color: var(--sv-cyan-btn) !important;
-            border-color: var(--sv-cyan-btn) !important;
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%) !important;
+            border-color: var(--admin-primary-dark) !important;
             color: #ffffff !important;
-            box-shadow: 0 1px 2px rgba(0, 131, 140, 0.18) !important;
+            box-shadow: 0 2px 6px rgba(0, 114, 206, 0.25) !important;
         }
         .btn-primary:hover, .btn-primary-custom:hover {
-            background-color: var(--sv-slate-teal) !important;
-            border-color: var(--sv-slate-teal) !important;
+            background: linear-gradient(135deg, var(--admin-primary-hover) 0%, var(--admin-primary-hover-dark) 100%) !important;
+            border-color: var(--admin-primary-hover-dark) !important;
             color: #ffffff !important;
             transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(0, 97, 122, 0.22) !important;
+            box-shadow: 0 4px 12px rgba(0, 114, 206, 0.35) !important;
         }
         .btn-success {
-            background-color: var(--sv-teal) !important;
-            border-color: var(--sv-teal) !important;
+            background: linear-gradient(135deg, var(--admin-success) 0%, var(--admin-success-dark) 100%) !important;
+            border-color: var(--admin-success-dark) !important;
             color: #ffffff !important;
         }
         .btn-success:hover {
-            background-color: #1d8172 !important;
-            border-color: #1d8172 !important;
+            background: linear-gradient(135deg, var(--admin-success-dark) 0%, #047857 100%) !important;
+            border-color: #047857 !important;
             color: #ffffff !important;
             transform: translateY(-1px);
         }
         .btn-outline-primary {
-            color: var(--sv-slate-teal) !important;
-            border-color: var(--sv-cyan-btn) !important;
-            background-color: #ffffff;
+            color: var(--admin-primary) !important;
+            border-color: var(--admin-primary) !important;
+            background-color: var(--admin-primary-button-soft) !important;
         }
-        .btn-outline-primary:hover {
-            background-color: var(--sv-cyan-bg) !important;
-            border-color: var(--sv-slate-teal) !important;
-            color: var(--sv-midnight) !important;
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active {
+            background-color: var(--admin-primary) !important;
+            border-color: transparent !important;
+            color: var(--admin-surface) !important;
         }
         .btn-outline-secondary {
-            color: var(--sv-text-muted) !important;
-            border-color: #cbd5e1 !important;
-            background-color: #ffffff;
+            color: var(--admin-secondary-button-text) !important;
+            border-color: var(--admin-neutral-border) !important;
+            background-color: var(--admin-secondary-button-bg) !important;
         }
-        .btn-outline-secondary:hover {
-            background-color: #f8fafc !important;
-            border-color: #94a3b8 !important;
-            color: var(--sv-text-main) !important;
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary:focus,
+        .btn-outline-secondary:active {
+            background-color: var(--admin-secondary-button-hover) !important;
+            border-color: transparent !important;
+            color: var(--admin-surface) !important;
+            box-shadow: 0 4px 12px var(--admin-secondary-button-shadow) !important;
         }
 
         /* Huy Hiệu Badges */
@@ -192,49 +197,51 @@
             border-radius: 50rem;
         }
         .badge.bg-primary {
-            background-color: var(--sv-cyan-btn) !important;
-            color: #ffffff !important;
+            background-color: var(--admin-badge-primary-bg) !important;
+            color: var(--admin-badge-primary-text) !important;
+            border: 1px solid var(--admin-badge-primary-border) !important;
         }
         .badge.bg-primary-subtle {
-            background-color: var(--sv-cyan-bg) !important;
-            color: var(--sv-midnight) !important;
-            border: 1px solid #b3e5ed !important;
+            background-color: var(--admin-badge-primary-bg) !important;
+            color: var(--admin-badge-primary-text) !important;
+            border: 1px solid var(--admin-badge-primary-border) !important;
         }
         .badge.bg-success {
-            background-color: var(--sv-teal) !important;
-            color: #ffffff !important;
+            background-color: var(--admin-badge-success-bg) !important;
+            color: var(--admin-badge-success-text) !important;
+            border: 1px solid var(--admin-badge-success-border) !important;
         }
         .badge.bg-success-subtle {
-            background-color: var(--sv-mint-bg) !important;
-            color: #115e59 !important;
-            border: 1px solid #b7ebd9 !important;
+            background-color: var(--admin-badge-success-bg) !important;
+            color: var(--admin-badge-success-text) !important;
+            border: 1px solid var(--admin-badge-success-border) !important;
         }
         .badge.bg-warning-subtle {
-            background-color: var(--sv-warm-bg) !important;
-            color: #854d0e !important;
-            border: 1px solid #fef08a !important;
+            background-color: var(--admin-badge-warning-bg) !important;
+            color: var(--admin-badge-warning-text) !important;
+            border: 1px solid var(--admin-badge-warning-border) !important;
         }
         .badge-neutral {
-            background-color: #f1f5f9 !important;
-            color: #334155 !important;
-            border: 1px solid #e2e8f0 !important;
+            background-color: var(--admin-neutral-soft) !important;
+            color: var(--admin-neutral-text) !important;
+            border: 1px solid var(--admin-neutral-border) !important;
         }
 
         /* Form Inputs */
         .form-control, .form-select {
             font-size: 13.5px !important;
             border-radius: 8px !important;
-            border-color: #cbd5e1 !important;
+            border-color: var(--admin-border-input) !important;
             padding: 8px 14px !important;
         }
         .form-control:focus, .form-select:focus {
-            border-color: var(--sv-cyan-btn) !important;
-            box-shadow: 0 0 0 3px rgba(0, 131, 140, 0.15) !important;
+            border-color: var(--admin-primary) !important;
+            box-shadow: 0 0 0 3px var(--admin-focus-ring) !important;
         }
         .input-group-text {
             font-size: 13.5px !important;
             border-radius: 8px !important;
-            border-color: #cbd5e1 !important;
+            border-color: var(--admin-border-input) !important;
             padding: 8px 14px !important;
         }
 
@@ -245,19 +252,24 @@
             font-size: 13.5px !important;
         }
         .alert-warning {
-            background-color: var(--sv-warm-bg) !important;
-            border-color: #fef08a !important;
-            color: #854d0e !important;
+            background-color: var(--admin-alert-warning-bg) !important;
+            border-color: var(--admin-alert-warning-border) !important;
+            color: var(--admin-alert-warning-text) !important;
         }
         .alert-success {
-            background-color: var(--sv-mint-bg) !important;
-            border-color: #b7ebd9 !important;
-            color: #115e59 !important;
+            background-color: var(--admin-alert-success-bg) !important;
+            border-color: var(--admin-alert-success-border) !important;
+            color: var(--admin-alert-success-text) !important;
         }
-        .alert-primary, .alert-info {
-            background-color: var(--sv-cyan-bg) !important;
-            border-color: #b3e5ed !important;
-            color: var(--sv-midnight) !important;
+        .alert-primary {
+            background-color: var(--admin-alert-primary-bg) !important;
+            border-color: var(--admin-alert-primary-border) !important;
+            color: var(--admin-alert-primary-text) !important;
+        }
+        .alert-info {
+            background-color: var(--admin-alert-info-bg) !important;
+            border-color: var(--admin-alert-info-border) !important;
+            color: var(--admin-alert-info-text) !important;
         }
 
         /* Hiệu ứng mượt mà khi load trang - Không giữ transform sau khi hoàn tất để tránh kẹt stacking context */
@@ -286,22 +298,22 @@
         /* Khung cuộn mượt đồng bộ chuẩn màu đại dương cho các danh sách dài */
         .sv-smooth-scroll {
             scrollbar-width: thin;
-            scrollbar-color: var(--sv-cyan-btn) #f1f5f9;
+            scrollbar-color: var(--admin-scrollbar) var(--admin-border-soft);
         }
         .sv-smooth-scroll::-webkit-scrollbar {
             width: 5px;
             height: 5px;
         }
         .sv-smooth-scroll::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: var(--admin-border-soft);
             border-radius: 4px;
         }
         .sv-smooth-scroll::-webkit-scrollbar-thumb {
-            background: var(--sv-cyan-btn);
+            background: var(--admin-scrollbar);
             border-radius: 4px;
         }
         .sv-smooth-scroll::-webkit-scrollbar-thumb:hover {
-            background: var(--sv-slate-teal);
+            background: var(--admin-primary-dark);
         }
 
         /* Bắt buộc font chữ tối thiểu 13px */
@@ -423,7 +435,7 @@
         <!-- Topbar / Breadcrumb Bar -->
         <div class="admin-top-bar">
             <div class="admin-breadcrumb">
-                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
+                <i class="fa-solid fa-angle-right" style="color: var(--admin-text-muted); font-size: 13px;"></i>
                 <a href="{{ route('sinhvien.dashboard') }}">Trang chủ</a>
                 <span class="separator">&gt;</span>
                 <span>Khóa luận tốt nghiệp</span>
@@ -449,9 +461,9 @@
                     <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="svUserDropdown">
                         <li>
                             <div class="px-3 py-2 mb-1 border-bottom">
-                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
-                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $svDisplayName }}</div>
-                                <div style="font-size: 13px; color: #0284c7; margin-top: 2px;"><i class="fa-solid fa-user-graduate me-1"></i>Sinh viên</div>
+                                <div style="font-size: 13px; font-weight: 600; color: var(--admin-text-muted);">Xin chào!</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--admin-user-text);">{{ $svDisplayName }}</div>
+                                <div style="font-size: 13px; color: var(--admin-primary); margin-top: 2px;"><i class="fa-solid fa-user-graduate me-1"></i>Sinh viên</div>
                             </div>
                         </li>
                         <li>

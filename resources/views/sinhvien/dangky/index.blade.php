@@ -7,7 +7,7 @@
     /* Thiết lập padding tổng thể và không gian thoáng đãng cho trang */
     .dangky-page-root {
         font-size: 0.875rem;
-        color: #334155;
+        color: var(--admin-body-text);
         padding: 8px 4px 32px 4px;
     }
     .dangky-page-root .small, 
@@ -19,25 +19,25 @@
     /* Khung thẻ bao quát với góc bo tròn mềm mại và hiệu ứng bóng đổ tinh tế */
     .dangky-panel-card {
         border-radius: 14px;
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 16px rgba(0, 63, 95, 0.04);
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 16px var(--shadow-sm);
     }
     .topic-row {
         transition: background-color 0.15s ease;
     }
     .topic-row:hover {
-        background-color: #f8fafc;
+        background-color: var(--admin-secondary-button-bg);
     }
 
     /* Bảng danh sách đề tài chuẩn hóa với khoảng đệm (padding) rộng rãi */
     .table-topic th {
-        background-color: #003F5F !important;
+        background-color: var(--admin-table-header) !important;
         font-weight: 700;
         font-size: 0.775rem !important;
         padding: 14px 18px !important;
-        color: #ffffff !important;
-        border-bottom: 1px solid #e2e8f0 !important;
+        color: var(--admin-surface) !important;
+        border-bottom: 1px solid var(--admin-border) !important;
         text-transform: uppercase;
         letter-spacing: 0.03em;
         white-space: nowrap;
@@ -47,16 +47,16 @@
         padding: 16px 18px !important;
         vertical-align: middle;
         line-height: 1.6;
-        color: #334155;
-        border-bottom: 1px solid #f1f5f9;
+        color: var(--admin-body-text);
+        border-bottom: 1px solid var(--admin-border-soft);
     }
 
     /* Bộ lọc toàn cục 3 cột đồng đều, cân đối không bị lệch */
     .filter-item-box {
         display: flex;
         align-items: center;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-secondary-button-bg);
+        border: 1px solid var(--admin-border);
         border-radius: 12px;
         height: 48px;
         padding: 0 16px;
@@ -64,14 +64,14 @@
         width: 100%;
     }
     .filter-item-box:hover, .filter-item-box:focus-within {
-        border-color: #00838C;
-        background-color: #ffffff;
-        box-shadow: 0 4px 12px rgba(0, 131, 140, 0.08);
+        border-color: var(--admin-primary);
+        background-color: var(--admin-surface);
+        box-shadow: 0 4px 12px var(--shadow-sm);
     }
     .filter-item-label {
         font-size: 0.825rem;
         font-weight: 600;
-        color: #475569;
+        color: var(--admin-text-secondary);
         white-space: nowrap;
         margin-right: 12px;
         display: flex;
@@ -83,7 +83,7 @@
         background-color: transparent !important;
         font-size: 0.875rem;
         font-weight: 600;
-        color: #003F5F;
+        color: var(--admin-primary-dark);
         padding: 0 4px;
         box-shadow: none !important;
         cursor: pointer;
@@ -95,7 +95,7 @@
     .filter-item-static {
         font-size: 0.875rem;
         font-weight: 600;
-        color: #003F5F;
+        color: var(--admin-primary-dark);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -105,47 +105,47 @@
 
     /* Các nút bấm chủ đạo theo tông màu hệ thống */
     .btn-cyan {
-        background-color: #00838C;
-        border-color: #00838C;
-        color: #ffffff;
+        background-color: var(--admin-primary);
+        border-color: var(--admin-primary);
+        color: var(--admin-surface);
     }
     .btn-cyan:hover, .btn-cyan:focus {
-        background-color: #006b73;
-        border-color: #006b73;
-        color: #ffffff;
+        background-color: var(--admin-primary-hover);
+        border-color: var(--admin-primary-hover);
+        color: var(--admin-surface);
     }
     .btn-theme-register {
-        background-color: #003F5F !important;
-        color: #ffffff !important;
-        border: 1px solid #003F5F !important;
+        background-color: var(--admin-primary) !important;
+        color: var(--admin-surface) !important;
+        border: 1px solid var(--admin-primary) !important;
         transition: all 0.15s ease;
     }
     .btn-theme-register:hover {
-        background-color: #002c44 !important;
-        border-color: #002c44 !important;
-        box-shadow: 0 4px 12px rgba(0, 63, 95, 0.25);
+        background-color: var(--admin-primary-hover) !important;
+        border-color: var(--admin-primary-hover) !important;
+        box-shadow: 0 4px 12px var(--shadow-md);
     }
     .badge-neutral {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-border-soft);
+        color: var(--admin-text-secondary);
+        border: 1px solid var(--admin-border);
     }
     .topic-scroll-container {
         max-height: calc(100vh - 350px);
         min-height: 380px;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: #00838C #f1f5f9;
+        scrollbar-color: var(--admin-primary) var(--admin-border-soft);
     }
     .topic-scroll-container::-webkit-scrollbar {
         width: 6px;
     }
     .topic-scroll-container::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: var(--admin-border-soft);
         border-radius: 4px;
     }
     .topic-scroll-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: var(--admin-neutral-border);
         border-radius: 4px;
     }
 </style>
@@ -154,8 +154,8 @@
     <!-- TIÊU ĐỀ TRANG & DẢI TRẠNG THÁI -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 px-1">
         <div class="d-flex align-items-center gap-3">
-            <h5 class="fw-bold mb-0" style="color: #003F5F; font-size: 1.2rem;">
-                <i class="fa-solid fa-book-bookmark me-2" style="color: #00838C;"></i>Đăng Ký Đề Tài Khóa Luận
+            <h5 class="fw-bold mb-0" style="color: var(--admin-primary-dark); font-size: 1.2rem;">
+                <i class="fa-solid fa-book-bookmark me-2" style="color: var(--admin-primary);"></i>Đăng Ký Đề Tài Khóa Luận
             </h5>
             <span class="badge badge-neutral px-3.5 py-2" style="font-size: 0.8rem;">
                 {{ $hocKies->firstWhere('MaHocKy', $selectedHocKy)->TenHocKy ?? 'Học kỳ hiện tại' }}
@@ -176,7 +176,7 @@
             <!-- Trạng thái giai đoạn đăng ký -->
             <div class="d-flex align-items-center gap-3 flex-grow-1">
                 <div class="rounded-circle bg-info bg-opacity-10 p-2.5 text-info d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                    <i class="fa-solid fa-circle-info fs-5" style="color: #00838C;"></i>
+                    <i class="fa-solid fa-circle-info fs-5" style="color: var(--admin-primary);"></i>
                 </div>
                 <span class="text-dark">
                     {{ $regState['message'] ?? 'Theo dõi lịch công bố và đăng ký đề tài chính thức của khoa.' }}
@@ -221,16 +221,16 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="d-flex align-items-center gap-3.5">
                     <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-xs" 
-                         style="width: 48px; height: 48px; background-color: {{ $dangKyCurrent->TrangThai === 'Đã duyệt' ? '#25A18E' : ($dangKyCurrent->TrangThai === 'Từ chối' ? '#dc2626' : '#f59e0b') }}; flex-shrink: 0;">
+                         style="width: 48px; height: 48px; background-color: {{ $dangKyCurrent->TrangThai === 'Đã duyệt' ? 'var(--admin-success)' : ($dangKyCurrent->TrangThai === 'Từ chối' ? 'var(--admin-danger)' : 'var(--admin-warning-text)') }}; flex-shrink: 0;">
                         <i class="fa-solid {{ $dangKyCurrent->TrangThai === 'Đã duyệt' ? 'fa-check' : ($dangKyCurrent->TrangThai === 'Từ chối' ? 'fa-xmark' : 'fa-hourglass-half') }} fs-5"></i>
                     </div>
                     <div>
                         <div class="d-flex align-items-center gap-2 flex-wrap mb-1.5">
-                            <span class="fw-bold text-dark" style="color: #003F5F !important; font-size: 1.05rem;">{{ $dangKyCurrent->deTai->TenDeTai ?? 'Chưa rõ tên đề tài' }}</span>
+                            <span class="fw-bold text-dark" style="color: var(--admin-primary-dark) !important; font-size: 1.05rem;">{{ $dangKyCurrent->deTai->TenDeTai ?? 'Chưa rõ tên đề tài' }}</span>
                             <span class="badge badge-neutral px-2.5 py-1"><code>{{ $dangKyCurrent->deTai->MaDeTai ?? '' }}</code></span>
                         </div>
                         <div class="text-secondary d-flex align-items-center gap-3 flex-wrap" style="font-size: 0.85rem;">
-                            <span><i class="fa-solid fa-chalkboard-user me-1" style="color: #00838C;"></i>GVHD: <strong>{{ $dangKyCurrent->deTai->giangVien->HoTen ?? 'Chưa rõ' }}</strong></span>
+                            <span><i class="fa-solid fa-chalkboard-user me-1" style="color: var(--admin-primary);"></i>GVHD: <strong>{{ $dangKyCurrent->deTai->giangVien->HoTen ?? 'Chưa rõ' }}</strong></span>
                             <span>&bull;</span>
                             <span>Trạng thái: 
                                 @if($dangKyCurrent->TrangThai === 'Từ chối')
@@ -256,7 +256,7 @@
                         @endphp
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-4 py-2 shadow-xs bg-white fw-semibold"
                                 onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($dangKyCurrent->deTai->TenDeTai ?? '') }}')" style="font-size: 0.825rem;">
-                            <i class="fa-solid fa-eye me-1.5" style="color: #00838C;"></i>Xem Đề Cương
+                            <i class="fa-solid fa-eye me-1.5" style="color: var(--admin-primary);"></i>Xem Đề Cương
                         </button>
                     @endif
 
@@ -278,12 +278,12 @@
     <!-- BỘ LỌC ĐỀ TÀI TOÀN CỤC: THIẾT KẾ CÂN ĐỐI 3 CỘT ĐỀU NHAU, THÔNG THOÁNG -->
     <div class="card mb-4 bg-white border border-slate-200 shadow-xs rounded-4 p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3.5 px-1">
-            <span class="fw-bold text-dark d-flex align-items-center" style="color: #003F5F !important; font-size: 0.95rem;">
-                <i class="fa-solid fa-filter me-2" style="color: #00838C;"></i>Bộ Lọc Đề Tài Khóa Luận:
+            <span class="fw-bold text-dark d-flex align-items-center" style="color: var(--admin-primary-dark) !important; font-size: 0.95rem;">
+                <i class="fa-solid fa-filter me-2" style="color: var(--admin-primary);"></i>Bộ Lọc Đề Tài Khóa Luận:
             </span>
             @if(!empty($isGroupLocked) && isset($nhom))
                 <span class="badge badge-neutral px-3.5 py-2 fw-semibold" style="font-size: 0.8rem;">
-                    <i class="fa-solid fa-lock me-1" style="color: #00838C;"></i>Đã khóa bộ lọc theo nhóm: <strong>{{ $nhom->TenNhom }}</strong>
+                    <i class="fa-solid fa-lock me-1" style="color: var(--admin-primary);"></i>Đã khóa bộ lọc theo nhóm: <strong>{{ $nhom->TenNhom }}</strong>
                 </span>
             @endif
         </div>
@@ -362,8 +362,8 @@
     <div class="card border border-slate-200 shadow-xs dangky-panel-card overflow-hidden mb-4">
         <div class="card-header bg-white py-4 px-4.5 d-flex justify-content-between align-items-center border-bottom">
             <div class="d-flex align-items-center gap-2.5">
-                <i class="fa-solid fa-clipboard-list" style="color: #00838C;"></i>
-                <h6 class="fw-bold mb-0" style="color: #003F5F; font-size: 1rem;">Danh Sách Đề Tài Đã Công Bố</h6>
+                <i class="fa-solid fa-clipboard-list" style="color: var(--admin-primary);"></i>
+                <h6 class="fw-bold mb-0" style="color: var(--admin-primary-dark); font-size: 1rem;">Danh Sách Đề Tài Đã Công Bố</h6>
                 <span class="badge badge-neutral px-3 py-1.5" style="font-size: 0.775rem;">{{ $detais->total() }} đề tài</span>
             </div>
             @if($selectedHocPhan)
@@ -371,7 +371,7 @@
                     $selHpName = $nhom?->hocPhan?->TenHocPhan ?? ($hocPhans->firstWhere('MaHocPhan', $selectedHocPhan)->TenHocPhan ?? $selectedHocPhan);
                 @endphp
                 <span class="badge badge-neutral px-3.5 py-2" style="font-size: 0.8rem;">
-                    <i class="fa-solid fa-tag me-1.5" style="color: #00838C;"></i>{{ $selHpName }}
+                    <i class="fa-solid fa-tag me-1.5" style="color: var(--admin-primary);"></i>{{ $selHpName }}
                 </span>
             @endif
         </div>
@@ -420,13 +420,13 @@
                                         @endphp
                                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 ms-1 bg-white fw-semibold shadow-xs"
                                                 onclick="quickPreviewOutline('{{ $dtDcUrl }}', '{{ $dtDcName }}', '{{ addslashes($dt->TenDeTai) }}')" style="font-size: 0.8rem;">
-                                            <i class="fa-solid fa-file-lines me-1" style="color: #00838C;"></i>Xem đề cương
+                                            <i class="fa-solid fa-file-lines me-1" style="color: var(--admin-primary);"></i>Xem đề cương
                                         </button>
                                     @endif
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-bold" style="color: #003F5F; font-size: 0.9rem;">{{ $dt->giangVien->HoTen ?? 'Chưa rõ' }}</div>
+                                <div class="fw-bold" style="color: var(--admin-primary-dark); font-size: 0.9rem;">{{ $dt->giangVien->HoTen ?? 'Chưa rõ' }}</div>
                                 <div class="text-muted mt-1" style="font-size: 0.825rem;">{{ $dt->giangVien->HocVi ?? 'Giảng viên' }}</div>
                             </td>
                             <td class="text-center">

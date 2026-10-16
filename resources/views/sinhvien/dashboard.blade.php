@@ -1,19 +1,19 @@
-@extends('layouts.sinhvien')
+﻿@extends('layouts.sinhvien')
 
 @section('page_title', 'Tổng Quan Khóa Luận')
 
 @section('content')
 <style>
-    /* Bảng màu chuẩn: Midnight Navy (#003F5F), Ocean Cyan (#00838C), Persian Green (#25A18E), Mint/Soft Aqua (#E6F7FA) */
+    /* Dashboard accents use the same palette as the admin layout. */
     .dashboard-container {
         font-size: 0.85rem;
-        color: #334155;
+        color: var(--admin-text-primary);
     }
 
     /* KPI Metric Cards */
     .kpi-metric-box {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
         border-radius: 12px;
         padding: 12px 16px;
         height: 100%;
@@ -21,19 +21,19 @@
         justify-content: space-between;
         align-items: center;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 1px 3px rgba(0, 63, 95, 0.03);
+        box-shadow: none;
     }
     .kpi-metric-box:hover {
         transform: translateY(-2px);
-        border-color: #00838C;
-        box-shadow: 0 6px 16px -4px rgba(0, 131, 140, 0.12);
+        border-color: var(--admin-neutral-border);
+        box-shadow: 0 6px 16px var(--shadow-sm);
     }
     .kpi-icon-circle {
         width: 42px;
         height: 42px;
         border-radius: 10px;
-        background-color: #e6f7fa;
-        color: #00838C;
+        background-color: var(--admin-neutral-soft);
+        color: var(--admin-primary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -45,29 +45,29 @@
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        color: #64748b;
+        color: var(--admin-text-secondary);
     }
     .metric-value {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #003F5F;
+        color: var(--admin-text-primary);
         line-height: 1.25;
     }
 
     /* Card Panels */
     .dashboard-card-panel {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-surface);
+        border: 1px solid var(--admin-border);
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 63, 95, 0.04);
+        box-shadow: none;
         display: flex;
         flex-direction: column;
         overflow: hidden;
     }
     .panel-header-compact {
         padding: 12px 18px;
-        background-color: #ffffff;
-        border-bottom: 1px solid #f1f5f9;
+        background-color: var(--admin-surface);
+        border-bottom: 1px solid var(--admin-border-soft);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -78,7 +78,7 @@
 
     /* Progress bar custom */
     .progress-bar-cyan {
-        background: linear-gradient(90deg, #00838C 0%, #25A18E 100%);
+        background: linear-gradient(90deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
     }
 
     /* Smooth Scroll Bar */
@@ -86,29 +86,29 @@
         width: 4px;
     }
     .sv-smooth-scroll::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: var(--admin-border-soft);
         border-radius: 4px;
     }
     .sv-smooth-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: var(--admin-scrollbar);
         border-radius: 4px;
     }
     .sv-smooth-scroll::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: var(--admin-primary-dark);
     }
 
     .badge-neutral {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
+        background-color: var(--admin-border-soft);
+        color: var(--admin-text-secondary);
+        border: 1px solid var(--admin-border);
     }
     .border-end-sm {
-        border-right: 1px solid #f1f5f9;
+        border-right: 1px solid var(--admin-border);
     }
     @media (max-width: 575.98px) {
         .border-end-sm {
             border-right: none;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--admin-border);
             padding-bottom: 0.75rem;
             margin-bottom: 0.75rem;
         }
@@ -120,22 +120,22 @@
     {{-- ── 1. TIÊU ĐỀ VÀ THÔNG TIN SINH VIÊN ── --}}
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: #003F5F;">
-                <i class="fa-solid fa-chart-pie" style="color: #00838C;"></i>
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--admin-text-primary);">
+                <i class="fa-solid fa-chart-pie" style="color: var(--admin-primary);"></i>
                 <span>Tổng Quan Khóa Luận</span>
                 <span class="badge badge-neutral fw-semibold ms-1" style="font-size: 0.75rem;">
-                    <i class="fa-regular fa-calendar-check me-1" style="color: #00838C;"></i>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ hiện tại' }}
+                    <i class="fa-regular fa-calendar-check me-1" style="color: var(--admin-primary);"></i>{{ $hocKyHienTai->TenHocKy ?? 'Học kỳ hiện tại' }}
                 </span>
             </h5>
             <div class="text-secondary" style="font-size: 0.825rem;">
-                Xin chào, <strong style="color: #003F5F;">{{ $sinhVien->HoTen }}</strong> &bull; MSSV: <code>{{ $sinhVien->MaSV }}</code> &bull; Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
+                Xin chào, <strong style="color: var(--admin-text-primary);">{{ $sinhVien->HoTen }}</strong> &bull; MSSV: <code>{{ $sinhVien->MaSV }}</code> &bull; Lớp: <strong>{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('sinhvien.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                 <i class="fa-solid fa-calendar-day me-1"></i>Lịch báo cáo
             </a>
-            <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+            <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                 <i class="fa-solid fa-upload me-1"></i>Nộp báo cáo
             </a>
         </div>
@@ -248,7 +248,7 @@
             <div class="kpi-metric-box">
                 <div>
                     <div class="metric-title">Tiến Độ Khóa Luận</div>
-                    <div class="metric-value mt-1" style="color: {{ $nhom ? '#25A18E' : '#64748b' }};">
+                    <div class="metric-value mt-1" style="color: var(--admin-primary);">
                         {{ $nhom ? $tienDoPhanTram . '%' : '--' }}
                     </div>
                     <div class="mt-1.5">
@@ -307,12 +307,12 @@
                         @endif
 
                         <span class="badge badge-neutral rounded-pill py-1 px-2.5">
-                            <i class="fa-solid fa-building-columns me-1" style="color: #00838C;"></i>{{ $sinhVien->lop->nganh->TenNganh ?? 'Công nghệ thông tin' }}
+                            <i class="fa-solid fa-building-columns me-1" style="color: var(--admin-primary);"></i>{{ $sinhVien->lop->nganh->TenNganh ?? 'Công nghệ thông tin' }}
                         </span>
                     </div>
 
-                    <div class="fw-bold" style="color: #003F5F; font-size: 0.85rem;">
-                        Tiến độ: <span style="color: #25A18E;">{{ $tienDoPhanTram }}%</span>
+                    <div class="fw-bold" style="color: var(--admin-text-primary); font-size: 0.85rem;">
+                        Tiến độ: <span style="color: var(--admin-primary);">{{ $tienDoPhanTram }}%</span>
                     </div>
                 </div>
 
@@ -330,9 +330,9 @@
                         <!-- Giảng viên hướng dẫn -->
                         <div class="col-12 col-sm-5 border-end-sm">
                             <div class="text-muted fw-semibold mb-1" style="font-size: 0.75rem; text-transform: uppercase;">
-                                <i class="fa-solid fa-chalkboard-user me-1" style="color: #00838C;"></i>GV Hướng dẫn:
+                                <i class="fa-solid fa-chalkboard-user me-1" style="color: var(--admin-primary);"></i>GV Hướng dẫn:
                             </div>
-                            <div class="fw-bold" style="color: #003F5F; font-size: 0.875rem;">
+                            <div class="fw-bold" style="color: var(--admin-text-primary); font-size: 0.875rem;">
                                 @if($gvhd)
                                     {{ ($gvhd->HocHam ? $gvhd->HocHam . '.' : '') . ($gvhd->HocVi ? $gvhd->HocVi . '.' : '') . ' ' . $gvhd->HoTen }}
                                 @else
@@ -347,7 +347,7 @@
                         <!-- Thành viên nhóm -->
                         <div class="col-12 col-sm-7">
                             <div class="text-muted fw-semibold mb-1" style="font-size: 0.75rem; text-transform: uppercase;">
-                                <i class="fa-solid fa-user-group me-1" style="color: #00838C;"></i>Thành viên nhóm:
+                                <i class="fa-solid fa-user-group me-1" style="color: var(--admin-primary);"></i>Thành viên nhóm:
                             </div>
                             <div class="d-flex flex-wrap gap-1.5">
                                 @if($truongNhom)
@@ -374,7 +374,7 @@
                     <!-- Thanh Progress Bar Mảnh -->
                     @if($nhom)
                     <div class="mt-3 pt-2">
-                        <div class="progress" style="height: 6px; background-color: #f1f5f9; border-radius: 10px;">
+                        <div class="progress" style="height: 6px; background-color: var(--admin-border-soft); border-radius: 10px;">
                             <div class="progress-bar progress-bar-cyan" role="progressbar" 
                                  style="width: {{ $tienDoPhanTram }}%; border-radius: 10px;"
                                  aria-valuenow="{{ $tienDoPhanTram }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -387,8 +387,8 @@
             <!-- CARD 2: KẾ HOẠCH & CÔNG VIỆC TIẾP THEO -->
             <div class="dashboard-card-panel">
                 <div class="panel-header-compact">
-                    <div class="fw-bold d-flex align-items-center gap-2" style="color: #003F5F; font-size: 0.875rem;">
-                        <i class="fa-solid fa-list-check" style="color: #00838C;"></i>
+                    <div class="fw-bold d-flex align-items-center gap-2" style="color: var(--admin-text-primary); font-size: 0.875rem;">
+                        <i class="fa-solid fa-list-check" style="color: var(--admin-primary);"></i>
                         <span>Kế Hoạch &amp; Công Việc Tiếp Theo</span>
                     </div>
 
@@ -408,7 +408,7 @@
                     @if($nhom && $nextMoc)
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <div class="fw-bold mb-1" style="color: #003F5F; font-size: 0.9rem;">
+                                <div class="fw-bold mb-1" style="color: var(--admin-text-primary); font-size: 0.9rem;">
                                     {{ $nextMoc->TenMoc ?? ('Báo Cáo Tiến Độ Đợt ' . $mocTiepTheo) }}
                                 </div>
                                 <div class="text-muted" style="font-size: 0.8rem;">
@@ -419,19 +419,19 @@
 
                             <div class="d-flex align-items-center gap-2">
                                 @if(($nextMoc->LoaiGiaiDoan ?? '') === 'TAO_NHOM')
-                                    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+                                    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                                         <i class="fa-solid fa-users me-1"></i>Quản lý nhóm
                                     </a>
                                 @elseif(($nextMoc->LoaiGiaiDoan ?? '') === 'DANG_KY_DE_TAI')
-                                    <a href="{{ route('sinhvien.dangky.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+                                    <a href="{{ route('sinhvien.dangky.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                                         <i class="fa-solid fa-book-bookmark me-1"></i>Đăng ký đề tài
                                     </a>
                                 @elseif(in_array($nextMoc->LoaiGiaiDoan ?? '', ['THUC_HIEN', 'NOP_BAO_CAO']))
-                                    <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+                                    <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                                         <i class="fa-solid fa-upload me-1"></i>Nộp báo cáo ngay
                                     </a>
                                 @else
-                                    <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+                                    <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                                         <i class="fa-solid fa-calendar-check me-1"></i>Xem kế hoạch
                                     </a>
                                 @endif
@@ -443,10 +443,10 @@
                     @else
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <div class="fw-bold mb-1" style="color: #003F5F;">Chưa có nhóm khóa luận</div>
+                                <div class="fw-bold mb-1" style="color: var(--admin-text-primary);">Chưa có nhóm khóa luận</div>
                                 <div class="text-muted" style="font-size: 0.8rem;">Thời hạn nộp báo cáo sẽ kích hoạt sau khi bạn tạo hoặc gia nhập nhóm.</div>
                             </div>
-                            <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: #00838C; border-color: #00838C;">
+                            <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-primary btn-sm rounded-pill px-3" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                                 <i class="fa-solid fa-users me-1"></i>Gia nhập nhóm
                             </a>
                         </div>
@@ -461,18 +461,18 @@
             <div class="dashboard-card-panel h-100 justify-content-between">
                 <div>
                     <div class="panel-header-compact">
-                        <div class="fw-bold d-flex align-items-center gap-2" style="color: #003F5F; font-size: 0.875rem;">
-                            <i class="fa-solid fa-comments" style="color: #00838C;"></i>
+                        <div class="fw-bold d-flex align-items-center gap-2" style="color: var(--admin-text-primary); font-size: 0.875rem;">
+                            <i class="fa-solid fa-comments" style="color: var(--admin-primary);"></i>
                             <span>Hoạt Động &amp; Nhận Xét GVHD</span>
                         </div>
-                        <a href="{{ route('sinhvien.baocao.index') }}" class="text-decoration-none fw-semibold" style="font-size: 0.8rem; color: #00838C;">
+                        <a href="{{ route('sinhvien.baocao.index') }}" class="text-decoration-none fw-semibold" style="font-size: 0.8rem; color: var(--admin-primary);">
                             Xem tất cả &rarr;
                         </a>
                     </div>
 
                     <div class="panel-body-compact">
                         <!-- PHẦN 1: NHẬN XÉT MỚI NHẤT -->
-                        <div class="p-3 rounded-3 border mb-3" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
+                        <div class="p-3 rounded-3 border mb-3" style="background-color: var(--admin-neutral-soft); border-color: var(--admin-border) !important;">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill py-1 px-2.5" style="font-size: 0.725rem;">
                                     {{ $latestFeedback ? 'Đợt ' . $latestFeedback->LanBaoCao . ': ' . Str::limit($latestFeedback->TieuDe, 24) : 'Phản hồi mới nhất' }}
@@ -495,7 +495,7 @@
                                 <div class="text-muted mt-2 d-flex justify-content-between align-items-center" style="font-size: 0.75rem;">
                                     <span><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($latestFeedback->updated_at)->format('H:i - d/m/Y') }}</span>
                                     @if($latestFeedback->DiemSo)
-                                        <span class="fw-bold" style="color: #00838C;">Điểm: {{ $latestFeedback->DiemSo }}/10</span>
+                                        <span class="fw-bold" style="color: var(--admin-primary);">Điểm: {{ $latestFeedback->DiemSo }}/10</span>
                                     @endif
                                 </div>
                             @else
@@ -506,17 +506,17 @@
                         </div>
 
                         <!-- PHẦN 2: LỊCH HẸN GẶP & LỊCH HỘI ĐỒNG BẢO VỆ -->
-                        <div class="fw-semibold mb-2 d-flex align-items-center justify-content-between" style="font-size: 0.8rem; color: #003F5F;">
-                            <span><i class="fa-regular fa-calendar-check me-1" style="color: #25A18E;"></i>Lịch hẹn gặp &amp; Bảo vệ Hội đồng:</span>
+                        <div class="fw-semibold mb-2 d-flex align-items-center justify-content-between" style="font-size: 0.8rem; color: var(--admin-text-primary);">
+                            <span><i class="fa-regular fa-calendar-check me-1" style="color: var(--admin-primary);"></i>Lịch hẹn gặp &amp; Bảo vệ Hội đồng:</span>
                             <a href="{{ route('sinhvien.calendar') }}" class="text-muted text-decoration-none" style="font-size: 0.75rem;">Lịch biểu &rarr;</a>
                         </div>
 
                         <div class="sv-smooth-scroll" style="max-height: 150px; overflow-y: auto; padding-right: 4px;">
                             <!-- Lịch Hội Đồng Bảo Vệ (Nếu có) -->
                             @if($hoSoBaoVe && $hoSoBaoVe->hoiDong)
-                                <div class="p-2.5 rounded-3 border mb-2" style="background-color: #e6f7fa; border-color: #b3e5ed !important;">
+                                <div class="p-2.5 rounded-3 border mb-2" style="background-color: var(--admin-primary-soft); border-color: var(--admin-info-border) !important;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong style="color: #003F5F; font-size: 0.825rem;">
+                                        <strong style="color: var(--admin-text-primary); font-size: 0.825rem;">
                                             <i class="fa-solid fa-building-columns me-1"></i>{{ $hoSoBaoVe->hoiDong->TenHoiDong }}
                                         </strong>
                                         <span class="badge bg-success rounded-pill py-0.5 px-2" style="font-size: 0.7rem;">Bảo Vệ</span>
@@ -544,7 +544,7 @@
                             @empty
                                 @if(!$hoSoBaoVe || !$hoSoBaoVe->hoiDong)
                                     <div class="text-muted text-center py-2" style="font-size: 0.775rem;">
-                                        <i class="fa-solid fa-info-circle me-1" style="color: #00838C;"></i>Chưa có lịch hẹn gặp mới với GVHD.
+                                        <i class="fa-solid fa-info-circle me-1" style="color: var(--admin-primary);"></i>Chưa có lịch hẹn gặp mới với GVHD.
                                     </div>
                                 @endif
                             @endforelse
@@ -558,7 +558,7 @@
                         <a href="{{ route('sinhvien.hoso.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill w-50 justify-content-center d-flex align-items-center">
                             <i class="fa-solid fa-file-circle-check me-1"></i>Hồ sơ bảo vệ
                         </a>
-                        <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill w-50 justify-content-center d-flex align-items-center" style="background-color: #00838C; border-color: #00838C;">
+                        <a href="{{ route('sinhvien.calendar') }}" class="btn btn-primary btn-sm rounded-pill w-50 justify-content-center d-flex align-items-center" style="background-color: var(--admin-primary); border-color: var(--admin-primary);">
                             <i class="fa-solid fa-calendar-days me-1"></i>Xem toàn bộ lịch
                         </a>
                     </div>
