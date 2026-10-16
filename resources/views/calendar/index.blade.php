@@ -4,7 +4,7 @@
 
 @push('styles')
 <style>
-    /* Styling Chuẩn Thời Khóa Biểu Theo Tuần (Image 1 Style) */
+    /* Styling Chuẩn Thời Khóa Biểu Theo Tuần */
     .timetable-wrapper {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -32,6 +32,46 @@
         display: flex;
         align-items: center;
         gap: 8px;
+    }
+
+    /* GIAO DIỆN BỘ LỌC ĐỐI TƯỢNG DẠNG SEGMENTED BUTTONS (THAY THẾ RADIO) */
+    .role-segmented-filter {
+        display: inline-flex;
+        background-color: #f1f5f9;
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        gap: 2px;
+    }
+    .role-segmented-filter .segmented-btn {
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+    }
+    .role-segmented-filter .segmented-btn input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .role-segmented-filter .segmented-label {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        white-space: nowrap;
+    }
+    .role-segmented-filter .segmented-btn:hover .segmented-label {
+        color: #1e293b;
+    }
+    .role-segmented-filter .segmented-btn input[type="radio"]:checked + .segmented-label {
+        background-color: #ffffff;
+        color: #0284c7;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     }
 
     /* Quick Phase Shortcuts */
@@ -67,7 +107,7 @@
         box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
     }
 
-    /* Macro Phase Banner (12 tuần thực hiện) */
+    /* Macro Phase Banner */
     .macro-phase-banner {
         background: #f8fafc;
         border: 1px solid #cbd5e1;
@@ -165,7 +205,6 @@
         gap: 6px;
         padding: 6px;
     }
-    /* Background Day Dividers */
     .day-col-background {
         position: absolute;
         top: 0;
@@ -180,7 +219,7 @@
         border-right: 1px solid #bae6fd;
     }
 
-    /* Thẻ Sự Kiện / Mốc Thời Gian (Spanning Event Card) */
+    /* Thẻ Sự Kiện / Mốc Thời Gian */
     .tt-span-card {
         z-index: 2;
         border-radius: 7px;
@@ -286,17 +325,20 @@
         overflow: auto !important;
         background: #ffffff !important;
     }
+
+    .shift-row-container {
+        transition: all 0.2s ease-in-out;
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid px-0">
 
-    {{-- ── 1. GIAO DIỆN LỊCH QUY TRÌNH THEO TUẦN (CHUẨN HUIT MẪU ẢNH) ── --}}
+    {{-- ── LỊCH QUY TRÌNH THEO TUẦN ── --}}
     <div class="timetable-wrapper" id="weeklyTimetableContainer">
         {{-- Toolbar trên cùng --}}
         <div class="timetable-toolbar">
-            {{-- Tiêu đề trang & Radio Bộ Lọc theo Nhóm Đối Tượng --}}
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h5 class="timetable-title">
                     <i class="fa-solid fa-calendar-week text-primary"></i> 
@@ -306,36 +348,38 @@
                         Lịch quy trình &amp; mốc khóa luận theo tuần
                     @endif
                 </h5>
-                <div class="d-flex align-items-center gap-2.5 small text-muted ms-2 flex-wrap">
+
+                {{-- BỘ LỌC ĐỐI TƯỢNG ĐÃ ĐỔI THÀNH NÚT TABS SEGMENTED --}}
+                <div class="role-segmented-filter ms-2">
                     @if(($roleTitle ?? '') == 'Sinh Viên')
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="ALL" class="form-check-input mt-0" checked onchange="filterMilestoneRole('ALL')">
-                            Tất cả
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="ALL" checked onchange="filterMilestoneRole('ALL')">
+                            <span class="segmented-label">Tất cả</span>
                         </label>
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="SINH_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('SINH_VIEN')">
-                            Báo cáo GV &amp; Kế hoạch
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="SINH_VIEN" onchange="filterMilestoneRole('SINH_VIEN')">
+                            <span class="segmented-label">Báo cáo GV &amp; Kế hoạch</span>
                         </label>
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="KHOA_HDS" class="form-check-input mt-0" onchange="filterMilestoneRole('KHOA_HDS')">
-                            Báo cáo Hội đồng
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="KHOA_HDS" onchange="filterMilestoneRole('KHOA_HDS')">
+                            <span class="segmented-label">Báo cáo Hội đồng</span>
                         </label>
                     @else
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="ALL" class="form-check-input mt-0" checked onchange="filterMilestoneRole('ALL')">
-                            Tất cả
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="ALL" checked onchange="filterMilestoneRole('ALL')">
+                            <span class="segmented-label">Tất cả</span>
                         </label>
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="SINH_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('SINH_VIEN')">
-                            Sinh viên
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="SINH_VIEN" onchange="filterMilestoneRole('SINH_VIEN')">
+                            <span class="segmented-label">Sinh viên</span>
                         </label>
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="GIANG_VIEN" class="form-check-input mt-0" onchange="filterMilestoneRole('GIANG_VIEN')">
-                            GVHD
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="GIANG_VIEN" onchange="filterMilestoneRole('GIANG_VIEN')">
+                            <span class="segmented-label">GVHD</span>
                         </label>
-                        <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                            <input type="radio" name="filter_role" value="KHOA_HDS" class="form-check-input mt-0" onchange="filterMilestoneRole('KHOA_HDS')">
-                            Khoa &amp; Hội đồng
+                        <label class="segmented-btn">
+                            <input type="radio" name="filter_role" value="KHOA_HDS" onchange="filterMilestoneRole('KHOA_HDS')">
+                            <span class="segmented-label">Khoa &amp; Hội đồng</span>
                         </label>
                     @endif
                 </div>
@@ -343,58 +387,40 @@
 
             {{-- Bộ chọn ngày & Các nút điều hướng tuần --}}
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                {{-- Ô chọn ngày --}}
                 <form method="GET" action="{{ url()->current() }}" id="formDateFilter" class="d-flex align-items-center gap-2 m-0">
                     <div class="input-group input-group-sm" style="width: 145px;">
                         <input type="date" name="date" class="form-control form-control-sm" value="{{ $currentDate ?? '2026-10-09' }}" onchange="document.getElementById('formDateFilter').submit()">
                     </div>
                 </form>
 
-                {{-- Nút Hiện tại --}}
                 <a href="{{ url()->current() }}?date={{ now()->format('Y-m-d') }}" class="btn-tt-blue" title="Về tuần hiện tại">
                     <i class="fa-solid fa-calendar-day"></i> Hiện tại
                 </a>
-
-                {{-- Nút In lịch --}}
                 <button type="button" class="btn-tt-blue" onclick="window.print()" title="In lịch tuần">
                     <i class="fa-solid fa-print"></i> In lịch
                 </button>
-
-                {{-- Nút < Trở về --}}
                 <a href="{{ url()->current() }}?date={{ $prevWeekDate }}" class="btn-tt-blue" title="Tuần trước">
                     <i class="fa-solid fa-chevron-left"></i> Trở về
                 </a>
-
-                {{-- Nút Tiếp > --}}
                 <a href="{{ url()->current() }}?date={{ $nextWeekDate }}" class="btn-tt-blue" title="Tuần tiếp theo">
                     Tiếp <i class="fa-solid fa-chevron-right"></i>
                 </a>
-
-                {{-- Nút Phóng to / Thu nhỏ --}}
                 <button type="button" class="btn-tt-blue" onclick="toggleTimetableFullscreen()" title="Toàn màn hình">
                     <i class="fa-solid fa-expand" id="iconFullscreen"></i>
                 </button>
             </div>
         </div>
 
-        {{-- Thanh phím tắt nhảy nhanh đến các giai đoạn trọng tâm của khóa luận --}}
+        {{-- Phím tắt chuyển nhanh tuần --}}
         <div class="timetable-quick-nav">
             <span class="text-muted small fw-semibold"><i class="fa-solid fa-bolt text-warning me-1"></i>Chuyển nhanh tuần:</span>
-            <a href="{{ url()->current() }}?date=2026-08-10" class="phase-pill {{ request('date') == '2026-08-10' ? 'active' : '' }}">
-                1. Đăng ký đề tài (10/08 - 16/08)
-            </a>
-            <a href="{{ url()->current() }}?date={{ now()->format('Y-m-d') }}" class="phase-pill {{ (!request('date') || request('date') == now()->format('Y-m-d')) ? 'active' : '' }}">
-                2. Tuần hiện tại ({{ now()->format('d/m/Y') }})
-            </a>
-            <a href="{{ url()->current() }}?date=2026-11-09" class="phase-pill {{ request('date') == '2026-11-09' ? 'active' : '' }}">
-                3. Nộp khóa luận (09/11 - 15/11)
-            </a>
-            <a href="{{ url()->current() }}?date=2026-11-16" class="phase-pill {{ request('date') == '2026-11-16' ? 'active' : '' }}">
-                4. Bảo vệ Hội đồng (16/11 - 28/11)
-            </a>
+            <a href="{{ url()->current() }}?date=2026-08-10" class="phase-pill {{ request('date') == '2026-08-10' ? 'active' : '' }}">1. Đăng ký đề tài (10/08 - 16/08)</a>
+            <a href="{{ url()->current() }}?date={{ now()->format('Y-m-d') }}" class="phase-pill {{ (!request('date') || request('date') == now()->format('Y-m-d')) ? 'active' : '' }}">2. Tuần hiện tại ({{ now()->format('d/m/Y') }})</a>
+            <a href="{{ url()->current() }}?date=2026-11-09" class="phase-pill {{ request('date') == '2026-11-09' ? 'active' : '' }}">3. Nộp khóa luận (09/11 - 15/11)</a>
+            <a href="{{ url()->current() }}?date=2026-11-16" class="phase-pill {{ request('date') == '2026-11-16' ? 'active' : '' }}">4. Bảo vệ Hội đồng (16/11 - 28/11)</a>
         </div>
 
-        {{-- Banner Giai Đoạn Vĩ Mô (Mốc 6: 12 Tuần Thực Hiện Đồ Án) - Tách riêng, không gây nhiễu từng ngày --}}
+        {{-- Banner Giai Đoạn Vĩ Mô --}}
         @if($macroPhase)
         <div class="macro-phase-banner">
             <div class="d-flex align-items-center gap-2">
@@ -402,9 +428,7 @@
                     Mốc {{ $macroPhase['moc_index'] }}
                 </span>
                 <span class="fw-bold text-dark">{{ $macroPhase['title'] }}</span>
-                <span class="text-muted small">
-                    ({{ $macroPhase['start_str'] }} &rarr; {{ $macroPhase['end_str'] }} &bull; {{ $macroPhase['weeks'] }} tuần)
-                </span>
+                <span class="text-muted small">({{ $macroPhase['start_str'] }} &rarr; {{ $macroPhase['end_str'] }} &bull; {{ $macroPhase['weeks'] }} tuần)</span>
             </div>
             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
                 <i class="fa-solid fa-circle-check me-1"></i>Đang trong giai đoạn thực hiện đồ án
@@ -414,12 +438,13 @@
         <div class="alert alert-warning bg-warning-subtle border-warning d-flex align-items-center gap-3 py-2.5 px-3 rounded-3 mb-3 small">
             <i class="fa-solid fa-users-slash text-warning fs-5"></i>
             <div>
-                <strong>Bạn chưa có nhóm khóa luận:</strong> Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ áp dụng khi bạn đã thuộc một nhóm (đã tạo nhóm hoặc đã chấp nhận lời mời). <a href="{{ route('sinhvien.nhom.index') }}" class="fw-bold text-decoration-none text-primary ms-1">Đến trang Quản lý nhóm &rarr;</a>
+                <strong>Bạn chưa có nhóm khóa luận:</strong> Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ áp dụng khi bạn đã thuộc một nhóm. 
+                <a href="{{ route('sinhvien.nhom.index') }}" class="fw-bold text-decoration-none text-primary ms-1">Đến trang Quản lý nhóm &rarr;</a>
             </div>
         </div>
         @endif
 
-        {{-- Bảng Ma Trận Lịch Tuần (Table Grid với Spanning Bar) --}}
+        {{-- Bảng Ma Trận Lịch Tuần --}}
         <div class="table-responsive">
             <table class="timetable-table">
                 <thead>
@@ -434,13 +459,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{-- 3 HÀNG PHÂN LOẠI: SINH VIÊN, GV HƯỚNG DẪN, KHOA & HỘI ĐỒNG (THAY CHO SÁNG, CHIỀU, TỐI) --}}
                     @foreach($shifts as $shiftKey => $shiftInfo)
                     @php
                         $events = $shiftEvents[$shiftKey] ?? [];
                     @endphp
                     <tr class="shift-row-container" data-shift-row="{{ $shiftKey }}">
-                        {{-- Cột tiêu đề Đối tượng: Màu sắc dịu nhẹ, phân biệt rõ ràng --}}
                         <td class="shift-header-cell" style="background: {{ $shiftInfo['bg'] ?? '#f8fafc' }} !important; color: {{ $shiftInfo['color'] ?? '#1e293b' }} !important;">
                             <div class="shift-box">
                                 <div class="shift-icon-wrap" style="color: {{ $shiftInfo['color'] ?? '#1e293b' }};">
@@ -451,10 +474,8 @@
                             </div>
                         </td>
 
-                        {{-- 7 Cột Ngày Tích Hợp CSS Grid: Hỗ Trợ Span Dải Thời Hạn (Không Lặp Mỗi Ngày 1 Cục) --}}
                         <td colspan="7" class="grid-track-cell">
                             <div class="days-grid-container">
-                                {{-- 7 Dải Cột Nền Để Phân Cách Ngày & Highlight Hôm Nay --}}
                                 @for($c = 0; $c < 7; $c++)
                                     @php
                                         $d = $weekDays[$c];
@@ -467,11 +488,10 @@
                                     </div>
                                 @endfor
 
-                                {{-- Các Mốc Quy Trình Được Trải Theo Độ Dài Thời Hạn (Spanning Event Bar) --}}
                                 @if(!empty($events))
                                     @foreach($events as $item)
                                         @php
-                                            $colStartGrid = $item['col_start'] + 1; // 1-indexed trong CSS Grid
+                                            $colStartGrid = $item['col_start'] + 1;
                                             $spanGrid = $item['span'];
                                             $pal = $item['palette'];
                                         @endphp
@@ -479,23 +499,18 @@
                                              data-role="{{ $shiftKey }}"
                                              style="grid-column: {{ $colStartGrid }} / span {{ $spanGrid }}; background: {{ $pal['bg'] }}; border: 1px solid {{ $pal['border'] }}; border-left: 4px solid {{ $pal['border'] }}; color: {{ $pal['text'] }};">
                                             
-                                            {{-- Header: Tag Mốc & Khoảng thời gian --}}
                                             <div class="d-flex align-items-center justify-content-between gap-1">
                                                 <span class="tt-card-badge" style="background: {{ $pal['badge'] }};">
                                                     Mốc {{ $item['moc_index'] }}
                                                 </span>
                                                 <span class="tt-card-range">
                                                     <i class="fa-regular fa-calendar me-1"></i>{{ $item['date_range'] }}
-                                                    @if($item['span'] > 1)
-                                                        ({{ $item['span'] }} ngày)
-                                                    @endif
+                                                    @if($item['span'] > 1) ({{ $item['span'] }} ngày) @endif
                                                 </span>
                                             </div>
 
-                                            {{-- Tiêu đề mốc --}}
                                             <div class="tt-card-title">{{ $item['title'] }}</div>
 
-                                            {{-- Chi tiết cụ thể (Đã lọc bỏ thông tin nhiễu) --}}
                                             @if($item['time_slot'] || $item['room'])
                                             <div class="tt-card-meta">
                                                 @if($item['time_slot'])
@@ -521,116 +536,27 @@
             </table>
         </div>
 
-        {{-- Thanh Chú Thích 9 Màu Nhận Diện Riêng Biệt Cho Từng Mốc Quy Trình --}}
+        {{-- Chú Thích Màu Sắc --}}
         <div class="timetable-legend">
             <span class="fw-bold text-dark me-2"><i class="fa-solid fa-palette text-primary me-1"></i>Nhận diện mốc:</span>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #8b5cf6;"></span>
-                <span>Mốc 1 (HUIT-STUDENT)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #0284c7;"></span>
-                <span>Mốc 2 (Đăng ký đề tài)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #ea580c;"></span>
-                <span>Mốc 3 (Ngoại lệ VPK)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #0d9488;"></span>
-                <span>Mốc 4 (Công bố đề tài & GVHD)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #16a34a;"></span>
-                <span>Mốc 5 (Liên hệ GVHD)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #64748b;"></span>
-                <span>Mốc 6 (12 tuần thực hiện)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #e11d48;"></span>
-                <span>Mốc 7 (Nộp khóa luận)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #d97706;"></span>
-                <span>Mốc 8 (Lịch Hội đồng)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-circle" style="background: #9333ea;"></span>
-                <span>Mốc 9 (Bảo vệ Hội đồng)</span>
-            </div>
+            <div class="legend-item"><span class="legend-circle" style="background: #8b5cf6;"></span><span>Mốc 1</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #0284c7;"></span><span>Mốc 2</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #ea580c;"></span><span>Mốc 3</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #0d9488;"></span><span>Mốc 4</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #16a34a;"></span><span>Mốc 5</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #64748b;"></span><span>Mốc 6</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #e11d48;"></span><span>Mốc 7</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #d97706;"></span><span>Mốc 8</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background: #9333ea;"></span><span>Mốc 9</span></div>
         </div>
     </div>
 
-    {{-- ── 2. DANH SÁCH TOÀN BỘ CÁC MỐC QUY TRÌNH TOÀN KHÓA ── --}}
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border: 1px solid #e2e8f0 !important;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-timeline text-primary"></i>
-                <span>Danh Mục Toàn Bộ Các Mốc Thời Gian Quy Trình (Kế Hoạch Đang Áp Dụng)</span>
-            </h6>
-            <span class="badge bg-light text-primary border rounded-pill px-3">{{ $allMilestones->count() }} Mốc quy định</span>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th width="5%" class="text-center">#</th>
-                        <th width="35%">Nội Dung Quy Trình / Giai Đoạn</th>
-                        <th width="18%">Đối Tượng Thực Hiện</th>
-                        <th width="22%">Thời Gian Áp Dụng</th>
-                        <th width="20%" class="text-center">Trạng Thái</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($allMilestones as $idx => $m)
-                    @php
-                        $today = now()->format('Y-m-d');
-                        $statusBadge = 'bg-secondary';
-                        $statusText = 'Chưa diễn ra';
-                        if ($m->NgayKetThuc < $today) {
-                            $statusBadge = 'bg-success';
-                            $statusText = 'Đã hoàn thành';
-                        } elseif ($today >= $m->NgayBatDau && $today <= $m->NgayKetThuc) {
-                            $statusBadge = 'bg-warning text-dark';
-                            $statusText = 'Đang diễn ra';
-                        }
-                        $mPalette = $milestonePalette[$idx + 1] ?? ['badge' => '#0072ce'];
-                    @endphp
-                    <tr>
-                        <td class="text-center fw-bold">
-                            <span class="badge rounded-pill text-white" style="background: {{ $mPalette['badge'] }};">
-                                Mốc {{ $idx + 1 }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-dark">{{ $m->TenMoc }}</div>
-                            <div class="small text-muted font-monospace">{{ $m->MaMoc }}</div>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">{{ $m->DoiTuongThucHien ?? 'Sinh viên & GVHD' }}</span>
-                        </td>
-                        <td>
-                            <div class="small fw-semibold text-dark">
-                                {{ date('d/m/Y', strtotime($m->NgayBatDau)) }} &rarr; {{ date('d/m/Y', strtotime($m->NgayKetThuc)) }}
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge {{ $statusBadge }} rounded-pill px-3 py-1">{{ $statusText }}</span>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-    // Bộ lọc hiển thị theo Nhóm đối tượng (Tất cả / Sinh viên / GVHD / Khoa & Hội đồng)
+    // Bộ lọc hiển thị theo Nhóm đối tượng
     function filterMilestoneRole(role) {
         const rows = document.querySelectorAll('.shift-row-container');
         rows.forEach(row => {
@@ -669,4 +595,3 @@
     });
 </script>
 @endpush
-@endsection

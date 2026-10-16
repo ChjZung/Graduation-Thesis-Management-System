@@ -20,13 +20,6 @@
     <!-- Breadcrumb & Actions Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('bomon.index') }}" class="text-decoration-none">Danh Mục Bộ Môn</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $bomon->MaBoMon }}</li>
-                </ol>
-            </nav>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                 <i class="fa-solid fa-building text-primary"></i>
                 <span>{{ $bomon->TenBoMon }}</span>

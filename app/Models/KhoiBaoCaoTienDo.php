@@ -10,7 +10,9 @@ class KhoiBaoCaoTienDo extends Model
     use HasFactory;
 
     protected $table = 'khoibaocaotiendo';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'MaKhoi';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'MaKhoi',
@@ -20,6 +22,11 @@ class KhoiBaoCaoTienDo extends Model
         'LanNop',
         'TieuDe',
         'NoiDungBaoCao',
+        'KetQuaDatDuoc',
+        'KhoKhan',
+        'HuongGiaiQuyet',
+        'KeHoachTiepTheo',
+        'PhanTramHoanThanh',
         'TenFile',
         'DuongDanFile',
         'LinkCode',
@@ -29,6 +36,7 @@ class KhoiBaoCaoTienDo extends Model
         'NgayNop',
         'NgayNhanXet',
         'TomTatAI',
+        'TomTatJson',
     ];
 
     protected function casts(): array
@@ -38,6 +46,8 @@ class KhoiBaoCaoTienDo extends Model
             'NgayNhanXet' => 'datetime',
             'LanBaoCao' => 'integer',
             'LanNop' => 'integer',
+            'PhanTramHoanThanh' => 'integer',
+            'TomTatJson' => 'array',
         ];
     }
 
@@ -46,9 +56,19 @@ class KhoiBaoCaoTienDo extends Model
         return $this->belongsTo(BaoCaoTienDo::class, 'MaBaoCao', 'MaBaoCao');
     }
 
+    public function baoCaoTienDo()
+    {
+        return $this->baoCao();
+    }
+
     public function deTai()
     {
         return $this->belongsTo(DeTai::class, 'MaDeTai', 'MaDeTai');
+    }
+
+    public function tomTat()
+    {
+        return $this->hasOne(TomTatBaoCao::class, 'MaKhoi', 'MaKhoi');
     }
 
     public function getLinkCodeAttribute()

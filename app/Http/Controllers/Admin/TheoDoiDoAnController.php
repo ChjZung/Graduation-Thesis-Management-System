@@ -239,22 +239,29 @@ class TheoDoiDoAnController extends Controller
         $statusBadge = 'bg-success';
         $priority = 3;
 
+        $stageDeadlines = [
+            1 => '2026-09-18',
+            2 => '2026-10-16',
+            3 => '2026-11-06',
+            4 => '2026-11-27',
+            5 => '2026-12-18',
+            6 => '2027-01-05',
+        ];
+
+        $todayStr = Carbon::now()->format('Y-m-d');
+        $currentDeadline = $stageDeadlines[$currentStage] ?? null;
+
         if ($completedStages === 6 || $nhom->TrangThai === 'Hoàn thành') {
             $status = 'HOAN_THANH';
             $statusLabel = 'Đã hoàn thành';
             $statusBadge = 'bg-primary';
             $priority = 4;
-        } elseif ($currentStage === 1 && $stages[1]['status'] === 'CHUA_NOP' && Carbon::now()->format('Y-m-d') > '2026-09-18') {
+        } elseif ($currentDeadline && $todayStr > $currentDeadline && ($stages[$currentStage]['status'] ?? '') !== 'DAT') {
             $status = 'QUA_HAN';
-            $statusLabel = 'Trễ hạn GĐ 1';
+            $statusLabel = 'Trễ hạn GĐ ' . $currentStage;
             $statusBadge = 'bg-danger';
             $priority = 1;
-        } elseif ($currentStage === 2 && $stages[2]['status'] === 'CHUA_NOP' && Carbon::now()->format('Y-m-d') > '2026-10-16') {
-            $status = 'QUA_HAN';
-            $statusLabel = 'Trễ hạn GĐ 2';
-            $statusBadge = 'bg-danger';
-            $priority = 1;
-        } elseif ($stages[$currentStage]['status'] === 'NOP_LAI') {
+        } elseif (($stages[$currentStage]['status'] ?? '') === 'NOP_LAI') {
             $status = 'SAP_DEN_HAN';
             $statusLabel = 'Cần nộp lại GĐ ' . $currentStage;
             $statusBadge = 'bg-warning text-dark';
@@ -282,7 +289,8 @@ class TheoDoiDoAnController extends Controller
             'thanhViens.sinhVien.lop.nganh',
             'dangKyDeTai.giangVienHuongDan.boMon',
             'dangKyDeTai.deTai.giangVien.boMon',
-            'baoCaos.nhanXets.giangVien',
+            'baoCaos.khoiBaoCaos.tomTat',
+            'baoCaos.tomTatBaoCao',
             'hoSoBaoVe.hoiDong',
             'lichGaps.giangVien',
             'hocKy',
@@ -290,10 +298,24 @@ class TheoDoiDoAnController extends Controller
 
         $activePlan = PlanPhaseService::getActivePlan();
         $phases = $activePlan ? $activePlan->mocThoiGians : collect();
+        $currentPhase = PlanPhaseService::getCurrentPhase($activePlan);
 
         $nhom = self::processNhomStageData($nhom, $activePlan);
 
-        return view('admin.theodoi.show', compact('nhom', 'activePlan', 'phases'));
+        // Thống kê nhanh cho header
+        $allNhoms = Nhom::with(['dangKyDeTai.deTai', 'deTai', 'hoSoBaoVe'])->get();
+        $processedAll = $allNhoms->map(function ($n) use ($activePlan) {
+            return self::processNhomStageData($n, $activePlan);
+        });
+
+        $stats = [
+            'total'        => $processedAll->count(),
+            'dung_tien_do' => $processedAll->where('status_code', 'DUNG_TIEN_DO')->count(),
+            'sap_den_han'  => $processedAll->where('status_code', 'SAP_DEN_HAN')->count(),
+            'qua_han'      => $processedAll->where('status_code', 'QUA_HAN')->count(),
+        ];
+
+        return view('admin.theodoi.show', compact('nhom', 'activePlan', 'phases', 'currentPhase', 'stats'));
     }
 
     /**

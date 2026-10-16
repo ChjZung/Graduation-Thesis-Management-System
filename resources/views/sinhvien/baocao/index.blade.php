@@ -197,15 +197,24 @@
             </div>
         @endif
 
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <span class="fw-bold text-dark fs-6">
+                <i class="fa-solid fa-layer-group text-primary me-1"></i>Các Báo Cáo Tiến Độ Nhỏ Trong Giai Đoạn {{ $mocHienTai }}
+            </span>
+            <a href="{{ route('sinhvien.baocao.create_khoi', $mocHienTai) }}" class="btn btn-primary btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-xs">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i>+ Tạo Báo Cáo Nhỏ Mới (Tích hợp AI)
+            </a>
+        </div>
+
         @if($bcHienTai && $bcHienTai->khoiBaoCaos && $bcHienTai->khoiBaoCaos->isNotEmpty())
             <!-- Timeline các lần nộp bài của mốc hiện tại -->
             <div class="mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="fw-bold text-dark" style="font-size: 13.5px;">
-                        <i class="fa-solid fa-timeline text-primary me-1"></i>Lịch Sử Các Lần Nộp — Mốc {{ $mocHienTai }}
+                        <i class="fa-solid fa-timeline text-primary me-1"></i>Lịch Sử Các Báo Cáo Nhỏ — GĐ {{ $mocHienTai }}
                     </span>
                     <span class="badge bg-light text-primary border">
-                        {{ $bcHienTai->khoiBaoCaos->count() }} lần nộp
+                        {{ $bcHienTai->khoiBaoCaos->count() }} báo cáo
                     </span>
                 </div>
                 <div class="p-3 bg-light rounded-3 border">
@@ -217,12 +226,16 @@
                             <div class="card border bg-white p-3 rounded-2 shadow-none" style="font-size: 13px;">
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-primary text-white fw-semibold">Lần nộp #{{ $khoi->LanNop }}</span>
-                                        <span class="text-muted">
+                                        <span class="badge bg-primary text-white fw-semibold">Đợt nộp #{{ $khoi->LanNop }}</span>
+                                        <span class="fw-bold text-dark">{{ $khoi->TieuDe }}</span>
+                                        <span class="text-muted" style="font-size: 12px;">
                                             <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
                                         </span>
                                     </div>
-                                    <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($khoi->PhanTramHoanThanh)
+                                            <span class="badge bg-light text-dark border">{{ $khoi->PhanTramHoanThanh }}%</span>
+                                        @endif
                                         @if($khoi->TrangThai === 'Đạt')
                                             <span class="badge bg-success-subtle text-success border border-success-subtle">✅ Đạt</span>
                                         @elseif($khoi->TrangThai === 'Yêu cầu nộp lại')
@@ -232,21 +245,38 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    @if($khoi->TenFile)
-                                        <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                            <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile }}
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @if($khoi->TenFile)
+                                            <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-0.5" style="font-size: 12px;">
+                                                <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile }}
+                                            </a>
+                                        @endif
+                                        @if($khoi->LinkCode)
+                                            <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-0.5" style="font-size: 12px;">
+                                                <i class="fa-brands fa-github me-1"></i>Source Code
+                                            </a>
+                                        @endif
+                                        @if($khoi->TomTatJson || $khoi->TomTatAI)
+                                            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill py-1">
+                                                <i class="fa-solid fa-wand-magic-sparkles me-1"></i>AI Trích Xuất
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('sinhvien.baocao.show_khoi', $khoi->MaKhoi) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5" style="font-size: 12px;">
+                                            <i class="fa-solid fa-eye me-1"></i>Xem chi tiết
                                         </a>
-                                    @endif
-                                    @if($khoi->LinkCode)
-                                        <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3">
-                                            <i class="fa-brands fa-github me-1"></i>Link Source Code
-                                        </a>
-                                    @endif
+                                        @if($khoi->TrangThai !== 'Đạt')
+                                            <a href="{{ route('sinhvien.baocao.edit_khoi', $khoi->MaKhoi) }}" class="btn btn-sm btn-outline-warning rounded-pill px-2.5 py-0.5" style="font-size: 12px;">
+                                                <i class="fa-solid fa-pen me-1"></i>Sửa
+                                            </a>
+                                        @endif
+                                    </div>
                                 </div>
-                                @if($khoi->NoiDungBaoCao)
-                                    <div class="text-secondary mb-1">
-                                        <strong>Ghi chú:</strong> {{ $khoi->NoiDungBaoCao }}
+                                @if($khoi->KetQuaDatDuoc || $khoi->NoiDungBaoCao)
+                                    <div class="text-secondary mb-1" style="font-size: 12.5px;">
+                                        <strong>Kết quả:</strong> {{ Str::limit($khoi->KetQuaDatDuoc ?: $khoi->NoiDungBaoCao, 160) }}
                                     </div>
                                 @endif
                                 @if($khoi->NhanXetGV)

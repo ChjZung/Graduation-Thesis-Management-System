@@ -21,9 +21,12 @@ class BaoCaoTienDo extends Model
         'NoiDungBaoCao',
         'NgayNop',
         'TrangThai',
+        'PhanTramHoanThanh',
         'TenFile',
         'DuongDanFile',
         'NhanXet',
+        'NgayXacNhan',
+        'NguoiXacNhan',
         'MaMoc',
         'MaDeTai',
     ];
@@ -34,6 +37,8 @@ class BaoCaoTienDo extends Model
     {
         return [
             'NgayNop' => 'date',
+            'NgayXacNhan' => 'datetime',
+            'PhanTramHoanThanh' => 'integer',
         ];
     }
 

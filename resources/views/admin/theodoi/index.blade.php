@@ -91,7 +91,6 @@
                        title="{{ $stInfo['full'] }}">
                         
                         <div class="step-node-bubble">
-                            <span class="step-number">[{{ $stNum }}]</span>
                             <i class="fa-solid {{ $stInfo['icon'] }} step-icon"></i>
                         </div>
 
@@ -170,12 +169,12 @@
     </div>
 </div>
 
-{{-- ── 4. BẢNG DANH SÁCH NHÓM & 6 GIAI ĐOẠN TIẾN ĐỘ ── --}}
+{{-- ── 4. BẢNG DANH SÁCH NHÓM & 6 GIAI ĐOẠN TIẾN ĐỘ (ĐÃ TỐI ƯU) ── --}}
 <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
     <div class="card-header bg-white border-bottom py-2.5 px-3 d-flex justify-content-between align-items-center">
         <span class="fw-bold text-dark small">
             <i class="fa-regular fa-folder-open text-primary me-1.5"></i>
-            Danh Sách Nhóm Thực Hiện &amp; 6 Giai Đoạn Tiến Độ
+            Danh Sách Nhóm Thực Hiện &amp; Tiến Độ
             <span class="text-muted fw-normal ms-1">({{ $processedNhoms->count() }} nhóm)</span>
         </span>
         <div class="d-flex gap-2">
@@ -187,14 +186,14 @@
 
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead>
+            <thead class="table-light text-uppercase fs-7">
                 <tr>
-                    <th style="width: 120px;">MÃ NHÓM</th>
-                    <th style="min-width: 280px;">TÊN ĐỀ TÀI &amp; TRƯỞNG NHÓM</th>
-                    <th style="min-width: 200px;">GV HƯỚNG DẪN</th>
-                    <th style="width: 280px;">6 GIAI ĐOẠN TIẾN ĐỘ</th>
-                    <th class="text-center" style="width: 160px;">TRẠNG THÁI</th>
-                    <th class="text-center" style="width: 100px;">THAO TÁC</th>
+                    <th class="ps-3" style="width: 100px;">Mã Nhóm</th>
+                    <th style="min-width: 260px;">Đề Tài &amp; Thành Viên</th>
+                    <th style="min-width: 180px;">Giảng Viên Hướng Dẫn</th>
+                    <th style="width: 220px;">Tiến Độ (6 Mốc)</th>
+                    <th class="text-center" style="width: 130px;">Trạng Thái</th>
+                    <th class="text-center pe-3" style="width: 90px;">Thao Tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -203,103 +202,82 @@
                     $isDanger = $nhom->status_code === 'QUA_HAN';
                     $gvhd = $nhom->dangKyDeTai?->giangVienHuongDan ?? $nhom->deTai?->giangVien;
                 @endphp
-                <tr class="{{ $isDanger ? 'table-danger bg-opacity-25' : '' }}">
+                <tr class="{{ $isDanger ? 'table-danger bg-opacity-10' : '' }}">
+                    
                     {{-- 1. Mã Nhóm --}}
-                    <td>
-                        <div class="fw-bold text-primary" style="font-size: 13.5px;">
-                            {{ $nhom->TenNhom ?: $nhom->MaNhom }}
-                        </div>
-                        <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 11px;">
-                            {{ $nhom->MaNhom }}
-                        </span>
+                    <td class="ps-3">
+                        <div class="fw-bold text-primary">{{ $nhom->TenNhom ?: $nhom->MaNhom }}</div>
+                        <span class="text-muted" style="font-size: 11px;">ID: {{ $nhom->MaNhom }}</span>
                     </td>
 
-                    {{-- 2. Tên Đề Tài & Trưởng Nhóm --}}
+                    {{-- 2. Tên Đề Tài & Trưởng Nhóm / Thành viên --}}
                     <td>
-                        <div class="fw-bold text-dark mb-1" style="font-size: 13.5px; line-height: 1.35;">
+                        <div class="fw-bold text-dark text-truncate-2 mb-1" style="font-size: 13px; max-width: 320px;" title="{{ $nhom->deTai->TenDeTai ?? 'Chưa đăng ký đề tài chính thức' }}">
                             {{ $nhom->deTai->TenDeTai ?? 'Chưa đăng ký đề tài chính thức' }}
                         </div>
-                        <div class="text-secondary small d-flex flex-wrap align-items-center gap-1.5">
-                            <span class="text-warning">👑</span>
-                            <span>Trưởng nhóm: <strong>{{ $nhom->truongNhom->HoTen ?? 'Chưa xác định' }}</strong></span>
-                            @if($nhom->truongNhom)
-                                <span class="text-muted">({{ $nhom->truongNhom->MaSoSinhVien ?? $nhom->truongNhom->MaSV ?? $nhom->MaTruongNhom }})</span>
-                            @endif
-                        </div>
-                        <div class="text-muted small mt-0.5">
-                            <i class="fa-solid fa-users text-primary me-1" style="font-size: 11px;"></i>Thành viên: 
-                            <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-size: 11px;">
-                                {{ $nhom->thanhViens->count() }}/3 sinh viên
-                            </span>
+                        <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 11.5px;">
+                            <span title="Trưởng nhóm"><i class="fa-solid fa-crown text-warning me-1"></i>{{ $nhom->truongNhom->HoTen ?? 'Chưa có TN' }}</span>
+                            <span>•</span>
+                            <span title="Tổng số thành viên"><i class="fa-solid fa-users text-secondary me-1"></i>{{ $nhom->thanhViens->count() }}/3 SV</span>
                         </div>
                     </td>
 
                     {{-- 3. GV Hướng Dẫn --}}
                     <td>
                         @if($gvhd)
-                            <div class="fw-bold text-dark" style="font-size: 13px;">
+                            <div class="fw-semibold text-dark text-truncate" style="max-width: 180px; font-size: 12.5px;" title="{{ $gvhd->HocHamHocVi ? $gvhd->HocHamHocVi . ' ' : '' }}{{ $gvhd->HoTen }}">
                                 {{ $gvhd->HocHamHocVi ? $gvhd->HocHamHocVi . ' ' : '' }}{{ $gvhd->HoTen }}
                             </div>
-                            <div class="mt-0.5">
-                                <span class="badge bg-info-subtle text-info border border-info-subtle px-1.5 py-0.5" style="font-size: 11px;">
-                                    Bộ môn: {{ $gvhd->boMon->TenBoMon ?? 'CNPM' }}
-                                </span>
-                            </div>
+                            <span class="text-muted" style="font-size: 11px;">{{ $gvhd->boMon->TenBoMon ?? 'CNPM' }}</span>
                         @else
-                            <span class="text-muted fst-italic small">Chưa phân công</span>
+                            <span class="text-muted fst-italic" style="font-size: 12px;">Chưa phân công</span>
                         @endif
                     </td>
 
-                    {{-- 4. 6 Giai Đoạn Tiến Độ Track --}}
+                    {{-- 4. 6 Giai Đoạn Tiến Độ Track (Gọn gàng hơn) --}}
                     <td>
-                        <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 12.5px;">
-                            <span class="fw-bold text-dark text-truncate" style="max-width: 200px;" title="GĐ {{ $nhom->current_stage }}: {{ $nhom->current_stage_label }}">
-                                <span class="text-primary">GĐ {{ $nhom->current_stage }}/6:</span> {{ $nhom->current_stage_label }}
-                            </span>
-                            <span class="badge bg-light text-primary border rounded-pill fw-bold px-2 py-0.5" style="font-size: 11.5px;">
-                                {{ $nhom->progress_percent }}%
-                            </span>
+                        <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 11.5px;">
+                            <span class="text-dark fw-semibold">GĐ {{ $nhom->current_stage }}/6: <span class="text-muted fw-normal">{{ $nhom->current_stage_label }}</span></span>
+                            <span class="badge bg-light text-primary border px-1.5 py-0">{{ $nhom->progress_percent }}%</span>
                         </div>
-                        <div class="progress rounded-pill shadow-none" style="height: 6px; background: #e2e8f0;">
+                        <div class="progress rounded-pill" style="height: 5px; background: #e2e8f0;">
                             <div class="progress-bar rounded-pill {{ $nhom->progress_percent >= 100 ? 'bg-success' : ($nhom->status_code == 'QUA_HAN' ? 'bg-danger' : 'bg-primary') }}" 
                                  style="width: {{ $nhom->progress_percent }}%;"></div>
                         </div>
-                        <div class="text-muted small mt-1" style="font-size: 11.5px;">
-                            Hoàn thành: <strong>{{ $nhom->completed_stages }}/6</strong> mốc
-                        </div>
                     </td>
 
-                    {{-- 5. Trạng Thái / Cảnh Báo (Ngắn gọn, chuẩn màu) --}}
+                    {{-- 5. Trạng Thái / Cảnh Báo --}}
                     <td class="text-center">
                         @if($nhom->status_code === 'DUNG_TIEN_DO')
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
                                 <i class="fa-solid fa-circle-check me-1"></i>Đúng tiến độ
                             </span>
                         @elseif($nhom->status_code === 'SAP_DEN_HAN')
-                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
                                 <i class="fa-solid fa-triangle-exclamation me-1"></i>Sắp đến hạn
                             </span>
                         @elseif($nhom->status_code === 'QUA_HAN')
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
                                 <i class="fa-solid fa-circle-exclamation me-1"></i>Quá hạn
                             </span>
                         @elseif($nhom->status_code === 'HOAN_THANH')
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
                                 <i class="fa-solid fa-flag-checkered me-1"></i>Hoàn thành
                             </span>
                         @else
-                            <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1">
+                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 11px;">
                                 {{ $nhom->status_label }}
                             </span>
                         @endif
                     </td>
 
-                    {{-- 6. Thao Tác (Chuyển trang Chi Tiết Đầy Đủ riêng biệt) --}}
-                    <td class="text-center">
+                    {{-- 6. Thao Tác --}}
+                    <td class="text-center pe-3">
                         <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" 
-                           class="btn btn-sm btn-action btn-outline-primary text-nowrap" 
+                           class="btn btn-sm btn-outline-primary px-2 py-1" 
+                           style="font-size: 12px;"
                            title="Xem chi tiết tiến độ nhóm">
-                            <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                            <i class="fa-solid fa-eye"></i>
                         </a>
                     </td>
                 </tr>
@@ -318,13 +296,21 @@
     {{-- Footer Bảng --}}
     <div class="p-2.5 px-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2 bg-light">
         <div class="text-muted small">
-            Hiển thị <strong>{{ $processedNhoms->count() }}</strong> nhóm khóa luận
+            Hiển thị tổng số <strong>{{ $processedNhoms->count() }}</strong> nhóm khóa luận
         </div>
     </div>
 </div>
 
-{{-- ── STYLES RIÊNG BIỆT CHO STEPPER & TIMELINE 6 GIAI ĐOẠN ── --}}
+
 <style>
+    .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.35;
+}
 /* Stepper Timeline Container */
 .stepper-timeline-container {
     padding: 10px 5px 5px;
@@ -364,32 +350,25 @@
     transition: all 0.2s ease;
 }
 
-/* Node Bubble [1] .. [6] */
+/* Node Bubble - Chỉ hiển thị icon */
 .step-node-bubble {
     width: 44px;
     height: 44px;
     border-radius: 50%;
     background: #ffffff;
-    border: 2.5px solid #0072ce;
+    border: 2px solid #0072ce;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #0072ce;
-    font-weight: 700;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease;
     margin-bottom: 6px;
 }
 
-.step-node-bubble .step-number {
-    font-size: 13px;
-    line-height: 1;
-}
-
 .step-node-bubble .step-icon {
-    font-size: 11px;
-    margin-top: 1px;
+    font-size: 16px;
+    line-height: 1;
 }
 
 /* Node Active / Hover */

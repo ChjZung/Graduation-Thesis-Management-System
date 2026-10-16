@@ -91,7 +91,7 @@ class DeTaiController extends Controller
             }
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(6)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // B3: Danh sách các nhóm chưa có đề tài đã duyệt VÀ ĐỦ 3 SINH VIÊN
@@ -813,28 +813,52 @@ class DeTaiController extends Controller
             return redirect()->route('giangvien.dashboard');
         }
 
-        $nhoms = Nhom::with(['deTai', 'truongNhom', 'dangKyDeTai.deTai', 'baoCaos', 'hoSoBaoVe'])
-            ->where(function($query) use ($gv) {
-                $query->whereHas('dangKyDeTai', function($q) use ($gv) {
-                    $q->where('TrangThai', 'Đã duyệt')
-                      ->whereHas('deTai', function($dtQ) use ($gv) {
-                          $dtQ->where('MaGV', $gv->MaGV);
-                      });
-                })->orWhereHas('deTai', function($q) use ($gv) {
-                    $q->where('MaGV', $gv->MaGV);
-                });
-            })->get();
+        $nhoms = Nhom::with([
+            'deTai',
+            'truongNhom',
+            'thanhViens.sinhVien',
+            'dangKyDeTai.deTai',
+            'baoCaos.khoiBaoCaos',
+            'baoCaos.tomTatBaoCao',
+            'hoSoBaoVe'
+        ])
+        ->where(function($query) use ($gv) {
+            $query->whereHas('dangKyDeTai', function($q) use ($gv) {
+                $q->where('TrangThai', 'Đã duyệt')
+                  ->whereHas('deTai', function($dtQ) use ($gv) {
+                      $dtQ->where('MaGV', $gv->MaGV);
+                  });
+            })->orWhereHas('deTai', function($q) use ($gv) {
+                $q->where('MaGV', $gv->MaGV);
+            });
+        })->get();
 
         $stats = [
+            'tong_nhom'    => $nhoms->count(),
+            'dung_tien_do' => 0,
             'sap_den_han'  => 0,
             'qua_han'      => 0,
             'cho_nhan_xet' => 0,
+            'hoan_thanh'   => 0,
         ];
 
-        $today = \Carbon\Carbon::today();
         foreach ($nhoms as $nhom) {
+            \App\Http\Controllers\Admin\TheoDoiDoAnController::processNhomStageData($nhom);
+
+            if ($nhom->status_code === 'QUA_HAN') {
+                $stats['qua_han']++;
+            } elseif ($nhom->status_code === 'SAP_DEN_HAN') {
+                $stats['sap_den_han']++;
+            } elseif ($nhom->status_code === 'HOAN_THANH') {
+                $stats['hoan_thanh']++;
+            } else {
+                $stats['dung_tien_do']++;
+            }
+
+            // Đếm các khối báo cáo hoặc báo cáo con đang chờ GVHD nhận xét
             foreach ($nhom->baoCaos as $bc) {
-                if (empty($bc->NhanXet)) {
+                $pendingKhois = $bc->khoiBaoCaos ? $bc->khoiBaoCaos->where('TrangThai', 'Chờ duyệt')->count() : 0;
+                if ($pendingKhois > 0 || $bc->TrangThai === 'Đã nộp' || (empty($bc->NhanXet) && $bc->TrangThai !== 'Đạt')) {
                     $stats['cho_nhan_xet']++;
                 }
             }

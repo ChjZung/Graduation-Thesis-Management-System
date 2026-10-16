@@ -2,38 +2,116 @@
 
 @section('page_title', 'Tổng Quan Giảng Viên Hướng Dẫn')
 
+@push('styles')
+<style>
+    /* CSS Tùy chỉnh Giao diện Clean & Professional */
+    :root {
+        --gv-border: #e2e8f0;
+        --gv-bg-subtle: #f8fafc;
+    }
+
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid var(--gv-border);
+        border-radius: 0.85rem;
+        padding: 1.25rem;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-icon-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .card-dashboard {
+        border: 1px solid var(--gv-border);
+        border-radius: 0.85rem;
+        background: #ffffff;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+    }
+
+    .card-dashboard .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid var(--gv-border);
+        padding: 1rem 1.25rem;
+    }
+
+    /* Nút Review AI nổi bật */
+    .btn-ai-review {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: #ffffff !important;
+        border: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .btn-ai-review:hover {
+        opacity: 0.9;
+        color: #ffffff;
+    }
+
+    /* CSS Bảng */
+    .table-modern tbody tr {
+        transition: background-color 0.15s ease;
+    }
+    .table-modern tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Cắt chữ tiêu đề dài */
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+@endpush
+
 @section('content')
 <!-- Header & Welcome Banner -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
-        <h3 class="fw-bold mb-0 text-primary-custom">
+        <h3 class="fw-bold mb-1 text-dark">
             <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>Tổng Quan Giảng Viên Hướng Dẫn
         </h3>
+        <p class="text-muted small mb-0">Quản lý danh sách nhóm hướng dẫn, tiến độ báo cáo và lịch họp.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 shadow-sm">
-            <i class="fa-solid fa-plus me-1"></i> Đề xuất Đề tài mới
+        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium">
+            <i class="fa-solid fa-plus me-1.5"></i> Đề xuất Đề tài mới
         </a>
-        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3">
-            <i class="fa-regular fa-calendar-days me-1"></i> Lịch của tôi
+        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium">
+            <i class="fa-regular fa-calendar-days me-1.5"></i> Lịch của tôi
         </a>
     </div>
 </div>
 
-<!-- 4 Stat Cards (Đồng bộ chuẩn học thuật - Không màu sặc sỡ) -->
+<!-- 4 Stat Cards (Cập nhật giao diện thẻ mượt mà, chuyên nghiệp) -->
 <div class="row g-3 mb-4">
     <!-- Stat 1: Đề tài đảm nhận -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
+        <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="kpi-title">Đề tài đảm nhận</div>
-                    <div class="kpi-value">{{ $soDeTai }}</div>
-                    <span class="badge bg-light text-primary border rounded-pill">
+                    <div class="text-muted small fw-medium mb-1">Đề tài đảm nhận</div>
+                    <div class="h2 fw-bold text-dark mb-1">{{ $soDeTai }}</div>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
                         Đang mở: {{ $deTaiDangMo }}
                     </span>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-avatar bg-primary-subtle text-primary">
                     <i class="fa-solid fa-book-bookmark"></i>
                 </div>
             </div>
@@ -42,20 +120,20 @@
 
     <!-- Stat 2: Nhóm HD chính thức -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
+        <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="w-100 me-2">
-                    <div class="kpi-title">Nhóm HD chính thức</div>
-                    <div class="kpi-value">{{ $soNhomHD }} <span class="fs-6 text-muted fw-normal">/ {{ $soNhomToiDa }} nhóm</span></div>
+                    <div class="text-muted small fw-medium mb-1">Nhóm HD chính thức</div>
+                    <div class="h2 fw-bold text-dark mb-1">{{ $soNhomHD }} <span class="fs-6 text-muted fw-normal">/ {{ $soNhomToiDa }} nhóm</span></div>
                     @php
                         $percentHD = min(100, round(($soNhomHD / max(1, $soNhomToiDa)) * 100));
                     @endphp
-                    <div class="progress mt-1" style="height: 6px;">
+                    <div class="progress mt-2" style="height: 6px;">
                         <div class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: {{ $percentHD }}%;"></div>
                     </div>
-                    <div class="kpi-subtext text-muted mt-1">{{ $percentHD }}% chỉ tiêu phân bổ</div>
+                    <div class="text-muted mt-1.5" style="font-size: 0.78rem;">{{ $percentHD }}% chỉ tiêu phân bổ</div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-avatar bg-info-subtle text-info">
                     <i class="fa-solid fa-users-viewfinder"></i>
                 </div>
             </div>
@@ -64,22 +142,22 @@
 
     <!-- Stat 3: Báo cáo chờ đánh giá -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
+        <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="kpi-title">Báo cáo chờ đánh giá</div>
-                    <div class="kpi-value">{{ $soBaoCaoChoDuyet }}</div>
+                    <div class="text-muted small fw-medium mb-1">Báo cáo chờ đánh giá</div>
+                    <div class="h2 fw-bold text-dark mb-1">{{ $soBaoCaoChoDuyet }}</div>
                     @if($soBaoCaoChoDuyet > 0)
-                        <span class="badge bg-light text-primary border rounded-pill">
-                            <i class="fa-solid fa-bell me-1 text-danger"></i>Cần xử lý
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
+                            <i class="fa-solid fa-bell me-1"></i>Cần xử lý
                         </span>
                     @else
-                        <span class="badge bg-light text-muted border rounded-pill">
-                            <i class="fa-solid fa-check me-1 text-success"></i>Đã duyệt hết
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                            <i class="fa-solid fa-check me-1"></i>Đã duyệt hết
                         </span>
                     @endif
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-avatar bg-warning-subtle text-warning">
                     <i class="fa-solid fa-file-circle-exclamation"></i>
                 </div>
             </div>
@@ -88,22 +166,22 @@
 
     <!-- Stat 4: Nhóm rủi ro trễ tiến độ -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="admin-kpi-card">
+        <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="kpi-title">Nhóm rủi ro trễ tiến độ</div>
-                    <div class="kpi-value">{{ $soNhomTreHan }}</div>
+                    <div class="text-muted small fw-medium mb-1">Nhóm rủi ro trễ tiến độ</div>
+                    <div class="h2 fw-bold text-dark mb-1">{{ $soNhomTreHan }}</div>
                     @if($soNhomTreHan > 0)
-                        <span class="badge bg-light text-danger border border-danger-subtle rounded-pill">
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
                             <i class="fa-solid fa-triangle-exclamation me-1"></i>Cần đôn đốc
                         </span>
                     @else
-                        <span class="badge bg-light text-success border border-success-subtle rounded-pill">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
                             <i class="fa-solid fa-shield-check me-1"></i>Đúng tiến độ
                         </span>
                     @endif
                 </div>
-                <div class="kpi-icon-wrap" style="background: #f1f5f9; color: #003366;">
+                <div class="kpi-icon-avatar bg-danger-subtle text-danger">
                     <i class="fa-solid fa-clock-rotate-left"></i>
                 </div>
             </div>
@@ -115,13 +193,13 @@
 <div class="row g-4 mb-4">
     <!-- Biểu đồ 1: Tiến độ các mốc của từng nhóm -->
     <div class="col-lg-7">
-        <div class="card card-premium border-0 shadow-sm h-100 rounded-4">
+        <div class="card card-dashboard h-100">
             <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0 text-dark">
                     <i class="fa-solid fa-chart-simple text-primary me-2"></i>
                     Tiến Độ Mốc Báo Cáo Của Từng Nhóm Hướng Dẫn
                 </h6>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small">Mục Tiêu 5 Mốc</span>
+                <span class="badge bg-light text-secondary border rounded-pill small">Mục Tiêu 5 Mốc</span>
             </div>
             <div class="card-body p-3 p-md-4">
                 <div style="position: relative; height: 230px; width: 100%;">
@@ -136,7 +214,7 @@
 
     <!-- Biểu đồ 2: Tình trạng đánh giá báo cáo -->
     <div class="col-lg-5">
-        <div class="card card-premium border-0 shadow-sm h-100 rounded-4">
+        <div class="card card-dashboard h-100">
             <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0 text-dark">
                     <i class="fa-solid fa-chart-pie text-success me-2"></i>
@@ -160,19 +238,19 @@
 <div class="row g-4">
     <!-- Cột Trái (8 phần): Nhóm SV Đang Hướng Dẫn -->
     <div class="col-lg-8">
-        <div class="card card-premium shadow-sm border-0 mb-4">
+        <div class="card card-dashboard mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fa-solid fa-users text-primary"></i>
-                    <h5 class="fw-bold mb-0">Nhóm Sinh Viên Đang Hướng Dẫn</h5>
-                    <span class="badge bg-primary rounded-pill">{{ $nhoms->count() }}</span>
+                    <h5 class="fw-bold mb-0 text-dark">Nhóm Sinh Viên Đang Hướng Dẫn</h5>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill fw-semibold">{{ $nhoms->count() }}</span>
                 </div>
-                <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-link text-primary text-decoration-none p-0 fw-semibold">
                     Xem tất cả tiến độ →
                 </a>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover table-modern align-middle mb-0">
                     <thead class="table-light text-muted small">
                         <tr>
                             <th class="ps-3" width="12%">Mã nhóm</th>
@@ -193,7 +271,7 @@
                         @endphp
                         <tr>
                             <td class="ps-3">
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-bold border">
+                                <span class="badge bg-light text-dark fw-bold border">
                                     {{ $nhom->MaNhom }}
                                 </span>
                             </td>
@@ -216,7 +294,7 @@
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress flex-grow-1" style="height: 6px;">
-                                        <div class="progress-bar bg-success" style="width: {{ $percentTienDo }}%;"></div>
+                                        <div class="progress-bar bg-success rounded-pill" style="width: {{ $percentTienDo }}%;"></div>
                                     </div>
                                     <span class="small fw-bold text-dark">{{ $percentTienDo }}%</span>
                                 </div>
@@ -228,13 +306,12 @@
                                 <div class="btn-group">
                                     @if($lastBaoCao)
                                         <a href="{{ route('giangvien.baocao.show', $lastBaoCao->MaBaoCao) }}" 
-                                           class="btn btn-sm btn-primary rounded-pill px-2 d-inline-flex align-items-center gap-1 shadow-sm"
-                                           style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none;">
+                                           class="btn btn-sm btn-ai-review rounded-pill px-2.5 d-inline-flex align-items-center gap-1 shadow-sm">
                                             <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
                                             <span class="small fw-bold">Review (AI)</span>
                                         </a>
                                     @else
-                                        <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                        <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-light border rounded-pill px-2.5">
                                             <i class="fa-regular fa-eye me-1"></i>Chi tiết
                                         </a>
                                     @endif
@@ -255,14 +332,14 @@
         </div>
     </div>
 
-    <!-- Cột Phải (4 phần): Lịch Làm Việc & Hội Đồng (Theo Mockup Ảnh 2) -->
+    <!-- Cột Phải (4 phần): Lịch Làm Việc & Hội Đồng -->
     <div class="col-lg-4">
         <!-- Lịch Làm Việc & Hội Đồng -->
-        <div class="card card-premium shadow-sm border-0 mb-4">
+        <div class="card card-dashboard mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fa-solid fa-calendar-check text-primary"></i>
-                    <h6 class="fw-bold mb-0">Lịch Làm Việc & Hội Đồng</h6>
+                    <h6 class="fw-bold mb-0 text-dark">Lịch Làm Việc & Hội Đồng</h6>
                 </div>
                 <a href="{{ route('giangvien.calendar') }}" class="text-primary small fw-semibold text-decoration-none">
                     Xem lịch →
@@ -354,7 +431,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Mốc đã đạt (trên 5)',
                     data: {!! json_encode($chartNhomProgress ?? []) !!},
-                    backgroundColor: '#0072ce',
+                    backgroundColor: '#2563eb',
+                    hoverBackgroundColor: '#1d4ed8',
                     borderRadius: 6,
                     maxBarThickness: 32
                 }]

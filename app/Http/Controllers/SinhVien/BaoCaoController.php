@@ -10,6 +10,7 @@ use App\Models\Nhom;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
 use App\Models\KhoiBaoCaoTienDo;
+use App\Models\TomTatBaoCao;
 use App\Helpers\IdGenerator;
 use App\Jobs\GenerateAiSummaryJob;
 use Illuminate\Http\Request;
@@ -415,5 +416,286 @@ class BaoCaoController extends Controller
             }
         }
         return $map;
+    }
+
+    public function createKhoi($lanBaoCao)
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
+        $deTai = $nhom->deTai;
+
+        if (!$deTai) {
+            return redirect()->route('sinhvien.baocao.index')->with('error', 'Nhóm chưa có đề tài được phê duyệt.');
+        }
+
+        $lan = (int)$lanBaoCao;
+        if (!isset(self::MOCS[$lan])) {
+            return redirect()->route('sinhvien.baocao.index')->with('error', 'Giai đoạn không hợp lệ.');
+        }
+
+        $mocInfo = self::MOCS[$lan];
+        $baoCao = BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->where('LanBaoCao', $lan)->first();
+
+        $soKhoi = $baoCao ? KhoiBaoCaoTienDo::where('MaBaoCao', $baoCao->MaBaoCao)->count() : 0;
+        $lanNop = $soKhoi + 1;
+
+        return view('sinhvien.baocao.create_khoi', compact('sinhVien', 'nhom', 'deTai', 'lan', 'mocInfo', 'baoCao', 'lanNop'));
+    }
+
+    public function storeKhoi(Request $request)
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
+        $deTai = $nhom->deTai;
+
+        if (!$deTai) {
+            return redirect()->route('sinhvien.baocao.index')->with('error', 'Nhóm chưa có đề tài.');
+        }
+
+        $lan = (int)$request->input('LanBaoCao');
+        $request->validate([
+            'LanBaoCao' => 'required|integer|between:1,6',
+            'TieuDe' => 'required|string|max:255',
+            'KetQuaDatDuoc' => 'required|string|min:10',
+            'KhoKhan' => 'nullable|string',
+            'HuongGiaiQuyet' => 'nullable|string',
+            'KeHoachTiepTheo' => 'nullable|string',
+            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
+            'FileBaoCao' => 'nullable|file|mimes:pdf|max:25600',
+            'LinkCode' => 'nullable|url',
+        ], [
+            'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
+            'KetQuaDatDuoc.required' => 'Vui lòng nhập kết quả đã thực hiện / đạt được.',
+            'KetQuaDatDuoc.min' => 'Nội dung kết quả tối thiểu 10 ký tự.',
+            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF.',
+            'FileBaoCao.max' => 'Dung lượng file PDF tối đa là 25MB.',
+        ]);
+
+        $baoCao = BaoCaoTienDo::firstOrCreate(
+            ['MaDeTai' => $deTai->MaDeTai, 'LanBaoCao' => $lan],
+            [
+                'MaBaoCao' => IdGenerator::nextBaoCao(),
+                'TieuDe' => self::MOCS[$lan]['ten'],
+                'TrangThai' => 'Chờ duyệt',
+                'NgayNop' => now()->toDateString(),
+                'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', 0),
+            ]
+        );
+
+        $soKhoi = KhoiBaoCaoTienDo::where('MaBaoCao', $baoCao->MaBaoCao)->count();
+        $lanNop = $soKhoi + 1;
+        $maKhoi = 'KHOI_' . $baoCao->MaBaoCao . '_' . $lanNop . '_' . time();
+
+        $tenFile = null;
+        $duongDanFile = null;
+        if ($request->hasFile('FileBaoCao')) {
+            $file = $request->file('FileBaoCao');
+            $tenFile = $file->getClientOriginalName();
+            $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$lan}", 'public');
+        } elseif ($request->filled('ExistingFileUrl')) {
+            $duongDanFile = $request->input('ExistingFileUrl');
+            $tenFile = $request->input('ExistingFileName') ?: basename($duongDanFile);
+        }
+
+        $tomTatJsonStr = $request->input('TomTatJson');
+        $tomTatJson = null;
+        if (!empty($tomTatJsonStr)) {
+            $tomTatJson = is_string($tomTatJsonStr) ? json_decode($tomTatJsonStr, true) : $tomTatJsonStr;
+        }
+
+        $khoi = KhoiBaoCaoTienDo::create([
+            'MaKhoi' => $maKhoi,
+            'MaBaoCao' => $baoCao->MaBaoCao,
+            'MaDeTai' => $deTai->MaDeTai,
+            'LanBaoCao' => $lan,
+            'LanNop' => $lanNop,
+            'TieuDe' => $request->input('TieuDe'),
+            'NoiDungBaoCao' => $request->input('KetQuaDatDuoc'),
+            'KetQuaDatDuoc' => $request->input('KetQuaDatDuoc'),
+            'KhoKhan' => $request->input('KhoKhan'),
+            'HuongGiaiQuyet' => $request->input('HuongGiaiQuyet'),
+            'KeHoachTiepTheo' => $request->input('KeHoachTiepTheo'),
+            'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', 0),
+            'TenFile' => $tenFile,
+            'DuongDanFile' => $duongDanFile,
+            'LinkCode' => $request->input('LinkCode'),
+            'TomTatAI' => $request->input('TomTatAI'),
+            'TomTatJson' => $tomTatJson,
+            'TrangThai' => 'Chờ duyệt',
+            'NgayNop' => now(),
+        ]);
+
+        $baoCao->update([
+            'TrangThai' => 'Chờ duyệt',
+            'PhanTramHoanThanh' => max((int)$baoCao->PhanTramHoanThanh, (int)$request->input('PhanTramHoanThanh', 0)),
+            'NgayNop' => now()->toDateString(),
+            'TenFile' => $tenFile ?: $baoCao->TenFile,
+            'DuongDanFile' => $duongDanFile ?: $baoCao->DuongDanFile,
+        ]);
+
+        if (!empty($tomTatJson)) {
+            $maTomTat = IdGenerator::nextTomTat();
+            TomTatBaoCao::updateOrCreate(
+                ['MaBaoCao' => $baoCao->MaBaoCao],
+                [
+                    'MaTomTat' => $maTomTat,
+                    'MaKhoi' => $maKhoi,
+                    'TenFile' => $tenFile,
+                    'DuongDanFile' => $duongDanFile,
+                    'SoTrang' => (int)($tomTatJson['total_pages'] ?? 1),
+                    'CongViecDaHoanThanh' => $request->input('KetQuaDatDuoc'),
+                    'KhoKhan' => $request->input('KhoKhan'),
+                    'KeHoachTuanToi' => $request->input('KeHoachTiepTheo'),
+                    'NoiDungAI' => $request->input('TomTatAI') ?: ($tomTatJson['overall_summary'] ?? ''),
+                    'TomTatJson' => $tomTatJson,
+                    'TrangThai' => 'Đã tạo',
+                    'TrangThaiXuLy' => 'hoan_thanh',
+                    'NgayTomTat' => now(),
+                ]
+            );
+        }
+
+        return redirect()->route('sinhvien.baocao.index')->with('success', "Đã tạo và nộp báo cáo nhỏ (Báo cáo đợt {$lanNop}) cho Giai đoạn {$lan} thành công!");
+    }
+
+    public function showKhoi($id)
+    {
+        $khoi = KhoiBaoCaoTienDo::with(['baoCaoTienDo.deTai.giangVien', 'tomTat'])
+            ->where('MaKhoi', $id)->orWhere('id', $id)->firstOrFail();
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->orWhere('MaSV', $user->TenDangNhap)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
+        $nhom = $thanhVien ? Nhom::find($thanhVien->MaNhom) : null;
+
+        if ($nhom && $khoi->baoCaoTienDo && $khoi->baoCaoTienDo->deTai && $khoi->baoCaoTienDo->deTai->MaDeTai !== $nhom->MaDeTai) {
+            abort(403, 'Bạn không có quyền xem báo cáo này.');
+        }
+
+        $mocInfo = self::MOCS[$khoi->LanBaoCao] ?? null;
+
+        return view('sinhvien.baocao.show_khoi', compact('khoi', 'nhom', 'mocInfo'));
+    }
+
+    public function editKhoi($id)
+    {
+        $khoi = KhoiBaoCaoTienDo::with(['baoCaoTienDo.deTai'])
+            ->where('MaKhoi', $id)->orWhere('id', $id)->firstOrFail();
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->orWhere('MaSV', $user->TenDangNhap)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::findOrFail($thanhVien->MaNhom);
+
+        if ($khoi->baoCaoTienDo && $khoi->baoCaoTienDo->deTai && $khoi->baoCaoTienDo->deTai->MaDeTai !== $nhom->MaDeTai) {
+            abort(403, 'Bạn không có quyền chỉnh sửa báo cáo này.');
+        }
+
+        if ($khoi->TrangThai === 'Đạt') {
+            return redirect()->route('sinhvien.baocao.show_khoi', $id)->with('error', 'Báo cáo đã được GVHD đánh giá Đạt, không thể chỉnh sửa.');
+        }
+
+        $lan = $khoi->LanBaoCao;
+        $mocInfo = self::MOCS[$lan] ?? null;
+
+        return view('sinhvien.baocao.edit_khoi', compact('khoi', 'nhom', 'lan', 'mocInfo'));
+    }
+
+    public function updateKhoi(Request $request, $id)
+    {
+        $khoi = KhoiBaoCaoTienDo::with('baoCaoTienDo')
+            ->where('MaKhoi', $id)->orWhere('id', $id)->firstOrFail();
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->orWhere('MaSV', $user->TenDangNhap)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::findOrFail($thanhVien->MaNhom);
+
+        if ($khoi->baoCaoTienDo && $khoi->baoCaoTienDo->deTai && $khoi->baoCaoTienDo->deTai->MaDeTai !== $nhom->MaDeTai) {
+            abort(403, 'Bạn không có quyền cập nhật báo cáo này.');
+        }
+
+        $request->validate([
+            'TieuDe' => 'required|string|max:255',
+            'KetQuaDatDuoc' => 'required|string|min:10',
+            'KhoKhan' => 'nullable|string',
+            'HuongGiaiQuyet' => 'nullable|string',
+            'KeHoachTiepTheo' => 'nullable|string',
+            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
+            'FileBaoCao' => 'nullable|file|mimes:pdf|max:25600',
+            'LinkCode' => 'nullable|url',
+        ]);
+
+        $tenFile = $khoi->TenFile;
+        $duongDanFile = $khoi->DuongDanFile;
+        if ($request->hasFile('FileBaoCao')) {
+            $file = $request->file('FileBaoCao');
+            $tenFile = $file->getClientOriginalName();
+            $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$khoi->LanBaoCao}", 'public');
+        }
+
+        $khoi->update([
+            'TieuDe' => $request->input('TieuDe'),
+            'NoiDungBaoCao' => $request->input('KetQuaDatDuoc'),
+            'KetQuaDatDuoc' => $request->input('KetQuaDatDuoc'),
+            'KhoKhan' => $request->input('KhoKhan'),
+            'HuongGiaiQuyet' => $request->input('HuongGiaiQuyet'),
+            'KeHoachTiepTheo' => $request->input('KeHoachTiepTheo'),
+            'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', $khoi->PhanTramHoanThanh),
+            'TenFile' => $tenFile,
+            'DuongDanFile' => $duongDanFile,
+            'LinkCode' => $request->input('LinkCode', $khoi->LinkCode),
+            'TrangThai' => 'Chờ duyệt',
+            'NgayNop' => now(),
+        ]);
+
+        $khoi->baoCaoTienDo->update([
+            'TrangThai' => 'Chờ duyệt',
+            'PhanTramHoanThanh' => max((int)$khoi->baoCaoTienDo->PhanTramHoanThanh, (int)$khoi->PhanTramHoanThanh),
+            'NgayNop' => now()->toDateString(),
+        ]);
+
+        return redirect()->route('sinhvien.baocao.show_khoi', $id)->with('success', 'Đã cập nhật và nộp lại báo cáo thành công!');
+    }
+
+    public function destroyKhoi($id)
+    {
+        $khoi = KhoiBaoCaoTienDo::with('baoCaoTienDo')->where('MaKhoi', $id)->orWhere('id', $id)->firstOrFail();
+        if ($khoi->TrangThai !== 'Chờ duyệt') {
+            return back()->with('error', 'Chỉ có thể xóa báo cáo nhỏ đang ở trạng thái Chờ duyệt.');
+        }
+
+        $khoi->delete();
+        return redirect()->route('sinhvien.baocao.index')->with('success', 'Đã xóa báo cáo nhỏ thành công.');
+    }
+
+    public function ajaxAiSummary(Request $request)
+    {
+        $request->validate([
+            'FilePdf' => 'required|file|mimes:pdf|max:25600',
+            'LanBaoCao' => 'nullable|integer|between:1,6',
+        ]);
+
+        try {
+            $file = $request->file('FilePdf');
+            $stage = (int)$request->input('LanBaoCao', 1);
+
+            $tempPath = $file->store('temp_ai', 'public');
+            $fullPath = Storage::disk('public')->path($tempPath);
+
+            $aiService = app(\App\Services\AiSummaryService::class);
+            $result = $aiService->summarizePdf($fullPath, $stage);
+
+            $result['temp_file_url'] = $tempPath;
+            $result['temp_file_name'] = $file->getClientOriginalName();
+
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Lỗi xử lý tóm tắt AI: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

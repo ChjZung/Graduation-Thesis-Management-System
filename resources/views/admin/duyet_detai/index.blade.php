@@ -262,13 +262,11 @@
         <h4 class="page-main-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
             <i class="fa-solid fa-book-bookmark text-primary"></i> Quản Lý &amp; Thống Kê Đề Tài Khóa Luận
         </h4>
-        <p class="text-muted small mb-0">
-            Theo dõi tiến độ xét duyệt chuyên môn, quản lý danh sách, công bố đề tài và phân tích báo cáo thống kê theo học kỳ.
-        </p>
+       
     </div>
     <div class="d-flex flex-wrap gap-2">
         {{-- Nút Xuất Danh Sách Đề Tài Đã Công Bố --}}
-        <a href="{{ route('admin.duyet_detai.export', array_merge(request()->all(), ['TrangThai' => 'da_cong_bo', 'MaHocKy' => $selectedHocKy])) }}" class="btn btn-sm btn-success rounded-3 px-3 fw-semibold shadow-sm" title="Xuất file Excel/CSV danh sách đề tài đã công bố theo bộ lọc hiện tại">
+        <a href="{{ route('admin.duyet_detai.export', array_merge(request()->all(), ['TrangThai' => 'da_cong_bo', 'MaHocKy' => $selectedHocKy])) }}" class="btn btn-sm btn-success rounded-3 px-3 " title="Xuất file Excel/CSV danh sách đề tài đã công bố theo bộ lọc hiện tại">
             <i class="fa-solid fa-file-excel me-1"></i> Xuất Đề Tài Đã Công Bố
         </a>
 
@@ -317,7 +315,7 @@
                 <div class="kpi-metric-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="kpi-label">Tổng Đề Tài (Học Kỳ)</div>
+                            <div class="kpi-label">Tổng Đề Tài Học Kỳ</div>
                             <div class="kpi-value">{{ $counts['total'] }}</div>
                         </div>
                         <div class="kpi-icon-box" style="background: #f1f5f9; color: #003366;">
@@ -325,8 +323,8 @@
                         </div>
                     </div>
                     <div class="kpi-subtext mt-2">
-                        <span class="badge bg-light text-dark border"><i class="fa-regular fa-clock me-1 text-primary"></i>HK đang chọn</span>
-                        <span>Toàn bộ đề tài trong kỳ</span>
+                        <span class="badge bg-light text-dark border"><i class="fa-regular fa-clock me-1 text-primary"></i>Học Kỳ</span>
+                       
                     </div>
                 </div>
             </div>
@@ -345,8 +343,8 @@
                     </div>
                     <div class="kpi-subtext mt-2">
                         @php $pctCb = $counts['total'] > 0 ? round(($counts['da_cong_bo_tab'] / $counts['total']) * 100, 1) : 0; @endphp
-                        <span class="badge bg-light text-primary border fw-semibold">{{ $pctCb }}%</span>
-                        <span>Sinh viên được phép đăng ký</span>
+                        
+                       
                     </div>
                 </div>
             </div>
@@ -363,14 +361,7 @@
                             <i class="fa-solid fa-triangle-exclamation"></i>
                         </div>
                     </div>
-                    <div class="kpi-subtext mt-2">
-                        @if($counts['tu_choi_can_sua'] > 0)
-                            <span class="badge bg-light text-danger border fw-semibold">Cần GV hoàn thiện</span>
-                        @else
-                            <span class="badge bg-light text-muted border">Không có đề tài lỗi</span>
-                        @endif
-                        <span>Chưa đạt yêu cầu</span>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -386,10 +377,7 @@
                             <i class="fa-solid fa-hourglass-half"></i>
                         </div>
                     </div>
-                    <div class="kpi-subtext mt-2">
-                        <span class="badge bg-light text-secondary border fw-semibold">{{ $counts['cho_duyet_bm'] }} BM / {{ $counts['cho_duyet_khoa'] }} Khoa</span>
-                        <span>Đang xử lý thẩm định</span>
-                    </div>
+                   
                 </div>
             </div>
         </div>
