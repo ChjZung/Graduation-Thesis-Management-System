@@ -327,4 +327,23 @@ class IdGenerator
             return $id;
         });
     }
+
+    /**
+     * Sinh mã Lịch gặp hướng dẫn: LG0001, LG0002...
+     */
+    public static function nextLichGap(): string
+    {
+        return DB::transaction(function () {
+            $max = DB::table('LichGapHuongDan')
+                ->where('MaLichGap', 'REGEXP', '^LG[0-9]+$')
+                ->max(DB::raw("CAST(SUBSTRING(MaLichGap, 3) AS UNSIGNED)"));
+            $next = ($max ?? 0) + 1;
+            $id = 'LG' . str_pad($next, 4, '0', STR_PAD_LEFT);
+            while (DB::table('LichGapHuongDan')->where('MaLichGap', $id)->exists()) {
+                $next++;
+                $id = 'LG' . str_pad($next, 4, '0', STR_PAD_LEFT);
+            }
+            return $id;
+        });
+    }
 }

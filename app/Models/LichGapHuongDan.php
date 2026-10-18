@@ -19,8 +19,13 @@ class LichGapHuongDan extends Model
         'ThoiGianBatDau',
         'ThoiGianKetThuc',
         'DiaDiem',
+        'HinhThuc',     // 'TrucTiep', 'TrucTuyen'
+        'LinkCuocHop',
         'NoiDung',
-        'TrangThai',
+        'SoNhomToiDa',
+        'SoNhomDaDangKy',
+        'TrangThai',    // 'MoDangKy', 'DaDuCho', 'DongDangKy', 'DaHuy', 'DaHoanThanh'
+        'LyDoHuy',
         'NgayTao',
         'MaNhom',
         'MaGV',
@@ -34,6 +39,8 @@ class LichGapHuongDan extends Model
             'ThoiGianBatDau' => 'datetime',
             'ThoiGianKetThuc' => 'datetime',
             'NgayTao' => 'date',
+            'SoNhomToiDa' => 'integer',
+            'SoNhomDaDangKy' => 'integer',
         ];
     }
 
@@ -45,5 +52,69 @@ class LichGapHuongDan extends Model
     public function giangVien()
     {
         return $this->belongsTo(GiangVien::class, 'MaGV', 'MaGV');
+    }
+
+    public function dangKys()
+    {
+        return $this->hasMany(DangKyLichHuongDan::class, 'MaLichGap', 'MaLichGap');
+    }
+
+    public function dangKyHieuLucs()
+    {
+        return $this->hasMany(DangKyLichHuongDan::class, 'MaLichGap', 'MaLichGap')
+            ->where('TrangThai', 'DaXacNhan');
+    }
+
+    /**
+     * Số chỗ còn lại trong khung giờ
+     */
+    public function getSoChoConLaiAttribute(): int
+    {
+        $max = $this->SoNhomToiDa ?: 1;
+        $booked = $this->SoNhomDaDangKy ?: 0;
+        return max(0, $max - $booked);
+    }
+
+    /**
+     * Trạng thái tính toán theo thực tế thời gian và số chỗ
+     */
+    public function getTrangThaiThucTeAttribute(): string
+    {
+        if ($this->TrangThai === 'DaHuy') {
+            return 'DaHuy';
+        }
+        if ($this->TrangThai === 'DongDangKy') {
+            return 'DongDangKy';
+        }
+        if ($this->ThoiGianBatDau < now()) {
+            return 'DaQuaHan';
+        }
+        if ($this->so_cho_con_lai <= 0) {
+            return 'DaDuCho';
+        }
+        return 'MoDangKy';
+    }
+
+    /**
+     * Nhãn hiển thị thân thiện tiếng Việt
+     */
+    public function getTenTrangThaiAttribute(): string
+    {
+        return match ($this->trang_thai_thuc_te) {
+            'MoDangKy'   => 'Mở đăng ký',
+            'DaDuCho'    => 'Đã đủ chỗ',
+            'DongDangKy' => 'Đã đóng đăng ký',
+            'DaHuy'      => 'Đã hủy',
+            'DaQuaHan'   => 'Đã qua hạn',
+            default      => $this->TrangThai ?? 'Mở đăng ký',
+        };
+    }
+
+    /**
+     * Khung giờ có khả dụng cho sinh viên đăng ký hay không
+     */
+    public function getIsKhaDungAttribute(): bool
+    {
+        return ($this->trang_thai_thuc_te === 'MoDangKy') && ($this->so_cho_con_lai > 0);
     }
 }

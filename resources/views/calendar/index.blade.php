@@ -335,10 +335,48 @@
 @section('content')
 <div class="container-fluid px-0">
 
-    {{-- ── LỊCH QUY TRÌNH THEO TUẦN ── --}}
-    <div class="timetable-wrapper" id="weeklyTimetableContainer">
-        {{-- Toolbar trên cùng --}}
-        <div class="timetable-toolbar">
+    {{-- ── THANH CHUYỂN TAB CHÍNH: TAB 1 LỊCH QUY TRÌNH vs TAB 2 LỊCH HẸN HƯỚNG DẪN ── --}}
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <ul class="nav nav-pills custom-calendar-main-tabs p-1 bg-white rounded-pill border shadow-xs d-inline-flex m-0">
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-4 py-2 fw-bold {{ ($activeTab ?? 'quy_trinh') === 'quy_trinh' ? 'active bg-primary text-white shadow-xs' : 'text-secondary' }}" 
+                   href="{{ url()->current() }}?tab=quy_trinh&date={{ $currentDate ?? now()->format('Y-m-d') }}">
+                    <i class="fa-solid fa-calendar-week me-2"></i>
+                    @if(($roleTitle ?? '') == 'Sinh Viên') Lịch Báo Cáo Khóa Luận @else Lịch Quy Trình Theo Tuần @endif
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-4 py-2 fw-bold {{ ($activeTab ?? 'quy_trinh') === 'lich_hen' ? 'active bg-primary text-white shadow-xs' : 'text-secondary' }}" 
+                   href="{{ url()->current() }}?tab=lich_hen&date={{ $currentDate ?? now()->format('Y-m-d') }}">
+                    <i class="fa-solid fa-calendar-check me-2"></i> Lịch Hẹn Hướng Dẫn
+                    @if(isset($appointmentSlots) && $appointmentSlots->count() > 0)
+                        <span class="badge {{ ($activeTab ?? 'quy_trinh') === 'lich_hen' ? 'bg-white text-primary' : 'bg-primary' }} rounded-pill ms-1" style="font-size: 11px;">{{ $appointmentSlots->count() }}</span>
+                    @endif
+                </a>
+            </li>
+        </ul>
+
+        @if(($activeTab ?? 'quy_trinh') === 'quy_trinh')
+            <div class="text-muted small">
+                <i class="fa-solid fa-circle-info text-primary me-1"></i> Hiển thị mốc tiến độ theo kế hoạch chung của Khoa
+            </div>
+        @else
+            <div class="text-muted small">
+                <i class="fa-solid fa-circle-check text-success me-1"></i> Khung giờ hẹn làm việc giữa Giảng viên hướng dẫn &amp; Nhóm sinh viên
+            </div>
+        @endif
+    </div>
+
+    @if(($activeTab ?? 'quy_trinh') === 'lich_hen')
+        {{-- ── TAB 2: LỊCH HẸN HƯỚNG DẪN ── --}}
+        <div class="timetable-wrapper">
+            @include('calendar.partials.appointment_tab')
+        </div>
+    @else
+        {{-- ── TAB 1: LỊCH QUY TRÌNH THEO TUẦN (GIỮ NGUYÊN HOÀN TOÀN) ── --}}
+        <div class="timetable-wrapper" id="weeklyTimetableContainer">
+            {{-- Toolbar trên cùng --}}
+            <div class="timetable-toolbar">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h5 class="timetable-title">
                     <i class="fa-solid fa-calendar-week text-primary me-2"></i> 
@@ -550,6 +588,7 @@
             <div class="legend-item"><span class="legend-circle" style="background: #9333ea;"></span><span>Mốc 9</span></div>
         </div>
     </div>
+    @endif
 
 </div>
 @endsection

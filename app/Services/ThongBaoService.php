@@ -17,6 +17,31 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ThongBaoService
 {
     /**
+     * Gửi thông báo linh hoạt theo mã đối tượng (MaGV, MaSV, MaNhom hoặc MaTK)
+     */
+    public static function gui(string $target, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null): void
+    {
+        if (\App\Models\Nhom::where('MaNhom', $target)->exists()) {
+            self::guiDenNhom($target, $tieuDe, $noiDung, $loai, $duongDan);
+            return;
+        }
+
+        $gv = \App\Models\GiangVien::with('taiKhoan')->find($target);
+        if ($gv && $gv->taiKhoan?->MaTK) {
+            self::guiDen($gv->taiKhoan->MaTK, $tieuDe, $noiDung, $loai, $duongDan);
+            return;
+        }
+
+        $sv = \App\Models\SinhVien::with('taiKhoan')->find($target);
+        if ($sv && $sv->taiKhoan?->MaTK) {
+            self::guiDen($sv->taiKhoan->MaTK, $tieuDe, $noiDung, $loai, $duongDan);
+            return;
+        }
+
+        self::guiDen($target, $tieuDe, $noiDung, $loai, $duongDan);
+    }
+
+    /**
      * Gửi thông báo đến một tài khoản cụ thể
      */
     public static function guiDen(string $maTK, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null): void

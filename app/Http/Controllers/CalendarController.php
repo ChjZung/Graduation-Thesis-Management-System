@@ -66,6 +66,7 @@ class CalendarController extends Controller
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
         $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones);
+        $appointmentData = $this->buildAppointmentScheduleData($request, 'ADMIN');
 
         return view('calendar.index', array_merge([
             'layout'        => 'layouts.admin',
@@ -75,7 +76,8 @@ class CalendarController extends Controller
             'plans'         => $plans,
             'activePlan'    => $activePlan,
             'roleTitle'     => 'Giáo Vụ Khoa',
-        ], $weeklyData));
+            'roleCode'      => 'ADMIN',
+        ], $weeklyData, $appointmentData));
     }
 
     public function giangVienCalendar(Request $request)
@@ -86,6 +88,7 @@ class CalendarController extends Controller
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
         $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones);
+        $appointmentData = $this->buildAppointmentScheduleData($request, 'GIANG_VIEN');
 
         return view('calendar.index', array_merge([
             'layout'        => 'layouts.giangvien',
@@ -95,7 +98,8 @@ class CalendarController extends Controller
             'plans'         => $plans,
             'activePlan'    => $activePlan,
             'roleTitle'     => 'Giảng Viên',
-        ], $weeklyData));
+            'roleCode'      => 'GIANG_VIEN',
+        ], $weeklyData, $appointmentData));
     }
 
     public function sinhVienCalendar(Request $request)
@@ -106,6 +110,7 @@ class CalendarController extends Controller
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
         $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones, 'SINH_VIEN');
+        $appointmentData = $this->buildAppointmentScheduleData($request, 'SINH_VIEN');
 
         return view('calendar.index', array_merge([
             'layout'        => 'layouts.sinhvien',
@@ -115,7 +120,8 @@ class CalendarController extends Controller
             'plans'         => $plans,
             'activePlan'    => $activePlan,
             'roleTitle'     => 'Sinh Viên',
-        ], $weeklyData));
+            'roleCode'      => 'SINH_VIEN',
+        ], $weeklyData, $appointmentData));
     }
 
     private function buildWeeklyScheduleData(Request $request, $allMilestones, string $role = 'ADMIN'): array
@@ -519,5 +525,113 @@ class CalendarController extends Controller
         $nhoms = $Nhom;
 
         return view('calendar.schedule_matrix', compact('layout', 'keHoachs', 'activePlan', 'matrix', 'Nhom', 'nhoms', 'hocKies', 'giangViens'));
+    }
+
+    /**
+     * Chuẩn bị dữ liệu cho Tab 2: Lịch hẹn hướng dẫn (Giảng viên & Sinh viên)
+     */
+    private function buildAppointmentScheduleData(Request $request, string $role): array
+    {
+        $dateParam = $request->input('date');
+        try {
+            $currentDate = $dateParam ? \Carbon\Carbon::parse($dateParam) : \Carbon\Carbon::parse('2026-10-09');
+        } catch (\Throwable $e) {
+            $currentDate = \Carbon\Carbon::parse('2026-10-09');
+        }
+
+        $startOfWeek = $currentDate->copy()->startOfWeek(\Carbon\Carbon::MONDAY)->startOfDay();
+        $endOfWeek = $currentDate->copy()->endOfWeek(\Carbon\Carbon::SUNDAY)->endOfDay();
+
+        $user = Auth::user();
+        $giangVien = null;
+        $sinhVien = null;
+        $nhom = null;
+        $gvhd = null;
+        $slots = collect();
+        $myBookings = collect();
+        $managedGroups = collect();
+
+        if ($role === 'GIANG_VIEN') {
+            $giangVien = \App\Models\GiangVien::getLoggedInGiangVien($user);
+            if ($giangVien) {
+                // Lấy tất cả khung giờ của Giảng viên trong tuần được chọn
+                $slots = \App\Models\LichGapHuongDan::with([
+                    'dangKys.nhom.truongNhom',
+                    'dangKys.sinhVien',
+                ])
+                ->where('MaGV', $giangVien->MaGV)
+                ->whereBetween('ThoiGianBatDau', [$startOfWeek, $endOfWeek])
+                ->orderBy('ThoiGianBatDau', 'asc')
+                ->get();
+
+                // Lấy danh sách nhóm sinh viên đang hướng dẫn
+                $managedGroups = \App\Models\Nhom::whereHas('phieuDangKys', function ($q) use ($giangVien) {
+                    $q->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])
+                      ->whereHas('deTai', fn ($d) => $d->where('MaGV', $giangVien->MaGV));
+                })->with(['truongNhom', 'deTai'])->get();
+            }
+        } elseif ($role === 'SINH_VIEN') {
+            $sinhVien = \App\Models\SinhVien::getLoggedInSinhVien($user);
+            if ($sinhVien) {
+                $tv = \App\Models\ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+                    ->where('TrangThai', 'da_tham_gia')
+                    ->first();
+
+                if ($tv) {
+                    $nhom = \App\Models\Nhom::with(['deTai.giangVien', 'phieuDangKys.deTai.giangVien'])->find($tv->MaNhom);
+                    if ($nhom) {
+                        $gvhd = $nhom->deTai?->giangVien
+                            ?? $nhom->phieuDangKys()->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->latest()->first()?->deTai?->giangVien;
+
+                        if ($gvhd) {
+                            // Chỉ lấy các khung giờ của GVHD thuộc nhóm này
+                            $slots = \App\Models\LichGapHuongDan::with(['dangKys.nhom', 'giangVien'])
+                                ->where('MaGV', $gvhd->MaGV)
+                                ->whereBetween('ThoiGianBatDau', [$startOfWeek, $endOfWeek])
+                                ->orderBy('ThoiGianBatDau', 'asc')
+                                ->get();
+                        }
+
+                        // Lịch hẹn đã đặt của nhóm này
+                        $myBookings = \App\Models\DangKyLichHuongDan::with(['lichGap.giangVien', 'sinhVien'])
+                            ->where('MaNhom', $nhom->MaNhom)
+                            ->orderBy('NgayDangKy', 'desc')
+                            ->get();
+                    }
+                }
+            }
+        } elseif ($role === 'ADMIN' || $role === 'GIAO_VU') {
+            $query = \App\Models\LichGapHuongDan::with(['giangVien.boMon', 'dangKys.nhom'])
+                ->whereBetween('ThoiGianBatDau', [$startOfWeek, $endOfWeek]);
+
+            if ($request->filled('filter_magv')) {
+                $query->where('MaGV', $request->filter_magv);
+            }
+
+            $slots = $query->orderBy('ThoiGianBatDau', 'asc')->get();
+        }
+
+        // Gom nhóm theo từng ngày trong tuần (Thứ 2 đến Chủ nhật)
+        $slotsByDay = [];
+        $dayCarbon = $startOfWeek->copy();
+        for ($i = 0; $i < 7; $i++) {
+            $isoDate = $dayCarbon->format('Y-m-d');
+            $slotsByDay[$isoDate] = $slots->filter(function ($s) use ($isoDate) {
+                return $s->ThoiGianBatDau->format('Y-m-d') === $isoDate;
+            });
+            $dayCarbon->addDay();
+        }
+
+        return [
+            'appointmentSlots'      => $slots,
+            'appointmentSlotsByDay' => $slotsByDay,
+            'myBookings'            => $myBookings,
+            'managedGroups'         => $managedGroups,
+            'currentGVHD'           => $gvhd,
+            'currentGroup'          => $nhom,
+            'currentStudent'        => $sinhVien,
+            'currentLecturer'       => $giangVien,
+            'activeTab'             => $request->input('tab', 'quy_trinh'),
+        ];
     }
 }

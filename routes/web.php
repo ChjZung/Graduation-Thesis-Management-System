@@ -343,6 +343,13 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/thongke/detai', [\App\Http\Controllers\ThongKeDeTaiController::class, 'index'])->name('giangvien.thongke.detai');
     Route::get('/thongke/detai/export', [\App\Http\Controllers\ThongKeDeTaiController::class, 'exportExcel'])->name('giangvien.thongke.detai.export');
 
+    // Lịch Hẹn Hướng Dẫn (Giảng viên)
+    Route::post('/lich-hen/tao-khung-gio', [\App\Http\Controllers\LichHenHuongDanController::class, 'taoKhungGio'])->name('giangvien.lichhen.tao');
+    Route::post('/lich-hen/{id}/cap-nhat', [\App\Http\Controllers\LichHenHuongDanController::class, 'capNhatKhungGio'])->name('giangvien.lichhen.capnhat');
+    Route::post('/lich-hen/{id}/chuyen-trang-thai', [\App\Http\Controllers\LichHenHuongDanController::class, 'chuyenTrangThai'])->name('giangvien.lichhen.chuyenTrangThai');
+    Route::post('/lich-hen/{id}/huy', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyKhungGio'])->name('giangvien.lichhen.huy');
+    Route::post('/lich-hen/{id}/huy-luot-dat/{dangKyId}', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyLuotDatCuaNhom'])->name('giangvien.lichhen.huyLuotDat');
+
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
     Route::get('/change-password', fn() => redirect()->route('password.change'));
@@ -399,6 +406,10 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::get('/ket-qua/hoan-thien-bao-cao', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'hoanThienBaoCao'])->name('sinhvien.ketqua.hoanthien');
     Route::post('/ket-qua/nop-bao-cao-chinh-sua', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopBaoCaoChinhSua'])->name('sinhvien.ketqua.nopBaoCaoChinhSua');
     Route::post('/ket-qua/nop-hoan-chinh', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopKetQuaHoanChinh'])->name('sinhvien.ketqua.nopKetQuaHoanChinh');
+
+    // Lịch Hẹn Hướng Dẫn (Sinh viên)
+    Route::post('/lich-hen/{id}/dat-lich', [\App\Http\Controllers\LichHenHuongDanController::class, 'datLich'])->name('sinhvien.lichhen.dat');
+    Route::post('/lich-hen/{dangKyId}/huy-lich', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyLichSinhVien'])->name('sinhvien.lichhen.huy');
 
     // Thông báo
     Route::get('/thongbao', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'index'])->name('sinhvien.thongbao.index');
