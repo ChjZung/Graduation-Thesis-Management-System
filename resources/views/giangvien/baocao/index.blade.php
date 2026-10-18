@@ -350,6 +350,9 @@
                 $deTai = $nhom->deTai;
                 $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
                 $groupProgress = $nhom->progress_percent ?? 0;
+                $tienDoNghiepVu = \App\Models\TienDoNghiepVuKhoaLuan::where('MaNhom', $nhom->MaNhom)->first();
+                $daMoCongBaoVe = ($tienDoNghiepVu && $tienDoNghiepVu->GiaiDoanHienTai >= 6) 
+                    || ($deTai && \App\Models\BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->where('LanBaoCao', 5)->where('TrangThai', 'Đạt')->exists());
             @endphp
 
             <div class="card-dashboard mb-0 h-100 group-detail-panel {{ $loop->first ? '' : 'd-none' }}" 
@@ -372,9 +375,27 @@
                             </h5>
                         </div>
 
-                        {{-- Các nút thao tác thêm giai đoạn / đợt nộp --}}
-                        <div class="d-flex align-items-center gap-2">
+                        {{-- Các nút thao tác thêm giai đoạn / đợt nộp & mở cổng bảo vệ --}}
+                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             @if($deTai)
+                                @if($daMoCongBaoVe)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center" style="font-size: 12px;">
+                                        <i class="fa-solid fa-circle-check me-1.5"></i> Đã mở cổng nộp bảo vệ
+                                    </span>
+                                    <form method="POST" action="{{ route('giangvien.tiendo.nhom.thu_hoi_bao_ve', $nhom->MaNhom) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ của nhóm {{ $nhom->TenNhom }} không?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" title="Thu hồi xác nhận nếu cần nhóm bổ sung/chỉnh sửa tiến độ">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Thu hồi
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center" 
+                                            data-bs-toggle="modal" data-bs-target="#modalChoPhepBaoVe{{ $nhom->MaNhom }}"
+                                            title="Xác nhận nhóm hoàn thành thực hiện và cho phép nộp hồ sơ bảo vệ khóa luận">
+                                        <i class="fa-solid fa-graduation-cap me-2"></i>Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ
+                                    </button>
+                                @endif
+
                                 @if($giaiDoans->isEmpty())
                                     <form method="POST" action="{{ route('giangvien.tiendo.giai_doan.khoi_tao', $deTai->MaDeTai) }}" class="d-inline">
                                         @csrf
@@ -648,6 +669,51 @@
                             @endforeach
                         </div>
                     @endif
+                </div>
+
+                {{-- Modal Cho Phép Nộp Hồ Sơ Bảo Vệ Cho Nhóm Này --}}
+                <div class="modal fade" id="modalChoPhepBaoVe{{ $nhom->MaNhom }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg rounded-4">
+                            <form method="POST" action="{{ route('giangvien.tiendo.nhom.cho_phep_bao_ve', $nhom->MaNhom) }}">
+                                @csrf
+                                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            <i class="fa-solid fa-graduation-cap fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="modal-title fw-bold text-dark mb-0">Xác Nhận Cho Phép Nộp Hồ Sơ Bảo Vệ</h5>
+                                            <small class="text-muted">Nhóm: <strong>{{ $nhom->TenNhom }}</strong> ({{ $nhom->MaNhom }})</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body px-4 py-3">
+                                    <div class="alert alert-info border-0 rounded-3 small mb-3">
+                                        <i class="fa-solid fa-circle-info me-1"></i>
+                                        Hành động này sẽ:
+                                        <ul class="mb-0 mt-1 ps-3">
+                                            <li>Xác nhận nhóm sinh viên đã hoàn thành đủ khối lượng thực hiện đề tài.</li>
+                                            <li>Chuyển trạng thái quy trình sang <strong>Giai đoạn 6: Hoàn thiện &amp; Bảo vệ</strong>.</li>
+                                            <li>Mở khóa giao diện nộp hồ sơ bảo vệ để nhóm nộp báo cáo chính thức và link demo/mã nguồn.</li>
+                                            <li>Gửi thông báo tự động cho tất cả thành viên trong nhóm.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-secondary small">Nhận xét / Lời dặn dò cho nhóm (tùy chọn):</label>
+                                        <textarea name="LyDo" class="form-control rounded-3" rows="3" placeholder="Nhóm đã hoàn thành tốt khối lượng đề tài, đồng ý cho phép nộp hồ sơ bảo vệ trước Hội đồng..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                        <i class="fa-solid fa-check me-2"></i>Xác Nhận Mở Cổng Nộp Bảo Vệ
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
             </div>

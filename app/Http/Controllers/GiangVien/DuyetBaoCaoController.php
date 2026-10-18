@@ -11,10 +11,14 @@ use App\Models\PhieuDangKy;
 use App\Models\DeTai;
 use App\Models\GiaiDoanThucHien;
 use App\Models\DotNopBaoCao;
+use App\Models\TienDoNghiepVuKhoaLuan;
+use App\Models\HoSoBaoVe;
+use App\Models\LichSuChuyenGiaiDoan;
 use App\Services\ThesisProgressService;
 use App\Services\AiSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DuyetBaoCaoController extends Controller
 {
@@ -794,5 +798,143 @@ class DuyetBaoCaoController extends Controller
             : "Đã yêu cầu sinh viên bổ sung / nộp lại cho đợt '{$dotNop->TenDotNop}'. Sinh viên có thể nộp phiên bản tiếp theo.";
 
         return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * GVHD xác nhận nhóm hoàn thành toàn bộ giai đoạn thực hiện & cho phép nộp hồ sơ bảo vệ
+     */
+    public function choPhepNopHoSoBaoVe(Request $request, $maNhom)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên.');
+        }
+
+        $nhom = Nhom::with(['deTai.giangVien', 'thanhViens.sinhVien'])->findOrFail($maNhom);
+        $deTai = $nhom->deTai;
+
+        if (!$deTai || $deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải Giảng viên hướng dẫn của nhóm này.');
+        }
+
+        $nguoiXacNhan = ($giangVien->HocHam ? $giangVien->HocHam . '.' : '') . ($giangVien->HocVi ? $giangVien->HocVi . '. ' : '') . $giangVien->HoTen;
+
+        DB::transaction(function () use ($nhom, $deTai, $giangVien, $nguoiXacNhan, $request, $user) {
+            // 1. Cập nhật tiến độ nghiệp vụ sang Giai đoạn 6 (Hoàn thiện và bảo vệ)
+            $tienDo = TienDoNghiepVuKhoaLuan::firstOrCreate(
+                ['MaNhom' => $nhom->MaNhom],
+                [
+                    'MaDeTai' => $deTai->MaDeTai,
+                    'MaHocKy' => $nhom->MaHocKy ?? $deTai->MaHocKy,
+                ]
+            );
+
+            $gdTruoc = $tienDo->GiaiDoanHienTai;
+            $tienDo->GiaiDoanHienTai = 6;
+            $tienDo->TrangThaiGiaiDoan = 'DANG_THUC_HIEN';
+            $tienDo->NgayHoanThanh = now();
+            $tienDo->save();
+
+            // 2. Ghi nhật ký chuyển giai đoạn
+            LichSuChuyenGiaiDoan::create([
+                'MaNhom' => $nhom->MaNhom,
+                'GiaiDoanTruoc' => $gdTruoc,
+                'GiaiDoanSau' => 6,
+                'TrangThaiTruoc' => 'DANG_THUC_HIEN',
+                'TrangThaiSau' => 'DANG_THUC_HIEN',
+                'HanhDong' => 'GVHD xác nhận hoàn thành giai đoạn thực hiện & mở cổng nộp hồ sơ bảo vệ',
+                'NguoiThucHien' => $nguoiXacNhan,
+                'LyDo' => $request->input('LyDo', 'GVHD xác nhận nhóm đã hoàn thành khối lượng đề tài và đủ điều kiện nộp hồ sơ bảo vệ.'),
+            ]);
+
+            // 3. Đánh dấu tất cả các giai đoạn và đợt nộp kỹ thuật của đề tài sang HOAN_THANH
+            GiaiDoanThucHien::where('MaDeTai', $deTai->MaDeTai)->update(['TrangThai' => 'HOAN_THANH']);
+            DotNopBaoCao::where('MaDeTai', $deTai->MaDeTai)->update(['TrangThai' => 'HOAN_THANH']);
+
+            // 4. Đồng bộ tạo bản ghi BaoCaoTienDo mốc 5 Đạt để tương thích ngược 100%
+            BaoCaoTienDo::updateOrCreate(
+                [
+                    'MaDeTai' => $deTai->MaDeTai,
+                    'LanBaoCao' => 5,
+                ],
+                [
+                    'MaBaoCao' => 'BC_TD5_' . $deTai->MaDeTai,
+                    'TieuDe' => 'Báo cáo hoàn thành giai đoạn thực hiện khóa luận',
+                    'NoiDungBaoCao' => 'GVHD ' . $nguoiXacNhan . ' xác nhận nhóm hoàn thành đủ khối lượng thực hiện khóa luận.',
+                    'TrangThai' => 'Đạt',
+                    'PhanTramHoanThanh' => 100,
+                    'NgayNop' => now(),
+                    'NgayXacNhan' => now(),
+                    'NguoiXacNhan' => $nguoiXacNhan,
+                    'NhanXet' => 'GVHD đã xác nhận nhóm hoàn thành đủ điều kiện chuyển sang giai đoạn nộp hồ sơ bảo vệ.',
+                ]
+            );
+
+            // 5. Khởi tạo hồ sơ bảo vệ (nếu chưa có) ở trạng thái 'Chưa nộp' để sinh viên thấy ngay
+            HoSoBaoVe::firstOrCreate(
+                ['MaNhom' => $nhom->MaNhom],
+                [
+                    'MaHoSo' => 'HSBV_' . $nhom->MaNhom,
+                    'MaDeTai' => $deTai->MaDeTai,
+                    'NgayLap' => now(),
+                    'TrangThai' => 'Chưa nộp',
+                ]
+            );
+
+            // 6. Gửi thông báo cho toàn bộ thành viên nhóm
+            foreach ($nhom->thanhViens as $tv) {
+                if ($tv->sinhVien && $tv->sinhVien->MaTK) {
+                    \App\Models\ThongBao::create([
+                        'TieuDe' => 'Cổng nộp hồ sơ bảo vệ đã mở',
+                        'NoiDung' => "Giảng viên hướng dẫn {$nguoiXacNhan} đã xác nhận nhóm {$nhom->TenNhom} hoàn thành giai đoạn thực hiện đề tài. Cổng nộp hồ sơ bảo vệ chính thức đã mở, các bạn hãy vào khu vực Hồ sơ bảo vệ để nộp báo cáo và các liên kết dự án.",
+                        'LoaiThongBao' => 'Nhóm',
+                        'MaNguoiGui' => $user->MaTK,
+                        'MaNguoiNhan' => $tv->sinhVien->MaTK,
+                        'DaDoc' => false,
+                        'NgayGui' => now(),
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->back()->with('success', "Đã xác nhận hoàn thành giai đoạn thực hiện cho nhóm '{$nhom->TenNhom}'! Cổng nộp hồ sơ bảo vệ đã được mở cho sinh viên.");
+    }
+
+    /**
+     * GVHD hủy hoặc thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ nếu cần nhóm bổ sung thêm
+     */
+    public function thuHoiChoPhepBaoVe(Request $request, $maNhom)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên.');
+        }
+
+        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($maNhom);
+        $deTai = $nhom->deTai;
+
+        if (!$deTai || $deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải Giảng viên hướng dẫn của nhóm này.');
+        }
+
+        // Không thu hồi nếu sinh viên đã nộp hồ sơ và đang chờ hoặc đã duyệt
+        $hoSo = HoSoBaoVe::where('MaNhom', $nhom->MaNhom)->first();
+        if ($hoSo && !in_array($hoSo->TrangThai, ['Chưa nộp', 'Yêu cầu chỉnh sửa'])) {
+            return redirect()->back()->with('error', "Không thể thu hồi do sinh viên đã nộp hồ sơ bảo vệ (trạng thái: {$hoSo->TrangThai}).");
+        }
+
+        $tienDo = TienDoNghiepVuKhoaLuan::where('MaNhom', $nhom->MaNhom)->first();
+        if ($tienDo) {
+            $tienDo->update([
+                'GiaiDoanHienTai' => 5,
+                'TrangThaiGiaiDoan' => 'DANG_THUC_HIEN',
+            ]);
+        }
+
+        BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->where('LanBaoCao', 5)->delete();
+
+        return redirect()->back()->with('success', "Đã thu hồi xác nhận giai đoạn nộp hồ sơ bảo vệ của nhóm '{$nhom->TenNhom}'. Nhóm sẽ quay lại trạng thái hoàn thiện tiến độ.");
     }
 }

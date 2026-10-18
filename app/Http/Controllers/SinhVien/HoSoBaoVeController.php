@@ -10,6 +10,9 @@ use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
 use App\Models\Nhom;
 use App\Models\BaoCaoTienDo;
+use App\Models\GiaiDoanThucHien;
+use App\Models\DotNopBaoCao;
+use App\Models\TienDoNghiepVuKhoaLuan;
 use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
@@ -63,11 +66,9 @@ class HoSoBaoVeController extends Controller
 
         $nhom = $selectedMembership->nhom;
 
-        // Kiểm tra điều kiện hoàn thành Mốc 5 (Đạt)
-        $moc5Dat = ($nhom && $nhom->deTai) ? BaoCaoTienDo::where('MaDeTai', $nhom->deTai->MaDeTai)
-            ->where('LanBaoCao', 5)
-            ->where('TrangThai', 'Đạt')
-            ->exists() : false;
+        // Kiểm tra điều kiện đủ điều kiện nộp hồ sơ bảo vệ (đa mô hình)
+        $duDieuKien = self::kiemTraDuDieuKienNop($nhom);
+        $moc5Dat = $duDieuKien['du_dieu_kien'];
 
         // Tải hồ sơ bảo vệ cùng lịch sử phiên bản và tệp đính kèm
         $hoSo = $nhom ? HoSoBaoVe::with([
@@ -79,7 +80,127 @@ class HoSoBaoVeController extends Controller
             'deTai.giangVien'
         ])->where('MaNhom', $nhom->MaNhom)->first() : null;
 
-        return view('sinhvien.hoso_baove.index', compact('sinhVien', 'memberships', 'nhom', 'hoSo', 'moc5Dat'));
+        return view('sinhvien.hoso_baove.index', compact('sinhVien', 'memberships', 'nhom', 'hoSo', 'moc5Dat', 'duDieuKien'));
+    }
+
+    /**
+     * Kiểm tra điều kiện nộp hồ sơ bảo vệ của nhóm theo cả 3 cơ chế:
+     * 1. Giai đoạn nghiệp vụ được GVHD duyệt mở cổng (GiaiDoanHienTai >= 6)
+     * 2. Hoàn thành 100% đợt nộp / giai đoạn báo cáo tiến độ mới
+     * 3. Bản ghi mốc 5 đạt trong bảng BaoCaoTienDo truyền thống
+     */
+    public static function kiemTraDuDieuKienNop(?Nhom $nhom): array
+    {
+        if (!$nhom || !$nhom->deTai) {
+            return [
+                'du_dieu_kien' => false,
+                'ly_do' => 'Nhóm chưa có đề tài được duyệt.',
+                'ti_le_hoan_thanh' => 0,
+                'dot_hoan_thanh' => 0,
+                'tong_dot' => 0,
+                'cho_gvhd_xac_nhan' => false,
+            ];
+        }
+
+        $maDeTai = $nhom->deTai->MaDeTai;
+
+        // 1. Kiểm tra tiến độ nghiệp vụ: nếu GiaiDoanHienTai >= 6 (Bảo vệ) -> đã được GVHD duyệt
+        $tienDo = TienDoNghiepVuKhoaLuan::where('MaNhom', $nhom->MaNhom)->first();
+        if ($tienDo && $tienDo->GiaiDoanHienTai >= 6) {
+            return [
+                'du_dieu_kien' => true,
+                'ly_do' => 'GVHD đã xác nhận nhóm hoàn thành giai đoạn thực hiện đề tài và mở cổng nộp hồ sơ bảo vệ.',
+                'ti_le_hoan_thanh' => 100,
+                'dot_hoan_thanh' => 0,
+                'tong_dot' => 0,
+                'cho_gvhd_xac_nhan' => false,
+            ];
+        }
+
+        // 2. Kiểm tra BaoCaoTienDo mốc 5 (Đạt) - mô hình kế thừa
+        $moc5Dat = BaoCaoTienDo::where('MaDeTai', $maDeTai)
+            ->where('LanBaoCao', 5)
+            ->where('TrangThai', 'Đạt')
+            ->exists();
+        if ($moc5Dat) {
+            return [
+                'du_dieu_kien' => true,
+                'ly_do' => 'Nhóm đã hoàn thành Mốc 5 báo cáo tiến độ (Đạt).',
+                'ti_le_hoan_thanh' => 100,
+                'dot_hoan_thanh' => 5,
+                'tong_dot' => 5,
+                'cho_gvhd_xac_nhan' => false,
+            ];
+        }
+
+        // 3. Kiểm tra hệ thống đợt nộp báo cáo mới (DotNopBaoCao)
+        $dotNops = DotNopBaoCao::where('MaDeTai', $maDeTai)->get();
+        if ($dotNops->isNotEmpty()) {
+            $tongDot = $dotNops->count();
+            $dotHoanThanh = $dotNops->filter(function ($dot) {
+                if ($dot->TrangThai === 'HOAN_THANH') return true;
+                return \App\Models\PhienBanBaoCao::where('MaDotNop', $dot->MaDotNop)
+                    ->where('TrangThaiDanhGia', 'Đạt')
+                    ->exists();
+            })->count();
+
+            $tiLe = $tongDot > 0 ? round(($dotHoanThanh / $tongDot) * 100) : 0;
+
+            if ($dotHoanThanh >= $tongDot && $tongDot > 0) {
+                return [
+                    'du_dieu_kien' => true,
+                    'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo tiến độ ({$tiLe}%).",
+                    'ti_le_hoan_thanh' => $tiLe,
+                    'dot_hoan_thanh' => $dotHoanThanh,
+                    'tong_dot' => $tongDot,
+                    'cho_gvhd_xac_nhan' => false,
+                ];
+            }
+
+            return [
+                'du_dieu_kien' => false,
+                'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo ({$tiLe}%). Chờ hoàn tất hoặc GVHD xác nhận mở cổng nộp hồ sơ bảo vệ.",
+                'ti_le_hoan_thanh' => $tiLe,
+                'dot_hoan_thanh' => $dotHoanThanh,
+                'tong_dot' => $tongDot,
+                'cho_gvhd_xac_nhan' => true,
+            ];
+        }
+
+        // 4. Kiểm tra các giai đoạn thực hiện (GiaiDoanThucHien)
+        $giaiDoans = GiaiDoanThucHien::where('MaDeTai', $maDeTai)->get();
+        if ($giaiDoans->isNotEmpty()) {
+            $tongGd = $giaiDoans->count();
+            $gdHoanThanh = $giaiDoans->where('TrangThai', 'HOAN_THANH')->count();
+            $tiLe = $tongGd > 0 ? round(($gdHoanThanh / $tongGd) * 100) : 0;
+            if ($gdHoanThanh >= $tongGd && $tongGd > 0) {
+                return [
+                    'du_dieu_kien' => true,
+                    'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn thực hiện đề tài.",
+                    'ti_le_hoan_thanh' => $tiLe,
+                    'dot_hoan_thanh' => $gdHoanThanh,
+                    'tong_dot' => $tongGd,
+                    'cho_gvhd_xac_nhan' => false,
+                ];
+            }
+            return [
+                'du_dieu_kien' => false,
+                'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn ({$tiLe}%). Chờ GVHD xác nhận mở cổng nộp hồ sơ bảo vệ.",
+                'ti_le_hoan_thanh' => $tiLe,
+                'dot_hoan_thanh' => $gdHoanThanh,
+                'tong_dot' => $tongGd,
+                'cho_gvhd_xac_nhan' => true,
+            ];
+        }
+
+        return [
+            'du_dieu_kien' => false,
+            'ly_do' => 'Nhóm chưa hoàn thành các mốc báo cáo tiến độ hoặc chưa được GVHD xác nhận chuyển sang giai đoạn bảo vệ.',
+            'ti_le_hoan_thanh' => 0,
+            'dot_hoan_thanh' => 0,
+            'tong_dot' => 0,
+            'cho_gvhd_xac_nhan' => true,
+        ];
     }
 
     public function store(Request $request)
@@ -107,14 +228,10 @@ class HoSoBaoVeController extends Controller
             return back()->with('error', 'Nhóm của bạn chưa có đề tài được duyệt.');
         }
 
-        // Kiểm tra điều kiện tiên quyết: phải hoàn thành Đạt Mốc 5
-        $moc5Dat = BaoCaoTienDo::where('MaDeTai', $nhom->deTai->MaDeTai)
-            ->where('LanBaoCao', 5)
-            ->where('TrangThai', 'Đạt')
-            ->exists();
-
-        if (!$moc5Dat) {
-            return back()->with('error', 'Nhóm cần hoàn thành và được GVHD đánh giá "Đạt" ở Mốc 5 báo cáo tiến độ trước khi nộp hồ sơ bảo vệ.');
+        // Kiểm tra điều kiện tiên quyết: đủ điều kiện nộp hồ sơ bảo vệ
+        $duDieuKien = self::kiemTraDuDieuKienNop($nhom);
+        if (!$duDieuKien['du_dieu_kien']) {
+            return back()->with('error', $duDieuKien['ly_do'] ?? 'Nhóm chưa đủ điều kiện nộp hồ sơ bảo vệ.');
         }
 
         $hoSoHienTai = HoSoBaoVe::with(['phienBans', 'tepHoSoBaoVes'])->where('MaNhom', $nhom->MaNhom)->first();

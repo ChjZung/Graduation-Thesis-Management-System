@@ -91,8 +91,8 @@
             </div>
         </div>
 
-    {{-- Trường hợp 2: Chưa hoàn thành đủ 5 mốc tiến độ --}}
-    @elseif(!$moc5Dat)
+    {{-- Trường hợp 2: Chưa đủ điều kiện nộp hồ sơ bảo vệ --}}
+    @elseif(!($duDieuKien['du_dieu_kien'] ?? $moc5Dat))
         <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px;">
             <div class="card-body text-center py-5 px-4">
                 <div class="mb-3">
@@ -100,11 +100,28 @@
                         <i class="fa-solid fa-hourglass-half fa-2x"></i>
                     </span>
                 </div>
-                <h5 class="fw-bold text-dark mb-2">Chưa hoàn thành 5 mốc báo cáo tiến độ</h5>
-                <p class="text-muted mx-auto mb-4" style="max-width: 560px; font-size: 14px;">
-                    Theo quy định đào tạo, nhóm khóa luận cần hoàn thành và được Giảng viên hướng dẫn đánh giá 
-                    <strong class="text-primary">"Đạt"</strong> ở cả 5 mốc báo cáo tiến độ để đủ điều kiện mở cổng nộp hồ sơ bảo vệ chính thức.
+                <h5 class="fw-bold text-dark mb-2">Chưa đủ điều kiện nộp hồ sơ bảo vệ</h5>
+                <p class="text-muted mx-auto mb-3" style="max-width: 600px; font-size: 14px;">
+                    {{ $duDieuKien['ly_do'] ?? 'Theo quy định đào tạo, nhóm khóa luận cần hoàn thành các mốc báo cáo tiến độ và được Giảng viên hướng dẫn xác nhận hoàn thành giai đoạn thực hiện đề tài để mở cổng nộp hồ sơ bảo vệ chính thức.' }}
                 </p>
+
+                @if(!empty($duDieuKien['tong_dot']) && $duDieuKien['tong_dot'] > 0)
+                    <div class="mx-auto mb-4" style="max-width: 420px;">
+                        <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
+                            <span>Tiến độ hoàn thành: <strong>{{ $duDieuKien['dot_hoan_thanh'] }}/{{ $duDieuKien['tong_dot'] }} đợt</strong></span>
+                            <span class="fw-bold text-primary">{{ $duDieuKien['ti_le_hoan_thanh'] }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 6px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $duDieuKien['ti_le_hoan_thanh'] }}%;"></div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="alert alert-light border d-inline-block text-start small text-muted mx-auto mb-4 px-4 py-2.5 rounded-3" style="max-width: 620px;">
+                    <i class="fa-solid fa-lightbulb text-warning me-2"></i>
+                    <strong>Gợi ý:</strong> Nếu nhóm đã hoàn thành tất cả các mốc báo cáo nhưng cổng nộp hồ sơ bảo vệ chưa mở, vui lòng liên hệ Giảng viên hướng dẫn (<strong>{{ $nhom->deTai->giangVien->HoTen ?? 'GVHD' }}</strong>) để thầy/cô bấm nút <em>"Xác Nhận Cho Phép Nộp Hồ Sơ Bảo Vệ"</em> trên hệ thống.
+                </div>
+
                 <div class="d-flex justify-content-center gap-2">
                     <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-primary rounded-pill px-4 py-2 d-inline-flex align-items-center">
                         <i class="fa-solid fa-chart-line me-2"></i>Xem Báo Cáo Tiến Độ

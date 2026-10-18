@@ -298,6 +298,8 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::post('/tiendo/dot-nop/{id}/toggle', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'toggleDotNop'])->name('giangvien.tiendo.dot_nop.toggle');
     Route::get('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showDotNop'])->name('giangvien.tiendo.dot_nop.show');
     Route::post('/tiendo/dot-nop/{id}/danh-gia', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'danhGiaPhienBan'])->name('giangvien.tiendo.dot_nop.danh_gia');
+    Route::post('/tiendo/nhom/{maNhom}/cho-phep-bao-ve', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'choPhepNopHoSoBaoVe'])->name('giangvien.tiendo.nhom.cho_phep_bao_ve');
+    Route::post('/tiendo/nhom/{maNhom}/thu-hoi-bao-ve', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'thuHoiChoPhepBaoVe'])->name('giangvien.tiendo.nhom.thu_hoi_bao_ve');
 
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
