@@ -854,9 +854,13 @@ class BaoCaoController extends Controller
         ];
 
         if ($dotNop->YeuCauSourceCode) {
-            $rules['LinkCode'] = 'required|url|regex:/^(https?:\/\/)?(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/.+$/i';
+            $rules['LinkCode'] = [
+                'required',
+                'url',
+                'regex:#^(https?://)?(www\.)?(github\.com|gitlab\.com|bitbucket\.org)/.+#i'
+            ];
         } else {
-            $rules['LinkCode'] = 'nullable|url';
+            $rules['LinkCode'] = ['nullable', 'url'];
         }
 
         $messages = [
