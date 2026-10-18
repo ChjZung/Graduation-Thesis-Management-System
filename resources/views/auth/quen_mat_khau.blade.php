@@ -7,20 +7,40 @@
         display: none !important;
     }
 
-    main.py-4 {
-        padding: 0 !important;
+    /* Reset & Centering Container */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
     }
 
     body {
-        font-family: "Times New Roman", Times, serif;
+        font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
         background: linear-gradient(135deg, #003B73 0%, #0072CE 55%, #A2D2FF 100%);
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
         overflow-x: hidden;
         overflow-y: auto;
+    }
+
+    #app {
+        min-height: 100vh !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 40px 20px !important;
+        box-sizing: border-box !important;
+    }
+
+    main.py-4,
+    #app > main {
+        padding: 0 !important;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     /* Background blobs */
@@ -58,6 +78,7 @@
     .reset-card {
         width: 100%;
         max-width: 480px;
+        margin: auto !important;
         background: #ffffff;
         border-radius: 24px;
         box-shadow: 0 30px 80px rgba(0, 40, 120, .35), 0 0 0 1px rgba(255, 255, 255, .08);

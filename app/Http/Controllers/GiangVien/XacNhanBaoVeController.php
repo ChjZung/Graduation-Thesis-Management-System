@@ -24,7 +24,7 @@ class XacNhanBaoVeController extends Controller
         }
 
         // Lấy danh sách học kỳ để phục vụ bộ lọc
-        $hocKys = HocKy::orderBy('NamHoc', 'desc')->orderBy('HocKySo', 'desc')->get();
+        $hocKys = HocKy::orderBy('NamHoc', 'desc')->orderBy('TenHocKy', 'desc')->get();
 
         // Query hồ sơ thuộc các đề tài do giảng viên này hướng dẫn
         $query = HoSoBaoVe::with([
