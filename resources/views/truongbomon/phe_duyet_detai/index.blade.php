@@ -101,7 +101,7 @@
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
                     Bộ Môn: {{ $boMon->TenBoMon ?? 'N/A' }} ({{ $boMon->MaBoMon ?? '' }})
                 </span>
-                <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1">
+                <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">
                     Cổng Trưởng Bộ Môn
                 </span>
             </div>
@@ -190,49 +190,54 @@
         </div>
     </div>
 
-    <!-- Khu Vực Tìm Kiếm Và Lọc Bên Dưới (Chuẩn P2: Tìm tên/mã GV/tên đề tài, Lọc trạng thái, Lọc chỉ tiêu, Lọc học kỳ) -->
-    <div class="card border rounded-3 mb-4">
-        <div class="card-body p-3">
-            <form method="GET" action="{{ route('truongbomon.phe_duyet_detai.index') }}" class="row g-2 align-items-center">
-                <input type="hidden" name="hocKy" value="{{ $selectedHocKy }}">
-
-                <!-- Ô tìm kiếm -->
-                <div class="col-12 col-md-5 col-lg-4">
-                    <input type="text" name="search" class="form-control" placeholder="Tìm tên giảng viên, mã GV hoặc tên đề tài..." value="{{ request('search') }}">
+    <!-- Khu Vực Tìm Kiếm Và Lọc (Đồng bộ tỷ lệ và mẫu màu #1e3a8a chuẩn Admin) -->
+    <div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
+        <form method="GET" action="{{ route('truongbomon.phe_duyet_detai.index') }}" class="w-100">
+            <div class="d-flex flex-column gap-2">
+                <!-- Hàng 1: Ô tìm kiếm -->
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light" placeholder="Tìm tên giảng viên, mã GV hoặc tên đề tài..." value="{{ request('search') }}">
+                    <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
                 </div>
 
-                <!-- Lọc theo trạng thái đề tài -->
-                <div class="col-12 col-sm-6 col-md-3 col-lg-3">
-                    <select name="trang_thai" class="form-select" onchange="this.form.submit()">
-                        <option value="tat_ca">Tất cả trạng thái đề tài</option>
+                <!-- Hàng 2: Các ô lọc dữ liệu -->
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    @if($hocKies->count() > 1)
+                        <select name="hocKy" class="form-select form-select-sm" style="width: auto; min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                            @foreach($hocKies as $hk)
+                                <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="hocKy" value="{{ $selectedHocKy }}">
+                    @endif
+
+                    <select name="trang_thai" class="form-select form-select-sm" style="width: auto; min-width: 180px; flex: 1;" onchange="this.form.submit()">
+                        <option value="tat_ca">-- Tất cả trạng thái đề tài --</option>
                         <option value="cho_duyet" {{ request('trang_thai') == 'cho_duyet' ? 'selected' : '' }}>Có đề tài Chờ duyệt</option>
                         <option value="da_duyet" {{ request('trang_thai') == 'da_duyet' ? 'selected' : '' }}>Có đề tài Đã duyệt</option>
                         <option value="yeu_cau_sua" {{ request('trang_thai') == 'yeu_cau_sua' ? 'selected' : '' }}>Có đề tài Cần chỉnh sửa</option>
                         <option value="tu_choi" {{ request('trang_thai') == 'tu_choi' ? 'selected' : '' }}>Có đề tài Bị từ chối</option>
                     </select>
-                </div>
 
-                <!-- Lọc theo tình trạng chỉ tiêu hướng dẫn -->
-                <div class="col-12 col-sm-6 col-md-3 col-lg-3">
-                    <select name="tinh_trang_chi_tieu" class="form-select" onchange="this.form.submit()">
-                        <option value="tat_ca">Tất cả tình trạng chỉ tiêu</option>
+                    <select name="tinh_trang_chi_tieu" class="form-select form-select-sm" style="width: auto; min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                        <option value="tat_ca">-- Tình trạng chỉ tiêu --</option>
                         <option value="con_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'con_chi_tieu' ? 'selected' : '' }}>Còn chỉ tiêu</option>
                         <option value="het_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'het_chi_tieu' ? 'selected' : '' }}>Hết chỉ tiêu</option>
                         <option value="vuot_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'vuot_chi_tieu' ? 'selected' : '' }}>Vượt chỉ tiêu</option>
                     </select>
-                </div>
 
-                <!-- Nút Thao Tác Tìm Kiếm / Xóa Lọc -->
-                <div class="col-12 col-md-auto d-flex align-items-center gap-2 ms-auto">
-                    <button class="btn btn-primary fw-semibold px-3" type="submit">Tìm kiếm</button>
                     @if(request()->anyFilled(['search', 'trang_thai', 'tinh_trang_chi_tieu']))
-                        <a href="{{ route('truongbomon.phe_duyet_detai.index', ['hocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary px-3">
-                            Xóa lọc
+                        <a href="{{ route('truongbomon.phe_duyet_detai.index', ['hocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary btn-sm text-nowrap">
+                            <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                         </a>
                     @endif
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     <!-- Bảng Danh Sách Giảng Viên Thuộc Bộ Môn (Chuẩn P2: Mã GV, Họ tên, Số lượng đề tài, Chỉ tiêu, Tình trạng phê duyệt, Thao tác) -->
@@ -288,7 +293,7 @@
                                 <div class="fw-bold text-dark">
                                     {{ $gv->HoTen }}
                                 </div>
-                                <div class="small text-muted mt-0.5">
+                                <div class="small text-muted mt-1">
                                     <span>{{ $gv->HocVi ?? 'Giảng viên' }}</span>
                                     <span>&bull;</span>
                                     <span>{{ $gv->Email }}</span>
@@ -297,7 +302,7 @@
                         </td>
                         <td class="text-center">
                             @if($stat['total'] > 0)
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-bold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-bold rounded-pill px-3 py-1">
                                     {{ $stat['total'] }} đề tài
                                 </span>
                             @else
@@ -306,42 +311,42 @@
                         </td>
                         <td class="text-center">
                             @if($ct['tinh_trang'] === 'con_chi_tieu')
-                                <span class="badge bg-success-subtle text-success-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã dùng {{ $ct['da_dung'] }} trên {{ $ct['tong'] }} nhóm chỉ tiêu">
+                                <span class="badge bg-success-subtle text-success-emphasis fw-bold rounded-pill px-3 py-1" title="Đã dùng {{ $ct['da_dung'] }} trên {{ $ct['tong'] }} nhóm chỉ tiêu">
                                     {{ $ct['label'] }}
                                 </span>
                             @elseif($ct['tinh_trang'] === 'het_chi_tieu')
-                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã nhận đủ chỉ tiêu hướng dẫn">
+                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold rounded-pill px-3 py-1" title="Đã nhận đủ chỉ tiêu hướng dẫn">
                                     {{ $ct['label'] }}
                                 </span>
                             @else
-                                <span class="badge bg-danger-subtle text-danger-emphasis fw-bold rounded-pill px-2.5 py-1" title="Đã nhận vượt chỉ tiêu">
+                                <span class="badge bg-danger-subtle text-danger-emphasis fw-bold rounded-pill px-3 py-1" title="Đã nhận vượt chỉ tiêu">
                                     {{ $ct['label'] }}
                                 </span>
                             @endif
                         </td>
                         <td class="text-center">
                             @if($stat['total'] == 0)
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-semibold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-semibold rounded-pill px-3 py-1">
                                     Chưa đề xuất
                                 </span>
                             @elseif($stat['cho_duyet'] > 0)
-                                <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-warning text-dark fw-bold rounded-pill px-3 py-1">
                                     Chờ duyệt ({{ $stat['cho_duyet'] }})
                                 </span>
                             @elseif($stat['yeu_cau_sua'] > 0)
-                                <span class="badge bg-info-subtle text-info-emphasis fw-semibold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-info-subtle text-info-emphasis fw-semibold rounded-pill px-3 py-1">
                                     Cần sửa ({{ $stat['yeu_cau_sua'] }})
                                 </span>
                             @elseif($stat['da_duyet'] > 0 && $stat['total'] == $stat['da_duyet'])
-                                <span class="badge bg-success-subtle text-success-emphasis fw-semibold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-success-subtle text-success-emphasis fw-semibold rounded-pill px-3 py-1">
                                     Đã duyệt hết
                                 </span>
                             @elseif($stat['tu_choi'] > 0 && $stat['total'] == $stat['tu_choi'])
-                                <span class="badge bg-danger-subtle text-danger-emphasis fw-semibold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-danger-subtle text-danger-emphasis fw-semibold rounded-pill px-3 py-1">
                                     Bị từ chối
                                 </span>
                             @else
-                                <span class="badge bg-primary-subtle text-primary-emphasis fw-semibold rounded-pill px-2.5 py-1">
+                                <span class="badge bg-primary-subtle text-primary-emphasis fw-semibold rounded-pill px-3 py-1">
                                     Đã xử lý
                                 </span>
                             @endif
@@ -350,7 +355,7 @@
                             <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $gv->MaGV, 'hocKy' => $selectedHocKy]) }}" 
                                class="btn btn-sm btn-action btn-outline-primary text-nowrap"
                                title="Xem danh sách đề tài của giảng viên này">
-                                <i class="fa-solid fa-list-check me-1"></i>Xem danh sách đề tài
+                                <i class="fa-solid fa-list-check me-2"></i>Xem danh sách đề tài
                             </a>
                         </td>
                     </tr>
@@ -368,12 +373,12 @@
             </table>
         </div>
 
-        <div class="card-footer bg-white border-top py-2.5 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="card-footer bg-white border-top py-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="small text-muted">
                 Tổng cộng <strong>{{ $giangViens->count() }}</strong> giảng viên trong bộ môn {{ $boMon->TenBoMon ?? '' }}. Học kỳ: <strong>{{ $selectedHocKy }}</strong>.
             </span>
             <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-2.5 py-1 small">
+                <span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-3 py-1 small">
                     Dòng nền vàng: Giảng viên có đề tài chờ phê duyệt
                 </span>
             </div>

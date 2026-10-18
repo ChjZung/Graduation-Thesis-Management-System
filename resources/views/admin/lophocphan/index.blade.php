@@ -45,7 +45,7 @@
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3"><i class="fa-solid fa-filter me-1"></i>Lọc</button>
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex align-items-center"><i class="fa-solid fa-filter me-2"></i>Lọc</button>
                 @if(request()->hasAny(['ma_mon', 'ma_hoc_ky', 'ma_gv']))
                     <a href="{{ route('admin.lophocphan.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Xóa lọc</a>
                 @endif
@@ -59,14 +59,14 @@
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Danh Sách Lớp Học Phần (Lớp Tín Chỉ)</span>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.import.template', 'lophocphan') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
+            <a href="{{ route('admin.import.template', 'lophocphan') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-file-arrow-down me-2"></i>File mẫu .xlsx
             </a>
-            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importLhpModal">
-                <i class="fa-solid fa-file-excel me-1"></i>Import Excel
+            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importLhpModal">
+                <i class="fa-solid fa-file-excel me-2"></i>Import Excel
             </button>
-            <a href="{{ route('admin.lophocphan.create') }}" class="btn btn-success btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-plus me-1"></i>Tạo Lớp HP Mới
+            <a href="{{ route('admin.lophocphan.create') }}" class="btn btn-success btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-plus me-2"></i>Tạo Lớp HP Mới
             </a>
         </div>
     </div>
@@ -118,7 +118,7 @@
                         </td>
                         <td>
                             @if($item->giangVien)
-                                <span class="fw-medium"><i class="fa-solid fa-user-tie text-secondary me-1"></i>{{ $item->giangVien->HoTen }}</span>
+                                <span class="fw-medium"><i class="fa-solid fa-user-tie text-secondary me-2"></i>{{ $item->giangVien->HoTen }}</span>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -130,9 +130,9 @@
                         </td>
                         <td class="text-center">
                             @if($item->TrangThai === 'Đang mở')
-                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-lock-open me-1"></i>Đang mở</span>
+                                <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-lock-open me-2"></i>Đang mở</span>
                             @else
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1"><i class="fa-solid fa-lock me-1"></i>Đã đóng</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1"><i class="fa-solid fa-lock me-2"></i>Đã đóng</span>
                             @endif
                         </td>
                         <td class="text-center">
@@ -154,7 +154,7 @@
                     @empty
                     <tr>
                         <td colspan="8" class="text-center py-4 text-muted">
-                            <i class="fa-solid fa-folder-open fa-2x mb-2 d-block text-secondary opacity-50"></i>
+                            <i class="fa-solid fa-folder-open fa-2x mb-2 d-block text-secondary opacity-50 me-2"></i>
                             Chưa có Lớp Học Phần nào được tạo.
                         </td>
                     </tr>
@@ -183,8 +183,8 @@
                 <div class="modal-body">
                     <p class="small text-muted mb-2">Tải file mẫu Excel chuẩn bên dưới, điền thông tin các Lớp Học Phần rồi upload tại đây.</p>
                     <div class="mb-3">
-                        <a href="{{ route('admin.import.template', 'lophocphan') }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                            <i class="fa-solid fa-download me-1"></i>Tải file mẫu Template_LopHocPhan.xlsx
+                        <a href="{{ route('admin.import.template', 'lophocphan') }}" class="btn btn-sm btn-outline-primary rounded-pill d-inline-flex align-items-center">
+                            <i class="fa-solid fa-download me-2"></i>Tải file mẫu Template_LopHocPhan.xlsx
                         </a>
                     </div>
                     <div class="mb-3">
@@ -194,7 +194,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 d-inline-flex align-items-center"><i class="fa-solid fa-upload me-2"></i>Tải Lên & Import</button>
                 </div>
             </div>
         </form>

@@ -75,7 +75,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-4 gap-3">
         <div>
             <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-list-check text-primary"></i>
+                <i class="fa-solid fa-list-check text-primary me-2"></i>
                 <span>Công Việc Hướng Dẫn &amp; Tiến Độ Các Nhóm</span>
             </h4>
             <p class="text-muted small mb-0">
@@ -83,11 +83,11 @@
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 shadow-sm fw-medium small">
-                <i class="fa-regular fa-calendar-days me-1.5 text-primary"></i> Lịch Công Việc &amp; Hội Đồng
+            <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center">
+                <i class="fa-regular fa-calendar-days me-2 text-primary"></i> Lịch Công Việc &amp; Hội Đồng
             </a>
-            <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-primary rounded-pill px-3.5 py-1.5 shadow-sm fw-medium small">
-                <i class="fa-solid fa-clipboard-check me-1.5"></i> Duyệt Báo Cáo Chi Tiết
+            <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center">
+                <i class="fa-solid fa-clipboard-check me-2"></i> Duyệt Báo Cáo Chi Tiết
             </a>
         </div>
     </div>
@@ -150,7 +150,7 @@
                 <i class="fa-solid fa-users text-primary"></i>
                 <h6 class="fw-bold text-dark mb-0">Danh Sách Nhóm Đồ Án Hướng Dẫn &amp; Tiến Độ</h6>
             </div>
-            <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill small fw-medium">
+            <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small fw-medium">
                 Tổng cộng: <strong>{{ $nhoms->count() }}</strong> nhóm
             </span>
         </div>
@@ -196,7 +196,7 @@
                     <tr>
                         {{-- 1. Mã nhóm --}}
                         <td class="ps-4">
-                            <span class="badge bg-light text-dark fw-bold border px-2.5 py-1.5 font-monospace">
+                            <span class="badge bg-light text-dark fw-bold border px-3 py-2 font-monospace">
                                 {{ $nhom->MaNhom }}
                             </span>
                         </td>
@@ -207,7 +207,7 @@
                                 {{ $nhom->deTai->TenDeTai ?? 'Chưa gán đề tài' }}
                             </div>
                             <div class="small text-muted mt-1 d-flex align-items-center gap-1">
-                                <i class="fa-solid fa-crown text-warning" style="font-size: 11px;"></i>
+                                <i class="fa-solid fa-crown text-warning me-2" style="font-size: 11px;"></i>
                                 <span>Trưởng nhóm: <strong>{{ $nhom->truongNhom->HoTen ?? 'Chưa xác định' }}</strong></span>
                             </div>
                         </td>
@@ -233,11 +233,11 @@
                                     $tl = (float) $nhom->hoSoBaoVe->TyLeTrungLap;
                                     $turnitinBadge = $tl <= 20 ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle';
                                 @endphp
-                                <span class="badge {{ $turnitinBadge }} border rounded-pill px-2.5 py-1 fw-bold">
-                                    <i class="fa-solid fa-shield-halved me-1"></i>Đạo văn: {{ $tl }}%
+                                <span class="badge {{ $turnitinBadge }} border rounded-pill px-3 py-1 fw-bold">
+                                    <i class="fa-solid fa-shield-halved me-2"></i>Đạo văn: {{ $tl }}%
                                 </span>
                             @else
-                                <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small fw-normal">
+                                <span class="badge bg-light text-muted border rounded-pill px-3 py-1 small fw-normal">
                                     Chưa kiểm tra
                                 </span>
                             @endif
@@ -245,8 +245,8 @@
 
                         {{-- 5. Thao tác GVHD --}}
                         <td class="text-center pe-4">
-                            <a href="{{ $targetUrl }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 shadow-sm fw-medium text-nowrap">
-                                <i class="fa-solid fa-pen-to-square me-1"></i> Nhận xét
+                            <a href="{{ $targetUrl }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 shadow-sm fw-medium text-nowrap d-inline-flex align-items-center">
+                                <i class="fa-solid fa-pen-to-square me-2"></i> Nhận xét
                             </a>
                         </td>
                     </tr>

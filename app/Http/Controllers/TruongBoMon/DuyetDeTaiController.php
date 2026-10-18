@@ -447,8 +447,12 @@ class DuyetDeTaiController extends Controller
         $currentGv = GiangVien::getLoggedInGiangVien($user);
 
         $maKhoa = $detai->giangVien?->boMon?->MaKhoa ?? $detai->hocPhanRef?->boMon?->MaKhoa ?? $detai->nganh?->MaKhoa ?? $boMon?->MaKhoa ?? 'CNTT';
+        $maBoMonDeTai = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon ?? $boMon?->MaBoMon;
         $allGiangViens = GiangVien::with('boMon')
-            ->whereHas('boMon', fn($b) => $b->where('MaKhoa', $maKhoa))
+            ->where(function($q) use ($maBoMonDeTai) {
+                $q->where('MaBoMon', $maBoMonDeTai)
+                  ->orWhere('MaBoMon', 'BM_' . str_replace('BM_', '', $maBoMonDeTai));
+            })
             ->where('MaGV', '!=', $detai->MaGV)
             ->when($currentGv, fn($q) => $q->where('MaGV', '!=', $currentGv->MaGV))
             ->orderBy('HoTen')
@@ -492,20 +496,19 @@ class DuyetDeTaiController extends Controller
             return redirect()->back()->withErrors('Giảng viên đề xuất đề tài không được làm Giảng viên phản biện cho đề tài này!');
         }
 
-        // 4. Chỉ GV cùng khoa với đề tài
+        // 4. Ràng buộc nghiệp vụ P0: Giảng viên được phân công PHẢI thuộc Bộ môn quản lý đề tài
         $gvPB = GiangVien::with('boMon')->find($request->MaGVPhanBien);
-        $detaiKhoa = $detai->giangVien?->boMon?->MaKhoa ?? $detai->hocPhanRef?->boMon?->MaKhoa ?? $detai->nganh?->MaKhoa ?? $boMon?->MaKhoa;
-        $gvKhoa = $gvPB?->boMon?->MaKhoa;
+        $detaiMaBoMon = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon ?? $boMon?->MaBoMon;
+        $cleanDtBm = str_replace('BM_', '', $detaiMaBoMon ?? '');
+        $cleanGvBm = str_replace('BM_', '', $gvPB?->MaBoMon ?? '');
 
-        if ($detaiKhoa && $gvKhoa && $detaiKhoa !== $gvKhoa) {
-            return redirect()->back()->withErrors("Giảng viên phản biện phải thuộc cùng Khoa với đề tài (Khoa {$detaiKhoa})!");
+        if (!$cleanDtBm || $cleanDtBm !== $cleanGvBm) {
+            $tenBmDetai = $detai->giangVien?->boMon?->TenBoMon ?? $boMon->TenBoMon;
+            return redirect()->back()->withErrors("Giảng viên phản biện được phân công phải thuộc cùng Bộ môn quản lý đề tài (Bộ môn '{$tenBmDetai}')! Không cho phép phân công giảng viên thuộc bộ môn khác.");
         }
 
-        // 5. Chặn server-side: 1 GV tối đa phản biện 5 đề tài (cho phép tùy chỉnh qua ChiTieuPhanBienService)
-        $statsPB = ChiTieuPhanBienService::getChiTieuStats($request->MaGVPhanBien, $detai->MaHocKy, $detai->MaDeTai);
-        if ($statsPB['da_dung'] >= $statsPB['tong']) {
-            return redirect()->back()->withErrors("Giảng viên {$gvPB->HoTen} đã đạt tối đa hạn mức phản biện {$statsPB['tong']} đề tài trong học kỳ ({$statsPB['da_dung']}/{$statsPB['tong']})! Vui lòng chọn giảng viên khác hoặc nâng hạn mức.");
-        }
+        // Quy định: Phân công phản biện không bị giới hạn số lượng đề tài, Trưởng bộ môn phân công theo năng lực chuyên môn.
+        // Chỉ lưu thông tin thống kê số lượng đang phản biện để tham khảo nếu cần.
 
         DB::transaction(function () use ($request, $detai) {
             $maPC = IdGenerator::nextPhanCong();
@@ -557,11 +560,25 @@ class DuyetDeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức, quyết định đã hoàn tất.');
         }
 
+        $oldStatus = $detai->TrangThai;
         $detai->update([
             'TrangThai'    => 'Chờ duyệt cấp Khoa',
             'NgayDuyetBM'  => now(),
             'NguoiDuyetBM' => $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TBM'),
             'LyDoTuChoi'   => null,
+        ]);
+
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv ? $gv->MaGV : null,
+            'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+            'HanhDong'      => 'Trưởng bộ môn phê duyệt',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => 'Chờ duyệt cấp Khoa',
+            'LyDo'          => 'Trưởng bộ môn duyệt thông qua đề xuất đề tài và chuyển tiếp lên Trưởng khoa.',
+            'NgayDuyet'     => now(),
         ]);
 
         // Gửi thông báo cho GV đề xuất
@@ -634,10 +651,16 @@ class DuyetDeTaiController extends Controller
     public function requestEdit(Request $request, $id)
     {
         $request->validate([
-            'YeuCauSua' => 'required|string|max:1000',
+            'YeuCauSua' => 'required|string',
         ], [
             'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu Giảng viên chỉnh sửa.',
         ]);
+
+        $cleanedYeuCauSua = \App\Helpers\HtmlHelper::clean($request->YeuCauSua);
+        $plainYeuCauSua = trim(strip_tags(html_entity_decode($cleanedYeuCauSua, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainYeuCauSua) < 5) {
+            return redirect()->back()->withInput()->withErrors(['YeuCauSua' => 'Vui lòng nhập nội dung yêu cầu chỉnh sửa chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
@@ -647,16 +670,33 @@ class DuyetDeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể yêu cầu chỉnh sửa đề tài này.');
         }
 
+        $oldStatus = $detai->TrangThai;
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+
         $detai->update([
             'TrangThai'   => 'Yêu cầu chỉnh sửa',
-            'LyDoTuChoi'  => trim($request->YeuCauSua),
+            'LyDoTuChoi'  => $cleanedYeuCauSua,
+        ]);
+
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv ? $gv->MaGV : null,
+            'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+            'HanhDong'      => 'Yêu cầu chỉnh sửa đề tài',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => 'Yêu cầu chỉnh sửa',
+            'LyDo'          => $cleanedYeuCauSua,
+            'NgayDuyet'     => now(),
         ]);
 
         if ($detai->giangVien && $detai->giangVien->MaTK) {
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
                 '⚠️ Yêu cầu chỉnh sửa đề tài từ Trưởng bộ môn',
-                "Đề tài '{$detai->TenDeTai}' có yêu cầu chỉnh sửa từ Trưởng bộ môn: " . trim($request->YeuCauSua),
+                "Đề tài '{$detai->TenDeTai}' có yêu cầu chỉnh sửa từ Trưởng bộ môn: " . $plainYeuCauSua,
                 'Đề tài'
             );
         }
@@ -667,10 +707,16 @@ class DuyetDeTaiController extends Controller
     public function reject(Request $request, $id)
     {
         $request->validate([
-            'LyDoTuChoi' => 'required|string|max:1000',
+            'LyDoTuChoi' => 'required|string',
         ], [
             'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối đề tài.',
         ]);
+
+        $cleanedLyDo = \App\Helpers\HtmlHelper::clean($request->LyDoTuChoi);
+        $plainLyDo = trim(strip_tags(html_entity_decode($cleanedLyDo, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainLyDo) < 5) {
+            return redirect()->back()->withInput()->withErrors(['LyDoTuChoi' => 'Vui lòng nhập lý do từ chối chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
@@ -680,9 +726,26 @@ class DuyetDeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài đã được Trưởng khoa phê duyệt chính thức. Không thể từ chối đề tài này.');
         }
 
+        $oldStatus = $detai->TrangThai;
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+
         $detai->update([
             'TrangThai'  => 'Từ chối',
-            'LyDoTuChoi' => trim($request->LyDoTuChoi),
+            'LyDoTuChoi' => $cleanedLyDo,
+        ]);
+
+        $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+        ChiTietDuyetDeTai::create([
+            'MaDuyet'       => $maDuyet,
+            'MaDeTai'       => $detai->MaDeTai,
+            'MaGV'          => $gv ? $gv->MaGV : null,
+            'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+            'HanhDong'      => 'Từ chối đề tài',
+            'TrangThaiCu'   => $oldStatus,
+            'TrangThai'     => 'Từ chối',
+            'LyDo'          => $cleanedLyDo,
+            'NgayDuyet'     => now(),
         ]);
 
         $detai->loadMissing('giangVien.taiKhoan');
@@ -695,7 +758,7 @@ class DuyetDeTaiController extends Controller
             ThongBaoService::guiDen(
                 $maTK,
                 '❌ Đề tài bị Trưởng bộ môn từ chối',
-                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng bộ môn từ chối. Lý do: " . trim($request->LyDoTuChoi),
+                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng bộ môn từ chối. Lý do: " . $plainLyDo,
                 'Đề tài'
             );
         }

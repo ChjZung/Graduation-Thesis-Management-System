@@ -14,8 +14,8 @@
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-primary shadow-xs fw-semibold">
-                <i class="fa-solid fa-landmark me-1"></i> Quản Lý Hội Đồng
+            <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-primary shadow-xs fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-landmark me-2"></i> Quản Lý Hội Đồng
             </a>
         </div>
     </div>
@@ -100,12 +100,12 @@
                     <option value="Đã lưu trữ" {{ request('TrangThai') === 'Đã lưu trữ' ? 'selected' : '' }}>⚪ Đã lưu trữ</option>
                 </select>
                 @if(request('search') || request('TrangThai'))
-                    <a href="{{ route('admin.hosoBaoVe.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                    <a href="{{ route('admin.hosoBaoVe.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                 @endif
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                <a href="{{ route('admin.hoidong.index') }}" class="btn btn-primary shadow-xs fw-semibold">
-                    <i class="fa-solid fa-landmark me-1"></i> Quản Lý Hội Đồng
+                <a href="{{ route('admin.hoidong.index') }}" class="btn btn-primary shadow-xs fw-semibold d-inline-flex align-items-center">
+                    <i class="fa-solid fa-landmark me-2"></i> Quản Lý Hội Đồng
                 </a>
             </div>
         </form>
@@ -143,7 +143,7 @@
                             {{-- Nhóm / Đề tài --}}
                             <td class="py-3">
                                 <div class="fw-bold text-primary">{{ $hs->nhom->TenNhom ?? 'Chưa rõ nhóm' }}</div>
-                                <div class="small text-dark fw-semibold mt-0.5">{{ Str::limit($hs->nhom->deTai->TenDeTai ?? 'Chưa có đề tài', 50) }}</div>
+                                <div class="small text-dark fw-semibold mt-1">{{ Str::limit($hs->nhom->deTai->TenDeTai ?? 'Chưa có đề tài', 50) }}</div>
                                 <div class="small text-muted mt-1">
                                     <span>TN: <strong>{{ $hs->nhom->truongNhom->HoTen ?? '—' }}</strong></span>
                                     @if($hs->nhom && $hs->nhom->deTai && $hs->nhom->deTai->giangVien)
@@ -155,16 +155,16 @@
                             {{-- File nộp --}}
                             <td class="py-3">
                                 @if($hs->ToanVanKhoaLuan)
-                                    <a href="{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}" target="_blank" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-2.5 py-1">
-                                        <i class="fa-solid fa-file-pdf me-1"></i>Toàn văn (PDF)
+                                    <a href="{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}" target="_blank" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-3 py-1">
+                                        <i class="fa-solid fa-file-pdf me-2"></i>Toàn văn (PDF)
                                     </a>
                                 @else
                                     <span class="text-muted small fst-italic">Chưa có tệp</span>
                                 @endif
                                 @if($hs->FileBanChinhSua)
                                     <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $hs->FileBanChinhSua) }}" target="_blank" class="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-0.5" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-file-circle-check me-1"></i>Bản sau bảo vệ
+                                        <a href="{{ asset('storage/' . $hs->FileBanChinhSua) }}" target="_blank" class="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-1" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-file-circle-check me-2"></i>Bản sau bảo vệ
                                         </a>
                                     </div>
                                 @endif
@@ -177,19 +177,19 @@
                                     {{ number_format($pct, 2) }}%
                                 </div>
                                 @if($pct <= 20)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-check me-1"></i>Hợp lệ (&le; 20%)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                        <i class="fa-solid fa-check me-2"></i>Hợp lệ (&le; 20%)
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-xmark me-1"></i>Vượt ngưỡng
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                        <i class="fa-solid fa-xmark me-2"></i>Vượt ngưỡng
                                     </span>
                                 @endif
 
                                 @if($hs->MinhChungDaoVan)
                                     <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $hs->MinhChungDaoVan) }}" target="_blank" class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none px-2 py-0.5" style="font-size: 0.68rem;">
-                                            <i class="fa-solid fa-file-shield me-1"></i>Minh chứng
+                                        <a href="{{ asset('storage/' . $hs->MinhChungDaoVan) }}" target="_blank" class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none px-2 py-1" style="font-size: 0.68rem;">
+                                            <i class="fa-solid fa-file-shield me-2"></i>Minh chứng
                                         </a>
                                     </div>
                                 @endif
@@ -201,24 +201,24 @@
                                     $st = $hs->TrangThai;
                                 @endphp
                                 @if(in_array($st, ['Đã phân công', 'Đã phân công hội đồng']))
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-landmark me-1" style="font-size: 0.55rem;"></i> Đã xếp HĐ
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-landmark me-2" style="font-size: 0.55rem;"></i> Đã xếp HĐ
                                     </span>
                                 @elseif($st === 'Đủ điều kiện bảo vệ')
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-circle-check me-1" style="font-size: 0.55rem;"></i> Đủ điều kiện
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-circle-check me-2" style="font-size: 0.55rem;"></i> Đủ điều kiện
                                     </span>
                                 @elseif($st === 'Không đủ điều kiện')
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-xmark me-1" style="font-size: 0.55rem;"></i> Không đạt
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-xmark me-2" style="font-size: 0.55rem;"></i> Không đạt
                                     </span>
                                 @elseif($st === 'Đã lưu trữ')
-                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-1.5 fw-medium">
-                                        <i class="fa-solid fa-box-archive me-1"></i> Đã lưu trữ
+                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2 fw-medium">
+                                        <i class="fa-solid fa-box-archive me-2"></i> Đã lưu trữ
                                     </span>
                                 @else
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-clock me-1" style="font-size: 0.55rem;"></i> Chờ thẩm định
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-clock me-2" style="font-size: 0.55rem;"></i> Chờ thẩm định
                                     </span>
                                 @endif
                             </td>
@@ -226,12 +226,12 @@
                             {{-- Hội đồng bảo vệ --}}
                             <td class="py-3">
                                 @if($hs->hoiDong)
-                                    <div class="fw-bold text-dark small"><i class="fa-solid fa-landmark me-1 text-primary"></i>{{ $hs->hoiDong->TenHoiDong }}</div>
+                                    <div class="fw-bold text-dark small"><i class="fa-solid fa-landmark me-2 text-primary"></i>{{ $hs->hoiDong->TenHoiDong }}</div>
                                     @if($hs->ThoiGianBaoVe || $hs->hoiDong->ThoiGianBatDau)
-                                        <div class="small text-muted"><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($hs->ThoiGianBaoVe ?? $hs->hoiDong->ThoiGianBatDau)->format('H:i d/m/Y') }}</div>
+                                        <div class="small text-muted"><i class="fa-regular fa-clock me-2"></i>{{ \Carbon\Carbon::parse($hs->ThoiGianBaoVe ?? $hs->hoiDong->ThoiGianBatDau)->format('H:i d/m/Y') }}</div>
                                     @endif
                                     @if($hs->PhongBaoVe || $hs->hoiDong->DiaDiem)
-                                        <div class="small text-muted"><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ $hs->PhongBaoVe ?? $hs->hoiDong->DiaDiem }}</div>
+                                        <div class="small text-muted"><i class="fa-solid fa-location-dot me-2 text-danger"></i>{{ $hs->PhongBaoVe ?? $hs->hoiDong->DiaDiem }}</div>
                                     @endif
                                 @else
                                     <span class="text-muted small fst-italic">Chưa xếp Hội đồng</span>
@@ -252,7 +252,7 @@
                                         </form>
 
                                         @if($hs->TrangThai === 'Chờ thẩm định')
-                                        <button type="button" class="btn btn-sm btn-light text-danger btn-action-circle border" title="Từ chối hồ sơ" data-bs-toggle="modal" data-bs-target="#modalTuChoi{{ $hs->MaHoSo }}">
+                                        <button type="button" class="btn btn-sm btn-light text-danger btn-action-circle border d-inline-flex align-items-center" title="Từ chối hồ sơ" data-bs-toggle="modal" data-bs-target="#modalTuChoi{{ $hs->MaHoSo }}">
                                             <i class="fa-solid fa-xmark"></i>
                                         </button>
                                         @endif
@@ -260,7 +260,7 @@
 
                                     {{-- Nút Phân công Hội đồng --}}
                                     @if(in_array($hs->TrangThai, ['Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã phân công hội đồng']))
-                                        <button type="button" class="btn btn-sm btn-light text-primary btn-action-circle border" title="{{ $hs->hoiDong ? 'Đổi Hội đồng' : 'Xếp Hội đồng bảo vệ' }}" data-bs-toggle="modal" data-bs-target="#modalPhanCong{{ $hs->MaHoSo }}">
+                                        <button type="button" class="btn btn-sm btn-light text-primary btn-action-circle border d-inline-flex align-items-center" title="{{ $hs->hoiDong ? 'Đổi Hội đồng' : 'Xếp Hội đồng bảo vệ' }}" data-bs-toggle="modal" data-bs-target="#modalPhanCong{{ $hs->MaHoSo }}">
                                             <i class="fa-solid fa-landmark"></i>
                                         </button>
                                     @endif
@@ -292,8 +292,15 @@
                                                 <div class="modal-body py-3">
                                                     <div class="small text-muted mb-3">Nhóm: <strong>{{ $hs->nhom->TenNhom ?? '' }}</strong> &bull; Tỷ lệ Turnitin: <strong>{{ $hs->TyLeTrungLap }}%</strong></div>
                                                     <div>
-                                                        <label class="form-label fw-bold">Lý do từ chối <span class="text-danger">*</span></label>
-                                                        <textarea name="GhiChu" class="form-control" rows="3" placeholder="Nhập lý do từ chối (VD: Tỷ lệ trùng lặp vượt quá 20%, thiếu minh chứng kiểm tra...)" required></textarea>
+                                                        @include('partials.rich_text_editor', [
+                                                            'name' => 'GhiChu',
+                                                            'id' => 'GhiChu_' . $hs->MaHoSo,
+                                                            'label' => 'Lý do từ chối',
+                                                            'required' => true,
+                                                            'minHeight' => '100px',
+                                                            'compact' => true,
+                                                            'placeholder' => 'Nhập lý do từ chối (VD: Tỷ lệ trùng lặp vượt quá 20%, thiếu minh chứng kiểm tra...)'
+                                                        ])
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer border-top-0 pt-0">

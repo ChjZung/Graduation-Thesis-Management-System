@@ -60,8 +60,8 @@
             </div>
 
             <div class="col-md-2 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary btn-sm rounded-pill w-100">
-                    <i class="fa-solid fa-filter me-1"></i>Lọc
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill w-100 d-flex align-items-center justify-content-center">
+                    <i class="fa-solid fa-filter me-2"></i>Lọc
                 </button>
                 <a href="{{ route('admin.sanpham.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Xóa lọc">
                     <i class="fa-solid fa-rotate-left"></i>
@@ -98,7 +98,7 @@
                         <td class="text-center fw-bold text-muted">{{ $index + 1 }}</td>
                         <td>
                             <strong class="text-dark">{{ $nhom->TenNhom ?? '—' }}</strong><br>
-                            <small class="text-muted"><i class="fa-solid fa-book me-1"></i>{{ $deTai->monHoc->TenMon ?? ($nhom->monHoc->TenMon ?? '—') }}</small>
+                            <small class="text-muted"><i class="fa-solid fa-book me-2"></i>{{ $deTai->monHoc->TenMon ?? ($nhom->monHoc->TenMon ?? '—') }}</small>
                         </td>
                         <td>
                             <span class="fw-semibold text-primary" title="{{ $deTai->TenDeTai ?? 'Chưa đăng ký' }}">
@@ -109,13 +109,13 @@
                         <td>
                             <div class="d-flex gap-1">
                                 @if($fileUrl)
-                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success py-0 px-2" title="Tải File Báo Cáo">
-                                        <i class="fa-solid fa-download me-1"></i>File
+                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center" title="Tải File Báo Cáo">
+                                        <i class="fa-solid fa-download me-2"></i>File
                                     </a>
                                 @endif
                                 @if($gitUrl)
-                                    <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" title="Xem GitHub">
-                                        <i class="fa-brands fa-github me-1"></i>GitHub
+                                    <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2 d-inline-flex align-items-center" title="Xem GitHub">
+                                        <i class="fa-brands fa-github me-2"></i>GitHub
                                     </a>
                                 @endif
                                 @if(!$fileUrl && !$gitUrl)
@@ -133,8 +133,8 @@
                                 @endphp
                                 @if($fileBc)
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ $targetUrlBc }}" target="_blank" class="btn btn-outline-info py-0 px-2" title="Xem báo cáo">
-                                            <i class="fa-solid fa-file-pdf me-1"></i>Báo cáo Lần {{ $lastBc->LanBaoCao }}
+                                        <a href="{{ $targetUrlBc }}" target="_blank" class="btn btn-outline-info py-0 px-2 d-inline-flex align-items-center" title="Xem báo cáo">
+                                            <i class="fa-solid fa-file-pdf me-2"></i>Báo cáo Lần {{ $lastBc->LanBaoCao }}
                                         </a>
                                         <a href="{{ $targetUrlBc }}" download class="btn btn-outline-success py-0 px-2" title="Tải báo cáo">
                                             <i class="fa-solid fa-download"></i>

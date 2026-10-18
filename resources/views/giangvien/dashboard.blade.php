@@ -89,11 +89,11 @@
         <p class="text-muted small mb-0">Quản lý danh sách nhóm hướng dẫn, tiến độ báo cáo và lịch họp.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium">
-            <i class="fa-solid fa-plus me-1.5"></i> Đề xuất Đề tài mới
+        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium d-inline-flex align-items-center">
+            <i class="fa-solid fa-plus me-2"></i> Đề xuất Đề tài mới
         </a>
-        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium">
-            <i class="fa-regular fa-calendar-days me-1.5"></i> Lịch của tôi
+        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium d-inline-flex align-items-center">
+            <i class="fa-regular fa-calendar-days me-2"></i> Lịch của tôi
         </a>
     </div>
 </div>
@@ -131,7 +131,7 @@
                     <div class="progress mt-2" style="height: 6px;">
                         <div class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: {{ $percentHD }}%;"></div>
                     </div>
-                    <div class="text-muted mt-1.5" style="font-size: 0.78rem;">{{ $percentHD }}% chỉ tiêu phân bổ</div>
+                    <div class="text-muted mt-2" style="font-size: 0.78rem;">{{ $percentHD }}% chỉ tiêu phân bổ</div>
                 </div>
                 <div class="kpi-icon-avatar bg-info-subtle text-info">
                     <i class="fa-solid fa-users-viewfinder"></i>
@@ -149,11 +149,11 @@
                     <div class="h2 fw-bold text-dark mb-1">{{ $soBaoCaoChoDuyet }}</div>
                     @if($soBaoCaoChoDuyet > 0)
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
-                            <i class="fa-solid fa-bell me-1"></i>Cần xử lý
+                            <i class="fa-solid fa-bell me-2"></i>Cần xử lý
                         </span>
                     @else
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="fa-solid fa-check me-1"></i>Đã duyệt hết
+                            <i class="fa-solid fa-check me-2"></i>Đã duyệt hết
                         </span>
                     @endif
                 </div>
@@ -173,11 +173,11 @@
                     <div class="h2 fw-bold text-dark mb-1">{{ $soNhomTreHan }}</div>
                     @if($soNhomTreHan > 0)
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
-                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Cần đôn đốc
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>Cần đôn đốc
                         </span>
                     @else
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="fa-solid fa-shield-check me-1"></i>Đúng tiến độ
+                            <i class="fa-solid fa-shield-check me-2"></i>Đúng tiến độ
                         </span>
                     @endif
                 </div>
@@ -306,13 +306,13 @@
                                 <div class="btn-group">
                                     @if($lastBaoCao)
                                         <a href="{{ route('giangvien.baocao.show', $lastBaoCao->MaBaoCao) }}" 
-                                           class="btn btn-sm btn-ai-review rounded-pill px-2.5 d-inline-flex align-items-center gap-1 shadow-sm">
-                                            <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
+                                           class="btn btn-sm btn-ai-review rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm">
+                                            <i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>
                                             <span class="small fw-bold">Review (AI)</span>
                                         </a>
                                     @else
-                                        <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-light border rounded-pill px-2.5">
-                                            <i class="fa-regular fa-eye me-1"></i>Chi tiết
+                                        <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center">
+                                            <i class="fa-regular fa-eye me-2"></i>Chi tiết
                                         </a>
                                     @endif
                                 </div>
@@ -359,15 +359,15 @@
                                 {{ $lich->NoiDung ?? 'Họp tiến độ hướng dẫn' }}
                             </div>
                             <div class="text-muted small d-flex align-items-center gap-2" style="font-size: 0.75rem;">
-                                <span><i class="fa-solid fa-users me-1 text-secondary"></i>Nhóm {{ $lich->MaNhom }}</span>
-                                <span><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ $lich->DiaDiem ?? 'Phòng Lab' }}</span>
+                                <span><i class="fa-solid fa-users me-2 text-secondary"></i>Nhóm {{ $lich->MaNhom }}</span>
+                                <span><i class="fa-solid fa-location-dot me-2 text-danger"></i>{{ $lich->DiaDiem ?? 'Phòng Lab' }}</span>
                             </div>
                         </div>
                     </div>
                     @empty
                     <div class="p-2 rounded-3 bg-light border-start border-4 border-primary">
                         <div class="fw-semibold small text-dark mb-1">
-                            <i class="fa-solid fa-clock me-1 text-primary"></i>14:00 - 15:30 (18/03)
+                            <i class="fa-solid fa-clock me-2 text-primary"></i>14:00 - 15:30 (18/03)
                         </div>
                         <div class="small text-muted">Họp tiến độ Khóa luận đợt 2 (Phòng Lab 3)</div>
                     </div>
@@ -384,15 +384,15 @@
                                 {{ $hd->TenHoiDong }}
                             </div>
                             <div class="text-muted small d-flex align-items-center gap-2" style="font-size: 0.75rem;">
-                                <span><i class="fa-solid fa-landmark me-1 text-success"></i>Hội đồng bảo vệ</span>
-                                <span><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ $hd->DiaDiem ?? 'Hội trường B' }}</span>
+                                <span><i class="fa-solid fa-landmark me-2 text-success"></i>Hội đồng bảo vệ</span>
+                                <span><i class="fa-solid fa-location-dot me-2 text-danger"></i>{{ $hd->DiaDiem ?? 'Hội trường B' }}</span>
                             </div>
                         </div>
                     </div>
                     @empty
                     <div class="p-2 rounded-3 bg-light border-start border-4 border-success">
                         <div class="fw-semibold small text-dark mb-1">
-                            <i class="fa-solid fa-award me-1 text-success"></i>08:00 - 11:30 (25/03)
+                            <i class="fa-solid fa-award me-2 text-success"></i>08:00 - 11:30 (25/03)
                         </div>
                         <div class="small text-muted">Hội đồng phản biện đợt 1 (Hội trường B)</div>
                     </div>
@@ -404,7 +404,7 @@
                 <!-- Thông báo nhanh -->
                 <div class="bg-primary-subtle p-3 rounded-3 border border-primary-subtle">
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="fa-solid fa-circle-info text-primary"></i>
+                        <i class="fa-solid fa-circle-info text-primary me-2"></i>
                         <span class="fw-bold small text-primary">Lưu ý nghiệp vụ</span>
                     </div>
                     <p class="small text-secondary mb-0" style="font-size: 0.8rem;">

@@ -12,11 +12,11 @@
             <h4 class="fw-bold mb-0" style="color: #00305a;">Quản Lý Biểu Mẫu Khóa Luận Tốt Nghiệp</h4>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm fw-semibold">
-                <i class="fa-solid fa-calendar-days me-1"></i> Xem Kế Hoạch
+            <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-calendar-days me-2"></i> Xem Kế Hoạch
             </a>
-            <button type="button" class="btn btn-primary rounded-pill px-3 py-2 btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateBieuMau">
-                <i class="fa-solid fa-plus me-1"></i> Thêm Biểu Mẫu Mới
+            <button type="button" class="btn btn-primary rounded-pill px-3 py-2 btn-sm fw-bold shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalCreateBieuMau">
+                <i class="fa-solid fa-plus me-2"></i> Thêm Biểu Mẫu Mới
             </button>
         </div>
     </div>
@@ -112,7 +112,7 @@
 
                 <div class="col-md-2 d-flex align-items-end">
                     @if(request('make_hoach') || request('search'))
-                        <a href="{{ route('admin.bieumau.index') }}" class="btn btn-light rounded-pill w-100 border"><i class="fa-solid fa-rotate-left me-1"></i> Xóa lọc</a>
+                        <a href="{{ route('admin.bieumau.index') }}" class="btn btn-light rounded-pill w-100 border d-flex align-items-center justify-content-center"><i class="fa-solid fa-rotate-left me-2"></i> Xóa lọc</a>
                     @endif
                 </div>
             </form>
@@ -146,15 +146,15 @@
                                 <td class="text-center">
                                     @if($bm->DuongDanFile && $bm->DuongDanFile !== '#')
                                         <a href="{{ asset($bm->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                            <i class="fa-solid fa-download me-1"></i> Tải Về
+                                            <i class="fa-solid fa-download me-2"></i> Tải Về
                                         </a>
                                     @else
-                                        <span class="badge bg-secondary-subtle text-secondary border px-3 py-1.5 rounded-pill">Chưa có file</span>
+                                        <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 rounded-pill">Chưa có file</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
                                     <div class="d-inline-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#modalEditBieuMau{{ $bm->MaBieuMau }}" title="Chỉnh sửa">
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEditBieuMau{{ $bm->MaBieuMau }}" title="Chỉnh sửa">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         <form method="POST" action="{{ route('admin.bieumau.destroy', $bm->MaBieuMau) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa biểu mẫu này?')">

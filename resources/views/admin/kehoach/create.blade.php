@@ -4,22 +4,22 @@
 
 @section('content')
 <div class="mb-3 d-flex justify-content-between align-items-center">
-    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách
     </a>
 </div>
 
 <div class="admin-table-card">
     <div class="admin-table-header">
         <h5 class="admin-table-header-title">
-            <i class="fa-solid fa-calendar-plus text-primary"></i>
+            <i class="fa-solid fa-calendar-plus text-primary me-2"></i>
             Lập Kế Hoạch Khóa Luận Tốt Nghiệp Mới
         </h5>
     </div>
     <div class="card-body p-4">
         @if(isset($errors) && $errors->any())
             <div class="alert alert-danger p-3 rounded-3 mb-4">
-                <div class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>Vui lòng kiểm tra lại thông tin:</div>
+                <div class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Vui lòng kiểm tra lại thông tin:</div>
                 <ul class="mb-0 small">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -81,8 +81,15 @@
                     <input type="date" name="NgayKetThuc" id="NgayKetThucKH" class="form-control" value="{{ old('NgayKetThuc', '2026-11-28') }}" required>
                 </div>
                 <div class="col-12">
-                    <label class="form-label fw-bold">Mô Tả / Nội Dung Kế Hoạch</label>
-                    <textarea name="NoiDung" class="form-control" rows="2" placeholder="Nhập ghi chú hoặc quy định chung của kế hoạch...">Kế hoạch quản lý và thực hiện Khóa luận tốt nghiệp Học kỳ 1 Năm học 2026-2027 cho sinh viên ngành Công nghệ Thông tin theo Thông báo số 27/TB-KCNTT.</textarea>
+                    @include('partials.rich_text_editor', [
+                        'name' => 'NoiDung',
+                        'id' => 'NoiDung',
+                        'label' => 'Mô Tả / Nội Dung Kế Hoạch',
+                        'value' => old('NoiDung', 'Kế hoạch quản lý và thực hiện Khóa luận tốt nghiệp Học kỳ 1 Năm học 2026-2027 cho sinh viên ngành Công nghệ Thông tin theo Thông báo số 27/TB-KCNTT.'),
+                        'minHeight' => '120px',
+                        'compact' => true,
+                        'placeholder' => 'Nhập ghi chú hoặc quy định chung của kế hoạch...'
+                    ])
                 </div>
             </div>
 
@@ -180,8 +187,8 @@
                 <a href="{{ route('admin.kehoach.index') }}" class="btn btn-light border rounded-pill px-4">Hủy bỏ</a>
                 <div class="d-flex gap-2">
                     <button type="submit" name="action" value="draft" class="btn btn-light border rounded-pill px-4 fw-semibold">Lưu Bản Nháp</button>
-                    <button type="submit" name="action" value="publish" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="fa-solid fa-check me-1"></i> Lưu &amp; Công Bố Kế Hoạch
+                    <button type="submit" name="action" value="publish" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Lưu &amp; Công Bố Kế Hoạch
                     </button>
                 </div>
             </div>

@@ -229,7 +229,7 @@
     @endif
 
     <div class="pwd-requirements">
-        <strong><i class="fa-solid fa-shield-halved me-1"></i>Yêu cầu mật khẩu mới:</strong>
+        <strong><i class="fa-solid fa-shield-halved me-2"></i>Yêu cầu mật khẩu mới:</strong>
         <ul>
             <li>Ít nhất 8 ký tự</li>
             <li>Có chứa ít nhất 1 chữ cái viết hoa (A-Z)</li>
@@ -244,10 +244,10 @@
 
         <div class="field-group">
             <label for="email">
-                <i class="fa-solid fa-envelope me-1"></i>Email tài khoản
+                <i class="fa-solid fa-envelope me-2"></i>Email tài khoản
             </label>
             <div class="input-icon-wrap">
-                <i class="fa-solid fa-at field-icon"></i>
+                <i class="fa-solid fa-at field-icon me-2"></i>
                 <input
                     id="email"
                     type="email"
@@ -262,10 +262,10 @@
 
         <div class="field-group">
             <label for="password">
-                <i class="fa-solid fa-lock me-1"></i>Mật khẩu mới
+                <i class="fa-solid fa-lock me-2"></i>Mật khẩu mới
             </label>
             <div class="input-icon-wrap">
-                <i class="fa-solid fa-key field-icon"></i>
+                <i class="fa-solid fa-key field-icon me-2"></i>
                 <input
                     id="password"
                     type="password"
@@ -282,10 +282,10 @@
 
         <div class="field-group">
             <label for="password_confirmation">
-                <i class="fa-solid fa-lock me-1"></i>Xác nhận mật khẩu mới
+                <i class="fa-solid fa-lock me-2"></i>Xác nhận mật khẩu mới
             </label>
             <div class="input-icon-wrap">
-                <i class="fa-solid fa-check-double field-icon"></i>
+                <i class="fa-solid fa-check-double field-icon me-2"></i>
                 <input
                     id="password_confirmation"
                     type="password"
@@ -299,15 +299,15 @@
             </div>
         </div>
 
-        <button type="submit" class="btn-submit-reset">
-            <i class="fa-solid fa-check-circle"></i>
+        <button type="submit" class="btn-submit-reset d-inline-flex align-items-center">
+            <i class="fa-solid fa-check-circle me-2"></i>
             XÁC NHẬN ĐẶT LẠI MẬT KHẨU
         </button>
     </form>
 
     <div style="text-align: center;">
         <a href="{{ route('login') }}" class="back-login">
-            <i class="fa-solid fa-arrow-left"></i>
+            <i class="fa-solid fa-arrow-left me-2"></i>
             Quay lại trang Đăng nhập
         </a>
     </div>

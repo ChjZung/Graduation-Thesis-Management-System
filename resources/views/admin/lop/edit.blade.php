@@ -8,7 +8,7 @@
         <div class="card card-create-huit">
             <div class="card-header-huit">
                 <div class="card-title-huit">
-                    <i class="fa-solid fa-pen-to-square text-white me-1"></i> Chỉnh Sửa Thông Tin Lớp: {{ $lop->TenLop }}
+                    <i class="fa-solid fa-pen-to-square text-white me-2"></i> Chỉnh Sửa Thông Tin Lớp: {{ $lop->TenLop }}
                 </div>
             </div>
             <div class="card-body p-4 p-md-5">
@@ -47,8 +47,8 @@
                     </div>
 
                     <div class="card-footer-huit mx-n4 mb-n4 mt-5">
-                        <button type="submit" class="btn btn-save-huit">
-                            <i class="fa-solid fa-check me-1"></i> Cập Nhật Lớp Học
+                        <button type="submit" class="btn btn-save-huit d-inline-flex align-items-center">
+                            <i class="fa-solid fa-check me-2"></i> Cập Nhật Lớp Học
                         </button>
                         <a href="{{ route('lop.index') }}" class="btn btn-cancel-huit">Hủy Bỏ</a>
                     </div>

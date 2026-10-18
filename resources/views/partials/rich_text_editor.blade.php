@@ -1,22 +1,32 @@
 {{-- ========================================================
    HUIT - TRÌNH SOẠN THẢO VĂN BẢN CÓ ĐỊNH DẠNG (RICH TEXT EDITOR)
-   Chuyên dụng cho Mô tả Đề tài Khóa luận Tốt nghiệp
+   Thành phần chuẩn dùng chung cho tất cả các trường nhập nội dung dài trong hệ thống
    Sử dụng: @include('partials.rich_text_editor', [
-       'name' => 'MoTa',
-       'id' => 'MoTa',
-       'value' => old('MoTa', ...),
-       'label' => 'Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu',
-       'placeholder' => 'Trình bày mục tiêu, nội dung thực hiện và yêu cầu của đề tài...'
+       'name'         => 'YeuCau',
+       'id'           => 'YeuCau',
+       'value'        => old('YeuCau', ...),
+       'label'        => 'Yêu cầu đối với sinh viên thực hiện',
+       'placeholder'  => 'Nhập yêu cầu...',
+       'required'     => false,
+       'minHeight'    => '180px',
+       'showTemplate' => false,
    ])
 ======================================================== --}}
 
 @php
     $inputName = $name ?? 'MoTa';
-    $inputId = $id ?? 'MoTa';
+    $inputId = $id ?? $inputName;
     $initialValue = $value ?? '';
     $cleanInitial = \App\Helpers\HtmlHelper::clean($initialValue);
     $fieldLabel = $label ?? 'Mô Tả Đề Tài & Mục Tiêu Nghiên Cứu';
     $isRequired = $required ?? false;
+    $editorHelp = $helpText ?? ($inputName === 'MoTa' ? 'Trình bày mục tiêu, nội dung thực hiện và yêu cầu của đề tài. Sử dụng thanh công cụ để định dạng văn bản.' : null);
+    $editorPlaceholder = $placeholder ?? 'Nhập nội dung chi tiết...';
+    $editorMinHeight = $minHeight ?? (($compact ?? false) ? '140px' : '220px');
+    $showSuggest = $showTemplate ?? ($inputName === 'MoTa');
+    $minCharLimit = $minChars ?? ($inputName === 'MoTa' ? 30 : 0);
+    $fnSuffix = preg_replace('/[^a-zA-Z0-9_]/', '_', $inputId);
+    $customTemplate = $templateHtml ?? null;
 @endphp
 
 <div class="rich-text-editor-container mb-3" id="container-{{ $inputId }}">
@@ -27,36 +37,40 @@
                 <span class="text-danger">*</span>
             @endif
         </label>
-        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-0.5 px-2.5 shadow-none" id="btn-insert-template-{{ $inputId }}" style="font-size: 12.5px;">
-            <i class="fa-solid fa-wand-magic-sparkles text-primary me-1"></i> Chèn mẫu gợi ý
+        @if($showSuggest)
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-1 px-3 shadow-none d-inline-flex align-items-center" id="btn-insert-template-{{ $inputId }}" style="font-size: 12.5px;">
+            <i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i> Chèn mẫu gợi ý
         </button>
+        @endif
     </div>
 
+    @if($editorHelp)
     <!-- Hướng dẫn ngắn -->
-    <div class="text-muted small mb-2 d-flex align-items-center gap-1.5" style="font-size: 13px;">
-        <i class="fa-solid fa-circle-info text-primary"></i>
-        <span>Trình bày mục tiêu, nội dung thực hiện và yêu cầu của đề tài. Sử dụng thanh công cụ để định dạng văn bản.</span>
+    <div class="text-muted small mb-2 d-flex align-items-center gap-2" style="font-size: 13px;">
+        <i class="fa-solid fa-circle-info text-primary me-2"></i>
+        <span>{{ $editorHelp }}</span>
     </div>
+    @endif
 
     <!-- Khung chính của Rich Text Editor -->
     <div class="rte-wrapper card border rounded-3 overflow-hidden shadow-xs @error($inputName) border-danger @enderror" id="rte-card-{{ $inputId }}">
         <!-- THANH CÔNG CỤ (TOOLBAR) -->
-        <div class="rte-toolbar bg-light border-bottom p-1.5 d-flex flex-wrap align-items-center gap-1" role="toolbar" aria-label="Thanh công cụ định dạng văn bản">
+        <div class="rte-toolbar bg-light border-bottom p-2 d-flex flex-wrap align-items-center gap-1" role="toolbar" aria-label="Thanh công cụ định dạng văn bản">
             
             <!-- Nhóm 1: Kiểu chữ (Bold, Italic, Underline) -->
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="bold" title="In đậm tiêu đề hoặc nội dung quan trọng (Ctrl+B)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="bold" title="In đậm (Ctrl+B)">
                     <i class="fa-solid fa-bold fw-bold"></i>
                 </button>
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="italic" title="In nghiêng văn bản (Ctrl+I)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="italic" title="In nghiêng (Ctrl+I)">
                     <i class="fa-solid fa-italic"></i>
                 </button>
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="underline" title="Gạch chân văn bản (Ctrl+U)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="underline" title="Gạch chân (Ctrl+U)">
                     <i class="fa-solid fa-underline"></i>
                 </button>
             </div>
 
-            <div class="vr my-1 mx-0.5 text-secondary opacity-25"></div>
+            <div class="vr my-1 mx-1 text-secondary opacity-25"></div>
 
             <!-- Nhóm 2: Danh sách (Bullet list, Numbered list) -->
             <div class="btn-group btn-group-sm" role="group">
@@ -68,7 +82,7 @@
                 </button>
             </div>
 
-            <div class="vr my-1 mx-0.5 text-secondary opacity-25"></div>
+            <div class="vr my-1 mx-1 text-secondary opacity-25"></div>
 
             <!-- Nhóm 3: Căn chỉnh lề (Left, Center, Right) -->
             <div class="btn-group btn-group-sm" role="group">
@@ -83,26 +97,26 @@
                 </button>
             </div>
 
-            <div class="vr my-1 mx-0.5 text-secondary opacity-25"></div>
+            <div class="vr my-1 mx-1 text-secondary opacity-25"></div>
 
             <!-- Nhóm 4: Tạo đoạn & Xóa định dạng -->
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="formatBlock" data-value="p" title="Tạo đoạn văn bản mới (Paragraph)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="formatBlock" data-value="p" title="Tạo đoạn văn bản (Paragraph)">
                     <i class="fa-solid fa-paragraph"></i>
                 </button>
-                <button type="button" class="btn btn-light border-0 rte-btn text-danger" data-command="removeFormat" title="Xóa toàn bộ định dạng của đoạn đã chọn">
+                <button type="button" class="btn btn-light border-0 rte-btn text-danger" data-command="removeFormat" title="Xóa định dạng">
                     <i class="fa-solid fa-eraser"></i>
                 </button>
             </div>
 
-            <div class="vr my-1 mx-0.5 text-secondary opacity-25"></div>
+            <div class="vr my-1 mx-1 text-secondary opacity-25"></div>
 
             <!-- Nhóm 5: Hoàn tác / Làm lại (Undo, Redo) -->
             <div class="btn-group btn-group-sm ms-auto" role="group">
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="undo" title="Hoàn tác thao tác trước (Ctrl+Z)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="undo" title="Hoàn tác (Ctrl+Z)">
                     <i class="fa-solid fa-rotate-left"></i>
                 </button>
-                <button type="button" class="btn btn-light border-0 rte-btn" data-command="redo" title="Làm lại thao tác vừa hủy (Ctrl+Y)">
+                <button type="button" class="btn btn-light border-0 rte-btn" data-command="redo" title="Làm lại (Ctrl+Y)">
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
             </div>
@@ -114,22 +128,25 @@
              contenteditable="true" 
              role="textbox" 
              aria-multiline="true"
-             data-placeholder="Nhập mô tả chi tiết bài toán, phạm vi nghiên cứu, kết quả kỳ vọng (tối thiểu 30 ký tự)...">{!! $cleanInitial !!}</div>
+             style="min-height: {{ $editorMinHeight }};"
+             data-placeholder="{{ $editorPlaceholder }}">{!! $cleanInitial !!}</div>
 
         <!-- Thanh trạng thái chân trang (Footer bar) -->
-        <div class="rte-footer bg-light px-3 py-1.5 border-top d-flex justify-content-between align-items-center text-muted" style="font-size: 12.5px;">
+        <div class="rte-footer bg-light px-3 py-2 border-top d-flex justify-content-between align-items-center text-muted" style="font-size: 12.5px;">
             <div>
                 <span id="rte-counter-{{ $inputId }}" class="fw-semibold text-secondary">0</span> ký tự văn bản
-                <span id="rte-hint-{{ $inputId }}" class="ms-1 text-danger d-none">(Cần tối thiểu 30 ký tự)</span>
+                @if($minCharLimit > 0)
+                <span id="rte-hint-{{ $inputId }}" class="ms-1 text-danger d-none">(Cần tối thiểu {{ $minCharLimit }} ký tự)</span>
+                @endif
             </div>
             <div class="small">
-                <i class="fa-solid fa-shield-halved text-success me-1"></i>Đã kích hoạt bảo vệ HTML & chống XSS tự động
+                <i class="fa-solid fa-shield-halved text-success me-2"></i>Bảo vệ an toàn dữ liệu HTML
             </div>
         </div>
     </div>
 
     <!-- TEXTAREA ẨN ĐỒNG BỘ DỮ LIỆU ĐỂ SUBMIT FORM LARAVEL CHUẨN XÁC -->
-    <textarea name="{{ $inputName }}" id="{{ $inputId }}" class="d-none" required>{{ $cleanInitial }}</textarea>
+    <textarea name="{{ $inputName }}" id="{{ $inputId }}" class="d-none" {{ $isRequired ? 'required' : '' }}>{{ $cleanInitial }}</textarea>
 
     @error($inputName)
         <div class="invalid-feedback d-block fw-semibold mt-1" style="font-size: 13px;">{{ $message }}</div>
@@ -180,7 +197,6 @@
         font-weight: 700;
     }
     .rich-text-editor-container .rte-editor {
-        min-height: 250px;
         max-height: 480px;
         overflow-y: auto;
         font-size: 14px;
@@ -188,7 +204,7 @@
         color: #1e293b;
         outline: none;
         word-break: break-word;
-        padding: 18px 20px !important;
+        padding: 16px 18px !important;
     }
     /* Typography bên trong vùng soạn thảo */
     .rich-text-editor-container .rte-editor p {
@@ -227,126 +243,134 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const editorId = '{{ $inputId }}';
-    const editorEl = document.getElementById('rte-editor-' + editorId);
-    const hiddenTextarea = document.getElementById(editorId);
-    const counterEl = document.getElementById('rte-counter-' + editorId);
-    const hintEl = document.getElementById('rte-hint-' + editorId);
-    const container = document.getElementById('container-' + editorId);
-    const btnTemplate = document.getElementById('btn-insert-template-' + editorId);
+(function () {
+    function initEditor_{{ $fnSuffix }}() {
+        const editorId = '{{ $inputId }}';
+        const editorEl = document.getElementById('rte-editor-' + editorId);
+        const hiddenTextarea = document.getElementById(editorId);
+        const counterEl = document.getElementById('rte-counter-' + editorId);
+        const hintEl = document.getElementById('rte-hint-' + editorId);
+        const container = document.getElementById('container-' + editorId);
+        const btnTemplate = document.getElementById('btn-insert-template-' + editorId);
+        const minChars = {{ (int)$minCharLimit }};
 
-    if (!editorEl || !hiddenTextarea) return;
+        if (!editorEl || !hiddenTextarea) return;
+        if (editorEl.dataset.rteInitialized === 'true') return;
+        editorEl.dataset.rteInitialized = 'true';
 
-    // 1. Kiểm tra trạng thái rỗng để kích hoạt placeholder
-    function checkEmptyState() {
-        const text = editorEl.innerText.trim();
-        const html = editorEl.innerHTML.trim();
-        const isEmpty = text === '' && (html === '' || html === '<p><br></p>' || html === '<br>' || html === '<p></p>');
-        if (isEmpty) {
-            editorEl.setAttribute('data-empty', 'true');
-        } else {
-            editorEl.removeAttribute('data-empty');
-        }
-
-        // Cập nhật đếm ký tự văn bản thuần
-        const charLen = text.length;
-        if (counterEl) counterEl.textContent = charLen;
-        if (hintEl) {
-            if (charLen > 0 && charLen < 30) {
-                hintEl.classList.remove('d-none');
+        // 1. Kiểm tra trạng thái rỗng để kích hoạt placeholder
+        function checkEmptyState() {
+            const text = editorEl.innerText.trim();
+            const html = editorEl.innerHTML.trim();
+            const isEmpty = text === '' && (html === '' || html === '<p><br></p>' || html === '<br>' || html === '<p></p>');
+            if (isEmpty) {
+                editorEl.setAttribute('data-empty', 'true');
             } else {
-                hintEl.classList.add('d-none');
+                editorEl.removeAttribute('data-empty');
             }
-        }
-    }
 
-    // 2. Đồng bộ nội dung HTML từ Editor vào Textarea ẩn
-    function syncToTextarea() {
-        checkEmptyState();
-        if (editorEl.getAttribute('data-empty') === 'true') {
-            hiddenTextarea.value = '';
-        } else {
-            hiddenTextarea.value = editorEl.innerHTML.trim();
-        }
-    }
-
-    // 3. Khởi tạo trạng thái ban đầu
-    checkEmptyState();
-    syncToTextarea();
-
-    // 4. Lắng nghe các sự kiện gõ phím / dán trên Editor
-    editorEl.addEventListener('input', syncToTextarea);
-    editorEl.addEventListener('keyup', syncToTextarea);
-    editorEl.addEventListener('blur', syncToTextarea);
-    editorEl.addEventListener('paste', function (e) {
-        // Tự động đồng bộ sau khi paste xong
-        setTimeout(syncToTextarea, 20);
-    });
-
-    // 5. Đồng bộ trước khi submit form
-    const parentForm = hiddenTextarea.closest('form');
-    if (parentForm) {
-        parentForm.addEventListener('submit', function () {
-            syncToTextarea();
-        });
-    }
-
-    // 6. Xử lý các nút bấm trên thanh công cụ (Toolbar Actions)
-    const toolbarButtons = container.querySelectorAll('.rte-btn');
-    toolbarButtons.forEach(function (btn) {
-        btn.addEventListener('mousedown', function (e) {
-            e.preventDefault(); // Giữ selection trong vùng soạn thảo
-        });
-
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            editorEl.focus();
-
-            const command = this.dataset.command;
-            const value = this.dataset.value || null;
-
-            if (command) {
-                document.execCommand(command, false, value);
-                syncToTextarea();
-                updateToolbarStates();
-            }
-        });
-    });
-
-    // 7. Cập nhật trạng thái active của các nút (In đậm, nghiêng, v.v.) dựa trên vị trí con trỏ
-    function updateToolbarStates() {
-        toolbarButtons.forEach(function (btn) {
-            const cmd = btn.dataset.command;
-            if (['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList', 'justifyLeft', 'justifyCenter', 'justifyRight'].includes(cmd)) {
-                try {
-                    if (document.queryCommandState(cmd)) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
-                } catch (err) {}
-            }
-        });
-    }
-
-    document.addEventListener('selectionchange', function () {
-        if (document.activeElement === editorEl) {
-            updateToolbarStates();
-        }
-    });
-
-    // 8. Chức năng: Chèn mẫu gợi ý theo đúng yêu cầu đề tài
-    if (btnTemplate) {
-        btnTemplate.addEventListener('click', function () {
-            const currentText = editorEl.innerText.trim();
-            if (currentText.length > 10) {
-                if (!confirm('Vùng soạn thảo đã có nội dung. Bạn có chắc muốn chèn thêm mẫu cấu trúc đề tài gợi ý vào không?')) {
-                    return;
+            // Cập nhật đếm ký tự văn bản thuần
+            const charLen = text.length;
+            if (counterEl) counterEl.textContent = charLen;
+            if (hintEl && minChars > 0) {
+                if (charLen > 0 && charLen < minChars) {
+                    hintEl.classList.remove('d-none');
+                } else {
+                    hintEl.classList.add('d-none');
                 }
             }
+        }
 
-            const templateHtml = `
+        // 2. Đồng bộ nội dung HTML từ Editor vào Textarea ẩn
+        function syncToTextarea() {
+            checkEmptyState();
+            if (editorEl.getAttribute('data-empty') === 'true') {
+                hiddenTextarea.value = '';
+            } else {
+                hiddenTextarea.value = editorEl.innerHTML.trim();
+            }
+        }
+
+        // 3. Khởi tạo trạng thái ban đầu
+        checkEmptyState();
+        syncToTextarea();
+
+        // 4. Lắng nghe các sự kiện gõ phím / dán trên Editor
+        editorEl.addEventListener('input', syncToTextarea);
+        editorEl.addEventListener('keyup', syncToTextarea);
+        editorEl.addEventListener('blur', syncToTextarea);
+        editorEl.addEventListener('paste', function () {
+            setTimeout(syncToTextarea, 20);
+        });
+
+        // 5. Đồng bộ trước khi submit form
+        const parentForm = hiddenTextarea.closest('form');
+        if (parentForm) {
+            parentForm.addEventListener('submit', function () {
+                syncToTextarea();
+            });
+        }
+
+        // 6. Xử lý các nút bấm trên thanh công cụ (Toolbar Actions)
+        if (container) {
+            const toolbarButtons = container.querySelectorAll('.rte-btn');
+            toolbarButtons.forEach(function (btn) {
+                btn.addEventListener('mousedown', function (e) {
+                    e.preventDefault(); // Giữ selection trong vùng soạn thảo
+                });
+
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    editorEl.focus();
+
+                    const command = this.dataset.command;
+                    const value = this.dataset.value || null;
+
+                    if (command) {
+                        document.execCommand(command, false, value);
+                        syncToTextarea();
+                        updateToolbarStates();
+                    }
+                });
+            });
+
+            // 7. Cập nhật trạng thái active của các nút dựa trên con trỏ
+            function updateToolbarStates() {
+                toolbarButtons.forEach(function (btn) {
+                    const cmd = btn.dataset.command;
+                    if (['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList', 'justifyLeft', 'justifyCenter', 'justifyRight'].includes(cmd)) {
+                        try {
+                            if (document.queryCommandState(cmd)) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        } catch (err) {}
+                    }
+                });
+            }
+
+            document.addEventListener('selectionchange', function () {
+                if (document.activeElement === editorEl) {
+                    updateToolbarStates();
+                }
+            });
+        }
+
+        // 8. Chức năng: Chèn mẫu gợi ý
+        if (btnTemplate) {
+            btnTemplate.addEventListener('click', function () {
+                const currentText = editorEl.innerText.trim();
+                if (currentText.length > 10) {
+                    if (!confirm('Vùng soạn thảo đã có nội dung. Bạn có chắc muốn chèn thêm mẫu cấu trúc gợi ý vào không?')) {
+                        return;
+                    }
+                }
+
+                @if(!empty($customTemplate))
+                    const templateHtml = `{!! addslashes($customTemplate) !!}`;
+                @else
+                    const templateHtml = `
 <p><strong>1. Mục tiêu đề tài:</strong></p>
 <ul>
     <li>Trình bày mục tiêu chính và ý nghĩa thực tiễn của đề tài khóa luận.</li>
@@ -363,16 +387,24 @@ document.addEventListener('DOMContentLoaded', function () {
     <li>Kiến thức nền tảng chuyên ngành vững vàng và tinh thần chủ động làm việc.</li>
     <li>Kỹ năng công nghệ, ngôn ngữ lập trình và các công cụ dự kiến sử dụng.</li>
 </ul>`;
+                @endif
 
-            if (currentText.length === 0 || editorEl.getAttribute('data-empty') === 'true') {
-                editorEl.innerHTML = templateHtml.trim();
-            } else {
-                editorEl.innerHTML += '<br>' + templateHtml.trim();
-            }
+                if (currentText.length === 0 || editorEl.getAttribute('data-empty') === 'true') {
+                    editorEl.innerHTML = templateHtml.trim();
+                } else {
+                    editorEl.innerHTML += '<br>' + templateHtml.trim();
+                }
 
-            editorEl.focus();
-            syncToTextarea();
-        });
+                editorEl.focus();
+                syncToTextarea();
+            });
+        }
     }
-});
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEditor_{{ $fnSuffix }});
+    } else {
+        initEditor_{{ $fnSuffix }}();
+    }
+})();
 </script>

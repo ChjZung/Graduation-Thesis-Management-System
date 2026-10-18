@@ -12,16 +12,22 @@ class AiSummaryService
 {
     private const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}';
     private const MAX_RETRIES    = 3;
-    private const CHUNK_SIZE     = 3500;
+    private const CHUNK_SIZE     = 3000;
+    private const CHUNK_OVERLAP  = 300;
 
     /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
      * Sử dụng Python PyMuPDF + Gemini API / Fallback NLP rule-based.
+     * Hỗ trợ cấu hình tham số thực nghiệm: chunk_size, chunk_overlap, method.
      */
-    public function summarizePdf(string $pdfPath, int $stage = 1): array
+    public function summarizePdf(string $pdfPath, int $stage = 1, array $options = []): array
     {
         $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
         $scriptPath = base_path('app/Services/ai_summarizer.py');
+
+        $chunkSize = $options['chunk_size'] ?? self::CHUNK_SIZE;
+        $chunkOverlap = $options['chunk_overlap'] ?? self::CHUNK_OVERLAP;
+        $method = $options['method'] ?? 'map_reduce';
 
         $command = [
             'python',
@@ -30,6 +36,12 @@ class AiSummaryService
             $pdfPath,
             '--stage',
             (string)$stage,
+            '--chunk-size',
+            (string)$chunkSize,
+            '--chunk-overlap',
+            (string)$chunkOverlap,
+            '--method',
+            $method,
         ];
 
         if (!empty($apiKey)) {
@@ -58,7 +70,7 @@ class AiSummaryService
     }
 
     /**
-     * Định dạng kết quả từ Map-Reduce sang schema chuẩn và text preview cho form.
+     * Định dạng kết quả từ Map-Reduce sang schema chuẩn 11 phần và text preview cho form.
      */
     public function formatSummarizeResult(array $raw, int $stage = 1): array
     {
@@ -68,9 +80,15 @@ class AiSummaryService
         $source = $raw['source'] ?? 'ai_map_reduce';
 
         $completedWork = $data['completed_work'] ?? [];
+        $deliverables = $data['deliverables'] ?? [];
+        $technicalLinks = $data['technical_links'] ?? [];
+        $techStack = $data['tech_stack'] ?? [];
         $difficulties = $data['difficulties'] ?? [];
+        $pendingItems = $data['pending_items'] ?? [];
         $nextSteps = $data['next_steps'] ?? [];
         $missingInfo = $data['missing_information'] ?? [];
+        $citations = $data['citations'] ?? [];
+        $aiRecs = $data['ai_recommendations'] ?? [];
         $overallSummary = $data['overall_summary'] ?? "Báo cáo tiến độ hoàn thành tốt giai đoạn {$stage}.";
         $completionPct = (int)($data['completion_percentage'] ?? min(100, max(25, $stage * 16)));
 
@@ -83,6 +101,13 @@ class AiSummaryService
                 $line .= "\n  - Dẫn chứng: " . $item['evidence'];
             }
             $formattedCompleted[] = $line;
+        }
+
+        $formattedDeliverables = [];
+        foreach ($deliverables as $item) {
+            $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
+            $line = "• " . ($item['content'] ?? '') . $pagesStr;
+            $formattedDeliverables[] = $line;
         }
 
         $formattedDifficulties = [];
@@ -105,25 +130,81 @@ class AiSummaryService
             $formattedNextSteps[] = $line;
         }
 
+        // Chuẩn hóa mảng chuỗi đơn giản
+        $congViecHoanThanh = array_map(fn($i) => is_array($i) ? ($i['content'] ?? '') : (string)$i, $completedWork);
+        $khoKhan = array_map(fn($i) => is_array($i) ? ($i['content'] ?? '') : (string)$i, $difficulties);
+        $keHoachTiepTheo = array_map(fn($i) => is_array($i) ? ($i['content'] ?? '') : (string)$i, $nextSteps);
+        $noiDungChuaRo = array_map(fn($i) => is_array($i) ? ($i['content'] ?? '') : (string)$i, $missingInfo);
+        $ketQuaDatDuoc = array_map(fn($i) => is_array($i) ? ($i['content'] ?? '') : (string)$i, $deliverables ?: $completedWork);
+        $canhBao = $data['warnings'] ?? $aiRecs;
+
+        $sectionsData = [
+            'overall_summary' => $overallSummary,
+            'completion_percentage' => $completionPct,
+            'completed_work' => $completedWork,
+            'deliverables' => $deliverables,
+            'technical_links' => $technicalLinks,
+            'tech_stack' => $techStack,
+            'difficulties' => $difficulties,
+            'pending_items' => $pendingItems,
+            'next_steps' => $nextSteps,
+            'missing_information' => $missingInfo,
+            'citations' => $citations,
+            'ai_recommendations' => $aiRecs,
+        ];
+
+        $stdReport = $raw['standard_report'] ?? [
+            'tom_tat' => $overallSummary,
+            'cong_viec_hoan_thanh' => array_values(array_filter($congViecHoanThanh)),
+            'ket_qua_dat_duoc'     => array_values(array_filter($ketQuaDatDuoc)),
+            'kho_khan'             => array_values(array_filter($khoKhan)),
+            'ke_hoach_tiep_theo'   => array_values(array_filter($keHoachTiepTheo)) ?: ['Tài liệu chưa đề cập đến kế hoạch tiếp theo'],
+            'moc_thoi_gian'        => $data['moc_thoi_gian'] ?? ["Giai đoạn {$stage}"],
+            'noi_dung_chua_ro'     => array_values(array_filter($noiDungChuaRo)),
+            'canh_bao'             => is_array($canhBao) ? $canhBao : [],
+            'nguon_tham_chieu'     => array_map(fn($c) => 'Trang ' . ($c['page'] ?? 1), $citations) ?: ['Trang 1'],
+        ];
+
+        $metrics = $raw['metrics'] ?? [
+            'total_pages' => $totalPages,
+            'valid_pages' => $totalPages,
+            'char_count' => 0,
+            'word_count' => 0,
+            'chunk_count' => 1,
+            'processing_time' => $procTime,
+        ];
+
         return [
             'success' => true,
             'source' => $source,
             'total_pages' => $totalPages,
             'processing_time' => $procTime,
             'completion_percentage' => $completionPct,
-            'data' => [
-                'completed_work' => $completedWork,
-                'difficulties' => $difficulties,
-                'next_steps' => $nextSteps,
-                'missing_information' => $missingInfo,
-                'overall_summary' => $overallSummary,
-                'completion_percentage' => $completionPct,
-            ],
+            // Cấu trúc báo cáo khoa học chuẩn theo Mục 3
+            'standard_report'      => $stdReport,
+            'metrics'              => $metrics,
+            // 11 phần dữ liệu chi tiết
+            'cong_viec_hoan_thanh' => array_values(array_filter($congViecHoanThanh)),
+            'ket_qua_dat_duoc'     => array_values(array_filter($ketQuaDatDuoc)),
+            'kho_khan'             => array_values(array_filter($khoKhan)),
+            'ke_hoach_tiep_theo'   => array_values(array_filter($keHoachTiepTheo)),
+            'noi_dung_chua_ro'     => array_values(array_filter($noiDungChuaRo)),
+            'danh_gia_tien_do'     => $overallSummary,
+            'canh_bao'             => is_array($canhBao) ? $canhBao : [],
+            'deliverables'         => $deliverables,
+            'technical_links'      => $technicalLinks,
+            'tech_stack'           => $techStack,
+            'pending_items'        => $pendingItems,
+            'citations'            => $citations,
+            'ai_recommendations'   => $aiRecs,
+
+            'data' => $sectionsData,
             'formatted' => [
                 'completed_work' => implode("\n\n", $formattedCompleted),
-                'difficulties' => implode("\n\n", $formattedDifficulties),
-                'next_steps' => implode("\n\n", $formattedNextSteps),
-                'overall_summary' => $overallSummary,
+                'deliverables'   => implode("\n\n", $formattedDeliverables),
+                'difficulties'   => implode("\n\n", $formattedDifficulties),
+                'next_steps'     => implode("\n\n", $formattedNextSteps),
+                'overall_summary'=> $overallSummary,
             ]
         ];
     }
@@ -151,10 +232,26 @@ class AiSummaryService
             ]
         ];
 
+        $deliverables = [
+            [
+                'content' => "Tài liệu báo cáo tiến độ và mã nguồn các chức năng Giai đoạn {$stage}.",
+                'evidence' => "Minh chứng trong tài liệu",
+                'source_pages' => [1]
+            ]
+        ];
+
         $difficulties = [
             [
                 'content' => "Một số yêu cầu kỹ thuật và tích hợp hệ thống cần tối ưu thêm hiệu năng và xử lý ngoại lệ.",
                 'evidence' => "Phần tổng hợp khó khăn kỹ thuật",
+                'source_pages' => [1]
+            ]
+        ];
+
+        $pending = [
+            [
+                'content' => "Kiểm thử các trường hợp ngoại lệ và viết tài liệu hướng dẫn vận hành.",
+                'evidence' => "Rà soát tồn đọng",
                 'source_pages' => [1]
             ]
         ];
@@ -174,9 +271,20 @@ class AiSummaryService
             'processing_time' => 0.05,
             'data' => [
                 'completed_work' => $completed,
+                'deliverables' => $deliverables,
+                'technical_links' => [],
+                'tech_stack' => ['Laravel', 'MySQL', 'Bootstrap'],
                 'difficulties' => $difficulties,
+                'pending_items' => $pending,
                 'next_steps' => $nextSteps,
                 'missing_information' => [],
+                'citations' => [
+                    ['page' => 1, 'topic' => 'Nội dung cốt lõi', 'snippet' => "Hoàn thành các nội dung cốt lõi của {$stageName}"]
+                ],
+                'ai_recommendations' => [
+                    "Bổ sung thêm hình ảnh màn hình kết quả chạy thực tế và link Git repository.",
+                    "Trao đổi kỹ với GVHD các yêu cầu cần hoàn thiện trước mốc nộp tiếp theo."
+                ],
                 'overall_summary' => "Tóm tắt tiến độ thực hiện {$stageName}.",
                 'completion_percentage' => min(100, max(25, $stage * 16)),
             ]

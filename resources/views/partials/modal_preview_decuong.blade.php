@@ -13,18 +13,18 @@
             <div class="modal-header py-3 px-4 text-white" style="background-color: #00529b; flex-shrink: 0;">
                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
                     <span class="badge bg-white text-primary fw-bold px-2 py-1" id="quickPreviewTypeBadge" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-file me-1"></i> ĐỀ CƯƠNG
+                        <i class="fa-solid fa-file me-2"></i> ĐỀ CƯƠNG
                     </span>
                     <h6 class="modal-title text-truncate fw-bold mb-0 text-white" id="modalQuickPreviewLabel" style="font-size: 1rem;" title="Xem nhanh đề cương">
                         Xem Nhanh Đề Cương Chi Tiết
                     </h6>
                 </div>
                 <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
-                    <a href="#" id="quickPreviewOpenTabBtn" target="_blank" class="btn btn-sm btn-outline-light py-1 px-2.5 rounded-pill" title="Mở trong tab mới của trình duyệt">
-                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> <span class="d-none d-sm-inline">Mở tab mới</span>
+                    <a href="#" id="quickPreviewOpenTabBtn" target="_blank" class="btn btn-sm btn-outline-light py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Mở trong tab mới của trình duyệt">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> <span class="d-none d-sm-inline">Mở tab mới</span>
                     </a>
-                    <a href="#" id="quickPreviewDownloadBtn" download class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-2.5 rounded-pill" title="Tải file về máy tính">
-                        <i class="fa-solid fa-download me-1"></i> <span class="d-none d-sm-inline">Tải về</span>
+                    <a href="#" id="quickPreviewDownloadBtn" download class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Tải file về máy tính">
+                        <i class="fa-solid fa-download me-2"></i> <span class="d-none d-sm-inline">Tải về</span>
                     </a>
                     <button type="button" class="btn-close btn-close-white ms-1" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
@@ -47,7 +47,7 @@
                     <!-- PDF Toolbar -->
                     <div class="bg-dark text-white px-3 py-2 border-bottom d-flex justify-content-between align-items-center flex-shrink-0" style="font-size: 13px; z-index: 10;">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-danger text-white"><i class="fa-solid fa-file-pdf me-1"></i> PDF</span>
+                            <span class="badge bg-danger text-white"><i class="fa-solid fa-file-pdf me-2"></i> PDF</span>
                             <span class="text-white-50">|</span>
                             <span class="text-light">
                                 Trang <span id="pdfCurrentPage" class="fw-bold text-white">1</span> / <span id="pdfTotalPages" class="fw-bold text-white">1</span>
@@ -76,11 +76,11 @@
                                 </button>
                             </div>
                             
-                            <a href="#" id="quickPreviewPdfOpenDirect" target="_blank" class="btn btn-sm btn-outline-info py-0.5 px-2.5 rounded-pill" style="font-size: 12px;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab riêng
+                            <a href="#" id="quickPreviewPdfOpenDirect" target="_blank" class="btn btn-sm btn-outline-info py-1 px-3 rounded-pill d-inline-flex align-items-center" style="font-size: 12px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab riêng
                             </a>
-                            <a href="#" id="quickPreviewPdfDownloadDirect" download class="btn btn-sm btn-warning text-dark fw-bold py-0.5 px-2.5 rounded-pill" style="font-size: 12px;">
-                                <i class="fa-solid fa-download me-1"></i> Tải PDF
+                            <a href="#" id="quickPreviewPdfDownloadDirect" download class="btn btn-sm btn-warning text-dark fw-bold py-1 px-3 rounded-pill d-inline-flex align-items-center" style="font-size: 12px;">
+                                <i class="fa-solid fa-download me-2"></i> Tải PDF
                             </a>
                         </div>
                     </div>
@@ -116,11 +116,11 @@
                             Tệp tài liệu đề cương đã sẵn sàng. Bạn có thể mở trực tiếp trong tab mới hoặc tải về máy tính để xem đầy đủ bằng Microsoft Word.
                         </p>
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="#" id="quickPreviewFallbackOpenBtn" target="_blank" class="btn btn-outline-primary px-3 rounded-pill">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                            <a href="#" id="quickPreviewFallbackOpenBtn" target="_blank" class="btn btn-outline-primary px-3 rounded-pill d-inline-flex align-items-center">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                             </a>
-                            <a href="#" id="quickPreviewFallbackDownloadBtn" download class="btn btn-primary px-3 rounded-pill">
-                                <i class="fa-solid fa-download me-1"></i> Tải về máy
+                            <a href="#" id="quickPreviewFallbackDownloadBtn" download class="btn btn-primary px-3 rounded-pill d-inline-flex align-items-center">
+                                <i class="fa-solid fa-download me-2"></i> Tải về máy
                             </a>
                         </div>
                     </div>
@@ -130,7 +130,7 @@
             <!-- Modal Footer (Small status line) -->
             <div class="modal-footer py-1 px-3 bg-white border-top d-flex justify-content-between align-items-center" style="flex-shrink: 0;">
                 <div class="small text-muted" id="quickPreviewFooterInfo">
-                    <i class="fa-regular fa-circle-question me-1 text-primary"></i> Nhấn phím <kbd>ESC</kbd> hoặc nút đóng để quay lại màn hình xét duyệt.
+                    <i class="fa-regular fa-circle-question me-2 text-primary"></i> Nhấn phím <kbd>ESC</kbd> hoặc nút đóng để quay lại màn hình xét duyệt.
                 </div>
                 <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
             </div>
@@ -385,7 +385,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
 
     if (isPdf) {
         badgeEl.className = 'badge bg-danger text-white fw-bold px-2 py-1';
-        badgeEl.innerHTML = '<i class="fa-solid fa-file-pdf me-1"></i> PDF';
+        badgeEl.innerHTML = '<i class="fa-solid fa-file-pdf me-2"></i> PDF';
         loadingText.textContent = 'Đang đọc và dựng tài liệu PDF trực tiếp...';
 
         if (window.pdfjsLib) {
@@ -411,7 +411,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
         }
     } else if (isDocx) {
         badgeEl.className = 'badge bg-primary text-white fw-bold px-2 py-1';
-        badgeEl.innerHTML = '<i class="fa-solid fa-file-word me-1"></i> WORD (.DOCX)';
+        badgeEl.innerHTML = '<i class="fa-solid fa-file-word me-2"></i> WORD (.DOCX)';
         loadingText.textContent = 'Đang đọc và chuyển đổi tài liệu Word...';
 
         if (typeof mammoth === 'undefined') {
@@ -442,7 +442,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
             });
     } else {
         badgeEl.className = 'badge bg-secondary text-white fw-bold px-2 py-1';
-        badgeEl.innerHTML = '<i class="fa-solid fa-file-lines me-1"></i> TÀI LIỆU';
+        badgeEl.innerHTML = '<i class="fa-solid fa-file-lines me-2"></i> TÀI LIỆU';
         loadingEl.classList.add('d-none');
         fallbackContainer.classList.remove('d-none');
         if (isDoc) {

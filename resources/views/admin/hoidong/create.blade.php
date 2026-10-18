@@ -63,13 +63,13 @@
                                 <h6 class="fw-bold text-dark mb-0">
                                     <i class="fa-solid fa-users text-primary me-2"></i>2. Phân Công Thành Viên Hội Đồng (Tối thiểu 3 Giảng Viên) <span class="text-danger">*</span>
                                 </h6>
-                                <button type="button" id="themThanhVien" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                    <i class="fa-solid fa-plus me-1"></i>Thêm Thành Viên
+                                <button type="button" id="themThanhVien" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-plus me-2"></i>Thêm Thành Viên
                                 </button>
                             </div>
 
                             <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 border-0 bg-info-subtle text-info-emphasis">
-                                <i class="fa-solid fa-circle-info me-1"></i>
+                                <i class="fa-solid fa-circle-info me-2"></i>
                                 Hội đồng chấm chuẩn cần: <strong>1 Chủ tịch</strong>, <strong>1 Thư ký</strong> và các <strong>Thành viên / Phản biện</strong>.
                             </div>
 
@@ -105,8 +105,8 @@
                         </div>
 
                         <div class="card-footer-huit mx-n4 mb-n4 mt-5">
-                            <button type="submit" class="btn btn-save-huit">
-                                <i class="fa-solid fa-check me-1"></i> Lưu & Thành Lập Hội Đồng
+                            <button type="submit" class="btn btn-save-huit d-inline-flex align-items-center">
+                                <i class="fa-solid fa-check me-2"></i> Lưu & Thành Lập Hội Đồng
                             </button>
                             <a href="{{ route('admin.hoidong.index') }}" class="btn btn-cancel-huit">Hủy Bỏ</a>
                         </div>

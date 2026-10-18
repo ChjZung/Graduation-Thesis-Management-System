@@ -132,7 +132,7 @@
 
                     <!-- PHẦN 2: CÁC MỐC BÁO CÁO TIẾN ĐỘ 6 GIAI ĐOẠN -->
                     <div class="mt-2 pt-2 border-top">
-                        <label class="form-label fw-bold text-primary mb-1.5" style="font-size: 0.75rem; text-transform: uppercase;">
+                        <label class="form-label fw-bold text-primary mb-2" style="font-size: 0.75rem; text-transform: uppercase;">
                             📊 Mốc Báo Cáo Tiến Độ (6 Giai Đoạn)
                         </label>
                     </div>

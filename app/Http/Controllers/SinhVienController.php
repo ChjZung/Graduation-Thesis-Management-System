@@ -595,7 +595,7 @@ class SinhVienController extends Controller
                     'NgayXetDuyet' => now(),
                     'TrangThai' => $request->TrangThai,
                     'DieuKien' => $dieuKienText,
-                    'GhiChu' => $request->GhiChu ? trim($request->GhiChu) : 'Thêm từ danh sách sinh viên trường',
+                    'GhiChu' => $request->filled('GhiChu') ? \App\Helpers\HtmlHelper::clean($request->GhiChu) : 'Thêm từ danh sách sinh viên trường',
                 ]
             );
 
@@ -623,13 +623,13 @@ class SinhVienController extends Controller
         $request->validate([
             'MaDSDK' => 'required|exists:DanhSachSVDuDieuKien,MaDSDK',
             'TrangThai' => 'required|in:Đủ điều kiện,Chưa đủ điều kiện',
-            'GhiChu' => 'nullable|string|max:255',
+            'GhiChu' => 'nullable|string',
         ]);
 
         $ds = \App\Models\DanhSachSVDuDieuKien::findOrFail($request->MaDSDK);
         $ds->update([
             'TrangThai' => $request->TrangThai,
-            'GhiChu' => $request->GhiChu ? trim($request->GhiChu) : 'Cập nhật thủ công bởi Admin',
+            'GhiChu' => $request->filled('GhiChu') ? \App\Helpers\HtmlHelper::clean($request->GhiChu) : 'Cập nhật thủ công bởi Admin',
             'NgayXetDuyet' => now(),
         ]);
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\DeTai;
 use App\Models\GiangVien;
 use App\Models\PhanCongPhanBien;
+use App\Models\ChiTietDuyetDeTai;
+use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -103,12 +105,21 @@ class PhanBienDeCuongController extends Controller
     {
         $request->validate([
             'KetQua'   => 'required|in:Đạt,Yêu cầu chỉnh sửa,Không đạt',
-            'NhanXet'  => 'required|string|max:2000',
+            'NhanXet'  => 'required|string',
         ], [
             'KetQua.required'  => 'Vui lòng chọn kết luận đánh giá (Đạt / Yêu cầu chỉnh sửa / Không đạt).',
             'KetQua.in'        => 'Kết quả đánh giá không hợp lệ.',
             'NhanXet.required' => 'Vui lòng nhập nhận xét, ý kiến phản biện đề cương.',
         ]);
+
+        $cleanedNhanXet = \App\Helpers\HtmlHelper::clean($request->NhanXet);
+        $plainNhanXet = trim(strip_tags(html_entity_decode($cleanedNhanXet, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainNhanXet) < 10) {
+            return redirect()->back()->withInput()->withErrors(['NhanXet' => 'Vui lòng nhập nhận xét chi tiết hơn (tối thiểu 10 ký tự).']);
+        }
+        if (mb_strlen($plainNhanXet) > 5000) {
+            return redirect()->back()->withInput()->withErrors(['NhanXet' => 'Nhận xét không được vượt quá 5.000 ký tự.']);
+        }
 
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
@@ -122,31 +133,48 @@ class PhanBienDeCuongController extends Controller
             ->firstOrFail();
 
         $detai = $phanCong->deTai;
+        $oldStatus = $detai->TrangThai;
 
-        DB::transaction(function () use ($request, $phanCong, $detai, $gv) {
+        DB::transaction(function () use ($request, $cleanedNhanXet, $phanCong, $detai, $gv, $oldStatus) {
             $phanCong->update([
                 'KetQua'      => $request->KetQua,
-                'NhanXet'     => trim($request->NhanXet),
+                'NhanXet'     => $cleanedNhanXet,
                 'NgayDanhGia' => now(),
                 'TrangThai'   => 'Đã phản biện',
             ]);
 
             // Cập nhật trạng thái đề tài tương ứng
             if ($request->KetQua === 'Đạt') {
+                $newStatus = 'Đã phản biện - Chờ duyệt BM';
                 $detai->update([
-                    'TrangThai' => 'Đã phản biện - Chờ duyệt BM',
+                    'TrangThai' => $newStatus,
                 ]);
             } elseif ($request->KetQua === 'Yêu cầu chỉnh sửa') {
+                $newStatus = 'Yêu cầu chỉnh sửa đề cương';
                 $detai->update([
-                    'TrangThai'  => 'Yêu cầu chỉnh sửa đề cương',
-                    'LyDoTuChoi' => 'Ý kiến phản biện đề cương: ' . trim($request->NhanXet),
+                    'TrangThai'  => $newStatus,
+                    'LyDoTuChoi' => 'Ý kiến phản biện đề cương: ' . $cleanedNhanXet,
                 ]);
             } else { // Không đạt
+                $newStatus = 'Không đạt phản biện';
                 $detai->update([
-                    'TrangThai'  => 'Không đạt phản biện',
-                    'LyDoTuChoi' => 'Kết quả phản biện đề cương: Không đạt. ' . trim($request->NhanXet),
+                    'TrangThai'  => $newStatus,
+                    'LyDoTuChoi' => 'Kết quả phản biện đề cương: Không đạt. ' . $cleanedNhanXet,
                 ]);
             }
+
+            $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => $maDuyet,
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $gv->MaGV,
+                'NguoiThucHien' => $gv->HoTen . ' - Giảng viên phản biện',
+                'HanhDong'      => 'Đánh giá phản biện đề cương: ' . $request->KetQua,
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => $newStatus,
+                'LyDo'          => $cleanedNhanXet,
+                'NgayDuyet'     => now(),
+            ]);
         });
 
         // Gửi thông báo cho GV đề xuất

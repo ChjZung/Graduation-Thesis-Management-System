@@ -131,74 +131,77 @@
     <!-- ═══ MAIN CONTENT ═══ -->
     <div id="content">
 
-        <!-- Banner -->
-        <div class="huit-banner-wrap">
-            <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
-        </div>
-
-        <!-- Topbar / Breadcrumb Bar -->
-        <div class="admin-top-bar">
-            <div class="admin-breadcrumb">
-                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
-                <a href="{{ route('truongbomon.dashboard') }}">Trang chủ</a>
-                <span class="separator">&gt;</span>
-                <span>Khóa luận tốt nghiệp</span>
-                <span class="separator">&gt;</span>
-                <span class="current-page">@yield('page_title', 'Trưởng Bộ Môn')</span>
+        <!-- ═══ HEADER (Sticky Top) ═══ -->
+        <header class="huit-header-sticky">
+            <!-- Banner -->
+            <div class="huit-banner-wrap">
+                <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
             </div>
-            <div class="d-flex align-items-center gap-3">
-                @php
-                    $tbmGv = \App\Models\GiangVien::getLoggedInGiangVien();
-                    $tbmName = $tbmGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Bộ Môn');
-                @endphp
 
-                <!-- Notification Bell Dropdown Unified -->
-                @include('partials.header_notifications')
+            <!-- Topbar / Breadcrumb Bar -->
+            <div class="admin-top-bar">
+                <div class="admin-breadcrumb">
+                    <i class="fa-solid fa-angle-right me-2" style="color: #64748b; font-size: 0.75rem;"></i>
+                    <a href="{{ route('truongbomon.dashboard') }}">Trang chủ</a>
+                    <span class="separator">&gt;</span>
+                    <span>Khóa luận tốt nghiệp</span>
+                    <span class="separator">&gt;</span>
+                    <span class="current-page">@yield('page_title', 'Trưởng Bộ Môn')</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    @php
+                        $tbmGv = \App\Models\GiangVien::getLoggedInGiangVien();
+                        $tbmName = $tbmGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Bộ Môn');
+                    @endphp
 
-                <!-- User Profile Pill -->
-                <div class="dropdown">
-                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                       id="tbmUserDropdown">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($tbmName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
-                             alt="Avatar">
-                        <span>{{ $tbmName }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="tbmUserDropdown">
-                        <li>
-                            <div class="px-3 py-2 mb-1 border-bottom">
-                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
-                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $tbmName }}</div>
-                                <div style="font-size: 13px; color: #d97706; margin-top: 2px;"><i class="fa-solid fa-user-tie me-1"></i>Trưởng Bộ Môn</div>
-                            </div>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
-                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
-                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); document.getElementById('logout-form-tbm').submit();">
-                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                    <form id="logout-form-tbm" action="{{ route('logout') }}" method="POST" class="d-none">
-                        @csrf
-                    </form>
+                    <!-- Notification Bell Dropdown Unified -->
+                    @include('partials.header_notifications')
+
+                    <!-- User Profile Pill -->
+                    <div class="dropdown">
+                        <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                           id="tbmUserDropdown">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($tbmName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                                 alt="Avatar">
+                            <span>{{ $tbmName }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="tbmUserDropdown">
+                            <li>
+                                <div class="px-3 py-2 mb-1 border-bottom">
+                                    <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $tbmName }}</div>
+                                    <div style="font-size: 13px; color: #d97706; margin-top: 2px;"><i class="fa-solid fa-user-tie me-2"></i>Trưởng Bộ Môn</div>
+                                </div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                    <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                    <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form-tbm').submit();">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                        <form id="logout-form-tbm" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Alerts + Content -->
-        <div class="content-body">
+        <div class="content-body admin-page-transition">
 
             @if (isset($errors) && $errors->any())
                 <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
@@ -256,13 +259,59 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // Auto-hide success alerts after 5s & safely move modals to document.body
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.modal').forEach(function(modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+
         setTimeout(function () {
             document.querySelectorAll('.alert-success').forEach(function (el) {
                 let a = bootstrap.Alert.getOrCreateInstance(el);
                 a.close();
             });
         }, 5000);
+
+        // Chống Double Submit trên tất cả các form POST
+        document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const btn = form.querySelector('button[type="submit"]:not([disabled])');
+                if (btn) {
+                    setTimeout(function () {
+                        btn.disabled = true;
+                        if (!btn.dataset.originalHtml) {
+                            btn.dataset.originalHtml = btn.innerHTML;
+                        }
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang xử lý...';
+                    }, 30);
+                }
+            });
+        });
+
+        // Hiệu ứng mượt mà liên tiếp khi chuyển trang
+        let progressBar = document.getElementById('huit-top-progress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'huit-top-progress';
+            document.body.prepend(progressBar);
+        }
+
+        document.querySelectorAll('a[href]:not([target="_blank"]):not([href^="#"]):not([href^="javascript"]):not([data-bs-toggle])').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                progressBar.style.opacity = '1';
+                progressBar.style.width = '70%';
+            });
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (progressBar) {
+                progressBar.style.opacity = '1';
+                progressBar.style.width = '100%';
+            }
+        });
     });
 </script>
 
@@ -270,5 +319,6 @@
 @include('partials.modal_preview_decuong')
 
 @stack('scripts')
+@include('components.time-machine')
 </body>
 </html>

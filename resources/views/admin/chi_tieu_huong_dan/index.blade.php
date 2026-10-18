@@ -15,11 +15,11 @@
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <button type="button" class="btn btn-outline-primary btn-sm rounded-2 px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#modalBulkUpdate" style="font-size: 13px;">
-                <i class="fa-solid fa-sliders me-1"></i> Thiết lập hàng loạt
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-2 px-3 fw-medium d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalBulkUpdate" style="font-size: 13px;">
+                <i class="fa-solid fa-sliders me-2"></i> Thiết lập hàng loạt
             </button>
-            <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-2 px-3 fw-medium" style="font-size: 13px;">
-                <i class="fa-solid fa-users me-1"></i> Hồ sơ giảng viên
+            <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-2 px-3 fw-medium d-inline-flex align-items-center" style="font-size: 13px;">
+                <i class="fa-solid fa-users me-2"></i> Hồ sơ giảng viên
             </a>
         </div>
     </div>
@@ -138,12 +138,13 @@
                     <div class="col-12 col-md-3">
                         <label class="form-label mb-1 text-muted fw-medium" style="font-size: 13px;">Tìm kiếm giảng viên</label>
                         <div class="input-group input-group-sm">
+                            <input type="hidden" name="per_page" value="{{ $perPage ?? 5 }}">
                             <input type="text" name="search" class="form-control rounded-start-2" placeholder="Nhập tên, mã GV, email..." value="{{ request('search') }}" style="font-size: 13px;">
-                            <button type="submit" class="btn btn-primary rounded-end-2 px-3 fw-medium" style="font-size: 13px;">
-                                <i class="fa-solid fa-magnifying-glass me-1"></i> Lọc
+                            <button type="submit" class="btn btn-primary rounded-end-2 px-3 fw-medium d-inline-flex align-items-center" style="font-size: 13px;">
+                                <i class="fa-solid fa-magnifying-glass me-2"></i> Lọc
                             </button>
                             @if(request()->anyFilled(['search', 'MaKhoa', 'MaBoMon', 'tinh_trang']))
-                                <a href="{{ route('admin.chi_tieu_huong_dan.index', ['MaHocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary rounded-2 ms-1 fw-medium" title="Xóa bộ lọc" style="font-size: 13px;">
+                                <a href="{{ route('admin.chi_tieu_huong_dan.index', ['MaHocKy' => $selectedHocKy, 'per_page' => $perPage ?? 5]) }}" class="btn btn-outline-secondary rounded-2 ms-1 fw-medium" title="Xóa bộ lọc" style="font-size: 13px;">
                                     <i class="fa-solid fa-arrow-rotate-left"></i>
                                 </a>
                             @endif
@@ -156,12 +157,22 @@
 
     {{-- Bảng danh sách Chỉ tiêu giảng viên (Chuẩn G: Phẳng, font >= 13px, không icon trong ô, chỉ icon ở nút thao tác) --}}
     <div class="card border rounded-2 bg-white" style="border-color: #e2e8f0 !important;">
-        <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e2e8f0 !important;">
+        <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #e2e8f0 !important;">
             <div class="fw-semibold text-dark" style="font-size: 13.5px;">
                 Danh sách Giảng viên &amp; Định mức hướng dẫn (Học kỳ: {{ $selectedHocKy }})
             </div>
-            <div class="text-muted" style="font-size: 13px;">
-                Hiển thị {{ $giangviens->firstItem() ?? 0 }} - {{ $giangviens->lastItem() ?? 0 }} trong tổng số {{ $giangviens->total() }} giảng viên
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 13px;">
+                    <span>Hiển thị:</span>
+                    <select class="form-select form-select-sm py-0 ps-2 pe-4 rounded-1" style="font-size: 12.5px; width: auto; height: 28px;" onchange="const url = new URL(window.location.href); url.searchParams.set('per_page', this.value); url.searchParams.set('page', '1'); window.location.href = url.toString();">
+                        <option value="5" {{ ($perPage ?? 5) == 5 ? 'selected' : '' }}>5 dòng / trang</option>
+                        <option value="10" {{ ($perPage ?? 5) == 10 ? 'selected' : '' }}>10 dòng / trang</option>
+                        <option value="20" {{ ($perPage ?? 5) == 20 ? 'selected' : '' }}>20 dòng / trang</option>
+                    </select>
+                </div>
+                <div class="text-muted" style="font-size: 13px;">
+                    Hiển thị {{ $giangviens->firstItem() ?? 0 }} - {{ $giangviens->lastItem() ?? 0 }} trong tổng số {{ $giangviens->total() }} giảng viên
+                </div>
             </div>
         </div>
 
@@ -243,7 +254,7 @@
                                 <div class="d-inline-flex gap-1 align-items-center">
                                     {{-- Nút Thiết lập / Sửa chỉ tiêu --}}
                                     <button type="button" 
-                                            class="btn btn-outline-primary btn-sm rounded-1 px-2 py-1 fw-medium" 
+                                            class="btn btn-outline-primary btn-sm rounded-1 px-2 py-1 fw-medium d-inline-flex align-items-center" 
                                             style="font-size: 12.5px;"
                                             data-bs-toggle="modal" 
                                             data-bs-target="#modalSetQuota"
@@ -252,7 +263,7 @@
                                             data-bomon="{{ $gv->boMon->TenBoMon ?? '' }}"
                                             data-chitieu="{{ $gv->chi_tieu_tong }}"
                                             data-iscustom="{{ $gv->is_custom ? '1' : '0' }}">
-                                        <i class="fa-solid fa-pen-to-square me-1"></i> Thiết lập
+                                        <i class="fa-solid fa-pen-to-square me-2"></i> Thiết lập
                                     </button>
 
                                     {{-- Nút Khôi phục về mặc định nếu đã thiết lập riêng --}}
@@ -281,16 +292,16 @@
         </div>
 
         {{-- Phân trang --}}
-        @if($giangviens->hasPages())
-            <div class="card-footer bg-white border-top py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: #e2e8f0 !important;">
-                <div class="text-muted" style="font-size: 13px;">
-                    Đang hiển thị trang {{ $giangviens->currentPage() }} / {{ $giangviens->lastPage() }}
-                </div>
+        <div class="card-footer bg-white border-top py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: #e2e8f0 !important;">
+            <div class="text-muted" style="font-size: 13px;">
+                Đang hiển thị trang {{ $giangviens->currentPage() }} / {{ $giangviens->lastPage() }} (Tối đa {{ $perPage ?? 5 }} dòng / trang)
+            </div>
+            @if($giangviens->hasPages())
                 <div>
                     {{ $giangviens->links('pagination::bootstrap-5') }}
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
 </div>
@@ -353,8 +364,8 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-2 px-3 fw-medium" data-bs-dismiss="modal" style="font-size: 13px;">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm rounded-2 px-3 fw-semibold" style="font-size: 13px;">
-                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu chỉ tiêu
+                    <button type="submit" class="btn btn-primary btn-sm rounded-2 px-3 fw-semibold d-inline-flex align-items-center" style="font-size: 13px;">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Lưu chỉ tiêu
                     </button>
                 </div>
             </form>
@@ -424,8 +435,8 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-2 px-3 fw-medium" data-bs-dismiss="modal" style="font-size: 13px;">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-primary btn-sm rounded-2 px-3 fw-semibold" style="font-size: 13px;" onclick="return confirm('Bạn có chắc chắn muốn cập nhật hàng loạt chỉ tiêu cho giảng viên?');">
-                        <i class="fa-solid fa-sliders me-1"></i> Áp dụng hàng loạt
+                    <button type="submit" class="btn btn-primary btn-sm rounded-2 px-3 fw-semibold d-inline-flex align-items-center" style="font-size: 13px;" onclick="return confirm('Bạn có chắc chắn muốn cập nhật hàng loạt chỉ tiêu cho giảng viên?');">
+                        <i class="fa-solid fa-sliders me-2"></i> Áp dụng hàng loạt
                     </button>
                 </div>
             </form>

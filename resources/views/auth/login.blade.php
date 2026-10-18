@@ -423,10 +423,10 @@
                 Hệ thống quản lý công tác khóa luận tốt nghiệp trực tuyến dành riêng cho Giảng Viên và Sinh Viên.
             </p>
             <div class="info-box">
-                <div><i class="fa-solid fa-location-dot"></i> 140 Lê Trọng Tấn, Q. Tân Phú, TP.HCM</div>
-                <div><i class="fa-solid fa-phone"></i> (028) 38 163 318</div>
-                <div><i class="fa-solid fa-envelope"></i> info@huit.edu.vn</div>
-                <div><i class="fa-solid fa-globe"></i> www.huit.edu.vn</div>
+                <div><i class="fa-solid fa-location-dot me-2"></i> 140 Lê Trọng Tấn, Q. Tân Phú, TP.HCM</div>
+                <div><i class="fa-solid fa-phone me-2"></i> (028) 38 163 318</div>
+                <div><i class="fa-solid fa-envelope me-2"></i> info@huit.edu.vn</div>
+                <div><i class="fa-solid fa-globe me-2"></i> www.huit.edu.vn</div>
             </div>
         </div>
     </div>
@@ -480,10 +480,10 @@
             {{-- Tên đăng nhập --}}
             <div class="field-group">
                 <label for="TenDangNhap">
-                    <i class="fa-solid fa-id-badge me-1"></i>Tên Đăng Nhập
+                    <i class="fa-solid fa-id-badge me-2"></i>Tên Đăng Nhập
                 </label>
                 <div class="input-icon-wrap">
-                    <i class="fa-solid fa-user field-icon"></i>
+                    <i class="fa-solid fa-user field-icon me-2"></i>
                     <input
                         id="TenDangNhap"
                         type="text"
@@ -504,10 +504,10 @@
             {{-- Mật khẩu --}}
             <div class="field-group">
                 <label for="password">
-                    <i class="fa-solid fa-lock me-1"></i>Mật Khẩu
+                    <i class="fa-solid fa-lock me-2"></i>Mật Khẩu
                 </label>
                 <div class="input-icon-wrap">
-                    <i class="fa-solid fa-key field-icon"></i>
+                    <i class="fa-solid fa-key field-icon me-2"></i>
                     <input
                         id="password"
                         type="password"
@@ -540,14 +540,14 @@
             </div>
 
             {{-- Submit Button --}}
-            <button type="submit" class="btn-login-huit" id="btn-submit-login">
-                <i class="fa-solid fa-right-to-bracket"></i>
+            <button type="submit" class="btn-login-huit d-inline-flex align-items-center" id="btn-submit-login">
+                <i class="fa-solid fa-right-to-bracket me-2"></i>
                 ĐĂNG NHẬP HỆ THỐNG
             </button>
         </form>
 
         <p style="font-size: 0.8rem; color: #94B4CC; text-align: center; margin-top: 25px;">
-            <i class="fa-solid fa-shield-halved me-1" style="color: #0072CE;"></i>
+            <i class="fa-solid fa-shield-halved me-2" style="color: #0072CE;"></i>
             Hệ thống được bảo mật theo tiêu chuẩn nhà trường &bull; HUIT &copy; {{ date('Y') }}
         </p>
     </div>

@@ -8,11 +8,23 @@ use App\Models\KhoiBaoCaoTienDo;
 use App\Models\GiangVien;
 use App\Models\Nhom;
 use App\Models\PhieuDangKy;
+use App\Models\DeTai;
+use App\Models\GiaiDoanThucHien;
+use App\Models\DotNopBaoCao;
+use App\Services\ThesisProgressService;
+use App\Services\AiSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DuyetBaoCaoController extends Controller
 {
+    protected ThesisProgressService $progressService;
+
+    public function __construct(ThesisProgressService $progressService)
+    {
+        $this->progressService = $progressService;
+    }
+
     public function index()
     {
         $user = Auth::user();
@@ -44,17 +56,74 @@ class DuyetBaoCaoController extends Controller
 
         foreach ($nhoms as $nhom) {
             \App\Http\Controllers\Admin\TheoDoiDoAnController::processNhomStageData($nhom);
+
+            // Cập nhật lại progress_percent và status_code dựa trên các đợt nộp thực tế của GVHD nếu có
+            $deTai = $nhom->deTai;
+            $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
+            $totalDots = 0;
+            $completedDots = 0;
+            $hasOverdue = false;
+            $hasPending = false;
+            $now = \Carbon\Carbon::now();
+
+            foreach ($giaiDoans as $gd) {
+                foreach ($gd->dotNops as $dot) {
+                    $totalDots++;
+                    $latestVersion = $dot->phienBanMoiNhat;
+                    if ($latestVersion && $latestVersion->TrangThai === 'Đạt') {
+                        $completedDots++;
+                    } elseif ($dot->HanNop && \Carbon\Carbon::parse($dot->HanNop)->lt($now) && (!$latestVersion || $latestVersion->TrangThai !== 'Đạt')) {
+                        $hasOverdue = true;
+                    }
+                    if ($latestVersion && in_array($latestVersion->TrangThai, ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp'])) {
+                        $hasPending = true;
+                    }
+                }
+            }
+
+            if ($totalDots > 0) {
+                $nhom->progress_percent = (int) round(($completedDots / $totalDots) * 100);
+                if ($hasOverdue) {
+                    $nhom->status_code = 'QUA_HAN';
+                } elseif ($hasPending) {
+                    $nhom->status_code = 'CHO_XU_LY';
+                } elseif ($completedDots === $totalDots) {
+                    $nhom->status_code = 'HOAN_THANH';
+                } else {
+                    $nhom->status_code = 'DANG_THUC_HIEN';
+                }
+            }
         }
 
-        // Thống kê 4 thẻ KPI theo chuẩn Figma
+        // Thống kê 4 thẻ KPI theo chuẩn
         $tongSoNhom = $nhoms->count();
-        $baocaoChoDuyet = $nhoms->flatMap->baoCaos->filter(function($b) {
-            return $b->TrangThai === 'Chờ duyệt' || $b->TrangThai === 'Đã nộp' || ($b->khoiBaoCaos && $b->khoiBaoCaos->where('TrangThai', 'Chờ duyệt')->isNotEmpty());
-        })->count();
-        $baocaoDaDat = $nhoms->flatMap->baoCaos->where('TrangThai', 'Đạt')->count();
-        $nhomCanNhacNho = $nhoms->filter(function($n) {
-            return $n->status_code === 'QUA_HAN' || $n->status_code === 'SAP_DEN_HAN' || $n->baoCaos->where('TrangThai', 'Yêu cầu nộp lại')->isNotEmpty();
-        })->count();
+        $baocaoChoDuyet = 0;
+        $baocaoDaDat = 0;
+        $nhomCanNhacNho = 0;
+
+        foreach ($nhoms as $nhom) {
+            $deTai = $nhom->deTai;
+            $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
+            $needsReminder = ($nhom->status_code === 'QUA_HAN' || $nhom->status_code === 'SAP_DEN_HAN');
+
+            foreach ($giaiDoans as $gd) {
+                foreach ($gd->dotNops as $dot) {
+                    $latest = $dot->phienBanMoiNhat;
+                    if ($latest) {
+                        if (in_array($latest->TrangThai, ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp'])) {
+                            $baocaoChoDuyet++;
+                        } elseif ($latest->TrangThai === 'Đạt') {
+                            $baocaoDaDat++;
+                        } elseif ($latest->TrangThai === 'Yêu cầu nộp lại') {
+                            $needsReminder = true;
+                        }
+                    }
+                }
+            }
+            if ($needsReminder) {
+                $nhomCanNhacNho++;
+            }
+        }
 
         return view('giangvien.baocao.index', compact(
             'giangVien', 'nhoms', 'tongSoNhom', 'baocaoChoDuyet', 'baocaoDaDat', 'nhomCanNhacNho'
@@ -133,13 +202,19 @@ class DuyetBaoCaoController extends Controller
     public function storeNhanXet(Request $request, $maBaoCao)
     {
         $request->validate([
-            'NoiDung'     => 'required|string|max:2000',
+            'NoiDung'     => 'required|string',
             'LoaiNhanXet' => 'required|in:Đạt,Yêu cầu nộp lại',
         ], [
             'NoiDung.required'     => 'Vui lòng nhập nhận xét.',
             'LoaiNhanXet.required' => 'Vui lòng chọn kết quả đánh giá.',
             'LoaiNhanXet.in'       => 'Kết quả phải là "Đạt" hoặc "Yêu cầu nộp lại".',
         ]);
+
+        $cleanedNoiDung = \App\Helpers\HtmlHelper::clean($request->NoiDung);
+        $plainNoiDung = trim(strip_tags(html_entity_decode($cleanedNoiDung, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainNoiDung) < 5) {
+            return back()->withInput()->withErrors(['NoiDung' => 'Vui lòng nhập nhận xét chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $user = Auth::user();
         $giangVien = GiangVien::getLoggedInGiangVien($user);
@@ -172,7 +247,7 @@ class DuyetBaoCaoController extends Controller
         if ($khoiMoiNhat) {
             $khoiMoiNhat->update([
                 'TrangThai'    => $request->LoaiNhanXet,
-                'NhanXetGV'    => $request->NoiDung,
+                'NhanXetGV'    => $cleanedNoiDung,
                 'NguoiNhanXet' => $nguoiNhanXet,
                 'NgayNhanXet'  => now(),
             ]);
@@ -189,7 +264,7 @@ class DuyetBaoCaoController extends Controller
                 'DuongDanFile' => $baoCao->DuongDanFile,
                 'LinkCode'     => $baoCao->LinkCode,
                 'TrangThai'    => $request->LoaiNhanXet,
-                'NhanXetGV'    => $request->NoiDung,
+                'NhanXetGV'    => $cleanedNoiDung,
                 'NguoiNhanXet' => $nguoiNhanXet,
                 'NgayNop'      => $baoCao->NgayNop ?? now(),
                 'NgayNhanXet'  => now(),
@@ -198,7 +273,7 @@ class DuyetBaoCaoController extends Controller
 
         $updateData = [
             'TrangThai' => $request->LoaiNhanXet,
-            'NhanXet'   => $request->NoiDung,
+            'NhanXet'   => $cleanedNoiDung,
         ];
         if ($request->LoaiNhanXet === 'Đạt') {
             $updateData['PhanTramHoanThanh'] = 100;
@@ -346,12 +421,18 @@ class DuyetBaoCaoController extends Controller
     public function storeNhanXetKhoi(Request $request, $id)
     {
         $request->validate([
-            'NoiDung' => 'required|string|max:2000',
+            'NoiDung' => 'required|string',
             'LoaiNhanXet' => 'required|in:Đạt,Yêu cầu nộp lại',
         ], [
             'NoiDung.required' => 'Vui lòng nhập nội dung nhận xét.',
             'LoaiNhanXet.required' => 'Vui lòng chọn kết quả đánh giá.',
         ]);
+
+        $cleanedNoiDung = \App\Helpers\HtmlHelper::clean($request->NoiDung);
+        $plainNoiDung = trim(strip_tags(html_entity_decode($cleanedNoiDung, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainNoiDung) < 5) {
+            return back()->withInput()->withErrors(['NoiDung' => 'Vui lòng nhập nhận xét chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $user = Auth::user();
         $giangVien = GiangVien::getLoggedInGiangVien($user);
@@ -370,7 +451,7 @@ class DuyetBaoCaoController extends Controller
 
         $khoi->update([
             'TrangThai' => $request->LoaiNhanXet,
-            'NhanXetGV' => $request->NoiDung,
+            'NhanXetGV' => $cleanedNoiDung,
             'NguoiNhanXet' => $nguoiNhanXet,
             'NgayNhanXet' => now(),
         ]);
@@ -448,15 +529,270 @@ class DuyetBaoCaoController extends Controller
         $nguoiXacNhan = ($giangVien->HocHam ? $giangVien->HocHam . '.' : '') . ($giangVien->HocVi ? $giangVien->HocVi . '. ' : '') . $giangVien->HoTen;
         $phanTram = (int)$request->input('PhanTramHoanThanh', 100);
         $nhanXet = $request->input('NhanXetTongQuat', 'Giảng viên hướng dẫn xác nhận sinh viên hoàn thành đạt yêu cầu giai đoạn này.');
+        $cleanedNhanXet = \App\Helpers\HtmlHelper::clean($nhanXet);
 
         $baoCao->update([
             'TrangThai' => 'Đạt',
             'PhanTramHoanThanh' => $phanTram,
-            'NhanXet' => $nhanXet,
+            'NhanXet' => $cleanedNhanXet,
             'NgayXacNhan' => now(),
             'NguoiXacNhan' => $nguoiXacNhan,
         ]);
 
         return redirect()->route('giangvien.baocao.show', $maBaoCao)->with('success', "Đã xác nhận hoàn thành Giai đoạn {$baoCao->LanBaoCao}! Nhóm sinh viên đã đủ điều kiện chuyển sang giai đoạn tiếp theo.");
+    }
+
+    // =========================================================================
+    // QUẢN LÝ CÁC GIAI ĐOẠN & ĐỢT NỘP BÁO CÁO DO GIẢNG VIÊN THIẾT LẬP
+    // =========================================================================
+
+    /**
+     * Khởi tạo lộ trình 6 giai đoạn kỹ thuật & các đợt nộp mẫu cho Đề tài
+     */
+    public function khoiTaoGiaiDoanMau(Request $request, $maDeTai)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $deTai = DeTai::where('MaDeTai', $maDeTai)->where('MaGV', $giangVien->MaGV)->firstOrFail();
+
+        $count = $this->progressService->khoiTaoGiaiDoanMauChoDeTai($deTai);
+        return redirect()->back()->with('success', "Đã khởi tạo thành công {$count} giai đoạn kỹ thuật mẫu cho đề tài '{$deTai->TenDeTai}'!");
+    }
+
+    /**
+     * Tạo giai đoạn thực hiện mới cho đề tài
+     */
+    public function storeGiaiDoan(Request $request)
+    {
+        $request->validate([
+            'MaDeTai' => 'required|string|exists:detai,MaDeTai',
+            'TenGiaiDoan' => 'required|string|max:255',
+            'MoTa' => 'nullable|string',
+            'NoiDungCongViec' => 'nullable|string',
+            'KetQuaDauRa' => 'nullable|string',
+            'NgayBatDau' => 'nullable|date',
+            'NgayKetThuc' => 'nullable|date|after_or_equal:NgayBatDau',
+            'YeuCauCanDat' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $deTai = DeTai::where('MaDeTai', $request->MaDeTai)->where('MaGV', $giangVien->MaGV)->firstOrFail();
+
+        $this->progressService->taoGiaiDoan($deTai, $request->all());
+        return redirect()->back()->with('success', "Đã thêm giai đoạn '{$request->TenGiaiDoan}' thành công!");
+    }
+
+    /**
+     * Cập nhật giai đoạn
+     */
+    public function updateGiaiDoan(Request $request, $id)
+    {
+        $request->validate([
+            'TenGiaiDoan' => 'required|string|max:255',
+            'MoTa' => 'nullable|string',
+            'NoiDungCongViec' => 'nullable|string',
+            'KetQuaDauRa' => 'nullable|string',
+            'NgayBatDau' => 'nullable|date',
+            'NgayKetThuc' => 'nullable|date',
+            'YeuCauCanDat' => 'nullable|string',
+            'TrangThai' => 'required|in:CHUA_BAT_DAU,DANG_THUC_HIEN,HOAN_THANH',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
+
+        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $this->progressService->capNhatGiaiDoan($giaiDoan, $request->all());
+        return redirect()->back()->with('success', "Đã cập nhật giai đoạn '{$giaiDoan->TenGiaiDoan}' thành công!");
+    }
+
+    /**
+     * Xóa giai đoạn
+     */
+    public function destroyGiaiDoan($id)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
+
+        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        try {
+            $this->progressService->xoaGiaiDoan($giaiDoan);
+            return redirect()->back()->with('success', "Đã xóa giai đoạn thành công!");
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Tạo đợt nộp báo cáo mới trong giai đoạn
+     */
+    public function storeDotNop(Request $request)
+    {
+        $request->validate([
+            'MaGiaiDoan' => 'required|integer|exists:giaidoanthuchien,MaGiaiDoan',
+            'TenDotNop' => 'required|string|max:255',
+            'MoTa' => 'nullable|string',
+            'NoiDungYeuCau' => 'nullable|string',
+            'NgayMoNop' => 'nullable|date',
+            'HanNop' => 'nullable|date',
+            'DinhDangChoPhep' => 'nullable|string',
+            'YeuCauSourceCode' => 'nullable|boolean',
+            'SoLanNopToiDa' => 'nullable|integer|min:1',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($request->MaGiaiDoan);
+
+        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $dotNop = $this->progressService->taoDotNop($giaiDoan, $request->all());
+        return redirect()->back()->with('success', "Đã tạo đợt nộp '{$dotNop->TenDotNop}' thành công!");
+    }
+
+    /**
+     * Cập nhật đợt nộp báo cáo
+     */
+    public function updateDotNop(Request $request, $id)
+    {
+        $request->validate([
+            'TenDotNop' => 'required|string|max:255',
+            'MoTa' => 'nullable|string',
+            'NoiDungYeuCau' => 'nullable|string',
+            'NgayMoNop' => 'nullable|date',
+            'HanNop' => 'nullable|date',
+            'DinhDangChoPhep' => 'nullable|string',
+            'YeuCauSourceCode' => 'nullable|boolean',
+            'SoLanNopToiDa' => 'nullable|integer|min:1',
+            'TrangThai' => 'required|in:DANG_MO,TAM_DONG,DA_DONG,HOAN_THANH',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+
+        if ($dotNop->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $dotNop->update([
+            'TenDotNop' => $request->TenDotNop,
+            'MoTa' => $request->MoTa,
+            'NoiDungYeuCau' => $request->NoiDungYeuCau,
+            'NgayMoNop' => $request->NgayMoNop,
+            'HanNop' => $request->HanNop,
+            'DinhDangChoPhep' => $request->DinhDangChoPhep ?? 'pdf',
+            'YeuCauSourceCode' => $request->boolean('YeuCauSourceCode'),
+            'SoLanNopToiDa' => $request->SoLanNopToiDa ? (int)$request->SoLanNopToiDa : null,
+            'TrangThai' => $request->TrangThai,
+        ]);
+
+        return redirect()->back()->with('success', "Đã cập nhật đợt nộp '{$dotNop->TenDotNop}' thành công!");
+    }
+
+    /**
+     * Chuyển trạng thái nhanh đợt nộp (Đóng / Mở)
+     */
+    public function toggleDotNop(Request $request, $id)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+
+        if ($dotNop->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $newStatus = ($dotNop->TrangThai === 'DANG_MO') ? 'DA_DONG' : 'DANG_MO';
+        $dotNop->update(['TrangThai' => $newStatus]);
+
+        $msg = ($newStatus === 'DANG_MO') ? 'Đã mở lại đợt nộp báo cáo.' : 'Đã đóng đợt nộp báo cáo.';
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Xem chi tiết đợt nộp báo cáo & danh sách các phiên bản (Versions)
+     */
+    public function showDotNop($id)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(404, 'Không tìm thấy hồ sơ giảng viên.');
+        }
+
+        $dotNop = DotNopBaoCao::with([
+            'giaiDoan',
+            'deTai.giangVien',
+            'khoiBaoCaos' => fn($q) => $q->orderBy('LanNop', 'desc'),
+        ])->findOrFail($id);
+
+        if (!$dotNop->deTai || $dotNop->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải Giảng viên hướng dẫn của đề tài này.');
+        }
+
+        $phieuDangKy = PhieuDangKy::with(['nhom.thanhViens.sinhVien'])
+            ->where('MaDeTai', $dotNop->MaDeTai)
+            ->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])
+            ->first();
+
+        $nhom = $phieuDangKy?->nhom;
+        $deTai = $dotNop->deTai;
+        $phienBans = $dotNop->khoiBaoCaos;
+        $latestPhienBan = $phienBans->first();
+
+        return view('giangvien.baocao.show_dot', compact(
+            'giangVien', 'dotNop', 'nhom', 'deTai', 'phienBans', 'latestPhienBan'
+        ));
+    }
+
+    /**
+     * Đánh giá một phiên bản của đợt nộp báo cáo (Đạt hoặc Yêu cầu nộp lại)
+     */
+    public function danhGiaPhienBan(Request $request, $id)
+    {
+        $request->validate([
+            'MaKhoi' => 'required|string|exists:khoibaocaotiendo,MaKhoi',
+            'HanhDong' => 'required|in:DAT,YEU_CAU_NOP_LAI',
+            'NhanXet' => 'required|string|min:5',
+        ], [
+            'NhanXet.required' => 'Vui lòng nhập nhận xét chuyên môn.',
+            'NhanXet.min' => 'Nhận xét phải có tối thiểu 5 ký tự.',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+
+        if ($dotNop->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $phienBan = KhoiBaoCaoTienDo::where('MaKhoi', $request->MaKhoi)->firstOrFail();
+
+        $this->progressService->danhGiaPhienBanBaoCao(
+            $dotNop,
+            $phienBan,
+            $request->HanhDong,
+            $request->NhanXet,
+            $giangVien
+        );
+
+        $msg = ($request->HanhDong === 'DAT')
+            ? "Đã xác nhận hoàn thành đợt nộp '{$dotNop->TenDotNop}' (Phiên bản v{$phienBan->LanNop})!"
+            : "Đã yêu cầu sinh viên bổ sung / nộp lại cho đợt '{$dotNop->TenDotNop}'. Sinh viên có thể nộp phiên bản tiếp theo.";
+
+        return redirect()->back()->with('success', $msg);
     }
 }

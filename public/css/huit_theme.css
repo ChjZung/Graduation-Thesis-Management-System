@@ -37,12 +37,29 @@
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; }
 
+html {
+    height: 100%;
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
     background-color: var(--alice-blue);
     color: var(--text-dark);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
     overflow-x: hidden;
+    overflow-x: clip;
     line-height: 1.6;
+}
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex: 1 0 auto;
+    width: 100%;
+    position: relative;
 }
 
 /* ═══════════════════════════════════════════════
@@ -201,7 +218,20 @@ body {
     flex-direction: column;
     flex-grow: 1;
     min-width: 0;
-    transition: var(--transition);
+    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Sticky Header Wrapper Toàn Hệ Thống ── */
+.huit-header-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 40, 85, 0.08);
+    width: 100%;
+    flex-shrink: 0;
+    transition: none !important;
 }
 
 /* ── Banner ── */
@@ -209,6 +239,7 @@ body {
     width: 100%;
     overflow: hidden;
     line-height: 0;
+    flex-shrink: 0;
 }
 
 .huit-banner-wrap img {
@@ -280,8 +311,10 @@ body {
 
 /* ── Content Area ── */
 .content-body {
-    flex: 1;
+    flex: 1 0 auto;
     padding: 24px 28px;
+    width: 100%;
+    min-width: 0;
 }
 
 /* ═══════════════════════════════════════════════
@@ -850,7 +883,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   FOOTER
+   FOOTER (Sticky Footer Pattern)
 ═══════════════════════════════════════════════ */
 .huit-footer {
     background: linear-gradient(160deg, var(--footer-deep) 0%, var(--footer-darker) 100%);
@@ -858,6 +891,9 @@ body {
     position: relative;
     overflow: hidden;
     margin-top: auto;
+    flex-shrink: 0;
+    width: 100%;
+    z-index: 10;
 }
 
 .huit-footer::before {
@@ -2374,6 +2410,7 @@ small, .small, .text-muted, .badge, .badge-code, .kpi-label, .kpi-subtext,
     justify-content: space-between !important;
     box-shadow: none !important;
     min-height: 58px;
+    flex-shrink: 0;
 }
 
 .admin-breadcrumb {
@@ -2883,6 +2920,10 @@ label .text-danger {
 
 /* Mobile Devices (<= 768px) */
 @media (max-width: 768px) {
+    .huit-header-sticky .huit-banner-wrap img {
+        height: 65px;
+    }
+
     .modal-dialog {
         margin: 12px auto !important;
         max-width: calc(100% - 24px) !important;
@@ -2927,6 +2968,19 @@ label .text-danger {
 
 /* Small Smart Phones (<= 576px) */
 @media (max-width: 576px) {
+    .huit-header-sticky .huit-banner-wrap img {
+        height: 50px;
+    }
+
+    .admin-top-bar {
+        padding: 8px 12px !important;
+        min-height: 48px;
+    }
+
+    .content-body {
+        padding: 16px 12px;
+    }
+
     .btn {
         min-height: 42px !important;
         padding: 8px 16px !important;

@@ -67,7 +67,7 @@
     <div class="card-dashboard mb-4 p-4 p-lg-5 bg-white border-0 shadow-sm">
         <div class="d-flex justify-content-between align-items-lg-center flex-column flex-lg-row gap-3">
             <div>
-                <a href="{{ route('giangvien.phanbien.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-2 fw-semibold mb-3 shadow-xs d-inline-flex align-items-center">
+                <a href="{{ route('giangvien.phanbien.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold mb-3 shadow-xs d-inline-flex align-items-center">
                     <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách phân công
                 </a>
                 <h3 class="fw-bold text-dark mb-2" style="color: var(--huit-primary);">
@@ -77,7 +77,7 @@
                     {{ $detai->TenDeTai ?? '' }}
                 </p>
                 <div class="text-muted small d-flex flex-wrap align-items-center gap-2 mt-2">
-                    <span class="bg-light px-2.5 py-1 rounded border font-monospace text-dark">Mã ĐT: {{ $detai->MaDeTai ?? '' }}</span>
+                    <span class="bg-light px-3 py-1 rounded border font-monospace text-dark">Mã ĐT: {{ $detai->MaDeTai ?? '' }}</span>
                     <span>•</span>
                     <span>GV Đề xuất: <strong class="text-dark">{{ $detai->giangVien->HoTen ?? 'N/A' }}</strong></span>
                     <span>•</span>
@@ -198,25 +198,25 @@
                                             <div class="fw-bold text-dark text-truncate fs-6" title="{{ $fileName }}">
                                                 {{ $fileName }}
                                             </div>
-                                            <span class="text-muted d-block mt-0.5 small">Tệp đề cương chính thức</span>
+                                            <span class="text-muted d-block mt-1 small">Tệp đề cương chính thức</span>
                                         </div>
                                     </div>
                                     <div class="d-flex flex-wrap gap-2 pt-2">
-                                        <button type="button" class="btn btn-primary rounded-pill px-4 py-2.5 shadow-xs fw-bold small d-inline-flex align-items-center justify-content-center" 
+                                        <button type="button" class="btn btn-primary rounded-pill px-4 py-2 shadow-xs fw-bold small d-inline-flex align-items-center justify-content-center" 
                                                 onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
                                             <i class="fa-solid fa-eye me-2"></i> Xem Nhanh Đề Cương
                                         </button>
-                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-3.5 py-2.5 fw-semibold small d-inline-flex align-items-center justify-content-center">
+                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small d-inline-flex align-items-center justify-content-center">
                                             <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                                         </a>
-                                        <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary rounded-pill px-3.5 py-2.5 fw-semibold small d-inline-flex align-items-center justify-content-center">
+                                        <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small d-inline-flex align-items-center justify-content-center">
                                             <i class="fa-solid fa-download me-2"></i> Tải về máy
                                         </a>
                                     </div>
                                 </div>
                             @else
                                 <div class="text-danger small p-4 bg-light rounded-4 border text-center fw-medium">
-                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Chưa có file đề cương đính kèm.
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i> Chưa có file đề cương đính kèm.
                                 </div>
                             @endif
                         </div>
@@ -233,7 +233,7 @@
                         <i class="fa-solid fa-signature me-2"></i>
                         Phiếu Đánh Giá Phản Biện
                     </h5>
-                    <span class="badge bg-white text-primary px-3 py-1.5 rounded-pill fw-bold small">Chính thức</span>
+                    <span class="badge bg-white text-primary px-3 py-2 rounded-pill fw-bold small">Chính thức</span>
                 </div>
 
                 <div class="card-body p-4 p-lg-5 bg-white">
@@ -285,10 +285,16 @@
 
                         <!-- Nhận xét chi tiết -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">Nhận xét chi tiết &amp; Ý kiến đóng góp <span class="text-danger">*</span></label>
-                            <textarea name="NhanXet" class="form-control rounded-4 p-3.5 shadow-xs border" rows="6" required
-                                      placeholder="Ghi rõ nhận xét về tính cấp thiết, mục tiêu, đối tượng, phương pháp nghiên cứu và các điểm cần khắc phục...">{{ old('NhanXet', $phanCong->NhanXet) }}</textarea>
-                            <div class="form-text text-muted small mt-2">Ý kiến này sẽ được chuyển trực tiếp đến Giảng viên đề xuất và Trưởng bộ môn theo dõi.</div>
+                            @include('partials.rich_text_editor', [
+                                'name' => 'NhanXet',
+                                'id' => 'NhanXet',
+                                'value' => old('NhanXet', $phanCong->NhanXet),
+                                'label' => 'Nhận xét chi tiết & Ý kiến đóng góp',
+                                'required' => true,
+                                'minHeight' => '180px',
+                                'placeholder' => 'Ghi rõ nhận xét về tính cấp thiết, mục tiêu, đối tượng, phương pháp nghiên cứu và các điểm cần khắc phục...',
+                                'helpText' => 'Ý kiến này sẽ được chuyển trực tiếp đến Giảng viên đề xuất và Trưởng bộ môn theo dõi.'
+                            ])
                         </div>
 
                         @if($phanCong->NgayDanhGia)
@@ -298,7 +304,7 @@
                             </div>
                         @endif
 
-                        <button type="submit" class="btn btn-primary w-100 py-3.5 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center justify-content-center fs-6"
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center justify-content-center fs-6"
                                 style="background: var(--huit-primary); border-color: var(--huit-primary);"
                                 onclick="return confirm('Bạn có chắc chắn muốn gửi kết quả đánh giá phản biện này?');">
                             <i class="fa-solid fa-paper-plane me-2"></i> Gửi Kết Quả Đánh Giá Phản Biện

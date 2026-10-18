@@ -17,14 +17,14 @@
             </h3>
         </div>
         <div class="col-12 col-md-auto d-flex align-items-center gap-2 flex-wrap">
-            <a href="{{ route('admin.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-3 px-3 fw-semibold">
-                <i class="fa-solid fa-calendar-week me-1.5"></i> Lịch Quy Trình
+            <a href="{{ route('admin.calendar') }}" class="btn btn-outline-secondary btn-sm rounded-3 px-3 fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-calendar-week me-2"></i> Lịch Quy Trình
             </a>
-            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalInitDefaults">
-                <i class="fa-solid fa-rotate me-1.5"></i> Nạp 8 Quy Định Chuẩn
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 px-3 fw-semibold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalInitDefaults">
+                <i class="fa-solid fa-rotate me-2"></i> Nạp 8 Quy Định Chuẩn
             </button>
-            <a href="{{ route('admin.quydinh.create') }}" class="btn btn-primary btn-sm rounded-3 px-3 fw-semibold shadow-sm">
-                <i class="fa-solid fa-plus me-1.5"></i> Thêm Quy Định
+            <a href="{{ route('admin.quydinh.create') }}" class="btn btn-primary btn-sm rounded-3 px-3 fw-semibold shadow-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-plus me-2"></i> Thêm Quy Định
             </a>
         </div>
     </div>
@@ -34,12 +34,12 @@
         <!-- Card 1 -->
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-3 bg-white h-100 position-relative overflow-hidden">
-                <div class="card-body p-3.5 d-flex align-items-center justify-content-between">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="letter-spacing: 0.5px; font-size: 0.75rem;">Tổng Quy Định</span>
                         <div class="h3 fw-bold text-dark mb-1">{{ $stats['total_quydinh'] }}</div>
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fw-normal small">
-                            <i class="fa-solid fa-check me-1"></i>Đang hiệu lực
+                            <i class="fa-solid fa-check me-2"></i>Đang hiệu lực
                         </span>
                     </div>
                     <div class="rounded-3 bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
@@ -52,11 +52,11 @@
         <!-- Card 2 -->
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-3 bg-white h-100 position-relative overflow-hidden">
-                <div class="card-body p-3.5 d-flex align-items-center justify-content-between">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="letter-spacing: 0.5px; font-size: 0.75rem;">Kế Hoạch Áp Dụng</span>
                         <div class="h3 fw-bold text-dark mb-1">{{ $stats['so_kehoach'] }}</div>
-                        <span class="text-muted small"><i class="fa-solid fa-calendar-check text-info me-1"></i>Đợt khóa luận</span>
+                        <span class="text-muted small"><i class="fa-solid fa-calendar-check text-info me-2"></i>Đợt khóa luận</span>
                     </div>
                     <div class="rounded-3 bg-info-subtle text-info p-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
                         <i class="fa-solid fa-calendar-days fs-4"></i>
@@ -68,7 +68,7 @@
         <!-- Card 3 -->
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-3 bg-white h-100 position-relative overflow-hidden">
-                <div class="card-body p-3.5 d-flex align-items-center justify-content-between">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="letter-spacing: 0.5px; font-size: 0.75rem;">Chuẩn Tín Chỉ</span>
                         <div class="h3 fw-bold text-success mb-1">{{ $stats['tc_chuan'] }} <span class="fs-6 fw-normal text-muted">TC</span></div>
@@ -84,7 +84,7 @@
         <!-- Card 4 -->
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-3 bg-white h-100 position-relative overflow-hidden">
-                <div class="card-body p-3.5 d-flex align-items-center justify-content-between">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="letter-spacing: 0.5px; font-size: 0.75rem;">GPA Tích Lũy</span>
                         <div class="h3 fw-bold text-warning mb-1">{{ $stats['gpa_chuan'] }} <span class="fs-6 fw-normal text-muted">/ 4.0</span></div>
@@ -121,8 +121,8 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary w-100 fw-semibold rounded-3">
-                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold rounded-3 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-filter me-2"></i> Lọc
                     </button>
                     @if(request()->hasAny(['search', 'make_hoach']))
                         <a href="{{ route('admin.quydinh.index') }}" class="btn btn-light border rounded-3 px-3 text-secondary d-flex align-items-center justify-content-center" title="Xóa bộ lọc">
@@ -139,11 +139,11 @@
         <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center gap-2">
                 <h6 class="fw-bold text-dark mb-0">Danh Sách Quy Định &amp; Tiêu Chuẩn</h6>
-                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5">{{ $quyDinhs->total() }}</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ $quyDinhs->total() }}</span>
             </div>
             @if(request('make_hoach'))
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill">
-                    <i class="fa-solid fa-circle-info me-1"></i>Kế hoạch: {{ request('make_hoach') }}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                    <i class="fa-solid fa-circle-info me-2"></i>Kế hoạch: {{ request('make_hoach') }}
                 </span>
             @endif
         </div>
@@ -168,7 +168,7 @@
                                 <span class="badge bg-light text-dark border font-monospace px-2 py-1 fs-7 rounded-2">{{ $qd->MaQuyDinh }}</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark mb-0.5">{{ $qd->TenQuyDinh }}</div>
+                                <div class="fw-bold text-dark mb-1">{{ $qd->TenQuyDinh }}</div>
                                 @if($qd->MoTa)
                                     <div class="small text-muted text-truncate" style="max-width: 380px;" title="{{ $qd->MoTa }}">
                                         {{ $qd->MoTa }}
@@ -176,14 +176,14 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 fw-bold fs-7 rounded-pill">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold fs-7 rounded-pill">
                                     {{ $qd->GiaTri }}
                                 </span>
                             </td>
                             <td>
                                 @if($qd->keHoachKhoaLuan)
                                     <div class="fw-semibold text-dark small">{{ $qd->keHoachKhoaLuan->TenKeHoach }}</div>
-                                    <div class="small text-muted"><i class="fa-regular fa-calendar me-1"></i>{{ $qd->keHoachKhoaLuan->hocKy->TenHocKy ?? '' }}</div>
+                                    <div class="small text-muted"><i class="fa-regular fa-calendar me-2"></i>{{ $qd->keHoachKhoaLuan->hocKy->TenHocKy ?? '' }}</div>
                                 @else
                                     <span class="badge bg-light text-muted border border-dashed font-normal">Chung toàn trường</span>
                                 @endif
@@ -216,11 +216,11 @@
                                     <h6 class="fw-bold text-dark mb-1">Chưa tìm thấy quy định phù hợp</h6>
                                     <p class="small text-muted mb-4" style="max-width: 420px; margin: 0 auto;">Bạn có thể đồng bộ nhanh 8 quy định chuẩn của Khoa CNTT hoặc khởi tạo quy định mới thủ công.</p>
                                     <div class="d-flex justify-content-center gap-2">
-                                        <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalInitDefaults">
-                                            <i class="fa-solid fa-rotate me-1.5"></i> Nạp 8 Quy Định Chuẩn
+                                        <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalInitDefaults">
+                                            <i class="fa-solid fa-rotate me-2"></i> Nạp 8 Quy Định Chuẩn
                                         </button>
-                                        <a href="{{ route('admin.quydinh.create') }}" class="btn btn-outline-secondary btn-sm rounded-3 px-3">
-                                            <i class="fa-solid fa-plus me-1.5"></i> Tạo Thủ Công
+                                        <a href="{{ route('admin.quydinh.create') }}" class="btn btn-outline-secondary btn-sm rounded-3 px-3 d-inline-flex align-items-center">
+                                            <i class="fa-solid fa-plus me-2"></i> Tạo Thủ Công
                                         </a>
                                     </div>
                                 </div>
@@ -253,13 +253,13 @@
                 @csrf
                 <div class="modal-header bg-light border-bottom py-3 px-4">
                     <h5 class="modal-title fw-bold text-primary d-flex align-items-center gap-2" id="modalInitDefaultsLabel">
-                        <i class="fa-solid fa-rotate"></i> Nạp 8 Quy Định &amp; Tiêu Chuẩn Chuẩn
+                        <i class="fa-solid fa-rotate me-2"></i> Nạp 8 Quy Định &amp; Tiêu Chuẩn Chuẩn
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-info border-0 bg-info-subtle text-info-emphasis rounded-3 p-3 mb-3 small">
-                        <i class="fa-solid fa-circle-info me-1.5"></i>
+                        <i class="fa-solid fa-circle-info me-2"></i>
                         Hệ thống sẽ đồng bộ <strong>8 tham số tiêu chuẩn</strong> (Tín chỉ min: 115, GPA min: 2.0, Nhóm 2-3 SV, Đề tài/GV: 5, Turnitin &le; 20%, Điểm đạt &ge; 5.0, Thời gian: 12 tuần,...).
                     </div>
                     <div class="mb-2">
@@ -275,10 +275,10 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-top py-2.5 px-4">
+                <div class="modal-footer bg-light border-top py-2 px-4">
                     <button type="button" class="btn btn-outline-secondary rounded-3 px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold shadow-sm">
-                        <i class="fa-solid fa-check me-1.5"></i> Xác Nhận Đồng Bộ
+                    <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold shadow-sm d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Xác Nhận Đồng Bộ
                     </button>
                 </div>
             </form>

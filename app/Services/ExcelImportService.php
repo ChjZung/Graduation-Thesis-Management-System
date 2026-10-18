@@ -2378,7 +2378,7 @@ class ExcelImportService
             $hoTen = trim($row['HoTen'] ?? '');
             $email = trim($row['Email'] ?? '');
             $rawPass = trim($row['MatKhau'] ?? '');
-            $password = (!empty($rawPass) && $rawPass !== '123456') ? $rawPass : \Illuminate\Support\Str::password(12, true, true, false, false);
+            $password = (!empty($rawPass) && $rawPass !== '123456') ? $rawPass : 'Huit@2026';
 
             if (empty($username)) {
                 $errors[] = ['row' => $rNum, 'reason' => 'Tên đăng nhập không được để trống', 'data' => $row];

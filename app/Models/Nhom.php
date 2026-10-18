@@ -114,4 +114,9 @@ class Nhom extends Model
     {
         return $this->hasOne(HoSoBaoVe::class, 'MaNhom', 'MaNhom')->latestOfMany('created_at');
     }
+
+    public function tienDoNghiepVu()
+    {
+        return $this->hasOne(TienDoNghiepVuKhoaLuan::class, 'MaNhom', 'MaNhom');
+    }
 }

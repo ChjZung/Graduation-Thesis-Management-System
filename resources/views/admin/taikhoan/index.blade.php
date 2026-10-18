@@ -100,18 +100,11 @@
 <div class="container-fluid px-0">
 
     <!-- ═══ 1. HEADER ═══ -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-users-gear text-primary"></i> Quản lý tài khoản
+                <i class="fa-solid fa-users-gear text-primary me-2"></i> Quản Lý Tài Khoản Người Dùng
             </h4>
-        </div>
-        <div>
-            <!-- Nút duy nhất góc phải: + Thêm tài khoản cán bộ -->
-            <button type="button" class="btn btn-create-canbo d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#createCanBoModal">
-                <i class="fa-solid fa-plus"></i>
-                <span>Thêm tài khoản cán bộ</span>
-            </button>
         </div>
     </div>
 
@@ -119,192 +112,142 @@
     <div class="d-flex account-tabs mb-4 overflow-auto">
         <a href="{{ route('admin.taikhoan.index', ['tab' => 'sinhvien']) }}" 
            class="account-tab-btn {{ $activeTab === 'sinhvien' ? 'active' : '' }}">
-            <i class="fa-solid fa-user-graduate"></i>
+            <i class="fa-solid fa-user-graduate me-2"></i>
             <span>Sinh viên</span>
             <span class="badge-pill-count">{{ number_format($counts['sinhvien']) }}</span>
         </a>
 
         <a href="{{ route('admin.taikhoan.index', ['tab' => 'giangvien']) }}" 
            class="account-tab-btn {{ $activeTab === 'giangvien' ? 'active' : '' }}">
-            <i class="fa-solid fa-chalkboard-user"></i>
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
             <span>Giảng viên</span>
             <span class="badge-pill-count">{{ number_format($counts['giangvien']) }}</span>
         </a>
 
         <a href="{{ route('admin.taikhoan.index', ['tab' => 'truongbomon']) }}" 
            class="account-tab-btn {{ $activeTab === 'truongbomon' ? 'active' : '' }}">
-            <i class="fa-solid fa-user-tie"></i>
+            <i class="fa-solid fa-user-tie me-2"></i>
             <span>Trưởng bộ môn</span>
             <span class="badge-pill-count">{{ number_format($counts['truongbomon']) }}</span>
         </a>
 
         <a href="{{ route('admin.taikhoan.index', ['tab' => 'truongkhoa']) }}" 
            class="account-tab-btn {{ $activeTab === 'truongkhoa' ? 'active' : '' }}">
-            <i class="fa-solid fa-graduation-cap"></i>
+            <i class="fa-solid fa-graduation-cap me-2"></i>
             <span>Trưởng khoa</span>
             <span class="badge-pill-count">{{ number_format($counts['truongkhoa']) }}</span>
         </a>
     </div>
 
     <!-- ═══ THANH TÌM KIẾM & BỘ LỌC THEO TAB ═══ -->
-    <div class="card filter-card mb-4 shadow-xs">
-        <div class="card-body p-3">
-            <form method="GET" action="{{ route('admin.taikhoan.index') }}" id="filterForm">
-                <input type="hidden" name="tab" value="{{ $activeTab }}">
+    <!-- Filter Bar Quản Lý Tài Khoản (Đồng bộ tỷ lệ 9 - 3 và nút khối lớn #1e3a8a với Sinh Viên & Giảng Viên) -->
+    <div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
+        <form method="GET" action="{{ route('admin.taikhoan.index') }}" id="filterForm" class="w-100">
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
 
-                <div class="row g-2 align-items-end">
-                    <!-- Ô tìm kiếm (chung cho mọi tab) -->
-                    <div class="col-12 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm từ khóa</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                            <input type="text" name="search" class="form-control border-start-0" 
-                                   placeholder="{{ $activeTab === 'sinhvien' ? 'Mã SV, họ tên, username...' : 'Mã cán bộ, họ tên, username...' }}" 
+            <div class="row g-3 align-items-center">
+                <!-- BÊN TRÁI: 9 PHẦN (2 hàng: Tìm kiếm + Các ô lọc) -->
+                <div class="col-12 col-xl-9">
+                    <div class="d-flex flex-column gap-2">
+                        <!-- Hàng 1: Ô tìm kiếm -->
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light" 
+                                   placeholder="{{ $activeTab === 'sinhvien' ? 'Tìm theo mã SV, họ tên, username...' : 'Tìm theo mã cán bộ, họ tên, username...' }}" 
                                    value="{{ request('search') }}">
-                        </div>
-                    </div>
-
-                    <!-- ── TAB 1: SINH VIÊN FILTERS ── -->
-                    @if($activeTab === 'sinhvien')
-                        <div class="col-6 col-md-2">
-                            <label class="form-label small fw-bold text-muted mb-1">Khoa</label>
-                            <select name="ma_khoa" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Khoa --</option>
-                                @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
                         </div>
 
-                        <div class="col-6 col-md-2">
-                            <label class="form-label small fw-bold text-muted mb-1">Ngành</label>
-                            <select name="ma_nganh" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Ngành --</option>
-                                @foreach($nganhs as $ng)
-                                    <option value="{{ $ng->MaNganh }}" {{ request('ma_nganh') == $ng->MaNganh ? 'selected' : '' }}>
-                                        {{ $ng->TenNganh }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-6 col-md-2">
-                            <label class="form-label small fw-bold text-muted mb-1">Lớp</label>
-                            <select name="ma_lop" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Lớp --</option>
-                                @foreach($lops as $lp)
-                                    <option value="{{ $lp->MaLop }}" {{ request('ma_lop') == $lp->MaLop ? 'selected' : '' }}>
-                                        {{ $lp->TenLop }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-6 col-md-1">
-                            <label class="form-label small fw-bold text-muted mb-1">Khóa</label>
-                            <select name="khoa_hoc" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Khóa --</option>
-                                @foreach($khoaHocs as $kh)
-                                    <option value="{{ $kh }}" {{ request('khoa_hoc') == $kh ? 'selected' : '' }}>{{ $kh }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                    <!-- ── TAB 2: GIẢNG VIÊN FILTERS ── -->
-                    @elseif($activeTab === 'giangvien')
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold text-muted mb-1">Khoa</label>
-                            <select name="ma_khoa" id="filterKhoa" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Khoa --</option>
-                                @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold text-muted mb-1">Bộ môn</label>
-                            <select name="ma_bomon" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Bộ môn --</option>
-                                @foreach($boMons as $bm)
-                                    @if(!request('ma_khoa') || $bm->MaKhoa == request('ma_khoa'))
-                                        <option value="{{ $bm->MaBoMon }}" {{ request('ma_bomon') == $bm->MaBoMon ? 'selected' : '' }}>
-                                            {{ $bm->TenBoMon }}
+                        <!-- Hàng 2: Các ô lọc dữ liệu (Select) -->
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            @if($activeTab === 'sinhvien')
+                                <select name="ma_khoa" class="form-select form-select-sm" style="width: auto; min-width: 140px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Khoa --</option>
+                                    @foreach($khoas as $k)
+                                        <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
+                                            {{ $k->TenKhoa }}
                                         </option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
+                                    @endforeach
+                                </select>
 
-                    <!-- ── TAB 3: TRƯỞNG BỘ MÔN FILTERS ── -->
-                    @elseif($activeTab === 'truongbomon')
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold text-muted mb-1">Khoa</label>
-                            <select name="ma_khoa" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Khoa --</option>
-                                @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold text-muted mb-1">Bộ môn</label>
-                            <select name="ma_bomon" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Bộ môn --</option>
-                                @foreach($boMons as $bm)
-                                    @if(!request('ma_khoa') || $bm->MaKhoa == request('ma_khoa'))
-                                        <option value="{{ $bm->MaBoMon }}" {{ request('ma_bomon') == $bm->MaBoMon ? 'selected' : '' }}>
-                                            {{ $bm->TenBoMon }}
+                                <select name="ma_nganh" class="form-select form-select-sm" style="width: auto; min-width: 140px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Ngành --</option>
+                                    @foreach($nganhs as $ng)
+                                        <option value="{{ $ng->MaNganh }}" {{ request('ma_nganh') == $ng->MaNganh ? 'selected' : '' }}>
+                                            {{ $ng->TenNganh }}
                                         </option>
-                                    @endif
-                                @endforeach
+                                    @endforeach
+                                </select>
+
+                                <select name="ma_lop" class="form-select form-select-sm" style="width: auto; min-width: 130px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Lớp --</option>
+                                    @foreach($lops as $lp)
+                                        <option value="{{ $lp->MaLop }}" {{ request('ma_lop') == $lp->MaLop ? 'selected' : '' }}>
+                                            {{ $lp->TenLop }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <select name="khoa_hoc" class="form-select form-select-sm" style="width: auto; min-width: 110px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Khóa --</option>
+                                    @foreach($khoaHocs as $kh)
+                                        <option value="{{ $kh }}" {{ request('khoa_hoc') == $kh ? 'selected' : '' }}>{{ $kh }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif($activeTab === 'giangvien' || $activeTab === 'truongbomon')
+                                <select name="ma_khoa" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Khoa --</option>
+                                    @foreach($khoas as $k)
+                                        <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
+                                            {{ $k->TenKhoa }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <select name="ma_bomon" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Bộ môn --</option>
+                                    @foreach($boMons as $bm)
+                                        @if(!request('ma_khoa') || $bm->MaKhoa == request('ma_khoa'))
+                                            <option value="{{ $bm->MaBoMon }}" {{ request('ma_bomon') == $bm->MaBoMon ? 'selected' : '' }}>
+                                                {{ $bm->TenBoMon }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            @elseif($activeTab === 'truongkhoa')
+                                <select name="ma_khoa" class="form-select form-select-sm" style="width: auto; min-width: 180px; flex: 1;" onchange="this.form.submit()">
+                                    <option value="">-- Tất cả Khoa --</option>
+                                    @foreach($khoas as $k)
+                                        <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
+                                            {{ $k->TenKhoa }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
+
+                            <select name="trang_thai" class="form-select form-select-sm" style="width: auto; min-width: 120px; flex: 1;" onchange="this.form.submit()">
+                                <option value="">-- Trạng thái --</option>
+                                <option value="1" {{ request('trang_thai') === '1' ? 'selected' : '' }}>Hoạt động</option>
+                                <option value="0" {{ request('trang_thai') === '0' ? 'selected' : '' }}>Đã khóa</option>
                             </select>
+
+                            @if(request()->anyFilled(['search', 'ma_khoa', 'ma_nganh', 'ma_lop', 'khoa_hoc', 'ma_bomon', 'trang_thai']))
+                                <a href="{{ route('admin.taikhoan.index', ['tab' => $activeTab]) }}" class="btn btn-outline-secondary btn-sm text-nowrap">
+                                    <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
+                                </a>
+                            @endif
                         </div>
-
-                    <!-- ── TAB 4: TRƯỞNG KHOA FILTERS (Không có bộ môn) ── -->
-                    @elseif($activeTab === 'truongkhoa')
-                        <div class="col-6 col-md-5">
-                            <label class="form-label small fw-bold text-muted mb-1">Khoa</label>
-                            <select name="ma_khoa" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">-- Tất cả Khoa --</option>
-                                @foreach($khoas as $k)
-                                    <option value="{{ $k->MaKhoa }}" {{ request('ma_khoa') == $k->MaKhoa ? 'selected' : '' }}>
-                                        {{ $k->TenKhoa }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
-
-                    <!-- Trạng thái (chung) -->
-                    <div class="col-6 col-md-1">
-                        <label class="form-label small fw-bold text-muted mb-1">Trạng thái</label>
-                        <select name="trang_thai" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">Tất cả</option>
-                            <option value="1" {{ request('trang_thai') === '1' ? 'selected' : '' }}>Hoạt động</option>
-                            <option value="0" {{ request('trang_thai') === '0' ? 'selected' : '' }}>Đã khóa</option>
-                        </select>
-                    </div>
-
-                    <!-- Nút Lọc & Reset -->
-                    <div class="col-12 col-md-1 d-flex gap-1">
-                        <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold" title="Lọc dữ liệu">
-                            <i class="fa-solid fa-filter"></i>
-                        </button>
-                        <a href="{{ route('admin.taikhoan.index', ['tab' => $activeTab]) }}" class="btn btn-sm btn-light border px-2" title="Đặt lại bộ lọc">
-                            <i class="fa-solid fa-rotate-left"></i>
-                        </a>
                     </div>
                 </div>
-            </form>
-        </div>
+
+                <!-- BÊN PHẢI: 3 PHẦN (Nút khối lớn #1e3a8a Thêm tài khoản cán bộ) -->
+                <div class="col-12 col-xl-3">
+                    <button type="button" class="btn shadow fw-bold rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white" data-bs-toggle="modal" data-bs-target="#createCanBoModal" title="Thêm mới tài khoản cán bộ giảng viên" style="background-color: #1e3a8a; border-color: #1e3a8a; min-height: 82px; padding: 10px 15px;">
+                        <span style="font-size: 0.95rem;"><i class="fa-solid fa-user-plus me-2"></i>Thêm Tài Khoản Cán Bộ</span>
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- ═══ BẢNG DANH SÁCH THEO TAB ═══ -->
@@ -372,7 +315,7 @@
                         @php
                             $sv = $tk->sinhVien;
                             $gv = $tk->giangVien;
-                            $isActive = (bool)$tk->TrangThai;
+                            $isActive = !$tk->isLocked();
 
                             // Trích xuất mã khoa từ username nếu chưa gán quan hệ
                             $uKhoa = '';
@@ -392,38 +335,38 @@
                                 <span class="badge-code">{{ $tk->TenDangNhap }}</span>
                             </td>
                             <td class="py-3 fw-bold text-dark">
-                                {{ $sv->MaSV ?? $tk->TenDangNhap }}
+                                {{ $sv?->MaSV ?? $tk->TenDangNhap }}
                             </td>
                             <td class="py-3 fw-semibold text-dark">
-                                {{ $sv->HoTen ?? 'Chưa cập nhật' }}
+                                {{ $sv?->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $sv->lop?->nganh?->khoa?->TenKhoa ?? $sv->khoa?->TenKhoa ?? ($sv->MaKhoa ? 'Khoa ' . $sv->MaKhoa : 'Khoa Công nghệ Thông tin') }}
+                                {{ $sv?->lop?->nganh?->khoa?->TenKhoa ?? $sv?->khoa?->TenKhoa ?? ($sv?->MaKhoa ? 'Khoa ' . $sv->MaKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $sv->lop?->nganh?->TenNganh ?? $sv->nganh?->TenNganh ?? $sv->MaNganh ?? '---' }}
+                                {{ $sv?->lop?->nganh?->TenNganh ?? $sv?->nganh?->TenNganh ?? $sv?->MaNganh ?? '---' }}
                             </td>
                             <td class="py-3">
-                                <span class="badge bg-light text-secondary border">{{ $sv->lop?->TenLop ?? $sv->MaLop ?? '---' }}</span>
+                                <span class="badge bg-light text-secondary border">{{ $sv?->lop?->TenLop ?? $sv?->MaLop ?? '---' }}</span>
                             </td>
                             <td class="py-3 small text-muted">
-                                {{ $sv->KhoaHoc ?? '---' }}
+                                {{ $sv?->KhoaHoc ?? '---' }}
                             </td>
                             <td class="text-center py-3">
                                 @if($isActive)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Hoạt động
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Hoạt động
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đã khóa
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Đã khóa
                                     </span>
                                 @endif
                             </td>
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu cho sinh viên {{ $sv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu cho sinh viên {{ $sv?->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
@@ -448,31 +391,31 @@
                                 <span class="badge-code">{{ $tk->TenDangNhap }}</span>
                             </td>
                             <td class="py-3 fw-bold text-dark">
-                                {{ $gv->MaGV ?? $tk->MaTK }}
+                                {{ $gv?->MaGV ?? $tk->MaTK }}
                             </td>
                             <td class="py-3">
-                                <div class="fw-semibold text-dark">{{ $gv->HoTen ?? 'Chưa cập nhật' }}</div>
+                                <div class="fw-semibold text-dark">{{ $gv?->HoTen ?? 'Chưa cập nhật' }}</div>
                                 @if($gv && $gv->HocVi)
                                     <span class="badge bg-light text-muted border small" style="font-size: 0.7rem;">{{ $gv->HocVi }}</span>
                                 @endif
                             </td>
                             <td class="py-3 small text-muted">
-                                {{ $gv->Email ?? '---' }}
+                                {{ $gv?->Email ?? '---' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
+                                {{ $gv?->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
+                                {{ $gv?->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
                             </td>
                             <td class="text-center py-3">
                                 @if($isActive)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Hoạt động
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Hoạt động
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đã khóa
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Đã khóa
                                     </span>
                                 @endif
                             </td>
@@ -482,7 +425,7 @@
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu cho giảng viên {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu cho giảng viên {{ $gv?->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
@@ -507,37 +450,37 @@
                                 <span class="badge-code">{{ $tk->TenDangNhap }}</span>
                             </td>
                             <td class="py-3 fw-bold text-dark">
-                                {{ $gv->MaGV ?? $tk->MaTK }}
+                                {{ $gv?->MaGV ?? $tk->MaTK }}
                             </td>
                             <td class="py-3 fw-semibold text-dark">
-                                {{ $gv->HoTen ?? 'Chưa cập nhật' }}
+                                {{ $gv?->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
+                                {{ $gv?->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
+                                {{ $gv?->boMon?->TenBoMon ?? ($uBoMon ? 'BM ' . $uBoMon : '---') }}
                             </td>
                             <td class="text-center py-3">
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                    <i class="fa-solid fa-user-tie me-1"></i> Trưởng bộ môn
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fw-bold">
+                                    <i class="fa-solid fa-user-tie me-2"></i> Trưởng bộ môn
                                 </span>
                             </td>
                             <td class="text-center py-3">
                                 @if($isActive)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Hoạt động
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Hoạt động
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đã khóa
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Đã khóa
                                     </span>
                                 @endif
                             </td>
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng bộ môn {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng bộ môn {{ $gv?->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
@@ -562,34 +505,34 @@
                                 <span class="badge-code">{{ $tk->TenDangNhap }}</span>
                             </td>
                             <td class="py-3 fw-bold text-dark">
-                                {{ $gv->MaGV ?? $tk->MaTK }}
+                                {{ $gv?->MaGV ?? $tk->MaTK }}
                             </td>
                             <td class="py-3 fw-semibold text-dark">
-                                {{ $gv->HoTen ?? 'Chưa cập nhật' }}
+                                {{ $gv?->HoTen ?? 'Chưa cập nhật' }}
                             </td>
                             <td class="py-3 text-muted">
-                                {{ $gv->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
+                                {{ $gv?->boMon?->khoa?->TenKhoa ?? ($uKhoa ? 'Khoa ' . $uKhoa : 'Khoa Công nghệ Thông tin') }}
                             </td>
                             <td class="text-center py-3">
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                    <i class="fa-solid fa-graduation-cap me-1"></i> Trưởng khoa
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold">
+                                    <i class="fa-solid fa-graduation-cap me-2"></i> Trưởng khoa
                                 </span>
                             </td>
                             <td class="text-center py-3">
                                 @if($isActive)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Hoạt động
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Hoạt động
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đã khóa
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Đã khóa
                                     </span>
                                 @endif
                             </td>
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex justify-content-center gap-1">
                                     <form action="{{ route('admin.taikhoan.resetPassword', $tk->MaTK) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng khoa {{ $gv->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
+                                          onsubmit="return confirm('Đặt lại mật khẩu tài khoản Trưởng khoa {{ $gv?->HoTen ?? $tk->TenDangNhap }} về mặc định Huit@2026?');">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2 text-warning" title="Đặt lại mật khẩu (Huit@2026)">
                                             <i class="fa-solid fa-key"></i>
@@ -644,7 +587,7 @@
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-bottom py-3 px-4" style="background: #002855; color: #ffffff;">
                 <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-warning"></i> Thêm tài khoản cán bộ
+                    <i class="fa-solid fa-user-plus text-warning me-2"></i> Thêm tài khoản cán bộ
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -660,17 +603,17 @@
                         <div class="d-flex flex-wrap gap-2">
                             <input type="radio" class="btn-check" name="loai_can_bo" id="btnLoaiTBM" value="TRUONG_BO_MON" checked onchange="onLoaiCanBoChange()">
                             <label class="btn btn-outline-warning text-dark px-3 py-2 fw-semibold rounded-3 flex-fill text-center" for="btnLoaiTBM">
-                                <i class="fa-solid fa-user-tie me-1"></i> Trưởng bộ môn
+                                <i class="fa-solid fa-user-tie me-2"></i> Trưởng bộ môn
                             </label>
 
                             <input type="radio" class="btn-check" name="loai_can_bo" id="btnLoaiTK" value="TRUONG_KHOA" onchange="onLoaiCanBoChange()">
                             <label class="btn btn-outline-danger px-3 py-2 fw-semibold rounded-3 flex-fill text-center" for="btnLoaiTK">
-                                <i class="fa-solid fa-graduation-cap me-1"></i> Trưởng khoa
+                                <i class="fa-solid fa-graduation-cap me-2"></i> Trưởng khoa
                             </label>
 
                             <input type="radio" class="btn-check" name="loai_can_bo" id="btnLoaiGV" value="GIANG_VIEN" onchange="onLoaiCanBoChange()">
                             <label class="btn btn-outline-primary px-3 py-2 fw-semibold rounded-3 flex-fill text-center" for="btnLoaiGV">
-                                <i class="fa-solid fa-chalkboard-user me-1"></i> Giảng viên
+                                <i class="fa-solid fa-chalkboard-user me-2"></i> Giảng viên
                             </label>
                         </div>
                     </div>
@@ -683,18 +626,18 @@
                                 <div class="form-preview-username mt-1" id="previewUsername">TBM_CNTT_BM_MACB</div>
                             </div>
                             <div class="text-end">
-                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1.5" id="badgeRoleName">Vai trò: Trưởng bộ môn (VT04)</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2" id="badgeRoleName">Vai trò: Trưởng bộ môn (VT04)</span>
                             </div>
                         </div>
                         <div class="small text-muted mt-2" id="ruleNote">
-                            <i class="fa-solid fa-circle-info me-1 text-primary"></i> Quy tắc: Giảng viên giữ nguyên tài khoản giảng dạy (<code>GV...</code>) và có thêm tài khoản chức vụ riêng biệt (<code>TBM_...</code> hoặc <code>TK_...</code>).
+                            <i class="fa-solid fa-circle-info me-2 text-primary"></i> Quy tắc: Giảng viên giữ nguyên tài khoản giảng dạy (<code>GV...</code>) và có thêm tài khoản chức vụ riêng biệt (<code>TBM_...</code> hoặc <code>TK_...</code>).
                         </div>
                     </div>
 
                     <!-- ── PHẦN 1: CHỌN GIẢNG VIÊN TỪ DANH SÁCH (Áp dụng cho TBM & TK) ── -->
                     <div class="mb-3" id="divSelectGiangVien">
                         <label class="form-label small fw-bold text-dark">
-                            <i class="fa-solid fa-user-check text-primary me-1"></i> Chọn giảng viên từ danh sách <span class="text-danger">*</span>
+                            <i class="fa-solid fa-user-check text-primary me-2"></i> Chọn giảng viên từ danh sách <span class="text-danger">*</span>
                         </label>
                         <select id="modalSelectGiangVien" class="form-select" onchange="onSelectGiangVienChange()">
                             <option value="">-- Chọn giảng viên để bổ nhiệm vai trò --</option>
@@ -715,7 +658,7 @@
                             @endforeach
                         </select>
                         <div class="form-text small text-muted">
-                            <i class="fa-solid fa-circle-info text-info me-1"></i> Thông tin cán bộ sẽ được lấy tự động từ danh sách giảng viên để bổ nhiệm chức vụ.
+                            <i class="fa-solid fa-circle-info text-info me-2"></i> Thông tin cán bộ sẽ được lấy tự động từ danh sách giảng viên để bổ nhiệm chức vụ.
                         </div>
 
                         <!-- Card tóm tắt hồ sơ Giảng viên đã chọn -->
@@ -733,10 +676,10 @@
                                 <span class="badge bg-light text-dark border" id="infoGvTrangThaiTK">Đã có tài khoản</span>
                             </div>
                             <div class="row g-2 small text-secondary">
-                                <div class="col-6"><i class="fa-solid fa-envelope me-1 text-primary"></i> <span id="infoGvEmail">email@huit.edu.vn</span></div>
-                                <div class="col-6"><i class="fa-solid fa-phone me-1 text-primary"></i> <span id="infoGvSdt">0901234567</span></div>
-                                <div class="col-6"><i class="fa-solid fa-building-columns me-1 text-primary"></i> Khoa: <strong class="text-dark" id="infoGvKhoa">CNTT</strong></div>
-                                <div class="col-6" id="infoGvDivBoMon"><i class="fa-solid fa-layer-group me-1 text-primary"></i> Bộ môn: <strong class="text-dark" id="infoGvBoMon">CNPM</strong></div>
+                                <div class="col-6"><i class="fa-solid fa-envelope me-2 text-primary"></i> <span id="infoGvEmail">email@huit.edu.vn</span></div>
+                                <div class="col-6"><i class="fa-solid fa-phone me-2 text-primary"></i> <span id="infoGvSdt">0901234567</span></div>
+                                <div class="col-6"><i class="fa-solid fa-building-columns me-2 text-primary"></i> Khoa: <strong class="text-dark" id="infoGvKhoa">CNTT</strong></div>
+                                <div class="col-6" id="infoGvDivBoMon"><i class="fa-solid fa-layer-group me-2 text-primary"></i> Bộ môn: <strong class="text-dark" id="infoGvBoMon">CNPM</strong></div>
                             </div>
                         </div>
                     </div>
@@ -827,8 +770,8 @@
                 </div>
                 <div class="modal-footer border-top py-2 px-4">
                     <button type="button" class="btn btn-sm btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-check me-1"></i> Lưu &amp; Cấp Vai Trò
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Lưu &amp; Cấp Vai Trò
                     </button>
                 </div>
             </form>
@@ -860,9 +803,9 @@ function onLoaiCanBoChange() {
         divSelectGV.style.display = 'block';
         divManual.style.display = 'none';
         selectBoMon.removeAttribute('required');
-        badgeRole.className = 'badge bg-danger rounded-pill px-3 py-1.5';
+        badgeRole.className = 'badge bg-danger rounded-pill px-3 py-2';
         badgeRole.textContent = 'Vai trò: Trưởng khoa (VT05)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> Cấp tài khoản chức vụ <strong>Trưởng khoa (VT05)</strong> riêng cho cán bộ (Username: <code>TK_{MA_KHOA}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i> Cấp tài khoản chức vụ <strong>Trưởng khoa (VT05)</strong> riêng cho cán bộ (Username: <code>TK_{MA_KHOA}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
         onSelectGiangVienChange();
 
     } else if (isTBM) {
@@ -870,9 +813,9 @@ function onLoaiCanBoChange() {
         divSelectGV.style.display = 'block';
         divManual.style.display = 'none';
         selectBoMon.setAttribute('required', 'required');
-        badgeRole.className = 'badge bg-warning text-dark rounded-pill px-3 py-1.5';
+        badgeRole.className = 'badge bg-warning text-dark rounded-pill px-3 py-2';
         badgeRole.textContent = 'Vai trò: Trưởng bộ môn (VT04)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> Cấp tài khoản chức vụ <strong>Trưởng bộ môn (VT04)</strong> riêng cho cán bộ (Username: <code>TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i> Cấp tài khoản chức vụ <strong>Trưởng bộ môn (VT04)</strong> riêng cho cán bộ (Username: <code>TBM_{MA_KHOA}_{MA_BO_MON}_{MA_CAN_BO}</code>), giữ nguyên tài khoản Giảng viên giảng dạy.';
         onSelectGiangVienChange();
 
     } else {
@@ -883,9 +826,9 @@ function onLoaiCanBoChange() {
         divHocVi.style.display = 'block';
         divBoMon.style.display = 'block';
         selectBoMon.setAttribute('required', 'required');
-        badgeRole.className = 'badge bg-primary rounded-pill px-3 py-1.5';
+        badgeRole.className = 'badge bg-primary rounded-pill px-3 py-2';
         badgeRole.textContent = 'Vai trò: Giảng viên (VT02)';
-        ruleNote.innerHTML = '<i class="fa-solid fa-circle-info text-primary me-1"></i> Tạo tài khoản <strong>Giảng viên (VT02)</strong>. Tên đăng nhập là Mã cán bộ (<code>GV...</code>), mật khẩu mặc định <code>Huit@2026</code>.';
+        ruleNote.innerHTML = '<i class="fa-solid fa-circle-info text-primary me-2"></i> Tạo tài khoản <strong>Giảng viên (VT02)</strong>. Tên đăng nhập là Mã cán bộ (<code>GV...</code>), mật khẩu mặc định <code>Huit@2026</code>.';
         updateUsernamePreview();
     }
 }

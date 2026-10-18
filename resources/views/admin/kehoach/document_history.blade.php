@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-3">
-    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách kế hoạch
+    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách kế hoạch
     </a>
 </div>
 
@@ -19,11 +19,11 @@
                 <span class="badge-code me-2">Mã VB: {{ $vanBan->MaVanBan }}</span>
                 <span class="badge bg-success rounded-pill px-3 py-1">Phiên bản v{{ $vanBan->PhienBanHienTai }}</span>
                 <h3 class="fw-bold text-primary mt-2 mb-1">{{ $vanBan->TenVanBan }}</h3>
-                <p class="text-muted mb-0"><i class="fa-solid fa-file-pdf text-danger me-1"></i>Số thông báo: <strong>{{ $vanBan->SoThongBao ?? 'N/A' }}</strong> | Kế hoạch: <strong>{{ $vanBan->keHoach->TenKeHoach ?? 'Khóa luận' }}</strong></p>
+                <p class="text-muted mb-0"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Số thông báo: <strong>{{ $vanBan->SoThongBao ?? 'N/A' }}</strong> | Kế hoạch: <strong>{{ $vanBan->keHoach->TenKeHoach ?? 'Khóa luận' }}</strong></p>
             </div>
             <div>
                 <a href="{{ asset($vanBan->FileGocPath) }}" target="_blank" class="btn btn-danger btn-lg rounded-pill px-4 shadow-sm fw-bold">
-                    <i class="fa-solid fa-download me-1"></i> Tải File Gốc Mới Nhất
+                    <i class="fa-solid fa-download me-2"></i> Tải File Gốc Mới Nhất
                 </a>
             </div>
         </div>
@@ -57,7 +57,7 @@
                             @endif
                         </td>
                         <td>
-                            <div class="fw-semibold text-dark"><i class="fa-regular fa-clock me-1"></i>{{ $ver->created_at ? $ver->created_at->format('d/m/Y H:i') : '---' }}</div>
+                            <div class="fw-semibold text-dark"><i class="fa-regular fa-clock me-2"></i>{{ $ver->created_at ? $ver->created_at->format('d/m/Y H:i') : '---' }}</div>
                         </td>
                         <td>
                             <span class="badge bg-light text-dark border">{{ $ver->NguoiThayDoi ?? 'ADMIN' }}</span>
@@ -77,14 +77,14 @@
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
                                 <a href="{{ asset($ver->FileGocPath) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm">
-                                    <i class="fa-solid fa-file-pdf me-1"></i> File v{{ $ver->PhienBan }}
+                                    <i class="fa-solid fa-file-pdf me-2"></i> File v{{ $ver->PhienBan }}
                                 </a>
 
                                 @if($ver->PhienBan != $vanBan->PhienBanHienTai)
                                 <form action="{{ route('admin.kehoach.documentRollback', [$vanBan->MaVanBan, $ver->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận khôi phục mốc thời gian kế hoạch về phiên bản v{{ $ver->PhienBan }}?');">
                                     @csrf
-                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm">
-                                        <i class="fa-solid fa-rotate-left me-1"></i> Khôi phục v{{ $ver->PhienBan }}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm d-inline-flex align-items-center">
+                                        <i class="fa-solid fa-rotate-left me-2"></i> Khôi phục v{{ $ver->PhienBan }}
                                     </button>
                                 </form>
                                 @endif

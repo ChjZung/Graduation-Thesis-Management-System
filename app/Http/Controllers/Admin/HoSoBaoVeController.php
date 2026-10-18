@@ -90,7 +90,7 @@ class HoSoBaoVeController extends Controller
         $maGVu = $user?->giaoVu?->MaGVu ?? \App\Models\GiaoVu::first()?->MaGVu;
 
         $action = $request->input('action', 'approve'); // approve or reject
-        $ghiChuAdmin = $request->input('GhiChu', '');
+        $ghiChuAdmin = $request->filled('GhiChu') ? \App\Helpers\HtmlHelper::clean($request->input('GhiChu')) : '';
 
         if ($action === 'reject') {
             $hoSo->update([

@@ -100,28 +100,28 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-primary"></i> Thống Kê Đề Tài Khóa Luận Tốt Nghiệp
+                <i class="fa-solid fa-chart-pie text-primary me-2"></i> Thống Kê Đề Tài Khóa Luận Tốt Nghiệp
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ $manageRoute }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 shadow-sm fw-semibold">
-                <i class="fa-solid fa-book-bookmark me-1"></i> Quản Lý &amp; Công Bố Đề Tài
+            <a href="{{ $manageRoute }}" class="btn btn-sm btn-outline-primary rounded-3 px-3 shadow-sm fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-book-bookmark me-2"></i> Quản Lý &amp; Công Bố Đề Tài
             </a>
             @if($scope['is_admin'])
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill shadow-xs">
-                    <i class="fa-solid fa-building-columns me-1"></i> Phạm vi: Toàn trường
+                    <i class="fa-solid fa-building-columns me-2"></i> Phạm vi: Toàn trường
                 </span>
             @elseif($scope['is_tk'])
                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill shadow-xs">
-                    <i class="fa-solid fa-graduation-cap me-1"></i> Phạm vi: Khoa {{ $scope['force_khoa'] }}
+                    <i class="fa-solid fa-graduation-cap me-2"></i> Phạm vi: Khoa {{ $scope['force_khoa'] }}
                 </span>
             @elseif($scope['is_tbm'])
                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill shadow-xs">
-                    <i class="fa-solid fa-layer-group me-1"></i> Phạm vi: Bộ môn {{ $scope['force_bm'] }}
+                    <i class="fa-solid fa-layer-group me-2"></i> Phạm vi: Bộ môn {{ $scope['force_bm'] }}
                 </span>
             @else
                 <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 rounded-pill shadow-xs">
-                    <i class="fa-solid fa-user-tie me-1"></i> Phạm vi: Đề tài của tôi
+                    <i class="fa-solid fa-user-tie me-2"></i> Phạm vi: Đề tài của tôi
                 </span>
             @endif
         </div>
@@ -219,14 +219,14 @@
 
                     <!-- Nút thao tác -->
                     <div class="col-12 col-lg-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 w-100 fw-bold">
-                            <i class="fa-solid fa-filter me-1"></i> Lọc
+                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 w-100 fw-bold d-flex align-items-center justify-content-center">
+                            <i class="fa-solid fa-filter me-2"></i> Lọc
                         </button>
                         <a href="{{ $currentRoute }}" class="btn btn-sm btn-light border rounded-3 px-2" title="Đặt lại bộ lọc">
                             <i class="fa-solid fa-rotate-left"></i>
                         </a>
-                        <a href="{{ $exportRoute }}" class="btn btn-sm btn-success rounded-3 px-3 text-nowrap fw-bold" title="Xuất báo cáo Excel">
-                            <i class="fa-solid fa-file-excel me-1"></i> Xuất
+                        <a href="{{ $exportRoute }}" class="btn btn-sm btn-success rounded-3 px-3 text-nowrap fw-bold d-inline-flex align-items-center" title="Xuất báo cáo Excel">
+                            <i class="fa-solid fa-file-excel me-2"></i> Xuất
                         </a>
                     </div>
                 </div>
@@ -320,7 +320,7 @@
         <!-- Donut Chart: Phân bố trạng thái đề tài -->
         <div class="col-12 col-lg-5">
             <div class="chart-box">
-                <h6><i class="fa-solid fa-chart-pie text-primary"></i> Phân Bố Trạng Thái Đề Tài</h6>
+                <h6><i class="fa-solid fa-chart-pie text-primary me-2"></i> Phân Bố Trạng Thái Đề Tài</h6>
                 <div style="height: 260px; position: relative;">
                     <canvas id="chartTrangThai"></canvas>
                 </div>
@@ -330,7 +330,7 @@
         <!-- Bar Chart: Số lượng đề tài theo bộ môn -->
         <div class="col-12 col-lg-7">
             <div class="chart-box">
-                <h6><i class="fa-solid fa-chart-column text-success"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
+                <h6><i class="fa-solid fa-chart-column text-success me-2"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
                 <div style="height: 260px; position: relative;">
                     <canvas id="chartBoMon"></canvas>
                 </div>
@@ -342,7 +342,7 @@
         <!-- Horizontal Bar: Phân bố đề tài theo lĩnh vực -->
         <div class="col-12 col-lg-7">
             <div class="chart-box">
-                <h6><i class="fa-solid fa-bars-staggered text-info"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
+                <h6><i class="fa-solid fa-bars-staggered text-info me-2"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
                 <div style="height: 260px; position: relative;">
                     <canvas id="chartLinhVuc"></canvas>
                 </div>
@@ -352,7 +352,7 @@
         <!-- Bar Chart: Quy mô nhóm đăng ký -->
         <div class="col-12 col-lg-5">
             <div class="chart-box">
-                <h6><i class="fa-solid fa-user-group text-warning"></i> Đề Tài Theo Quy Mô Nhóm Sinh Viên</h6>
+                <h6><i class="fa-solid fa-user-group text-warning me-2"></i> Đề Tài Theo Quy Mô Nhóm Sinh Viên</h6>
                 <div style="height: 260px; position: relative;">
                     <canvas id="chartQuyMoNhom"></canvas>
                 </div>
@@ -365,7 +365,7 @@
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-list-check text-primary"></i> Tình Hình Đăng Ký Đề Tài Của Sinh Viên
+                    <i class="fa-solid fa-list-check text-primary me-2"></i> Tình Hình Đăng Ký Đề Tài Của Sinh Viên
                 </h6>
                 <span class="small text-muted">Số liệu tính trên các đề tài mở công bố đăng ký</span>
             </div>
@@ -471,8 +471,8 @@
                             <td class="py-3">
                                 <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
                                 @if($dt->LinhVuc)
-                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 mt-1 small" style="font-size: 0.72rem;">
-                                        <i class="fa-solid fa-tag me-1"></i>{{ $dt->LinhVuc }}
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 mt-1 small" style="font-size: 0.72rem;">
+                                        <i class="fa-solid fa-tag me-2"></i>{{ $dt->LinhVuc }}
                                     </span>
                                 @endif
                             </td>
@@ -494,13 +494,13 @@
                                 </div>
                             </td>
                             <td class="text-center py-3">
-                                <span class="badge border rounded-pill px-2.5 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 0.75rem;">
+                                <span class="badge border rounded-pill px-3 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 0.75rem;">
                                     {{ $dt->TrangThai }}
                                 </span>
                             </td>
                             <td class="pe-4 text-center py-3">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5" 
+                                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" 
                                             onclick="showDeTaiModal({{ json_encode($dt) }})" title="Xem chi tiết đề tài">
                                         <i class="fa-solid fa-eye text-primary"></i>
                                     </button>
@@ -512,7 +512,7 @@
                                             default => route('admin.duyet_detai.index', ['search' => $dt->MaDeTai]),
                                         };
                                     @endphp
-                                    <a href="{{ $itemManageUrl }}" class="btn btn-sm btn-light border rounded-pill px-2.5" title="Mở trong Quản lý đề tài">
+                                    <a href="{{ $itemManageUrl }}" class="btn btn-sm btn-light border rounded-pill px-3" title="Mở trong Quản lý đề tài">
                                         <i class="fa-solid fa-arrow-up-right-from-square text-secondary"></i>
                                     </a>
                                 </div>
@@ -552,7 +552,7 @@
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-bottom py-3 px-4">
                 <h5 class="modal-title fw-bold text-primary d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-circle-info"></i> Chi Tiết Đề Tài Khóa Luận
+                    <i class="fa-solid fa-circle-info me-2"></i> Chi Tiết Đề Tài Khóa Luận
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

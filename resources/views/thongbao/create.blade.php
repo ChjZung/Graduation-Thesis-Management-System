@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-3">
-    <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
+    <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách thông báo
     </a>
 </div>
 
@@ -61,35 +61,42 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Nội Dung Chi Tiết Thông Báo <span class="text-danger">*</span></label>
-                <textarea name="NoiDung" class="form-control" rows="6" placeholder="Nhập nội dung chi tiết thông báo..." required>{{ old('NoiDung') }}</textarea>
+                @include('partials.rich_text_editor', [
+                    'name' => 'NoiDung',
+                    'id' => 'NoiDung',
+                    'label' => 'Nội Dung Chi Tiết Thông Báo',
+                    'value' => old('NoiDung'),
+                    'required' => true,
+                    'minHeight' => '200px',
+                    'placeholder' => 'Nhập nội dung chi tiết thông báo...'
+                ])
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-1 text-primary"></i> File Văn Bản / Tài Liệu Đính Kèm (PDF / Word / Zip)</label>
+                <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i> File Văn Bản / Tài Liệu Đính Kèm (PDF / Word / Zip)</label>
                 <input type="file" name="FileDinhKem" class="form-control" accept=".pdf,.docx,.doc,.zip,.rar,.png,.jpg,.jpeg">
                 <span class="small text-muted">Hỗ trợ các định dạng file PDF, DOCX, ZIP, RAR hoặc Hình ảnh (tối đa 10MB).</span>
             </div>
 
             <div class="p-3 bg-light rounded-3 border mb-4">
-                <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock me-1 text-primary"></i> Tùy Chọn Phát Hành / Lên Lịch</h6>
+                <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock me-2 text-primary"></i> Tùy Chọn Phát Hành / Lên Lịch</h6>
                 <div class="d-flex gap-4 align-items-center">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="action_type" id="act_send_now" value="send_now" checked onchange="toggleSchedule(false)">
                         <label class="form-check-label fw-bold text-success" for="act_send_now">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Phát Hành &amp; Gửi Ngay
+                            <i class="fa-solid fa-paper-plane me-2"></i> Phát Hành &amp; Gửi Ngay
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="action_type" id="act_draft" value="draft" onchange="toggleSchedule(false)">
                         <label class="form-check-label fw-bold text-secondary" for="act_draft">
-                            <i class="fa-solid fa-file-signature me-1"></i> Lưu Thành Bản Nháp
+                            <i class="fa-solid fa-file-signature me-2"></i> Lưu Thành Bản Nháp
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="action_type" id="act_schedule" value="schedule" onchange="toggleSchedule(true)">
                         <label class="form-check-label fw-bold text-warning" for="act_schedule">
-                            <i class="fa-regular fa-clock me-1"></i> Đặt Lịch Phát Hành
+                            <i class="fa-regular fa-clock me-2"></i> Đặt Lịch Phát Hành
                         </label>
                     </div>
                 </div>
@@ -102,8 +109,8 @@
 
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('thongbao.index') }}" class="btn btn-light rounded-pill px-4">Hủy</a>
-                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                    <i class="fa-solid fa-check me-1"></i> Hoàn Tất &amp; Thực Thi
+                <button type="submit" class="btn text-white rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+                    <i class="fa-solid fa-check me-2"></i> Hoàn Tất &amp; Thực Thi
                 </button>
             </div>
         </form>

@@ -30,7 +30,7 @@
         @endif
 
         @if($nhom && $nhom->TruongNhom == $sv->MaSV)
-        <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addModal">
+        <button class="btn btn-primary rounded-pill px-4 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="fa-solid fa-cloud-arrow-up me-2"></i>Nộp Sản Phẩm
         </button>
         @endif
@@ -66,13 +66,13 @@
                             @endphp
                             <div class="d-flex flex-wrap gap-2">
                                 @if($fileUrl)
-                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                        <i class="fa-solid fa-download me-1"></i>Tải Tệp
+                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success rounded-pill px-3 d-inline-flex align-items-center">
+                                        <i class="fa-solid fa-download me-2"></i>Tải Tệp
                                     </a>
                                 @endif
                                 @if($gitUrl)
-                                    <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3">
-                                        <i class="fa-brands fa-github me-1"></i>GitHub
+                                    <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3 d-inline-flex align-items-center">
+                                        <i class="fa-brands fa-github me-2"></i>GitHub
                                     </a>
                                 @endif
                                 @if(!$fileUrl && !$gitUrl)
@@ -82,14 +82,14 @@
                         </td>
                         <td>
                             <div class="text-muted" style="font-size: 13.5px;">
-                                <i class="fa-regular fa-calendar-days me-1"></i>{{ date('d/m/Y', strtotime($sp->NgayNop)) }}
+                                <i class="fa-regular fa-calendar-days me-2"></i>{{ date('d/m/Y', strtotime($sp->NgayNop)) }}
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
                         <td colspan="3" class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-box-open fa-2x mb-2 d-block opacity-40"></i>
+                            <i class="fa-solid fa-box-open fa-2x mb-2 d-block opacity-40 me-2"></i>
                             Chưa có sản phẩm hoặc mã nguồn nào được nộp.
                         </td>
                     </tr>
@@ -138,8 +138,8 @@
                 </div>
                 <div class="modal-footer border-top py-3 px-4">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4">
-                        <i class="fa-solid fa-check me-1"></i>Xác Nhận Nộp
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i>Xác Nhận Nộp
                     </button>
                 </div>
             </div>

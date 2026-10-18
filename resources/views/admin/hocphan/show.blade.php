@@ -11,10 +11,10 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('hocphan.edit', $hocphan->MaHocPhan) }}" class="btn btn-warning rounded-pill px-3 fw-semibold">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh sửa
             </a>
-            <a href="{{ route('hocphan.index') }}" class="btn btn-outline-secondary rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+            <a href="{{ route('hocphan.index') }}" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay lại
             </a>
         </div>
     </div>
@@ -37,33 +37,45 @@
                         </li>
                         <li class="mb-3 pb-2 border-bottom">
                             <span class="text-muted d-block small">Số tín chỉ:</span>
-                            <span class="badge bg-primary px-3 py-1.5 fs-6">{{ $hocphan->SoTinChi }} Tín chỉ</span>
+                            <span class="badge bg-primary px-3 py-2 fs-6">{{ $hocphan->SoTinChi }} Tín chỉ</span>
                         </li>
                         <li class="mb-3 pb-2 border-bottom">
                             <span class="text-muted d-block small">Phân cấp trực thuộc:</span>
                             @if($hocphan->isDungChung())
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold mt-1">
-                                    <i class="fa-solid fa-share-nodes me-1"></i> Học phần dùng chung
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold mt-1">
+                                    <i class="fa-solid fa-share-nodes me-2"></i> Học phần dùng chung
                                 </span>
                             @else
-                                <span class="badge bg-info-subtle text-dark border border-info-subtle rounded-pill px-3 py-1.5 fw-semibold mt-1">
-                                    <i class="fa-solid fa-layer-group me-1 text-primary"></i> {{ $hocphan->boMon->TenBoMon ?? $hocphan->MaBoMon }}
+                                <span class="badge bg-info-subtle text-dark border border-info-subtle rounded-pill px-3 py-2 fw-semibold mt-1">
+                                    <i class="fa-solid fa-layer-group me-2 text-primary"></i> {{ $hocphan->boMon->TenBoMon ?? $hocphan->MaBoMon }}
                                 </span>
                             @endif
                             <div class="small text-muted mt-1">Khoa: {{ $hocphan->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
                         </li>
                         <li class="mb-3 pb-2 border-bottom">
                             <span class="text-muted d-block small">Loại học phần:</span>
-                            <span class="badge bg-light text-dark border px-2.5 py-1">{{ $hocphan->LoaiHocPhan }}</span>
+                            <span class="badge bg-light text-dark border px-3 py-1">{{ $hocphan->LoaiHocPhan }}</span>
                         </li>
                         <li class="mb-3 pb-2 border-bottom">
                             <span class="text-muted d-block small">Trạng thái:</span>
-                            <span class="badge bg-success px-2.5 py-1">{{ $hocphan->TrangThai }}</span>
+                            <span class="badge bg-success px-3 py-1">{{ $hocphan->TrangThai }}</span>
+                        </li>
+                        <li class="mb-3 pb-2 border-bottom">
+                            <span class="text-muted d-block small">Thời gian học phần:</span>
+                            <div class="fw-semibold text-dark mt-1">
+                                <i class="fa-regular fa-calendar-days text-primary me-2"></i>
+                                @if($hocphan->NgayBatDau || $hocphan->NgayKetThuc)
+                                    {{ $hocphan->NgayBatDau ? \Carbon\Carbon::parse($hocphan->NgayBatDau)->format('d/m/Y') : 'Chưa thiết lập' }}
+                                    <i class="fa-solid fa-arrow-right-long mx-1 text-muted"></i>
+                                    {{ $hocphan->NgayKetThuc ? \Carbon\Carbon::parse($hocphan->NgayKetThuc)->format('d/m/Y') : 'Chưa thiết lập' }}
+                                @else
+                                    <span class="text-muted fst-italic">Chưa cấu hình</span>
+                                @endif
+                            </div>
                         </li>
                         @if($hocphan->MoTa)
                         <li>
-                            <span class="text-muted d-block small">Mô tả:</span>
-                            <p class="small text-dark mb-0 mt-1">{{ $hocphan->MoTa }}</p>
+                            <div class="small text-dark mb-0 mt-1">{!! \App\Helpers\HtmlHelper::clean($hocphan->MoTa) !!}</div>
                         </li>
                         @endif
                     </ul>

@@ -521,23 +521,42 @@ class TaiKhoanController extends Controller
             return redirect()->back()->withErrors('Không thể tự khóa tài khoản Admin đang sử dụng!');
         }
 
-        $dataUpdate = [
-            'MaVaiTro'          => $request->MaVaiTro,
-            'TrangThai'         => (bool)$request->TrangThai,
-            'BatBuocDoiMatKhau' => $request->has('BatBuocDoiMatKhau'),
-        ];
+        DB::transaction(function () use ($request, $taiKhoan) {
+            $dataUpdate = [
+                'MaVaiTro'          => $request->MaVaiTro,
+                'TrangThai'         => (bool)$request->TrangThai,
+                'BatBuocDoiMatKhau' => $request->has('BatBuocDoiMatKhau'),
+            ];
 
-        if ($request->filled('MatKhauMoi')) {
-            $dataUpdate['MatKhau'] = Hash::make($request->MatKhauMoi);
-            $dataUpdate['TrangThaiMatKhau'] = 'ACTIVE';
-            $dataUpdate['NgayDoiMatKhau'] = now();
-        }
+            if ($request->filled('MatKhauMoi')) {
+                $dataUpdate['MatKhau'] = Hash::make($request->MatKhauMoi);
+                $dataUpdate['TrangThaiMatKhau'] = 'ACTIVE';
+                $dataUpdate['NgayDoiMatKhau'] = now();
+                $dataUpdate['SoLanDangNhapSai'] = 0;
+            }
 
-        if (!$request->TrangThai && $taiKhoan->TrangThai) {
-            $dataUpdate['NgayKhoa'] = now();
-        }
+            // Đồng bộ trạng thái khóa và số lần đăng nhập sai
+            if ($request->TrangThai && $taiKhoan->isLocked()) {
+                // Mở khóa: reset số lần sai và xóa ngày khóa
+                $dataUpdate['TrangThai'] = true;
+                $dataUpdate['SoLanDangNhapSai'] = 0;
+                $dataUpdate['NgayKhoa'] = null;
+                \App\Models\AuditLog::log('UNLOCK_ACCOUNT', 'TaiKhoan', $taiKhoan->MaTK, [
+                    'performed_by' => auth()->user()?->TenDangNhap ?? 'admin',
+                    'action'       => 'Admin updated account status to Active (unlocked)'
+                ]);
+            } elseif (!$request->TrangThai && !$taiKhoan->isLocked()) {
+                // Khóa thủ công
+                $dataUpdate['TrangThai'] = false;
+                $dataUpdate['NgayKhoa'] = now();
+                \App\Models\AuditLog::log('MANUAL_LOCK', 'TaiKhoan', $taiKhoan->MaTK, [
+                    'performed_by' => auth()->user()?->TenDangNhap ?? 'admin',
+                    'action'       => 'Admin updated account status to Locked'
+                ]);
+            }
 
-        $taiKhoan->update($dataUpdate);
+            $taiKhoan->update($dataUpdate);
+        });
 
         return redirect()->route('admin.taikhoan.index')->with('success', "Cập nhật tài khoản '{$taiKhoan->TenDangNhap}' thành công!");
     }
@@ -570,9 +589,15 @@ class TaiKhoanController extends Controller
             return redirect()->back()->withErrors('Không thể tự khóa tài khoản Admin bạn đang sử dụng!');
         }
 
-        $taiKhoan->TrangThai = !$taiKhoan->TrangThai;
-        $taiKhoan->NgayKhoa = $taiKhoan->TrangThai ? null : now();
-        $taiKhoan->save();
+        DB::transaction(function () use ($taiKhoan) {
+            if ($taiKhoan->isLocked()) {
+                // Đang bị khóa (thủ công hoặc tự động) -> Mở khóa và reset số lần sai
+                $taiKhoan->unlock(auth()->user()?->TenDangNhap ?? 'admin');
+            } else {
+                // Đang hoạt động -> Khóa thủ công bởi Admin
+                $taiKhoan->lock(isAuto: false, reason: 'Admin toggled account lock');
+            }
+        });
 
         $msg = $taiKhoan->TrangThai ? "Mở khóa tài khoản '{$taiKhoan->TenDangNhap}' thành công!" : "Đã khóa tài khoản '{$taiKhoan->TenDangNhap}'!";
         return redirect()->back()->with('success', $msg);
@@ -583,12 +608,21 @@ class TaiKhoanController extends Controller
         $taiKhoan = TaiKhoan::findOrFail($id);
         $tempPassword = 'Huit@2026';
 
-        $taiKhoan->update([
-            'MatKhau'           => Hash::make($tempPassword),
-            'TrangThaiMatKhau'  => 'INITIAL',
-            'BatBuocDoiMatKhau' => true,
-            'SoLanDangNhapSai'  => 0,
-        ]);
+        DB::transaction(function () use ($taiKhoan, $tempPassword) {
+            $taiKhoan->update([
+                'MatKhau'           => Hash::make($tempPassword),
+                'TrangThaiMatKhau'  => 'INITIAL',
+                'BatBuocDoiMatKhau' => true,
+                'SoLanDangNhapSai'  => 0,
+                'TrangThai'         => true,
+                'NgayKhoa'          => null,
+            ]);
+
+            \App\Models\AuditLog::log('RESET_PASSWORD', 'TaiKhoan', $taiKhoan->MaTK, [
+                'performed_by' => auth()->user()?->TenDangNhap ?? 'admin',
+                'action'       => 'Admin reset password to default temp password'
+            ]);
+        });
 
         return redirect()->back()
             ->with('temp_password', $tempPassword)

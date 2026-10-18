@@ -25,7 +25,14 @@ class HocPhan extends Model
         'MaBoMon',
         'LoaiHocPhan',
         'TrangThai',
+        'NgayBatDau',
+        'NgayKetThuc',
         'MoTa',
+    ];
+
+    protected $casts = [
+        'NgayBatDau'  => 'date',
+        'NgayKetThuc' => 'date',
     ];
 
     public $timestamps = true;

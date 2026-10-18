@@ -10,8 +10,8 @@
                 <div>
                     <i class="fa-solid fa-user-pen text-primary me-2"></i>Chỉnh Sửa Tài Khoản: {{ $taiKhoan->TenDangNhap }}
                 </div>
-                <a href="{{ route('admin.taikhoan.index') }}" class="btn btn-sm btn-light border rounded-pill px-3">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                <a href="{{ route('admin.taikhoan.index') }}" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center">
+                    <i class="fa-solid fa-arrow-left me-2"></i> Quay lại
                 </a>
             </div>
             <div class="card-body p-4">
@@ -69,8 +69,8 @@
 
                     <div class="d-flex justify-content-between pt-3 border-top">
                         <a href="{{ route('admin.taikhoan.index') }}" class="btn btn-light border px-4 rounded-pill">Quay Lại</a>
-                        <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold">
-                            <i class="fa-solid fa-save me-1"></i> Lưu Thay Đổi
+                        <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold d-inline-flex align-items-center">
+                            <i class="fa-solid fa-save me-2"></i> Lưu Thay Đổi
                         </button>
                     </div>
                 </form>

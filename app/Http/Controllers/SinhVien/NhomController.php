@@ -198,15 +198,16 @@ class NhomController extends Controller
             $nhomCurrent->loadMissing([
                 'deTai.giangVien.boMon',
                 'deTai.hocKy',
-                'deTai.hocPhanRef',
+                'deTai.hocPhanRef.boMon',
                 'deTai.nganh',
                 'dangKyDeTai.deTai.giangVien.boMon',
                 'dangKyDeTai.deTai.hocKy',
-                'dangKyDeTai.deTai.hocPhanRef',
+                'dangKyDeTai.deTai.hocPhanRef.boMon',
                 'dangKyDeTai.deTai.nganh',
                 'truongNhom.taiKhoan',
-                'hocPhan',
-                'hocKy'
+                'truongNhom.lop.nganh',
+                'hocPhan.boMon',
+                'hocKy.keHoachKhoaLuans.mocThoiGians'
             ]);
 
             // Nhóm đã khóa khi đề tài đang chờ duyệt hoặc đã được duyệt chính thức

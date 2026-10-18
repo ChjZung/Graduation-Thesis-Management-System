@@ -7,13 +7,13 @@
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-book-open text-primary me-2"></i>Quản Lý Môn Học</span>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.import.template', 'monhoc') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
+            <a href="{{ route('admin.import.template', 'monhoc') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-file-arrow-down me-2"></i>File mẫu .xlsx
             </a>
-            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fa-solid fa-file-excel me-1"></i>Import Excel
+            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fa-solid fa-file-excel me-2"></i>Import Excel
             </button>
-            <a href="{{ route('monhoc.create') }}" class="btn btn-success btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i>Thêm Mới</a>
+            <a href="{{ route('monhoc.create') }}" class="btn btn-success btn-sm rounded-pill px-3 d-inline-flex align-items-center"><i class="fa-solid fa-plus me-2"></i>Thêm Mới</a>
         </div>
     </div>
     <div class="card-body p-0">
@@ -60,12 +60,12 @@
                         <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
                     </div>
                     <div class="alert alert-light border small text-muted mb-0">
-                        <i class="fa-solid fa-circle-info me-1"></i> Tải <a href="{{ route('admin.import.template', 'monhoc') }}" class="fw-bold">File mẫu .xlsx</a> để nhập đúng định dạng dữ liệu.
+                        <i class="fa-solid fa-circle-info me-2"></i> Tải <a href="{{ route('admin.import.template', 'monhoc') }}" class="fw-bold">File mẫu .xlsx</a> để nhập đúng định dạng dữ liệu.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 d-inline-flex align-items-center"><i class="fa-solid fa-upload me-2"></i>Tải Lên & Import</button>
                 </div>
             </div>
         </form>

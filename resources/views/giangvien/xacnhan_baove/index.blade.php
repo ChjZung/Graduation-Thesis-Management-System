@@ -26,7 +26,7 @@
                 <li class="nav-item">
                     <a class="nav-link py-2 px-3 {{ request('xac_nhan') === 'Chờ xác nhận' ? 'active bg-warning text-dark' : '' }}" 
                        href="{{ route('giangvien.xacnhan_baove.index', ['xac_nhan' => 'Chờ xác nhận']) }}">
-                        <i class="fa-solid fa-clock me-1"></i> Chờ Xác Nhận 
+                        <i class="fa-solid fa-clock me-2"></i> Chờ Xác Nhận 
                         <span class="badge bg-dark ms-1">{{ $counts['cho_xac_nhan'] }}</span>
                     </a>
                 </li>
@@ -86,7 +86,7 @@
                                             <div class="d-flex flex-column gap-1">
                                                 @foreach($hs->tepHoSoBaoVes as $tep)
                                                     <a href="{{ asset('storage/' . $tep->DuongDan) }}" target="_blank" class="small text-truncate" style="max-width: 200px;">
-                                                        <i class="fa-solid fa-paperclip me-1"></i> {{ $tep->TenTep ?: 'Tệp đính kèm' }}
+                                                        <i class="fa-solid fa-paperclip me-2"></i> {{ $tep->TenTep ?: 'Tệp đính kèm' }}
                                                     </a>
                                                 @endforeach
                                             </div>
@@ -96,12 +96,12 @@
                                     </td>
                                     <td>
                                         @if($hs->XacNhanGVHD === 'Đã duyệt')
-                                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Đã duyệt cho bảo vệ</span>
+                                            <span class="badge bg-success"><i class="fa-solid fa-check me-2"></i> Đã duyệt cho bảo vệ</span>
                                             <div class="small text-muted mt-1">{{ $hs->NgayXacNhan ? \Carbon\Carbon::parse($hs->NgayXacNhan)->format('d/m/Y') : '' }}</div>
                                         @elseif($hs->XacNhanGVHD === 'Không duyệt')
-                                            <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i> Không đồng ý</span>
+                                            <span class="badge bg-danger"><i class="fa-solid fa-xmark me-2"></i> Không đồng ý</span>
                                         @else
-                                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Chờ GVHD xác nhận</span>
+                                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-2"></i> Chờ GVHD xác nhận</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
@@ -111,13 +111,13 @@
                                                   onsubmit="return confirm('Xác nhận đồng ý cho nhóm này đủ điều kiện ra bảo vệ trước Hội đồng?');">
                                                 @csrf
                                                 <input type="hidden" name="HanhDong" value="dong_y">
-                                                <button type="submit" class="btn btn-sm btn-success" title="Xác nhận đủ điều kiện">
-                                                    <i class="fa-solid fa-check me-1"></i> Đồng ý
+                                                <button type="submit" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Xác nhận đủ điều kiện">
+                                                    <i class="fa-solid fa-check me-2"></i> Đồng ý
                                                 </button>
                                             </form>
 
                                             <!-- Nút Từ chối -->
-                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#modalTuChoi{{ $hs->MaHoSo }}" title="Không đồng ý cho bảo vệ">
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi{{ $hs->MaHoSo }}" title="Không đồng ý cho bảo vệ">
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
@@ -141,10 +141,15 @@
                                                                 <label class="form-label fw-bold">Nhóm sinh viên:</label>
                                                                 <div>{{ $hs->nhom->TenNhom ?? '' }} (Đề tài: {{ $hs->deTai->TenDeTai ?? '' }})</div>
                                                             </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label fw-bold">Lý do chưa đủ điều kiện bảo vệ:</label>
-                                                                <textarea name="NhanXet" class="form-control" rows="4" required
-                                                                          placeholder="Ghi rõ lý do sản phẩm hoặc báo cáo chưa đạt chuẩn để nhóm biết và khắc phục..."></textarea>
+                                                                @include('partials.rich_text_editor', [
+                                                                    'name' => 'NhanXet',
+                                                                    'id' => 'NhanXet_' . $hs->MaHoSo,
+                                                                    'label' => 'Lý do chưa đủ điều kiện bảo vệ',
+                                                                    'required' => true,
+                                                                    'minHeight' => '100px',
+                                                                    'compact' => true,
+                                                                    'placeholder' => 'Ghi rõ lý do sản phẩm hoặc báo cáo chưa đạt chuẩn để nhóm biết và khắc phục...'
+                                                                ])
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">

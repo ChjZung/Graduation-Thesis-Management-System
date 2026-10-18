@@ -8,16 +8,16 @@
 
 @section('content')
 <div class="mb-3 d-flex justify-content-between align-items-center">
-    <a href="{{ route('admin.kehoach.importDocument') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Upload file khác
+    <a href="{{ route('admin.kehoach.importDocument') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Upload file khác
     </a>
     
     @if(!empty($previewData))
     <form action="{{ route('admin.kehoach.confirmImport') }}" method="POST" class="d-inline">
         @csrf
         <input type="hidden" name="MaHocKy" value="{{ $previewData['ma_hoc_ky'] ?? '' }}">
-        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm fw-bold">
-            <i class="fa-solid fa-check-circle me-1"></i> XÁC NHẬN CẬP NHẬT KẾ HOẠCH & SINH LỊCH
+        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm fw-bold d-inline-flex align-items-center">
+            <i class="fa-solid fa-check-circle me-2"></i> XÁC NHẬN CẬP NHẬT KẾ HOẠCH & SINH LỊCH
         </button>
     </form>
     @endif
@@ -89,12 +89,12 @@
             </div>
             <div class="col-md-3">
                 <label class="small text-muted fw-bold">File Gốc Upload:</label>
-                <div class="fw-bold text-success"><i class="fa-solid fa-paperclip me-1"></i>{{ $previewData['original_name'] ?? 'Văn bản đính kèm' }} ({{ strtoupper($previewData['ext'] ?? 'DOCX') }})</div>
+                <div class="fw-bold text-success"><i class="fa-solid fa-paperclip me-2"></i>{{ $previewData['original_name'] ?? 'Văn bản đính kèm' }} ({{ strtoupper($previewData['ext'] ?? 'DOCX') }})</div>
             </div>
 
             <div class="col-md-3">
                 <label class="small text-muted fw-bold">Học Kỳ Áp Dụng (Đã chọn):</label>
-                <div class="fw-bold text-success"><i class="fa-solid fa-calendar-check me-1"></i>{{ $previewData['ten_hoc_ky'] ?? $previewData['header']['HocKy'] ?? '' }}</div>
+                <div class="fw-bold text-success"><i class="fa-solid fa-calendar-check me-2"></i>{{ $previewData['ten_hoc_ky'] ?? $previewData['header']['HocKy'] ?? '' }}</div>
             </div>
             <div class="col-md-3">
                 <label class="small text-muted fw-bold">Khóa Sinh Viên:</label>
@@ -155,12 +155,12 @@
                         </td>
                         <td><span class="badge bg-light text-dark border rounded-pill px-3">{{ $m['DoiTuongThucHien'] ?? 'Tất cả' }}</span></td>
                         <td>
-                            <div class="small fw-semibold text-primary"><i class="fa-regular fa-calendar-days me-1"></i>{{ !empty($m['NgayBatDau']) ? date('d/m/Y', strtotime($m['NgayBatDau'])) : '' }}</div>
-                            <div class="small text-muted"><i class="fa-solid fa-arrow-right me-1"></i>{{ !empty($m['NgayKetThuc']) ? date('d/m/Y', strtotime($m['NgayKetThuc'])) : '' }}</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-regular fa-calendar-days me-2"></i>{{ !empty($m['NgayBatDau']) ? date('d/m/Y', strtotime($m['NgayBatDau'])) : '' }}</div>
+                            <div class="small text-muted"><i class="fa-solid fa-arrow-right me-2"></i>{{ !empty($m['NgayKetThuc']) ? date('d/m/Y', strtotime($m['NgayKetThuc'])) : '' }}</div>
                         </td>
                         <td>
                             @if(!empty($m['GioBatDau']))
-                                <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1"><i class="fa-regular fa-clock me-1"></i>{{ $m['GioBatDau'] }} - {{ $m['GioKetThuc'] ?? '' }}</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1"><i class="fa-regular fa-clock me-2"></i>{{ $m['GioBatDau'] }} - {{ $m['GioKetThuc'] ?? '' }}</span>
                             @else
                                 <span class="text-muted small">Cả ngày</span>
                             @endif
@@ -219,7 +219,7 @@
             </table>
         </div>
         <div class="p-3 bg-light border-top text-muted small d-flex align-items-center gap-2">
-            <i class="fa-solid fa-circle-info text-primary"></i>
+            <i class="fa-solid fa-circle-info text-primary me-2"></i>
             <span>Khi bấm <strong>[XÁC NHẬN CẬP NHẬT KẾ HOẠCH &amp; SINH LỊCH]</strong> ở trên, toàn bộ {{ count($previewData['regulations']) }} quy định này sẽ được đồng bộ trực tiếp vào mục <strong>Quy Định Khóa Luận</strong> để Giáo vụ theo dõi và tùy chỉnh.</span>
         </div>
     </div>

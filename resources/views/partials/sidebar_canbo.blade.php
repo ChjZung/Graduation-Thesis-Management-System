@@ -15,7 +15,7 @@
 
     <div class="px-3 pb-2">
         <div class="role-badge">
-            <i class="{{ $roleBadgeIcon }}"></i>
+            <i class="{{ $roleBadgeIcon }} me-2"></i>
             <span>{{ $roleBadgeText }}</span>
         </div>
     </div>
@@ -29,7 +29,7 @@
                         data-bs-target="#{{ $group['id'] }}"
                         aria-expanded="{{ !empty($group['active']) ? 'true' : 'false' }}">
                     <span class="parent-icon-title text-start">
-                        <i class="{{ $group['icon'] }}"></i>
+                        <i class="{{ $group['icon'] }} me-2"></i>
                         <span>{{ $group['title'] }}</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>

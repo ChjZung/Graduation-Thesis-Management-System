@@ -341,7 +341,7 @@
         <div class="timetable-toolbar">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h5 class="timetable-title">
-                    <i class="fa-solid fa-calendar-week text-primary"></i> 
+                    <i class="fa-solid fa-calendar-week text-primary me-2"></i> 
                     @if(($roleTitle ?? '') == 'Sinh Viên')
                         Lịch Báo Cáo Khóa Luận
                     @else
@@ -394,13 +394,13 @@
                 </form>
 
                 <a href="{{ url()->current() }}?date={{ now()->format('Y-m-d') }}" class="btn-tt-blue" title="Về tuần hiện tại">
-                    <i class="fa-solid fa-calendar-day"></i> Hiện tại
+                    <i class="fa-solid fa-calendar-day me-2"></i> Hiện tại
                 </a>
-                <button type="button" class="btn-tt-blue" onclick="window.print()" title="In lịch tuần">
-                    <i class="fa-solid fa-print"></i> In lịch
+                <button type="button" class="btn-tt-blue d-inline-flex align-items-center" onclick="window.print()" title="In lịch tuần">
+                    <i class="fa-solid fa-print me-2"></i> In lịch
                 </button>
                 <a href="{{ url()->current() }}?date={{ $prevWeekDate }}" class="btn-tt-blue" title="Tuần trước">
-                    <i class="fa-solid fa-chevron-left"></i> Trở về
+                    <i class="fa-solid fa-chevron-left me-2"></i> Trở về
                 </a>
                 <a href="{{ url()->current() }}?date={{ $nextWeekDate }}" class="btn-tt-blue" title="Tuần tiếp theo">
                     Tiếp <i class="fa-solid fa-chevron-right"></i>
@@ -413,7 +413,7 @@
 
         {{-- Phím tắt chuyển nhanh tuần --}}
         <div class="timetable-quick-nav">
-            <span class="text-muted small fw-semibold"><i class="fa-solid fa-bolt text-warning me-1"></i>Chuyển nhanh tuần:</span>
+            <span class="text-muted small fw-semibold"><i class="fa-solid fa-bolt text-warning me-2"></i>Chuyển nhanh tuần:</span>
             <a href="{{ url()->current() }}?date=2026-08-10" class="phase-pill {{ request('date') == '2026-08-10' ? 'active' : '' }}">1. Đăng ký đề tài (10/08 - 16/08)</a>
             <a href="{{ url()->current() }}?date={{ now()->format('Y-m-d') }}" class="phase-pill {{ (!request('date') || request('date') == now()->format('Y-m-d')) ? 'active' : '' }}">2. Tuần hiện tại ({{ now()->format('d/m/Y') }})</a>
             <a href="{{ url()->current() }}?date=2026-11-09" class="phase-pill {{ request('date') == '2026-11-09' ? 'active' : '' }}">3. Nộp khóa luận (09/11 - 15/11)</a>
@@ -424,18 +424,18 @@
         @if($macroPhase)
         <div class="macro-phase-banner">
             <div class="d-flex align-items-center gap-2">
-                <span class="badge rounded-pill px-2.5 py-1" style="background: {{ $macroPhase['palette']['badge'] }}; color: #ffffff;">
+                <span class="badge rounded-pill px-3 py-1" style="background: {{ $macroPhase['palette']['badge'] }}; color: #ffffff;">
                     Mốc {{ $macroPhase['moc_index'] }}
                 </span>
                 <span class="fw-bold text-dark">{{ $macroPhase['title'] }}</span>
                 <span class="text-muted small">({{ $macroPhase['start_str'] }} &rarr; {{ $macroPhase['end_str'] }} &bull; {{ $macroPhase['weeks'] }} tuần)</span>
             </div>
             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
-                <i class="fa-solid fa-circle-check me-1"></i>Đang trong giai đoạn thực hiện đồ án
+                <i class="fa-solid fa-circle-check me-2"></i>Đang trong giai đoạn thực hiện đồ án
             </span>
         </div>
         @elseif(($roleTitle ?? '') === 'Sinh Viên' && !($hasGroup ?? true))
-        <div class="alert alert-warning bg-warning-subtle border-warning d-flex align-items-center gap-3 py-2.5 px-3 rounded-3 mb-3 small">
+        <div class="alert alert-warning bg-warning-subtle border-warning d-flex align-items-center gap-3 py-2 px-3 rounded-3 mb-3 small">
             <i class="fa-solid fa-users-slash text-warning fs-5"></i>
             <div>
                 <strong>Bạn chưa có nhóm khóa luận:</strong> Thông tin thời gian thực hiện khóa luận và hạn nộp báo cáo chỉ áp dụng khi bạn đã thuộc một nhóm. 
@@ -504,7 +504,7 @@
                                                     Mốc {{ $item['moc_index'] }}
                                                 </span>
                                                 <span class="tt-card-range">
-                                                    <i class="fa-regular fa-calendar me-1"></i>{{ $item['date_range'] }}
+                                                    <i class="fa-regular fa-calendar me-2"></i>{{ $item['date_range'] }}
                                                     @if($item['span'] > 1) ({{ $item['span'] }} ngày) @endif
                                                 </span>
                                             </div>
@@ -514,10 +514,10 @@
                                             @if($item['time_slot'] || $item['room'])
                                             <div class="tt-card-meta">
                                                 @if($item['time_slot'])
-                                                    <div><i class="fa-regular fa-clock me-1"></i>{{ $item['time_slot'] }}</div>
+                                                    <div><i class="fa-regular fa-clock me-2"></i>{{ $item['time_slot'] }}</div>
                                                 @endif
                                                 @if($item['room'])
-                                                    <div><i class="fa-solid fa-location-dot me-1"></i>{{ $item['room'] }}</div>
+                                                    <div><i class="fa-solid fa-location-dot me-2"></i>{{ $item['room'] }}</div>
                                                 @endif
                                             </div>
                                             @endif
@@ -538,7 +538,7 @@
 
         {{-- Chú Thích Màu Sắc --}}
         <div class="timetable-legend">
-            <span class="fw-bold text-dark me-2"><i class="fa-solid fa-palette text-primary me-1"></i>Nhận diện mốc:</span>
+            <span class="fw-bold text-dark me-2"><i class="fa-solid fa-palette text-primary me-2"></i>Nhận diện mốc:</span>
             <div class="legend-item"><span class="legend-circle" style="background: #8b5cf6;"></span><span>Mốc 1</span></div>
             <div class="legend-item"><span class="legend-circle" style="background: #0284c7;"></span><span>Mốc 2</span></div>
             <div class="legend-item"><span class="legend-circle" style="background: #ea580c;"></span><span>Mốc 3</span></div>

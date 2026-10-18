@@ -260,24 +260,24 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
         <h4 class="page-main-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-            <i class="fa-solid fa-book-bookmark text-primary"></i> Quản Lý &amp; Thống Kê Đề Tài Khóa Luận
+            <i class="fa-solid fa-book-bookmark text-primary me-2"></i> Quản Lý &amp; Thống Kê Đề Tài Khóa Luận
         </h4>
        
     </div>
     <div class="d-flex flex-wrap gap-2">
         {{-- Nút Xuất Danh Sách Đề Tài Đã Công Bố --}}
         <a href="{{ route('admin.duyet_detai.export', array_merge(request()->all(), ['TrangThai' => 'da_cong_bo', 'MaHocKy' => $selectedHocKy])) }}" class="btn btn-sm btn-success rounded-3 px-3 " title="Xuất file Excel/CSV danh sách đề tài đã công bố theo bộ lọc hiện tại">
-            <i class="fa-solid fa-file-excel me-1"></i> Xuất Đề Tài Đã Công Bố
+            <i class="fa-solid fa-file-excel me-2"></i> Xuất Đề Tài Đã Công Bố
         </a>
 
         {{-- Nút Xuất Báo Cáo Thống Kê --}}
         <a href="{{ route('admin.thongke.detai.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
-            <i class="fa-solid fa-chart-line me-1"></i> Xuất Báo Cáo Thống Kê
+            <i class="fa-solid fa-chart-line me-2"></i> Xuất Báo Cáo Thống Kê
         </a>
 
         {{-- Nút Xuất File Excel Danh Sách Đề Tài --}}
         <a href="{{ route('admin.duyet_detai.export', request()->all()) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3 fw-semibold">
-            <i class="fa-solid fa-download me-1"></i> Xuất Tất Cả Đề Tài
+            <i class="fa-solid fa-download me-2"></i> Xuất Tất Cả Đề Tài
         </a>
     </div>
 </div>
@@ -323,7 +323,7 @@
                         </div>
                     </div>
                     <div class="kpi-subtext mt-2">
-                        <span class="badge bg-light text-dark border"><i class="fa-regular fa-clock me-1 text-primary"></i>Học Kỳ</span>
+                        <span class="badge bg-light text-dark border"><i class="fa-regular fa-clock me-2 text-primary"></i>Học Kỳ</span>
                        
                     </div>
                 </div>
@@ -386,7 +386,7 @@
             {{-- 1. Tất Cả --}}
             <a href="{{ route('admin.duyet_detai.index', array_merge(request()->except(['page', 'TrangThai']), ['TrangThai' => 'ALL', 'tab' => 'quanly'])) }}" 
                class="admin-pill-tab {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'active' : '' }}" title="Xem toàn bộ đề tài trong học kỳ">
-                <i class="fa-solid fa-layer-group {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'text-white' : 'text-primary' }}"></i>
+                <i class="fa-solid fa-layer-group {{ !request('TrangThai') || request('TrangThai') === 'ALL' ? 'text-white' : 'text-primary' }} me-2"></i>
                 <span>Tất Cả Đề Tài</span>
                 <span class="pill-count">{{ $counts['total'] }}</span>
             </a>
@@ -424,7 +424,7 @@
 
                     {{-- 1. Học kỳ --}}
                     <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-regular fa-calendar me-1"></i>Học Kỳ:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-regular fa-calendar me-2"></i>Học Kỳ:</label>
                         <select name="MaHocKy" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
@@ -436,7 +436,7 @@
 
                     {{-- 2. Trạng thái (Thêm bộ lọc trạng thái chi tiết theo yêu cầu) --}}
                     <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-circle-check me-1"></i>Trạng Thái:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-circle-check me-2"></i>Trạng Thái:</label>
                         <select name="TrangThai" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="ALL">-- Tất cả Trạng Thái --</option>
                             <optgroup label="Nhóm tổng hợp">
@@ -456,7 +456,7 @@
 
                     {{-- 3. Khoa --}}
                     <div class="col-6 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-landmark me-1"></i>Khoa:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-landmark me-2"></i>Khoa:</label>
                         <select name="MaKhoa" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Khoa --</option>
                             @foreach($khoas as $k)
@@ -467,7 +467,7 @@
 
                     {{-- 4. Bộ môn --}}
                     <div class="col-6 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-sitemap me-1"></i>Bộ Môn:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-sitemap me-2"></i>Bộ Môn:</label>
                         <select name="MaBoMon" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Bộ Môn --</option>
                             @foreach($boMons as $bm)
@@ -478,7 +478,7 @@
 
                     {{-- 5. Lĩnh vực --}}
                     <div class="col-6 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-tags me-1"></i>Lĩnh Vực:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-tags me-2"></i>Lĩnh Vực:</label>
                         <select name="LinhVuc" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Lĩnh Vực --</option>
                             @foreach($linhVucs as $lv)
@@ -489,7 +489,7 @@
 
                     {{-- 6. Môn học phần --}}
                     <div class="col-6 col-sm-6 col-md-4 col-lg-2">
-                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-graduation-cap me-1"></i>Học Phần:</label>
+                        <label class="form-label small text-muted fw-bold mb-1" style="font-size: 13px;"><i class="fa-solid fa-graduation-cap me-2"></i>Học Phần:</label>
                         <select name="HocPhan" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Học Phần --</option>
                             @foreach($hocPhans as $hp)
@@ -514,11 +514,11 @@
                                        value="{{ request('search') }}">
                             </div>
                             <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold" style="font-size: 13px;">
-                                    <i class="fa-solid fa-filter me-1"></i> Lọc Dữ Liệu
+                                <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold d-inline-flex align-items-center" style="font-size: 13px;">
+                                    <i class="fa-solid fa-filter me-2"></i> Lọc Dữ Liệu
                                 </button>
                                 <a href="{{ route('admin.duyet_detai.index', ['tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3" style="font-size: 13px;">
-                                    <i class="fa-solid fa-rotate me-1"></i> Đặt Lại
+                                    <i class="fa-solid fa-rotate me-2"></i> Đặt Lại
                                 </a>
                             </div>
                         </div>
@@ -532,7 +532,7 @@
             <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-table-list text-primary"></i> Danh Sách Đề Tài Khóa Luận
+                        <i class="fa-solid fa-table-list text-primary me-2"></i> Danh Sách Đề Tài Khóa Luận
                     </h5>
                 </div>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
@@ -589,11 +589,11 @@
                                 <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
                                 <div class="d-flex align-items-center gap-2 mt-1">
                                     @if($dt->LinhVuc)
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 13px;">
-                                            <i class="fa-solid fa-tag me-1 text-primary"></i>{{ $dt->LinhVuc }}
+                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 13px;">
+                                            <i class="fa-solid fa-tag me-2 text-primary"></i>{{ $dt->LinhVuc }}
                                         </span>
                                     @endif
-                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 13px;">
+                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 13px;">
                                         {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
                                     </span>
                                 </div>
@@ -618,7 +618,7 @@
                                 @if($regNhom)
                                     <div>
                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace" style="font-size: 13px;" title="Mã & Tên nhóm: {{ $regNhom->MaNhom }}">
-                                            <i class="fa-solid fa-users me-1"></i>{{ $regNhom->MaNhom }}
+                                            <i class="fa-solid fa-users me-2"></i>{{ $regNhom->MaNhom }}
                                         </span>
                                     </div>
                                 @else
@@ -630,14 +630,14 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill px-2.5 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 13px;">
+                                <span class="badge rounded-pill px-3 py-1 fw-semibold {{ $statusBadgeClass }}" style="font-size: 13px;">
                                     {{ $dt->TrangThai }}
                                 </span>
                             </td>
                             <td class="text-center">
                                 <div class="d-inline-flex gap-1">
                                     {{-- Nút xem chi tiết modal --}}
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1" 
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center" 
                                             data-bs-toggle="modal" data-bs-target="#deTaiDetailModal_{{ $dt->MaDeTai }}" title="Xem chi tiết đề tài">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
@@ -647,7 +647,7 @@
                         @empty
                         <tr>
                             <td colspan="7" class="text-center text-muted py-5">
-                                <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                 Không có đề tài nào phù hợp với bộ lọc hiện tại.
                             </td>
                         </tr>
@@ -684,7 +684,7 @@
                     <div class="row g-3 align-items-end">
                         <!-- Học kỳ -->
                         <div class="col-12 col-sm-6 col-lg-3">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-1"></i>Học kỳ / Năm học</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-2"></i>Học kỳ / Năm học</label>
                             <select name="MaHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
@@ -696,7 +696,7 @@
 
                         <!-- Khoa -->
                         <div class="col-12 col-sm-6 col-lg-3">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-landmark me-1"></i>Khoa</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-landmark me-2"></i>Khoa</label>
                             <select name="MaKhoa" id="statsSelectKhoa" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 <option value="">-- Tất cả các khoa --</option>
                                 @foreach($khoas as $k)
@@ -709,7 +709,7 @@
 
                         <!-- Bộ môn -->
                         <div class="col-12 col-sm-6 col-lg-3">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-sitemap me-1"></i>Bộ môn</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-sitemap me-2"></i>Bộ môn</label>
                             <select name="MaBoMon" id="statsSelectBoMon" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 <option value="">-- Tất cả bộ môn --</option>
                                 @foreach($boMons as $bm)
@@ -722,7 +722,7 @@
 
                         <!-- Lĩnh vực -->
                         <div class="col-12 col-sm-6 col-lg-3">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-tags me-1"></i>Lĩnh vực nghiên cứu</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-tags me-2"></i>Lĩnh vực nghiên cứu</label>
                             <select name="LinhVuc" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 <option value="">-- Tất cả lĩnh vực --</option>
                                 @foreach($linhVucs as $lv)
@@ -732,14 +732,14 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-bold">
-                            <i class="fa-solid fa-filter me-1"></i> Lọc Thống Kê
+                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-bold d-inline-flex align-items-center">
+                            <i class="fa-solid fa-filter me-2"></i> Lọc Thống Kê
                         </button>
                         <a href="{{ route('admin.duyet_detai.index', ['tab' => 'thongke']) }}" class="btn btn-sm btn-light border rounded-3 px-3">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Đặt Lại
+                            <i class="fa-solid fa-rotate-left me-2"></i> Đặt Lại
                         </a>
                         <a href="{{ route('admin.thongke.detai.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-bold">
-                            <i class="fa-solid fa-file-excel me-1"></i> Xuất Báo Cáo Excel
+                            <i class="fa-solid fa-file-excel me-2"></i> Xuất Báo Cáo Excel
                         </a>
                     </div>
                 </form>
@@ -832,7 +832,7 @@
             <!-- Donut Chart: Phân bố trạng thái đề tài -->
             <div class="col-12 col-lg-5">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-chart-pie text-primary"></i> Phân Bố Trạng Thái Đề Tài</h6>
+                    <h6><i class="fa-solid fa-chart-pie text-primary me-2"></i> Phân Bố Trạng Thái Đề Tài</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartTrangThai"></canvas>
                     </div>
@@ -842,7 +842,7 @@
             <!-- Bar Chart: Số lượng đề tài theo bộ môn -->
             <div class="col-12 col-lg-7">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-chart-column text-success"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
+                    <h6><i class="fa-solid fa-chart-column text-success me-2"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartBoMon"></canvas>
                     </div>
@@ -854,7 +854,7 @@
             <!-- Horizontal Bar: Phân bố đề tài theo lĩnh vực -->
             <div class="col-12 col-lg-7">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-bars-staggered text-info"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
+                    <h6><i class="fa-solid fa-bars-staggered text-info me-2"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartLinhVuc"></canvas>
                     </div>
@@ -864,7 +864,7 @@
             <!-- Bar Chart: Quy mô nhóm đăng ký -->
             <div class="col-12 col-lg-5">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-user-group text-warning"></i> Đề Tài Theo Quy Mô Nhóm Sinh Viên</h6>
+                    <h6><i class="fa-solid fa-user-group text-warning me-2"></i> Đề Tài Theo Quy Mô Nhóm Sinh Viên</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartQuyMoNhom"></canvas>
                     </div>
@@ -877,7 +877,7 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-list-check text-primary"></i> Tình Hình Đăng Ký Đề Tài Của Sinh Viên
+                        <i class="fa-solid fa-list-check text-primary me-2"></i> Tình Hình Đăng Ký Đề Tài Của Sinh Viên
                     </h6>
                     <span class="small text-muted">Số liệu tính trên các đề tài mở công bố đăng ký trong học kỳ</span>
                 </div>
@@ -934,7 +934,7 @@
             <div class="modal-header border-bottom py-3 px-4">
                 <div>
                     <span class="badge-code">{{ $dt->MaDeTai }}</span>
-                    <span class="badge rounded-pill ms-2 px-2.5 py-1 {{ $statusBadgeClass ?? 'bg-light text-dark' }}">
+                    <span class="badge rounded-pill ms-2 px-3 py-1 {{ $statusBadgeClass ?? 'bg-light text-dark' }}">
                         {{ $dt->TrangThai }}
                     </span>
                     <h5 class="modal-title fw-bold text-dark mt-2">{{ $dt->TenDeTai }}</h5>
@@ -973,15 +973,15 @@
                 <div class="card border border-light-subtle rounded-3 p-3 mb-3 bg-light">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fw-bold small text-dark text-uppercase">
-                            <i class="fa-solid fa-users text-primary me-1"></i> Quy Mô &amp; Nhóm Sinh Viên Thực Hiện:
+                            <i class="fa-solid fa-users text-primary me-2"></i> Quy Mô &amp; Nhóm Sinh Viên Thực Hiện:
                         </div>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
                             Quy định: {{ $dt->SoLuongSinhVienToiDa ?? 3 }} SV / đề tài
                         </span>
                     </div>
 
                     @if($mRegNhom)
-                        <div class="p-2.5 bg-white rounded-3 border mb-2">
+                        <div class="p-2 bg-white rounded-3 border mb-2">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <div>
                                     <span class="text-muted small">Mã nhóm:</span>
@@ -993,7 +993,7 @@
                                 </div>
                                 <div>
                                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                                        <i class="fa-solid fa-circle-check me-1"></i>Đã đủ 3 sinh viên
+                                        <i class="fa-solid fa-circle-check me-2"></i>Đã đủ 3 sinh viên
                                     </span>
                                 </div>
                             </div>
@@ -1024,11 +1024,11 @@
                                                 <td class="text-muted">{{ $mSv?->lop?->TenLop ?? 'CNTT' }}</td>
                                                 <td class="text-center">
                                                     @if($isLeader)
-                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
-                                                            <i class="fa-solid fa-crown me-1 text-warning"></i>Trưởng nhóm
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-bold" style="font-size: 0.72rem;">
+                                                            <i class="fa-solid fa-crown me-2 text-warning"></i>Trưởng nhóm
                                                         </span>
                                                     @else
-                                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
                                                             Thành viên
                                                         </span>
                                                     @endif
@@ -1041,14 +1041,14 @@
                         @endif
                     @else
                         <div class="p-3 bg-white rounded-3 border text-center text-muted small">
-                            <i class="fa-regular fa-user me-1 opacity-75"></i> Đề tài hiện tại chưa có nhóm sinh viên đăng ký.
+                            <i class="fa-regular fa-user me-2 opacity-75"></i> Đề tài hiện tại chưa có nhóm sinh viên đăng ký.
                         </div>
                     @endif
                 </div>
 
                 <div class="p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="fw-bold small text-dark"><i class="fa-solid fa-paperclip me-1 text-primary"></i>Tệp Đề Cương Đính Kèm:</div>
+                        <div class="fw-bold small text-dark"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Tệp Đề Cương Đính Kèm:</div>
                         @if($dt->FileDeCuong)
                             <div class="small text-success mt-1">Tệp đã nộp: {{ basename($dt->FileDeCuong) }}</div>
                         @else
@@ -1061,12 +1061,12 @@
                             $fileName = basename($dt->FileDeCuong);
                         @endphp
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm d-inline-flex align-items-center"
                                     onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}')">
-                                <i class="fa-solid fa-eye me-1"></i> Xem Nhanh
+                                <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
                             </button>
-                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                <i class="fa-solid fa-download me-1"></i> Tải Về
+                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                                <i class="fa-solid fa-download me-2"></i> Tải Về
                             </a>
                         </div>
                     @endif
@@ -1074,7 +1074,7 @@
 
                 @if($dt->LyDoTuChoi)
                     <div class="mt-3 p-3 bg-danger-subtle rounded-3 border border-danger-subtle text-danger small">
-                        <strong class="d-block mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i>Ý Kiến Phản Hồi / Lý Do Từ Chối:</strong>
+                        <strong class="d-block mb-1"><i class="fa-solid fa-circle-exclamation me-2"></i>Ý Kiến Phản Hồi / Lý Do Từ Chối:</strong>
                         {{ $dt->LyDoTuChoi }}
                     </div>
                 @endif

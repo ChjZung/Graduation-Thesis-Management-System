@@ -3,8 +3,8 @@
 @section('content')
 
 <div class="mb-3">
-    <a href="{{ route('giangvien.lop.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i>Quay lại danh sách lớp
+    <a href="{{ route('giangvien.lop.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i>Quay lại danh sách lớp
     </a>
 </div>
 
@@ -12,12 +12,12 @@
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2"><i class="fa-solid fa-graduation-cap me-1"></i>Lớp Học Phần Phụ Trách</span>
+                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2"><i class="fa-solid fa-graduation-cap me-2"></i>Lớp Học Phần Phụ Trách</span>
                 <h3 class="fw-bold mb-1 text-primary-custom">{{ $lopHP->TenLopHP }}</h3>
                 <p class="text-muted mb-0">
-                    <i class="fa-solid fa-book me-1"></i>Môn Học: <strong>{{ $lopHP->monHoc->TenMon ?? 'N/A' }}</strong> ({{ $lopHP->monHoc->SoTinChi ?? 0 }} tín chỉ)
+                    <i class="fa-solid fa-book me-2"></i>Môn Học: <strong>{{ $lopHP->monHoc->TenMon ?? 'N/A' }}</strong> ({{ $lopHP->monHoc->SoTinChi ?? 0 }} tín chỉ)
                     &nbsp;|&nbsp;
-                    <i class="fa-solid fa-calendar me-1"></i>Học Kỳ: <strong>{{ $lopHP->hocKy->TenHocKy ?? 'N/A' }}</strong>
+                    <i class="fa-solid fa-calendar me-2"></i>Học Kỳ: <strong>{{ $lopHP->hocKy->TenHocKy ?? 'N/A' }}</strong>
                 </p>
             </div>
             <div class="d-flex gap-2">
@@ -39,12 +39,12 @@
         <ul class="nav nav-pills card-header-pills" id="lopTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active rounded-pill me-2" id="nhom-tab" data-bs-toggle="tab" data-bs-target="#nhom-pane" type="button">
-                    <i class="fa-solid fa-users me-1"></i>Danh Sách Nhóm Đồ Án ({{ $nhoms->count() }})
+                    <i class="fa-solid fa-users me-2"></i>Danh Sách Nhóm Đồ Án ({{ $nhoms->count() }})
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link rounded-pill" id="sv-tab" data-bs-toggle="tab" data-bs-target="#sv-pane" type="button">
-                    <i class="fa-solid fa-id-card me-1"></i>Danh Sách Sinh Viên Lớp HP ({{ $sinhVienLhps->count() }})
+                    <i class="fa-solid fa-id-card me-2"></i>Danh Sách Sinh Viên Lớp HP ({{ $sinhVienLhps->count() }})
                 </button>
             </li>
         </ul>
@@ -111,7 +111,7 @@
                             @empty
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-muted">
-                                        <i class="fa-solid fa-users-slash fa-2x mb-2 d-block opacity-50"></i>
+                                        <i class="fa-solid fa-users-slash fa-2x mb-2 d-block opacity-50 me-2"></i>
                                         Chưa có nhóm đồ án nào được thành lập trong lớp học phần này.
                                     </td>
                                 </tr>
@@ -155,7 +155,7 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-5 text-muted">
-                                        <i class="fa-solid fa-user-slash fa-2x mb-2 d-block opacity-50"></i>
+                                        <i class="fa-solid fa-user-slash fa-2x mb-2 d-block opacity-50 me-2"></i>
                                         Lớp học phần này chưa có sinh viên nào đăng ký.
                                     </td>
                                 </tr>

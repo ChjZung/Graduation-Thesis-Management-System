@@ -158,7 +158,7 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-white text-secondary border px-3 py-2 rounded-2 shadow-xs small">
-                <i class="fa-solid fa-building-columns text-primary me-1"></i> Khoa Công nghệ Thông tin
+                <i class="fa-solid fa-building-columns text-primary me-2"></i> Khoa Công nghệ Thông tin
             </span>
         </div>
     </div>
@@ -202,14 +202,14 @@
                 <li class="nav-item">
                     <a class="nav-link {{ $activeTab !== 'phan_bo_hocky' ? 'active' : '' }}" 
                        href="{{ route('hocphan.index', ['tab' => 'danh_muc']) }}">
-                        <i class="fa-solid fa-layer-group me-1 text-muted"></i> Danh mục học phần (Theo bộ môn)
+                        <i class="fa-solid fa-layer-group me-2 text-muted"></i> Danh mục học phần (Theo bộ môn)
                         <span class="hp-badge-count">{{ $stats['total'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ $activeTab === 'phan_bo_hocky' ? 'active' : '' }}" 
                        href="{{ route('hocphan.index', ['tab' => 'phan_bo_hocky', 'ma_hocky' => $selectedHocKy]) }}">
-                        <i class="fa-solid fa-calendar-check me-1 text-muted"></i> Gán &amp; Phân bổ học phần theo học kỳ
+                        <i class="fa-solid fa-calendar-check me-2 text-muted"></i> Gán &amp; Phân bổ học phần theo học kỳ
                         <span class="hp-badge-count">{{ $statsHk['opened'] }}/{{ $statsHk['total'] }} đang mở</span>
                     </a>
                 </li>
@@ -223,7 +223,7 @@
             ═══════════════════════════════════════════════════════════════ --}}
             @if($activeTab !== 'phan_bo_hocky')
                 <!-- Bộ lọc theo bộ môn (Pills) -->
-                <div class="mb-3 d-flex flex-wrap align-items-center gap-1.5 pb-2 border-bottom">
+                <div class="mb-3 d-flex flex-wrap align-items-center gap-2 pb-2 border-bottom">
                     <span class="text-secondary small fw-semibold me-2">Bộ môn:</span>
                     <a href="{{ route('hocphan.index', array_merge(request()->except(['ma_bomon', 'hp_page']), ['tab' => 'danh_muc'])) }}"
                        class="pill-filter {{ !request('ma_bomon') ? 'active' : '' }}">
@@ -237,45 +237,66 @@
                     @endforeach
                 </div>
 
-                <!-- Form tìm kiếm & Bộ lọc trạng thái & Nút thêm -->
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                    <form method="GET" action="{{ route('hocphan.index') }}" class="d-flex flex-wrap align-items-center gap-2 flex-grow-1" style="max-width: 720px;">
+                <!-- Filter Bar Học Phần (Đồng bộ tỷ lệ 9 - 3 và nút khối lớn #1e3a8a với Sinh Viên & Giảng Viên) -->
+                <div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
+                    <form method="GET" action="{{ route('hocphan.index') }}" class="w-100">
                         <input type="hidden" name="tab" value="danh_muc">
                         @if(request('ma_bomon'))
                             <input type="hidden" name="ma_bomon" value="{{ request('ma_bomon') }}">
                         @endif
 
-                        <div class="input-group input-group-sm" style="max-width: 280px;">
-                            <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-magnifying-glass"></i></span>
-                            <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0" placeholder="Tìm theo mã hoặc tên học phần...">
+                        <div class="row g-3 align-items-center">
+                            <!-- BÊN TRÁI: 9 PHẦN (2 hàng: Tìm kiếm + Các ô lọc) -->
+                            <div class="col-12 col-xl-9">
+                                <div class="d-flex flex-column gap-2">
+                                    <!-- Hàng 1: Ô tìm kiếm -->
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                        <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0 bg-light" placeholder="Tìm theo mã hoặc tên học phần...">
+                                        <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
+                                    </div>
+
+                                    <!-- Hàng 2: Các ô lọc dữ liệu (Select) -->
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <select name="ma_bomon" class="form-select form-select-sm" style="width: auto; min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                                            <option value="">-- Tất cả Bộ môn --</option>
+                                            @foreach($bomons as $bm)
+                                                <option value="{{ $bm->MaBoMon }}" {{ request('ma_bomon') == $bm->MaBoMon ? 'selected' : '' }}>
+                                                    {{ $bm->TenBoMon }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        <select name="loai_hocphan" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
+                                            <option value="">-- Loại học phần --</option>
+                                            <option value="Khóa luận" {{ request('loai_hocphan') == 'Khóa luận' ? 'selected' : '' }}>Khóa luận</option>
+                                            <option value="Chuyên ngành" {{ request('loai_hocphan') == 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
+                                            <option value="Đồ án" {{ request('loai_hocphan') == 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
+                                        </select>
+
+                                        <select name="trang_thai" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
+                                            <option value="">-- Trạng thái --</option>
+                                            <option value="Đang sử dụng" {{ request('trang_thai') == 'Đang sử dụng' ? 'selected' : '' }}>Đang sử dụng</option>
+                                            <option value="Ngừng sử dụng" {{ request('trang_thai') == 'Ngừng sử dụng' ? 'selected' : '' }}>Ngừng sử dụng</option>
+                                        </select>
+
+                                        @if(request()->anyFilled(['search', 'ma_bomon', 'loai_hocphan', 'trang_thai']))
+                                            <a href="{{ route('hocphan.index', ['tab' => 'danh_muc']) }}" class="btn btn-outline-secondary btn-sm text-nowrap">
+                                                <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BÊN PHẢI: 3 PHẦN (Nút khối lớn #1e3a8a Thêm học phần mới) -->
+                            <div class="col-12 col-xl-3 d-flex flex-column gap-2">
+                                <button type="button" class="btn shadow fw-bold rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white" data-bs-toggle="modal" data-bs-target="#createModal" title="Thêm mới học phần" style="background-color: #1e3a8a; border-color: #1e3a8a; min-height: 82px; padding: 10px 15px;">
+                                    <span style="font-size: 0.95rem;"><i class="fa-solid fa-plus-circle me-2"></i>Thêm Học Phần Mới</span>
+                                </button>
+                            </div>
                         </div>
-
-                        <select name="loai_hocphan" class="form-select form-select-sm" style="max-width: 160px;" onchange="this.form.submit()">
-                            <option value="">-- Loại học phần --</option>
-                            <option value="Khóa luận" {{ request('loai_hocphan') == 'Khóa luận' ? 'selected' : '' }}>Khóa luận</option>
-                            <option value="Chuyên ngành" {{ request('loai_hocphan') == 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
-                            <option value="Đồ án" {{ request('loai_hocphan') == 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
-                        </select>
-
-                        <select name="trang_thai" class="form-select form-select-sm" style="max-width: 160px;" onchange="this.form.submit()">
-                            <option value="">-- Trạng thái --</option>
-                            <option value="Đang sử dụng" {{ request('trang_thai') == 'Đang sử dụng' ? 'selected' : '' }}>Đang sử dụng</option>
-                            <option value="Ngừng sử dụng" {{ request('trang_thai') == 'Ngừng sử dụng' ? 'selected' : '' }}>Ngừng sử dụng</option>
-                        </select>
-
-                        @if(request()->anyFilled(['search', 'ma_bomon', 'loai_hocphan', 'trang_thai']))
-                            <a href="{{ route('hocphan.index', ['tab' => 'danh_muc']) }}" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
-                        @endif
                     </form>
-
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary shadow-xs" data-bs-toggle="modal" data-bs-target="#importModal">
-                            <i class="fa-solid fa-file-excel text-success me-1"></i> Import Excel
-                        </button>
-                        <button type="button" class="btn btn-sm btn-navy fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#createModal">
-                            <i class="fa-solid fa-plus me-1"></i> Thêm học phần mới
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Bảng danh sách học phần theo bộ môn -->
@@ -304,7 +325,7 @@
                                     </td>
                                     <td>
                                         <div class="fw-bold text-dark">{{ $hp->TenHocPhan }}</div>
-                                        <div class="text-muted small mt-0.5">
+                                        <div class="text-muted small mt-1">
                                             @if($hp->MoTa)
                                                 <span>{{ Str::limit($hp->MoTa, 60) }}</span>
                                             @else
@@ -323,26 +344,26 @@
                                             $badgeClass = $bmBadges[$hp->MaBoMon] ?? 'bg-secondary-subtle text-secondary';
                                         @endphp
                                         @if(!empty($hp->boMon))
-                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-3 py-1">
                                                 {{ $hp->boMon->TenBoMon }}
                                             </span>
                                         @elseif(!empty($hp->MaBoMon))
-                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-3 py-1">
                                                 {{ $hp->MaBoMon }}
                                             </span>
                                         @else
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
                                                 Dùng chung
                                             </span>
                                         @endif
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">🎓 Khóa luận</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">🎓 Khóa luận</span>
                                         @elseif($hp->LoaiHocPhan === 'Đồ án')
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1">📁 Đồ án</span>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1">📁 Đồ án</span>
                                         @else
-                                            <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1">Chuyên ngành</span>
+                                            <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">Chuyên ngành</span>
                                         @endif
                                     </td>
                                     <td class="text-end fw-bold text-dark">
@@ -372,7 +393,7 @@
                             @empty
                                 <tr>
                                     <td colspan="8" class="text-center py-4 text-muted">
-                                        <i class="fa-regular fa-folder-open mb-2 d-block fs-3 text-secondary"></i>
+                                        <i class="fa-regular fa-folder-open mb-2 d-block fs-3 text-secondary me-2"></i>
                                         Không tìm thấy học phần nào phù hợp với bộ lọc.
                                     </td>
                                 </tr>
@@ -399,7 +420,7 @@
                 <div class="p-3 bg-light rounded-3 border mb-3">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div class="d-flex align-items-center gap-2 flex-grow-1 me-md-3" style="min-width: 380px;">
-                            <label class="fw-bold text-dark small mb-0 text-nowrap"><i class="fa-solid fa-calendar-days text-primary me-1"></i>Chọn Học Kỳ:</label>
+                            <label class="fw-bold text-dark small mb-0 text-nowrap"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Chọn Học Kỳ:</label>
                             <select class="form-select form-select-sm fw-semibold flex-grow-1" style="min-width: 320px;" onchange="window.location.href='{{ route('hocphan.index') }}?tab=phan_bo_hocky&ma_hocky=' + this.value">
                                 @foreach($hocKies as $hk)
                                     @php
@@ -417,16 +438,16 @@
                                 @csrf
                                 <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                 <input type="hidden" name="action" value="open_all">
-                                <button type="submit" class="btn btn-sm btn-success rounded-pill fw-semibold shadow-xs px-3">
-                                    <i class="fa-solid fa-check-double me-1"></i> Mở tất cả
+                                <button type="submit" class="btn btn-sm btn-success rounded-pill fw-semibold shadow-xs px-3 d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-check-double me-2"></i> Mở tất cả
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('admin.hocphan.bulk_hocky') }}" class="d-inline" onsubmit="return confirm('Xác nhận ĐÓNG TẤT CẢ học phần trong học kỳ này?')">
                                 @csrf
                                 <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                 <input type="hidden" name="action" value="close_all">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold shadow-xs px-3">
-                                    <i class="fa-solid fa-ban me-1"></i> Đóng tất cả
+                                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold shadow-xs px-3 d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-ban me-2"></i> Đóng tất cả
                                 </button>
                             </form>
                         </div>
@@ -438,7 +459,7 @@
                     <div>
                         <span class="text-secondary small">Học kỳ áp dụng:</span>
                         <strong class="text-dark ms-1">{{ $currentHocKyObj?->TenHocKy }} ({{ $currentHocKyObj?->NamHoc }})</strong>
-                        <span class="badge {{ $currentHocKyObj?->TrangThai === 'Đang diễn ra' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary' }} ms-2 rounded-pill px-2.5">
+                        <span class="badge {{ $currentHocKyObj?->TrangThai === 'Đang diễn ra' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary' }} ms-2 rounded-pill px-3">
                             {{ $currentHocKyObj?->TrangThai }}
                         </span>
                     </div>
@@ -509,35 +530,35 @@
                                     </td>
                                     <td>
                                         @if(!empty($hp->boMon))
-                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-3 py-1">
                                                 {{ $hp->boMon->TenBoMon }}
                                             </span>
                                         @elseif(!empty($hp->MaBoMon))
-                                            <span class="badge {{ $badgeClass }} rounded-pill px-2.5 py-1">
+                                            <span class="badge {{ $badgeClass }} rounded-pill px-3 py-1">
                                                 {{ $hp->MaBoMon }}
                                             </span>
                                         @else
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
                                                 Dùng chung
                                             </span>
                                         @endif
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1">🎓 Khóa luận</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">🎓 Khóa luận</span>
                                         @else
-                                            <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1">{{ $hp->LoaiHocPhan }}</span>
+                                            <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">{{ $hp->LoaiHocPhan }}</span>
                                         @endif
                                     </td>
                                     <td class="text-end fw-bold text-dark">{{ $hp->SoTinChi }}</td>
                                     <td class="text-center">
                                         @if($isOpenedThisHk)
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                                <i class="fa-solid fa-circle-check me-1"></i>Đang mở
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                                <i class="fa-solid fa-circle-check me-2"></i>Đang mở
                                             </span>
                                         @else
-                                            <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2.5 py-1">
-                                                <i class="fa-solid fa-circle-xmark me-1"></i>Chưa mở
+                                            <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-3 py-1">
+                                                <i class="fa-solid fa-circle-xmark me-2"></i>Chưa mở
                                             </span>
                                         @endif
                                     </td>
@@ -547,11 +568,11 @@
                                             <input type="hidden" name="MaHocPhan" value="{{ $hp->MaHocPhan }}">
                                             <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                                             @if($isOpenedThisHk)
-                                                <button type="submit" class="btn btn-sm btn-outline-danger px-2.5 py-1 rounded-pill" title="Đóng học phần trong học kỳ này">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger px-3 py-1 rounded-pill" title="Đóng học phần trong học kỳ này">
                                                     Đóng
                                                 </button>
                                             @else
-                                                <button type="submit" class="btn btn-sm btn-success px-2.5 py-1 rounded-pill" title="Mở học phần cho học kỳ này">
+                                                <button type="submit" class="btn btn-sm btn-success px-3 py-1 rounded-pill" title="Mở học phần cho học kỳ này">
                                                     Mở
                                                 </button>
                                             @endif
@@ -561,7 +582,7 @@
                             @empty
                                 <tr>
                                     <td colspan="8" class="text-center py-4 text-muted">
-                                        <i class="fa-regular fa-folder-open mb-2 d-block fs-3 text-secondary"></i>
+                                        <i class="fa-regular fa-folder-open mb-2 d-block fs-3 text-secondary me-2"></i>
                                         Không tìm thấy học phần nào trong học kỳ này.
                                     </td>
                                 </tr>
@@ -571,6 +592,114 @@
                 </div>
             @endif
 </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm Mới Học Phần -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header text-white py-3 px-4" style="background-color: #003366 !important;">
+                <h5 class="modal-title fw-bold text-white mb-0 fs-6">
+                    <i class="fa-solid fa-plus-circle me-2 text-warning"></i>Thêm Mới Học Phần
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('hocphan.store') }}">
+                @csrf
+                <div class="modal-body p-4 bg-light">
+                    <div class="card border border-slate-200 rounded-3 shadow-none bg-white p-3 mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small text-secondary">Mã học phần</label>
+                                <input type="text" name="MaHocPhan" class="form-control form-control-sm" value="{{ old('MaHocPhan', $suggestedMaHocPhan ?? '') }}" placeholder="VD: HP_CNPM01...">
+                                <div class="form-text text-muted" style="font-size: 0.72rem;">Để trống hệ thống sẽ tự sinh mã tự động</div>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold small text-dark">Tên học phần <span class="text-danger">*</span></label>
+                                <input type="text" name="TenHocPhan" class="form-control form-control-sm" value="{{ old('TenHocPhan') }}" placeholder="VD: Khóa luận tốt nghiệp..." required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-dark">Bộ môn phụ trách <span class="text-danger">*</span></label>
+                                <select name="MaBoMon" class="form-select form-select-sm" required>
+                                    <option value="">-- Chọn Bộ môn --</option>
+                                    @foreach($bomons as $bm)
+                                        <option value="{{ $bm->MaBoMon }}" {{ old('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
+                                            {{ $bm->TenBoMon }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-dark">Số tín chỉ <span class="text-danger">*</span></label>
+                                <input type="number" name="SoTinChi" class="form-control form-control-sm" value="{{ old('SoTinChi', 3) }}" min="1" max="30" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-dark">Loại học phần</label>
+                                <select name="LoaiHocPhan" class="form-select form-select-sm">
+                                    <option value="Chuyên ngành" {{ old('LoaiHocPhan') === 'Chuyên ngành' ? 'selected' : '' }}>Chuyên ngành</option>
+                                    <option value="Đồ án" {{ old('LoaiHocPhan') === 'Đồ án' ? 'selected' : '' }}>Đồ án</option>
+                                    <option value="Khóa luận" {{ old('LoaiHocPhan') === 'Khóa luận' ? 'selected' : '' }}>Khóa luận</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Số tiết lý thuyết</label>
+                                <input type="number" name="SoTietLT" class="form-control form-control-sm" value="{{ old('SoTietLT', 0) }}" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Số tiết thực hành</label>
+                                <input type="number" name="SoTietTH" class="form-control form-control-sm" value="{{ old('SoTietTH', 0) }}" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Số tiết khác</label>
+                                <input type="number" name="SoTietKhac" class="form-control form-control-sm" value="{{ old('SoTietKhac', 0) }}" min="0">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-dark">Trạng thái</label>
+                                <select name="TrangThai" class="form-select form-select-sm">
+                                    <option value="Đang sử dụng" {{ old('TrangThai') === 'Đang sử dụng' ? 'selected' : '' }}>Đang sử dụng</option>
+                                    <option value="Ngừng sử dụng" {{ old('TrangThai') === 'Ngừng sử dụng' ? 'selected' : '' }}>Ngừng sử dụng</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-dark">Ngày bắt đầu học phần</label>
+                                <input type="date" name="NgayBatDau" class="form-control form-control-sm" value="{{ old('NgayBatDau') }}">
+                                <div class="form-text text-muted" style="font-size: 0.72rem;">Thời gian bắt đầu học phần</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-dark">Ngày kết thúc học phần</label>
+                                <input type="date" name="NgayKetThuc" class="form-control form-control-sm" value="{{ old('NgayKetThuc') }}">
+                                <div class="form-text text-muted" style="font-size: 0.72rem;">Thời gian kết thúc học phần</div>
+                            </div>
+
+                            <div class="col-12">
+                                @include('partials.rich_text_editor', [
+                                    'name' => 'MoTa',
+                                    'id' => 'MoTa_Create',
+                                    'label' => 'Mô tả học phần',
+                                    'value' => old('MoTa'),
+                                    'minHeight' => '100px',
+                                    'compact' => true,
+                                    'placeholder' => 'Nhập thông tin giới thiệu hoặc mô tả học phần...'
+                                ])
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top py-2 px-4 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold d-inline-flex align-items-center" style="background-color: #003366 !important; border-color: #003366 !important;">
+                        <i class="fa-solid fa-save me-2"></i> Lưu Học Phần
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

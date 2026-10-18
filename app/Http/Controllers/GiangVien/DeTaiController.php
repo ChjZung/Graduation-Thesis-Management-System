@@ -194,7 +194,7 @@ class DeTaiController extends Controller
             'MaHocKy'   => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan' => 'required|exists:HocPhan,MaHocPhan',
             'MoTa'      => 'nullable|string',
-            'YeuCau'    => 'nullable|string|min:15|max:1000',
+            'YeuCau'    => 'nullable|string',
             'LinhVuc'   => 'nullable|string|max:150',
         ], [
             'TenDeTai.required'  => 'Vui lòng nhập tên đề tài.',
@@ -203,8 +203,6 @@ class DeTaiController extends Controller
             'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
-            'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
 
         $cleanedMoTa = \App\Helpers\HtmlHelper::clean($request->MoTa);
@@ -214,6 +212,17 @@ class DeTaiController extends Controller
         }
         if (mb_strlen($plainMoTa) > 10000) {
             return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài không được vượt quá 10.000 ký tự.']);
+        }
+
+        $cleanedYeuCau = \App\Helpers\HtmlHelper::clean($request->YeuCau);
+        if ($request->filled('YeuCau')) {
+            $plainYeuCau = trim(strip_tags(html_entity_decode($cleanedYeuCau, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if (mb_strlen($plainYeuCau) > 0 && mb_strlen($plainYeuCau) < 15) {
+                return redirect()->back()->withInput()->withErrors(['YeuCau' => 'Yêu cầu năng lực sinh viên phải có tối thiểu 15 ký tự.']);
+            }
+            if (mb_strlen($plainYeuCau) > 5000) {
+                return redirect()->back()->withInput()->withErrors(['YeuCau' => 'Yêu cầu năng lực sinh viên không được vượt quá 5.000 ký tự.']);
+            }
         }
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
@@ -248,7 +257,7 @@ class DeTaiController extends Controller
             'MaGV' => $gv->MaGV,
             'TenDeTai' => $request->TenDeTai,
             'MoTa' => $cleanedMoTa,
-            'YeuCau' => $request->YeuCau,
+            'YeuCau' => $cleanedYeuCau,
             'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
             'MaHocPhan' => $hocPhan->MaHocPhan,
             'HocPhan' => $hocPhan->TenHocPhan,
@@ -405,6 +414,7 @@ class DeTaiController extends Controller
 
         if ($phanCongPB) {
             // Đã có phân công phản biện trước đó -> Đây là lần nộp lại sau khi chỉnh sửa
+            $oldStatus = $detai->TrangThai;
             $detai->update([
                 'FileDeCuong' => 'storage/' . $path,
                 'TrangThai'   => 'Đã cập nhật đề cương - Chờ phản biện lại',
@@ -414,6 +424,19 @@ class DeTaiController extends Controller
                 'TrangThai'   => 'Đã nộp lại đề cương',
                 'KetQua'      => 'Đã nộp lại',
                 'NgayDanhGia' => null,
+            ]);
+
+            // Ghi nhận lịch sử nộp lại đề cương vào ChiTietDuyetDeTai
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $gv->MaGV,
+                'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên hướng dẫn',
+                'HanhDong'      => "Nộp lại đề cương chi tiết (Lần {$lanNop})",
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => 'Đã cập nhật đề cương - Chờ phản biện lại',
+                'LyDo'          => "Giảng viên nộp lại đề cương sau khi chỉnh sửa theo góp ý phản biện/TBM (Tệp: {$file->getClientOriginalName()})",
+                'NgayDuyet'     => now(),
             ]);
 
             // Gửi thông báo đến GV phản biện
@@ -450,9 +473,23 @@ class DeTaiController extends Controller
             return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp lại Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
         } else {
             // Nộp lần đầu
+            $oldStatus = $detai->TrangThai;
             $detai->update([
                 'FileDeCuong' => 'storage/' . $path,
                 'TrangThai'   => 'Đã nộp đề cương - Chờ phân công PB',
+            ]);
+
+            // Ghi nhận lịch sử nộp đề cương lần đầu vào ChiTietDuyetDeTai
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $gv->MaGV,
+                'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên hướng dẫn',
+                'HanhDong'      => "Nộp đề cương chi tiết (Lần {$lanNop})",
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => 'Đã nộp đề cương - Chờ phân công PB',
+                'LyDo'          => "Giảng viên nộp file đề cương chi tiết (Tệp: {$file->getClientOriginalName()})",
+                'NgayDuyet'     => now(),
             ]);
 
             $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
@@ -530,7 +567,7 @@ class DeTaiController extends Controller
             'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
             'MaHocPhan'   => 'required|exists:HocPhan,MaHocPhan',
             'MoTa'        => 'nullable|string',
-            'YeuCau'      => 'nullable|string|min:15|max:1000',
+            'YeuCau'      => 'nullable|string',
             'LinhVuc'     => 'nullable|string|max:150',
             'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ], [
@@ -540,8 +577,6 @@ class DeTaiController extends Controller
             'MaHocKy.required'   => 'Vui lòng chọn học kỳ áp dụng.',
             'MaHocPhan.required' => 'Vui lòng chọn môn / học phần cho đề tài.',
             'MaHocPhan.exists'   => 'Môn / học phần được chọn không tồn tại trong hệ thống.',
-            'YeuCau.min'         => 'Vui lòng nhập yêu cầu năng lực sinh viên tối thiểu 15 ký tự.',
-            'YeuCau.max'         => 'Yêu cầu năng lực không được vượt quá 1000 ký tự.',
         ]);
 
         $cleanedMoTa = \App\Helpers\HtmlHelper::clean($request->MoTa);
@@ -551,6 +586,17 @@ class DeTaiController extends Controller
         }
         if (mb_strlen($plainMoTa) > 10000) {
             return redirect()->back()->withInput()->withErrors(['MoTa' => 'Mô tả đề tài không được vượt quá 10.000 ký tự.']);
+        }
+
+        $cleanedYeuCau = \App\Helpers\HtmlHelper::clean($request->YeuCau);
+        if ($request->filled('YeuCau')) {
+            $plainYeuCau = trim(strip_tags(html_entity_decode($cleanedYeuCau, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if (mb_strlen($plainYeuCau) > 0 && mb_strlen($plainYeuCau) < 15) {
+                return redirect()->back()->withInput()->withErrors(['YeuCau' => 'Yêu cầu năng lực sinh viên phải có tối thiểu 15 ký tự.']);
+            }
+            if (mb_strlen($plainYeuCau) > 5000) {
+                return redirect()->back()->withInput()->withErrors(['YeuCau' => 'Yêu cầu năng lực sinh viên không được vượt quá 5.000 ký tự.']);
+            }
         }
 
         $hocPhan = \App\Models\HocPhan::findOrFail($request->MaHocPhan);
@@ -581,7 +627,7 @@ class DeTaiController extends Controller
                 'HocPhan'     => $hocPhan->TenHocPhan,
                 'LinhVuc'     => $request->LinhVuc,
                 'MoTa'        => $cleanedMoTa,
-                'YeuCau'      => $request->YeuCau,
+                'YeuCau'      => $cleanedYeuCau,
                 'saved_at'    => now()->format('H:i d/m/Y'),
             ];
 
@@ -612,7 +658,7 @@ class DeTaiController extends Controller
             'MaNganh'              => null,
             'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
             'MoTa'                 => $cleanedMoTa,
-            'YeuCau'               => $request->YeuCau,
+            'YeuCau'               => $cleanedYeuCau,
             'LinhVuc'              => $request->LinhVuc,
             'DuLieuNhap'           => null, // Xóa bản nháp sau khi đã nộp chính thức
         ];

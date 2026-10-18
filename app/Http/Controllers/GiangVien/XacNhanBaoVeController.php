@@ -60,12 +60,13 @@ class XacNhanBaoVeController extends Controller
         }
 
         $isApprove = ($request->HanhDong === 'dong_y');
+        $cleanedNhanXet = $request->filled('NhanXet') ? \App\Helpers\HtmlHelper::clean($request->NhanXet) : null;
 
         $hoSo->update([
             'XacNhanGVHD' => $isApprove ? 'Đã duyệt' : 'Không duyệt',
             'NgayXacNhan' => now()->toDateString(),
             'TrangThai'   => $isApprove ? 'Đủ điều kiện bảo vệ' : 'Không đủ điều kiện',
-            'GhiChu'      => $hoSo->GhiChu . ' [GVHD: ' . ($request->NhanXet ?: ($isApprove ? 'Đồng ý cho bảo vệ' : 'Chưa đạt yêu cầu')) . ']',
+            'GhiChu'      => $hoSo->GhiChu . ' [GVHD: ' . ($cleanedNhanXet ?: ($isApprove ? 'Đồng ý cho bảo vệ' : 'Chưa đạt yêu cầu')) . ']',
         ]);
 
         // Gửi thông báo cho nhóm
@@ -74,7 +75,7 @@ class XacNhanBaoVeController extends Controller
             $isApprove ? '✅ GVHD xác nhận đủ điều kiện bảo vệ!' : '⚠️ GVHD chưa duyệt đủ điều kiện bảo vệ',
             $isApprove 
                 ? "Giảng viên hướng dẫn {$gv->HoTen} đã kiểm tra khóa luận và xác nhận nhóm đủ điều kiện bảo vệ. Giáo vụ Khoa sẽ sắp xếp Hội đồng bảo vệ."
-                : "Giảng viên hướng dẫn {$gv->HoTen} có ý kiến về hồ sơ: " . ($request->NhanXet ?: 'Chưa đạt yêu cầu'),
+                : "Giảng viên hướng dẫn {$gv->HoTen} có ý kiến về hồ sơ: " . ($cleanedNhanXet ?: 'Chưa đạt yêu cầu'),
             'Bảo vệ'
         );
 

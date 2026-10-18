@@ -43,17 +43,17 @@
             <div class="btn-group btn-group-sm shadow-xs" role="group">
                 <a href="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLCN']) }}" 
                    class="btn {{ !$isKLKS ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">
-                    <i class="fa-solid fa-graduation-cap me-1"></i> Mẫu Cử Nhân (KLCN)
+                    <i class="fa-solid fa-graduation-cap me-2"></i> Mẫu Cử Nhân (KLCN)
                 </a>
                 <a href="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLKS']) }}" 
                    class="btn {{ $isKLKS ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">
-                    <i class="fa-solid fa-microchip me-1"></i> Mẫu Kỹ Sư (KLKS)
+                    <i class="fa-solid fa-microchip me-2"></i> Mẫu Kỹ Sư (KLKS)
                 </a>
             </div>
 
             <!-- Nút In Phiếu -->
-            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary shadow-xs">
-                <i class="fa-solid fa-print me-1"></i> In Phiếu
+            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary shadow-xs d-inline-flex align-items-center">
+                <i class="fa-solid fa-print me-2"></i> In Phiếu
             </button>
         </div>
     </div>
@@ -63,7 +63,7 @@
         <div class="row g-2 align-items-center">
             <div class="col-md-6 col-lg-5">
                 <label class="form-label small fw-bold text-secondary mb-1">
-                    <i class="fa-solid fa-landmark text-primary me-1"></i> Hội Đồng Bảo Vệ:
+                    <i class="fa-solid fa-landmark text-primary me-2"></i> Hội Đồng Bảo Vệ:
                 </label>
                 <select class="form-select form-select-sm" onchange="location = this.value;">
                     @foreach($hoiDongs as $hd)
@@ -76,7 +76,7 @@
 
             <div class="col-md-6 col-lg-5">
                 <label class="form-label small fw-bold text-secondary mb-1">
-                    <i class="fa-solid fa-users-rectangle text-success me-1"></i> Nhóm Sinh Viên Bảo Vệ:
+                    <i class="fa-solid fa-users-rectangle text-success me-2"></i> Nhóm Sinh Viên Bảo Vệ:
                 </label>
                 <select class="form-select form-select-sm" onchange="location = this.value;">
                     @forelse($activeHoiDong->hoSoBaoVes as $hs)
@@ -90,8 +90,8 @@
             </div>
 
             <div class="col-md-12 col-lg-2 text-lg-end pt-lg-3">
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                    <i class="fa-solid fa-user-check me-1"></i>{{ $vaiTroGV }}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                    <i class="fa-solid fa-user-check me-2"></i>{{ $vaiTroGV }}
                 </span>
             </div>
         </div>
@@ -116,35 +116,35 @@
         <div class="card-body p-4 bg-light-subtle">
             <div class="row g-3">
                 <div class="col-12">
-                    <div class="p-2.5 bg-white rounded-3 border">
+                    <div class="p-2 bg-white rounded-3 border">
                         <span class="fw-bold text-dark">Tên đề tài:</span>
                         <span class="text-primary fw-semibold fs-6 ms-1">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</span>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                    <div class="p-2 bg-white rounded-3 border h-100">
                         <div class="text-muted small">Giảng viên hướng dẫn:</div>
                         <div class="fw-bold text-dark mt-1">{{ $activeDeTai->giangVien->HoTen ?? 'Chưa phân công' }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                    <div class="p-2 bg-white rounded-3 border h-100">
                         <div class="text-muted small">Hội đồng số / Phòng:</div>
                         <div class="fw-bold text-dark mt-1">{{ $activeHoiDong->TenHoiDong }} &bull; {{ $activeHoSo->PhongBaoVe ?? ($activeHoiDong->DiaDiem ?? 'Phòng B.304') }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                    <div class="p-2 bg-white rounded-3 border h-100">
                         <div class="text-muted small">Ngày chấm:</div>
                         <div class="fw-bold text-dark mt-1">{{ \Carbon\Carbon::parse($activeHoSo->ThoiGianBaoVe ?? ($activeHoiDong->ThoiGianBatDau ?? now()))->format('d/m/Y H:i') }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-2.5 bg-white rounded-3 border h-100">
+                    <div class="p-2 bg-white rounded-3 border h-100">
                         <div class="text-muted small">Giám khảo chấm điểm:</div>
                         <div class="fw-bold text-dark mt-1">{{ $giangVien->HoTen }} ({{ $vaiTroGV }})</div>
                     </div>
@@ -154,7 +154,7 @@
                 <div class="col-12">
                     <div class="p-3 bg-white rounded-3 border">
                         <div class="fw-bold text-dark small mb-2">
-                            <i class="fa-solid fa-user-graduate text-primary me-1"></i> Danh Sách Nhóm Sinh Viên Thực Hiện:
+                            <i class="fa-solid fa-user-graduate text-primary me-2"></i> Danh Sách Nhóm Sinh Viên Thực Hiện:
                         </div>
                         <div class="row g-2">
                             @forelse($sinhViens as $idx => $sv)
@@ -192,11 +192,11 @@
                     <i class="fa-solid fa-list-check text-primary me-2"></i>Bảng Tiêu Chí Đánh Giá &amp; Điểm Chấm Cho Từng Sinh Viên (Thang 10.0)
                 </span>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1" onclick="dienDiemNhanh(0.9)" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Điểm Mẫu (90%)
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center" onclick="dienDiemNhanh(0.9)" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Điểm Mẫu (90%)
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1" onclick="dienDiemNhanh(1.0)" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-star me-1"></i> Tối Đa (10.0)
+                    <button type="button" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 d-inline-flex align-items-center" onclick="dienDiemNhanh(1.0)" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-star me-2"></i> Tối Đa (10.0)
                     </button>
                 </div>
             </div>
@@ -240,7 +240,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.72rem;">{{ $criterion['clo'] }}</span>
+                                    <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.72rem;">{{ $criterion['clo'] }}</span>
                                 </td>
                                 <td class="text-center fw-bold {{ $isBonus ? 'text-warning-emphasis' : 'text-primary' }}">
                                     {{ number_format($cMax, 2) }}
@@ -284,7 +284,7 @@
                                         10.00
                                     </div>
                                     <input type="hidden" name="diems[{{ $sv->MaSV }}][Diem]" id="inputTotalScore_{{ $sv->MaSV }}" value="10.00">
-                                    <div class="small fw-semibold text-success mt-0.5" id="badgeGrade_{{ $sv->MaSV }}">
+                                    <div class="small fw-semibold text-success mt-1" id="badgeGrade_{{ $sv->MaSV }}">
                                         Điểm chữ: A+ (4.0)
                                     </div>
                                 </td>
@@ -313,7 +313,7 @@
                         @endphp
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center">
-                                <span><i class="fa-solid fa-user me-1 text-primary"></i> Nhận xét cho SV{{ $idx + 1 }}: <strong>{{ $sv->HoTen }}</strong> ({{ $sv->MaSoSinhVien ?? $sv->MaSV }})</span>
+                                <span><i class="fa-solid fa-user me-2 text-primary"></i> Nhận xét cho SV{{ $idx + 1 }}: <strong>{{ $sv->HoTen }}</strong> ({{ $sv->MaSoSinhVien ?? $sv->MaSV }})</span>
                             </label>
                             <textarea name="diems[{{ $sv->MaSV }}][NhanXet]" rows="3" class="form-control" style="font-size: 0.88rem;"
                                 placeholder="Nhập nhận xét về mức độ đóng góp, tính chủ động, khả năng trả lời phản biện của sinh viên...">{{ $daChamSV?->NhanXet ?? 'Sinh viên nắm vững kiến thức chuyên môn, trả lời tốt câu hỏi của Hội đồng. Sản phẩm thực nghiệm hoạt động ổn định và đáp ứng đầy đủ yêu cầu đề tài.' }}</textarea>
@@ -321,7 +321,7 @@
                         @endforeach
 
                         <div class="alert alert-info py-2 px-3 small rounded-3 mb-0 border-0 bg-info-subtle text-info-emphasis">
-                            <i class="fa-solid fa-circle-info me-1"></i>
+                            <i class="fa-solid fa-circle-info me-2"></i>
                             <strong>Lưu ý:</strong> Điểm sau khi lưu sẽ được hệ thống tự động cộng dồn với các thành viên khác trong Hội đồng để tính ra điểm trung bình chính thức của nhóm.
                         </div>
                     </div>
@@ -352,7 +352,7 @@
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" id="badgeSummaryResult_{{ $sv->MaSV }}">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1" id="badgeSummaryResult_{{ $sv->MaSV }}">
                                         ĐẠT (Xuất sắc)
                                     </span>
                                     <span class="small fw-semibold text-secondary" id="badgeSummaryScale_{{ $sv->MaSV }}">
@@ -365,7 +365,7 @@
 
                         <div class="p-3 bg-warning-subtle border border-warning-subtle rounded-3 mt-3">
                             <div class="small fw-bold text-warning-emphasis mb-1">
-                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Quy Chế Điểm Khóa Luận (HUIT):
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i> Quy Chế Điểm Khóa Luận (HUIT):
                             </div>
                             <div class="small text-secondary" style="font-size: 0.78rem; line-height: 1.4;">
                                 Điểm cuối cùng của sinh viên được tính bằng <strong>100% điểm trung bình do Hội đồng bảo vệ chấm</strong>. Không cộng trọng số 30% GVHD hay 30% GVPB.
@@ -378,11 +378,11 @@
 
         <!-- Action Buttons -->
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 bg-white rounded-3 border shadow-sm">
-            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="alert('Đã lưu nháp bảng điểm vào phiên làm việc hiện tại!');">
-                <i class="fa-regular fa-floppy-disk me-1"></i> Lưu Nháp Điểm
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center" onclick="alert('Đã lưu nháp bảng điểm vào phiên làm việc hiện tại!');">
+                <i class="fa-regular fa-floppy-disk me-2"></i> Lưu Nháp Điểm
             </button>
-            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" style="background: #0072ce; border-color: #0072ce;">
-                <i class="fa-solid fa-lock me-1"></i> Ký Xác Nhận &amp; Khóa Phiếu Chấm
+            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center" style="background: #0072ce; border-color: #0072ce;">
+                <i class="fa-solid fa-lock me-2"></i> Ký Xác Nhận &amp; Khóa Phiếu Chấm
             </button>
         </div>
     </form>
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (summaryScaleEl) summaryScaleEl.textContent = `Điểm chữ: ${letter} | Hệ 4: ${scale4}`;
             if (summaryResultEl) {
                 summaryResultEl.textContent = xepLoai;
-                summaryResultEl.className = `badge rounded-pill px-2.5 py-1 ${badgeClass}`;
+                summaryResultEl.className = `badge rounded-pill px-3 py-1 ${badgeClass}`;
             }
         });
     }

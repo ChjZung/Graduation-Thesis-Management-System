@@ -24,19 +24,19 @@
                     </p>
 
                     <div class="footer-contact-item">
-                        <i class="fa-solid fa-location-dot"></i>
+                        <i class="fa-solid fa-location-dot me-2"></i>
                         <span>140 Lê Trọng Tấn, Phường Tây Thạnh, Q. Tân Phú, TP. Hồ Chí Minh</span>
                     </div>
                     <div class="footer-contact-item">
-                        <i class="fa-solid fa-phone"></i>
+                        <i class="fa-solid fa-phone me-2"></i>
                         <span>(028) 38 163 318</span>
                     </div>
                     <div class="footer-contact-item">
-                        <i class="fa-solid fa-envelope"></i>
+                        <i class="fa-solid fa-envelope me-2"></i>
                         <span>info@huit.edu.vn</span>
                     </div>
                     <div class="footer-contact-item">
-                        <i class="fa-solid fa-globe"></i>
+                        <i class="fa-solid fa-globe me-2"></i>
                         <span>www.huit.edu.vn</span>
                     </div>
 
@@ -68,22 +68,22 @@
                     <ul class="footer-link-list">
                         <li>
                             <a href="{{ route('login') }}">
-                                <i class="fa-solid fa-chevron-right"></i> Đăng nhập
+                                <i class="fa-solid fa-chevron-right me-2"></i> Đăng nhập
                             </a>
                         </li>
                         @auth
                         @if(Auth::user()->VaiTro === 'gv')
-                        <li><a href="{{ route('giangvien.detai.index') }}"><i class="fa-solid fa-chevron-right"></i> Đề tài của tôi</a></li>
-                        <li><a href="{{ route('giangvien.duyet.index') }}"><i class="fa-solid fa-chevron-right"></i> Duyệt đăng ký</a></li>
+                        <li><a href="{{ route('giangvien.detai.index') }}"><i class="fa-solid fa-chevron-right me-2"></i> Đề tài của tôi</a></li>
+                        <li><a href="{{ route('giangvien.duyet.index') }}"><i class="fa-solid fa-chevron-right me-2"></i> Duyệt đăng ký</a></li>
                         @elseif(Auth::user()->VaiTro === 'sv')
-                        <li><a href="{{ route('sinhvien.dangky.index') }}"><i class="fa-solid fa-chevron-right"></i> Đăng ký đề tài</a></li>
-                        <li><a href="{{ route('sinhvien.baocao.index') }}"><i class="fa-solid fa-chevron-right"></i> Báo cáo tiến độ</a></li>
+                        <li><a href="{{ route('sinhvien.dangky.index') }}"><i class="fa-solid fa-chevron-right me-2"></i> Đăng ký đề tài</a></li>
+                        <li><a href="{{ route('sinhvien.baocao.index') }}"><i class="fa-solid fa-chevron-right me-2"></i> Báo cáo tiến độ</a></li>
                         @elseif(Auth::user()->VaiTro === 'admin')
-                        <li><a href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-chevron-right"></i> Dashboard Admin</a></li>
+                        <li><a href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-chevron-right me-2"></i> Dashboard Admin</a></li>
                         @endif
                         <li>
                             <a href="{{ route('profile.show') }}">
-                                <i class="fa-solid fa-chevron-right"></i> Hồ sơ cá nhân
+                                <i class="fa-solid fa-chevron-right me-2"></i> Hồ sơ cá nhân
                             </a>
                         </li>
                         @endauth
@@ -91,9 +91,9 @@
 
                     <div class="footer-col-title mt-4">Liên Hệ Khoa</div>
                     <ul class="footer-link-list">
-                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right"></i> Khoa CNTT</a></li>
-                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right"></i> Phòng Đào Tạo</a></li>
-                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right"></i> Phòng CTSV</a></li>
+                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right me-2"></i> Khoa CNTT</a></li>
+                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right me-2"></i> Phòng Đào Tạo</a></li>
+                        <li><a href="#" onclick="return false"><i class="fa-solid fa-chevron-right me-2"></i> Phòng CTSV</a></li>
                     </ul>
                 </div>
 
@@ -115,10 +115,10 @@
 
                     <div class="mt-3 p-3 rounded" style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);">
                         <div style="font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.65;">
-                            <i class="fa-regular fa-clock me-1" style="color: #8FC9FF;"></i>
+                            <i class="fa-regular fa-clock me-2" style="color: #8FC9FF;"></i>
                             <strong style="color: rgba(255,255,255,0.85);">Giờ làm việc:</strong>
                             Thứ 2 – Thứ 6: 7:30 – 17:00<br>
-                            <i class="fa-solid fa-headset me-1" style="color: #8FC9FF;"></i>
+                            <i class="fa-solid fa-headset me-2" style="color: #8FC9FF;"></i>
                             <strong style="color: rgba(255,255,255,0.85);">Hỗ trợ kỹ thuật:</strong> it-support@huit.edu.vn
                         </div>
                     </div>
@@ -139,7 +139,7 @@
                     Phát triển bởi <span>Sinh viên Khoa CNTT</span>.
                 </p>
                 <div style="font-size: 0.75rem; color: rgba(255,255,255,0.35);">
-                    <i class="fa-solid fa-shield-halved me-1" style="color: #8FC9FF;"></i>
+                    <i class="fa-solid fa-shield-halved me-2" style="color: #8FC9FF;"></i>
                     Hệ thống bảo mật &amp; mã hóa dữ liệu theo tiêu chuẩn nhà trường
                 </div>
             </div>

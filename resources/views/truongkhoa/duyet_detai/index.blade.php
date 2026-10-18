@@ -175,12 +175,12 @@
     <div class="d-flex flex-wrap gap-2">
         {{-- Nút Xuất Báo Cáo Thống Kê --}}
         <a href="{{ route('truongkhoa.thongke.detai.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
-            <i class="fa-solid fa-file-excel me-1"></i> Xuất Báo Cáo Thống Kê
+            <i class="fa-solid fa-file-excel me-2"></i> Xuất Báo Cáo Thống Kê
         </a>
 
         {{-- Nút Xuất File CSV/Excel Danh Sách Đề Tài --}}
         <a href="{{ route('truongkhoa.duyet_detai.export', request()->all()) }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3 fw-semibold">
-            <i class="fa-solid fa-download me-1"></i> Xuất Danh Sách Đề Tài
+            <i class="fa-solid fa-download me-2"></i> Xuất Danh Sách Đề Tài
         </a>
     </div>
 </div>
@@ -275,56 +275,46 @@
             </div>
         </div>
 
-        {{-- ── KHU VỰC TÌM KIẾM VÀ LỌC (CHUẨN P3.2) ── --}}
-        <div class="card border rounded-3 mb-4">
-            <div class="card-body p-3">
-                <form method="GET" action="{{ route('truongkhoa.duyet_detai.index') }}" class="row g-2 align-items-center">
-                    <input type="hidden" name="tab" value="quanly">
+        {{-- ── KHU VỰC TÌM KIẾM VÀ LỌC (Đồng bộ tỷ lệ và mẫu màu #1e3a8a chuẩn Admin) ── --}}
+        <div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
+            <form method="GET" action="{{ route('truongkhoa.duyet_detai.index') }}" class="w-100">
+                <input type="hidden" name="tab" value="quanly">
 
-                    <!-- 1. Học kỳ -->
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Học kỳ:</label>
-                        <select name="MaHocKy" class="form-select form-select-sm" onchange="this.form.submit()">
+                <div class="d-flex flex-column gap-2">
+                    <!-- Hàng 1: Ô tìm kiếm -->
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light" 
+                               placeholder="Nhập tên bộ môn hoặc mã bộ môn..." 
+                               value="{{ request('search') }}">
+                        <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
+                    </div>
+
+                    <!-- Hàng 2: Các ô lọc dữ liệu -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <select name="MaHocKy" class="form-select form-select-sm" style="width: auto; min-width: 200px; flex: 1;" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
                                     {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Hiện tại)' : '' }}
                                 </option>
                             @endforeach
                         </select>
-                    </div>
 
-                    <!-- 2. Tìm theo tên bộ môn -->
-                    <div class="col-12 col-sm-6 col-md-4">
-                        <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm:</label>
-                        <input type="text" name="search" class="form-control form-control-sm" 
-                               placeholder="Nhập tên bộ môn hoặc mã bộ môn..." 
-                               value="{{ request('search') }}">
-                    </div>
-
-                    <!-- 3. Lọc theo tình trạng chỉ tiêu hướng dẫn -->
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Tình trạng chỉ tiêu:</label>
-                        <select name="tinh_trang_chi_tieu" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="tat_ca">Tất cả tình trạng chỉ tiêu</option>
+                        <select name="tinh_trang_chi_tieu" class="form-select form-select-sm" style="width: auto; min-width: 200px; flex: 1;" onchange="this.form.submit()">
+                            <option value="tat_ca">-- Tất cả tình trạng chỉ tiêu --</option>
                             <option value="con_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'con_chi_tieu' ? 'selected' : '' }}>Còn chỉ tiêu</option>
                             <option value="het_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'het_chi_tieu' ? 'selected' : '' }}>Hết chỉ tiêu</option>
                             <option value="vuot_chi_tieu" {{ request('tinh_trang_chi_tieu') == 'vuot_chi_tieu' ? 'selected' : '' }}>Vượt chỉ tiêu</option>
                         </select>
-                    </div>
 
-                    <!-- Nút Thao Tác Tìm Kiếm / Xóa Lọc -->
-                    <div class="col-12 col-md-2 d-flex align-items-end gap-2 mt-md-auto">
-                        <button class="btn btn-sm btn-primary fw-semibold px-3 w-100" type="submit">
-                            <i class="fa-solid fa-filter me-1"></i> Lọc
-                        </button>
                         @if(request()->anyFilled(['search', 'tinh_trang_chi_tieu']))
-                            <a href="{{ route('truongkhoa.duyet_detai.index', ['MaHocKy' => $selectedHocKy, 'tab' => 'quanly']) }}" class="btn btn-sm btn-outline-secondary px-2" title="Đặt lại bộ lọc">
-                                <i class="fa-solid fa-rotate-left"></i>
+                            <a href="{{ route('truongkhoa.duyet_detai.index', ['MaHocKy' => $selectedHocKy, 'tab' => 'quanly']) }}" class="btn btn-outline-secondary btn-sm text-nowrap">
+                                <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                             </a>
                         @endif
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
 
         {{-- ── BẢNG DANH SÁCH BỘ MÔN THUỘC KHOA (CHUẨN P3.2) ── --}}
@@ -377,7 +367,7 @@
                             </td>
                             <td class="text-center">
                                 @if($row['cho_duyet_khoa'] > 0)
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 fw-bold" style="font-size: 13px;">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fw-bold" style="font-size: 13px;">
                                         {{ $row['cho_duyet_khoa'] }} đề tài
                                     </span>
                                 @else
@@ -390,14 +380,14 @@
                                 <div class="small fw-semibold text-dark mb-1">
                                     {{ $row['da_dung_chi_tieu'] }}/{{ $row['tong_chi_tieu'] }} chỉ tiêu
                                 </div>
-                                <span class="badge {{ $badgeChiTieu }} px-2 py-0.5" style="font-size: 12.5px;">
+                                <span class="badge {{ $badgeChiTieu }} px-2 py-1" style="font-size: 12.5px;">
                                     {{ $row['tinh_trang_label'] }}
                                 </span>
                             </td>
                             <td class="text-center">
                                 <a href="{{ route('truongkhoa.duyet_detai.bomon', ['maBoMon' => $row['MaBoMon'], 'MaHocKy' => $selectedHocKy]) }}" 
                                    class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1">
-                                    <i class="fa-solid fa-list me-1"></i> Danh sách đề tài
+                                    <i class="fa-solid fa-list me-2"></i> Danh sách đề tài
                                 </a>
                             </td>
                         </tr>
@@ -429,7 +419,7 @@
                     <div class="row g-2 align-items-center">
                         <!-- Học kỳ -->
                         <div class="col-12 col-sm-6 col-lg-4">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-1"></i>Học kỳ / Năm học</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-regular fa-calendar me-2"></i>Học kỳ / Năm học</label>
                             <select name="MaHocKy" id="statsSelectHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
@@ -441,7 +431,7 @@
 
                         <!-- Bộ môn -->
                         <div class="col-12 col-sm-6 col-lg-4">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-sitemap me-1"></i>Bộ môn</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-sitemap me-2"></i>Bộ môn</label>
                             <select name="MaBoMon" id="statsSelectBoMon" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 <option value="">-- Tất cả bộ môn --</option>
                                 @foreach($boMons as $bm)
@@ -454,7 +444,7 @@
 
                         <!-- Lĩnh vực -->
                         <div class="col-12 col-sm-6 col-lg-4">
-                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-tags me-1"></i>Lĩnh vực nghiên cứu</label>
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-tags me-2"></i>Lĩnh vực nghiên cứu</label>
                             <select name="LinhVuc" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 <option value="">-- Tất cả lĩnh vực --</option>
                                 @foreach($linhVucs as $lv)
@@ -464,14 +454,14 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
-                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-bold">
-                            <i class="fa-solid fa-filter me-1"></i> Lọc Thống Kê
+                        <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-bold d-inline-flex align-items-center">
+                            <i class="fa-solid fa-filter me-2"></i> Lọc Thống Kê
                         </button>
                         <a href="{{ route('truongkhoa.duyet_detai.index', ['tab' => 'thongke']) }}" class="btn btn-sm btn-light border rounded-3 px-3">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Đặt Lại
+                            <i class="fa-solid fa-rotate-left me-2"></i> Đặt Lại
                         </a>
                         <a href="{{ route('truongkhoa.thongke.detai.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-bold">
-                            <i class="fa-solid fa-file-excel me-1"></i> Xuất Báo Cáo Excel
+                            <i class="fa-solid fa-file-excel me-2"></i> Xuất Báo Cáo Excel
                         </a>
                     </div>
                 </form>
@@ -564,7 +554,7 @@
             <!-- Donut Chart: Phân bố trạng thái đề tài -->
             <div class="col-12 col-lg-5">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-chart-pie text-primary"></i> Phân Bố Trạng Thái Đề Tài</h6>
+                    <h6><i class="fa-solid fa-chart-pie text-primary me-2"></i> Phân Bố Trạng Thái Đề Tài</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartTrangThai"></canvas>
                     </div>
@@ -574,7 +564,7 @@
             <!-- Bar Chart: Số lượng đề tài theo bộ môn -->
             <div class="col-12 col-lg-7">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-chart-column text-success"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
+                    <h6><i class="fa-solid fa-chart-column text-success me-2"></i> Số Lượng Đề Tài Theo Bộ Môn</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartBoMon"></canvas>
                     </div>
@@ -586,7 +576,7 @@
             <!-- Horizontal Bar: Phân bố đề tài theo lĩnh vực -->
             <div class="col-12 col-lg-7">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-bars-staggered text-info"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
+                    <h6><i class="fa-solid fa-bars-staggered text-info me-2"></i> Phân Bố Đề Tài Theo Lĩnh Vực Nghiên Cứu</h6>
                     <div style="height: 260px; position: relative;">
                         <canvas id="chartLinhVuc"></canvas>
                     </div>
@@ -596,11 +586,11 @@
             <!-- Registration Progress Breakdown -->
             <div class="col-12 col-lg-5">
                 <div class="chart-box">
-                    <h6><i class="fa-solid fa-chart-simple text-warning"></i> Tỷ Lệ Đề Tài Đã Được Nhóm Đăng Ký</h6>
+                    <h6><i class="fa-solid fa-chart-simple text-warning me-2"></i> Tỷ Lệ Đề Tài Đã Được Nhóm Đăng Ký</h6>
                     <div class="d-flex flex-column gap-3 justify-content-center h-75 pt-2">
                         <div class="reg-stat-pill">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="small fw-bold text-dark"><i class="fa-solid fa-circle-check text-success me-1"></i> Đã đủ 3 SV / Đủ chỉ tiêu</span>
+                                <span class="small fw-bold text-dark"><i class="fa-solid fa-circle-check text-success me-2"></i> Đã đủ 3 SV / Đủ chỉ tiêu</span>
                                 <span class="fw-bold text-success">{{ $dangKyStats['da_du_sv'] }} đề tài</span>
                             </div>
                             <div class="progress" style="height: 6px;">
@@ -611,7 +601,7 @@
 
                         <div class="reg-stat-pill">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="small fw-bold text-dark"><i class="fa-solid fa-user-clock text-warning me-1"></i> Đang đăng ký (còn chỗ)</span>
+                                <span class="small fw-bold text-dark"><i class="fa-solid fa-user-clock text-warning me-2"></i> Đang đăng ký (còn chỗ)</span>
                                 <span class="fw-bold text-warning">{{ $dangKyStats['con_cho'] }} đề tài</span>
                             </div>
                             <div class="progress" style="height: 6px;">
@@ -622,7 +612,7 @@
 
                         <div class="reg-stat-pill">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="small fw-bold text-dark"><i class="fa-solid fa-circle-xmark text-secondary me-1"></i> Chưa có nhóm đăng ký</span>
+                                <span class="small fw-bold text-dark"><i class="fa-solid fa-circle-xmark text-secondary me-2"></i> Chưa có nhóm đăng ký</span>
                                 <span class="fw-bold text-secondary">{{ $dangKyStats['chua_co_sv'] }} đề tài</span>
                             </div>
                             <div class="progress" style="height: 6px;">

@@ -23,11 +23,11 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('giangvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('giangvien.edit', $giangvien->MaGV) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa Hồ Sơ
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa Hồ Sơ
             </a>
         </div>
     </div>
@@ -59,13 +59,13 @@
                         </div>
                         <div class="small mt-1 fw-medium {{ $stats['tinh_trang'] === 'vuot_chi_tieu' ? 'text-danger' : ($stats['is_full'] ? 'text-warning-emphasis' : ($stats['nhom_huong_dan'] > 0 ? 'text-success' : 'text-muted')) }}">
                             @if($stats['tinh_trang'] === 'vuot_chi_tieu')
-                                <i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i>Vượt chỉ tiêu hướng dẫn
+                                <i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>Vượt chỉ tiêu hướng dẫn
                             @elseif($stats['is_full'])
-                                <i class="fa-solid fa-circle-exclamation me-1"></i>Đã đạt định mức tối đa
+                                <i class="fa-solid fa-circle-exclamation me-2"></i>Đã đạt định mức tối đa
                             @elseif($stats['nhom_huong_dan'] > 0)
-                                <i class="fa-solid fa-check-circle me-1"></i>Đang trong tải (còn {{ $stats['con_lai'] }} nhóm)
+                                <i class="fa-solid fa-check-circle me-2"></i>Đang trong tải (còn {{ $stats['con_lai'] }} nhóm)
                             @else
-                                <i class="fa-solid fa-info-circle me-1"></i>Chưa nhận nhóm hướng dẫn
+                                <i class="fa-solid fa-info-circle me-2"></i>Chưa nhận nhóm hướng dẫn
                             @endif
                         </div>
                     </div>
@@ -98,9 +98,9 @@
                         <div class="text-muted small fw-medium">Trạng Thái Tài Khoản</div>
                         <div class="fs-5 fw-bold mt-1">
                             @if($giangvien->taiKhoan && $giangvien->taiKhoan->TrangThai)
-                                <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Hoạt động</span>
+                                <span class="text-success"><i class="fa-solid fa-circle-check me-2"></i>Hoạt động</span>
                             @else
-                                <span class="text-danger"><i class="fa-solid fa-lock me-1"></i>Đang khóa</span>
+                                <span class="text-danger"><i class="fa-solid fa-lock me-2"></i>Đang khóa</span>
                             @endif
                         </div>
                         <div class="small text-muted mt-1">TK: {{ $giangvien->taiKhoan->TenDangNhap ?? $giangvien->MaGV }}</div>
@@ -172,11 +172,11 @@
                                             <td class="pe-4 text-center">
                                                 @if($dt->TrangThai === 'Đã duyệt' || $dt->TrangThai === 'DA_DUYET')
                                                     <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">
-                                                        <i class="fa-solid fa-check me-1"></i> Đã duyệt
+                                                        <i class="fa-solid fa-check me-2"></i> Đã duyệt
                                                     </span>
                                                 @elseif($dt->TrangThai === 'Chờ duyệt')
                                                     <span class="badge bg-warning-subtle text-warning rounded-pill px-2 py-1 small">
-                                                        <i class="fa-solid fa-clock me-1"></i> Chờ duyệt
+                                                        <i class="fa-solid fa-clock me-2"></i> Chờ duyệt
                                                     </span>
                                                 @else
                                                     <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">

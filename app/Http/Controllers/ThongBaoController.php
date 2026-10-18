@@ -27,15 +27,16 @@ class ThongBaoController extends Controller
             return redirect()->route('sinhvien.thongbao.index');
         }
 
-        $query = ThongBao::orderBy('created_at', 'desc');
+        $query = ThongBao::with(['giaoVu', 'giangVien'])->orderBy('created_at', 'desc');
 
         // Phân quyền hiển thị: Người dùng không phải Admin/Giáo vụ chỉ thấy thông báo chung hoặc gửi đích danh cho mình
         if ($role !== 'Admin' && $role !== 'Giáo vụ') {
             $curMaTK = $user->MaTK ?? '';
             $curMaGV = $user->MaGV ?? '';
-            $query->where(function($q) use ($role, $curMaTK, $curMaGV) {
-                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+            $query->where(function($q) use ($curMaTK, $curMaGV) {
+                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', 'Toàn thể sinh viên'])
                   ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', '')
                   ->orWhere('DoiTuongNhan', 'Giảng viên');
                 if ($curMaTK) {
                     $q->orWhere('DoiTuongNhan', $curMaTK);
@@ -57,6 +58,7 @@ class ThongBaoController extends Controller
                   });
         }
 
+        // 1. Tìm kiếm theo từ khóa (Tiêu đề, Nội dung, Mã thông báo)
         if ($request->filled('search')) {
             $s = trim($request->search);
             $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
@@ -70,30 +72,98 @@ class ThongBaoController extends Controller
             });
         }
 
+        // 2. Lọc theo Loại thông báo
         if ($request->filled('LoaiThongBao')) {
             $query->where('LoaiThongBao', $request->LoaiThongBao);
         }
 
+        // 3. Lọc theo Trạng thái
         if ($request->filled('TrangThai')) {
-            $query->where('TrangThai', $request->TrangThai);
+            $tt = $request->TrangThai;
+            if ($tt === 'ĐÃ GỬI') {
+                $query->whereIn('TrangThai', ['ĐÃ GỬI', 'Đã phát hành', 'ACTIVE', 'da_gui']);
+            } else {
+                $query->where('TrangThai', $tt);
+            }
+        }
+
+        // 4. Lọc theo Đối tượng nhận
+        if ($request->filled('DoiTuongNhan')) {
+            $dt = $request->DoiTuongNhan;
+            if ($dt === 'Toàn trường') {
+                $query->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV']);
+            } else {
+                $query->where('DoiTuongNhan', $dt);
+            }
+        }
+
+        // 5. Lọc theo Người tạo / Nguồn phát hành
+        if ($request->filled('NguoiTao')) {
+            $nt = $request->NguoiTao;
+            if ($nt === 'Khoa') {
+                $query->where(function($q) {
+                    $q->whereNotNull('MaGVu')->orWhereNull('MaGV');
+                });
+            } elseif ($nt === 'GiangVien') {
+                $query->whereNotNull('MaGV');
+            }
+        }
+
+        // 6. Lọc theo Thời gian đăng hoặc ngày tạo
+        if ($request->filled('tu_ngay')) {
+            $query->where(function($q) use ($request) {
+                $q->whereDate('NgayTao', '>=', $request->tu_ngay)
+                  ->orWhereDate('created_at', '>=', $request->tu_ngay);
+            });
+        }
+        if ($request->filled('den_ngay')) {
+            $query->where(function($q) use ($request) {
+                $q->whereDate('NgayTao', '<=', $request->den_ngay)
+                  ->orWhereDate('created_at', '<=', $request->den_ngay);
+            });
+        }
+
+        // 7. Lọc theo trạng thái đã đọc / chưa đọc
+        $curMaTK = $user->MaTK ?? '';
+        $readIds = \App\Services\ThongBaoService::getReadIds($curMaTK);
+        if ($request->filled('is_read')) {
+            if ($request->is_read === 'read') {
+                $query->whereIn('MaThongBao', $readIds);
+            } elseif ($request->is_read === 'unread') {
+                $query->whereNotIn('MaThongBao', $readIds);
+            }
         }
 
         $thongbaos = $query->paginate(10)->withQueryString();
 
-        $officialQuery = ThongBao::whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
-            ->where(function($q) {
-                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
+        // Thống kê tổng quan dựa trên phạm vi được xem
+        $baseScopeQuery = ThongBao::whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);
+        if ($role !== 'Admin' && $role !== 'Giáo vụ') {
+            $baseScopeQuery->where(function($q) use ($user) {
+                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+                  ->orWhereNull('DoiTuongNhan')
+                  ->orWhere('DoiTuongNhan', 'Giảng viên');
+                if ($user->MaTK) $q->orWhere('DoiTuongNhan', $user->MaTK);
+                if ($user->MaGV) $q->orWhere('DoiTuongNhan', $user->MaGV);
+            });
+        } else {
+            $baseScopeQuery->where(function($q) {
+                $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
                   ->orWhereNull('DoiTuongNhan')
                   ->orWhere('DoiTuongNhan', '')
                   ->orWhere('MaThongBao', 'like', 'TB_KH_%')
                   ->orWhere('MaThongBao', 'like', 'TB_DK_%');
             });
+        }
+
+        $allVisibleCodes = (clone $baseScopeQuery)->pluck('MaThongBao')->toArray();
+        $unreadCount = count(array_diff($allVisibleCodes, $readIds));
 
         $stats = [
-            'total_thongbao' => (clone $officialQuery)->count(),
-            'active_count' => (clone $officialQuery)->whereIn('TrangThai', ['ĐÃ GỬI', 'ACTIVE', 'Đã phát hành'])->count(),
-            'target_all_count' => (clone $officialQuery)->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể'])->count(),
-            'draft_schedule_count' => (clone $officialQuery)->whereIn('TrangThai', ['NHÁP', 'ĐÃ LÊN LỊCH'])->count(),
+            'total_thongbao'       => (clone $baseScopeQuery)->count(),
+            'active_count'         => (clone $baseScopeQuery)->whereIn('TrangThai', ['ĐÃ GỬI', 'ACTIVE', 'Đã phát hành', 'da_gui'])->count(),
+            'unread_count'         => $unreadCount,
+            'draft_schedule_count' => (clone $baseScopeQuery)->whereIn('TrangThai', ['NHÁP', 'ĐÃ LÊN LỊCH'])->count(),
         ];
 
         $layout = match($role) {
@@ -104,7 +174,7 @@ class ThongBaoController extends Controller
             default            => 'layouts.sinhvien',
         };
 
-        return view('thongbao.index', compact('layout', 'thongbaos', 'stats', 'role'));
+        return view('thongbao.index', compact('layout', 'thongbaos', 'stats', 'role', 'readIds'));
     }
 
     /**
@@ -147,36 +217,41 @@ class ThongBaoController extends Controller
 
         $actionType = $request->input('action_type', 'send_now');
         $trangThai = 'NHÁP';
-        $ngayGui = null;
 
         if ($actionType === 'send_now') {
-            $trangThai = 'ĐÃ GỬI';
-            $ngayGui = now();
+            $trangThai = 'Đã phát hành';
         } elseif ($actionType === 'schedule') {
             $trangThai = 'ĐÃ LÊN LỊCH';
-            $ngayGui = $request->input('NgayGuiScheduled', now());
+        }
+
+        $user = Auth::user();
+        $giaoVu = \App\Models\GiaoVu::where('MaTK', $user?->MaTK)->first();
+        $maGVu = $giaoVu?->MaGVu ?? (\App\Models\GiaoVu::value('MaGVu') ?? null);
+        $maGV = null;
+        if (!$maGVu) {
+            $gv = \App\Models\GiangVien::getLoggedInGiangVien($user);
+            $maGV = $gv?->MaGV ?? null;
         }
 
         $thongBao = ThongBao::create([
             'MaThongBao'   => $maTB,
-            'MaGVu'        => Auth::user()->MaTK ?? 'ADMIN',
+            'MaGVu'        => $maGVu,
+            'MaGV'         => $maGV,
             'TieuDe'       => $request->TieuDe,
-            'NoiDung'      => $request->NoiDung,
+            'NoiDung'      => \App\Helpers\HtmlHelper::clean($request->NoiDung),
             'LoaiThongBao' => $request->LoaiThongBao,
             'DoiTuongNhan' => $request->DoiTuongNhan,
             'FileDinhKem'  => $filePath,
-            'MaKeHoach'    => $request->MaKeHoach,
             'NgayTao'      => now(),
-            'NgayGui'      => $ngayGui,
             'TrangThai'    => $trangThai,
         ]);
 
         // Nếu phát hành ngay -> Phân phối notification tới người nhận
-        if ($trangThai === 'ĐÃ GỬI') {
+        if (in_array($trangThai, ['Đã phát hành', 'ĐÃ GỬI'])) {
             $this->dispatchRecipients($thongBao);
         }
 
-        return redirect()->route('thongbao.index')->with('success', 'Đã lưu thông báo thành công!');
+        return redirect()->route('thongbao.index')->with('success', 'Đã lưu và phát hành thông báo thành công!');
     }
 
     /**
@@ -363,25 +438,21 @@ class ThongBaoController extends Controller
         $ngayGui = $thongBao->NgayGui;
 
         if ($actionType === 'send_now') {
-            $trangThai = 'ĐÃ GỬI';
-            $ngayGui = now();
+            $trangThai = 'Đã phát hành';
         } elseif ($actionType === 'schedule') {
             $trangThai = 'ĐÃ LÊN LỊCH';
-            $ngayGui = $request->input('NgayGuiScheduled', now());
         }
 
         $thongBao->update([
             'TieuDe'       => $request->TieuDe,
-            'NoiDung'      => $request->NoiDung,
+            'NoiDung'      => \App\Helpers\HtmlHelper::clean($request->NoiDung),
             'LoaiThongBao' => $request->LoaiThongBao,
             'DoiTuongNhan' => $request->DoiTuongNhan,
             'FileDinhKem'  => $filePath,
-            'MaKeHoach'    => $request->MaKeHoach,
-            'NgayGui'      => $ngayGui,
             'TrangThai'    => $trangThai,
         ]);
 
-        if ($trangThai === 'ĐÃ GỬI') {
+        if (in_array($trangThai, ['Đã phát hành', 'ĐÃ GỬI'])) {
             $this->dispatchRecipients($thongBao);
         }
 
@@ -395,13 +466,12 @@ class ThongBaoController extends Controller
     {
         $thongBao = ThongBao::where('MaThongBao', $id)->firstOrFail();
 
-        if ($thongBao->TrangThai === 'ĐÃ GỬI') {
+        if (in_array($thongBao->TrangThai, ['Đã phát hành', 'ĐÃ GỬI'])) {
             return redirect()->back()->with('info', 'Thông báo này đã được phát hành trước đó.');
         }
 
         $thongBao->update([
-            'TrangThai' => 'ĐÃ GỬI',
-            'NgayGui'   => now(),
+            'TrangThai' => 'Đã phát hành',
         ]);
 
         $this->dispatchRecipients($thongBao);

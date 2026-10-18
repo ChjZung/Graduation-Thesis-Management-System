@@ -13,7 +13,7 @@
             </h4>
         </div>
         <div>
-            <a href="{{ route('giangvien.thongbao.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold">
+            <a href="{{ route('giangvien.thongbao.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold d-inline-flex align-items-center">
                 <i class="fa-solid fa-paper-plane me-2"></i>Tạo Thông Báo Cho Nhóm
             </a>
         </div>
@@ -81,7 +81,7 @@
                     </select>
                 </div>
                 <div class="col-6 col-md-2 d-flex gap-1">
-                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Lọc</button>
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 align-items-center">Lọc</button>
                     @if(request()->anyFilled(['search', 'LoaiThongBao']))
                         <a href="{{ route('giangvien.thongbao.index', ['tab' => $tab]) }}" class="btn btn-sm btn-light border" title="Xóa lọc">
                             <i class="fa-solid fa-rotate-left"></i>
@@ -120,7 +120,7 @@
                                 </div>
                                 @if($tb->FileDinhKem)
                                     <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-paperclip me-1"></i>Có tệp đính kèm
+                                        <i class="fa-solid fa-paperclip me-2"></i>Có tệp đính kèm
                                     </span>
                                 @endif
                             </td>
@@ -140,22 +140,22 @@
                             </td>
                             <td>
                                 <span class="badge bg-light text-primary border rounded-pill px-3 py-1 fw-semibold">
-                                    <i class="fa-solid fa-users me-1"></i>{{ $tb->DoiTuongNhan ?? 'Tất cả' }}
+                                    <i class="fa-solid fa-users me-2"></i>{{ $tb->DoiTuongNhan ?? 'Tất cả' }}
                                 </span>
                             </td>
                             <td class="text-muted small">
-                                <div><i class="fa-regular fa-clock me-1"></i>{{ $tb->created_at ? $tb->created_at->format('H:i d/m/Y') : ($tb->NgayTao ?? '') }}</div>
+                                <div><i class="fa-regular fa-clock me-2"></i>{{ $tb->created_at ? $tb->created_at->format('H:i d/m/Y') : ($tb->NgayTao ?? '') }}</div>
                             </td>
                             <td class="text-center">
                                 <a href="{{ route('giangvien.thongbao.show', $tb->MaThongBao) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                    <i class="fa-solid fa-eye me-1"></i> Xem
+                                    <i class="fa-solid fa-eye me-2"></i> Xem
                                 </a>
                             </td>
                         </tr>
                         @empty
                         <tr>
                             <td colspan="6" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-envelope-open text-secondary fs-1 mb-2 d-block opacity-50"></i>
+                                <i class="fa-solid fa-envelope-open text-secondary fs-1 mb-2 d-block opacity-50 me-2"></i>
                                 Chưa có thông báo nào trong mục này.
                             </td>
                         </tr>

@@ -31,7 +31,7 @@
                         </div>
                         <div>
                             <a href="{{ route('admin.kehoach.importDocument') }}?ma_hoc_ky={{ $keHoach->MaHocKy }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-                                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload File Mới Thay Thế
+                                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Upload File Mới Thay Thế
                             </a>
                         </div>
                     </div>
@@ -55,8 +55,15 @@
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="NoiDung" class="form-label fw-bold">Mô Tả / Nội Dung Kế Hoạch</label>
-                            <textarea name="NoiDung" id="NoiDung" class="form-control" rows="2">{{ old('NoiDung', $keHoach->NoiDung) }}</textarea>
+                            @include('partials.rich_text_editor', [
+                                'name' => 'NoiDung',
+                                'id' => 'NoiDung',
+                                'label' => 'Mô Tả / Nội Dung Kế Hoạch',
+                                'value' => old('NoiDung', $keHoach->NoiDung),
+                                'minHeight' => '120px',
+                                'compact' => true,
+                                'placeholder' => 'Nhập ghi chú hoặc quy định chung của kế hoạch...'
+                            ])
                         </div>
                     </div>
 
@@ -106,8 +113,8 @@
 
                     <div class="d-flex justify-content-end gap-2">
                         <a href="{{ route('admin.kehoach.index') }}" class="btn btn-light border px-4 rounded-pill">Hủy Bỏ</a>
-                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold" style="background: #00305a; border-color: #00305a;">
-                            <i class="fa-solid fa-save me-1"></i> Lưu Thay Đổi Kế Hoạch
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold d-inline-flex align-items-center" style="background: #00305a; border-color: #00305a;">
+                            <i class="fa-solid fa-save me-2"></i> Lưu Thay Đổi Kế Hoạch
                         </button>
                     </div>
                 </form>

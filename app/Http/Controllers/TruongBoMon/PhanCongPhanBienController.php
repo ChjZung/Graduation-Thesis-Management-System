@@ -8,6 +8,7 @@ use App\Models\DeTai;
 use App\Models\GiangVien;
 use App\Models\HocKy;
 use App\Models\PhanCongPhanBien;
+use App\Models\ChiTietDuyetDeTai;
 use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use App\Services\ChiTieuPhanBienService;
@@ -74,9 +75,12 @@ class PhanCongPhanBienController extends Controller
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
 
-        // Giảng viên thuộc cùng Khoa để chọn làm GV phản biện (Loại trừ Trưởng bộ môn)
+        // Giảng viên thuộc cùng Bộ môn để chọn làm GV phản biện (Loại trừ GV đề xuất & Trưởng bộ môn)
         $allGiangViens = GiangVien::with('boMon')
-            ->whereHas('boMon', fn($b) => $b->where('MaKhoa', $maKhoa))
+            ->where(function($q) use ($maBoMon) {
+                $q->where('MaBoMon', $maBoMon)
+                  ->orWhere('MaBoMon', 'BM_' . str_replace('BM_', '', $maBoMon));
+            })
             ->when($currentGv, fn($q) => $q->where('MaGV', '!=', $currentGv->MaGV))
             ->orderBy('HoTen')
             ->get();
@@ -217,22 +221,23 @@ class PhanCongPhanBienController extends Controller
             return redirect()->back()->withErrors('Giảng viên đề xuất đề tài không được làm Giảng viên phản biện cho đề tài này!');
         }
 
-        // 4. Chỉ GV cùng khoa với đề tài
+        // 4. Ràng buộc nghiệp vụ P0: Giảng viên được phân công PHẢI thuộc Bộ môn quản lý đề tài
         $gvPB = GiangVien::with('boMon')->find($request->MaGVPhanBien);
-        $detaiKhoa = $detai->giangVien?->boMon?->MaKhoa ?? $detai->hocPhanRef?->boMon?->MaKhoa ?? $detai->nganh?->MaKhoa ?? $boMon?->MaKhoa;
-        $gvKhoa = $gvPB?->boMon?->MaKhoa;
+        $detaiMaBoMon = $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon ?? $boMon?->MaBoMon;
+        $cleanDtBm = str_replace('BM_', '', $detaiMaBoMon ?? '');
+        $cleanGvBm = str_replace('BM_', '', $gvPB?->MaBoMon ?? '');
 
-        if ($detaiKhoa && $gvKhoa && $detaiKhoa !== $gvKhoa) {
-            return redirect()->back()->withErrors("Giảng viên phản biện phải thuộc cùng Khoa với đề tài (Khoa {$detaiKhoa})!");
+        if (!$cleanDtBm || $cleanDtBm !== $cleanGvBm) {
+            $tenBmDetai = $detai->giangVien?->boMon?->TenBoMon ?? $boMon->TenBoMon;
+            return redirect()->back()->withErrors("Giảng viên phản biện được phân công phải thuộc cùng Bộ môn quản lý đề tài (Bộ môn '{$tenBmDetai}')! Không cho phép phân công giảng viên thuộc bộ môn khác.");
         }
 
-        // 5. Chặn server-side: 1 GV tối đa phản biện 5 đề tài (cho phép tùy chỉnh qua ChiTieuPhanBienService)
-        $statsPB = ChiTieuPhanBienService::getChiTieuStats($request->MaGVPhanBien, $detai->MaHocKy, $detai->MaDeTai);
-        if ($statsPB['da_dung'] >= $statsPB['tong']) {
-            return redirect()->back()->withErrors("Giảng viên {$gvPB->HoTen} đã đạt tối đa hạn mức phản biện {$statsPB['tong']} đề tài trong học kỳ ({$statsPB['da_dung']}/{$statsPB['tong']})! Vui lòng chọn giảng viên khác hoặc nâng hạn mức.");
-        }
+        // Quy định: Phân công phản biện không bị giới hạn số lượng đề tài, Trưởng bộ môn phân công theo năng lực chuyên môn.
+        // Chỉ lưu thông tin thống kê số lượng đang phản biện để tham khảo nếu cần.
 
-        DB::transaction(function () use ($request, $detai) {
+        $oldStatus = $detai->TrangThai;
+
+        DB::transaction(function () use ($request, $detai, $gvPB, $user, $oldStatus) {
             $maPC = IdGenerator::nextPhanCong();
 
             PhanCongPhanBien::updateOrCreate(
@@ -253,6 +258,20 @@ class PhanCongPhanBienController extends Controller
 
             $detai->update([
                 'TrangThai' => 'Đang phản biện đề cương',
+            ]);
+
+            $currentGv = GiangVien::getLoggedInGiangVien($user);
+            $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => $maDuyet,
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $currentGv ? $currentGv->MaGV : null,
+                'NguoiThucHien' => ($currentGv ? $currentGv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+                'HanhDong'      => 'Phân công phản biện đề cương',
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => 'Đang phản biện đề cương',
+                'LyDo'          => "Trưởng bộ môn phân công Giảng viên {$gvPB->HoTen} ({$gvPB->MaGV}) phản biện đề cương.",
+                'NgayDuyet'     => now(),
             ]);
         });
 

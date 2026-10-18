@@ -9,14 +9,14 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
             <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-clipboard-list text-primary"></i>
+                <i class="fa-solid fa-clipboard-list text-primary me-2"></i>
                 Quản Lý Kế Hoạch Khóa Luận
             </h4>
             <p class="text-muted small mb-0">Theo dõi, điều chỉnh và công bố kế hoạch khóa luận tốt nghiệp cho các học kỳ.</p>
         </div>
         <div>
-            <a href="{{ route('admin.kehoach.importDocument') }}" class="btn btn-primary shadow-sm rounded-3 px-3 fw-semibold">
-                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Tải Lên Công Văn Kế Hoạch
+            <a href="{{ route('admin.kehoach.importDocument') }}" class="btn btn-primary shadow-sm rounded-3 px-3 fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Tải Lên Công Văn Kế Hoạch
             </a>
         </div>
     </div>
@@ -123,12 +123,12 @@
 
                 {{-- Nút bấm --}}
                 <div class="col-12 col-md-auto ms-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-primary px-3 fw-semibold flex-grow-1 flex-md-grow-0">
-                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    <button type="submit" class="btn btn-primary px-3 fw-semibold flex-grow-1 flex-md-grow-0 align-items-center">
+                        <i class="fa-solid fa-filter me-2"></i> Lọc
                     </button>
                     @if(request()->hasAny(['search', 'TrangThai', 'MaHocKy']))
-                    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary px-3" title="Xóa bộ lọc">
-                        <i class="fa-solid fa-rotate-right me-1"></i> Xóa lọc
+                    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center" title="Xóa bộ lọc">
+                        <i class="fa-solid fa-rotate-right me-2"></i> Xóa lọc
                     </a>
                     @endif
                 </div>
@@ -140,10 +140,10 @@
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
             <h6 class="card-title fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                <i class="fa-regular fa-file-lines text-primary"></i>
+                <i class="fa-regular fa-file-lines text-primary me-2"></i>
                 Danh Sách Kế Hoạch Khóa Luận Tốt Nghiệp
             </h6>
-            <span class="badge bg-primary-subtle text-primary fw-semibold px-2.5 py-1.5 rounded-pill">
+            <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill">
                 Hiển thị {{ $keHoachs->count() }} kế hoạch
             </span>
         </div>
@@ -187,7 +187,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2 flex-wrap small text-muted">
                                 <span class="text-primary fw-semibold">
-                                    <i class="fa-solid fa-graduation-cap me-1"></i>
+                                    <i class="fa-solid fa-graduation-cap me-2"></i>
                                     {{ $kh->hocKy->TenHocKy ?? $kh->MaHocKy }}
                                 </span>
                                 <span>•</span>
@@ -197,7 +197,7 @@
                             @if($kh->FileDinhKem)
                             <div class="mt-2">
                                 <a href="{{ asset('storage/' . $kh->FileDinhKem) }}" target="_blank" class="inline-flex align-items-center gap-1 badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill text-decoration-none px-2 py-1">
-                                    <i class="fa-solid fa-file-pdf"></i> File công văn đính kèm
+                                    <i class="fa-solid fa-file-pdf me-2"></i> File công văn đính kèm
                                 </a>
                             </div>
                             @endif
@@ -205,7 +205,7 @@
                             <div class="mt-1 small">
                                 @if(in_array($kh->TrangThai, ['NHÁP', 'CHỜ DUYỆT']))
                                     <span class="text-warning-emphasis fw-medium">
-                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Đang chờ BCN Khoa phê duyệt
+                                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Đang chờ BCN Khoa phê duyệt
                                     </span>
                                 @else
                                     <span class="text-muted">Đối tượng: Sinh viên năm cuối đủ điều kiện</span>
@@ -221,18 +221,18 @@
                                 {{ $kh->NgayKetThuc ? \Carbon\Carbon::parse($kh->NgayKetThuc)->format('d/m/Y') : '15/01/2027' }}
                             </div>
                             <div class="text-muted small mt-1">
-                                <i class="fa-regular fa-clock me-1 text-primary"></i> Thời lượng: <strong>{{ $durationWeeks }}</strong> tuần
+                                <i class="fa-regular fa-clock me-2 text-primary"></i> Thời lượng: <strong>{{ $durationWeeks }}</strong> tuần
                             </div>
                         </td>
 
                         {{-- Mốc quy trình --}}
                         <td class="text-center">
-                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 mb-1">
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1 mb-1">
                                 {{ $kh->mocThoiGians->count() ?: 5 }} mốc
                             </span>
                             <div>
                                 <a href="{{ route('admin.kehoach.show', $kh->MaKeHoach) }}" class="text-decoration-none text-primary fw-semibold small">
-                                    Chi tiết <i class="fa-solid fa-angle-right ms-0.5 fs-7"></i>
+                                    Chi tiết <i class="fa-solid fa-angle-right ms-1 fs-7"></i>
                                 </a>
                             </div>
                         </td>
@@ -240,23 +240,23 @@
                         {{-- Trạng thái --}}
                         <td class="text-center">
                             @if($kh->TrangThai === 'ĐÃ CÔNG BỐ')
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
-                                    <i class="fa-solid fa-circle-check me-1"></i>Đã công bố
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-circle-check me-2"></i>Đã công bố
                                 </span>
                             @elseif($kh->TrangThai === 'ĐANG THỰC HIỆN')
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
-                                    <i class="fa-solid fa-spinner fa-spin me-1"></i>Đang diễn ra
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-spinner fa-spin me-2"></i>Đang diễn ra
                                 </span>
                             @elseif($kh->TrangThai === 'NHÁP')
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1">
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1">
                                     Bản nháp
                                 </span>
                             @elseif($kh->TrangThai === 'CHỜ DUYỆT')
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1">
-                                    <i class="fa-solid fa-clock me-1"></i>Chờ duyệt
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-clock me-2"></i>Chờ duyệt
                                 </span>
                             @else
-                                <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1">{{ $kh->TrangThai }}</span>
+                                <span class="badge bg-light text-dark border rounded-pill px-3 py-1">{{ $kh->TrangThai }}</span>
                             @endif
                         </td>
 

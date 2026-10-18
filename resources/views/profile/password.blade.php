@@ -53,8 +53,8 @@
     <div>
         <h4 class="mb-0 text-primary-custom fw-bold"><i class="fa-solid fa-key me-2"></i>Đổi Mật Khẩu</h4>
     </div>
-    <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm fw-semibold">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại hồ sơ
+    <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm fw-semibold d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại hồ sơ
     </a>
 </div>
 
@@ -100,16 +100,16 @@
                         <!-- CHECKLIST -->
                         <div class="p-2 bg-light rounded-2 border mb-2">
                             <div class="checklist-item" id="ruleLength">
-                                <i class="fa-regular fa-circle"></i> Ít nhất 8 ký tự
+                                <i class="fa-regular fa-circle me-2"></i> Ít nhất 8 ký tự
                             </div>
                             <div class="checklist-item" id="ruleUpper">
-                                <i class="fa-regular fa-circle"></i> Có chữ in hoa (A-Z)
+                                <i class="fa-regular fa-circle me-2"></i> Có chữ in hoa (A-Z)
                             </div>
                             <div class="checklist-item" id="ruleLower">
-                                <i class="fa-regular fa-circle"></i> Có chữ thường (a-z)
+                                <i class="fa-regular fa-circle me-2"></i> Có chữ thường (a-z)
                             </div>
                             <div class="checklist-item" id="ruleNumber">
-                                <i class="fa-regular fa-circle"></i> Có chữ số (0-9)
+                                <i class="fa-regular fa-circle me-2"></i> Có chữ số (0-9)
                             </div>
                         </div>
                     </div>
@@ -126,7 +126,7 @@
                         <div id="confirmFeedback" class="small mt-1 d-none"></div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center">
                         <i class="fa-solid fa-save me-2"></i>Cập nhật mật khẩu
                     </button>
                 </form>
@@ -234,10 +234,10 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmFeedback.classList.remove('d-none');
         if (confirmInput.value === pwdInput.value) {
             confirmFeedback.className = 'small mt-1 text-success fw-semibold';
-            confirmFeedback.innerHTML = '<i class="fa-solid fa-check me-1"></i>Mật khẩu xác nhận khớp.';
+            confirmFeedback.innerHTML = '<i class="fa-solid fa-check me-2"></i>Mật khẩu xác nhận khớp.';
         } else {
             confirmFeedback.className = 'small mt-1 text-danger fw-semibold';
-            confirmFeedback.innerHTML = '<i class="fa-solid fa-xmark me-1"></i>Mật khẩu xác nhận chưa khớp.';
+            confirmFeedback.innerHTML = '<i class="fa-solid fa-xmark me-2"></i>Mật khẩu xác nhận chưa khớp.';
         }
     }
 

@@ -94,14 +94,14 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
         <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $detai->MaGV, 'hocKy' => $selectedHocKy]) }}" 
            class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách đề tài của GV {{ $detai->giangVien->HoTen ?? '' }}
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách đề tài của GV {{ $detai->giangVien->HoTen ?? '' }}
         </a>
 
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-light text-secondary border rounded-pill px-3 py-1.5">
+            <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
                 Mã ĐT: <strong class="text-dark">{{ $detai->MaDeTai }}</strong>
             </span>
-            <span class="badge bg-light text-secondary border rounded-pill px-3 py-1.5">
+            <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
                 Học kỳ: <strong class="text-dark">{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}</strong>
             </span>
         </div>
@@ -143,8 +143,8 @@
                     <span class="fw-bold text-dark fs-6">
                         <i class="fa-solid fa-file-lines text-primary me-2"></i> Thông Tin Chung Đề Tài
                     </span>
-                    <span class="badge rounded-pill px-3 py-1.5 fw-semibold {{ $statusClass }}">
-                        <i class="fa-solid {{ $statusBadgeIcon }} me-1"></i> {{ $statusLabel }}
+                    <span class="badge rounded-pill px-3 py-2 fw-semibold {{ $statusClass }}">
+                        <i class="fa-solid {{ $statusBadgeIcon }} me-2"></i> {{ $statusLabel }}
                     </span>
                 </div>
                 <div class="card-body p-4">
@@ -153,22 +153,22 @@
                     <div class="row g-3 py-3 border-top border-bottom bg-light bg-opacity-50 rounded-3 px-2 mb-3">
                         <div class="col-md-6">
                             <div class="text-muted small">Giảng viên đề xuất:</div>
-                            <div class="fw-bold text-dark fs-6 mt-0.5">
+                            <div class="fw-bold text-dark fs-6 mt-1">
                                 {{ $detai->giangVien->HoTen ?? 'N/A' }} 
                                 <span class="badge-code ms-1">{{ $detai->MaGV }}</span>
                             </div>
                             <div class="small text-muted mt-1">
-                                <i class="fa-solid fa-building-columns me-1 text-secondary"></i> {{ $detai->giangVien->boMon->TenBoMon ?? ($boMon->TenBoMon ?? 'Bộ môn') }}
+                                <i class="fa-solid fa-building-columns me-2 text-secondary"></i> {{ $detai->giangVien->boMon->TenBoMon ?? ($boMon->TenBoMon ?? 'Bộ môn') }}
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="text-muted small">Môn học / Học kỳ:</div>
-                            <div class="fw-bold text-dark mt-0.5">
+                            <div class="fw-bold text-dark mt-1">
                                 {{ $detai->hocPhanRef->TenHocPhan ?? ($detai->HocPhan ?? 'Khóa luận tốt nghiệp') }}
                             </div>
                             <div class="small text-muted mt-1">
-                                <i class="fa-solid fa-calendar me-1 text-secondary"></i> {{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}
+                                <i class="fa-solid fa-calendar me-2 text-secondary"></i> {{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}
                                 &bull; Ngày đề xuất: <strong>{{ $detai->NgayDeXuat ? \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') : ($detai->created_at ? $detai->created_at->format('d/m/Y') : '—') }}</strong>
                             </div>
                         </div>
@@ -177,14 +177,14 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <span class="text-muted small d-block">Lĩnh vực nghiên cứu:</span>
-                            <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill mt-1 fw-medium">
-                                <i class="fa-solid fa-layer-group text-primary me-1"></i> {{ $detai->LinhVuc ?? 'Công Nghệ Thông Tin' }}
+                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill mt-1 fw-medium">
+                                <i class="fa-solid fa-layer-group text-primary me-2"></i> {{ $detai->LinhVuc ?? 'Công Nghệ Thông Tin' }}
                             </span>
                         </div>
                         <div class="col-md-6">
                             <span class="text-muted small d-block">Quy mô nhóm sinh viên:</span>
-                            <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill mt-1 fw-medium">
-                                <i class="fa-solid fa-users text-primary me-1"></i> Tối đa {{ $detai->SoLuongSinhVienToiDa ?? 3 }} sinh viên
+                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill mt-1 fw-medium">
+                                <i class="fa-solid fa-users text-primary me-2"></i> Tối đa {{ $detai->SoLuongSinhVienToiDa ?? 3 }} sinh viên
                             </span>
                         </div>
                     </div>
@@ -201,7 +201,7 @@
                             </div>
                             <div>
                                 <a href="{{ asset($detai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
-                                    <i class="fa-solid fa-eye me-1"></i> Xem / Tải file
+                                    <i class="fa-solid fa-eye me-2"></i> Xem / Tải file
                                 </a>
                             </div>
                         </div>
@@ -230,8 +230,8 @@
                     <!-- Yêu cầu đối với sinh viên -->
                     <div class="mb-0">
                         <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">2. Yêu Cầu Đối Với Sinh Viên Thực Hiện:</h6>
-                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="white-space: pre-line; line-height: 1.6;">
-                            {{ $detai->YeuCau ?: 'Kiến thức chuyên ngành phù hợp, tinh thần tự giác, hoàn thành đúng tiến độ theo quy định của Khoa & Bộ môn.' }}
+                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="line-height: 1.6;">
+                            {!! \App\Helpers\HtmlHelper::clean($detai->YeuCau ?: 'Kiến thức chuyên ngành phù hợp, tinh thần tự giác, hoàn thành đúng tiến độ theo quy định của Khoa & Bộ môn.') !!}
                         </div>
                     </div>
                 </div>
@@ -254,20 +254,20 @@
                             <div>Đề tài đang ở trạng thái <strong>Chờ duyệt</strong>. Vui lòng xem xét nội dung và chọn một trong các quyết định dưới đây:</div>
                         </div>
 
-                        <div class="d-grid gap-2.5">
+                        <div class="d-grid gap-2">
                             <!-- NÚT 1: PHÊ DUYỆT -->
-                            <button type="button" class="btn btn-success fw-bold py-2 rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
-                                <i class="fa-solid fa-circle-check me-1"></i> Phê Duyệt Đề Tài
+                            <button type="button" class="btn btn-success fw-bold py-2 rounded-pill shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
+                                <i class="fa-solid fa-circle-check me-2"></i> Phê Duyệt Đề Tài
                             </button>
 
                             <!-- NÚT 2: YÊU CẦU CHỈNH SỬA -->
-                            <button type="button" class="btn btn-outline-info text-dark fw-bold py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                                <i class="fa-solid fa-pen-ruler me-1 text-primary"></i> Yêu Cầu Chỉnh Sửa
+                            <button type="button" class="btn btn-outline-info text-dark fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-ruler me-2 text-primary"></i> Yêu Cầu Chỉnh Sửa
                             </button>
 
                             <!-- NÚT 3: TỪ CHỐI -->
-                            <button type="button" class="btn btn-outline-danger fw-bold py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                                <i class="fa-solid fa-ban me-1"></i> Từ Chối Đề Tài
+                            <button type="button" class="btn btn-outline-danger fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-ban me-2"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     @else
@@ -275,11 +275,11 @@
                         <div class="p-3 bg-light rounded-3 text-center mb-3">
                             <div class="fs-4 mb-1">
                                 @if(in_array($detai->TrangThai, ['Chờ duyệt cấp Khoa', 'Đã phê duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành']))
-                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <i class="fa-solid fa-circle-check text-success me-2"></i>
                                 @elseif($detai->TrangThai === 'Từ chối')
-                                    <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                    <i class="fa-solid fa-circle-xmark text-danger me-2"></i>
                                 @else
-                                    <i class="fa-solid fa-pen-ruler text-info"></i>
+                                    <i class="fa-solid fa-pen-ruler text-info me-2"></i>
                                 @endif
                             </div>
                             <div class="fw-bold text-dark fs-6">{{ $statusLabel }}</div>
@@ -289,17 +289,17 @@
                         @if($detai->LyDoTuChoi)
                             <div class="border rounded-3 p-3 mb-3 bg-white">
                                 <div class="small fw-bold text-secondary mb-1">
-                                    <i class="fa-solid fa-message me-1 text-primary"></i> Nội dung phản hồi / Lý do ghi nhận:
+                                    <i class="fa-solid fa-message me-2 text-primary"></i> Nội dung phản hồi / Lý do ghi nhận:
                                 </div>
-                                <div class="small text-dark fst-italic" style="white-space: pre-line;">
-                                    "{{ $detai->LyDoTuChoi }}"
+                                <div class="small text-dark fst-italic">
+                                    {!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}
                                 </div>
                             </div>
                         @endif
 
                         <div class="d-grid gap-2">
-                            <button class="btn btn-light rounded-pill py-2 fw-semibold text-muted border" disabled>
-                                <i class="fa-solid fa-lock me-1"></i> Chức năng phê duyệt đã khóa
+                            <button class="btn btn-light rounded-pill py-2 fw-semibold text-muted border d-inline-flex align-items-center" disabled>
+                                <i class="fa-solid fa-lock me-2"></i> Chức năng phê duyệt đã khóa
                             </button>
                         </div>
                     @endif
@@ -341,7 +341,7 @@
                             <div class="timeline-point {{ $pClass }}">
                                 <i class="fa-solid {{ $pIcon }}"></i>
                             </div>
-                            <div class="border rounded-3 p-2.5 bg-light bg-opacity-50">
+                            <div class="border rounded-3 p-2 bg-light bg-opacity-50">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold text-dark small">
                                         {{ $log->HanhDong ?: $log->TrangThai }}
@@ -351,7 +351,7 @@
                                     </span>
                                 </div>
                                 <div class="small text-secondary mb-1">
-                                    <i class="fa-solid fa-user-circle me-1"></i> {{ $log->NguoiThucHien ?? ($log->giangVien->HoTen ?? 'Người xử lý') }}
+                                    <i class="fa-solid fa-user-circle me-2"></i> {{ $log->NguoiThucHien ?? ($log->giangVien->HoTen ?? 'Người xử lý') }}
                                 </div>
                                 @if($log->TrangThaiCu)
                                     <div class="small text-muted mb-1" style="font-size: 11px;">
@@ -360,7 +360,7 @@
                                 @endif
                                 @if($log->LyDo)
                                     <div class="small text-dark bg-white border rounded p-2 mt-1 fst-italic">
-                                        "{{ $log->LyDo }}"
+                                        {!! \App\Helpers\HtmlHelper::clean($log->LyDo) !!}
                                     </div>
                                 @endif
                             </div>
@@ -373,7 +373,7 @@
                             <div class="timeline-point point-info">
                                 <i class="fa-solid fa-paper-plane"></i>
                             </div>
-                            <div class="border rounded-3 p-2.5 bg-light bg-opacity-50">
+                            <div class="border rounded-3 p-2 bg-light bg-opacity-50">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold text-dark small">Khởi tạo &amp; Gửi đề xuất</span>
                                     <span class="small text-muted" style="font-size: 11px;">
@@ -381,7 +381,7 @@
                                     </span>
                                 </div>
                                 <div class="small text-secondary">
-                                    <i class="fa-solid fa-user me-1"></i> Giảng viên: <strong>{{ $detai->giangVien->HoTen ?? $detai->MaGV }}</strong>
+                                    <i class="fa-solid fa-user me-2"></i> Giảng viên: <strong>{{ $detai->giangVien->HoTen ?? $detai->MaGV }}</strong>
                                 </div>
                                 <div class="small text-muted mt-1" style="font-size: 11px;">
                                     Đề tài được gửi đến Bộ môn để chờ Trưởng bộ môn thẩm định phê duyệt.
@@ -427,8 +427,8 @@
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-check me-1"></i> Xác Nhận Phê Duyệt
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Xác Nhận Phê Duyệt
                     </button>
                 </div>
             </div>
@@ -451,25 +451,28 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="alert alert-light border rounded-3 p-2.5 mb-3">
+                    <div class="alert alert-light border rounded-3 p-2 mb-3">
                         <div class="small text-muted">Đề tài yêu cầu chỉnh sửa:</div>
                         <div class="fw-bold text-dark small">{{ $detai->TenDeTai }}</div>
                     </div>
 
                     <div class="mb-0">
-                        <label class="form-label fw-bold text-dark">
-                            Nội dung góp ý / Yêu cầu chỉnh sửa <span class="text-danger">*</span>
-                        </label>
-                        <textarea name="YeuCauSua" class="form-control" rows="4" 
-                                  placeholder="Nhập chi tiết các nội dung cần giảng viên chỉnh sửa (ví dụ: mục tiêu chưa rõ ràng, cần bổ sung phạm vi nghiên cứu...)" 
-                                  required minlength="5" maxlength="1000"></textarea>
-                        <div class="form-text small text-muted">Nội dung góp ý bắt buộc từ 5 đến 1000 ký tự. Hệ thống sẽ gửi thông báo đến giảng viên đề xuất.</div>
+                        @include('partials.rich_text_editor', [
+                            'name' => 'YeuCauSua',
+                            'id' => 'YeuCauSua_TBM',
+                            'label' => 'Nội dung góp ý / Yêu cầu chỉnh sửa',
+                            'required' => true,
+                            'minHeight' => '120px',
+                            'compact' => true,
+                            'placeholder' => 'Nhập chi tiết các nội dung cần giảng viên chỉnh sửa (ví dụ: mục tiêu chưa rõ ràng, cần bổ sung phạm vi nghiên cứu...)'
+                        ])
+                        <div class="form-text small text-muted mt-1">Nội dung góp ý tối thiểu 5 ký tự. Hệ thống sẽ gửi thông báo đến giảng viên đề xuất.</div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-paper-plane me-1"></i> Gửi Yêu Cầu Chỉnh Sửa
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Gửi Yêu Cầu Chỉnh Sửa
                     </button>
                 </div>
             </div>
@@ -493,23 +496,26 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-danger bg-danger-subtle border-0 rounded-3 p-3 mb-3 small text-danger-emphasis">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Lưu ý:</strong> Khi từ chối, đề tài sẽ không được đưa vào danh sách đề tài của học kỳ này. Vui lòng nêu rõ lý do để giảng viên nắm thông tin.
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> <strong>Lưu ý:</strong> Khi từ chối, đề tài sẽ không được đưa vào danh sách đề tài của học kỳ này. Vui lòng nêu rõ lý do để giảng viên nắm thông tin.
                     </div>
 
                     <div class="mb-0">
-                        <label class="form-label fw-bold text-dark">
-                            Lý do từ chối đề tài <span class="text-danger">*</span>
-                        </label>
-                        <textarea name="LyDoTuChoi" class="form-control" rows="4" 
-                                  placeholder="Nhập lý do từ chối đề xuất này (ví dụ: đề tài trùng lặp với đề tài năm trước, không phù hợp định hướng chuyên môn...)" 
-                                  required minlength="5" maxlength="1000"></textarea>
-                        <div class="form-text small text-muted">Bắt buộc nhập lý do (5 - 1000 ký tự).</div>
+                        @include('partials.rich_text_editor', [
+                            'name' => 'LyDoTuChoi',
+                            'id' => 'LyDoTuChoi_TBM',
+                            'label' => 'Lý do từ chối đề tài',
+                            'required' => true,
+                            'minHeight' => '120px',
+                            'compact' => true,
+                            'placeholder' => 'Nhập lý do từ chối đề xuất này (ví dụ: đề tài trùng lặp với đề tài năm trước, không phù hợp định hướng chuyên môn...)'
+                        ])
+                        <div class="form-text small text-muted mt-1">Bắt buộc nhập lý do (tối thiểu 5 ký tự).</div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-ban me-1"></i> Xác Nhận Từ Chối
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-ban me-2"></i> Xác Nhận Từ Chối
                     </button>
                 </div>
             </div>

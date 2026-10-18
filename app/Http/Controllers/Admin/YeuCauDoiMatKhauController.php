@@ -73,7 +73,7 @@ class YeuCauDoiMatKhauController extends Controller
         $yeuCau = YeuCauDoiMatKhau::find($id);
 
         if ($yeuCau) {
-            $tempPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+            $tempPassword = 'Huit@2026';
             $tk = TaiKhoan::where('TenDangNhap', $yeuCau->TenDangNhap)->first();
             if ($tk) {
                 $tk->update([
@@ -82,6 +82,7 @@ class YeuCauDoiMatKhauController extends Controller
                     'BatBuocDoiMatKhau' => true,
                     'SoLanDangNhapSai'  => 0,
                     'TrangThai'         => true,
+                    'NgayKhoa'          => null,
                 ]);
             }
 
@@ -95,7 +96,7 @@ class YeuCauDoiMatKhauController extends Controller
         }
 
         // Trường hợp reset trực tiếp từ danh sách tài khoản
-        $tempPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+        $tempPassword = 'Huit@2026';
         $tk = TaiKhoan::findOrFail($id);
         $tk->update([
             'MatKhau'           => Hash::make($tempPassword),
@@ -103,6 +104,7 @@ class YeuCauDoiMatKhauController extends Controller
             'BatBuocDoiMatKhau' => true,
             'SoLanDangNhapSai'  => 0,
             'TrangThai'         => true,
+            'NgayKhoa'          => null,
         ]);
 
         return redirect()->back()->with('success', "Đã reset mật khẩu tài khoản '{$tk->TenDangNhap}' thành công! Cấp mật khẩu tạm thời mới: [{$tempPassword}]. Người dùng sẽ được yêu cầu thiết lập mật khẩu cá nhân mới khi đăng nhập.");
@@ -128,14 +130,15 @@ class YeuCauDoiMatKhauController extends Controller
             return redirect()->back()->withErrors('Không thể tự khóa tài khoản Admin đang đăng nhập!');
         }
 
-        $newStatus = !$tk->TrangThai;
-        $tk->update([
-            'TrangThai'        => $newStatus,
-            'SoLanDangNhapSai' => $newStatus ? 0 : $tk->SoLanDangNhapSai, // Reset lần sai nếu mở khóa
-            'NgayKhoa'         => $newStatus ? null : now(),
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($tk) {
+            if ($tk->isLocked()) {
+                $tk->unlock(Auth::user()->TenDangNhap ?? 'admin');
+            } else {
+                $tk->lock(isAuto: false, reason: 'Manual lock from YeuCauDoiMatKhauController');
+            }
+        });
 
-        $msg = $newStatus ? "Đã mở khóa tài khoản '{$tk->TenDangNhap}'." : "Đã khóa tài khoản '{$tk->TenDangNhap}'.";
+        $msg = $tk->TrangThai ? "Đã mở khóa tài khoản '{$tk->TenDangNhap}'." : "Đã khóa tài khoản '{$tk->TenDangNhap}'.";
         return redirect()->back()->with('success', $msg);
     }
 }

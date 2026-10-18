@@ -23,11 +23,11 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('sinhvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('sinhvien.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('sinhvien.edit', $sinhvien->MaSV) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa Hồ Sơ
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa Hồ Sơ
             </a>
         </div>
     </div>
@@ -43,7 +43,7 @@
                             {{ $stats['tin_chi'] }} <span class="fs-6 fw-normal text-muted">/ 115 chuẩn</span>
                         </div>
                         <div class="small {{ $stats['is_du_dk'] ? 'text-success' : 'text-danger' }} mt-1 fw-medium">
-                            <i class="fa-solid {{ $stats['is_du_dk'] ? 'fa-check' : 'fa-xmark' }} me-1"></i>
+                            <i class="fa-solid {{ $stats['is_du_dk'] ? 'fa-check' : 'fa-xmark' }} me-2"></i>
                             {{ $stats['is_du_dk'] ? 'Đạt chuẩn tín chỉ' : 'Thiếu ' . (115 - $stats['tin_chi']) . ' tín chỉ' }}
                         </div>
                     </div>
@@ -76,9 +76,9 @@
                         <div class="text-muted small fw-medium">Xét Điều Kiện KLTN</div>
                         <div class="fs-5 fw-bold mt-1">
                             @if($stats['is_du_dk'])
-                                <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đủ Điều Kiện</span>
+                                <span class="text-success"><i class="fa-solid fa-circle-check me-2"></i>Đủ Điều Kiện</span>
                             @else
-                                <span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa Đủ ĐK</span>
+                                <span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-2"></i>Chưa Đủ ĐK</span>
                             @endif
                         </div>
                         <div class="small text-muted mt-1">Quy định KLTN HUIT</div>
@@ -129,7 +129,7 @@
                 <div class="card border-0 shadow-sm rounded-3 mb-4">
                     <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-file-contract text-primary"></i>
+                            <i class="fa-solid fa-file-contract text-primary me-2"></i>
                             <span>Thông Tin Đề Tài & Nhóm Đồ Án</span>
                         </h6>
                         <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
@@ -178,7 +178,7 @@
                 <div class="card border-0 shadow-sm rounded-3 mb-4">
                     <div class="card-header bg-white py-3 border-bottom">
                         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-list-check text-primary"></i>
+                            <i class="fa-solid fa-list-check text-primary me-2"></i>
                             <span>Tiến Độ Báo Cáo 5 Mốc Liên Hoàn</span>
                         </h6>
                     </div>
@@ -220,15 +220,15 @@
                                                 @if($bc)
                                                     @if($bc->TrangThai === 'Đạt' || $bc->TrangThai === 'DAT')
                                                         <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">
-                                                            <i class="fa-solid fa-check me-1"></i> Đạt yêu cầu
+                                                            <i class="fa-solid fa-check me-2"></i> Đạt yêu cầu
                                                         </span>
                                                     @elseif($bc->TrangThai === 'Nộp lại' || $bc->TrangThai === 'NOP_LAI')
                                                         <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 small">
-                                                            <i class="fa-solid fa-rotate me-1"></i> Nộp lại
+                                                            <i class="fa-solid fa-rotate me-2"></i> Nộp lại
                                                         </span>
                                                     @else
                                                         <span class="badge bg-warning-subtle text-warning rounded-pill px-2 py-1 small">
-                                                            <i class="fa-solid fa-clock me-1"></i> Đang chấm
+                                                            <i class="fa-solid fa-clock me-2"></i> Đang chấm
                                                         </span>
                                                     @endif
                                                 @else
@@ -250,7 +250,7 @@
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                             <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-award text-primary"></i>
+                                <i class="fa-solid fa-award text-primary me-2"></i>
                                 <span>Kết Quả Bảo Vệ Khóa Luận Tốt Nghiệp</span>
                             </h6>
                             <span class="badge bg-success rounded-pill px-3 py-1">

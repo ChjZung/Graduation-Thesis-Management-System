@@ -5,8 +5,8 @@
 @section('content')
 <div class="container-fluid px-0">
     <div class="mb-3">
-        <a href="{{ route('giangvien.thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
+        <a href="{{ route('giangvien.thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách thông báo
         </a>
     </div>
 
@@ -73,13 +73,19 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Nội Dung Chi Tiết <span class="text-danger">*</span></label>
-                    <textarea name="NoiDung" class="form-control" rows="6" 
-                              placeholder="Nhập nội dung nhắc nhở, hướng dẫn, đường link họp online Google Meet/Zoom, yêu cầu nộp file..." required>{{ old('NoiDung') }}</textarea>
+                    @include('partials.rich_text_editor', [
+                        'name' => 'NoiDung',
+                        'id' => 'NoiDung',
+                        'label' => 'Nội Dung Chi Tiết',
+                        'value' => old('NoiDung'),
+                        'required' => true,
+                        'minHeight' => '160px',
+                        'placeholder' => 'Nhập nội dung nhắc nhở, hướng dẫn, đường link họp online Google Meet/Zoom, yêu cầu nộp file...'
+                    ])
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-1"></i>Tệp Đính Kèm (Nếu có)</label>
+                    <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-2"></i>Tệp Đính Kèm (Nếu có)</label>
                     <input type="file" name="FileDinhKem" class="form-control" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg">
                     <div class="form-text">Hỗ trợ các định dạng PDF, DOCX, ZIP, RAR, PNG, JPG (Tối đa 10MB).</div>
                 </div>
@@ -88,7 +94,7 @@
                     <a href="{{ route('giangvien.thongbao.index') }}" class="btn btn-light border px-4 rounded-pill">
                         Hủy
                     </a>
-                    <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm fw-semibold">
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm fw-semibold d-inline-flex align-items-center">
                         <i class="fa-solid fa-paper-plane me-2"></i>Phát Hành Thông Báo
                     </button>
                 </div>

@@ -17,6 +17,8 @@ class KhoiBaoCaoTienDo extends Model
     protected $fillable = [
         'MaKhoi',
         'MaBaoCao',
+        'MaDotNop',
+        'MaGiaiDoan',
         'MaDeTai',
         'LanBaoCao',
         'LanNop',
@@ -24,6 +26,7 @@ class KhoiBaoCaoTienDo extends Model
         'NoiDungBaoCao',
         'KetQuaDatDuoc',
         'KhoKhan',
+        'CongViecChuaHoanThanh',
         'HuongGiaiQuyet',
         'KeHoachTiepTheo',
         'PhanTramHoanThanh',
@@ -49,6 +52,16 @@ class KhoiBaoCaoTienDo extends Model
             'PhanTramHoanThanh' => 'integer',
             'TomTatJson' => 'array',
         ];
+    }
+
+    public function dotNop()
+    {
+        return $this->belongsTo(DotNopBaoCao::class, 'MaDotNop', 'MaDotNop');
+    }
+
+    public function giaiDoan()
+    {
+        return $this->belongsTo(GiaiDoanThucHien::class, 'MaGiaiDoan', 'MaGiaiDoan');
     }
 
     public function baoCao()

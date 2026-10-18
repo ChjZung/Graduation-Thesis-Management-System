@@ -141,6 +141,19 @@ class HoiDongController extends Controller
             return redirect()->back()->with('error', 'Nhóm này chưa nộp hồ sơ bảo vệ.');
         }
 
+        if ($request->filled('MaGVPhanBien')) {
+            $hoSo->loadMissing('nhom.deTai.giangVien', 'nhom.deTai.hocPhanRef');
+            $detai = $hoSo->nhom?->deTai;
+            $gvPB = \App\Models\GiangVien::find($request->MaGVPhanBien);
+            if ($detai && $gvPB) {
+                $dtBm = str_replace('BM_', '', $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon ?? '');
+                $gvBm = str_replace('BM_', '', $gvPB->MaBoMon ?? '');
+                if ($dtBm && $gvBm && $dtBm !== $gvBm) {
+                    return redirect()->back()->withErrors("Giảng viên phản biện ({$gvPB->HoTen}) phải thuộc cùng Bộ môn với đề tài!");
+                }
+            }
+        }
+
         DB::transaction(function () use ($request, $hoiDong, $hoSo) {
             $updateData = [
                 'MaHoiDong' => $hoiDong->MaHoiDong,

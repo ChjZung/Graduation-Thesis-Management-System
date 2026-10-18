@@ -8,17 +8,17 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-scale-balanced text-primary"></i>
+                <i class="fa-solid fa-scale-balanced text-primary me-2"></i>
                 <span>{{ $quyDinh->TenQuyDinh }}</span>
                 <span class="badge-code ms-2">{{ $quyDinh->MaQuyDinh }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('admin.quydinh.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('admin.quydinh.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('admin.quydinh.edit', $quyDinh->MaQuyDinh) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
             </a>
         </div>
     </div>
@@ -66,7 +66,7 @@
                     <div class="mb-4">
                         <div class="text-muted small mb-2 fw-bold">Mô Tả Chi Tiết &amp; Căn Cứ Điều Khoản:</div>
                         <div class="p-3 rounded bg-light border text-dark" style="line-height: 1.7;">
-                            {{ $quyDinh->MoTa ?? 'Không có ghi chú diễn giải bổ sung cho quy định này.' }}
+                            {!! \App\Helpers\HtmlHelper::clean($quyDinh->MoTa ?? 'Không có ghi chú diễn giải bổ sung cho quy định này.') !!}
                         </div>
                     </div>
 
@@ -74,12 +74,12 @@
                         <form action="{{ route('admin.quydinh.destroy', $quyDinh->MaQuyDinh) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa quy định này?');">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                <i class="fa-solid fa-trash me-1"></i> Xóa Quy Định
+                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                                <i class="fa-solid fa-trash me-2"></i> Xóa Quy Định
                             </button>
                         </form>
                         <a href="{{ route('admin.quydinh.edit', $quyDinh->MaQuyDinh) }}" class="btn btn-primary btn-sm rounded-pill px-4">
-                            <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa Nội Dung
+                            <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa Nội Dung
                         </a>
                     </div>
                 </div>

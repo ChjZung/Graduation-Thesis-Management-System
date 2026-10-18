@@ -13,6 +13,9 @@ use App\Models\KhoiBaoCaoTienDo;
 use App\Models\TomTatBaoCao;
 use App\Helpers\IdGenerator;
 use App\Jobs\GenerateAiSummaryJob;
+use App\Models\GiaiDoanThucHien;
+use App\Models\DotNopBaoCao;
+use App\Services\ThesisProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +24,12 @@ use Carbon\Carbon;
 
 class BaoCaoController extends Controller
 {
+    protected ThesisProgressService $progressService;
+
+    public function __construct(ThesisProgressService $progressService)
+    {
+        $this->progressService = $progressService;
+    }
     // Danh sách 6 giai đoạn tiến độ khóa luận
     const MOCS = [
         1 => ['ten' => 'GĐ 1: Nhận đề cương & Thiết kế CSDL', 'loai' => 'pdf', 'mo_ta' => 'Nộp file PDF đề cương chi tiết đề tài và sơ đồ thiết kế cơ sở dữ liệu.'],
@@ -31,7 +40,7 @@ class BaoCaoController extends Controller
         6 => ['ten' => 'GĐ 6: Nhận kết quả & Nộp lại kết quả hoàn chỉnh', 'loai' => 'pdf_git', 'mo_ta' => 'Nộp bản khóa luận hoàn chỉnh đã chỉnh sửa theo kết luận và góp ý của Hội đồng chấm.'],
     ];
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
@@ -41,33 +50,60 @@ class BaoCaoController extends Controller
                 ->with('error', 'Bạn chưa có hồ sơ sinh viên. Vui lòng liên hệ Giáo vụ.');
         }
 
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->first();
+        // Lấy tất cả nhóm sinh viên đang tham gia
+        $allStudentMemberships = ThanhVienNhom::with([
+            'nhom.hocPhan',
+            'nhom.hocKy',
+            'nhom.dangKyDeTai.deTai.giangVien',
+            'nhom.thanhViens.sinhVien',
+        ])
+        ->where('MaSV', $sinhVien->MaSV)
+        ->where('TrangThai', 'da_tham_gia')
+        ->get();
 
-        if (!$thanhVienRecord) {
+        if ($allStudentMemberships->isEmpty()) {
             return view('sinhvien.baocao.index', [
-                'error'      => 'Bạn chưa có nhóm. Vui lòng tạo hoặc gia nhập nhóm trước.',
-                'sinhVien'   => $sinhVien,
-                'nhom'       => null,
-                'mocs'       => self::MOCS,
-                'baoCaos'    => collect(),
-                'mocHienTai' => 1,
-                'mocDeadlines' => [],
+                'error'                 => 'Bạn chưa có nhóm. Vui lòng tạo hoặc gia nhập nhóm trước.',
+                'sinhVien'              => $sinhVien,
+                'nhom'                  => null,
+                'mocs'                  => self::MOCS,
+                'baoCaos'               => collect(),
+                'mocHienTai'            => 1,
+                'mocDeadlines'          => [],
+                'allStudentMemberships' => collect(),
+                'stageBreakdown'        => [],
             ]);
         }
 
-        $nhom = Nhom::with(['deTai.giangVien'])->find($thanhVienRecord->MaNhom);
+        $selectedNhomId = $request->get('nhom_id');
+        $activeMembership = null;
+        if ($selectedNhomId) {
+            $activeMembership = $allStudentMemberships->firstWhere('MaNhom', $selectedNhomId);
+        }
+        if (!$activeMembership) {
+            $activeMembership = $allStudentMemberships->first();
+        }
+
+        $nhom = Nhom::with(['deTai.giangVien.boMon', 'hocPhan', 'hocKy'])->find($activeMembership->MaNhom);
 
         if (!$nhom || !$nhom->deTai) {
             return view('sinhvien.baocao.index', [
-                'error'      => 'Nhóm của bạn chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
-                'sinhVien'   => $sinhVien,
-                'nhom'       => $nhom,
-                'mocs'       => self::MOCS,
-                'baoCaos'    => collect(),
-                'mocHienTai' => 1,
-                'mocDeadlines' => [],
+                'error'                 => 'Nhóm ' . ($nhom?->TenNhom ?? '') . ' chưa đăng ký đề tài hoặc đề tài chưa được duyệt.',
+                'sinhVien'              => $sinhVien,
+                'nhom'                  => $nhom,
+                'mocs'                  => self::MOCS,
+                'baoCaos'               => collect(),
+                'mocHienTai'            => 1,
+                'mocDeadlines'          => [],
+                'allStudentMemberships' => $allStudentMemberships,
+                'stageBreakdown'        => [],
             ]);
         }
+
+        $stageBreakdownData = ThesisProgressService::getStageProgressBreakdown($nhom);
+        $stageBreakdown = $stageBreakdownData['stages'] ?? [];
+        $nhom->stage_breakdown = $stageBreakdown;
+        $nhom->progress_percent = $stageBreakdownData['overall_percent'] ?? 0;
 
         $baoCaos = BaoCaoTienDo::with(['tomTatBaoCao', 'khoiBaoCaos'])
             ->where('MaDeTai', $nhom->deTai->MaDeTai)
@@ -94,8 +130,11 @@ class BaoCaoController extends Controller
         $timeCheckHienTai = $this->checkThoiGianNopBaoCao($mocHienTai, $maKH);
         $mocDeadlines = $this->getMocDeadlines();
 
+        $giaiDoans = $nhom->deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get();
+
         return view('sinhvien.baocao.index', compact(
-            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines', 'timeCheckHienTai'
+            'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines', 'timeCheckHienTai', 'giaiDoans',
+            'allStudentMemberships', 'stageBreakdown'
         ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
@@ -104,7 +143,15 @@ class BaoCaoController extends Controller
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
 
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia');
+        $thanhVienRecord = null;
+        if ($request->filled('MaNhom') || $request->filled('nhom_id')) {
+            $reqNhomId = $request->input('MaNhom') ?: $request->input('nhom_id');
+            $thanhVienRecord = (clone $thanhVienQuery)->where('MaNhom', $reqNhomId)->first();
+        }
+        if (!$thanhVienRecord) {
+            $thanhVienRecord = $thanhVienQuery->firstOrFail();
+        }
         $nhom = Nhom::with(['deTai.hocKy.keHoachKhoaLuan'])->findOrFail($thanhVienRecord->MaNhom);
         $deTai = $nhom->deTai;
 
@@ -149,11 +196,17 @@ class BaoCaoController extends Controller
             $messages['LinkCode.url'] = 'Link Code phải là URL hợp lệ (bắt đầu https://).';
         }
 
-        $rules['NoiDungBaoCao'] = 'nullable|string|min:20|max:5000';
-        $messages['NoiDungBaoCao.min'] = 'Nội dung tóm tắt tiến độ báo cáo phải có tối thiểu 20 ký tự.';
-        $messages['NoiDungBaoCao.max'] = 'Nội dung tóm tắt tiến độ báo cáo không được vượt quá 5000 ký tự.';
-
+        $rules['NoiDungBaoCao'] = 'nullable|string';
         $request->validate($rules, $messages);
+
+        $cleanedNoiDungBaoCao = '';
+        if ($request->filled('NoiDungBaoCao')) {
+            $cleanedNoiDungBaoCao = \App\Helpers\HtmlHelper::clean($request->NoiDungBaoCao);
+            $plainNoiDung = trim(strip_tags(html_entity_decode($cleanedNoiDungBaoCao, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if (mb_strlen($plainNoiDung) < 20) {
+                return back()->withInput()->withErrors(['NoiDungBaoCao' => 'Nội dung tóm tắt tiến độ báo cáo phải có tối thiểu 20 ký tự.']);
+            }
+        }
 
         // Kiểm tra thứ tự mốc: Phải hoàn thành mốc trước mới được nộp mốc sau
         if ($lan > 1) {
@@ -173,7 +226,7 @@ class BaoCaoController extends Controller
         $maBaoCao = null;
         $lanNop = 1;
 
-        DB::transaction(function () use ($request, $nhom, $deTai, $lan, $mocInfo, $existing, $timeCheck, $isResubmit, &$maBaoCao, &$lanNop) {
+        DB::transaction(function () use ($request, $cleanedNoiDungBaoCao, $nhom, $deTai, $lan, $mocInfo, $existing, $timeCheck, $isResubmit, &$maBaoCao, &$lanNop) {
             $tenFile = $existing?->TenFile;
             $duongDanFile = $existing?->DuongDanFile;
             $linkCode = $request->input('LinkCode');
@@ -184,7 +237,7 @@ class BaoCaoController extends Controller
             }
 
             $tieuDe = $request->input('TieuDe') ?: $mocInfo['ten'];
-            $noiDung = $request->input('NoiDungBaoCao') . ($linkCode ? "\nLink Code: " . $linkCode : '');
+            $noiDung = $cleanedNoiDungBaoCao . ($linkCode ? "\nLink Code: " . $linkCode : '');
 
             if ($existing) {
                 $maBaoCao = $existing->MaBaoCao;
@@ -422,7 +475,16 @@ class BaoCaoController extends Controller
     {
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+
+        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia');
+        $thanhVien = null;
+        if (request()->filled('nhom_id') || request()->filled('MaNhom')) {
+            $reqNhom = request()->input('nhom_id') ?: request()->input('MaNhom');
+            $thanhVien = (clone $thanhVienQuery)->where('MaNhom', $reqNhom)->first();
+        }
+        if (!$thanhVien) {
+            $thanhVien = $thanhVienQuery->firstOrFail();
+        }
         $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
         $deTai = $nhom->deTai;
 
@@ -448,7 +510,16 @@ class BaoCaoController extends Controller
     {
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+
+        $thanhVienQuery = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia');
+        $thanhVien = null;
+        if ($request->filled('nhom_id') || $request->filled('MaNhom')) {
+            $reqNhom = $request->input('nhom_id') ?: $request->input('MaNhom');
+            $thanhVien = (clone $thanhVienQuery)->where('MaNhom', $reqNhom)->first();
+        }
+        if (!$thanhVien) {
+            $thanhVien = $thanhVienQuery->firstOrFail();
+        }
         $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
         $deTai = $nhom->deTai;
 
@@ -457,10 +528,12 @@ class BaoCaoController extends Controller
         }
 
         $lan = (int)$request->input('LanBaoCao');
+        $hasFile = $request->hasFile('FileBaoCao') || $request->filled('ExistingFileUrl');
+
         $request->validate([
             'LanBaoCao' => 'required|integer|between:1,6',
             'TieuDe' => 'required|string|max:255',
-            'KetQuaDatDuoc' => 'required|string|min:10',
+            'KetQuaDatDuoc' => $hasFile ? 'nullable|string' : 'required|string|min:10',
             'KhoKhan' => 'nullable|string',
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
@@ -469,11 +542,16 @@ class BaoCaoController extends Controller
             'LinkCode' => 'nullable|url',
         ], [
             'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
-            'KetQuaDatDuoc.required' => 'Vui lòng nhập kết quả đã thực hiện / đạt được.',
-            'KetQuaDatDuoc.min' => 'Nội dung kết quả tối thiểu 10 ký tự.',
+            'KetQuaDatDuoc.required' => 'Vui lòng đính kèm file báo cáo PDF hoặc nhập kết quả công việc.',
             'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF.',
             'FileBaoCao.max' => 'Dung lượng file PDF tối đa là 25MB.',
         ]);
+
+        $cleanedKetQua = $request->filled('KetQuaDatDuoc') ? \App\Helpers\HtmlHelper::clean($request->KetQuaDatDuoc) : null;
+        $cleanedKhoKhan = $request->filled('KhoKhan') ? \App\Helpers\HtmlHelper::clean($request->KhoKhan) : null;
+        $cleanedHuongGiaiQuyet = $request->filled('HuongGiaiQuyet') ? \App\Helpers\HtmlHelper::clean($request->HuongGiaiQuyet) : null;
+        $cleanedKeHoach = $request->filled('KeHoachTiepTheo') ? \App\Helpers\HtmlHelper::clean($request->KeHoachTiepTheo) : null;
+        $phanTram = (int)$request->input('PhanTramHoanThanh', 0);
 
         $baoCao = BaoCaoTienDo::firstOrCreate(
             ['MaDeTai' => $deTai->MaDeTai, 'LanBaoCao' => $lan],
@@ -482,7 +560,7 @@ class BaoCaoController extends Controller
                 'TieuDe' => self::MOCS[$lan]['ten'],
                 'TrangThai' => 'Chờ duyệt',
                 'NgayNop' => now()->toDateString(),
-                'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', 0),
+                'PhanTramHoanThanh' => $phanTram,
             ]
         );
 
@@ -506,6 +584,33 @@ class BaoCaoController extends Controller
         if (!empty($tomTatJsonStr)) {
             $tomTatJson = is_string($tomTatJsonStr) ? json_decode($tomTatJsonStr, true) : $tomTatJsonStr;
         }
+        $tomTatAi = $request->input('TomTatAI');
+
+        // Tự động kích hoạt AI phân tích PDF nếu chưa có tóm tắt
+        if (empty($tomTatJson) && $duongDanFile && file_exists(storage_path('app/public/' . $duongDanFile))) {
+            try {
+                $aiService = app(\App\Services\AiSummaryService::class);
+                $aiResult = $aiService->summarizePdf(storage_path('app/public/' . $duongDanFile), $lan);
+                if (!empty($aiResult['data'])) {
+                    $tomTatJson = $aiResult['data'];
+                    $tomTatAi = $aiResult['formatted']['overall_summary'] ?? ($aiResult['data']['overall_summary'] ?? '');
+                    if (empty($cleanedKetQua) && !empty($aiResult['formatted']['completed_work'])) {
+                        $cleanedKetQua = $aiResult['formatted']['completed_work'];
+                    }
+                    if (empty($cleanedKhoKhan) && !empty($aiResult['formatted']['difficulties'])) {
+                        $cleanedKhoKhan = $aiResult['formatted']['difficulties'];
+                    }
+                    if (empty($cleanedKeHoach) && !empty($aiResult['formatted']['next_steps'])) {
+                        $cleanedKeHoach = $aiResult['formatted']['next_steps'];
+                    }
+                    if ($phanTram === 0) {
+                        $phanTram = (int)($aiResult['completion_percentage'] ?? 60);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("StoreKhoi AI summary error: " . $e->getMessage());
+            }
+        }
 
         $khoi = KhoiBaoCaoTienDo::create([
             'MaKhoi' => $maKhoi,
@@ -514,16 +619,16 @@ class BaoCaoController extends Controller
             'LanBaoCao' => $lan,
             'LanNop' => $lanNop,
             'TieuDe' => $request->input('TieuDe'),
-            'NoiDungBaoCao' => $request->input('KetQuaDatDuoc'),
-            'KetQuaDatDuoc' => $request->input('KetQuaDatDuoc'),
-            'KhoKhan' => $request->input('KhoKhan'),
-            'HuongGiaiQuyet' => $request->input('HuongGiaiQuyet'),
-            'KeHoachTiepTheo' => $request->input('KeHoachTiepTheo'),
-            'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', 0),
+            'NoiDungBaoCao' => $cleanedKetQua ?: ($tomTatAi ?: 'Báo cáo tiến độ phân tích bởi AI'),
+            'KetQuaDatDuoc' => $cleanedKetQua,
+            'KhoKhan' => $cleanedKhoKhan,
+            'HuongGiaiQuyet' => $cleanedHuongGiaiQuyet,
+            'KeHoachTiepTheo' => $cleanedKeHoach,
+            'PhanTramHoanThanh' => $phanTram,
             'TenFile' => $tenFile,
             'DuongDanFile' => $duongDanFile,
             'LinkCode' => $request->input('LinkCode'),
-            'TomTatAI' => $request->input('TomTatAI'),
+            'TomTatAI' => $tomTatAi,
             'TomTatJson' => $tomTatJson,
             'TrangThai' => 'Chờ duyệt',
             'NgayNop' => now(),
@@ -531,7 +636,7 @@ class BaoCaoController extends Controller
 
         $baoCao->update([
             'TrangThai' => 'Chờ duyệt',
-            'PhanTramHoanThanh' => max((int)$baoCao->PhanTramHoanThanh, (int)$request->input('PhanTramHoanThanh', 0)),
+            'PhanTramHoanThanh' => max((int)$baoCao->PhanTramHoanThanh, $phanTram),
             'NgayNop' => now()->toDateString(),
             'TenFile' => $tenFile ?: $baoCao->TenFile,
             'DuongDanFile' => $duongDanFile ?: $baoCao->DuongDanFile,
@@ -540,17 +645,17 @@ class BaoCaoController extends Controller
         if (!empty($tomTatJson)) {
             $maTomTat = IdGenerator::nextTomTat();
             TomTatBaoCao::updateOrCreate(
-                ['MaBaoCao' => $baoCao->MaBaoCao],
+                ['MaKhoi' => $maKhoi],
                 [
                     'MaTomTat' => $maTomTat,
-                    'MaKhoi' => $maKhoi,
+                    'MaBaoCao' => $baoCao->MaBaoCao,
                     'TenFile' => $tenFile,
                     'DuongDanFile' => $duongDanFile,
                     'SoTrang' => (int)($tomTatJson['total_pages'] ?? 1),
-                    'CongViecDaHoanThanh' => $request->input('KetQuaDatDuoc'),
-                    'KhoKhan' => $request->input('KhoKhan'),
-                    'KeHoachTuanToi' => $request->input('KeHoachTiepTheo'),
-                    'NoiDungAI' => $request->input('TomTatAI') ?: ($tomTatJson['overall_summary'] ?? ''),
+                    'CongViecDaHoanThanh' => $cleanedKetQua,
+                    'KhoKhan' => $cleanedKhoKhan,
+                    'KeHoachTuanToi' => $cleanedKeHoach,
+                    'NoiDungAI' => $tomTatAi ?: ($tomTatJson['overall_summary'] ?? ''),
                     'TomTatJson' => $tomTatJson,
                     'TrangThai' => 'Đã tạo',
                     'TrangThaiXuLy' => 'hoan_thanh',
@@ -618,14 +723,29 @@ class BaoCaoController extends Controller
 
         $request->validate([
             'TieuDe' => 'required|string|max:255',
-            'KetQuaDatDuoc' => 'required|string|min:10',
+            'KetQuaDatDuoc' => 'required|string',
             'KhoKhan' => 'nullable|string',
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
             'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
             'FileBaoCao' => 'nullable|file|mimes:pdf|max:25600',
             'LinkCode' => 'nullable|url',
+        ], [
+            'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
+            'KetQuaDatDuoc.required' => 'Vui lòng nhập kết quả đã thực hiện / đạt được.',
+            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF.',
+            'FileBaoCao.max' => 'Dung lượng file PDF tối đa là 25MB.',
         ]);
+
+        $cleanedKetQua = \App\Helpers\HtmlHelper::clean($request->KetQuaDatDuoc);
+        $plainKetQua = trim(strip_tags(html_entity_decode($cleanedKetQua, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainKetQua) < 10) {
+            return redirect()->back()->withInput()->withErrors(['KetQuaDatDuoc' => 'Nội dung kết quả tối thiểu 10 ký tự.']);
+        }
+
+        $cleanedKhoKhan = $request->filled('KhoKhan') ? \App\Helpers\HtmlHelper::clean($request->KhoKhan) : null;
+        $cleanedHuongGiaiQuyet = $request->filled('HuongGiaiQuyet') ? \App\Helpers\HtmlHelper::clean($request->HuongGiaiQuyet) : null;
+        $cleanedKeHoach = $request->filled('KeHoachTiepTheo') ? \App\Helpers\HtmlHelper::clean($request->KeHoachTiepTheo) : null;
 
         $tenFile = $khoi->TenFile;
         $duongDanFile = $khoi->DuongDanFile;
@@ -637,11 +757,11 @@ class BaoCaoController extends Controller
 
         $khoi->update([
             'TieuDe' => $request->input('TieuDe'),
-            'NoiDungBaoCao' => $request->input('KetQuaDatDuoc'),
-            'KetQuaDatDuoc' => $request->input('KetQuaDatDuoc'),
-            'KhoKhan' => $request->input('KhoKhan'),
-            'HuongGiaiQuyet' => $request->input('HuongGiaiQuyet'),
-            'KeHoachTiepTheo' => $request->input('KeHoachTiepTheo'),
+            'NoiDungBaoCao' => $cleanedKetQua,
+            'KetQuaDatDuoc' => $cleanedKetQua,
+            'KhoKhan' => $cleanedKhoKhan,
+            'HuongGiaiQuyet' => $cleanedHuongGiaiQuyet,
+            'KeHoachTiepTheo' => $cleanedKeHoach,
             'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', $khoi->PhanTramHoanThanh),
             'TenFile' => $tenFile,
             'DuongDanFile' => $duongDanFile,
@@ -697,5 +817,98 @@ class BaoCaoController extends Controller
                 'error' => 'Lỗi xử lý tóm tắt AI: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Sinh viên nộp báo cáo phiên bản mới cho một đợt nộp (Version N + 1)
+     */
+    public function nopPhienBan(Request $request, $id)
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::with('deTai')->findOrFail($thanhVien->MaNhom);
+
+        $dotNop = DotNopBaoCao::with(['giaiDoan', 'deTai'])->findOrFail($id);
+
+        if (!$nhom->deTai || $nhom->deTai->MaDeTai !== $dotNop->MaDeTai) {
+            abort(403, 'Đợt nộp báo cáo này không thuộc đề tài của nhóm bạn.');
+        }
+
+        // Kiểm tra quyền hạn nộp: Phải đang mở hoặc được yêu cầu nộp lại
+        $latest = $dotNop->phienBanMoiNhat;
+        $canSubmit = $dotNop->isMoNop() || ($latest && ($latest->TrangThai === 'Yêu cầu nộp lại' || $latest->TrangThai === 'Cần bổ sung'));
+
+        if (!$canSubmit) {
+            return redirect()->back()->with('error', 'Đợt nộp này hiện đang đóng hoặc đã được xác nhận hoàn thành.');
+        }
+
+        $rules = [
+            'FilePdf' => $latest ? 'nullable|file|mimes:pdf|max:25600' : 'required|file|mimes:pdf|max:25600',
+            'NoiDungBaoCao' => 'nullable|string',
+            'KetQuaDatDuoc' => 'nullable|string',
+            'KhoKhan' => 'nullable|string',
+            'CongViecChuaHoanThanh' => 'nullable|string',
+            'KeHoachTiepTheo' => 'nullable|string',
+            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
+        ];
+
+        if ($dotNop->YeuCauSourceCode) {
+            $rules['LinkCode'] = 'required|url|regex:/^(https?:\/\/)?(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/.+$/i';
+        } else {
+            $rules['LinkCode'] = 'nullable|url';
+        }
+
+        $messages = [
+            'FilePdf.required' => 'Vui lòng đính kèm file báo cáo định dạng PDF để AI tự động phân tích.',
+            'FilePdf.mimes' => 'File báo cáo phải có định dạng .PDF.',
+            'FilePdf.max' => 'Dung lượng file tối đa là 25MB.',
+            'LinkCode.required' => 'Đợt nộp này yêu cầu cung cấp đường dẫn mã nguồn dự án (GitHub / GitLab / Bitbucket).',
+            'LinkCode.regex' => 'Đường dẫn mã nguồn phải thuộc GitHub, GitLab hoặc Bitbucket hợp lệ.',
+        ];
+
+        $request->validate($rules, $messages);
+
+        try {
+            $khoi = $this->progressService->nopBaoCaoPhienBanMoi(
+                $dotNop,
+                $sinhVien,
+                $request->all(),
+                $request->file('FilePdf')
+            );
+
+            return redirect()->route('sinhvien.baocao.dot_nop.show', $dotNop->MaDotNop)
+                ->with('success', "Đã nộp thành công Báo cáo Phiên bản v{$khoi->LanNop}! Giảng viên hướng dẫn sẽ nhận xét và đánh giá sớm nhất.");
+        } catch (\Throwable $e) {
+            return redirect()->back()->withInput()->with('error', 'Lỗi khi nộp báo cáo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sinh viên xem chi tiết đợt nộp & lịch sử các phiên bản
+     */
+    public function showDotNop($id)
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
+        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
+
+        $dotNop = DotNopBaoCao::with([
+            'giaiDoan',
+            'deTai.giangVien',
+            'khoiBaoCaos' => fn($q) => $q->orderBy('LanNop', 'desc'),
+        ])->findOrFail($id);
+
+        if (!$nhom->deTai || $nhom->deTai->MaDeTai !== $dotNop->MaDeTai) {
+            abort(403, 'Đợt nộp báo cáo này không thuộc đề tài của nhóm bạn.');
+        }
+
+        $phienBans = $dotNop->khoiBaoCaos;
+        $latestPhienBan = $phienBans->first();
+
+        return view('sinhvien.baocao.show_dot', compact(
+            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan'
+        ));
     }
 }

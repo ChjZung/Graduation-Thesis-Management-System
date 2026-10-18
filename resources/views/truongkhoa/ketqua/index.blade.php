@@ -13,7 +13,7 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('truongkhoa.ketqua.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold">
-                <i class="fa-solid fa-file-excel me-1"></i> Xuất Bảng Điểm (Excel / CSV)
+                <i class="fa-solid fa-file-excel me-2"></i> Xuất Bảng Điểm (Excel / CSV)
             </a>
         </div>
     </div>
@@ -115,8 +115,8 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap w-100">
-                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap w-100 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-filter me-2"></i> Lọc
                     </button>
                     <a href="{{ route('truongkhoa.ketqua.index') }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3" title="Đặt lại">
                         <i class="fa-solid fa-rotate"></i>

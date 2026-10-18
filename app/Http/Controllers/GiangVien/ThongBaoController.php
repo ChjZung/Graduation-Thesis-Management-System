@@ -179,10 +179,11 @@ class ThongBaoController extends Controller
         }
 
         // 1. Tạo thông báo
+        $cleanedNoiDung = \App\Helpers\HtmlHelper::clean($request->NoiDung);
         $thongBao = ThongBao::create([
             'MaThongBao'   => $maTB,
             'TieuDe'       => trim($request->TieuDe),
-            'NoiDung'      => trim($request->NoiDung),
+            'NoiDung'      => $cleanedNoiDung,
             'LoaiThongBao' => $request->LoaiThongBao,
             'DoiTuongNhan' => $doiTuongText,
             'NgayTao'      => now(),
@@ -198,7 +199,7 @@ class ThongBaoController extends Controller
             ThongBaoService::guiDenNhom(
                 $nhom->MaNhom,
                 "📢 [GVHD {$gv->HoTen}] {$request->TieuDe}",
-                $request->NoiDung,
+                $cleanedNoiDung,
                 $request->LoaiThongBao,
                 $filePath
             );

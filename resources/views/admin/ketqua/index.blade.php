@@ -15,10 +15,10 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('admin.ketqua.export', request()->all()) }}" class="btn btn-outline-success shadow-xs fw-semibold">
-                <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
+                <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel
             </a>
-            <button type="button" onclick="window.print()" class="btn btn-outline-secondary shadow-xs">
-                <i class="fa-solid fa-print me-1"></i> In Bảng Điểm
+            <button type="button" onclick="window.print()" class="btn btn-outline-secondary shadow-xs d-inline-flex align-items-center">
+                <i class="fa-solid fa-print me-2"></i> In Bảng Điểm
             </button>
         </div>
     </div>
@@ -119,12 +119,12 @@
                     @endforeach
                 </select>
                 @if(request('search') || request('MaHocKy') || request('xep_loai') || request('MaHoiDong'))
-                    <a href="{{ route('admin.ketqua.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                    <a href="{{ route('admin.ketqua.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                 @endif
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
                 <a href="{{ route('admin.ketqua.export', request()->all()) }}" class="btn btn-success shadow-xs fw-semibold">
-                    <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
+                    <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel
                 </a>
             </div>
         </form>
@@ -179,15 +179,15 @@
                             {{-- Họ tên SV --}}
                             <td class="py-3">
                                 <div class="fw-bold text-dark">{{ $sv->HoTen ?? 'Chưa rõ họ tên' }}</div>
-                                <div class="small text-muted mt-0.5">
+                                <div class="small text-muted mt-1">
                                     Lớp: {{ $sv->lop->TenLop ?? '14DHTH01' }} &bull; {{ $isTruongNhom ? 'Trưởng nhóm' : 'Thành viên' }}
                                 </div>
                             </td>
 
                             {{-- Nhóm & Đề tài --}}
                             <td class="py-3">
-                                <div class="d-flex align-items-center gap-1.5 mb-1">
-                                    <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.72rem;">{{ $nhom->TenNhom ?? 'Nhóm SV' }}</span>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.72rem;">{{ $nhom->TenNhom ?? 'Nhóm SV' }}</span>
                                 </div>
                                 <div class="small text-dark fw-semibold text-truncate" style="max-width: 250px;" title="{{ $deTai->TenDeTai ?? 'Chưa cập nhật' }}">
                                     {{ $deTai->TenDeTai ?? 'Chưa có tên đề tài' }}
@@ -197,19 +197,19 @@
                             {{-- Loại khóa luận --}}
                             <td class="text-center py-3">
                                 @if($loai === 'KLKS')
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;">
-                                        <i class="fa-solid fa-microchip me-1"></i> Kỹ sư (KLKS)
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-microchip me-2"></i> Kỹ sư (KLKS)
                                     </span>
                                 @else
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;">
-                                        <i class="fa-solid fa-graduation-cap me-1"></i> Cử nhân (KLCN)
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-graduation-cap me-2"></i> Cử nhân (KLCN)
                                     </span>
                                 @endif
                             </td>
 
                             {{-- Điểm Hội Đồng (100%) --}}
                             <td class="text-center py-3">
-                                <span class="badge {{ $diemBadgeClass }} rounded-pill px-3 py-1.5 fs-6 fw-bold">
+                                <span class="badge {{ $diemBadgeClass }} rounded-pill px-3 py-2 fs-6 fw-bold">
                                     {{ number_format($diem10, 2) }}
                                 </span>
                             </td>
@@ -231,7 +231,7 @@
                                         default => 'bg-danger-subtle text-danger border border-danger-subtle',
                                     };
                                 @endphp
-                                <span class="badge {{ $xlBadge }} rounded-pill px-3 py-1.5 fw-semibold">
+                                <span class="badge {{ $xlBadge }} rounded-pill px-3 py-2 fw-semibold">
                                     {{ $xlName }}
                                 </span>
                             </td>
@@ -276,7 +276,7 @@
     <!-- Bottom Info Card: Quy chế quy đổi tín chỉ HUIT -->
     <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
         <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-            <i class="fa-solid fa-book-open-reader text-primary"></i> QUY CHẾ ĐÁNH GIÁ &amp; CÔNG NHẬN TỐT NGHIỆP (KHOA CÔNG NGHỆ THÔNG TIN — HUIT):
+            <i class="fa-solid fa-book-open-reader text-primary me-2"></i> QUY CHẾ ĐÁNH GIÁ &amp; CÔNG NHẬN TỐT NGHIỆP (KHOA CÔNG NGHỆ THÔNG TIN — HUIT):
         </h6>
         <div class="row g-3 mb-3">
             <div class="col-md-3">
@@ -306,7 +306,7 @@
         </div>
         <div class="small text-muted">
             <div>&bull; <strong>Quy chế tính điểm:</strong> Điểm khóa luận tốt nghiệp được tính <strong>100% từ điểm đánh giá của Hội đồng bảo vệ</strong> theo phiếu chấm điểm chuẩn hóa KLCN hoặc KLKS.</div>
-            <div class="text-success mt-1"><i class="fa-solid fa-circle-check me-1"></i> Điểm tổng kết tự động đồng bộ sang Phân hệ Đào tạo sinh viên sau khi hoàn tất bảo vệ.</div>
+            <div class="text-success mt-1"><i class="fa-solid fa-circle-check me-2"></i> Điểm tổng kết tự động đồng bộ sang Phân hệ Đào tạo sinh viên sau khi hoàn tất bảo vệ.</div>
         </div>
     </div>
 </div>

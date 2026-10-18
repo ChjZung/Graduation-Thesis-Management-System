@@ -30,7 +30,7 @@
                             <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
                                 <div class="fw-bold text-white small mb-1">{{ $moc->TenMoc }}</div>
                                 <div class="small opacity-75 mb-2">
-                                    <i class="fa-regular fa-calendar-days me-1"></i>
+                                    <i class="fa-regular fa-calendar-days me-2"></i>
                                     {{ \Carbon\Carbon::parse($moc->NgayBatDau)->format('d/m/Y') }} – {{ \Carbon\Carbon::parse($moc->NgayKetThuc)->format('d/m/Y') }}
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
@@ -77,8 +77,8 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap w-100">
-                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold text-nowrap w-100 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-filter me-2"></i> Lọc
                     </button>
                     <a href="{{ route('truongkhoa.kehoach.index') }}" class="btn btn-sm btn-outline-secondary rounded-3 px-3" title="Đặt lại">
                         <i class="fa-solid fa-rotate"></i>
@@ -110,7 +110,7 @@
                             </div>
                             <div>
                                 @if(in_array($kh->TrangThai, ['ĐÃ CÔNG BỐ', 'Đã công bố', 'Hoạt động']))
-                                    <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i> ĐÃ CÔNG BỐ</span>
+                                    <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-circle-check me-2"></i> ĐÃ CÔNG BỐ</span>
                                 @else
                                     <span class="badge bg-secondary px-3 py-2">{{ $kh->TrangThai ?? 'Dự thảo' }}</span>
                                 @endif
@@ -124,8 +124,8 @@
                                 </div>
                                 <div class="col-md-4 border-start-md">
                                     <div class="small text-muted">
-                                        <div><i class="fa-solid fa-user-pen me-1 text-primary"></i> Người lập: <strong>{{ $kh->giaoVu->HoTen ?? ($kh->MaGVu ?? 'Giáo vụ Khoa') }}</strong></div>
-                                        <div class="mt-1"><i class="fa-regular fa-clock me-1 text-secondary"></i> Ngày lập: <strong>{{ $kh->NgayTao ? \Carbon\Carbon::parse($kh->NgayTao)->format('d/m/Y') : 'N/A' }}</strong></div>
+                                        <div><i class="fa-solid fa-user-pen me-2 text-primary"></i> Người lập: <strong>{{ $kh->giaoVu->HoTen ?? ($kh->MaGVu ?? 'Giáo vụ Khoa') }}</strong></div>
+                                        <div class="mt-1"><i class="fa-regular fa-clock me-2 text-secondary"></i> Ngày lập: <strong>{{ $kh->NgayTao ? \Carbon\Carbon::parse($kh->NgayTao)->format('d/m/Y') : 'N/A' }}</strong></div>
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +134,7 @@
                             @if($kh->mocThoiGians && $kh->mocThoiGians->isNotEmpty())
                                 <div class="border-top pt-3 mt-3">
                                     <h6 class="fw-bold small text-dark mb-2">
-                                        <i class="fa-solid fa-timeline text-danger me-1"></i>
+                                        <i class="fa-solid fa-timeline text-danger me-2"></i>
                                         Các Mốc Thời Gian Quy Trình:
                                     </h6>
                                     <div class="table-responsive">
@@ -172,13 +172,13 @@
                             @if($kh->quyDinhs && $kh->quyDinhs->isNotEmpty())
                                 <div class="border-top pt-3 mt-3">
                                     <h6 class="fw-bold small text-dark mb-2">
-                                        <i class="fa-solid fa-book-bookmark text-primary me-1"></i>
+                                        <i class="fa-solid fa-book-bookmark text-primary me-2"></i>
                                         Quy Định & Hướng Dẫn:
                                     </h6>
                                     <div class="d-flex flex-wrap gap-2">
                                         @foreach($kh->quyDinhs as $qd)
                                             <span class="badge bg-light text-dark border p-2">
-                                                <i class="fa-solid fa-file-lines me-1 text-primary"></i>
+                                                <i class="fa-solid fa-file-lines me-2 text-primary"></i>
                                                 {{ $qd->TenQuyDinh ?? 'Quy định' }}
                                             </span>
                                         @endforeach

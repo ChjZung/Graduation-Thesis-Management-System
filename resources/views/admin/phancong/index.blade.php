@@ -7,13 +7,13 @@
         <small class="text-muted">Quản lý phân công Giảng viên cho cả Lớp Hành Chính và Lớp Học Phần (Lớp Tín Chỉ)</small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.import.template', 'phancong') }}" class="btn btn-outline-secondary rounded-pill px-3">
-            <i class="fa-solid fa-file-arrow-down me-1"></i>File mẫu .xlsx
+        <a href="{{ route('admin.import.template', 'phancong') }}" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+            <i class="fa-solid fa-file-arrow-down me-2"></i>File mẫu .xlsx
         </a>
-        <button class="btn btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importModal">
-            <i class="fa-solid fa-file-excel me-1"></i>Import Excel
+        <button class="btn btn-outline-success rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="fa-solid fa-file-excel me-2"></i>Import Excel
         </button>
-        <button class="btn btn-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addModal">
+        <button class="btn btn-success btn-sm rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="fa-solid fa-plus me-2"></i>Thêm Phân Công
         </button>
     </div>
@@ -80,11 +80,11 @@
                                 <td class="px-4 fw-bold text-muted">#{{ $pc->MaPhanCong }}</td>
                                 <td>
                                     <span class="fw-bold text-dark">{{ $pc->giangVien->HoTen ?? 'N/A' }}</span><br>
-                                    <small class="text-muted"><i class="fa-solid fa-chalkboard-user me-1"></i>{{ $pc->giangVien->boMon->TenBoMon ?? 'Bộ môn N/A' }}</small>
+                                    <small class="text-muted"><i class="fa-solid fa-chalkboard-user me-2"></i>{{ $pc->giangVien->boMon->TenBoMon ?? 'Bộ môn N/A' }}</small>
                                 </td>
                                 <td>
                                     <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill fw-bold">
-                                        <i class="fa-solid fa-users-rectangle me-1"></i>{{ $pc->lop->TenLop ?? 'N/A' }}
+                                        <i class="fa-solid fa-users-rectangle me-2"></i>{{ $pc->lop->TenLop ?? 'N/A' }}
                                     </span>
                                 </td>
                                 <td>{{ $pc->hocKy->TenHocKy ?? 'N/A' }}</td>
@@ -100,7 +100,7 @@
                             @empty
                             <tr>
                                 <td colspan="6" class="text-center py-5 text-muted">
-                                    <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                    <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                     Chưa có dữ liệu phân công Lớp Hành chính nào.
                                 </td>
                             </tr>
@@ -140,9 +140,9 @@
                                 <td>
                                     @if($lhp->giangVien)
                                         <span class="fw-bold text-dark">{{ $lhp->giangVien->HoTen }}</span><br>
-                                        <small class="text-muted"><i class="fa-solid fa-chalkboard-user me-1"></i>{{ $lhp->giangVien->boMon->TenBoMon ?? 'Bộ môn N/A' }}</small>
+                                        <small class="text-muted"><i class="fa-solid fa-chalkboard-user me-2"></i>{{ $lhp->giangVien->boMon->TenBoMon ?? 'Bộ môn N/A' }}</small>
                                     @else
-                                        <span class="badge bg-warning-subtle text-dark border"><i class="fa-solid fa-triangle-exclamation me-1"></i>Chưa phân công</span>
+                                        <span class="badge bg-warning-subtle text-dark border"><i class="fa-solid fa-triangle-exclamation me-2"></i>Chưa phân công</span>
                                     @endif
                                 </td>
                                 <td>
@@ -151,11 +151,11 @@
                                     </span>
                                 </td>
                                 <td class="text-end px-4">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 btn-assign-hp" 
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 btn-assign-hp d-inline-flex align-items-center" 
                                             data-lhp-id="{{ $lhp->MaLopHP }}" 
                                             data-lhp-name="{{ $lhp->TenLopHP }}"
                                             data-gv-id="{{ $lhp->MaGV }}">
-                                        <i class="fa-solid fa-user-pen me-1"></i>{{ $lhp->MaGV ? 'Đổi GV' : 'Phân công GV' }}
+                                        <i class="fa-solid fa-user-pen me-2"></i>{{ $lhp->MaGV ? 'Đổi GV' : 'Phân công GV' }}
                                     </button>
                                     @if($lhp->MaGV)
                                     <form action="{{ route('admin.phancong.unassign_lhp', $lhp->MaLopHP) }}" method="POST" class="d-inline form-delete">
@@ -169,7 +169,7 @@
                             @empty
                             <tr>
                                 <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                    <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                     Chưa có Lớp Học Phần nào trong hệ thống.
                                 </td>
                             </tr>
@@ -263,7 +263,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary-custom rounded-pill px-4"><i class="fa-solid fa-floppy-disk me-1"></i>Lưu Phân Công</button>
+                    <button type="submit" class="btn btn-primary-custom rounded-pill px-4 d-inline-flex align-items-center"><i class="fa-solid fa-floppy-disk me-2"></i>Lưu Phân Công</button>
                 </div>
             </div>
         </form>
@@ -286,12 +286,12 @@
                         <input type="file" name="file" class="form-control" accept=".xlsx,.csv,.xls" required>
                     </div>
                     <div class="alert alert-light border small text-muted mb-0">
-                        <i class="fa-solid fa-circle-info me-1"></i> Tải <a href="{{ route('admin.import.template', 'phancong') }}" class="fw-bold">File mẫu .xlsx</a> hỗ trợ nhập phân công cho cả Lớp Hành Chính và Lớp Học Phần.
+                        <i class="fa-solid fa-circle-info me-2"></i> Tải <a href="{{ route('admin.import.template', 'phancong') }}" class="fw-bold">File mẫu .xlsx</a> hỗ trợ nhập phân công cho cả Lớp Hành Chính và Lớp Học Phần.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4"><i class="fa-solid fa-upload me-1"></i>Tải Lên & Import</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 d-inline-flex align-items-center"><i class="fa-solid fa-upload me-2"></i>Tải Lên & Import</button>
                 </div>
             </div>
         </form>

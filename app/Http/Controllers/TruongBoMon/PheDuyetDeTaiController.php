@@ -409,19 +409,23 @@ class PheDuyetDeTaiController extends Controller
     public function yeuCauChinhSua(Request $request, $maDeTai)
     {
         $request->validate([
-            'YeuCauSua' => 'required|string|min:5|max:1000',
+            'YeuCauSua' => 'required|string',
         ], [
             'YeuCauSua.required' => 'Vui lòng nhập nội dung góp ý / yêu cầu chỉnh sửa cho giảng viên.',
-            'YeuCauSua.min'      => 'Nội dung góp ý phải có tối thiểu 5 ký tự.',
-            'YeuCauSua.max'      => 'Nội dung góp ý không được vượt quá 1000 ký tự.',
         ]);
+
+        $cleanedYeuCauSua = \App\Helpers\HtmlHelper::clean($request->YeuCauSua);
+        $plainYeuCauSua = trim(strip_tags(html_entity_decode($cleanedYeuCauSua, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainYeuCauSua) < 5) {
+            return back()->withInput()->withErrors(['YeuCauSua' => 'Nội dung góp ý phải có tối thiểu 5 ký tự.']);
+        }
 
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
         $boMon = $this->getBoMon();
 
         try {
-            DB::transaction(function () use ($request, $maDeTai, $boMon, $currentGv, $user) {
+            DB::transaction(function () use ($cleanedYeuCauSua, $maDeTai, $boMon, $currentGv, $user) {
                 // Lock dòng chống race condition
                 $detai = DeTai::where('MaDeTai', $maDeTai)->lockForUpdate()->firstOrFail();
 
@@ -435,7 +439,7 @@ class PheDuyetDeTaiController extends Controller
 
                 $oldStatus = $detai->TrangThai;
                 $newStatus = 'Yêu cầu chỉnh sửa';
-                $noiDungGopY = trim($request->YeuCauSua);
+                $noiDungGopY = $cleanedYeuCauSua;
 
                 $detai->update([
                     'TrangThai'   => $newStatus,
@@ -486,19 +490,23 @@ class PheDuyetDeTaiController extends Controller
     public function tuChoi(Request $request, $maDeTai)
     {
         $request->validate([
-            'LyDoTuChoi' => 'required|string|min:5|max:1000',
+            'LyDoTuChoi' => 'required|string',
         ], [
             'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối đề tài.',
-            'LyDoTuChoi.min'      => 'Lý do từ chối phải có tối thiểu 5 ký tự.',
-            'LyDoTuChoi.max'      => 'Lý do từ chối không được vượt quá 1000 ký tự.',
         ]);
+
+        $cleanedLyDo = \App\Helpers\HtmlHelper::clean($request->LyDoTuChoi);
+        $plainLyDo = trim(strip_tags(html_entity_decode($cleanedLyDo, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainLyDo) < 5) {
+            return back()->withInput()->withErrors(['LyDoTuChoi' => 'Lý do từ chối phải có tối thiểu 5 ký tự.']);
+        }
 
         $user = Auth::user();
         $currentGv = GiangVien::getLoggedInGiangVien($user);
         $boMon = $this->getBoMon();
 
         try {
-            DB::transaction(function () use ($request, $maDeTai, $boMon, $currentGv, $user) {
+            DB::transaction(function () use ($cleanedLyDo, $maDeTai, $boMon, $currentGv, $user) {
                 // Lock dòng chống race condition
                 $detai = DeTai::where('MaDeTai', $maDeTai)->lockForUpdate()->firstOrFail();
 
@@ -512,7 +520,7 @@ class PheDuyetDeTaiController extends Controller
 
                 $oldStatus = $detai->TrangThai;
                 $newStatus = 'Từ chối';
-                $lyDo = trim($request->LyDoTuChoi);
+                $lyDo = $cleanedLyDo;
 
                 $detai->update([
                     'TrangThai'  => $newStatus,

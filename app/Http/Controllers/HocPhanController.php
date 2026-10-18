@@ -141,13 +141,16 @@ class HocPhanController extends Controller
             'MaBoMon'     => 'required|exists:BoMon,MaBoMon',
             'LoaiHocPhan' => 'nullable|string|max:50',
             'TrangThai'   => 'required|string|max:50',
+            'NgayBatDau'  => 'nullable|date',
+            'NgayKetThuc' => 'nullable|date|after_or_equal:NgayBatDau',
             'MoTa'        => 'nullable|string',
         ], [
-            'MaHocPhan.unique'    => 'Mã học phần đã tồn tại trong hệ thống.',
-            'TenHocPhan.required' => 'Vui lòng nhập tên học phần.',
-            'TenHocPhan.unique'   => 'Tên học phần này đã tồn tại trong hệ thống.',
-            'SoTinChi.required'   => 'Vui lòng nhập số tín chỉ.',
-            'MaBoMon.required'    => 'Vui lòng chọn Bộ môn phụ trách cho học phần này.',
+            'MaHocPhan.unique'              => 'Mã học phần đã tồn tại trong hệ thống.',
+            'TenHocPhan.required'           => 'Vui lòng nhập tên học phần.',
+            'TenHocPhan.unique'             => 'Tên học phần này đã tồn tại trong hệ thống.',
+            'SoTinChi.required'             => 'Vui lòng nhập số tín chỉ.',
+            'MaBoMon.required'              => 'Vui lòng chọn Bộ môn phụ trách cho học phần này.',
+            'NgayKetThuc.after_or_equal'    => 'Ngày kết thúc học phần phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
         $maHocPhan = $request->filled('MaHocPhan') ? $request->MaHocPhan : IdGenerator::nextHocPhan();
@@ -163,7 +166,9 @@ class HocPhanController extends Controller
             'MaBoMon'     => $request->MaBoMon,
             'LoaiHocPhan' => $request->LoaiHocPhan ?: 'Chuyên ngành',
             'TrangThai'   => $request->TrangThai,
-            'MoTa'        => $request->MoTa,
+            'NgayBatDau'  => $request->NgayBatDau ?: null,
+            'NgayKetThuc' => $request->NgayKetThuc ?: null,
+            'MoTa'        => $request->filled('MoTa') ? \App\Helpers\HtmlHelper::clean($request->MoTa) : null,
         ]);
 
         // Nếu học phần ở trạng thái Đang sử dụng, tự động mở cho các học kỳ đang diễn ra
@@ -214,11 +219,14 @@ class HocPhanController extends Controller
             'SoTietKhac'  => 'nullable|integer|min:0',
             'MaBoMon'     => 'required|exists:BoMon,MaBoMon',
             'TrangThai'   => 'required|string|max:50',
+            'NgayBatDau'  => 'nullable|date',
+            'NgayKetThuc' => 'nullable|date|after_or_equal:NgayBatDau',
             'MoTa'        => 'nullable|string',
         ], [
-            'TenHocPhan.required' => 'Vui lòng nhập tên học phần.',
-            'TenHocPhan.unique'   => 'Tên học phần này đã tồn tại trong hệ thống.',
-            'MaBoMon.required'    => 'Vui lòng chọn Bộ môn phụ trách.',
+            'TenHocPhan.required'        => 'Vui lòng nhập tên học phần.',
+            'TenHocPhan.unique'          => 'Tên học phần này đã tồn tại trong hệ thống.',
+            'MaBoMon.required'           => 'Vui lòng chọn Bộ môn phụ trách.',
+            'NgayKetThuc.after_or_equal' => 'Ngày kết thúc học phần phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
         $updateData = [
@@ -229,7 +237,9 @@ class HocPhanController extends Controller
             'SoTietKhac'  => $request->input('SoTietKhac', 0) ?: 0,
             'MaBoMon'     => $request->MaBoMon,
             'TrangThai'   => $request->TrangThai,
-            'MoTa'        => $request->MoTa,
+            'NgayBatDau'  => $request->NgayBatDau ?: null,
+            'NgayKetThuc' => $request->NgayKetThuc ?: null,
+            'MoTa'        => $request->filled('MoTa') ? \App\Helpers\HtmlHelper::clean($request->MoTa) : null,
         ];
 
         if ($request->filled('LoaiHocPhan')) {

@@ -92,7 +92,7 @@ class QuyDinhKhoaLuanController extends Controller
             'MaQuyDinh'  => $maQD,
             'TenQuyDinh' => trim($request->TenQuyDinh),
             'GiaTri'     => trim($request->GiaTri),
-            'MoTa'       => $request->MoTa ? trim($request->MoTa) : null,
+            'MoTa'       => $request->MoTa ? \App\Helpers\HtmlHelper::clean($request->MoTa) : null,
             'MakeHoach'  => $request->MakeHoach,
         ]);
 
@@ -127,7 +127,7 @@ class QuyDinhKhoaLuanController extends Controller
         $quyDinh->update([
             'TenQuyDinh' => trim($request->TenQuyDinh),
             'GiaTri'     => trim($request->GiaTri),
-            'MoTa'       => $request->MoTa ? trim($request->MoTa) : null,
+            'MoTa'       => $request->MoTa ? \App\Helpers\HtmlHelper::clean($request->MoTa) : null,
             'MakeHoach'  => $request->MakeHoach,
         ]);
 

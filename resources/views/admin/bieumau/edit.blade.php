@@ -8,8 +8,8 @@
         <div>
             <h4 class="fw-bold mb-0" style="color: #00305a;">Chỉnh Sửa Biểu Mẫu: {{ $bieuMau->MaBieuMau }}</h4>
         </div>
-        <a href="{{ route('admin.bieumau.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Danh Sách
+        <a href="{{ route('admin.bieumau.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm d-inline-flex align-items-center">
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại Danh Sách
         </a>
     </div>
 

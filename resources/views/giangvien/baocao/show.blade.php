@@ -9,47 +9,47 @@
     <div class="card border-0 shadow-sm rounded-3 bg-white p-3 mb-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs">
-                    <i class="fa-solid fa-arrow-left me-1"></i>Danh sách nhóm
+                <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs d-inline-flex align-items-center">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Danh sách nhóm
                 </a>
                 <div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 fw-bold font-monospace">
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold font-monospace">
                             {{ $nhom->MaNhom }}
                         </span>
                         <span class="fw-bold fs-6 text-dark">
                             {{ $nhom->TenNhom ?: 'Nhóm Khóa Luận' }}
                         </span>
-                        <span class="badge {{ $baoCao->TrangThai === 'Đạt' ? 'bg-success' : ($baoCao->TrangThai === 'Chờ duyệt' ? 'bg-warning text-dark' : 'bg-info text-dark') }} rounded-pill px-2.5 py-1 fw-bold">
+                        <span class="badge {{ $baoCao->TrangThai === 'Đạt' ? 'bg-success' : ($baoCao->TrangThai === 'Chờ duyệt' ? 'bg-warning text-dark' : 'bg-info text-dark') }} rounded-pill px-3 py-1 fw-bold">
                             {{ $baoCao->TrangThai }}
                         </span>
                     </div>
-                    <div class="text-primary fw-semibold small mt-0.5">
-                        <i class="fa-solid fa-folder-open me-1"></i>{{ $deTai->TenDeTai ?? 'Chưa có tên đề tài' }}
+                    <div class="text-primary fw-semibold small mt-1">
+                        <i class="fa-solid fa-folder-open me-2"></i>{{ $deTai->TenDeTai ?? 'Chưa có tên đề tài' }}
                     </div>
                 </div>
             </div>
 
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <div class="text-end d-none d-md-block small" style="font-size: 12px;">
-                    <div><i class="fa-solid fa-crown text-warning me-1"></i>Trưởng nhóm: <strong>{{ $truongNhom->HoTen ?? 'Chưa xác định' }}</strong> ({{ $truongNhom->MaSV ?? '' }})</div>
-                    <div class="text-muted"><i class="fa-solid fa-users me-1"></i>Thành viên: {{ $thanhViens->count() }} sinh viên</div>
+                    <div><i class="fa-solid fa-crown text-warning me-2"></i>Trưởng nhóm: <strong>{{ $truongNhom->HoTen ?? 'Chưa xác định' }}</strong> ({{ $truongNhom->MaSV ?? '' }})</div>
+                    <div class="text-muted"><i class="fa-solid fa-users me-2"></i>Thành viên: {{ $thanhViens->count() }} sinh viên</div>
                 </div>
 
                 {{-- Nút nhảy nhanh tới Form Nghiệm thu --}}
                 @if($baoCao->TrangThai !== 'Đạt')
-                    <a href="#section-xacnhan-giaidoan" class="btn btn-sm btn-success rounded-pill px-3 py-1.5 fw-bold shadow-xs">
-                        <i class="fa-solid fa-certificate me-1"></i>Nghiệm Thu Giai Đoạn {{ $baoCao->LanBaoCao }}
+                    <a href="#section-xacnhan-giaidoan" class="btn btn-sm btn-success rounded-pill px-3 py-2 fw-bold shadow-xs d-inline-flex align-items-center">
+                        <i class="fa-solid fa-certificate me-2"></i>Nghiệm Thu Giai Đoạn {{ $baoCao->LanBaoCao }}
                     </a>
                 @endif
             </div>
         </div>
 
         {{-- ── MINI STEPPER: LỘ TRÌNH 6 GIAI ĐOẠN ── --}}
-        <div class="border-top mt-3 pt-2.5">
-            <div class="d-flex justify-content-between align-items-center mb-1.5">
+        <div class="border-top mt-3 pt-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted small fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                    <i class="fa-solid fa-timeline text-primary me-1"></i>Lộ trình 6 giai đoạn tiến độ:
+                    <i class="fa-solid fa-timeline text-primary me-2"></i>Lộ trình 6 giai đoạn tiến độ:
                 </span>
                 <span class="text-secondary small" style="font-size: 11px;">
                     Đang xem: <strong>Giai đoạn {{ $baoCao->LanBaoCao }}</strong>
@@ -75,11 +75,11 @@
                         $isPassed = ($stBc && $stBc->TrangThai === 'Đạt');
                     @endphp
                     <div class="col-2">
-                        <div class="p-1.5 rounded-2 border {{ $isCurrent ? 'border-primary bg-primary bg-opacity-10 shadow-xs' : ($isPassed ? 'border-success-subtle bg-success-subtle bg-opacity-25' : 'bg-light') }}">
+                        <div class="p-2 rounded-2 border {{ $isCurrent ? 'border-primary bg-primary bg-opacity-10 shadow-xs' : ($isPassed ? 'border-success-subtle bg-success-subtle bg-opacity-25' : 'bg-light') }}">
                             <div class="fw-bold text-truncate {{ $isCurrent ? 'text-primary' : ($isPassed ? 'text-success' : 'text-secondary') }}" style="font-size: 11px;">
                                 GĐ {{ $stNum }}: {{ $stName }}
                             </div>
-                            <div class="mt-0.5">
+                            <div class="mt-1">
                                 @if($isPassed)
                                     <span class="badge bg-success rounded-pill" style="font-size: 9.5px;">✓ Đạt</span>
                                 @elseif($isCurrent)
@@ -108,13 +108,13 @@
             {{-- Thông báo session --}}
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-3 rounded-3 shadow-xs" role="alert" style="font-size: 13px;">
-                    <i class="fa-solid fa-circle-check me-1.5"></i>{{ session('success') }}
+                    <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
                     <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3 rounded-3 shadow-xs" role="alert" style="font-size: 13px;">
-                    <i class="fa-solid fa-circle-exclamation me-1.5"></i>{{ session('error') }}
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ session('error') }}
                     <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
@@ -123,7 +123,7 @@
             @if($baoCao->khoiBaoCaos && $baoCao->khoiBaoCaos->isNotEmpty())
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-primary"></i>
+                        <i class="fa-solid fa-layer-group text-primary me-2"></i>
                         <span>Chi Tiết Các Báo Cáo Nhỏ ({{ $baoCao->khoiBaoCaos->count() }} đợt nộp)</span>
                     </h6>
                     <span class="text-muted small" style="font-size: 11.5px;">
@@ -138,9 +138,9 @@
                     @endphp
                     <div class="card border shadow-sm rounded-3 bg-white mb-3 overflow-hidden {{ $isLatest ? 'border-primary' : '' }}">
                         {{-- Card Header khối --}}
-                        <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge {{ $isLatest ? 'bg-primary' : 'bg-secondary' }} text-white rounded-pill px-2.5 py-1 fw-bold">
+                                <span class="badge {{ $isLatest ? 'bg-primary' : 'bg-secondary' }} text-white rounded-pill px-3 py-1 fw-bold">
                                     Đợt nộp #{{ $khoi->LanNop }}
                                 </span>
                                 <span class="fw-bold text-dark fs-6">{{ $khoi->TieuDe }}</span>
@@ -153,9 +153,9 @@
 
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-muted small" style="font-size: 11px;">
-                                    <i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
+                                    <i class="fa-regular fa-clock me-2"></i>{{ \Carbon\Carbon::parse($khoi->NgayNop)->format('H:i - d/m/Y') }}
                                 </span>
-                                <span class="badge {{ $isPassedKhoi ? 'bg-success' : ($khoi->TrangThai === 'Chờ duyệt' ? 'bg-warning text-dark' : 'bg-danger text-white') }} rounded-pill px-2.5 py-1 fw-bold">
+                                <span class="badge {{ $isPassedKhoi ? 'bg-success' : ($khoi->TrangThai === 'Chờ duyệt' ? 'bg-warning text-dark' : 'bg-danger text-white') }} rounded-pill px-3 py-1 fw-bold">
                                     {{ $khoi->TrangThai }}
                                 </span>
                             </div>
@@ -166,45 +166,45 @@
                             {{-- 4 mục nghiệp vụ chuẩn --}}
                             <div class="row g-2 mb-3">
                                 <div class="col-12">
-                                    <div class="p-2.5 rounded-2 bg-light border">
+                                    <div class="p-2 rounded-2 bg-light border">
                                         <div class="fw-bold text-success mb-1" style="font-size: 12.5px;">
-                                            <i class="fa-solid fa-circle-check me-1"></i>1. Kết quả đạt được &amp; Công việc đã làm:
+                                            <i class="fa-solid fa-circle-check me-2"></i>1. Kết quả đạt được &amp; Công việc đã làm:
                                         </div>
-                                        <div class="text-dark small" style="white-space: pre-line; line-height: 1.5;">
-                                            {{ $khoi->KetQuaDatDuoc ?: ($khoi->NoiDungBaoCao ?: 'Chưa cập nhật nội dung') }}
+                                        <div class="text-dark small" style="line-height: 1.5;">
+                                            {!! \App\Helpers\HtmlHelper::clean($khoi->KetQuaDatDuoc ?: ($khoi->NoiDungBaoCao ?: 'Chưa cập nhật nội dung')) !!}
                                         </div>
                                     </div>
                                 </div>
 
                                 @if($khoi->KhoKhan)
                                 <div class="col-md-6">
-                                    <div class="p-2.5 rounded-2 bg-light border h-100">
+                                    <div class="p-2 rounded-2 bg-light border h-100">
                                         <div class="fw-bold text-warning-emphasis mb-1" style="font-size: 12.5px;">
-                                            <i class="fa-solid fa-triangle-exclamation me-1"></i>2. Khó khăn gặp phải:
+                                            <i class="fa-solid fa-triangle-exclamation me-2"></i>2. Khó khăn gặp phải:
                                         </div>
-                                        <div class="text-dark small" style="white-space: pre-line;">{{ $khoi->KhoKhan }}</div>
+                                        <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($khoi->KhoKhan) !!}</div>
                                     </div>
                                 </div>
                                 @endif
 
                                 @if($khoi->HuongGiaiQuyet)
                                 <div class="col-md-6">
-                                    <div class="p-2.5 rounded-2 bg-light border h-100">
+                                    <div class="p-2 rounded-2 bg-light border h-100">
                                         <div class="fw-bold text-info mb-1" style="font-size: 12.5px;">
-                                            <i class="fa-solid fa-lightbulb me-1"></i>3. Hướng giải quyết đề xuất:
+                                            <i class="fa-solid fa-lightbulb me-2"></i>3. Hướng giải quyết đề xuất:
                                         </div>
-                                        <div class="text-dark small" style="white-space: pre-line;">{{ $khoi->HuongGiaiQuyet }}</div>
+                                        <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($khoi->HuongGiaiQuyet) !!}</div>
                                     </div>
                                 </div>
                                 @endif
 
                                 @if($khoi->KeHoachTiepTheo)
                                 <div class="col-12">
-                                    <div class="p-2.5 rounded-2 bg-light border">
+                                    <div class="p-2 rounded-2 bg-light border">
                                         <div class="fw-bold text-primary mb-1" style="font-size: 12.5px;">
-                                            <i class="fa-solid fa-calendar-check me-1"></i>4. Kế hoạch giai đoạn tiếp theo:
+                                            <i class="fa-solid fa-calendar-check me-2"></i>4. Kế hoạch giai đoạn tiếp theo:
                                         </div>
-                                        <div class="text-dark small" style="white-space: pre-line;">{{ $khoi->KeHoachTiepTheo }}</div>
+                                        <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($khoi->KeHoachTiepTheo) !!}</div>
                                     </div>
                                 </div>
                                 @endif
@@ -213,38 +213,38 @@
                             {{-- Minh chứng file đính kèm & Source code --}}
                             <div class="d-flex flex-wrap gap-2 align-items-center mb-3 p-2 bg-light rounded-2 border">
                                 <span class="text-muted small fw-semibold" style="font-size: 11.5px;">
-                                    <i class="fa-solid fa-paperclip me-1"></i>Minh chứng:
+                                    <i class="fa-solid fa-paperclip me-2"></i>Minh chứng:
                                 </span>
                                 @if($khoi->DuongDanFile)
-                                    <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1">
-                                        <i class="fa-solid fa-file-pdf me-1"></i>{{ $khoi->TenFile ?: 'BaoCao_TienDo.pdf' }} (Mở xem)
+                                    <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-3 py-1">
+                                        <i class="fa-solid fa-file-pdf me-2"></i>{{ $khoi->TenFile ?: 'BaoCao_TienDo.pdf' }} (Mở xem)
                                     </a>
                                     <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" download class="btn btn-xs btn-light border rounded-pill px-2 py-1 text-secondary">
-                                        <i class="fa-solid fa-download me-1"></i>Tải về
+                                        <i class="fa-solid fa-download me-2"></i>Tải về
                                     </a>
                                 @else
                                     <span class="text-muted small fst-italic">Không đính kèm file PDF.</span>
                                 @endif
 
                                 @if($khoi->LinkCode)
-                                    <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-xs btn-outline-dark rounded-pill px-2.5 py-1">
-                                        <i class="fa-brands fa-github me-1"></i>Source Code
+                                    <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-xs btn-outline-dark rounded-pill px-3 py-1">
+                                        <i class="fa-brands fa-github me-2"></i>Source Code
                                     </a>
                                 @endif
                             </div>
 
                             {{-- Đánh giá trước đó nếu có --}}
                             @if($khoi->NhanXetGV)
-                                <div class="p-2.5 rounded-2 bg-light border-start border-3 {{ $isPassedKhoi ? 'border-success' : 'border-warning' }} mb-3">
+                                <div class="p-2 rounded-2 bg-light border-start border-3 {{ $isPassedKhoi ? 'border-success' : 'border-warning' }} mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="fw-bold text-dark small" style="font-size: 12px;">
-                                            <i class="fa-solid fa-comment-dots text-primary me-1"></i>Nhận xét của bạn:
+                                            <i class="fa-solid fa-comment-dots text-primary me-2"></i>Nhận xét của bạn:
                                         </span>
                                         <span class="text-muted" style="font-size: 11px;">
                                             {{ $khoi->NgayNhanXet ? \Carbon\Carbon::parse($khoi->NgayNhanXet)->format('H:i - d/m/Y') : '' }}
                                         </span>
                                     </div>
-                                    <div class="text-dark small" style="white-space: pre-line;"><em>"{{ $khoi->NhanXetGV }}"</em></div>
+                                    <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($khoi->NhanXetGV) !!}</div>
                                 </div>
                             @endif
 
@@ -254,7 +254,7 @@
                                     @csrf
                                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                         <label class="form-label fw-bold text-dark mb-0 small" style="font-size: 12.5px;">
-                                            <i class="fa-solid fa-pen-to-square text-primary me-1"></i>Đánh giá đợt nộp #{{ $khoi->LanNop }}:
+                                            <i class="fa-solid fa-pen-to-square text-primary me-2"></i>Đánh giá đợt nộp #{{ $khoi->LanNop }}:
                                         </label>
 
                                         {{-- Nút chọn Đạt / Yêu cầu nộp lại --}}
@@ -272,13 +272,20 @@
                                     </div>
 
                                     <div class="mb-2">
-                                        <textarea name="NoiDung" class="form-control form-control-sm" rows="2" 
-                                                  placeholder="Nhập nhận xét chuyên môn, góp ý sửa đổi hoặc hướng dẫn tiếp theo cho sinh viên..." required>{{ old('NoiDung', $khoi->NhanXetGV) }}</textarea>
+                                        @include('partials.rich_text_editor', [
+                                            'name' => 'NoiDung',
+                                            'id' => 'NoiDung_' . $khoi->MaKhoi,
+                                            'value' => old('NoiDung', $khoi->NhanXetGV),
+                                            'required' => true,
+                                            'minHeight' => '100px',
+                                            'compact' => true,
+                                            'placeholder' => 'Nhập nhận xét chuyên môn, góp ý sửa đổi hoặc hướng dẫn tiếp theo cho sinh viên...'
+                                        ])
                                     </div>
 
                                     <div class="d-flex justify-content-end">
-                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-bold shadow-xs">
-                                            <i class="fa-solid fa-floppy-disk me-1"></i>Lưu Đánh Giá Đợt #{{ $khoi->LanNop }}
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-bold shadow-xs d-inline-flex align-items-center">
+                                            <i class="fa-solid fa-floppy-disk me-2"></i>Lưu Đánh Giá Đợt #{{ $khoi->LanNop }}
                                         </button>
                                     </div>
                                 </form>
@@ -303,7 +310,7 @@
                             <i class="fa-solid fa-certificate fa-lg"></i>
                             <h6 class="fw-bold mb-0">Xác Nhận Nghiệm Thu Toàn Bộ Giai Đoạn {{ $baoCao->LanBaoCao }}</h6>
                         </div>
-                        <span class="badge bg-white text-success rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+                        <span class="badge bg-white text-success rounded-pill px-3 py-1 fw-bold" style="font-size: 11px;">
                             Điều kiện tiên quyết GĐ {{ $baoCao->LanBaoCao + 1 }}
                         </span>
                     </div>
@@ -314,13 +321,13 @@
                             <i class="fa-solid fa-circle-check fa-2x text-success"></i>
                             <div>
                                 <div class="fw-bold fs-6">Giai đoạn {{ $baoCao->LanBaoCao }} đã được nghiệm thu ĐẠT 100%!</div>
-                                <div class="small mt-0.5">
+                                <div class="small mt-1">
                                     Xác nhận bởi: <strong>{{ $baoCao->NguoiXacNhan ?: $giangVien->HoTen }}</strong> 
                                     @if($baoCao->NgayXacNhan)
                                         vào lúc {{ \Carbon\Carbon::parse($baoCao->NgayXacNhan)->format('H:i - d/m/Y') }}
                                     @endif
                                 </div>
-                                <div class="text-secondary small mt-1"><em>"{{ $baoCao->NhanXet ?: 'Hoàn thành đạt yêu cầu giai đoạn.' }}"</em></div>
+                                <div class="text-secondary small mt-1">{!! \App\Helpers\HtmlHelper::clean($baoCao->NhanXet ?: 'Hoàn thành đạt yêu cầu giai đoạn.') !!}</div>
                             </div>
                         </div>
                     @else
@@ -338,19 +345,24 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-dark small">
-                                    Nhận xét tổng kết nghiệm thu Giai đoạn {{ $baoCao->LanBaoCao }}:
-                                </label>
-                                <textarea name="NhanXetTongQuat" class="form-control form-control-sm" rows="3" 
-                                          placeholder="Đánh giá tổng quan về chất lượng đồ án, tiến độ hoàn thành và đồng ý cho nhóm chuyển sang giai đoạn tiếp theo..." required>Giảng viên hướng dẫn xác nhận nhóm hoàn thành đạt yêu cầu giai đoạn {{ $baoCao->LanBaoCao }}. Cho phép nhóm chuyển sang giai đoạn tiếp theo.</textarea>
+                                @include('partials.rich_text_editor', [
+                                    'name' => 'NhanXetTongQuat',
+                                    'id' => 'NhanXetTongQuat_' . $baoCao->MaBaoCao,
+                                    'value' => old('NhanXetTongQuat', "Giảng viên hướng dẫn xác nhận nhóm hoàn thành đạt yêu cầu giai đoạn {$baoCao->LanBaoCao}. Cho phép nhóm chuyển sang giai đoạn tiếp theo."),
+                                    'label' => 'Nhận xét tổng kết nghiệm thu Giai đoạn ' . $baoCao->LanBaoCao,
+                                    'required' => true,
+                                    'minHeight' => '100px',
+                                    'compact' => true,
+                                    'placeholder' => 'Đánh giá tổng quan về chất lượng đồ án, tiến độ hoàn thành và đồng ý cho nhóm chuyển sang giai đoạn tiếp theo...'
+                                ])
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <span class="text-muted small" style="font-size: 12px;">
-                                    <i class="fa-solid fa-shield-halved text-success me-1"></i>Hệ thống sẽ lưu vết Giảng viên xác nhận và thời điểm phê duyệt chính thức.
+                                    <i class="fa-solid fa-shield-halved text-success me-2"></i>Hệ thống sẽ lưu vết Giảng viên xác nhận và thời điểm phê duyệt chính thức.
                                 </span>
-                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs">
-                                    <i class="fa-solid fa-check-double me-1.5"></i>Xác Nhận Nghiệm Thu GĐ {{ $baoCao->LanBaoCao }}
+                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-check-double me-2"></i>Xác Nhận Nghiệm Thu GĐ {{ $baoCao->LanBaoCao }}
                                 </button>
                             </div>
                         </form>
@@ -371,8 +383,8 @@
                         <i class="fa-solid fa-wand-magic-sparkles text-warning fa-lg"></i>
                         <h6 class="fw-bold mb-0">Trợ Lý AI Map-Reduce</h6>
                     </div>
-                    <span class="badge bg-white text-dark rounded-pill px-2.5 py-1 fw-bold shadow-xs" style="font-size: 11px;">
-                        <i class="fa-solid fa-circle-check text-success me-1"></i>{{ $tomTat->DoTinCayAI ?? 95 }}% tin cậy
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-1 fw-bold shadow-xs" style="font-size: 11px;">
+                        <i class="fa-solid fa-circle-check text-success me-2"></i>{{ $tomTat->DoTinCayAI ?? 95 }}% tin cậy
                     </span>
                 </div>
 
@@ -383,19 +395,19 @@
 
                     {{-- 1. Tổng quan phân tích --}}
                     <div class="mb-3">
-                        <div class="fw-bold text-primary small mb-1.5 d-flex align-items-center gap-1.5">
-                            <i class="fa-solid fa-chart-pie"></i>
+                        <div class="fw-bold text-primary small mb-2 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-chart-pie me-2"></i>
                             <span>1. Tổng quan phân tích:</span>
                         </div>
-                        <div class="p-2.5 rounded-2 bg-light border text-dark small" style="line-height: 1.5; font-size: 12.5px;">
+                        <div class="p-2 rounded-2 bg-light border text-dark small" style="line-height: 1.5; font-size: 12.5px;">
                             {{ $tomTat?->NoiDungAI ?: ($tomTat?->CongViecDaHoanThanh ?: 'AI đã tự động trích xuất các hạng mục công việc chính của nhóm từ báo cáo tiến độ.') }}
                         </div>
                     </div>
 
                     {{-- 2. Hạng mục công việc tìm thấy trong tài liệu --}}
                     <div class="mb-3">
-                        <div class="fw-bold text-success small mb-1.5 d-flex align-items-center gap-1.5">
-                            <i class="fa-solid fa-circle-check"></i>
+                        <div class="fw-bold text-success small mb-2 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-circle-check me-2"></i>
                             <span>2. Công việc hoàn thành (kèm trích dẫn):</span>
                         </div>
                         @if(!empty($tomTatData['data']['completed_work']))
@@ -411,7 +423,7 @@
                                             @endif
                                         </div>
                                         @if(!empty($item['evidence']))
-                                            <div class="text-muted mt-0.5 fst-italic" style="font-size: 11px;">
+                                            <div class="text-muted mt-1 fst-italic" style="font-size: 11px;">
                                                 "{{ Str::limit($item['evidence'], 90) }}"
                                             </div>
                                         @endif
@@ -419,7 +431,7 @@
                                 @endforeach
                             </div>
                         @else
-                            <div class="p-2.5 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
+                            <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
                                 {{ $tomTat?->CongViecDaHoanThanh ?: 'Đã hoàn thành các hạng mục theo kế hoạch giai đoạn.' }}
                             </div>
                         @endif
@@ -427,11 +439,11 @@
 
                     {{-- 3. Khó khăn & Rào cản phát hiện --}}
                     <div class="mb-3">
-                        <div class="fw-bold text-warning-emphasis small mb-1.5 d-flex align-items-center gap-1.5">
-                            <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+                        <div class="fw-bold text-warning-emphasis small mb-2 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
                             <span>3. Khó khăn & Vướng mắc:</span>
                         </div>
-                        <div class="p-2.5 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
+                        <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
                             {{ $tomTat?->KhoKhan ?: 'Không ghi nhận vướng mắc kỹ thuật đặc biệt nào trong tài liệu nộp.' }}
                         </div>
                     </div>
@@ -439,19 +451,19 @@
                     {{-- 4. Kế hoạch tiếp theo trích xuất --}}
                     @if($tomTat?->KeHoachTuanToi)
                     <div class="mb-3">
-                        <div class="fw-bold text-info small mb-1.5 d-flex align-items-center gap-1.5">
-                            <i class="fa-solid fa-calendar-check text-info"></i>
+                        <div class="fw-bold text-info small mb-2 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-calendar-check text-info me-2"></i>
                             <span>4. Kế hoạch giai đoạn tiếp theo:</span>
                         </div>
-                        <div class="p-2.5 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
+                        <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
                             {{ $tomTat->KeHoachTuanToi }}
                         </div>
                     </div>
                     @endif
 
                     {{-- Gợi ý kiểm tra đối chiếu --}}
-                    <div class="p-2.5 rounded-2 border border-info border-opacity-25 bg-info-subtle bg-opacity-25 text-info-emphasis small" style="font-size: 11.5px; line-height: 1.5;">
-                        <i class="fa-solid fa-lightbulb text-warning me-1"></i>
+                    <div class="p-2 rounded-2 border border-info border-opacity-25 bg-info-subtle bg-opacity-25 text-info-emphasis small" style="font-size: 11.5px; line-height: 1.5;">
+                        <i class="fa-solid fa-lightbulb text-warning me-2"></i>
                         <strong>Mẹo đối chiếu:</strong> Bạn có thể so sánh giữa nội dung sinh viên tự khai báo ở cột trái và kết quả AI trích xuất từ file PDF ở đây để quyết định đánh giá <strong>Đạt</strong> hay <strong>Yêu cầu nộp lại</strong>.
                     </div>
                 </div>

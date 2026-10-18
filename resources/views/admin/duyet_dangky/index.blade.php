@@ -13,19 +13,19 @@
         </h4>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-warning text-dark rounded-3 px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNgoaiLeVPK">
-            <i class="fa-solid fa-hand-holding-hand me-1"></i> Xử Lý Ngoại Lệ (VPK)
+        <button type="button" class="btn btn-sm btn-warning text-dark rounded-3 px-3 fw-semibold shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalNgoaiLeVPK">
+            <i class="fa-solid fa-hand-holding-hand me-2"></i> Xử Lý Ngoại Lệ (VPK)
         </button>
 
         <form action="{{ route('admin.duyet_dangky.publishOfficialList') }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn chốt và CÔNG BỐ CHÍNH THỨC danh sách đề tài & GVHD? Hệ thống sẽ phát thông báo hướng dẫn liên hệ GVHD đến toàn thể SV và GV.');">
             @csrf
-            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold shadow-sm">
-                <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Danh Sách (14/08)
+            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 fw-semibold shadow-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Danh Sách (14/08)
             </button>
         </form>
 
         <a href="{{ route('admin.duyet_dangky.export', request()->all()) }}" class="btn btn-sm btn-outline-success rounded-3 px-3 fw-semibold shadow-sm">
-            <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel / CSV
+            <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel / CSV
         </a>
     </div>
 </div>
@@ -86,8 +86,8 @@
 
         {{-- Nút bấm --}}
         <div class="col-6 col-md-4 d-flex gap-2 justify-content-end">
-            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3">
-                <i class="fa-solid fa-filter me-1"></i> Lọc Dữ Liệu
+            <button type="submit" class="btn btn-sm btn-primary rounded-3 px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-filter me-2"></i> Lọc Dữ Liệu
             </button>
             <a href="{{ route('admin.duyet_dangky.index') }}" class="btn btn-sm btn-light border rounded-3 text-secondary" title="Đặt lại bộ lọc">
                 <i class="fa-solid fa-rotate-left"></i>
@@ -157,18 +157,18 @@
                     <td class="text-center">
                         @if($dk->TrangThai === 'Đã duyệt')
                             <span class="badge bg-success text-white rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle-check me-1"></i>Đã gán cho nhóm
+                                <i class="fa-solid fa-circle-check me-2"></i>Đã gán cho nhóm
                             </span>
                             @if($dk->NgayDuyet)
                                 <div class="text-muted small mt-1" style="font-size: 0.72rem;">{{ \Carbon\Carbon::parse($dk->NgayDuyet)->format('d/m/Y') }}</div>
                             @endif
                         @elseif($dk->TrangThai === 'Từ chối')
                             <span class="badge bg-danger text-white rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle-xmark me-1"></i>Từ chối / Hủy
+                                <i class="fa-solid fa-circle-xmark me-2"></i>Từ chối / Hủy
                             </span>
                         @else
                             <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-clock me-1"></i>Chờ xử lý
+                                <i class="fa-solid fa-clock me-2"></i>Chờ xử lý
                             </span>
                         @endif
                     </td>
@@ -180,9 +180,9 @@
 
                     {{-- Thao tác: Giáo vụ chỉ xem chi tiết --}}
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-light border rounded-3 px-2 py-1 text-primary fw-semibold" 
+                        <button type="button" class="btn btn-sm btn-light border rounded-3 px-2 py-1 text-primary fw-semibold d-inline-flex align-items-center" 
                                 data-bs-toggle="modal" data-bs-target="#detailModal{{ $dk->MaDangKy }}" title="Xem chi tiết đăng ký">
-                            <i class="fa-solid fa-eye me-1"></i>Chi tiết
+                            <i class="fa-solid fa-eye me-2"></i>Chi tiết
                         </button>
 
                         {{-- MODAL CHI TIẾT ĐĂNG KÝ --}}
@@ -214,7 +214,7 @@
                                         {{-- THÔNG TIN NHÓM SINH VIÊN --}}
                                         <div class="mb-3">
                                             <h6 class="fw-bold text-dark mb-2">
-                                                <i class="fa-solid fa-users text-primary me-1"></i> Danh Sách Thành Viên Nhóm ({{ $dk->nhom->TenNhom ?? $dk->MaNhom }})
+                                                <i class="fa-solid fa-users text-primary me-2"></i> Danh Sách Thành Viên Nhóm ({{ $dk->nhom->TenNhom ?? $dk->MaNhom }})
                                             </h6>
                                             <div class="table-responsive border rounded-3">
                                                 <table class="table table-sm table-hover mb-0 align-middle">
@@ -260,11 +260,11 @@
                                                 <div>
                                                     <span class="fw-bold">Trạng thái đăng ký:</span>
                                                     @if($dk->TrangThai === 'Đã duyệt')
-                                                        <span class="text-success fw-bold ms-1"><i class="fa-solid fa-check-circle me-1"></i>Đã gán chính thức cho nhóm</span>
+                                                        <span class="text-success fw-bold ms-1"><i class="fa-solid fa-check-circle me-2"></i>Đã gán chính thức cho nhóm</span>
                                                     @elseif($dk->TrangThai === 'Từ chối')
-                                                        <span class="text-danger fw-bold ms-1"><i class="fa-solid fa-times-circle me-1"></i>Đã từ chối / Hủy</span>
+                                                        <span class="text-danger fw-bold ms-1"><i class="fa-solid fa-times-circle me-2"></i>Đã từ chối / Hủy</span>
                                                     @else
-                                                        <span class="text-warning-emphasis fw-bold ms-1"><i class="fa-solid fa-clock me-1"></i>Đang chờ xử lý</span>
+                                                        <span class="text-warning-emphasis fw-bold ms-1"><i class="fa-solid fa-clock me-2"></i>Đang chờ xử lý</span>
                                                     @endif
                                                 </div>
                                                 <div class="small text-muted">
@@ -294,7 +294,7 @@
                 @empty
                 <tr>
                     <td colspan="6" class="text-center text-muted py-5">
-                        <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                        <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                         Không có đơn đăng ký đề tài nào trong danh sách.
                     </td>
                 </tr>
@@ -323,14 +323,14 @@
                 @csrf
                 <div class="modal-header bg-warning bg-opacity-25 border-bottom py-3 px-4">
                     <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalNgoaiLeVPKLabel">
-                        <i class="fa-solid fa-hand-holding-hand text-warning"></i>
+                        <i class="fa-solid fa-hand-holding-hand text-warning me-2"></i>
                         Xử Lý Ngoại Lệ Đăng Ký Đề Tài Tại Văn Phòng Khoa (Mốc 12/08)
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-info border-0 rounded-3 mb-3 p-3" style="font-size: 0.88rem;">
-                        <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
                         Chức năng dành cho Giáo vụ hỗ trợ các nhóm sinh viên gặp sự cố kỹ thuật hoặc chưa đăng ký được đề tài trên phần mềm trong ngày đăng ký chính thức, đến trực tiếp VPK xử lý theo thông báo số 27/TB-KCNTT.
                     </div>
 
@@ -372,8 +372,8 @@
                 </div>
                 <div class="modal-footer bg-light py-2 px-4 border-top">
                     <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold text-dark shadow-sm">
-                        <i class="fa-solid fa-check-circle me-1"></i> Xác Nhận Gán Đề Tài Cho Nhóm
+                    <button type="submit" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold text-dark shadow-sm d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check-circle me-2"></i> Xác Nhận Gán Đề Tài Cho Nhóm
                     </button>
                 </div>
             </form>

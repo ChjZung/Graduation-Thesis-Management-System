@@ -23,13 +23,13 @@ class PlanPhaseService
             $query->where('MaHocKy', $maHocKy);
         }
 
-        if (!empty($maKhoa)) {
+        if (!empty($maKhoa) && \Illuminate\Support\Facades\Schema::hasColumn('kehoachkhoaluan', 'MaKhoa')) {
             $query->where(function ($q) use ($maKhoa) {
                 $q->where('MaKhoa', $maKhoa)->orWhereNull('MaKhoa');
             });
         }
 
-        if (!empty($maBoMon)) {
+        if (!empty($maBoMon) && \Illuminate\Support\Facades\Schema::hasColumn('kehoachkhoaluan', 'MaBoMon')) {
             $query->where(function ($q) use ($maBoMon) {
                 $q->where('MaBoMon', $maBoMon)->orWhereNull('MaBoMon');
             });

@@ -23,12 +23,12 @@
                     </option>
                 @endforeach
             </select>
-            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-filter me-1"></i>Lọc
+            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-filter me-2"></i>Lọc
             </button>
             @if($selectedNhomId)
-                <a href="{{ route('giangvien.sanpham.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="fa-solid fa-xmark me-1"></i>Xoá lọc
+                <a href="{{ route('giangvien.sanpham.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                    <i class="fa-solid fa-xmark me-2"></i>Xoá lọc
                 </a>
             @endif
         </form>
@@ -47,9 +47,9 @@
                         </span>
                     </h5>
                     <div class="text-muted small">
-                        <i class="fa-solid fa-book me-1"></i>Môn: <strong>{{ $nhom->monHoc->TenMon ?? '—' }}</strong>
+                        <i class="fa-solid fa-book me-2"></i>Môn: <strong>{{ $nhom->monHoc->TenMon ?? '—' }}</strong>
                         &nbsp;|&nbsp;
-                        <i class="fa-solid fa-graduation-cap me-1"></i>Đề tài:
+                        <i class="fa-solid fa-graduation-cap me-2"></i>Đề tài:
                         @if($nhom->dangKyDeTai && $nhom->dangKyDeTai->deTai)
                             <strong class="text-primary">{{ $nhom->dangKyDeTai->deTai->TenDeTai }}</strong>
                             <span class="badge bg-{{ $nhom->dangKyDeTai->TrangThai == 'Đã duyệt' ? 'success' : ($nhom->dangKyDeTai->TrangThai == 'Từ chối' ? 'danger' : 'warning text-dark') }} ms-1">
@@ -64,7 +64,7 @@
 
             {{-- Thành viên --}}
             <div class="mb-3">
-                <span class="text-muted small fw-semibold"><i class="fa-solid fa-user-group me-1"></i>Thành viên nhóm:</span>
+                <span class="text-muted small fw-semibold"><i class="fa-solid fa-user-group me-2"></i>Thành viên nhóm:</span>
                 <div class="d-flex flex-wrap gap-2 mt-1">
                     @foreach($nhom->thanhVienNhoms->whereIn('TrangThai', ['da_chap_nhan', 'da_tham_gia']) as $tv)
                     <span class="badge bg-light text-dark border">
@@ -120,16 +120,16 @@
                                             <td>
                                                 @if(is_array($decodedBc))
                                                     @if(!empty($decodedBc['file']))
-                                                        <span class="badge bg-light text-success border me-1"><i class="fa-solid fa-file me-1"></i>File báo cáo</span>
+                                                        <span class="badge bg-light text-success border me-1"><i class="fa-solid fa-file me-2"></i>File báo cáo</span>
                                                     @endif
                                                     @if(!empty($decodedBc['github']))
-                                                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-1"></i>GitHub Repo</span>
+                                                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-2"></i>GitHub Repo</span>
                                                     @endif
                                                 @elseif($fileBc)
                                                     @if($isUrlBc)
-                                                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-1"></i>GitHub Repo</span>
+                                                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-2"></i>GitHub Repo</span>
                                                     @else
-                                                        <span class="badge bg-light text-success border"><i class="fa-solid fa-file me-1"></i>File báo cáo</span>
+                                                        <span class="badge bg-light text-success border"><i class="fa-solid fa-file me-2"></i>File báo cáo</span>
                                                     @endif
                                                 @else
                                                     <span class="text-muted">—</span>
@@ -139,27 +139,27 @@
                                                 @if(is_array($decodedBc))
                                                     <div class="d-flex gap-1">
                                                         @if(!empty($decodedBc['github']))
-                                                            <a href="{{ $decodedBc['github'] }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" title="Xem GitHub">
-                                                                <i class="fa-brands fa-github me-1"></i>Xem link GitHub
+                                                            <a href="{{ $decodedBc['github'] }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2 d-inline-flex align-items-center" title="Xem GitHub">
+                                                                <i class="fa-brands fa-github me-2"></i>Xem link GitHub
                                                             </a>
                                                         @endif
                                                         @if(!empty($decodedBc['file']))
-                                                            <a href="{{ asset(ltrim($decodedBc['file'], '/')) }}" download class="btn btn-sm btn-outline-success py-0 px-2" title="Tải về">
-                                                                <i class="fa-solid fa-download me-1"></i>Download File
+                                                            <a href="{{ asset(ltrim($decodedBc['file'], '/')) }}" download class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center" title="Tải về">
+                                                                <i class="fa-solid fa-download me-2"></i>Download File
                                                             </a>
                                                         @endif
                                                     </div>
                                                 @elseif($fileBc)
                                                     @if($isUrlBc)
-                                                        <a href="{{ $fileBc }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" title="Xem GitHub">
-                                                            <i class="fa-brands fa-github me-1"></i>Xem link GitHub
+                                                        <a href="{{ $fileBc }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2 d-inline-flex align-items-center" title="Xem GitHub">
+                                                            <i class="fa-brands fa-github me-2"></i>Xem link GitHub
                                                         </a>
                                                     @else
                                                         @php
                                                             $targetUrlBc = asset(ltrim($fileBc, '/'));
                                                         @endphp
-                                                        <a href="{{ $targetUrlBc }}" download class="btn btn-sm btn-outline-success py-0 px-2" title="Tải về">
-                                                            <i class="fa-solid fa-download me-1"></i>Download File
+                                                        <a href="{{ $targetUrlBc }}" download class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center" title="Tải về">
+                                                            <i class="fa-solid fa-download me-2"></i>Download File
                                                         </a>
                                                     @endif
                                                 @else
@@ -169,7 +169,7 @@
                                             <td>
                                                 @if($bc->nhanXets->isNotEmpty())
                                                     <span class="text-success small">
-                                                        <i class="fa-solid fa-check-circle me-1"></i>
+                                                        <i class="fa-solid fa-check-circle me-2"></i>
                                                         {{ Str::limit($bc->nhanXets->last()->NoiDung ?? '', 50) }}
                                                     </span>
                                                 @else
@@ -229,10 +229,10 @@
                                             <td class="small text-muted">{{ \Carbon\Carbon::parse($sp->NgayNop)->format('d/m/Y') }}</td>
                                             <td>
                                                 @if($sp->LinkFile && !filter_var($sp->LinkFile, FILTER_VALIDATE_URL))
-                                                    <span class="badge bg-light text-success border me-1"><i class="fa-solid fa-file me-1"></i>File báo cáo</span>
+                                                    <span class="badge bg-light text-success border me-1"><i class="fa-solid fa-file me-2"></i>File báo cáo</span>
                                                 @endif
                                                 @if($gitUrl)
-                                                    <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-1"></i>GitHub Repo</span>
+                                                    <span class="badge bg-light text-dark border"><i class="fa-brands fa-github me-2"></i>GitHub Repo</span>
                                                 @endif
                                                 @if(!$sp->LinkFile && !$gitUrl)
                                                     <span class="text-muted">—</span>
@@ -241,13 +241,13 @@
                                             <td>
                                                 <div class="d-flex gap-1">
                                                     @if($gitUrl)
-                                                        <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" title="Xem GitHub">
-                                                            <i class="fa-brands fa-github me-1"></i>Xem link GitHub
+                                                        <a href="{{ $gitUrl }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2 d-inline-flex align-items-center" title="Xem GitHub">
+                                                            <i class="fa-brands fa-github me-2"></i>Xem link GitHub
                                                         </a>
                                                     @endif
                                                     @if($fileUrl && !filter_var($sp->LinkFile, FILTER_VALIDATE_URL))
-                                                        <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success py-0 px-2" title="Tải về">
-                                                            <i class="fa-solid fa-download me-1"></i>Download File
+                                                        <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center" title="Tải về">
+                                                            <i class="fa-solid fa-download me-2"></i>Download File
                                                         </a>
                                                     @endif
                                                 </div>

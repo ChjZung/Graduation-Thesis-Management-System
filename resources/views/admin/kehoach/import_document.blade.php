@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-3">
-    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách kế hoạch
+    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách kế hoạch
     </a>
 </div>
 
@@ -19,7 +19,7 @@
 <div class="admin-table-card">
     <div class="admin-table-header">
         <h5 class="admin-table-header-title">
-            <i class="fa-solid fa-file-pdf text-danger"></i>
+            <i class="fa-solid fa-file-pdf text-danger me-2"></i>
             Lập Kế Hoạch Tự Động Từ File Thông Báo Chính Thức (PDF / Word)
         </h5>
     </div>
@@ -27,10 +27,10 @@
         <!-- 4-Step Wizard Progress -->
         <div class="mb-4 p-3 bg-light rounded-3 border">
             <div class="row text-center small fw-bold text-muted g-2">
-                <div class="col-md-3 text-primary"><i class="fa-solid fa-circle-1 me-1"></i>1. Upload Văn bản</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-1"></i>2. Trích xuất văn bản</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-1"></i>3. Đối chiếu xem trước</div>
-                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-1"></i>4. Xác nhận &amp; Cập nhật</div>
+                <div class="col-md-3 text-primary"><i class="fa-solid fa-circle-1 me-2"></i>1. Upload Văn bản</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-2 me-2"></i>2. Trích xuất văn bản</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-3 me-2"></i>3. Đối chiếu xem trước</div>
+                <div class="col-md-3"><i class="fa-solid fa-circle-4 me-2"></i>4. Xác nhận &amp; Cập nhật</div>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
                     <div class="card border-0 bg-light p-3 rounded-4 border">
                         <label for="MaHocKy" class="form-label fw-bold text-dark d-flex justify-content-between align-items-center mb-2">
                             <span><i class="fa-solid fa-calendar-days text-primary me-2"></i>1. Chọn Học Kỳ Áp Dụng Cho Kế Hoạch: <span class="text-danger">*</span></span>
-                            <span class="badge bg-primary text-white font-weight-normal"><i class="fa-solid fa-graduation-cap me-1"></i>Học kỳ áp dụng</span>
+                            <span class="badge bg-primary text-white font-weight-normal"><i class="fa-solid fa-graduation-cap me-2"></i>Học kỳ áp dụng</span>
                         </label>
                         <select name="MaHocKy" id="MaHocKy" class="form-select form-select-lg rounded-3" required>
                             <option value="">-- Chọn Học Kỳ Áp Dụng --</option>
@@ -56,7 +56,7 @@
                             @endforelse
                         </select>
                         <div class="form-text text-muted small mt-2">
-                            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                            <i class="fa-solid fa-circle-info text-primary me-2"></i>
                             Kế hoạch khóa luận và các mốc quy trình sẽ được liên kết và thiết lập cho học kỳ này.
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                         <p class="text-muted small mb-4">Hỗ trợ định dạng <strong>.PDF</strong> hoặc <strong>.DOCX</strong> (Dung lượng tối đa 10MB). Hệ thống sẽ tự động đọc bảng mốc thời gian, học kỳ và mã học phần.</p>
                         
                         <input type="file" name="document_file" id="document_file" class="form-control form-control-lg d-none" accept=".pdf,.docx" onchange="updateFileName(this)" required>
-                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm" onclick="document.getElementById('document_file').click()">
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm d-inline-flex align-items-center" onclick="document.getElementById('document_file').click()">
                             <i class="fa-solid fa-file-import me-2"></i>Chọn File Văn Bản
                         </button>
                         
@@ -90,8 +90,8 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm">
-                    <i class="fa-solid fa-file-invoice me-1"></i> Bắt Đầu Trích Xuất &amp; Xem Trước
+                <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center">
+                    <i class="fa-solid fa-file-invoice me-2"></i> Bắt Đầu Trích Xuất &amp; Xem Trước
                 </button>
             </div>
         </form>

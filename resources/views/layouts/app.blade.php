@@ -13,9 +13,31 @@
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
   <style>
-        body{
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #f5f7fb;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        #app > nav.navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+        #app > main {
+            flex: 1 0 auto;
         }
   </style>
     <!-- Scripts -->

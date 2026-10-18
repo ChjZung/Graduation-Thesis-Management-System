@@ -130,4 +130,29 @@ class DeTai extends Model
     {
         return $this->hasMany(PhieuChamDiem::class, 'MaDeTai', 'MaDeTai');
     }
+
+    public function boMon()
+    {
+        return $this->hasOneThrough(BoMon::class, GiangVien::class, 'MaGV', 'MaBoMon', 'MaGV', 'MaBoMon');
+    }
+
+    public function nhoms()
+    {
+        return $this->hasManyThrough(Nhom::class, PhieuDangKy::class, 'MaDeTai', 'MaNhom', 'MaDeTai', 'MaNhom');
+    }
+
+    public function giaiDoanThucHiens()
+    {
+        return $this->hasMany(GiaiDoanThucHien::class, 'MaDeTai', 'MaDeTai')->orderBy('ThuTu');
+    }
+
+    public function dotNopBaoCaos()
+    {
+        return $this->hasMany(DotNopBaoCao::class, 'MaDeTai', 'MaDeTai')->orderBy('ThuTu');
+    }
+
+    public function tienDoNghiepVu()
+    {
+        return $this->hasOne(TienDoNghiepVuKhoaLuan::class, 'MaDeTai', 'MaDeTai');
+    }
 }

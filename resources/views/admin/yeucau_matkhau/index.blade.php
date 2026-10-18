@@ -10,7 +10,7 @@
         </div>
         <div class="d-flex align-items-center">
             <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
-                <i class="fa-solid fa-lock text-primary me-1"></i> Chính sách bảo mật HUIT: Reset về <code>123456</code>
+                <i class="fa-solid fa-lock text-primary me-2"></i> Chính sách bảo mật HUIT: Reset về <code>123456</code>
             </span>
         </div>
     </div>
@@ -82,7 +82,7 @@
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
             <span class="fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-envelope-open-text text-warning"></i>
+                <i class="fa-solid fa-envelope-open-text text-warning me-2"></i>
                 <span>Yêu Cầu Cấp Lại Mật Khẩu Đang Chờ Duyệt</span>
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill ms-1 fw-semibold">{{ $yeuCauChoDuyet->count() }}</span>
             </span>
@@ -110,16 +110,16 @@
                         <td class="py-3">
                             <div class="fw-bold text-darkfs-6">{{ $yc->HoTen }}</div>
                             @if($yc->Email)
-                                <div class="small text-muted"><i class="fa-regular fa-envelope me-1"></i>{{ $yc->Email }}</div>
+                                <div class="small text-muted"><i class="fa-regular fa-envelope me-2"></i>{{ $yc->Email }}</div>
                             @endif
                         </td>
                         <td class="py-3">
                             @if($yc->Role === 'Giảng viên')
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1 fw-semibold">
                                     Giảng viên
                                 </span>
                             @else
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold">
                                     Sinh viên
                                 </span>
                             @endif
@@ -128,7 +128,7 @@
                             <span class="small text-secondary">{{ $yc->LyDo ?? 'Quên mật khẩu đăng nhập' }}</span>
                         </td>
                         <td class="py-3">
-                            <span class="small text-muted"><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($yc->NgayGui)->format('d/m/Y H:i') }}</span>
+                            <span class="small text-muted"><i class="fa-regular fa-clock me-2"></i>{{ \Carbon\Carbon::parse($yc->NgayGui)->format('d/m/Y H:i') }}</span>
                         </td>
                         <td class="pe-4 text-center py-3">
                             <div class="d-flex justify-content-center gap-1">
@@ -192,7 +192,7 @@
                         <option value="0" {{ request('TrangThai') === '0' ? 'selected' : '' }}>🔴 Đang bị khóa</option>
                     </select>
                     @if(request()->anyFilled(['search', 'MaVaiTro', 'TrangThai']))
-                        <a href="{{ route('admin.yeucau.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                        <a href="{{ route('admin.yeucau.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                     @endif
                 </div>
             </form>
@@ -223,25 +223,25 @@
                             @endif
                         </td>
                         <td class="py-3">
-                            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1">{{ $tk->vaiTro->TenVaiTro ?? 'N/A' }}</span>
+                            <span class="badge bg-light text-dark border rounded-pill px-3 py-1">{{ $tk->vaiTro->TenVaiTro ?? 'N/A' }}</span>
                         </td>
                         <td class="text-center py-3">
                             @if($tk->TrangThaiMatKhau === 'ACTIVE' || $tk->password_status === 'ACTIVE')
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold"><i class="fa-solid fa-check me-1"></i>ACTIVE</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold"><i class="fa-solid fa-check me-2"></i>ACTIVE</span>
                             @elseif($tk->TrangThaiMatKhau === 'INITIAL' || $tk->password_status === 'INITIAL')
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold"><i class="fa-solid fa-clock me-1"></i>INITIAL</span>
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fw-semibold"><i class="fa-solid fa-clock me-2"></i>INITIAL</span>
                             @else
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1 fw-semibold">EXPIRED</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1 fw-semibold">EXPIRED</span>
                             @endif
                         </td>
                         <td class="text-center py-3">
                             @if($tk->TrangThai)
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                    <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
                                 </span>
                             @else
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                    <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #dc2626;"></i> Đã khóa
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #dc2626;"></i> Đã khóa
                                 </span>
                             @endif
                         </td>
@@ -275,7 +275,7 @@
                                 <h6 class="fw-bold text-secondary">Không tìm thấy tài khoản nào</h6>
                                 <p class="small text-muted mb-3">Thử thay đổi từ khóa hoặc xóa bộ lọc tìm kiếm.</p>
                                 @if(request()->anyFilled(['search', 'MaVaiTro', 'TrangThai']))
-                                    <a href="{{ route('admin.yeucau.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-1"></i> Xóa bộ lọc</a>
+                                    <a href="{{ route('admin.yeucau.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 d-inline-flex align-items-center"><i class="fa-solid fa-rotate me-2"></i> Xóa bộ lọc</a>
                                 @endif
                             </div>
                         </td>

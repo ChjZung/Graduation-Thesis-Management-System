@@ -14,16 +14,16 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'Chờ duyệt cấp Bộ môn']) }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
-                <i class="fa-solid fa-clipboard-check me-1"></i> Duyệt Đề Tài ({{ $stats['cho_duyet_bm'] }})
+                <i class="fa-solid fa-clipboard-check me-2"></i> Duyệt Đề Tài ({{ $stats['cho_duyet_bm'] }})
             </a>
-            <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-outline-primary btn-sm rounded-3 fw-semibold">
-                <i class="fa-solid fa-user-plus me-1"></i> Phân Công PB ({{ $stats['cho_phan_cong_pb'] }})
+            <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-outline-primary btn-sm rounded-3 fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-user-plus me-2"></i> Phân Công PB ({{ $stats['cho_phan_cong_pb'] }})
             </a>
-            <a href="{{ route('truongbomon.theodoi.index') }}" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold">
-                <i class="fa-solid fa-list-check me-1"></i> Theo Dõi Tiến Độ
+            <a href="{{ route('truongbomon.theodoi.index') }}" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-list-check me-2"></i> Theo Dõi Tiến Độ
             </a>
             <a href="{{ route('truongbomon.duyet_detai.index', ['view' => 'thongke']) }}" class="btn btn-outline-success btn-sm rounded-3 fw-semibold">
-                <i class="fa-solid fa-chart-column me-1"></i> Thống Kê
+                <i class="fa-solid fa-chart-column me-2"></i> Thống Kê
             </a>
         </div>
     </div>
@@ -183,7 +183,7 @@
                 <a href="{{ route('truongbomon.duyet_detai.index', ['TrangThai' => 'can_duyet']) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
                     Duyệt Đề Tài <i class="fa-solid fa-arrow-right ms-1"></i>
                 </a>
-                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold d-inline-flex align-items-center">
                     Phân Công PB <i class="fa-solid fa-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -221,48 +221,48 @@
                                     <td>{{ $dt->giangVien->HoTen ?? 'Chưa xác định' }}</td>
                                     <td>
                                         @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-clock me-1"></i> Chờ duyệt BM</span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-clock me-2"></i> Chờ duyệt BM</span>
                                         @elseif($dt->TrangThai === 'Đang phản biện đề cương')
-                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-spinner me-1"></i> Đang phản biện</span>
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-spinner me-2"></i> Đang phản biện</span>
                                         @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1"><i class="fa-solid fa-check-double me-1"></i> Đã phản biện</span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-check-double me-2"></i> Đã phản biện</span>
                                         @else
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1">{{ $dt->TrangThai }}</span>
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1">{{ $dt->TrangThai }}</span>
                                         @endif
                                     </td>
                                     <td>
                                         @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn')
                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.75rem;">
-                                                <i class="fa-solid fa-clock me-1"></i> Chờ TBM duyệt đề xuất
+                                                <i class="fa-solid fa-clock me-2"></i> Chờ TBM duyệt đề xuất
                                             </span>
                                         @elseif($pb)
                                             <div class="small fw-semibold">{{ $pb->giangVien->HoTen ?? 'N/A' }}</div>
                                             @if($pb->KetQua === 'Đạt')
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-2"></i> Đạt</span>
                                             @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
-                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-pen me-1"></i> Cần sửa</span>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-pen me-2"></i> Cần sửa</span>
                                             @elseif($pb->KetQua === 'Không đạt')
-                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-xmark me-1"></i> Không đạt</span>
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-xmark me-2"></i> Không đạt</span>
                                             @else
-                                                <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-hourglass-start me-1"></i> Chờ đánh giá</span>
+                                                <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-hourglass-start me-2"></i> Chờ đánh giá</span>
                                             @endif
                                         @else
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa phân công PB</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.75rem;"><i class="fa-solid fa-circle-exclamation me-2"></i> Chưa phân công PB</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
                                         <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
                                             @if($dt->TrangThai === 'Chờ duyệt cấp Bộ môn' || $dt->TrangThai === 'Đã phản biện - Chờ duyệt BM')
                                                 <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
-                                                    <i class="fa-solid fa-clipboard-check me-1"></i> Duyệt đề tài
+                                                    <i class="fa-solid fa-clipboard-check me-2"></i> Duyệt đề tài
                                                 </a>
                                             @elseif(!$pb)
-                                                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-info text-white rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
-                                                    <i class="fa-solid fa-user-plus me-1"></i> Phân công PB
+                                                <a href="{{ route('truongbomon.phancong.index') }}" class="btn btn-sm btn-info text-white rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs d-inline-flex align-items-center">
+                                                    <i class="fa-solid fa-user-plus me-2"></i> Phân công PB
                                                 </a>
                                             @endif
                                             <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-nowrap">
-                                                <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                                                <i class="fa-solid fa-eye me-2"></i> Chi tiết
                                             </a>
                                         </div>
                                     </td>

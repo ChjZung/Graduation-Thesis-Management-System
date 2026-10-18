@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 class ThongBaoController extends Controller
 {
-    public function index()
+    public function index(?\Illuminate\Http\Request $request = null)
     {
+        $request = $request ?? request();
         $user = Auth::user();
         $readIds = \App\Services\ThongBaoService::getReadIds($user?->MaTK);
 
@@ -34,9 +35,45 @@ class ThongBaoController extends Controller
             })
             ->orderBy('created_at', 'desc');
 
-        $thongBaos = $query->paginate(15);
+        // Bộ lọc từ khóa
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('TieuDe', 'like', "%{$s}%")
+                  ->orWhere('NoiDung', 'like', "%{$s}%")
+                  ->orWhere('MaThongBao', 'like', "%{$s}%");
+            });
+        }
 
-        $thongBaos->getCollection()->transform(function($tb) use ($readIds) {
+        // Bộ lọc Loại thông báo
+        if ($request->filled('LoaiThongBao')) {
+            $query->where('LoaiThongBao', $request->LoaiThongBao);
+        }
+
+        // Bộ lọc Trạng thái đã đọc / chưa đọc
+        if ($request->filled('is_read')) {
+            if ($request->is_read === 'read') {
+                $query->whereIn('MaThongBao', $readIds);
+            } elseif ($request->is_read === 'unread') {
+                $query->whereNotIn('MaThongBao', $readIds);
+            }
+        }
+
+        $allVisibleCodes = (clone $query)->pluck('MaThongBao')->toArray();
+        $unreadCount = count(array_diff($allVisibleCodes, $readIds));
+        $targetAllCount = (clone $query)->whereIn('DoiTuongNhan', ['Toàn trường', 'Toàn thể', 'Tất cả', 'Toàn thể GV và SV'])->count();
+
+        $stats = [
+            'total_thongbao'       => count($allVisibleCodes),
+            'active_count'         => count($allVisibleCodes),
+            'unread_count'         => $unreadCount,
+            'draft_schedule_count' => 0,
+            'target_all_count'     => $targetAllCount,
+        ];
+
+        $thongbaos = $query->paginate(15)->withQueryString();
+
+        $thongbaos->getCollection()->transform(function($tb) use ($readIds) {
             $tb->DaDoc = in_array($tb->MaThongBao, $readIds);
             $tb->Loai = $tb->LoaiThongBao ?? 'Thông báo';
             $tb->icon = match($tb->LoaiThongBao) {
@@ -49,7 +86,11 @@ class ThongBaoController extends Controller
             return $tb;
         });
 
-        return view('sinhvien.thongbao.index', compact('thongBaos'));
+        $thongBaos = $thongbaos;
+        $role = 'Sinh viên';
+        $layout = 'layouts.sinhvien';
+
+        return view('sinhvien.thongbao.index', compact('thongbaos', 'thongBaos', 'stats', 'readIds', 'role', 'layout'));
     }
 
     public function markRead($id)

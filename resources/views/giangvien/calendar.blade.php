@@ -320,8 +320,8 @@
             <p class="text-muted small mb-0">Quản lý lịch trình bảo vệ khóa luận tốt nghiệp, theo dõi mốc báo cáo và đồng bộ lịch làm việc.</p>
         </div>
         <div>
-            <button class="btn btn-export-google" onclick="exportToGoogleCalendar()">
-                <i class="fa-brands fa-google me-1.5"></i> Xuất Lịch Google
+            <button class="btn btn-export-google d-inline-flex align-items-center" onclick="exportToGoogleCalendar()">
+                <i class="fa-brands fa-google me-2"></i> Xuất Lịch Google
             </button>
         </div>
     </div>
@@ -419,15 +419,15 @@
                 <!-- Legend -->
                 <div class="d-flex justify-content-center align-items-center gap-3 pt-3 border-top mt-3 small">
                     <span class="d-inline-flex align-items-center">
-                        <span class="badge rounded-circle p-1 me-1.5" style="background-color: #2563eb;"> </span>
+                        <span class="badge rounded-circle p-1 me-2" style="background-color: #2563eb;"> </span>
                         <span class="text-secondary" style="font-size: 0.75rem;">Chủ tịch HĐ</span>
                     </span>
                     <span class="d-inline-flex align-items-center">
-                        <span class="badge rounded-circle p-1 me-1.5" style="background-color: #f59e0b;"> </span>
+                        <span class="badge rounded-circle p-1 me-2" style="background-color: #f59e0b;"> </span>
                         <span class="text-secondary" style="font-size: 0.75rem;">Ủy viên HĐ</span>
                     </span>
                     <span class="d-inline-flex align-items-center">
-                        <span class="badge rounded-circle p-1 me-1.5" style="background-color: #10b981;"> </span>
+                        <span class="badge rounded-circle p-1 me-2" style="background-color: #10b981;"> </span>
                         <span class="text-secondary" style="font-size: 0.75rem;">Báo cáo Mốc</span>
                     </span>
                 </div>
@@ -484,15 +484,15 @@
                 <!-- Warning Notice Box -->
                 <div class="notice-box mt-3">
                     <div class="fw-bold mb-1 text-danger">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i> LƯU Ý CHO GIẢNG VIÊN HƯỚNG DẪN &amp; THÀNH VIÊN HỘI ĐỒNG:
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> LƯU Ý CHO GIẢNG VIÊN HƯỚNG DẪN &amp; THÀNH VIÊN HỘI ĐỒNG:
                     </div>
-                    <ul class="mb-1.5 ps-3 small">
-                        <li>Giảng viên hoàn tất nhận xét Mốc 2 trước ngày <strong>20/11/2026</strong> trên hệ thống[cite: 3].</li>
-                        <li>Xác nhận điều kiện bảo vệ (Turnitin &lt; 20%) cho các nhóm hướng dẫn trước ngày <strong>25/12/2026</strong>[cite: 3].</li>
-                        <li>Hội đồng 01 bắt đầu lúc <strong>08:00 ngày 08/01/2026</strong> tại B.402, đề nghị cán bộ chấm có mặt trước 15 phút[cite: 3].</li>
+                    <ul class="mb-2 ps-3 small">
+                        <li>Giảng viên hoàn tất nhận xét Mốc 2 trước ngày <strong>20/11/2026</strong> trên hệ thống.</li>
+                        <li>Xác nhận điều kiện bảo vệ (Turnitin &lt; 20%) cho các nhóm hướng dẫn trước ngày <strong>25/12/2026</strong>.</li>
+                        <li>Hội đồng 01 bắt đầu lúc <strong>08:00 ngày 08/01/2026</strong> tại B.402, đề nghị cán bộ chấm có mặt trước 15 phút.</li>
                     </ul>
                     <div class="text-muted" style="font-size: 0.75rem;">
-                        Mọi thắc mắc về phân công lịch hội đồng liên hệ Giáo vụ Khoa: (028) 38163 318[cite: 3]
+                        Mọi thắc mắc về phân công lịch hội đồng liên hệ Giáo vụ Khoa: (028) 38163 318
                     </div>
                 </div>
             </div>
@@ -517,42 +517,42 @@
                     <!-- HỘI ĐỒNG 01 -->
                     <tr id="row-hd-01">
                         <td class="ps-4 py-3">
-                            <span class="badge-time-active mb-1.5">
+                            <span class="badge-time-active mb-2">
                                 08:00 - 11:30
                             </span>
-                            <div class="fw-bold text-dark fs-6 mt-1">08/01/2026 (Thứ Năm)[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6 mt-1">08/01/2026 (Thứ Năm)</div>
                             <div class="small text-success fw-semibold mt-1">
-                                <i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i>Đang mở chấm điểm
+                                <i class="fa-solid fa-circle me-2" style="font-size: 0.5rem;"></i>Đang mở chấm điểm
                             </div>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark fs-6">Hội đồng 01[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6">Hội đồng 01</div>
                             <div class="small text-muted">Khoa CNTT (KTPM)</div>
                         </td>
                         <td>
                             <span class="role-badge-gold">
-                                <i class="fa-solid fa-crown text-warning"></i> Chủ tịch HĐ[cite: 3]
+                                <i class="fa-solid fa-crown text-warning me-2"></i> Chủ tịch HĐ
                             </span>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark">Phòng B.402[cite: 3]</div>
+                            <div class="fw-bold text-dark">Phòng B.402</div>
                             <div class="small text-muted">140 Lê Trọng Tấn</div>
                         </td>
                         <td>
                             <div class="group-item-box active-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 1 (08:00): Nhóm 01 – Hồ Chí Dũng[cite: 3]
+                                    Ca 1 (08:00): Nhóm 01 – Hồ Chí Dũng
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    QL công tác khóa luận tốt nghiệp tại HUIT[cite: 3]
+                                    QL công tác khóa luận tốt nghiệp tại HUIT
                                 </div>
                             </div>
                             <div class="group-item-box active-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 2 (08:50): Nhóm 04 – Trần Văn An[cite: 3]
+                                    Ca 2 (08:50): Nhóm 04 – Trần Văn An
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    Hỗ trợ người khiếm thị nhận diện vật cản[cite: 3]
+                                    Hỗ trợ người khiếm thị nhận diện vật cản
                                 </div>
                             </div>
                         </td>
@@ -566,42 +566,42 @@
                     <!-- HỘI ĐỒNG 03 -->
                     <tr id="row-hd-03">
                         <td class="ps-4 py-3">
-                            <span class="badge-time-muted mb-1.5">
+                            <span class="badge-time-muted mb-2">
                                 13:30 - 16:30
                             </span>
-                            <div class="fw-bold text-dark fs-6 mt-1">09/01/2026 (Thứ Sáu)[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6 mt-1">09/01/2026 (Thứ Sáu)</div>
                             <div class="small text-muted mt-1">
-                                <i class="fa-regular fa-circle me-1" style="font-size: 0.5rem;"></i>Chưa diễn ra
+                                <i class="fa-regular fa-circle me-2" style="font-size: 0.5rem;"></i>Chưa diễn ra
                             </div>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark fs-6">Hội đồng 03[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6">Hội đồng 03</div>
                             <div class="small text-muted">Khoa CNTT (HTTT)</div>
                         </td>
                         <td>
                             <span class="role-badge-silver">
-                                Ủy viên HĐ[cite: 3]
+                                Ủy viên HĐ
                             </span>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark">Phòng B.301[cite: 3]</div>
+                            <div class="fw-bold text-dark">Phòng B.301</div>
                             <div class="small text-muted">140 Lê Trọng Tấn</div>
                         </td>
                         <td>
                             <div class="group-item-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 1 (13:30): Nhóm 07 – Phạm Quốc Huy[cite: 3]
+                                    Ca 1 (13:30): Nhóm 07 – Phạm Quốc Huy
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    Nghiên cứu Microservices cổng thông tin đào tạo[cite: 3]
+                                    Nghiên cứu Microservices cổng thông tin đào tạo
                                 </div>
                             </div>
                             <div class="group-item-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 2 (14:20): Nhóm 12 – Vũ Minh Anh[cite: 3]
+                                    Ca 2 (14:20): Nhóm 12 – Vũ Minh Anh
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    Phát hiện tấn công DDoS mạng IoT bằng AI[cite: 3]
+                                    Phát hiện tấn công DDoS mạng IoT bằng AI
                                 </div>
                             </div>
                         </td>
@@ -615,42 +615,42 @@
                     <!-- HỘI ĐỒNG 05 -->
                     <tr id="row-hd-05">
                         <td class="ps-4 py-3">
-                            <span class="badge-time-muted mb-1.5">
+                            <span class="badge-time-muted mb-2">
                                 08:00 - 11:30
                             </span>
-                            <div class="fw-bold text-dark fs-6 mt-1">10/01/2026 (Thứ Bảy)[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6 mt-1">10/01/2026 (Thứ Bảy)</div>
                             <div class="small text-muted mt-1">
-                                <i class="fa-regular fa-circle me-1" style="font-size: 0.5rem;"></i>Chưa diễn ra
+                                <i class="fa-regular fa-circle me-2" style="font-size: 0.5rem;"></i>Chưa diễn ra
                             </div>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark fs-6">Hội đồng 05[cite: 3]</div>
+                            <div class="fw-bold text-dark fs-6">Hội đồng 05</div>
                             <div class="small text-muted">Khoa CNTT (KHDL &amp; AI)</div>
                         </td>
                         <td>
                             <span class="role-badge-silver">
-                                Ủy viên HĐ[cite: 3]
+                                Ủy viên HĐ
                             </span>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark">Phòng B.402[cite: 3]</div>
+                            <div class="fw-bold text-dark">Phòng B.402</div>
                             <div class="small text-muted">140 Lê Trọng Tấn</div>
                         </td>
                         <td>
                             <div class="group-item-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 1 (08:00): Nhóm 09 – Nguyễn Văn Bình[cite: 3]
+                                    Ca 1 (08:00): Nhóm 09 – Nguyễn Văn Bình
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    Nhận diện biển số xe thông minh tích hợp IoT[cite: 3]
+                                    Nhận diện biển số xe thông minh tích hợp IoT
                                 </div>
                             </div>
                             <div class="group-item-box">
                                 <div class="fw-bold text-primary" style="font-size: 0.85rem;">
-                                    Ca 2 (08:50): Nhóm 15 – Lê Hoàng Nam[cite: 3]
+                                    Ca 2 (08:50): Nhóm 15 – Lê Hoàng Nam
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    Trợ lý ảo hỏi đáp quy chế đào tạo HUIT[cite: 3]
+                                    Trợ lý ảo hỏi đáp quy chế đào tạo HUIT
                                 </div>
                             </div>
                         </td>
@@ -667,7 +667,7 @@
         <!-- Table Footer -->
         <div class="p-3 px-4 border-top d-flex flex-wrap justify-content-between align-items-center gap-2 bg-white">
             <div class="text-muted small fw-medium">
-                Tổng cộng: <strong class="text-dark">3 buổi Hội đồng bảo vệ</strong> (6 nhóm báo cáo)[cite: 3]
+                Tổng cộng: <strong class="text-dark">3 buổi Hội đồng bảo vệ</strong> (6 nhóm báo cáo)
             </div>
             <div>
                 <ul class="pagination pagination-sm mb-0">
@@ -703,10 +703,10 @@
                     <div class="fw-bold fs-6 text-primary" id="detailHdRole"></div>
                 </div>
                 <div class="alert alert-info py-2 px-3 small mb-0 rounded-3 border-info-subtle bg-info-subtle text-info-emphasis">
-                    <i class="fa-solid fa-circle-info me-1"></i> Cổng chấm điểm cho Hội đồng này sẽ tự động mở vào đúng ngày bảo vệ theo quy định của Khoa[cite: 3].
+                    <i class="fa-solid fa-circle-info me-2"></i> Cổng chấm điểm cho Hội đồng này sẽ tự động mở vào đúng ngày bảo vệ theo quy định của Khoa.
                 </div>
             </div>
-            <div class="modal-footer py-2.5 px-4 bg-light border-top">
+            <div class="modal-footer py-2 px-4 bg-light border-top">
                 <button type="button" class="btn btn-secondary btn-sm px-3 rounded-pill fw-medium" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>

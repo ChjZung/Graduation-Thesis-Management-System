@@ -220,10 +220,10 @@
 
         <div class="field-group">
             <label for="email">
-                <i class="fa-solid fa-envelope me-1"></i>Email chính của tài khoản
+                <i class="fa-solid fa-envelope me-2"></i>Email chính của tài khoản
             </label>
             <div class="input-icon-wrap">
-                <i class="fa-solid fa-at field-icon"></i>
+                <i class="fa-solid fa-at field-icon me-2"></i>
                 <input
                     id="email"
                     type="email"
@@ -236,15 +236,15 @@
             </div>
         </div>
 
-        <button type="submit" class="btn-submit-reset">
-            <i class="fa-solid fa-paper-plane"></i>
+        <button type="submit" class="btn-submit-reset d-inline-flex align-items-center">
+            <i class="fa-solid fa-paper-plane me-2"></i>
             GỬI YÊU CẦU ĐẶT LẠI MẬT KHẨU
         </button>
     </form>
 
     <div style="text-align: center;">
         <a href="{{ route('login') }}" class="back-login">
-            <i class="fa-solid fa-arrow-left"></i>
+            <i class="fa-solid fa-arrow-left me-2"></i>
             Quay lại trang Đăng nhập
         </a>
     </div>

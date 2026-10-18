@@ -16,7 +16,7 @@
             <p class="text-muted small mb-0">Học phần: <strong>{{ $hocphan->TenHocPhan }}</strong> (<code>{{ $hocphan->MaHocPhan }}</code>)</p>
         </div>
         <a href="{{ route('hocphan.index', ['tab' => $hocphan->isDungChung() ? 'dung_chung' : 'bomon']) }}" class="btn btn-sm btn-outline-secondary px-3">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại
         </a>
     </div>
 
@@ -37,7 +37,7 @@
                     <input type="hidden" name="is_dung_chung" value="1">
                     <input type="hidden" name="MaBoMon" value="">
                     <div class="alert alert-info py-2 px-3 small border-0 mb-4" style="background-color: #f0f9ff; color: #0369a1;">
-                        <i class="fa-solid fa-circle-info me-1"></i> Học phần này là <strong>Học phần dùng chung</strong> trong Khoa và không thuộc riêng một bộ môn nào.
+                        <i class="fa-solid fa-circle-info me-2"></i> Học phần này là <strong>Học phần dùng chung</strong> trong Khoa và không thuộc riêng một bộ môn nào.
                     </div>
                 @else
                     <input type="hidden" name="is_dung_chung" value="0">
@@ -92,9 +92,27 @@
                         </select>
                     </div>
 
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-dark">Ngày bắt đầu học phần</label>
+                        <input type="date" name="NgayBatDau" class="form-control form-control-sm" value="{{ old('NgayBatDau', $hocphan->NgayBatDau ? \Carbon\Carbon::parse($hocphan->NgayBatDau)->format('Y-m-d') : '') }}">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">Thời gian bắt đầu học phần chính thức</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-dark">Ngày kết thúc học phần</label>
+                        <input type="date" name="NgayKetThuc" class="form-control form-control-sm" value="{{ old('NgayKetThuc', $hocphan->NgayKetThuc ? \Carbon\Carbon::parse($hocphan->NgayKetThuc)->format('Y-m-d') : '') }}">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">Thời gian kết thúc học phần</div>
+                    </div>
+
                     <div class="col-12">
-                        <label class="form-label fw-semibold small text-secondary">Mô tả</label>
-                        <textarea name="MoTa" rows="3" class="form-control form-control-sm">{{ old('MoTa', $hocphan->MoTa) }}</textarea>
+                        @include('partials.rich_text_editor', [
+                            'name' => 'MoTa',
+                            'id' => 'MoTa',
+                            'label' => 'Mô tả học phần',
+                            'value' => old('MoTa', $hocphan->MoTa),
+                            'minHeight' => '120px',
+                            'compact' => true,
+                            'placeholder' => 'Nhập mô tả chi tiết học phần...'
+                        ])
                     </div>
                 </div>
 

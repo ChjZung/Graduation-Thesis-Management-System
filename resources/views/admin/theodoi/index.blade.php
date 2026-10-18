@@ -1,533 +1,742 @@
 @extends('layouts.admin')
 
-@section('page_title', 'Theo Dõi Tiến Độ Đồ Án / Khóa Luận')
+@section('page_title', 'Theo Dõi Tiến Độ Khóa Luận Tốt Nghiệp')
+
+@push('styles')
+<style>
+    :root {
+        --huit-primary: #00305a;
+        --huit-accent: #0284c7;
+        --huit-bg-light: #f8fafc;
+        --border-color: #e2e8f0;
+    }
+
+    body {
+        background-color: var(--huit-bg-light);
+        color: #1e293b;
+    }
+
+    /* Card Layout chung */
+    .card-theodoi {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        transition: all 0.25s ease;
+    }
+
+    /* KPI Cards */
+    .stat-kpi-card {
+        background: #ffffff;
+        border-radius: 1rem;
+        padding: 1.25rem 1.35rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+    }
+    .stat-kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+    .stat-kpi-card.kpi-total::before { background-color: var(--huit-primary); }
+    .stat-kpi-card.kpi-active::before { background-color: #10b981; }
+    .stat-kpi-card.kpi-pending::before { background-color: #f59e0b; }
+    .stat-kpi-card.kpi-overdue::before { background-color: #ef4444; }
+    .stat-kpi-card.kpi-completed::before { background-color: #0284c7; }
+
+    /* Custom Modern Tabs */
+    .nav-tabs-theodoi {
+        border-bottom: 2px solid #e2e8f0;
+        gap: 0.75rem;
+    }
+    .nav-tabs-theodoi .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.95rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        background: transparent;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .nav-tabs-theodoi .nav-link:hover {
+        color: var(--huit-primary);
+        background: rgba(0, 48, 90, 0.03);
+    }
+    .nav-tabs-theodoi .nav-link.active {
+        color: var(--huit-primary);
+        border-bottom-color: var(--huit-accent);
+        background: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
+    }
+
+    /* 6 Stage Cards - Thiết kế Nổi Bật */
+    .stage-card {
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        background: #ffffff;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.35rem;
+    }
+    .stage-card:hover {
+        border-color: #0284c7;
+        box-shadow: 0 10px 25px rgba(2, 132, 199, 0.1);
+        transform: translateY(-4px);
+    }
+    .stage-icon-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    /* Hộp làm nổi bật mô tả */
+    .stage-description-box {
+        background-color: #f8fafc;
+        border-left: 3px solid var(--huit-accent);
+        border-radius: 0 0.5rem 0.5rem 0;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.83rem;
+        color: #475569;
+        line-height: 1.5;
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Table styles */
+    .table-theodoi th {
+        font-weight: 600;
+        color: #475569;
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.85rem 1rem;
+        white-space: nowrap;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .table-theodoi td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(2, 132, 199, 0.02);
+    }
+
+    /* Pulse Dot */
+    .pulse-dot-sm {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulseSm 2s infinite;
+    }
+    @keyframes pulseSm {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+</style>
+@endpush
 
 @section('content')
+<div class="container-fluid px-2 px-md-4 py-3">
 
-{{-- ── 1. HEADER & THÔNG TIN KẾ HOẠCH HIỆN TẠI ── --}}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-        <h4 class="fw-bold mb-0 text-dark">
-            <i class="fa-solid fa-chart-line text-primary me-2"></i>Theo Dõi Tiến Độ Khóa Luận Tốt Nghiệp
-        </h4>
-    </div>
-    
-    {{-- Banner Thông Tin Kế Hoạch & Giai Đoạn Hiện Tại --}}
-    <div class="plan-status-card d-flex align-items-center gap-3 p-2 px-3 bg-white rounded-3 border shadow-sm">
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                <i class="fa-solid fa-calendar-check me-1"></i>{{ $activePlan->TenKeHoach ?? 'Kế hoạch Khóa luận HK1 2026-2027' }}
-            </span>
+    {{-- ── 1. TIÊU ĐỀ & KẾ HOẠCH HIỆN TẠI ── --}}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chart-line text-primary me-2"></i>
+                Theo Dõi Tiến Độ Khóa Luận Tốt Nghiệp
+            </h4>
+            <p class="text-muted small mb-0">
+                Quản lý và theo dõi sát sao tình hình thực hiện các giai đoạn nghiệp vụ của sinh viên.
+            </p>
         </div>
-        <div class="border-start ps-3 d-none d-md-flex align-items-center gap-1.5 small">
-            <span class="badge-pulsing-green"></span>
-            <span class="text-secondary fw-semibold">Giai đoạn hiện tại:</span> 
-            <span class="text-dark fw-bold">{{ $currentPhase->TenMoc ?? 'Sinh viên tạo nhóm trên phần mềm HUIT-STUDENT (mỗi nhóm 3 SV/1 đề tài)' }}</span>
-        </div>
-    </div>
-</div>
 
-{{-- ── 2. STEPPER LỘ TRÌNH 6 GIAI ĐOẠN & DẢI LỌC TIẾN ĐỘ ── --}}
-<div class="card border-0 shadow-sm rounded-3 mb-3 bg-white">
-    <div class="card-body p-3 p-md-4">
-        {{-- Header của Stepper & Thanh Thống Kê Nhanh --}}
-        <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
-                    <i class="fa-solid fa-timeline text-primary me-1.5"></i> 6 Giai Đoạn Giám Sát Tiến Độ Khóa Luận
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="card-theodoi px-3 py-2 bg-white d-flex align-items-center gap-2">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-2 fw-bold" style="font-size: 12px;">
+                    <i class="fa-solid fa-calendar-check me-2"></i>{{ $activePlan->TenKeHoach ?? 'Kế hoạch Khóa luận HK1 2026-2027' }}
                 </span>
-                <a href="{{ route('admin.theodoi.index') }}" 
-                   class="badge text-decoration-none {{ !request('stage') && !request('status_code') ? 'bg-primary text-white' : 'bg-light text-secondary border' }} rounded-pill px-2.5 py-1">
-                    Tất cả ({{ $stats['total'] }})
-                </a>
+                <span class="border-start ps-2 d-none d-sm-inline-flex align-items-center gap-2 small text-muted">
+                    <span class="pulse-dot-sm"></span>
+                    <span class="fw-semibold text-dark">{{ $currentPhase->TenMoc ?? 'Đang triển khai' }}</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── 2. KHU VỰC BỘ LỌC ĐA NĂNG & TÌM KIẾM ── --}}
+    <div class="card-theodoi p-3 p-md-4 mb-4">
+        <form method="GET" action="{{ route('admin.theodoi.index') }}" id="filterForm">
+            <input type="hidden" name="tab" id="activeTabInput" value="{{ request('tab', 'tong-quan') }}">
+            @if(request('stage'))
+                <input type="hidden" name="stage" value="{{ request('stage') }}">
+            @endif
+            @if(request('status_code'))
+                <input type="hidden" name="status_code" value="{{ request('status_code') }}">
+            @endif
+
+            <div class="row g-3 align-items-center">
+                {{-- Ô tìm kiếm từ khóa --}}
+                <div class="col-lg-3 col-md-6 col-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0 shadow-none" 
+                               placeholder="Tìm đề tài, nhóm, MSSV..." value="{{ request('search') }}">
+                    </div>
+                </div>
+
+                {{-- Lọc Học kỳ --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select name="MaHocKy" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">-- Tất cả học kỳ --</option>
+                        @foreach($hocKies as $hk)
+                            <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
+                                {{ $hk->TenHocKy }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Lọc Khoa --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select name="MaKhoa" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">-- Tất cả khoa --</option>
+                        @foreach($khoas as $k)
+                            <option value="{{ $k->MaKhoa }}" {{ request('MaKhoa') == $k->MaKhoa ? 'selected' : '' }}>
+                                {{ $k->TenKhoa }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Lọc Bộ môn --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select name="MaBoMon" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">-- Tất cả bộ môn --</option>
+                        @foreach($boMons as $bm)
+                            <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
+                                {{ $bm->TenBoMon }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Lọc GVHD --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select name="MaGV" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">-- Tất cả GVHD --</option>
+                        @foreach($giangViens as $gv)
+                            <option value="{{ $gv->MaGV }}" {{ request('MaGV') == $gv->MaGV ? 'selected' : '' }}>
+                                {{ $gv->HoTen }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Nút bấm Lọc & Xóa lọc --}}
+                <div class="col-lg-1 col-md-12 col-12 d-flex gap-2 justify-content-end">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold w-100 shadow-sm d-flex align-items-center justify-content-center" title="Áp dụng bộ lọc">
+                        <i class="fa-solid fa-filter me-2"></i>Lọc
+                    </button>
+                    @if(request()->anyFilled(['search', 'MaHocKy', 'MaKhoa', 'MaBoMon', 'MaGV', 'stage', 'status_code']))
+                        <a href="{{ route('admin.theodoi.index', ['tab' => request('tab', 'tong-quan')]) }}" 
+                           class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" title="Xóa bộ lọc">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- ── 3. HỆ THỐNG TAB ── --}}
+    <ul class="nav nav-tabs nav-tabs-theodoi mb-4" id="theodoiTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ request('tab', 'tong-quan') === 'tong-quan' ? 'active' : '' }}" 
+                    id="tab-tongquan-btn" data-bs-toggle="tab" data-bs-target="#tab-tong-quan" type="button" role="tab"
+                    onclick="switchTab('tong-quan')">
+                <i class="fa-solid fa-chart-pie me-2"></i>
+                <span>1. Tổng Quan</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ request('tab') === 'danh-sach' ? 'active' : '' }}" 
+                    id="tab-danhsach-btn" data-bs-toggle="tab" data-bs-target="#tab-danh-sach" type="button" role="tab"
+                    onclick="switchTab('danh-sach')">
+                <i class="fa-solid fa-list-check me-2"></i>
+                <span>2. Danh Sách Theo Dõi</span>
+                <span class="badge bg-primary text-white rounded-pill px-2 py-1 ms-1" style="font-size: 11px;">
+                    {{ $filteredNhoms->count() }}
+                </span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ request('tab') === 'nhac-nho' ? 'active' : '' }}" 
+                    id="tab-nhacnho-btn" data-bs-toggle="tab" data-bs-target="#tab-nhac-nho" type="button" role="tab"
+                    onclick="switchTab('nhac-nho')">
+                <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+                <span>3. Cần Theo Dõi &amp; Nhắc Nhở</span>
+                @if($warningNhoms->count() > 0)
+                    <span class="badge bg-danger text-white rounded-pill px-2 py-1 ms-1" style="font-size: 11px;">
+                        {{ $warningNhoms->count() }}
+                    </span>
+                @endif
+            </button>
+        </li>
+    </ul>
+
+    {{-- ── 4. NỘI DUNG CÁC TAB ── --}}
+    <div class="tab-content" id="theodoiTabsContent">
+
+        {{-- TAB 1: TỔNG QUAN --}}
+        <div class="tab-pane fade {{ request('tab', 'tong-quan') === 'tong-quan' ? 'show active' : '' }}" 
+             id="tab-tong-quan" role="tabpanel">
+            
+            {{-- 5 Thẻ KPI --}}
+            <div class="row g-3 mb-4">
+                <div class="col-xl col-md-4 col-sm-6">
+                    <div class="stat-kpi-card kpi-total h-100">
+                        <span class="text-muted small fw-semibold d-block mb-1">Tổng Số Đề Tài</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-bold text-dark mb-0">{{ $stats['total'] }}</h3>
+                            <i class="fa-solid fa-layer-group text-primary fs-3 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-md-4 col-sm-6">
+                    <div class="stat-kpi-card kpi-active h-100">
+                        <span class="text-muted small fw-semibold d-block mb-1">Đang Thực Hiện</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-bold text-success mb-0">{{ $stats['dang_thuc_hien'] }}</h3>
+                            <i class="fa-solid fa-circle-play text-success fs-3 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-md-4 col-sm-6">
+                    <div class="stat-kpi-card kpi-pending h-100">
+                        <span class="text-muted small fw-semibold d-block mb-1">Chờ Xử Lý</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-bold text-warning mb-0">{{ $stats['cho_xu_ly'] }}</h3>
+                            <i class="fa-solid fa-hourglass-half text-warning fs-3 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-md-4 col-sm-6">
+                    <div class="stat-kpi-card kpi-overdue h-100">
+                        <span class="text-muted small fw-semibold d-block mb-1">Quá Hạn</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-bold text-danger mb-0">{{ $stats['qua_han'] }}</h3>
+                            <i class="fa-solid fa-circle-exclamation text-danger fs-3 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-md-4 col-sm-6">
+                    <div class="stat-kpi-card kpi-completed h-100">
+                        <span class="text-muted small fw-semibold d-block mb-1">Đã Hoàn Thành</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-bold text-info mb-0">{{ $stats['hoan_thanh'] }}</h3>
+                            <i class="fa-solid fa-circle-check text-info fs-3 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {{-- Thống kê KPI ngắn gọn dạng Pill --}}
-            <div class="d-flex flex-wrap align-items-center gap-2 small">
-                <a href="{{ route('admin.theodoi.index', array_merge(request()->query(), ['status_code' => 'DUNG_TIEN_DO'])) }}" 
-                   class="kpi-pill kpi-pill-success {{ request('status_code') === 'DUNG_TIEN_DO' ? 'active' : '' }}">
-                    <i class="fa-solid fa-circle-check"></i> Đúng tiến độ: <strong>{{ $stats['dung_tien_do'] }}</strong>
-                </a>
-                <a href="{{ route('admin.theodoi.index', array_merge(request()->query(), ['status_code' => 'SAP_DEN_HAN'])) }}" 
-                   class="kpi-pill kpi-pill-warning {{ request('status_code') === 'SAP_DEN_HAN' ? 'active' : '' }}">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Sắp đến hạn: <strong>{{ $stats['sap_den_han'] }}</strong>
-                </a>
-                <a href="{{ route('admin.theodoi.index', array_merge(request()->query(), ['status_code' => 'QUA_HAN'])) }}" 
-                   class="kpi-pill kpi-pill-danger {{ request('status_code') === 'QUA_HAN' ? 'active' : '' }}">
-                    <i class="fa-solid fa-circle-exclamation"></i> Quá hạn: <strong>{{ $stats['qua_han'] }}</strong>
-                </a>
-                @if(request()->anyFilled(['stage', 'status_code', 'search', 'MaGV', 'MaHocKy']))
-                    <a href="{{ route('admin.theodoi.index') }}" class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-pill" style="font-size: 11px;">
-                        <i class="fa-solid fa-xmark me-1"></i>Xóa lọc
-                    </a>
+            {{-- TIẾN TRÌNH 6 GIAI ĐOẠN - CÓ MÔ TẢ NỔI BẬT --}}
+            <div class="card-theodoi p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 fs-6">
+                            <i class="fa-solid fa-diagram-project text-primary me-2"></i>
+                            Tiến Trình 6 Giai Đoạn Nghiệp Vụ
+                        </h6>
+                        <span class="text-muted small">Chi tiết nội dung nhiệm vụ và tỷ lệ tiến độ toàn Khoa</span>
+                    </div>
+                    <span class="badge bg-light text-secondary border font-monospace px-3 py-2">
+                        6 Giai đoạn quy chuẩn
+                    </span>
+                </div>
+
+                <div class="row g-3">
+                    @foreach($stageDefinitions as $stNum => $stMeta)
+                        @php
+                            $stData = $stageStats[$stNum] ?? [];
+                            $totalInStage = $stData['total_in_stage'] ?? 0;
+                            $rate = $stData['completion_rate'] ?? 0;
+                        @endphp
+                        <div class="col-lg-4 col-md-6 col-12">
+                            <div class="stage-card">
+                                <div>
+                                    {{-- Header Giai đoạn --}}
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="stage-icon-circle" style="background-color: {{ $stMeta['color'] }}15; color: {{ $stMeta['color'] }};">
+                                                <i class="fa-solid {{ $stMeta['icon'] }}"></i>
+                                            </div>
+                                            <div>
+                                                <span class="badge rounded-pill fw-bold px-3 py-1" style="background-color: {{ $stMeta['color'] }}20; color: {{ $stMeta['color'] }}; font-size: 11px;">
+                                                    Giai đoạn {{ $stNum }}
+                                                </span>
+                                                <h6 class="fw-bold text-dark mb-0 mt-1" style="font-size: 0.95rem;">
+                                                    {{ $stMeta['ten'] }}
+                                                </h6>
+                                            </div>
+                                        </div>
+
+                                        @if(($stData['qua_han'] ?? 0) > 0)
+                                            <span class="badge bg-danger text-white rounded-pill px-3 py-1 small shadow-sm" title="Có nhóm trễ hạn">
+                                                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $stData['qua_han'] }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    {{-- Khung làm nổi bật mô tả nhiệm vụ --}}
+                                    <div class="stage-description-box mb-3" style="border-left-color: {{ $stMeta['color'] }};">
+                                        <span><i class="fa-solid fa-circle-info me-2 opacity-50" style="color: {{ $stMeta['color'] }};"></i>{{ $stMeta['mo_ta'] ?? 'Triển khai công việc theo mốc thời gian quy định của khoa.' }}</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    {{-- Con số nhóm --}}
+                                    <div class="d-flex justify-content-between align-items-center mb-2 text-muted small">
+                                        <span>Số nhóm đang ở GĐ này:</span>
+                                        <strong class="text-dark font-monospace fs-6">{{ $totalInStage }}</strong>
+                                    </div>
+
+                                    {{-- Thanh Tiến độ --}}
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center text-muted small mb-1">
+                                            <span>Hoàn thành điều kiện:</span>
+                                            <span class="fw-bold text-dark font-monospace">{{ $rate }}%</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 4px; background: #e2e8f0;">
+                                            <div class="progress-bar rounded-pill" role="progressbar" 
+                                                 style="width: {{ $rate }}%; background-color: {{ $stMeta['color'] }};"></div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Action Link --}}
+                                    <a href="{{ route('admin.theodoi.index', ['tab' => 'danh-sach', 'stage' => $stNum]) }}" 
+                                       class="btn btn-sm btn-light border w-100 rounded-pill fw-semibold text-primary shadow-none py-2" style="font-size: 12px;">
+                                        <span>Xem danh sách GĐ {{ $stNum }}</span>
+                                        <i class="fa-solid fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- TAB 2: DANH SÁCH THEO DÕI --}}
+        <div class="tab-pane fade {{ request('tab') === 'danh-sach' ? 'show active' : '' }}" 
+             id="tab-danh-sach" role="tabpanel">
+
+            <div class="card-theodoi mb-4">
+                <div class="p-3 px-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="fa-solid fa-table-list text-primary me-2"></i>
+                            Danh Sách Nhóm Khóa Luận
+                        </h6>
+                        <span class="text-muted small">
+                            Hiển thị <strong>{{ $paginatedNhoms->firstItem() ?? 0 }}</strong> - <strong>{{ $paginatedNhoms->lastItem() ?? 0 }}</strong> 
+                            trên tổng số <strong>{{ $paginatedNhoms->total() }}</strong> nhóm
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <a href="{{ route('admin.theodoi.index', array_merge(request()->except(['page', 'stage']), ['tab' => 'danh-sach'])) }}" 
+                           class="badge text-decoration-none {{ !request('stage') ? 'bg-primary text-white' : 'bg-light text-secondary border' }} rounded-pill px-3 py-2">
+                            Tất cả GĐ
+                        </a>
+                        @foreach($stageDefinitions as $sNum => $sInfo)
+                            <a href="{{ route('admin.theodoi.index', array_merge(request()->except(['page']), ['tab' => 'danh-sach', 'stage' => $sNum])) }}" 
+                               class="badge text-decoration-none {{ request('stage') == $sNum ? 'text-white' : 'bg-light text-secondary border' }} rounded-pill px-3 py-2"
+                               style="{{ request('stage') == $sNum ? 'background-color: ' . $sInfo['color'] . ';' : '' }}">
+                                GĐ {{ $sNum }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-theodoi mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th style="width: 100px;">Mã Nhóm</th>
+                                <th style="min-width: 220px;">Tên Đề Tài</th>
+                                <th style="min-width: 170px;">Nhóm Sinh Viên</th>
+                                <th style="width: 130px;">Khoa / Bộ Môn</th>
+                                <th style="width: 150px;">GV Hướng Dẫn</th>
+                                <th class="text-center" style="width: 130px;">Giai Đoạn</th>
+                                <th class="text-center" style="width: 110px;">Trạng Thái</th>
+                                <th style="width: 110px;">Hạn Xử Lý</th>
+                                <th class="text-center" style="width: 120px;">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($paginatedNhoms as $index => $nhom)
+                                @php
+                                    $tienDo = $nhom->tien_do_nghiep_vu;
+                                    $stNum = $tienDo->GiaiDoanHienTai;
+                                    $stMeta = $stageDefinitions[$stNum] ?? [];
+                                    $deTai = $nhom->deTai;
+                                    $stt = ($paginatedNhoms->currentPage() - 1) * $paginatedNhoms->perPage() + $index + 1;
+                                @endphp
+                                <tr>
+                                    <td class="text-center font-monospace text-muted">{{ $stt }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-primary border font-monospace fw-bold px-3 py-1 d-block text-center">
+                                            {{ $nhom->MaNhom }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" title="{{ $deTai->TenDeTai ?? 'Chưa đăng ký đề tài' }}">
+                                            {{ $deTai->TenDeTai ?? 'Chưa đăng ký đề tài' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ $nhom->TenNhom ?: $nhom->MaNhom }}</div>
+                                        <div class="text-muted small" style="font-size: 11.5px;">
+                                            <i class="fa-solid fa-crown text-warning me-2"></i>{{ $nhom->truongNhom?->HoTen ?? 'Chưa có TN' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small fw-semibold text-dark">
+                                            {{ $deTai?->giangVien?->boMon?->TenBoMon ?? '---' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($deTai && $deTai->giangVien)
+                                            <div class="fw-semibold text-dark text-truncate" style="max-width: 140px;" title="{{ $deTai->giangVien->HoTen }}">
+                                                {{ $deTai->giangVien->HoTen }}
+                                            </div>
+                                        @else
+                                            <span class="badge bg-light text-secondary border">Chưa phân công</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill text-white fw-bold px-3 py-1 d-inline-block"
+                                              style="background-color: {{ $stMeta['color'] ?? '#0284c7' }}; font-size: 11px;">
+                                            GĐ {{ $stNum }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if($tienDo->TrangThaiGiaiDoan === 'HOAN_THANH')
+                                            <span class="badge bg-primary text-white rounded-pill px-3 py-1">Hoàn thành</span>
+                                        @elseif($tienDo->TrangThaiGiaiDoan === 'CHO_XU_LY')
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Chờ xử lý</span>
+                                        @elseif($tienDo->TrangThaiGiaiDoan === 'QUA_HAN')
+                                            <span class="badge bg-danger text-white rounded-pill px-3 py-1">Quá hạn</span>
+                                        @else
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                                Đang làm
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small font-monospace">
+                                            {{ $tienDo->NgayHoanThanh ? \Carbon\Carbon::parse($tienDo->NgayHoanThanh)->format('d/m/Y') : 'Theo kế hoạch' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex gap-1 align-items-center">
+                                            <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" 
+                                               class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-none" title="Chi tiết">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.theodoi.remind', $nhom->MaNhom) }}" class="d-inline"
+                                                  onsubmit="return confirm('Gửi nhắc nhở tiến độ?');">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-warning text-dark rounded-circle p-1 shadow-none" 
+                                                        style="width: 28px; height: 28px;" title="Gửi nhắc nhở">
+                                                    <i class="fa-solid fa-bell"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-folder-open fa-2x mb-2 opacity-50 d-block me-2"></i>
+                                        Không tìm thấy nhóm khóa luận phù hợp.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if($paginatedNhoms->hasPages())
+                    <div class="p-3 px-4 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="text-muted small">
+                            Trang <strong>{{ $paginatedNhoms->currentPage() }}</strong> / <strong>{{ $paginatedNhoms->lastPage() }}</strong>
+                        </span>
+                        <div>
+                            {{ $paginatedNhoms->appends(request()->query())->links('pagination::bootstrap-5') }}
+                        </div>
+                    </div>
                 @endif
             </div>
         </div>
 
-        {{-- Thanh Stepper Timeline: [1] ─── [2] ─── [3] ─── [4] ─── [5] ─── [6] --}}
-        <div class="stepper-timeline-container">
-            <div class="stepper-track">
-                {{-- Đường kẻ nối giữa các node --}}
-                <div class="stepper-connecting-line"></div>
+        {{-- TAB 3: CẦN THEO DÕI VÀ NHẮC NHỞ --}}
+        <div class="tab-pane fade {{ request('tab') === 'nhac-nho' ? 'show active' : '' }}" 
+             id="tab-nhac-nho" role="tabpanel">
 
-                @php
-                    $stagesList = [
-                        1 => ['title' => 'Đề cương & CSDL', 'full' => 'Nhận đề cương & Thiết kế CSDL', 'icon' => 'fa-database', 'count' => $stats['gd1']],
-                        2 => ['title' => 'Hệ thống & Chức năng', 'full' => 'Thiết kế hệ thống & Xây dựng chức năng', 'icon' => 'fa-code', 'count' => $stats['gd2']],
-                        3 => ['title' => 'Kiểm thử & Báo cáo', 'full' => 'Kiểm thử hoàn thiện & Báo cáo dự thảo', 'icon' => 'fa-vial-circle-check', 'count' => $stats['gd3']],
-                        4 => ['title' => 'Hồ sơ bảo vệ', 'full' => 'Hoàn thiện hồ sơ bảo vệ & Turnitin', 'icon' => 'fa-file-shield', 'count' => $stats['gd4']],
-                        5 => ['title' => 'Bảo vệ Hội đồng', 'full' => 'Tiến hành bảo vệ trước Hội đồng', 'icon' => 'fa-chalkboard-user', 'count' => $stats['gd5']],
-                        6 => ['title' => 'Kết quả & Nộp lại', 'full' => 'Nhận kết quả & Nộp lại sau chỉnh sửa', 'icon' => 'fa-award', 'count' => $stats['gd6']],
-                    ];
-                @endphp
-
-                @foreach($stagesList as $stNum => $stInfo)
-                    @php
-                        $isSelected = request('stage') == $stNum;
-                        $isCurrentPhaseStage = ($stNum === 1); // Mốc hiện tại của đợt đang mở
-                    @endphp
-                    <a href="{{ route('admin.theodoi.index', array_merge(request()->except('page'), ['stage' => $stNum])) }}" 
-                       class="stepper-step {{ $isSelected ? 'is-selected' : '' }} {{ $isCurrentPhaseStage ? 'is-current-phase' : '' }}"
-                       title="{{ $stInfo['full'] }}">
-                        
-                        <div class="step-node-bubble">
-                            <i class="fa-solid {{ $stInfo['icon'] }} step-icon"></i>
-                        </div>
-
-                        <div class="step-title-text">{{ $stInfo['title'] }}</div>
-                        <div class="step-group-count">{{ $stInfo['count'] }} nhóm</div>
-
-                        @if($isCurrentPhaseStage)
-                            <div class="current-phase-marker" title="Giai đoạn hiện tại của Kế hoạch">
-                                <i class="fa-solid fa-caret-up text-success marker-arrow"></i>
-                                <span class="marker-tag">
-                                    <span class="pulse-dot-sm"></span> Hiện tại
-                                </span>
-                            </div>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
-
-            {{-- Dòng chỉ báo mốc hiện tại chuẩn mockup --}}
-            <div class="current-phase-detail-strip mt-3 text-center">
-                <span class="current-phase-pill-banner">
-                    <i class="fa-solid fa-circle-arrow-right text-success me-1"></i>
-                    <strong>GĐ Hiện tại:</strong> {{ $currentPhase->TenMoc ?? 'Đăng ký nhóm trên HUIT-STUDENT (3 SV/đề tài)' }}
-                </span>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ── 3. THANH TÌM KIẾM & BỘ LỌC DỮ LIỆU ── --}}
-<div class="card border-0 shadow-sm rounded-3 mb-3 bg-white">
-    <div class="card-body p-2 px-3">
-        <form method="GET" action="{{ route('admin.theodoi.index') }}" class="row g-2 align-items-center">
-            <input type="hidden" name="stage" value="{{ request('stage') }}">
-            <input type="hidden" name="status_code" value="{{ request('status_code') }}">
-
-            <div class="col-12 col-md-4">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" class="form-control form-control-sm border-start-0 ps-1" 
-                           placeholder="Tìm theo mã nhóm, tên đề tài, tên SV, MSSV..." value="{{ request('search') }}">
+            <div class="card-theodoi p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-wrap gap-2">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+                            Các Trường Hợp Cần Nhắc Nhở Tiến Độ
+                        </h6>
+                        <span class="text-muted small">Tập trung các nhóm quá hạn hoặc chậm trễ hồ sơ</span>
+                    </div>
+                    <span class="badge bg-danger text-white rounded-pill px-3 py-2 fw-bold">
+                        {{ $warningNhoms->count() }} trường hợp
+                    </span>
                 </div>
-            </div>
 
-            <div class="col-6 col-md-3">
-                <select name="MaGV" class="form-select form-select-sm">
-                    <option value="">-- Tất cả Giảng viên hướng dẫn --</option>
-                    @foreach($giangViens as $gv)
-                        <option value="{{ $gv->MaGV }}" {{ request('MaGV') == $gv->MaGV ? 'selected' : '' }}>
-                            {{ $gv->HoTen }} ({{ $gv->MaGV }})
-                        </option>
-                    @endforeach
-                </select>
+                @if($warningNhoms->isEmpty())
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-shield-heart fa-3x text-success mb-3 opacity-75"></i>
+                        <h6 class="fw-bold text-dark">Tuyệt vời! Không có trường hợp nào cần nhắc nhở</h6>
+                    </div>
+                @else
+                    <div class="table-responsive">
+                        <table class="table table-hover table-theodoi mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;" class="text-center">STT</th>
+                                    <th style="width: 100px;">Mã Nhóm</th>
+                                    <th>Tên Đề Tài &amp; GVHD</th>
+                                    <th style="width: 140px;">Giai Đoạn</th>
+                                    <th style="min-width: 220px;">Lý Do Cảnh Báo</th>
+                                    <th style="width: 110px;" class="text-center">Tình Trạng</th>
+                                    <th style="width: 130px;" class="text-center">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($warningNhoms as $wIdx => $wn)
+                                    <tr>
+                                        <td class="text-center font-monospace text-muted">{{ $wIdx + 1 }}</td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border font-monospace px-3 py-1">
+                                                {{ $wn->MaNhom }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark text-truncate" style="max-width: 260px;" title="{{ $wn->deTai->TenDeTai ?? $wn->TenNhom }}">
+                                                {{ $wn->deTai->TenDeTai ?? $wn->TenNhom }}
+                                            </div>
+                                            <div class="text-muted small mt-1" style="font-size: 11.5px;">
+                                                GVHD: <strong>{{ $wn->deTai?->giangVien?->HoTen ?? 'Chưa phân công' }}</strong>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-primary border rounded-pill px-3 py-1 fw-bold">
+                                                {{ $wn->current_stage_label }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <ul class="mb-0 ps-3 text-danger small" style="line-height: 1.4;">
+                                                @foreach($wn->warning_reasons as $r)
+                                                    <li>{{ $r }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-danger text-white rounded-pill px-3 py-1">Quá hạn</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-inline-flex gap-2 align-items-center">
+                                                <a href="{{ route('admin.theodoi.show', $wn->MaNhom) }}" 
+                                                   class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-none" style="font-size: 11.5px;">
+                                                    Chi tiết
+                                                </a>
+                                                <form method="POST" action="{{ route('admin.theodoi.remind', $wn->MaNhom) }}" class="d-inline"
+                                                      onsubmit="return confirm('Xác nhận gửi thông báo nhắc tiến độ?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold shadow-none d-inline-flex align-items-center" style="font-size: 11.5px;">
+                                                        <i class="fa-solid fa-bell me-2"></i>Nhắc
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
+        </div>
 
-            <div class="col-6 col-md-3">
-                <select name="MaHocKy" class="form-select form-select-sm">
-                    <option value="">-- Tất cả học kỳ --</option>
-                    @foreach($hocKies as $hk)
-                        <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
-                            {{ $hk->TenHocKy }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-12 col-md-2 d-flex gap-1.5 justify-content-end">
-                <button type="submit" class="btn btn-sm btn-primary rounded-2 px-3 fw-semibold text-nowrap flex-grow-1">
-                    <i class="fa-solid fa-filter me-1"></i> Lọc
-                </button>
-                <a href="{{ route('admin.theodoi.index') }}" class="btn btn-sm btn-light border rounded-2 px-2 text-secondary" title="Tải lại">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </a>
-            </div>
-        </form>
     </div>
 </div>
-
-{{-- ── 4. BẢNG DANH SÁCH NHÓM & 6 GIAI ĐOẠN TIẾN ĐỘ (ĐÃ TỐI ƯU) ── --}}
-<div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-    <div class="card-header bg-white border-bottom py-2.5 px-3 d-flex justify-content-between align-items-center">
-        <span class="fw-bold text-dark small">
-            <i class="fa-regular fa-folder-open text-primary me-1.5"></i>
-            Danh Sách Nhóm Thực Hiện &amp; Tiến Độ
-            <span class="text-muted fw-normal ms-1">({{ $processedNhoms->count() }} nhóm)</span>
-        </span>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.ketqua.export') }}" class="btn btn-sm btn-outline-success border rounded-2 px-2.5 py-1" style="font-size: 12.5px;">
-                <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
-            </a>
-        </div>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light text-uppercase fs-7">
-                <tr>
-                    <th class="ps-3" style="width: 100px;">Mã Nhóm</th>
-                    <th style="min-width: 260px;">Đề Tài &amp; Thành Viên</th>
-                    <th style="min-width: 180px;">Giảng Viên Hướng Dẫn</th>
-                    <th style="width: 220px;">Tiến Độ (6 Mốc)</th>
-                    <th class="text-center" style="width: 130px;">Trạng Thái</th>
-                    <th class="text-center pe-3" style="width: 90px;">Thao Tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($processedNhoms as $nhom)
-                @php
-                    $isDanger = $nhom->status_code === 'QUA_HAN';
-                    $gvhd = $nhom->dangKyDeTai?->giangVienHuongDan ?? $nhom->deTai?->giangVien;
-                @endphp
-                <tr class="{{ $isDanger ? 'table-danger bg-opacity-10' : '' }}">
-                    
-                    {{-- 1. Mã Nhóm --}}
-                    <td class="ps-3">
-                        <div class="fw-bold text-primary">{{ $nhom->TenNhom ?: $nhom->MaNhom }}</div>
-                        <span class="text-muted" style="font-size: 11px;">ID: {{ $nhom->MaNhom }}</span>
-                    </td>
-
-                    {{-- 2. Tên Đề Tài & Trưởng Nhóm / Thành viên --}}
-                    <td>
-                        <div class="fw-bold text-dark text-truncate-2 mb-1" style="font-size: 13px; max-width: 320px;" title="{{ $nhom->deTai->TenDeTai ?? 'Chưa đăng ký đề tài chính thức' }}">
-                            {{ $nhom->deTai->TenDeTai ?? 'Chưa đăng ký đề tài chính thức' }}
-                        </div>
-                        <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 11.5px;">
-                            <span title="Trưởng nhóm"><i class="fa-solid fa-crown text-warning me-1"></i>{{ $nhom->truongNhom->HoTen ?? 'Chưa có TN' }}</span>
-                            <span>•</span>
-                            <span title="Tổng số thành viên"><i class="fa-solid fa-users text-secondary me-1"></i>{{ $nhom->thanhViens->count() }}/3 SV</span>
-                        </div>
-                    </td>
-
-                    {{-- 3. GV Hướng Dẫn --}}
-                    <td>
-                        @if($gvhd)
-                            <div class="fw-semibold text-dark text-truncate" style="max-width: 180px; font-size: 12.5px;" title="{{ $gvhd->HocHamHocVi ? $gvhd->HocHamHocVi . ' ' : '' }}{{ $gvhd->HoTen }}">
-                                {{ $gvhd->HocHamHocVi ? $gvhd->HocHamHocVi . ' ' : '' }}{{ $gvhd->HoTen }}
-                            </div>
-                            <span class="text-muted" style="font-size: 11px;">{{ $gvhd->boMon->TenBoMon ?? 'CNPM' }}</span>
-                        @else
-                            <span class="text-muted fst-italic" style="font-size: 12px;">Chưa phân công</span>
-                        @endif
-                    </td>
-
-                    {{-- 4. 6 Giai Đoạn Tiến Độ Track (Gọn gàng hơn) --}}
-                    <td>
-                        <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 11.5px;">
-                            <span class="text-dark fw-semibold">GĐ {{ $nhom->current_stage }}/6: <span class="text-muted fw-normal">{{ $nhom->current_stage_label }}</span></span>
-                            <span class="badge bg-light text-primary border px-1.5 py-0">{{ $nhom->progress_percent }}%</span>
-                        </div>
-                        <div class="progress rounded-pill" style="height: 5px; background: #e2e8f0;">
-                            <div class="progress-bar rounded-pill {{ $nhom->progress_percent >= 100 ? 'bg-success' : ($nhom->status_code == 'QUA_HAN' ? 'bg-danger' : 'bg-primary') }}" 
-                                 style="width: {{ $nhom->progress_percent }}%;"></div>
-                        </div>
-                    </td>
-
-                    {{-- 5. Trạng Thái / Cảnh Báo --}}
-                    <td class="text-center">
-                        @if($nhom->status_code === 'DUNG_TIEN_DO')
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
-                                <i class="fa-solid fa-circle-check me-1"></i>Đúng tiến độ
-                            </span>
-                        @elseif($nhom->status_code === 'SAP_DEN_HAN')
-                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
-                                <i class="fa-solid fa-triangle-exclamation me-1"></i>Sắp đến hạn
-                            </span>
-                        @elseif($nhom->status_code === 'QUA_HAN')
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
-                                <i class="fa-solid fa-circle-exclamation me-1"></i>Quá hạn
-                            </span>
-                        @elseif($nhom->status_code === 'HOAN_THANH')
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size: 11px;">
-                                <i class="fa-solid fa-flag-checkered me-1"></i>Hoàn thành
-                            </span>
-                        @else
-                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 11px;">
-                                {{ $nhom->status_label }}
-                            </span>
-                        @endif
-                    </td>
-
-                    {{-- 6. Thao Tác --}}
-                    <td class="text-center pe-3">
-                        <a href="{{ route('admin.theodoi.show', $nhom->MaNhom) }}" 
-                           class="btn btn-sm btn-outline-primary px-2 py-1" 
-                           style="font-size: 12px;"
-                           title="Xem chi tiết tiến độ nhóm">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-5">
-                        <i class="fa-solid fa-chart-line fa-2x mb-2 d-block opacity-50"></i>
-                        Không có nhóm khóa luận nào phù hợp với điều kiện tìm kiếm.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Footer Bảng --}}
-    <div class="p-2.5 px-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2 bg-light">
-        <div class="text-muted small">
-            Hiển thị tổng số <strong>{{ $processedNhoms->count() }}</strong> nhóm khóa luận
-        </div>
-    </div>
-</div>
-
-
-<style>
-    .text-truncate-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.35;
-}
-/* Stepper Timeline Container */
-.stepper-timeline-container {
-    padding: 10px 5px 5px;
-    overflow-x: auto;
-}
-
-.stepper-track {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    position: relative;
-    min-width: 680px;
-    padding-bottom: 25px;
-}
-
-/* Connecting Line between [1] ─── [2] ─── [6] */
-.stepper-connecting-line {
-    position: absolute;
-    top: 22px;
-    left: 40px;
-    right: 40px;
-    height: 3px;
-    background: #cbd5e1;
-    z-index: 1;
-}
-
-/* Step Item */
-.stepper-step {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-decoration: none !important;
-    z-index: 2;
-    flex: 1;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-/* Node Bubble - Chỉ hiển thị icon */
-.step-node-bubble {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid #0072ce;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0072ce;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease;
-    margin-bottom: 6px;
-}
-
-.step-node-bubble .step-icon {
-    font-size: 16px;
-    line-height: 1;
-}
-
-/* Node Active / Hover */
-.stepper-step:hover .step-node-bubble {
-    background: #0072ce;
-    color: #ffffff;
-    border-color: #003366;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 114, 206, 0.35);
-}
-
-.stepper-step.is-selected .step-node-bubble {
-    background: #003366;
-    color: #ffffff;
-    border-color: #0072ce;
-    box-shadow: 0 0 0 4px rgba(0, 114, 206, 0.25);
-    transform: scale(1.08);
-}
-
-.step-title-text {
-    font-size: 12px;
-    font-weight: 700;
-    color: #334155;
-    text-align: center;
-    line-height: 1.25;
-    max-width: 120px;
-    margin-bottom: 2px;
-}
-
-.stepper-step.is-selected .step-title-text {
-    color: #0072ce;
-}
-
-.step-group-count {
-    font-size: 11px;
-    font-weight: 600;
-    color: #64748b;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    padding: 1px 8px;
-    border-radius: 12px;
-}
-
-.stepper-step.is-selected .step-group-count {
-    background: #0072ce;
-    color: #ffffff;
-    border-color: #0072ce;
-}
-
-/* Current Phase Marker: ▲ GĐ Hiện tại */
-.current-phase-marker {
-    position: absolute;
-    bottom: -22px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: none;
-}
-
-.marker-arrow {
-    margin-bottom: -5px;
-    line-height: 1;
-}
-
-.marker-tag {
-    background: #198754;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(25, 135, 84, 0.3);
-}
-
-/* Current Phase Banner Strip at Bottom */
-.current-phase-pill-banner {
-    display: inline-flex;
-    align-items: center;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #166534;
-    font-size: 12.5px;
-    padding: 5px 14px;
-    border-radius: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-/* Pulse Animation Dots */
-.badge-pulsing-green {
-    width: 9px;
-    height: 9px;
-    background-color: #198754;
-    border-radius: 50%;
-    display: inline-block;
-    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
-    animation: pulse-green 1.8s infinite;
-}
-
-.pulse-dot-sm {
-    width: 6px;
-    height: 6px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
-}
-
-/* KPI Filter Pills */
-.kpi-pill {
-    text-decoration: none !important;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-weight: 500;
-    font-size: 12px;
-    transition: all 0.15s ease;
-    border: 1px solid transparent;
-}
-
-.kpi-pill-success {
-    background: #dcfce7;
-    color: #15803d;
-    border-color: #bbf7d0;
-}
-.kpi-pill-success:hover, .kpi-pill-success.active {
-    background: #15803d;
-    color: #ffffff;
-    box-shadow: 0 2px 6px rgba(21, 128, 61, 0.3);
-}
-
-.kpi-pill-warning {
-    background: #fef9c3;
-    color: #a16207;
-    border-color: #fef08a;
-}
-.kpi-pill-warning:hover, .kpi-pill-warning.active {
-    background: #a16207;
-    color: #ffffff;
-    box-shadow: 0 2px 6px rgba(161, 98, 7, 0.3);
-}
-
-.kpi-pill-danger {
-    background: #fee2e2;
-    color: #b91c1c;
-    border-color: #fecaca;
-}
-.kpi-pill-danger:hover, .kpi-pill-danger.active {
-    background: #b91c1c;
-    color: #ffffff;
-    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.3);
-}
-</style>
-
 @endsection
+
+@push('scripts')
+<script>
+    function switchTab(tabName) {
+        document.getElementById('activeTabInput').value = tabName;
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentTab = urlParams.get('tab') || 'tong-quan';
+
+        if (currentTab === 'danh-sach') {
+            const btn = document.getElementById('tab-danhsach-btn');
+            if (btn) new bootstrap.Tab(btn).show();
+        } else if (currentTab === 'nhac-nho') {
+            const btn = document.getElementById('tab-nhacnho-btn');
+            if (btn) new bootstrap.Tab(btn).show();
+        } else {
+            const btn = document.getElementById('tab-tongquan-btn');
+            if (btn) new bootstrap.Tab(btn).show();
+        }
+    });
+</script>
+@endpush

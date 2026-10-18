@@ -7,15 +7,15 @@
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
         <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i class="fa-solid fa-user-check text-primary"></i> Rà Soát &amp; Lập Danh Sách Sinh Viên Đủ Điều Kiện Khóa Luận
+            <i class="fa-solid fa-user-check text-primary me-2"></i> Rà Soát &amp; Lập Danh Sách Sinh Viên Đủ Điều Kiện Khóa Luận
         </h4>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <a href="{{ route('sinhvien.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm">
-            <i class="fa-solid fa-list me-1"></i> Danh Sách Tất Cả SV
+        <a href="{{ route('sinhvien.index') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm d-inline-flex align-items-center">
+            <i class="fa-solid fa-list me-2"></i> Danh Sách Tất Cả SV
         </a>
         <a href="{{ route('admin.sinhvien.export_du_dk', ['MaHocKy' => $selectedHocKy]) }}" class="btn btn-success rounded-pill px-3 py-2 btn-sm fw-bold">
-            <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel Danh Sách
+            <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel Danh Sách
         </a>
     </div>
 </div>
@@ -26,12 +26,12 @@
 <ul class="nav nav-tabs mb-4 border-bottom">
     <li class="nav-item">
         <a class="nav-link" href="{{ route('sinhvien.index') }}">
-            <i class="fa-solid fa-users me-1"></i> Quản Lý Danh Mục Sinh Viên
+            <i class="fa-solid fa-users me-2"></i> Quản Lý Danh Mục Sinh Viên
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link active fw-bold text-primary" href="{{ route('admin.sinhvien.dieu_kien') }}">
-            <i class="fa-solid fa-award me-1"></i> Danh Sách SV Đủ Điều Kiện Khóa Luận (Học Kỳ)
+            <i class="fa-solid fa-award me-2"></i> Danh Sách SV Đủ Điều Kiện Khóa Luận (Học Kỳ)
         </a>
     </li>
 </ul>
@@ -89,12 +89,12 @@
                 <div class="text-muted small fw-medium mb-1">Trạng Thái Công Bố</div>
                 <div class="mt-1">
                     @if($stats['is_published'])
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-semibold">
-                            <i class="fa-solid fa-bullhorn me-1"></i> Đã Công Bố
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                            <i class="fa-solid fa-bullhorn me-2"></i> Đã Công Bố
                         </span>
                     @else
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
-                            <i class="fa-solid fa-lock me-1"></i> Chưa Công Bố
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
+                            <i class="fa-solid fa-lock me-2"></i> Chưa Công Bố
                         </span>
                     @endif
                 </div>
@@ -110,18 +110,18 @@
 <div class="card card-premium shadow-sm">
     <div class="card-header-premium d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
         <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-filter text-primary"></i>
+            <i class="fa-solid fa-filter text-primary me-2"></i>
             <span class="fw-bold text-dark">Rà Soát &amp; Lọc Danh Sách Theo Học Kỳ</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalRaSoat">
-                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> ⚡ Tự Động Rà Soát
+            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalRaSoat">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> ⚡ Tự Động Rà Soát
             </button>
             <form method="POST" action="{{ route('admin.sinhvien.cong_bo') }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn công bố chính thức danh sách đủ điều kiện cho học kỳ này?')">
                 @csrf
                 <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
-                <button type="submit" class="btn btn-warning btn-sm text-dark rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Danh Sách
+                <button type="submit" class="btn btn-warning btn-sm text-dark rounded-pill px-3 fw-bold d-inline-flex align-items-center">
+                    <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Danh Sách
                 </button>
             </form>
         </div>
@@ -218,21 +218,21 @@
                             <td class="text-center">
                                 @if($item->TrangThai === 'Đủ điều kiện')
                                     <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">
-                                        <i class="fa-solid fa-circle-check me-1"></i> Đủ Điều Kiện
+                                        <i class="fa-solid fa-circle-check me-2"></i> Đủ Điều Kiện
                                     </span>
                                 @else
                                     <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill">
-                                        <i class="fa-solid fa-circle-xmark me-1"></i> Chưa Đủ Điều Kiện
+                                        <i class="fa-solid fa-circle-xmark me-2"></i> Chưa Đủ Điều Kiện
                                     </span>
                                 @endif
                             </td>
                             <td>
                                 <div class="small fw-semibold text-dark">{{ $item->DieuKien }}</div>
-                                <div class="small text-muted text-truncate" style="max-width: 250px;">{{ $item->GhiChu }}</div>
+                                <div class="small text-muted text-truncate" style="max-width: 250px;">{{ strip_tags($item->GhiChu) }}</div>
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalCapNhat{{ $item->MaDSDK }}">
-                                    <i class="fa-solid fa-pen-to-square me-1"></i> Sửa
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalCapNhat{{ $item->MaDSDK }}">
+                                    <i class="fa-solid fa-pen-to-square me-2"></i> Sửa
                                 </button>
 
                                 <!-- Modal Cập Nhật Trạng Thái -->
@@ -261,8 +261,15 @@
                                                     </div>
 
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-bold">Ghi Chú Phê Duyệt / Lý Do Khác</label>
-                                                        <textarea name="GhiChu" class="form-control" rows="3" placeholder="Nhập lý do hoặc quyết định đặc cách của Khoa...">{{ $item->GhiChu }}</textarea>
+                                                        @include('partials.rich_text_editor', [
+                                                            'name' => 'GhiChu',
+                                                            'id' => 'GhiChu_' . $item->MaDSDK,
+                                                            'label' => 'Ghi Chú Phê Duyệt / Lý Do Khác',
+                                                            'value' => $item->GhiChu,
+                                                            'minHeight' => '100px',
+                                                            'compact' => true,
+                                                            'placeholder' => 'Nhập lý do hoặc quyết định đặc cách của Khoa...'
+                                                        ])
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer bg-light rounded-bottom-4">
@@ -330,7 +337,7 @@
                     </div>
 
                     <div class="alert alert-info rounded-3 mb-0 small">
-                        <i class="fa-solid fa-circle-info me-1"></i> Hệ thống sẽ rà soát tất cả sinh viên đang học, tự động so sánh số tín chỉ và điểm tích lũy với tiêu chí để lập danh sách chính thức.
+                        <i class="fa-solid fa-circle-info me-2"></i> Hệ thống sẽ rà soát tất cả sinh viên đang học, tự động so sánh số tín chỉ và điểm tích lũy với tiêu chí để lập danh sách chính thức.
                     </div>
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">

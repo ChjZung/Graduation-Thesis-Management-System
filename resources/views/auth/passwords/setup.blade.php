@@ -62,7 +62,7 @@
         <h4 class="mb-0 text-primary-custom fw-bold"><i class="fa-solid fa-shield-halved me-2"></i>Thiết Lập Mật Khẩu Cá Nhân</h4>
     </div>
     <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
-        <i class="fa-solid fa-user-lock me-1"></i>Lần Đầu Đăng Nhập
+        <i class="fa-solid fa-user-lock me-2"></i>Lần Đầu Đăng Nhập
     </span>
 </div>
 
@@ -121,21 +121,21 @@
 
                         <!-- CHECKLIST TIÊU CHÍ BẢO MẬT -->
                         <div class="p-3 bg-light rounded-3 border mb-3">
-                            <div class="small fw-bold text-dark mb-2"><i class="fa-solid fa-list-check me-1 text-primary"></i>Quy chuẩn mật khẩu an toàn:</div>
+                            <div class="small fw-bold text-dark mb-2"><i class="fa-solid fa-list-check me-2 text-primary"></i>Quy chuẩn mật khẩu an toàn:</div>
                             <div class="checklist-item" id="ruleLength">
-                                <i class="fa-regular fa-circle"></i> Ít nhất 8 ký tự
+                                <i class="fa-regular fa-circle me-2"></i> Ít nhất 8 ký tự
                             </div>
                             <div class="checklist-item" id="ruleUpper">
-                                <i class="fa-regular fa-circle"></i> Có ít nhất 1 chữ in hoa (A-Z)
+                                <i class="fa-regular fa-circle me-2"></i> Có ít nhất 1 chữ in hoa (A-Z)
                             </div>
                             <div class="checklist-item" id="ruleLower">
-                                <i class="fa-regular fa-circle"></i> Có ít nhất 1 chữ thường (a-z)
+                                <i class="fa-regular fa-circle me-2"></i> Có ít nhất 1 chữ thường (a-z)
                             </div>
                             <div class="checklist-item" id="ruleNumber">
-                                <i class="fa-regular fa-circle"></i> Có ít nhất 1 chữ số (0-9)
+                                <i class="fa-regular fa-circle me-2"></i> Có ít nhất 1 chữ số (0-9)
                             </div>
                             <div class="checklist-item" id="ruleSpecial">
-                                <i class="fa-regular fa-circle"></i> Ký tự đặc biệt (!@#$%^&*...) (khuyến khích)
+                                <i class="fa-regular fa-circle me-2"></i> Ký tự đặc biệt (!@#$%^&*...) (khuyến khích)
                             </div>
                         </div>
                     </div>
@@ -155,7 +155,7 @@
                     </div>
 
                     <!-- NÚT THỰC HIỆN -->
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm" id="btnSubmitSetup">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center" id="btnSubmitSetup">
                         <i class="fa-solid fa-check-circle me-2"></i>Thiết Lập Mật Khẩu &amp; Bắt Đầu Sử Dụng
                     </button>
                 </form>
@@ -276,10 +276,10 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmFeedback.classList.remove('d-none');
         if (confirmInput.value === pwdInput.value) {
             confirmFeedback.className = 'small mt-1 text-success fw-semibold';
-            confirmFeedback.innerHTML = '<i class="fa-solid fa-check me-1"></i>Mật khẩu xác nhận khớp.';
+            confirmFeedback.innerHTML = '<i class="fa-solid fa-check me-2"></i>Mật khẩu xác nhận khớp.';
         } else {
             confirmFeedback.className = 'small mt-1 text-danger fw-semibold';
-            confirmFeedback.innerHTML = '<i class="fa-solid fa-xmark me-1"></i>Mật khẩu xác nhận chưa khớp.';
+            confirmFeedback.innerHTML = '<i class="fa-solid fa-xmark me-2"></i>Mật khẩu xác nhận chưa khớp.';
         }
     }
 

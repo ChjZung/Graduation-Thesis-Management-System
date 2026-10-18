@@ -10,7 +10,7 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-light text-primary border px-3 py-2 rounded-pill fw-semibold">
-                <i class="fa-solid fa-calendar-days text-primary me-1"></i>Học kỳ đang chọn: <strong class="text-dark">{{ $hocKys->firstWhere('MaHocKy', $selectedHocKy)?->TenHocKy ?? ($selectedHocKy ? $selectedHocKy : 'Tất cả học kỳ') }}</strong>
+                <i class="fa-solid fa-calendar-days text-primary me-2"></i>Học kỳ đang chọn: <strong class="text-dark">{{ $hocKys->firstWhere('MaHocKy', $selectedHocKy)?->TenHocKy ?? ($selectedHocKy ? $selectedHocKy : 'Tất cả học kỳ') }}</strong>
             </span>
         </div>
     </div>
@@ -31,32 +31,39 @@
 
 
     <!-- Tabs Navigation (Đồng bộ tuyệt đối cấu trúc với Quản Lý Sinh Viên) -->
-    <ul class="nav nav-tabs nav-tabs-huit mb-4 border-bottom" id="giangVienUnifiedTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0 !important;">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {{ ($activeTab !== 'theohocky' && $activeTab !== 'taikhoan') ? 'active fw-bold text-primary' : 'text-secondary' }}" 
-               id="tab-btn-danhmuc" data-bs-toggle="tab" href="#pane-danhmuc" role="tab" aria-controls="pane-danhmuc" 
-               aria-selected="{{ ($activeTab !== 'theohocky' && $activeTab !== 'taikhoan') ? 'true' : 'false' }}"
-               style="font-size: 0.95rem; padding: 10px 22px;">
-                <i class="fa-solid fa-address-book me-2"></i>Danh Mục Giảng Viên (Toàn Trường)
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {{ $activeTab === 'theohocky' ? 'active fw-bold text-primary' : 'text-secondary' }}" 
-               id="tab-btn-theohocky" data-bs-toggle="tab" href="#pane-theohocky" role="tab" aria-controls="pane-theohocky" 
-               aria-selected="{{ $activeTab === 'theohocky' ? 'true' : 'false' }}"
-               style="font-size: 0.95rem; padding: 10px 22px;">
-                <i class="fa-solid fa-chalkboard-user me-2"></i>Quản Lý Giảng Viên Theo Học Kỳ
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {{ $activeTab === 'taikhoan' ? 'active fw-bold text-primary' : 'text-secondary' }}" 
-               id="tab-btn-taikhoan" data-bs-toggle="tab" href="#pane-taikhoan" role="tab" aria-controls="pane-taikhoan" 
-               aria-selected="{{ $activeTab === 'taikhoan' ? 'true' : 'false' }}"
-               style="font-size: 0.95rem; padding: 10px 22px;">
-                <i class="fa-solid fa-user-shield me-2"></i>Tài Khoản Portal &amp; Phân Quyền Chức Vụ
-            </a>
-        </li>
-    </ul>
+    <!-- Tabs Navigation (Xanh dương trầm / Navy đậm, không bị chói) -->
+<ul class="nav nav-tabs nav-tabs-huit mb-4 border-bottom" id="giangVienUnifiedTabs" role="tablist" style="border-bottom: 2px solid #cbd5e1 !important;">
+    
+    <!-- Tab 1 -->
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {{ ($activeTab !== 'theohocky' && $activeTab !== 'taikhoan') ? 'active fw-bold' : 'text-secondary' }}" 
+           id="tab-btn-danhmuc" data-bs-toggle="tab" href="#pane-danhmuc" role="tab" aria-controls="pane-danhmuc" 
+           aria-selected="{{ ($activeTab !== 'theohocky' && $activeTab !== 'taikhoan') ? 'true' : 'false' }}"
+           style="font-size: 0.95rem; padding: 10px 22px; {{ ($activeTab !== 'theohocky' && $activeTab !== 'taikhoan') ? 'color: #1e3a8a !important; border-bottom: 2px solid #1e3a8a; margin-bottom: -2px;' : '' }}">
+            <i class="fa-solid fa-address-book me-2"></i>Danh Mục Giảng Viên (Toàn Trường)
+        </a>
+    </li>
+
+    <!-- Tab 2 -->
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {{ $activeTab === 'theohocky' ? 'active fw-bold' : 'text-secondary' }}" 
+           id="tab-btn-theohocky" data-bs-toggle="tab" href="#pane-theohocky" role="tab" aria-controls="pane-theohocky" 
+           aria-selected="{{ $activeTab === 'theohocky' ? 'true' : 'false' }}"
+           style="font-size: 0.95rem; padding: 10px 22px; {{ $activeTab === 'theohocky' ? 'color: #1e3a8a !important; border-bottom: 2px solid #1e3a8a; margin-bottom: -2px;' : '' }}">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>Quản Lý Giảng Viên Theo Học Kỳ
+        </a>
+    </li>
+
+    <!-- Tab 3 -->
+    <li class="nav-item" role="presentation">
+        <a class="nav-link {{ $activeTab === 'taikhoan' ? 'active fw-bold' : 'text-secondary' }}" 
+           id="tab-btn-taikhoan" data-bs-toggle="tab" href="#pane-taikhoan" role="tab" aria-controls="pane-taikhoan" 
+           aria-selected="{{ $activeTab === 'taikhoan' ? 'true' : 'false' }}"
+           style="font-size: 0.95rem; padding: 10px 22px; {{ $activeTab === 'taikhoan' ? 'color: #1e3a8a !important; border-bottom: 2px solid #1e3a8a; margin-bottom: -2px;' : '' }}">
+            <i class="fa-solid fa-user-shield me-2"></i>Tài Khoản Portal &amp; Phân Quyền Chức Vụ
+        </a>
+    </li>
+</ul>
 
     <!-- Tab Contents -->
     <div class="tab-content" id="giangVienUnifiedContent">
@@ -130,18 +137,28 @@
             </div>
 
             <!-- Filter Bar Tab 1 -->
-            <div class="admin-filter-bar mb-4">
-                <form method="GET" action="{{ route('giangvien.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
-                    <input type="hidden" name="tab" value="danhsach">
-                    <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
-                        <div class="input-group" style="min-width: 260px; flex: 1;">
-                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                            <input type="text" name="search" class="form-control border-start-0 border-end-0 ps-0" placeholder="Tìm theo tên GV, học vị, email, mã GV..." value="{{ request('search') }}">
-                            <button class="btn btn-primary px-3 fw-semibold" type="submit">Tìm</button>
-                        </div>
+            <!-- Filter Bar Tab 1 (Cân đối tỷ lệ 7 - 3, bên phải là nút khối lớn đồng bộ chiều cao) -->
+<div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
+    <form method="GET" action="{{ route('giangvien.index') }}" class="w-100">
+        <input type="hidden" name="tab" value="danhsach">
+        
+        <div class="row g-3 align-items-center">
+            
+            <!-- BÊN TRÁI: 7 PHẦN (2 hàng: Tìm kiếm + Các ô lọc) -->
+            <div class="col-12 col-xl-9">
+                <div class="d-flex flex-column gap-2">
+                    
+                    <!-- Hàng 1: Ô tìm kiếm -->
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light" placeholder="Tìm tên GV, học vị, email, mã GV..." value="{{ request('search') }}">
+                        <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
+                    </div>
 
+                    <!-- Hàng 2: Các ô lọc dữ liệu (Select) -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
                         <!-- Bộ lọc Học Kỳ -->
-                        <select name="MaHocKy_filter" class="form-select" style="min-width: 220px;" onchange="this.form.submit()">
+                        <select name="MaHocKy_filter" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Học Kỳ --</option>
                             @foreach($hocKys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy_filter') == $hk->MaHocKy ? 'selected' : '' }}>
@@ -151,7 +168,7 @@
                         </select>
 
                         <!-- Bộ lọc Bộ Môn -->
-                        <select name="MaBoMon" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
+                        <select name="MaBoMon" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
                             <option value="">-- Tất cả Bộ môn --</option>
                             @foreach($bomons as $bm)
                                 <option value="{{ $bm->MaBoMon }}" {{ request('MaBoMon') == $bm->MaBoMon ? 'selected' : '' }}>
@@ -161,8 +178,8 @@
                         </select>
 
                         <!-- Bộ lọc Chức Vụ -->
-                        <select name="ChucVu" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
-                            <option value="">-- Tất cả Chức vụ --</option>
+                        <select name="ChucVu" class="form-select form-select-sm" style="width: auto; min-width: 130px; flex: 1;" onchange="this.form.submit()">
+                            <option value="">-- Chức vụ --</option>
                             <option value="co_chuc_vu" {{ request('ChucVu') == 'co_chuc_vu' ? 'selected' : '' }}>Đang giữ chức vụ</option>
                             <option value="TK" {{ request('ChucVu') == 'TK' ? 'selected' : '' }}>Trưởng Khoa (TK)</option>
                             <option value="TBM" {{ request('ChucVu') == 'TBM' ? 'selected' : '' }}>Trưởng Bộ Môn (TBM)</option>
@@ -170,25 +187,34 @@
                         </select>
 
                         <!-- Bộ lọc Định Mức Hướng Dẫn -->
-                        <select name="tinh_trang_hd" class="form-select" style="min-width: 190px;" onchange="this.form.submit()">
+                        <select name="tinh_trang_hd" class="form-select form-select-sm" style="width: auto; min-width: 150px; flex: 1;" onchange="this.form.submit()">
                             <option value="">-- Tình trạng hướng dẫn --</option>
-                            <option value="co_hd" {{ request('tinh_trang_hd') == 'co_hd' ? 'selected' : '' }}>Có nhóm hướng dẫn (&ge; 1)</option>
-                            <option value="dat_dinh_muc" {{ request('tinh_trang_hd') == 'dat_dinh_muc' ? 'selected' : '' }}>Đạt định mức / Hết chỉ tiêu</option>
-                            <option value="chua_hd" {{ request('tinh_trang_hd') == 'chua_hd' ? 'selected' : '' }}>Chưa nhận hướng dẫn</option>
+                            <option value="co_hd" {{ request('tinh_trang_hd') == 'co_hd' ? 'selected' : '' }}>Có nhóm HD (&ge; 1)</option>
+                            <option value="dat_dinh_muc" {{ request('tinh_trang_hd') == 'dat_dinh_muc' ? 'selected' : '' }}>Đạt định mức</option>
+                            <option value="chua_hd" {{ request('tinh_trang_hd') == 'chua_hd' ? 'selected' : '' }}>Chưa nhận HD</option>
                         </select>
 
+                        <!-- Nút Xóa lọc -->
                         @if(request()->anyFilled(['search', 'MaHocKy_filter', 'MaBoMon', 'ChucVu', 'tinh_trang_hd']))
-                            <a href="{{ route('giangvien.index', ['tab' => 'danhsach']) }}" class="btn btn-outline-secondary px-3 flex-shrink-0"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                            <a href="{{ route('giangvien.index', ['tab' => 'danhsach']) }}" class="btn btn-outline-secondary btn-sm text-nowrap">
+                                <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
+                            </a>
                         @endif
                     </div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                        <!-- Nút Chuyển Sang Tab Quản Lý Học Kỳ (Đồng bộ tuyệt đối với Sinh Viên) -->
-                        <button type="button" class="btn btn-primary shadow-xs fw-semibold rounded-pill px-3" onclick="switchToTabTheoHocKy()" title="Chuyển sang tab quản lý giảng viên theo học kỳ để thêm hoặc import giảng viên">
-                            <i class="fa-solid fa-calendar-check me-1"></i> Quản Lý Giảng Viên Theo Học Kỳ
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
+
+            <!-- BÊN PHẢI: 3 PHẦN (Nút khối lớn làm điểm nhấn, đồng bộ chiều cao với 2 hàng bên trái) -->
+            <div class="col-12 col-xl-3">
+                <button type="button" class="btn shadow fw-bold rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white" onclick="switchToTabTheoHocKy()" title="Chuyển sang tab quản lý giảng viên theo học kỳ để thêm hoặc import giảng viên" style="background-color: #1e3a8a; border-color: #1e3a8a; min-height: 82px; padding: 10px 15px;">
+                    <span style="font-size: 0.95rem;"><i class="fa-solid fa-calendar-check me-2"></i>Quản Lý Giảng Viên Theo Học Kỳ</span>
+                   
+                </button>
+            </div>
+
+        </div>
+    </form>
+</div>
 
             <!-- Bảng Danh Sách Giảng Viên Toàn Trường -->
             <div class="card border-0 shadow-sm rounded-3 mb-4">
@@ -246,18 +272,18 @@
                                     </div>
                                     <div class="small text-muted mt-1">
                                         @if($ct['tinh_trang'] === 'vuot_chi_tieu')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5">Vượt chỉ tiêu</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">Vượt chỉ tiêu</span>
                                         @elseif($ct['tinh_trang'] === 'het_chi_tieu')
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5">Đã đủ chỉ tiêu</span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">Đã đủ chỉ tiêu</span>
                                         @elseif($ct['da_dung'] > 0)
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5">Còn {{ $ct['con_lai'] }} chỗ</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Còn {{ $ct['con_lai'] }} chỗ</span>
                                         @else
-                                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5">Chưa có nhóm</span>
+                                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">Chưa có nhóm</span>
                                         @endif
                                     </div>
                                 </td>
                                 <td class="text-center py-3">
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
                                         {{ $gv->TrangThai ?? 'Đang công tác' }}
                                     </span>
                                 </td>
@@ -287,10 +313,10 @@
                                         <h6 class="fw-bold text-secondary">Chưa có dữ liệu giảng viên nào</h6>
                                         <p class="small text-muted mb-3">Vui lòng điều chỉnh bộ lọc hoặc thêm mới giảng viên.</p>
                                         @if(request()->anyFilled(['search', 'MaHocKy_filter', 'MaBoMon', 'ChucVu', 'tinh_trang_hd']))
-                                            <a href="{{ route('giangvien.index', ['tab' => 'danhsach']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-1"></i> Xóa bộ lọc</a>
+                                            <a href="{{ route('giangvien.index', ['tab' => 'danhsach']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-2"></i> Xóa bộ lọc</a>
                                         @else
-                                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" onclick="switchToTabTheoHocKy()">
-                                                <i class="fa-solid fa-calendar-check me-1"></i> Quản Lý &amp; Thêm Theo Học Kỳ
+                                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 d-inline-flex align-items-center" onclick="switchToTabTheoHocKy()">
+                                                <i class="fa-solid fa-calendar-check me-2"></i> Quản Lý &amp; Thêm Theo Học Kỳ
                                             </button>
                                         @endif
                                     </div>
@@ -340,26 +366,26 @@
                             <div class="vr d-none d-lg-block" style="height: 40px;"></div>
                             <div class="small text-muted">
                                 <div>Tiêu chuẩn: Tối đa <strong>5 nhóm / GV</strong> &bull; Hướng dẫn tối đa <strong>15 sinh viên</strong> &bull; Yêu cầu có đề tài duyệt.</div>
-                                <div class="text-secondary mt-0.5">Giảng viên tham gia học kỳ sẽ phụ trách hướng dẫn các nhóm sinh viên làm khóa luận và tham gia chấm bảo vệ.</div>
+                                <div class="text-secondary mt-1">Giảng viên tham gia học kỳ sẽ phụ trách hướng dẫn các nhóm sinh viên làm khóa luận và tham gia chấm bảo vệ.</div>
                             </div>
                         </div>
 
                         <!-- Các nút thao tác dạng pill theo ảnh mẫu người dùng -->
                         <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap">
-                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalThemGVVaoKy">
-                                <i class="fa-solid fa-user-plus me-1"></i> Thêm giảng viên
+                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalThemGVVaoKy">
+                                <i class="fa-solid fa-user-plus me-2"></i> Thêm giảng viên
                             </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalPhanBoDinhMuc">
-                                <i class="fa-solid fa-sliders me-1"></i> Phân Bổ Định Mức
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPhanBoDinhMuc">
+                                <i class="fa-solid fa-sliders me-2"></i> Phân Bổ Định Mức
                             </button>
-                            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalImportGVVaoKy">
-                                <i class="fa-solid fa-file-excel me-1"></i> Import Excel Vào Kỳ
+                            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalImportGVVaoKy">
+                                <i class="fa-solid fa-file-excel me-2"></i> Import Excel Vào Kỳ
                             </button>
-                            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" title="Tải file mẫu Excel">
-                                <i class="fa-solid fa-download me-1"></i> File Mẫu
+                            <a href="{{ route('admin.import.template', 'giangvien') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center" title="Tải file mẫu Excel">
+                                <i class="fa-solid fa-download me-2"></i> File Mẫu
                             </a>
                             <a href="{{ route('admin.giangvien.export', ['MaHocKy' => $selectedHocKy, 'tab' => 'theohocky']) }}" class="btn btn-success btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs">
-                                <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
+                                <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel
                             </a>
                         </div>
                     </div>
@@ -464,7 +490,7 @@
                         </select>
 
                         @if(request()->anyFilled(['search_hk', 'MaBoMon_hk', 'tinh_trang_hd_hk', 'pham_vi']))
-                            <a href="{{ route('giangvien.index', ['tab' => 'theohocky', 'MaHocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                            <a href="{{ route('giangvien.index', ['tab' => 'theohocky', 'MaHocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                         @endif
                     </div>
                 </form>
@@ -527,7 +553,7 @@
                                     <div class="small text-muted">{{ $gv->boMon->khoa->TenKhoa ?? 'Khoa CNTT' }}</div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light text-primary border px-2.5 py-1.5 fw-bold fs-6">
+                                    <span class="badge bg-light text-primary border px-3 py-2 fw-bold fs-6">
                                         {{ $gv->de_tais_hk_count ?? 0 }} đề tài
                                     </span>
                                 </td>
@@ -535,7 +561,7 @@
                                     <div class="fw-bold {{ $ct['tinh_trang'] === 'vuot_chi_tieu' ? 'text-danger' : ($ct['is_full'] ? 'text-warning-emphasis' : ($ct['da_dung'] > 0 ? 'text-success' : 'text-muted')) }}">
                                         {{ $ct['label'] }} nhóm tối đa
                                     </div>
-                                    <div class="progress mt-1.5" style="height: 6px; background-color: #f1f5f9;">
+                                    <div class="progress mt-2" style="height: 6px; background-color: #f1f5f9;">
                                         <div class="progress-bar {{ $ct['is_full'] ? 'bg-warning' : ($ct['da_dung'] > 0 ? 'bg-success' : 'bg-secondary') }}" role="progressbar" style="width: {{ $pct }}%" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <div class="small text-muted mt-1" style="font-size: 0.75rem;">
@@ -544,27 +570,27 @@
                                 </td>
                                 <td class="text-center">
                                     @if($ct['tinh_trang'] === 'vuot_chi_tieu')
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-semibold">
                                             Vượt chỉ tiêu
                                         </span>
                                     @elseif($ct['is_full'])
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
                                             Đã đủ chỉ tiêu
                                         </span>
                                     @elseif($ct['da_dung'] > 0)
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
                                             Đang HD (còn {{ $ct['con_lai'] }})
                                         </span>
                                     @else
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-semibold">
+                                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 fw-semibold">
                                             Chưa nhận nhóm
                                         </span>
                                     @endif
                                 </td>
                                 <td class="text-center pe-3">
                                     <div class="d-inline-flex align-items-center gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5" data-bs-toggle="modal" data-bs-target="#modalCapNhatChiTieu{{ $gv->MaGV }}" title="Thiết lập chỉ tiêu hướng dẫn">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i> Định mức
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalCapNhatChiTieu{{ $gv->MaGV }}" title="Thiết lập chỉ tiêu hướng dẫn">
+                                            <i class="fa-solid fa-pen-to-square me-2"></i> Định mức
                                         </button>
                                         <a href="{{ route('giangvien.show', $gv->MaGV) }}" class="btn btn-sm btn-light text-primary btn-action-circle border" title="Xem chi tiết hồ sơ">
                                             <i class="fa-solid fa-eye"></i>
@@ -577,7 +603,7 @@
                                             <div class="modal-content rounded-4 border-0 shadow">
                                                 <div class="modal-header bg-light rounded-top-4">
                                                     <h5 class="modal-title fw-bold text-primary">
-                                                        <i class="fa-solid fa-sliders me-1"></i> Định Mức Hướng Dẫn: {{ $gv->HoTen }}
+                                                        <i class="fa-solid fa-sliders me-2"></i> Định Mức Hướng Dẫn: {{ $gv->HoTen }}
                                                     </h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
@@ -617,18 +643,18 @@
                                             <h6 class="fw-bold text-secondary">Không tìm thấy giảng viên phù hợp trong học kỳ {{ $selectedHocKy }}</h6>
                                             <p class="small text-muted mb-3">Vui lòng điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.</p>
                                             <a href="{{ route('giangvien.index', ['tab' => 'theohocky', 'MaHocKy' => $selectedHocKy]) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4">
-                                                <i class="fa-solid fa-rotate me-1"></i> Xóa Bộ Lọc
+                                                <i class="fa-solid fa-rotate me-2"></i> Xóa Bộ Lọc
                                             </a>
                                         @else
                                             <i class="fa-solid fa-chalkboard-user text-muted mb-3" style="font-size: 2.5rem;"></i>
                                             <h6 class="fw-bold text-secondary">Chưa có dữ liệu phân bổ cho học kỳ {{ $selectedHocKy }}</h6>
                                             <p class="small text-muted mb-3">Bấm nút <strong>Thêm giảng viên</strong> hoặc <strong>Import Excel Vào Kỳ</strong> để phân bổ giảng viên vào học kỳ này.</p>
                                             <div class="d-flex justify-content-center gap-2">
-                                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalThemGVVaoKy">
-                                                    <i class="fa-solid fa-user-plus me-1"></i> Thêm Giảng Viên Vào Kỳ
+                                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalThemGVVaoKy">
+                                                    <i class="fa-solid fa-user-plus me-2"></i> Thêm Giảng Viên Vào Kỳ
                                                 </button>
-                                                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-4 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalImportGVVaoKy">
-                                                    <i class="fa-solid fa-file-excel me-1"></i> Import Excel
+                                                <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-4 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalImportGVVaoKy">
+                                                    <i class="fa-solid fa-file-excel me-2"></i> Import Excel
                                                 </button>
                                             </div>
                                         @endif
@@ -684,12 +710,12 @@
                             <option value="GV" {{ request('ChucVu') == 'GV' ? 'selected' : '' }}>Giảng viên thường</option>
                         </select>
                         @if(request()->anyFilled(['search', 'MaBoMon', 'ChucVu']))
-                            <a href="{{ route('giangvien.index', ['tab' => 'taikhoan']) }}" class="btn btn-outline-secondary px-3 flex-shrink-0"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                            <a href="{{ route('giangvien.index', ['tab' => 'taikhoan']) }}" class="btn btn-outline-secondary px-3 flex-shrink-0"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                         @endif
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                        <button type="button" class="btn btn-warning text-dark shadow-xs fw-semibold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importTBM_TK_Modal">
-                            <i class="fa-solid fa-user-shield me-1"></i> Upload DS TK / TBM
+                        <button type="button" class="btn btn-warning text-dark shadow-xs fw-semibold rounded-pill px-3 d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importTBM_TK_Modal">
+                            <i class="fa-solid fa-user-shield me-2"></i> Upload DS TK / TBM
                         </button>
                     </div>
                 </form>
@@ -737,65 +763,65 @@
                                     <div class="fw-bold text-dark fs-6">
                                         {{ $gv->HocVi ? $gv->HocVi . '. ' : '' }}{{ $gv->HoTen }}
                                     </div>
-                                    <div class="text-muted small mt-0.5">
+                                    <div class="text-muted small mt-1">
                                         <span class="badge-code">{{ $gv->MaGV }}</span> &bull; {{ $gv->boMon->TenBoMon ?? 'Chưa gán bộ môn' }}
                                     </div>
                                 </td>
                                 <td class="py-3">
                                     <div>
-                                        <span class="badge bg-light text-primary border px-2.5 py-1 fs-6 font-monospace">
-                                            <i class="fa-solid fa-id-badge me-1"></i>{{ $tk->TenDangNhap ?? $gv->MaGV }}
+                                        <span class="badge bg-light text-primary border px-3 py-1 fs-6 font-monospace">
+                                            <i class="fa-solid fa-id-badge me-2"></i>{{ $tk->TenDangNhap ?? $gv->MaGV }}
                                         </span>
                                     </div>
                                     <div class="small text-muted mt-1">
-                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-chalkboard-user me-1"></i>Giảng viên (VT02)
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-chalkboard-user me-2"></i>Giảng viên (VT02)
                                         </span>
                                     </div>
                                 </td>
                                 <td class="py-3">
                                     @if($isTK)
                                         <div>
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 fw-bold fs-7">
-                                                <i class="fa-solid fa-crown me-1"></i>Trưởng Khoa (VT05)
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold fs-7">
+                                                <i class="fa-solid fa-crown me-2"></i>Trưởng Khoa (VT05)
                                             </span>
                                         </div>
                                         <div class="small text-dark font-monospace mt-1">
-                                            <i class="fa-solid fa-shield-halved me-1 text-danger"></i>TK chức vụ: <strong>{{ $tkChucVuObj->TenDangNhap ?? ('TK_' . ($gv->boMon->khoa->MaKhoa ?? 'CNTT') . '_' . $gv->MaGV) }}</strong>
+                                            <i class="fa-solid fa-shield-halved me-2 text-danger"></i>TK chức vụ: <strong>{{ $tkChucVuObj->TenDangNhap ?? ('TK_' . ($gv->boMon->khoa->MaKhoa ?? 'CNTT') . '_' . $gv->MaGV) }}</strong>
                                         </div>
                                     @elseif($isTBM)
                                         <div>
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-bold fs-7">
-                                                <i class="fa-solid fa-medal me-1"></i>Trưởng Bộ Môn (VT04)
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fw-bold fs-7">
+                                                <i class="fa-solid fa-medal me-2"></i>Trưởng Bộ Môn (VT04)
                                             </span>
                                         </div>
                                         <div class="small text-dark font-monospace mt-1">
-                                            <i class="fa-solid fa-shield me-1 text-warning"></i>TK chức vụ: <strong>{{ $tkChucVuObj->TenDangNhap ?? ('TBM_' . ($gv->MaBoMon ?? 'BM') . '_' . $gv->MaGV) }}</strong>
+                                            <i class="fa-solid fa-shield me-2 text-warning"></i>TK chức vụ: <strong>{{ $tkChucVuObj->TenDangNhap ?? ('TBM_' . ($gv->MaBoMon ?? 'BM') . '_' . $gv->MaGV) }}</strong>
                                         </div>
                                     @else
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1">
-                                            <i class="fa-solid fa-user me-1 text-muted"></i>Giảng viên thường
+                                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">
+                                            <i class="fa-solid fa-user me-2 text-muted"></i>Giảng viên thường
                                         </span>
-                                        <div class="small text-muted mt-0.5">Chưa bổ nhiệm chức vụ</div>
+                                        <div class="small text-muted mt-1">Chưa bổ nhiệm chức vụ</div>
                                     @endif
                                 </td>
                                 <td class="text-center py-3">
                                     @if($isActive)
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
                                         </span>
                                     @else
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                            <i class="fa-solid fa-lock me-1"></i> Đã khóa
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-lock me-2"></i> Đã khóa
                                         </span>
                                     @endif
                                 </td>
                                 <td class="pe-4 py-3 text-center">
                                     <div class="d-inline-flex align-items-center gap-1">
-                                        <button type="button" class="btn btn-sm {{ $hasChucVu ? 'btn-outline-warning' : 'btn-outline-primary' }} rounded-pill px-2.5" 
+                                        <button type="button" class="btn btn-sm {{ $hasChucVu ? 'btn-outline-warning' : 'btn-outline-primary' }} rounded-pill px-3" 
                                                 onclick="openBoNhiemModal('{{ $gv->MaGV }}', '{{ $gv->HoTen }}', '{{ $gv->MaBoMon }}', '{{ $gv->boMon->MaKhoa ?? '' }}', '{{ $isTK ? 'VT05' : ($isTBM ? 'VT04' : '') }}')"
                                                 title="Bổ nhiệm Trưởng khoa / Trưởng bộ môn & cấp tài khoản Portal">
-                                            <i class="fa-solid fa-award me-1"></i> {{ $hasChucVu ? 'Đổi chức vụ' : 'Bổ nhiệm' }}
+                                            <i class="fa-solid fa-award me-2"></i> {{ $hasChucVu ? 'Đổi chức vụ' : 'Bổ nhiệm' }}
                                         </button>
                                         
                                         <div class="dropdown d-inline">
@@ -807,8 +833,8 @@
                                                 <li>
                                                     <form method="POST" action="{{ route('admin.giangvien.huy_bo_nhiem', $gv->MaGV) }}" onsubmit="return confirm('Xác nhận hủy chức vụ và thu hồi tài khoản chức vụ của giảng viên {{ $gv->HoTen }}?');">
                                                         @csrf
-                                                        <button type="submit" class="dropdown-item text-warning-emphasis py-1.5 d-flex align-items-center gap-2">
-                                                            <i class="fa-solid fa-user-minus" style="width: 16px;"></i> Hủy chức vụ đã cấp
+                                                        <button type="submit" class="dropdown-item text-warning-emphasis py-2 d-flex align-items-center gap-2">
+                                                            <i class="fa-solid fa-user-minus me-2" style="width: 16px;"></i> Hủy chức vụ đã cấp
                                                         </button>
                                                     </form>
                                                 </li>
@@ -819,8 +845,8 @@
                                                     <form method="POST" action="{{ route('admin.giangvien.xoa_tai_khoan', $gv->MaGV) }}" onsubmit="return confirm('CẢNH BÁO: Thao tác này sẽ xóa toàn bộ tài khoản Portal của giảng viên {{ $gv->HoTen }} (hồ sơ giảng viên vẫn được giữ nguyên). Tiếp tục?');">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="dropdown-item text-danger py-1.5 d-flex align-items-center gap-2">
-                                                            <i class="fa-solid fa-user-slash" style="width: 16px;"></i> Thu hồi tài khoản Portal
+                                                        <button type="submit" class="dropdown-item text-danger py-2 d-flex align-items-center gap-2">
+                                                            <i class="fa-solid fa-user-slash me-2" style="width: 16px;"></i> Thu hồi tài khoản Portal
                                                         </button>
                                                     </form>
                                                 </li>
@@ -837,7 +863,7 @@
                                         <i class="fa-solid fa-user-shield text-muted mb-3" style="font-size: 2.5rem;"></i>
                                         <h6 class="fw-bold text-secondary">Chưa có dữ liệu tài khoản nào</h6>
                                         <p class="small text-muted mb-3">Vui lòng điều chỉnh bộ lọc tìm kiếm hoặc chức vụ.</p>
-                                        <a href="{{ route('giangvien.index', ['tab' => 'taikhoan']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-1"></i> Xóa bộ lọc</a>
+                                        <a href="{{ route('giangvien.index', ['tab' => 'taikhoan']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4"><i class="fa-solid fa-rotate me-2"></i> Xóa bộ lọc</a>
                                     </div>
                                 </td>
                             </tr>
@@ -863,7 +889,7 @@
     <!-- Bottom Info Card: HUIT Lecturer Rules -->
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
         <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-            <i class="fa-solid fa-rocket text-primary"></i> QUY ĐỊNH HƯỚNG DẪN ĐỀ TÀI &amp; PHÂN BỔ TÀI KHOẢN GIẢNG VIÊN (HUIT):
+            <i class="fa-solid fa-rocket text-primary me-2"></i> QUY ĐỊNH HƯỚNG DẪN ĐỀ TÀI &amp; PHÂN BỔ TÀI KHOẢN GIẢNG VIÊN (HUIT):
         </h6>
         <div class="row g-3">
             <div class="col-md-4">
@@ -901,9 +927,9 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-light border rounded-3 d-flex align-items-center justify-content-between p-2.5 mb-3 bg-light">
+                <div class="alert alert-light border rounded-3 d-flex align-items-center justify-content-between p-2 mb-3 bg-light">
                     <div class="small text-muted">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> Có file danh sách nhiều giảng viên?
+                        <i class="fa-solid fa-file-excel text-success me-2"></i> Có file danh sách nhiều giảng viên?
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-semibold" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalImportGVVaoKy">
                         Upload File Excel
@@ -914,12 +940,12 @@
                 <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-pill border" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active rounded-pill fw-semibold py-2" id="btn-tab-gv-cosan" type="button" onclick="switchThemGVMode('co_san')">
-                            <i class="fa-solid fa-user-check me-1"></i> 1. Chọn GV Đã Có Sẵn
+                            <i class="fa-solid fa-user-check me-2"></i> 1. Chọn GV Đã Có Sẵn
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link rounded-pill fw-semibold py-2" id="btn-tab-gv-moi" type="button" onclick="switchThemGVMode('moi')">
-                            <i class="fa-solid fa-user-plus me-1"></i> 2. Nhập Mới Giảng Viên (Tạo Tài Khoản)
+                            <i class="fa-solid fa-user-plus me-2"></i> 2. Nhập Mới Giảng Viên (Tạo Tài Khoản)
                         </button>
                     </li>
                 </ul>
@@ -937,7 +963,7 @@
                             @endforeach
                         </select>
                         <div class="form-text small text-success mt-1">
-                            <i class="fa-solid fa-shield-halved me-1"></i> Giảng viên đã có sẵn sẽ được <strong>bảo toàn tài khoản &amp; mật khẩu hiện tại</strong>, chỉ gán định mức vào học kỳ <strong>{{ $selectedHocKy }}</strong>.
+                            <i class="fa-solid fa-shield-halved me-2"></i> Giảng viên đã có sẵn sẽ được <strong>bảo toàn tài khoản &amp; mật khẩu hiện tại</strong>, chỉ gán định mức vào học kỳ <strong>{{ $selectedHocKy }}</strong>.
                         </div>
                     </div>
 
@@ -955,7 +981,7 @@
 
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold"><i class="fa-solid fa-save me-1"></i> Phân Bổ Vào Học Kỳ</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center"><i class="fa-solid fa-save me-2"></i> Phân Bổ Vào Học Kỳ</button>
                     </div>
                 </form>
 
@@ -964,7 +990,7 @@
                     @csrf
                     <input type="hidden" name="MaHocKy" value="{{ $selectedHocKy }}">
                     <div class="alert alert-primary bg-primary-subtle border-0 rounded-3 py-2 px-3 small mb-3">
-                        <i class="fa-solid fa-info-circle me-1 text-primary"></i> <strong>Quy tắc tự động:</strong> Giảng viên mới sẽ được tạo hồ sơ, đồng thời được <strong>cấp tài khoản đăng nhập Portal</strong> với <code>Tên đăng nhập = Mã GV</code>, <code>Mật khẩu mặc định = 123456</code>.
+                        <i class="fa-solid fa-info-circle me-2 text-primary"></i> <strong>Quy tắc tự động:</strong> Giảng viên mới sẽ được tạo hồ sơ, đồng thời được <strong>cấp tài khoản đăng nhập Portal</strong> với <code>Tên đăng nhập = Mã GV</code>, <code>Mật khẩu mặc định = 123456</code>.
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -1017,7 +1043,7 @@
 
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold"><i class="fa-solid fa-save me-1"></i> Lưu &amp; Cấp Tài Khoản</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center"><i class="fa-solid fa-save me-2"></i> Lưu &amp; Cấp Tài Khoản</button>
                     </div>
                 </form>
             </div>
@@ -1111,7 +1137,7 @@
                             @endforeach
                         </select>
                         <div class="form-text small text-muted">
-                            <i class="fa-solid fa-circle-info text-primary me-1"></i> Giảng viên được import sẽ được cập nhật hồ sơ và sẵn sàng tham gia công tác hướng dẫn / phản biện trong học kỳ này.
+                            <i class="fa-solid fa-circle-info text-primary me-2"></i> Giảng viên được import sẽ được cập nhật hồ sơ và sẵn sàng tham gia công tác hướng dẫn / phản biện trong học kỳ này.
                         </div>
                     </div>
 
@@ -1122,14 +1148,14 @@
                     </div>
 
                     <div class="alert alert-info rounded-3 mb-0 small">
-                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-info me-1"></i> Hướng dẫn nhập liệu:</div>
+                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-info me-2"></i> Hướng dẫn nhập liệu:</div>
                         <div class="mt-1 text-muted">Hệ thống sẽ tự động tạo tài khoản Portal với: <code>Tên đăng nhập = Mã GV</code>, <code>Mật khẩu tạm thời ngẫu nhiên</code> (Bắt buộc đổi mật khẩu lần đầu).</div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-upload me-1"></i> Import Dữ Liệu Ngay
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-upload me-2"></i> Import Dữ Liệu Ngay
                     </button>
                 </div>
             </form>
@@ -1151,12 +1177,12 @@
                 <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-pill border" id="pillsModalGvTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active rounded-pill fw-semibold py-2" id="tab-import-gv" data-bs-toggle="pill" data-bs-target="#pane-import-gv" type="button" role="tab" aria-controls="pane-import-gv" aria-selected="true">
-                            <i class="fa-solid fa-file-excel text-success me-1"></i> Import Danh Sách Giảng Viên
+                            <i class="fa-solid fa-file-excel text-success me-2"></i> Import Danh Sách Giảng Viên
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link rounded-pill fw-semibold py-2" id="tab-them-gv" data-bs-toggle="pill" data-bs-target="#pane-them-gv" type="button" role="tab" aria-controls="pane-them-gv" aria-selected="false">
-                            <i class="fa-solid fa-user-plus text-primary me-1"></i> Thêm Mới Giảng Viên
+                            <i class="fa-solid fa-user-plus text-primary me-2"></i> Thêm Mới Giảng Viên
                         </button>
                     </li>
                 </ul>
@@ -1191,7 +1217,7 @@
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-bottom py-3 px-4">
                 <h5 class="modal-title fw-bold text-primary d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-award text-warning"></i> Bổ Nhiệm Chức Vụ &amp; Cấp Tài Khoản Portal
+                    <i class="fa-solid fa-award text-warning me-2"></i> Bổ Nhiệm Chức Vụ &amp; Cấp Tài Khoản Portal
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -1209,19 +1235,19 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="chuc_vu" id="cvTruongKhoa" value="TK" onchange="toggleChucVuFields()">
                                 <label class="form-check-label fw-bold text-dark" for="cvTruongKhoa">
-                                    <i class="fa-solid fa-crown text-danger me-1"></i> Trưởng Khoa (VT05)
+                                    <i class="fa-solid fa-crown text-danger me-2"></i> Trưởng Khoa (VT05)
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="chuc_vu" id="cvTruongBoMon" value="TBM" checked onchange="toggleChucVuFields()">
                                 <label class="form-check-label fw-bold text-dark" for="cvTruongBoMon">
-                                    <i class="fa-solid fa-medal text-warning me-1"></i> Trưởng Bộ Môn (VT04)
+                                    <i class="fa-solid fa-medal text-warning me-2"></i> Trưởng Bộ Môn (VT04)
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="chuc_vu" id="cvHuy" value="HUY" onchange="toggleChucVuFields()">
                                 <label class="form-check-label fw-bold text-danger" for="cvHuy">
-                                    <i class="fa-solid fa-user-xmark me-1"></i> Hủy chức vụ đã cấp (Trả về vai trò Giảng viên thường VT02)
+                                    <i class="fa-solid fa-user-xmark me-2"></i> Hủy chức vụ đã cấp (Trả về vai trò Giảng viên thường VT02)
                                 </label>
                             </div>
                         </div>
@@ -1240,7 +1266,7 @@
                             @endforeach
                         </select>
                         <div class="form-text small text-info mt-1">
-                            <i class="fa-solid fa-circle-info me-1"></i> Cập nhật quyền Trưởng khoa cho tài khoản của giảng viên
+                            <i class="fa-solid fa-circle-info me-2"></i> Cập nhật quyền Trưởng khoa cho tài khoản của giảng viên
                         </div>
                     </div>
 
@@ -1254,22 +1280,22 @@
                             @endforeach
                         </select>
                         <div class="form-text small text-info mt-1">
-                            <i class="fa-solid fa-circle-info me-1"></i> Cập nhật quyền Trưởng bộ môn cho tài khoản của giảng viên
+                            <i class="fa-solid fa-circle-info me-2"></i> Cập nhật quyền Trưởng bộ môn cho tài khoản của giảng viên
                         </div>
                     </div>
 
                     <div class="alert alert-info py-2 px-3 small rounded-3 mb-0" id="alertHuyChucVu" style="display: none;">
-                        <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> <strong>Lưu ý:</strong> Khi chọn <em>Hủy chức vụ</em>, quyền quản lý Trưởng khoa / Trưởng bộ môn sẽ được thu hồi và tài khoản chuyển về vai trò Giảng viên bình thường.
+                        <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> <strong>Lưu ý:</strong> Khi chọn <em>Hủy chức vụ</em>, quyền quản lý Trưởng khoa / Trưởng bộ môn sẽ được thu hồi và tài khoản chuyển về vai trò Giảng viên bình thường.
                     </div>
 
                     <div class="alert alert-warning py-2 px-3 small rounded-3 mb-0" id="alertMatKhauMacDinh">
-                        <i class="fa-solid fa-shield-halved me-1"></i> Giảng viên sẽ sử dụng tài khoản liên kết để đăng nhập vào đúng Portal phân quyền.
+                        <i class="fa-solid fa-shield-halved me-2"></i> Giảng viên sẽ sử dụng tài khoản liên kết để đăng nhập vào đúng Portal phân quyền.
                     </div>
                 </div>
                 <div class="modal-footer border-top py-2 px-4">
                     <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-check me-1"></i> Xác Nhận Lưu
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Xác Nhận Lưu
                     </button>
                 </div>
             </form>
@@ -1296,7 +1322,7 @@
                     </div>
 
                     <div class="alert alert-secondary py-2 px-3 small rounded-3 mb-3">
-                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-question me-1 text-primary"></i>Quy tắc đặt tên đăng nhập:</div>
+                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-question me-2 text-primary"></i>Quy tắc đặt tên đăng nhập:</div>
                         <div>&bull; Trưởng khoa: <code>TK_{MaKhoa}_001</code> (Role: <code>VT05</code>)</div>
                         <div>&bull; Trưởng bộ môn: <code>TBM_{MaKhoa}_{MaBoMon}_001</code> (Role: <code>VT04</code>)</div>
                         <div class="mt-1">Dùng file mẫu: <strong>sample_imports/08_TaiKhoan_TBM_TK_Mau</strong></div>
@@ -1304,8 +1330,8 @@
                 </div>
                 <div class="modal-footer border-top py-2 px-4">
                     <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm btn-warning rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-upload me-1"></i> Upload &amp; Khởi Tạo
+                    <button type="submit" class="btn btn-sm btn-warning rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-upload me-2"></i> Upload &amp; Khởi Tạo
                     </button>
                 </div>
             </div>

@@ -7,8 +7,8 @@
         <div class="card card-premium">
             <div class="card-header-premium d-flex justify-content-between align-items-center">
                 <span><i class="fa-solid fa-plus-circle text-primary me-2"></i>Thêm Mới Lớp Học Phần (Lớp Tín Chỉ)</span>
-                <a href="{{ route('admin.lophocphan.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="fa-solid fa-arrow-left me-1"></i>Quay lại
+                <a href="{{ route('admin.lophocphan.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
                 </a>
             </div>
             <div class="card-body p-4">
@@ -83,7 +83,7 @@
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <a href="{{ route('admin.lophocphan.index') }}" class="btn btn-light px-4 rounded-pill">Hủy</a>
-                        <button type="submit" class="btn btn-success px-4 rounded-pill"><i class="fa-solid fa-save me-1"></i>Lưu Lớp Học Phần</button>
+                        <button type="submit" class="btn btn-success px-4 rounded-pill d-inline-flex align-items-center"><i class="fa-solid fa-save me-2"></i>Lưu Lớp Học Phần</button>
                     </div>
                 </form>
             </div>

@@ -8,17 +8,17 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-users-rectangle text-primary"></i>
+                <i class="fa-solid fa-users-rectangle text-primary me-2"></i>
                 <span>Lớp {{ $lop->TenLop }}</span>
                 <span class="badge-code ms-2">{{ $lop->MaLop }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('lop.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('lop.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('lop.edit', $lop->MaLop) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
             </a>
         </div>
     </div>
@@ -95,11 +95,11 @@
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                     <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-user-graduate text-primary"></i>
+                        <i class="fa-solid fa-user-graduate text-primary me-2"></i>
                         <span>Danh Sách Sinh Viên Trong Lớp ({{ $lop->sinhViens->count() }})</span>
                     </h6>
                     <a href="{{ route('sinhvien.create') }}?MaLop={{ $lop->MaLop }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fa-solid fa-user-plus me-1"></i> Thêm Sinh Viên
+                        <i class="fa-solid fa-user-plus me-2"></i> Thêm Sinh Viên
                     </a>
                 </div>
                 <div class="table-responsive">
@@ -141,11 +141,11 @@
                                     <td class="text-center">
                                         @if(($sv->SoTinChiTichLuy ?? 0) >= 115)
                                             <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">
-                                                <i class="fa-solid fa-check me-1"></i> Đủ ĐK
+                                                <i class="fa-solid fa-check me-2"></i> Đủ ĐK
                                             </span>
                                         @else
                                             <span class="badge bg-warning-subtle text-warning rounded-pill px-2 py-1 small">
-                                                <i class="fa-solid fa-xmark me-1"></i> Chưa đủ
+                                                <i class="fa-solid fa-xmark me-2"></i> Chưa đủ
                                             </span>
                                         @endif
                                     </td>
@@ -204,7 +204,7 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                             <span class="text-muted">Trạng Thái</span>
                             <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle me-1 small" style="font-size: 0.5rem;"></i> Đang học
+                                <i class="fa-solid fa-circle me-2 small" style="font-size: 0.5rem;"></i> Đang học
                             </span>
                         </li>
                     </ul>

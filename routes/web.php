@@ -94,8 +94,14 @@ Route::middleware(['auth'])->group(function () {
 // ==========================================
 Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
-    // Dashboard
+    // Dashboard & Thống kê Báo cáo
     Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard/export-tong-hop', [\App\Http\Controllers\Admin\DashboardController::class, 'exportTongHop'])->name('admin.dashboard.export_tong_hop');
+    Route::get('/dashboard/export-phan-cong', [\App\Http\Controllers\Admin\DashboardController::class, 'exportPhanCong'])->name('admin.dashboard.export_phan_cong');
+    Route::get('/dashboard/export-sinh-vien', [\App\Http\Controllers\Admin\DashboardController::class, 'exportSinhVien'])->name('admin.dashboard.export_sinh_vien');
+    Route::get('/dashboard/export-tien-do', [\App\Http\Controllers\Admin\DashboardController::class, 'exportSinhVien'])->name('admin.dashboard.export_tien_do');
+    Route::get('/dashboard/print-report', [\App\Http\Controllers\Admin\DashboardController::class, 'printReport'])->name('admin.dashboard.print_report');
+
     Route::post('/taikhoan/{id}/toggle-lock', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'toggleLock'])->name('admin.taikhoan.toggleLock');
     Route::post('/taikhoan/{id}/reset-password', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'resetPassword'])->name('admin.taikhoan.resetPassword');
     Route::post('/taikhoan/can-bo', [\App\Http\Controllers\Admin\TaiKhoanController::class, 'storeCanBo'])->name('admin.taikhoan.store_canbo');
@@ -117,7 +123,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::get('giangvien/export', [\App\Http\Controllers\GiangVienController::class, 'exportExcel'])->name('admin.giangvien.export');
     Route::resource('giangvien', \App\Http\Controllers\GiangVienController::class);
 
-    // Chỉ tiêu hướng dẫn (P4)
+    // Màn hình Thiết lập & Giám sát Chỉ tiêu Hướng dẫn Giảng viên theo Học kỳ
     Route::get('chi-tieu-huong-dan', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'index'])->name('admin.chi_tieu_huong_dan.index');
     Route::post('chi-tieu-huong-dan/update', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'update'])->name('admin.chi_tieu_huong_dan.update');
     Route::post('chi-tieu-huong-dan/bulk', [\App\Http\Controllers\Admin\ChiTieuHuongDanController::class, 'bulkUpdate'])->name('admin.chi_tieu_huong_dan.bulk_update');
@@ -159,8 +165,11 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adminCalendar'])->name('admin.calendar');
 
-    // Theo dõi Đồ án / Khóa luận
+    // Theo dõi Đồ án / Khóa luận (6 Giai đoạn nghiệp vụ Giáo vụ)
     Route::get('/theo-doi-do-an', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'index'])->name('admin.theodoi.index');
+    Route::post('/theo-doi-do-an/chuyen-giai-doan', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'chuyenGiaiDoan'])->name('admin.theodoi.chuyenGiaiDoan');
+    Route::get('/theo-doi-do-an/{id}/lich-su', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'lichSu'])->name('admin.theodoi.lichSu');
+    Route::get('/theo-doi-do-an/{id}/chi-tiet-gv', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'chiTietTienDoGV'])->name('admin.theodoi.chiTietGV');
     Route::get('/theo-doi-do-an/{id}', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'show'])->name('admin.theodoi.show');
     Route::post('/theo-doi-do-an/{id}/remind', [\App\Http\Controllers\Admin\TheoDoiDoAnController::class, 'remindGroup'])->name('admin.theodoi.remind');
 
@@ -212,9 +221,13 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 
     // Quản lý Thông báo (Xem, Tạo mới, Sửa, Xóa, Phát hành - dành cho Admin / Giáo vụ)
     Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('admin.thongbao.index');
-    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('admin.thongbao.show');
+    Route::get('/thongbao/create', [\App\Http\Controllers\ThongBaoController::class, 'create'])->name('thongbao.create');
+    Route::post('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'store'])->name('thongbao.store');
+    Route::get('/thongbao/{id}/edit', [\App\Http\Controllers\ThongBaoController::class, 'edit'])->name('thongbao.edit');
+    Route::put('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'update'])->name('thongbao.update');
+    Route::delete('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'destroy'])->name('thongbao.destroy');
     Route::post('/thongbao/{id}/send-now', [\App\Http\Controllers\ThongBaoController::class, 'sendNow'])->name('thongbao.sendNow');
-    Route::resource('thongbao', \App\Http\Controllers\ThongBaoController::class)->except(['index', 'show']);
+    Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('admin.thongbao.show');
 
     // Thống kê Đề tài Khóa luận
     Route::get('/thongke/detai', [\App\Http\Controllers\ThongKeDeTaiController::class, 'index'])->name('admin.thongke.detai');
@@ -232,6 +245,17 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
 // ==========================================
 Route::middleware(['auth', 'role:Admin,Giáo vụ,Trưởng khoa,Trưởng bộ môn,Giảng viên,Sinh viên'])->group(function () {
     Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('thongbao.index');
+    Route::get('/thongbao/create', function() {
+        $user = Auth::user();
+        $user?->loadMissing('vaiTro');
+        $role = $user?->vaiTro?->TenVaiTro ?? '';
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
+            return redirect()->route('thongbao.create');
+        } elseif ($role === 'Giảng viên') {
+            return redirect()->route('giangvien.thongbao.create');
+        }
+        return redirect()->route('thongbao.index');
+    });
     Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('thongbao.show');
 });
 
@@ -256,13 +280,24 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::post('detai/{id}/discard-draft', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'discardDraft'])->name('giangvien.detai.discard_draft');
     Route::post('detai/{id}/gan-nhom', [\App\Http\Controllers\GiangVien\DeTaiController::class, 'ganNhom'])->name('giangvien.detai.ganNhom');
 
-    // Báo cáo tiến độ
+    // Báo cáo tiến độ & Quản lý giai đoạn thực hiện (Giảng viên)
     Route::get('/baocao', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'index'])->name('giangvien.baocao.index');
     Route::get('/baocao/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'show'])->name('giangvien.baocao.show');
     Route::post('/baocao/{maBaoCao}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXet'])->name('giangvien.baocao.nhanxet');
     Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showKhoi'])->name('giangvien.baocao.show_khoi');
     Route::post('/baocao/khoi/{id}/nhanxet', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeNhanXetKhoi'])->name('giangvien.baocao.nhanxet_khoi');
     Route::post('/baocao/{maBaoCao}/xac-nhan-giai-doan', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'xacNhanGiaiDoan'])->name('giangvien.baocao.xacnhan_giaidoan');
+
+    // Quản lý giai đoạn và các đợt nộp báo cáo (Giảng viên hướng dẫn)
+    Route::post('/tiendo/giai-doan/khoi-tao/{maDeTai}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'khoiTaoGiaiDoanMau'])->name('giangvien.tiendo.giai_doan.khoi_tao');
+    Route::post('/tiendo/giai-doan', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeGiaiDoan'])->name('giangvien.tiendo.giai_doan.store');
+    Route::put('/tiendo/giai-doan/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'updateGiaiDoan'])->name('giangvien.tiendo.giai_doan.update');
+    Route::delete('/tiendo/giai-doan/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'destroyGiaiDoan'])->name('giangvien.tiendo.giai_doan.destroy');
+    Route::post('/tiendo/dot-nop', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeDotNop'])->name('giangvien.tiendo.dot_nop.store');
+    Route::put('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'updateDotNop'])->name('giangvien.tiendo.dot_nop.update');
+    Route::post('/tiendo/dot-nop/{id}/toggle', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'toggleDotNop'])->name('giangvien.tiendo.dot_nop.toggle');
+    Route::get('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showDotNop'])->name('giangvien.tiendo.dot_nop.show');
+    Route::post('/tiendo/dot-nop/{id}/danh-gia', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'danhGiaPhienBan'])->name('giangvien.tiendo.dot_nop.danh_gia');
 
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
@@ -327,11 +362,14 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('nhom/{id}/huy-xin-gia-nhap', [\App\Http\Controllers\SinhVien\NhomController::class, 'huyXinGiaNhap'])->name('sinhvien.nhom.huyXinGiaNhap');
     Route::post('nhom/{id}/yeu-cau/{maSV}/duyet', [\App\Http\Controllers\SinhVien\NhomController::class, 'duyetYeuCauXinVao'])->name('sinhvien.nhom.duyetYeuCau');
     Route::post('nhom/{id}/yeu-cau/{maSV}/tu-choi', [\App\Http\Controllers\SinhVien\NhomController::class, 'tuChoiYeuCauXinVao'])->name('sinhvien.nhom.tuChoiYeuCau');
+    Route::get('dangky/de-tai/{maDeTai}', [\App\Http\Controllers\SinhVien\DangKyDeTaiController::class, 'showDeTai'])->name('sinhvien.dangky.show_detai');
     Route::resource('dangky', \App\Http\Controllers\SinhVien\DangKyDeTaiController::class)->names('sinhvien.dangky')->only(['index', 'store', 'destroy']);
 
-    // Báo cáo tiến độ
+    // Báo cáo tiến độ & Nộp theo phiên bản (Sinh viên)
     Route::get('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'index'])->name('sinhvien.baocao.index');
     Route::post('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'store'])->name('sinhvien.baocao.store');
+    Route::get('/baocao/dot-nop/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showDotNop'])->name('sinhvien.baocao.dot_nop.show');
+    Route::post('/baocao/dot-nop/{id}/nop', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'nopPhienBan'])->name('sinhvien.baocao.dot_nop.nop');
     Route::get('/baocao/giai-doan/{lanBaoCao}/them-khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'createKhoi'])->name('sinhvien.baocao.create_khoi');
     Route::post('/baocao/khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'storeKhoi'])->name('sinhvien.baocao.store_khoi');
     Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showKhoi'])->name('sinhvien.baocao.show_khoi');
@@ -395,6 +433,10 @@ Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->
     Route::post('/duyet-de-cuong/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongBoMon\DuyetDeCuongController::class, 'requestEdit'])->name('truongbomon.duyet_decuong.yeuCauChinhSua');
 
     Route::get('/theo-doi', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'index'])->name('truongbomon.theodoi.index');
+    Route::get('/theo-doi/{id}', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'show'])->name('truongbomon.theodoi.show');
+    Route::get('/theo-doi/{id}/lich-su', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'lichSu'])->name('truongbomon.theodoi.lichSu');
+    Route::get('/theo-doi/{id}/chi-tiet-gv', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'chiTietTienDoGV'])->name('truongbomon.theodoi.chiTietGV');
+    Route::post('/theo-doi/{id}/remind', [\App\Http\Controllers\TruongBoMon\TheoDoiController::class, 'remind'])->name('truongbomon.theodoi.remind');
 
     // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)
     Route::get('/thongke/detai', fn() => redirect()->route('truongbomon.duyet_detai.index', ['view' => 'thongke']))->name('truongbomon.thongke.detai');
@@ -423,9 +465,25 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::post('/duyet-detai/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'requestEdit'])->name('truongkhoa.duyet_detai.yeuCauChinhSua');
     Route::post('/duyet-detai/{id}/tu-choi', [\App\Http\Controllers\TruongKhoa\DuyetDeTaiController::class, 'reject'])->name('truongkhoa.duyet_detai.tuChoi');
     Route::get('/theo-doi', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'index'])->name('truongkhoa.theodoi.index');
+    Route::get('/theo-doi/{id}', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'show'])->name('truongkhoa.theodoi.show');
+    Route::get('/theo-doi/{id}/lich-su', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'lichSu'])->name('truongkhoa.theodoi.lichSu');
+    Route::get('/theo-doi/{id}/chi-tiet-gv', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'chiTietTienDoGV'])->name('truongkhoa.theodoi.chiTietGV');
+    Route::post('/theo-doi/{id}/remind', [\App\Http\Controllers\TruongKhoa\TheoDoiController::class, 'remind'])->name('truongkhoa.theodoi.remind');
 
     // Kế hoạch khóa luận cấp Khoa
     Route::get('/ke-hoach', [\App\Http\Controllers\TruongKhoa\KeHoachController::class, 'index'])->name('truongkhoa.kehoach.index');
+
+    // Hội đồng bảo vệ (Trưởng khoa thành lập & phân công nhóm)
+    Route::get('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'index'])->name('truongkhoa.hoidong.index');
+    Route::get('/hoi-dong/create', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'create'])->name('truongkhoa.hoidong.create');
+    Route::post('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'store'])->name('truongkhoa.hoidong.store');
+    Route::get('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'show'])->name('truongkhoa.hoidong.show');
+    Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateTrangThai'])->name('truongkhoa.hoidong.updateTrangThai');
+    Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'phanCongNhom'])->name('truongkhoa.hoidong.phanCongNhom');
+    Route::post('/hoi-dong/{id}/huy-phan-cong/{maHoSo}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'huyPhanCongNhom'])->name('truongkhoa.hoidong.huyPhanCongNhom');
+    Route::post('/hoi-dong/{id}/them-thanh-vien', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'themThanhVien'])->name('truongkhoa.hoidong.themThanhVien');
+    Route::post('/hoi-dong/{id}/doi-vai-tro/{maGV}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'doiVaiTroThanhVien'])->name('truongkhoa.hoidong.doiVaiTroThanhVien');
+    Route::delete('/hoi-dong/{id}/xoa-thanh-vien/{maGV}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'xoaThanhVien'])->name('truongkhoa.hoidong.xoaThanhVien');
 
     // Kết quả khóa luận & Bảng điểm
     Route::get('/ket-qua', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'index'])->name('truongkhoa.ketqua.index');

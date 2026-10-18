@@ -49,7 +49,7 @@
     <!-- Nút Quay lại & Breadcrumb -->
     <div class="mb-3">
         <a href="{{ route('truongbomon.phe_duyet_detai.index', ['hocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách giảng viên (Học kỳ {{ $selectedHocKy }})
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách giảng viên (Học kỳ {{ $selectedHocKy }})
         </a>
     </div>
 
@@ -71,18 +71,18 @@
                         </div>
                         <h4 class="fw-bold text-dark mb-1">Danh sách đề tài của giảng viên: {{ $giangVien->HoTen }}</h4>
                         <div class="text-muted small d-flex flex-wrap align-items-center gap-3">
-                            <span><i class="fa-regular fa-envelope me-1"></i>{{ $giangVien->Email }}</span>
+                            <span><i class="fa-regular fa-envelope me-2"></i>{{ $giangVien->Email }}</span>
                             @if($giangVien->SoDienThoai)
-                                <span><i class="fa-solid fa-phone me-1"></i>{{ $giangVien->SoDienThoai }}</span>
+                                <span><i class="fa-solid fa-phone me-2"></i>{{ $giangVien->SoDienThoai }}</span>
                             @endif
-                            <span><i class="fa-solid fa-calendar-check me-1 text-primary"></i>Học kỳ đang xem: <strong>{{ $currentHocKyModel->TenHocKy ?? $selectedHocKy }}</strong></span>
+                            <span><i class="fa-solid fa-calendar-check me-2 text-primary"></i>Học kỳ đang xem: <strong>{{ $currentHocKyModel->TenHocKy ?? $selectedHocKy }}</strong></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Đổi Học Kỳ Nhanh -->
                 <div class="d-flex align-items-center gap-2 bg-light p-2 rounded-3 border">
-                    <label class="small fw-bold text-secondary mb-0 text-nowrap"><i class="fa-solid fa-filter me-1"></i>Học kỳ:</label>
+                    <label class="small fw-bold text-secondary mb-0 text-nowrap"><i class="fa-solid fa-filter me-2"></i>Học kỳ:</label>
                     <form method="GET" action="{{ route('truongbomon.phe_duyet_detai.giang_vien', $giangVien->MaGV) }}" class="d-inline-block">
                         @if(request('trang_thai'))
                             <input type="hidden" name="trang_thai" value="{{ request('trang_thai') }}">
@@ -108,19 +108,19 @@
         </a>
         <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $giangVien->MaGV, 'hocKy' => $selectedHocKy, 'trang_thai' => 'cho_duyet']) }}" 
            class="nav-filter-pill {{ $selectedStatus === 'cho_duyet' ? 'bg-warning text-dark shadow-xs' : 'bg-white text-secondary border' }}">
-            <i class="fa-solid fa-clock me-1 text-warning"></i> Chờ duyệt ({{ $statFilter['cho_duyet'] }})
+            <i class="fa-solid fa-clock me-2 text-warning"></i> Chờ duyệt ({{ $statFilter['cho_duyet'] }})
         </a>
         <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $giangVien->MaGV, 'hocKy' => $selectedHocKy, 'trang_thai' => 'yeu_cau_sua']) }}" 
            class="nav-filter-pill {{ $selectedStatus === 'yeu_cau_sua' ? 'bg-info text-white shadow-xs' : 'bg-white text-secondary border' }}">
-            <i class="fa-solid fa-pen-ruler me-1"></i> Yêu cầu chỉnh sửa ({{ $statFilter['yeu_cau_sua'] }})
+            <i class="fa-solid fa-pen-ruler me-2"></i> Yêu cầu chỉnh sửa ({{ $statFilter['yeu_cau_sua'] }})
         </a>
         <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $giangVien->MaGV, 'hocKy' => $selectedHocKy, 'trang_thai' => 'da_duyet']) }}" 
            class="nav-filter-pill {{ $selectedStatus === 'da_duyet' ? 'bg-success text-white shadow-xs' : 'bg-white text-secondary border' }}">
-            <i class="fa-solid fa-circle-check me-1"></i> Đã phê duyệt ({{ $statFilter['da_duyet'] }})
+            <i class="fa-solid fa-circle-check me-2"></i> Đã phê duyệt ({{ $statFilter['da_duyet'] }})
         </a>
         <a href="{{ route('truongbomon.phe_duyet_detai.giang_vien', ['maGV' => $giangVien->MaGV, 'hocKy' => $selectedHocKy, 'trang_thai' => 'tu_choi']) }}" 
            class="nav-filter-pill {{ $selectedStatus === 'tu_choi' ? 'bg-danger text-white shadow-xs' : 'bg-white text-secondary border' }}">
-            <i class="fa-solid fa-ban me-1"></i> Từ chối ({{ $statFilter['tu_choi'] }})
+            <i class="fa-solid fa-ban me-2"></i> Từ chối ({{ $statFilter['tu_choi'] }})
         </a>
     </div>
 
@@ -185,14 +185,14 @@
                                     {{ $dt->TenDeTai }}
                                 </a>
                                 <div class="small text-muted mt-1 d-flex align-items-center gap-2">
-                                    <span><i class="fa-solid fa-graduation-cap text-secondary me-1"></i>{{ $dt->hocPhanRef->TenHocPhan ?? ($dt->HocPhan ?? 'Khóa luận tốt nghiệp') }}</span>
+                                    <span><i class="fa-solid fa-graduation-cap text-secondary me-2"></i>{{ $dt->hocPhanRef->TenHocPhan ?? ($dt->HocPhan ?? 'Khóa luận tốt nghiệp') }}</span>
                                     <span>&bull;</span>
                                     <span>Tối đa: <strong>{{ $dt->SoLuongSinhVienToiDa ?? 3 }} SV</strong></span>
                                 </div>
                             </div>
                         </td>
                         <td class="py-3">
-                            <span class="badge bg-light text-secondary border fw-medium rounded-pill px-2.5 py-1">
+                            <span class="badge bg-light text-secondary border fw-medium rounded-pill px-3 py-1">
                                 {{ $dt->LinhVuc ?? 'Công Nghệ Thông Tin' }}
                             </span>
                         </td>
@@ -200,14 +200,14 @@
                             {{ $dt->NgayDeXuat ? \Carbon\Carbon::parse($dt->NgayDeXuat)->format('d/m/Y') : ($dt->created_at ? $dt->created_at->format('d/m/Y') : '—') }}
                         </td>
                         <td class="py-3 text-center">
-                            <span class="badge rounded-pill fw-semibold px-2.5 py-1.5 {{ $statusClass }}">
-                                <i class="fa-solid {{ $iconStatus }} me-1"></i> {{ $statusLabel }}
+                            <span class="badge rounded-pill fw-semibold px-3 py-2 {{ $statusClass }}">
+                                <i class="fa-solid {{ $iconStatus }} me-2"></i> {{ $statusLabel }}
                             </span>
                         </td>
                         <td class="pe-3 text-center">
                             <a href="{{ route('truongbomon.phe_duyet_detai.show', ['maDeTai' => $dt->MaDeTai, 'hocKy' => $selectedHocKy]) }}" 
                                class="btn btn-sm btn-action btn-primary text-nowrap">
-                                <i class="fa-solid fa-eye me-1"></i> Xem chi tiết
+                                <i class="fa-solid fa-eye me-2"></i> Xem chi tiết
                             </a>
                         </td>
                     </tr>
@@ -231,7 +231,7 @@
                 Tổng cộng <strong>{{ $detais->count() }}</strong> đề tài hiển thị cho giảng viên <strong>{{ $giangVien->HoTen }}</strong> trong học kỳ <strong>{{ $selectedHocKy }}</strong>.
             </span>
             <a href="{{ route('truongbomon.phe_duyet_detai.index', ['hocKy' => $selectedHocKy]) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Trở về danh sách giảng viên
+                <i class="fa-solid fa-arrow-left me-2"></i> Trở về danh sách giảng viên
             </a>
         </div>
     </div>

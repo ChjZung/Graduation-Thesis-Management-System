@@ -85,24 +85,28 @@
                         'required' => false
                     ])
 
-                    <div class="mb-3">
-                        <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Năng Lực Đối Với Sinh Viên</label>
-                        <textarea name="YeuCau" id="YeuCau" class="form-control @error('YeuCau') is-invalid @enderror" rows="3" minlength="15" maxlength="1000" placeholder="Ví dụ: Thành thạo Laravel/Vue, kiến thức cơ sở dữ liệu vững vàng (tối thiểu 15 ký tự)...">{{ old('YeuCau') }}</textarea>
-                        @error('YeuCau')
-                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @include('partials.rich_text_editor', [
+                        'name' => 'YeuCau',
+                        'id' => 'YeuCau',
+                        'value' => old('YeuCau'),
+                        'label' => 'Yêu Cầu Năng Lực Đối Với Sinh Viên',
+                        'placeholder' => 'Ví dụ: Kiến thức nền tảng vững vàng, thành thạo lập trình Web, tinh thần chủ động làm việc nhóm...',
+                        'required' => false,
+                        'minHeight' => '160px',
+                        'showTemplate' => false,
+                        'minChars' => 15
+                    ])
 
                     <div class="mb-4 p-3 bg-light rounded-3 border">
                         <div class="small text-secondary d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-circle-info text-primary"></i>
+                            <i class="fa-solid fa-circle-info text-primary me-2"></i>
                             <span><strong>Đề cương chi tiết:</strong> Đề tài chưa được phê duyệt (Giảng viên sẽ nộp file đề cương chi tiết sau khi đề tài được phê duyệt).</span>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Đề xuất đề tài
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold d-inline-flex align-items-center">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Đề xuất đề tài
                         </button>
                         <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4">Hủy Bỏ</a>
                     </div>
@@ -150,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
             selectHocPhan.disabled = true;
             if (helpHocPhan) {
-                helpHocPhan.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn <strong>${boMonTen}</strong> được kích hoạt mở. Vui lòng liên hệ Giáo vụ/Admin để mở học phần trong tab Phân bổ học kỳ.</span>`;
+                helpHocPhan.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn <strong>${boMonTen}</strong> được kích hoạt mở. Vui lòng liên hệ Giáo vụ/Admin để mở học phần trong tab Phân bổ học kỳ.</span>`;
             }
             return;
         }

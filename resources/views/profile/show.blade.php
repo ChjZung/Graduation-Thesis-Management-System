@@ -7,11 +7,11 @@
         <h4 class="mb-0 text-primary-custom fw-bold"><i class="fa-solid fa-address-card me-2"></i>Hồ Sơ Cá Nhân</h4>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-            <i class="fa-solid fa-user-pen me-1"></i> Chỉnh sửa thông tin
+        <button type="button" class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-semibold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+            <i class="fa-solid fa-user-pen me-2"></i> Chỉnh sửa thông tin
         </button>
-        <a href="{{ route('password.change') }}" class="btn btn-primary rounded-pill px-3 shadow-sm fw-semibold">
-            <i class="fa-solid fa-key me-1"></i> Đổi mật khẩu
+        <a href="{{ route('password.change') }}" class="btn btn-primary rounded-pill px-3 shadow-sm fw-semibold d-inline-flex align-items-center">
+            <i class="fa-solid fa-key me-2"></i> Đổi mật khẩu
         </a>
     </div>
 </div>
@@ -34,23 +34,23 @@
                     <span class="badge bg-light text-primary rounded-pill px-3 py-1 fw-bold fs-7">{{ $role }}</span>
                 </div>
                 <p class="mb-2 text-white-50 small">
-                    <i class="fa-solid fa-id-badge me-1"></i> Tên đăng nhập / Mã: <code class="text-warning bg-dark bg-opacity-25 px-2 py-0.5 rounded">{{ $user->TenDangNhap }}</code>
+                    <i class="fa-solid fa-id-badge me-2"></i> Tên đăng nhập / Mã: <code class="text-warning bg-dark bg-opacity-25 px-2 py-1 rounded">{{ $user->TenDangNhap }}</code>
                     @if(!empty($profile->Email))
                         <span class="mx-2">•</span>
-                        <i class="fa-solid fa-envelope me-1"></i> {{ $profile->Email }}
+                        <i class="fa-solid fa-envelope me-2"></i> {{ $profile->Email }}
                     @endif
                     @if(!empty($profile->SoDienThoai))
                         <span class="mx-2">•</span>
-                        <i class="fa-solid fa-phone me-1"></i> {{ $profile->SoDienThoai }}
+                        <i class="fa-solid fa-phone me-2"></i> {{ $profile->SoDienThoai }}
                     @endif
                 </p>
                 <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
                     <span class="badge bg-success bg-opacity-75 rounded-pill px-3 py-1">
-                        <i class="fa-solid fa-shield-check me-1"></i> Tài khoản ACTIVE
+                        <i class="fa-solid fa-shield-check me-2"></i> Tài khoản ACTIVE
                     </span>
                     @if($user->NgayDoiMatKhau)
                         <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-1">
-                            <i class="fa-solid fa-clock-rotate-left me-1"></i> Đổi mật khẩu: {{ \Carbon\Carbon::parse($user->NgayDoiMatKhau)->format('d/m/Y H:i') }}
+                            <i class="fa-solid fa-clock-rotate-left me-2"></i> Đổi mật khẩu: {{ \Carbon\Carbon::parse($user->NgayDoiMatKhau)->format('d/m/Y H:i') }}
                         </span>
                     @endif
                 </div>
@@ -122,20 +122,20 @@
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Email Sinh Viên</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-envelope text-primary me-1"></i> {{ $profile->Email ?? 'Chưa cập nhật' }}
+                                <i class="fa-solid fa-envelope text-primary me-2"></i> {{ $profile->Email ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Số Điện Thoại Liên Hệ</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-phone text-success me-1"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
+                                <i class="fa-solid fa-phone text-success me-2"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Trạng Thái Học Tập</label>
                             <p class="mb-0">
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold">
-                                    <i class="fa-solid fa-check me-1"></i>{{ $profile->TrangThai ?? 'Đang học' }}
+                                    <i class="fa-solid fa-check me-2"></i>{{ $profile->TrangThai ?? 'Đang học' }}
                                 </span>
                             </p>
                         </div>
@@ -179,20 +179,20 @@
                             <label class="text-muted small fw-bold text-uppercase mb-1">Trạng Thái Công Tác</label>
                             <p class="mb-0">
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold">
-                                    <i class="fa-solid fa-check me-1"></i>{{ $profile->TrangThai ?? 'Đang công tác' }}
+                                    <i class="fa-solid fa-check me-2"></i>{{ $profile->TrangThai ?? 'Đang công tác' }}
                                 </span>
                             </p>
                         </div>
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Email Công Vụ</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-envelope text-primary me-1"></i> {{ $profile->Email ?? 'Chưa cập nhật' }}
+                                <i class="fa-solid fa-envelope text-primary me-2"></i> {{ $profile->Email ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Số Điện Thoại Liên Hệ</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-phone text-success me-1"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
+                                <i class="fa-solid fa-phone text-success me-2"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
                     </div>
@@ -219,13 +219,13 @@
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Email Liên Hệ</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-envelope text-primary me-1"></i> {{ $profile->Email ?? 'admin@huit.edu.vn' }}
+                                <i class="fa-solid fa-envelope text-primary me-2"></i> {{ $profile->Email ?? 'admin@huit.edu.vn' }}
                             </p>
                         </div>
                         <div class="col-sm-6">
                             <label class="text-muted small fw-bold text-uppercase mb-1">Số Điện Thoại</label>
                             <p class="fw-medium text-dark mb-0">
-                                <i class="fa-solid fa-phone text-success me-1"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
+                                <i class="fa-solid fa-phone text-success me-2"></i> {{ $profile->SoDienThoai ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
                     </div>
@@ -238,7 +238,7 @@
             <div class="card card-premium shadow-sm">
                 <div class="card-header-premium d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-users text-primary me-2"></i> Thông Tin Nhóm &amp; Khóa Luận Tốt Nghiệp</span>
-                    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-sm btn-link text-decoration-none">
+                    <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center">
                         Xem chi tiết <i class="fa-solid fa-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -264,7 +264,7 @@
                                 <span class="text-muted small fw-bold text-uppercase">Đề tài đăng ký:</span>
                                 @if($curNhom->deTai)
                                     <div class="fw-semibold text-dark mt-1">
-                                        <i class="fa-solid fa-book-bookmark text-primary me-1"></i>
+                                        <i class="fa-solid fa-book-bookmark text-primary me-2"></i>
                                         {{ $curNhom->deTai->TenDeTai }}
                                     </div>
                                     <div class="small text-muted mt-1">
@@ -299,7 +299,7 @@
                                                 <td>{{ $tv->sinhVien->HoTen ?? 'N/A' }}</td>
                                                 <td>
                                                     @if(str_contains(mb_strtolower($tv->VaiTro), 'trưởng'))
-                                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="fa-solid fa-crown me-1"></i>{{ $tv->VaiTro }}</span>
+                                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="fa-solid fa-crown me-2"></i>{{ $tv->VaiTro }}</span>
                                                     @else
                                                         <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">{{ $tv->VaiTro }}</span>
                                                     @endif
@@ -314,8 +314,8 @@
                         <div class="text-center py-4">
                             <i class="fa-solid fa-users-slash text-muted fs-1 mb-2"></i>
                             <p class="text-muted mb-3">Bạn hiện chưa tham gia vào nhóm làm khóa luận tốt nghiệp nào.</p>
-                            <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-                                <i class="fa-solid fa-plus me-1"></i> Tạo nhóm hoặc Tìm nhóm
+                            <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center">
+                                <i class="fa-solid fa-plus me-2"></i> Tạo nhóm hoặc Tìm nhóm
                             </a>
                         </div>
                     @endif
@@ -325,7 +325,7 @@
             <div class="card card-premium shadow-sm">
                 <div class="card-header-premium d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-chalkboard-user text-primary me-2"></i> Thống Kê Hướng Dẫn &amp; Đề Tài</span>
-                    <a href="{{ route('giangvien.detai.index') }}" class="btn btn-sm btn-link text-decoration-none">
+                    <a href="{{ route('giangvien.detai.index') }}" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center">
                         Quản lý đề tài <i class="fa-solid fa-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -357,7 +357,7 @@
             <div class="card card-premium shadow-sm">
                 <div class="card-header-premium d-flex justify-content-between align-items-center">
                     <span><i class="fa-solid fa-chart-pie text-primary me-2"></i> Thống Kê Tổng Quan Hệ Thống</span>
-                    <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-link text-decoration-none">
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-link text-decoration-none d-inline-flex align-items-center">
                         Về Dashboard <i class="fa-solid fa-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -392,7 +392,7 @@
         <div class="card card-premium shadow-sm mb-4">
             <div class="card-header-premium d-flex justify-content-between align-items-center">
                 <span><i class="fa-solid fa-shield-halved text-primary me-2"></i> Bảo Mật &amp; Đăng Nhập</span>
-                <span class="badge bg-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i>ACTIVE</span>
+                <span class="badge bg-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-2"></i>ACTIVE</span>
             </div>
             <div class="card-body p-4">
                 <ul class="list-group list-group-flush mb-4">
@@ -424,7 +424,7 @@
 
                 <div class="p-3 bg-light rounded-3 border mb-3">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="fa-solid fa-lock text-primary"></i>
+                        <i class="fa-solid fa-lock text-primary me-2"></i>
                         <strong class="small text-dark">Mật khẩu tài khoản</strong>
                     </div>
                     <p class="text-muted small mb-0">
@@ -432,7 +432,7 @@
                     </p>
                 </div>
 
-                <a href="{{ route('password.change') }}" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm">
+                <a href="{{ route('password.change') }}" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center">
                     <i class="fa-solid fa-key me-2"></i>Đổi mật khẩu ngay
                 </a>
             </div>
@@ -550,8 +550,8 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-save me-1"></i> Lưu Thay Đổi
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-save me-2"></i> Lưu Thay Đổi
                     </button>
                 </div>
             </form>

@@ -8,17 +8,17 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-user-shield text-primary"></i>
+                <i class="fa-solid fa-user-shield text-primary me-2"></i>
                 <span>Tài Khoản: {{ $taiKhoan->TenDangNhap }}</span>
                 <span class="badge-code ms-2">{{ $taiKhoan->MaTK }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('admin.taikhoan.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('admin.taikhoan.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('admin.taikhoan.edit', $taiKhoan->MaTK) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
             </a>
         </div>
     </div>
@@ -115,8 +115,8 @@
                         <div class="col-sm-6">
                             <form action="{{ route('admin.taikhoan.resetPassword', $taiKhoan->MaTK) }}" method="POST" onsubmit="return confirm('Đặt lại mật khẩu của {{ $taiKhoan->TenDangNhap }} về 123456?');">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-info w-100 rounded-pill">
-                                    <i class="fa-solid fa-key me-1"></i> Reset Pass Về 123456
+                                <button type="submit" class="btn btn-sm btn-outline-info w-100 rounded-pill d-flex align-items-center justify-content-center">
+                                    <i class="fa-solid fa-key me-2"></i> Reset Pass Về 123456
                                 </button>
                             </form>
                         </div>
@@ -168,7 +168,7 @@
                         </ul>
                         <div class="mt-3">
                             <a href="{{ route('sinhvien.show', $sv->MaSV) }}" class="btn btn-sm btn-outline-primary rounded-pill w-100">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem Chi Tiết Hồ Sơ Sinh Viên
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Xem Chi Tiết Hồ Sơ Sinh Viên
                             </a>
                         </div>
 
@@ -204,7 +204,7 @@
                         </ul>
                         <div class="mt-3">
                             <a href="{{ route('giangvien.show', $gv->MaGV) }}" class="btn btn-sm btn-outline-primary rounded-pill w-100">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem Chi Tiết Hồ Sơ Giảng Viên
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Xem Chi Tiết Hồ Sơ Giảng Viên
                             </a>
                         </div>
 

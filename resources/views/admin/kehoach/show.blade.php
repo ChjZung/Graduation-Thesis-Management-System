@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-3 d-flex justify-content-between align-items-center">
-    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+    <a href="{{ route('admin.kehoach.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách
     </a>
     
     <!-- Action Workflow Controls -->
@@ -13,20 +13,20 @@
         {{-- Nút Công Bố Kế Hoạch (Gửi thông báo kèm file cho toàn hệ thống) --}}
         <form action="{{ route('admin.kehoach.publish', $keHoach->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận Công Bố Kế Hoạch này? Hệ thống sẽ phát hành thông báo kèm file công văn đính kèm cho toàn thể người dùng.');">
             @csrf
-            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
-                <i class="fa-solid fa-bullhorn me-1"></i> {{ in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN']) ? 'Phát Lại Thông Báo Công Bố' : 'Công Bố Kế Hoạch (Gửi Toàn Hệ Thống)' }}
+            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-bullhorn me-2"></i> {{ in_array($keHoach->TrangThai, ['ĐÃ CÔNG BỐ', 'ĐANG THỰC HIỆN']) ? 'Phát Lại Thông Báo Công Bố' : 'Công Bố Kế Hoạch (Gửi Toàn Hệ Thống)' }}
             </button>
         </form>
 
         {{-- Cập nhật bằng upload file mới --}}
         <a href="{{ route('admin.kehoach.importDocument') }}?ma_hoc_ky={{ $keHoach->MaHocKy }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Cập Nhật Qua File Mới
+            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Cập Nhật Qua File Mới
         </a>
 
         {{-- Tải file công văn gốc nếu có --}}
         @if($keHoach->FileDinhKem)
         <a href="{{ asset('storage/' . $keHoach->FileDinhKem) }}" target="_blank" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold shadow-sm">
-            <i class="fa-solid fa-file-pdf me-1"></i> Tải File Công Văn Gốc
+            <i class="fa-solid fa-file-pdf me-2"></i> Tải File Công Văn Gốc
         </a>
         @endif
 
@@ -34,8 +34,8 @@
         <form action="{{ route('admin.kehoach.destroy', $keHoach->MaKeHoach) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kế hoạch này?');">
             @csrf
             @method('DELETE')
-            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
-                <i class="fa-solid fa-trash me-1"></i> Xóa
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-trash me-2"></i> Xóa
             </button>
         </form>
     </div>
@@ -64,18 +64,18 @@
                     <span class="badge {{ $badgeClass }} fs-6 px-3 py-1 rounded-pill">{{ $keHoach->TrangThai }}</span>
                 </div>
                 <h3 class="fw-bold text-primary mb-2">{{ $keHoach->TenKeHoach }}</h3>
-                <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-1"></i> <strong>Học Kỳ:</strong> {{ $keHoach->hocKy->TenHocKy ?? $keHoach->MaHocKy }} | <strong>Phạm vi:</strong> {{ $keHoach->khoa->TenKhoa ?? 'Toàn trường / Khoa CNTT' }}</p>
+                <p class="text-muted mb-0"><i class="fa-solid fa-graduation-cap me-2"></i> <strong>Học Kỳ:</strong> {{ $keHoach->hocKy->TenHocKy ?? $keHoach->MaHocKy }} | <strong>Phạm vi:</strong> {{ $keHoach->khoa->TenKhoa ?? 'Toàn trường / Khoa CNTT' }}</p>
                 @if($keHoach->FileDinhKem)
                 <div class="mt-2">
                     <a href="{{ asset('storage/' . $keHoach->FileDinhKem) }}" target="_blank" class="badge bg-light text-danger border rounded-pill px-3 py-2 text-decoration-none shadow-sm">
-                        <i class="fa-solid fa-file-pdf me-1"></i> Văn bản công văn gốc đính kèm: {{ basename($keHoach->FileDinhKem) }} (Bấm để tải về)
+                        <i class="fa-solid fa-file-pdf me-2"></i> Văn bản công văn gốc đính kèm: {{ basename($keHoach->FileDinhKem) }} (Bấm để tải về)
                     </a>
                 </div>
                 @endif
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <div class="p-3 bg-light rounded-3 border">
-                    <div class="small text-muted mb-1"><i class="fa-regular fa-calendar-check me-1"></i>Thời gian thực hiện kế hoạch:</div>
+                    <div class="small text-muted mb-1"><i class="fa-regular fa-calendar-check me-2"></i>Thời gian thực hiện kế hoạch:</div>
                     <div class="fw-bold fs-6 text-dark">{{ $keHoach->NgayBatDau ? date('d/m/Y', strtotime($keHoach->NgayBatDau)) : '01/09/2026' }} <i class="fa-solid fa-arrow-right mx-1 text-muted"></i> {{ $keHoach->NgayKetThuc ? date('d/m/Y', strtotime($keHoach->NgayKetThuc)) : '10/12/2026' }}</div>
                 </div>
             </div>
@@ -115,15 +115,15 @@
                             </td>
                             <td><span class="badge bg-light text-dark border rounded-pill px-2">{{ $moc->DoiTuongThucHien ?? 'Tất cả' }}</span></td>
                             <td>
-                                <div class="fw-semibold small"><i class="fa-regular fa-calendar-days me-1 text-primary"></i> {{ date('d/m/Y', strtotime($moc->NgayBatDau)) }}</div>
-                                <div class="small text-muted"><i class="fa-solid fa-arrow-right me-1"></i> {{ date('d/m/Y', strtotime($moc->NgayKetThuc)) }}</div>
+                                <div class="fw-semibold small"><i class="fa-regular fa-calendar-days me-2 text-primary"></i> {{ date('d/m/Y', strtotime($moc->NgayBatDau)) }}</div>
+                                <div class="small text-muted"><i class="fa-solid fa-arrow-right me-2"></i> {{ date('d/m/Y', strtotime($moc->NgayKetThuc)) }}</div>
                             </td>
                             <td>
                                 <span class="badge {{ $statusInfo['badge'] }} rounded-pill px-3 py-2">
                                     {{ $statusInfo['label'] }}
                                 </span>
                                 @if($statusInfo['is_open'])
-                                    <div class="small text-success fw-bold mt-1"><i class="fa-solid fa-clock me-1"></i>Còn {{ $statusInfo['days_left'] }} ngày</div>
+                                    <div class="small text-success fw-bold mt-1"><i class="fa-solid fa-clock me-2"></i>Còn {{ $statusInfo['days_left'] }} ngày</div>
                                 @endif
                             </td>
                             <td class="small text-muted">{{ $moc->MoTa ?? 'Thao tác giai đoạn tương ứng.' }}</td>
@@ -143,12 +143,12 @@
 <div class="card border-0 shadow-sm rounded-3 mt-4">
     <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-            <i class="fa-solid fa-scale-balanced text-primary"></i>
+            <i class="fa-solid fa-scale-balanced text-primary me-2"></i>
             <span>Quy Định &amp; Tiêu Chuẩn Áp Dụng Cho Kế Hoạch Này</span>
         </h6>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.quydinh.create') }}?make_hoach={{ $keHoach->MakeHoach }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                <i class="fa-solid fa-plus me-1"></i> Thêm Quy Định
+                <i class="fa-solid fa-plus me-2"></i> Thêm Quy Định
             </a>
             <a href="{{ route('admin.quydinh.index', ['make_hoach' => $keHoach->MakeHoach]) }}" class="btn btn-sm btn-light border rounded-pill">
                 Xem Tất Cả Quy Định
@@ -180,8 +180,8 @@
                 <form action="{{ route('admin.quydinh.initDefaults') }}" method="POST" class="d-inline mt-2">
                     @csrf
                     <input type="hidden" name="MakeHoach" value="{{ $keHoach->MakeHoach }}">
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 mt-2 fw-semibold">
-                        <i class="fa-solid fa-scale-balanced me-1"></i> Nạp 8 Quy Định &amp; Tiêu Chuẩn Chuẩn
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 mt-2 fw-semibold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-scale-balanced me-2"></i> Nạp 8 Quy Định &amp; Tiêu Chuẩn Chuẩn
                     </button>
                 </form>
             </div>

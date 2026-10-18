@@ -307,8 +307,8 @@
     {{-- Thanh điều hướng & Action bar --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ $backUrl ?? route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
+            <a href="{{ $backUrl ?? route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách thông báo
             </a>
             <span class="text-muted small">|</span>
             <span class="badge bg-light text-primary border rounded-pill px-3 py-1 font-monospace">{{ $thongBao->MaThongBao }}</span>
@@ -320,18 +320,18 @@
         <div class="d-flex gap-2">
             @if(!empty($fileUrl))
                 @if(($fileType ?? '') === 'excel')
-                    <a href="{{ asset($fileUrl) }}" download class="btn btn-success btn-sm rounded-pill px-3 shadow-sm fw-semibold text-white">
-                        <i class="fa-solid fa-file-excel me-1"></i> Tải Danh Sách Excel (.xlsx)
+                    <a href="{{ asset($fileUrl) }}" download class="btn btn-success btn-sm rounded-pill px-3 shadow-sm fw-semibold text-white d-inline-flex align-items-center">
+                        <i class="fa-solid fa-file-excel me-2"></i> Tải Danh Sách Excel (.xlsx)
                     </a>
                 @else
-                    <a href="{{ asset($fileUrl) }}" download class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold">
-                        <i class="fa-solid fa-download me-1"></i> Tải Công Văn Gốc
+                    <a href="{{ asset($fileUrl) }}" download class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-download me-2"></i> Tải Công Văn Gốc
                     </a>
                 @endif
             @endif
             @if(in_array($thongBao->TrangThai, ['NHÁP', 'ĐÃ LÊN LỊCH']) && Route::has('thongbao.edit') && (!isset($layout) || $layout === 'layouts.admin'))
                 <a href="{{ route('thongbao.edit', $thongBao->MaThongBao) }}" class="btn btn-warning btn-sm rounded-pill px-3 shadow-sm fw-semibold">
-                    <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                    <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
                 </a>
             @endif
         </div>
@@ -345,7 +345,7 @@
                 <div class="doc-viewer-header">
                     <div class="d-flex align-items-center gap-2 text-truncate me-2">
                         @if(isset($officialListData) && !empty($officialListData['isOfficial']))
-                            <i class="fa-solid fa-table-list text-warning fs-5"></i>
+                            <i class="fa-solid fa-table-list text-warning fs-5 me-2"></i>
                             <span class="fw-semibold text-truncate small text-white">
                                 Danh Sách Chính Thức: Đề Tài, Nhóm SV &amp; GVHD
                             </span>
@@ -353,7 +353,7 @@
                                 CHÍNH THỨC
                             </span>
                         @elseif(($fileType ?? '') === 'image')
-                            <i class="fa-solid fa-file-image text-warning fs-5"></i>
+                            <i class="fa-solid fa-file-image text-warning fs-5 me-2"></i>
                             <span class="fw-semibold text-truncate small" title="{{ !empty($fileUrl) ? basename($fileUrl) : 'VanBan_ThongBao.pdf' }}">
                                 {{ !empty($fileUrl) ? basename($fileUrl) : 'Văn Bản Công Văn Thông Báo (Khoa CNTT)' }}
                             </span>
@@ -361,7 +361,7 @@
                                 IMAGE
                             </span>
                         @elseif(($fileType ?? '') === 'excel' || (isset($officialListData) && !empty($officialListData['isOfficial'])))
-                            <i class="fa-solid fa-file-excel text-success fs-5"></i>
+                            <i class="fa-solid fa-file-excel text-success fs-5 me-2"></i>
                             <span class="fw-semibold text-truncate small" title="{{ !empty($fileUrl) ? basename($fileUrl) : 'DanhSach_ChinhThuc_DeTai_Nhom_GVHD.xlsx' }}">
                                 {{ !empty($fileUrl) ? basename($fileUrl) : 'DanhSach_ChinhThuc_DeTai_Nhom_GVHD.xlsx' }}
                             </span>
@@ -369,7 +369,7 @@
                                 XLSX
                             </span>
                         @else
-                            <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                            <i class="fa-solid fa-file-pdf text-danger fs-5 me-2"></i>
                             <span class="fw-semibold text-truncate small" title="{{ !empty($fileUrl) ? basename($fileUrl) : 'VanBan_ThongBao.pdf' }}">
                                 {{ !empty($fileUrl) ? basename($fileUrl) : 'Văn Bản Công Văn Thông Báo (Khoa CNTT)' }}
                             </span>
@@ -380,16 +380,16 @@
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                         @if(isset($officialListData) && !empty($officialListData['isOfficial']))
-                            <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPopupXemNhanh" title="Mở bảng tính xem nhanh toàn màn hình">
-                                <i class="fa-solid fa-up-right-and-down-left-from-center me-1"></i> Popup Xem Nhanh
+                            <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPopupXemNhanh" title="Mở bảng tính xem nhanh toàn màn hình">
+                                <i class="fa-solid fa-up-right-and-down-left-from-center me-2"></i> Popup Xem Nhanh
                             </button>
                         @endif
                         @if(!empty($fileUrl))
-                            <a href="{{ asset($fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1" style="font-size: 0.78rem;" title="Mở trong cửa sổ riêng">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                            <a href="{{ asset($fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 d-inline-flex align-items-center" style="font-size: 0.78rem;" title="Mở trong cửa sổ riêng">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                             </a>
-                            <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success text-white rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.78rem;" title="Xuất file Excel về máy">
-                                <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel (.{{ strtoupper(pathinfo($fileUrl, PATHINFO_EXTENSION)) }})
+                            <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success text-white rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;" title="Xuất file Excel về máy">
+                                <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel (.{{ strtoupper(pathinfo($fileUrl, PATHINFO_EXTENSION)) }})
                             </a>
                         @endif
                         <button type="button" class="btn btn-sm btn-outline-light rounded-circle p-1" style="width: 32px; height: 32px;" onclick="toggleDocFullscreen()" title="Toàn màn hình">
@@ -703,13 +703,13 @@
                                 <button type="button" class="excel-sheet-nav-btn" title="Cuối cùng"><i class="fa-solid fa-angles-right"></i></button>
                                 <div class="d-flex align-items-center ms-2" role="tablist">
                                     <button class="excel-sheet-tab-item {{ $isNhomOfficial ? 'active' : '' }}" id="pane-tab-btn-2" data-bs-toggle="tab" data-bs-target="#pane-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD', 'pane')">
-                                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
+                                        <i class="fa-solid fa-file-excel text-success me-2"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
                                     </button>
                                     <button class="excel-sheet-tab-item {{ !$isNhomOfficial ? 'active' : '' }}" id="pane-tab-btn-1" data-bs-toggle="tab" data-bs-target="#pane-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC', 'pane')">
-                                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
+                                        <i class="fa-solid fa-file-excel text-success me-2"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
                                     </button>
                                     <button class="excel-sheet-tab-item" id="pane-tab-btn-3" data-bs-toggle="tab" data-bs-target="#pane-sheet-gvhd" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH GIẢNG VIÊN HƯỚNG DẪN KHÓA LUẬN', 'pane')">
-                                        <i class="fa-solid fa-file-excel text-success me-1"></i> 3. GV Hướng Dẫn
+                                        <i class="fa-solid fa-file-excel text-success me-2"></i> 3. GV Hướng Dẫn
                                     </button>
                                 </div>
                                 <span class="ms-2 text-muted small cursor-pointer" title="Thêm sheet mới"><i class="fa-solid fa-plus"></i></span>
@@ -725,7 +725,7 @@
                                 <div class="d-flex align-items-center gap-3">
                                     @if(!empty($fileUrl))
                                         <a href="{{ asset($fileUrl) }}" download class="text-success text-decoration-none fw-bold" style="font-size: 11px;">
-                                            <i class="fa-solid fa-download me-1"></i> Tải về (.xlsx)
+                                            <i class="fa-solid fa-download me-2"></i> Tải về (.xlsx)
                                         </a>
                                     @endif
                                     <span>100%</span>
@@ -744,7 +744,7 @@
                                 <!-- Excel Control Bar -->
                                 <div class="p-2 px-3 border-bottom bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="fa-solid fa-file-excel text-success fs-5"></i>
+                                        <i class="fa-solid fa-file-excel text-success fs-5 me-2"></i>
                                         <span class="fw-bold small text-dark">
                                             @if(isset($duDieuKienStats))
                                                 Danh Sách Sinh Viên Đủ Điều Kiện - {{ $duDieuKienStats['tenHocKy'] }}
@@ -754,7 +754,7 @@
                                         </span>
                                         @if(isset($duDieuKienStats))
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small px-2">
-                                                <i class="fa-solid fa-check-double me-1"></i> {{ $duDieuKienStats['eligible'] }}/{{ $duDieuKienStats['total'] }} SV Đủ điều kiện
+                                                <i class="fa-solid fa-check-double me-2"></i> {{ $duDieuKienStats['eligible'] }}/{{ $duDieuKienStats['total'] }} SV Đủ điều kiện
                                             </span>
                                         @endif
                                     </div>
@@ -765,8 +765,8 @@
                                                 <input type="text" id="excelSearchInput" class="form-control form-control-sm border-start-0 ps-0" placeholder="Tìm MSSV, họ tên..." onkeyup="filterExcelTable()">
                                             </div>
                                         @endif
-                                        <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold text-white shadow-sm" style="font-size: 0.78rem;">
-                                            <i class="fa-solid fa-file-excel me-1"></i> Tải File Excel (.xlsx)
+                                        <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold text-white shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;">
+                                            <i class="fa-solid fa-file-excel me-2"></i> Tải File Excel (.xlsx)
                                         </a>
                                     </div>
                                 </div>
@@ -808,11 +808,11 @@
                                                             <td class="text-center">
                                                                 @if($isEligible)
                                                                     <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
-                                                                        <i class="fa-solid fa-circle-check me-1"></i> Đủ điều kiện
+                                                                        <i class="fa-solid fa-circle-check me-2"></i> Đủ điều kiện
                                                                     </span>
                                                                 @else
                                                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
-                                                                        <i class="fa-solid fa-circle-xmark me-1"></i> Chưa đủ ĐK
+                                                                        <i class="fa-solid fa-circle-xmark me-2"></i> Chưa đủ ĐK
                                                                     </span>
                                                                 @endif
                                                             </td>
@@ -853,8 +853,8 @@
                                             <i class="fa-solid fa-file-excel text-success display-4 mb-3"></i>
                                             <h6 class="fw-bold text-dark mb-2">Tệp Bảng Tính Đính Kèm (.XLSX)</h6>
                                             <p class="text-muted small mb-3">Tệp danh sách đã sẵn sàng để tải về và mở trên Microsoft Excel.</p>
-                                            <a href="{{ asset($fileUrl) }}" download class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
-                                                <i class="fa-solid fa-download me-1"></i> Tải Danh Sách Excel (.xlsx)
+                                            <a href="{{ asset($fileUrl) }}" download class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm d-inline-flex align-items-center">
+                                                <i class="fa-solid fa-download me-2"></i> Tải Danh Sách Excel (.xlsx)
                                             </a>
                                         </div>
                                     @endif
@@ -876,7 +876,7 @@
                             </p>
                             @if($thongBao->keHoach && auth()->check() && auth()->user()->MaVaiTro === 'VT01')
                                 <a href="{{ route('admin.kehoach.show', $thongBao->keHoach->MaKeHoach) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold">
-                                    <i class="fa-solid fa-calendar-check me-1"></i> Xem Chi Tiết Kế Hoạch &amp; Mốc Thời Gian
+                                    <i class="fa-solid fa-calendar-check me-2"></i> Xem Chi Tiết Kế Hoạch &amp; Mốc Thời Gian
                                 </a>
                             @endif
                         </div>
@@ -892,10 +892,10 @@
                     <!-- Badge phân loại & Trạng thái -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold">
-                            <i class="fa-solid fa-bullhorn me-1"></i> {{ $thongBao->LoaiThongBao ?? 'Thông báo Khóa luận' }}
+                            <i class="fa-solid fa-bullhorn me-2"></i> {{ $thongBao->LoaiThongBao ?? 'Thông báo Khóa luận' }}
                         </span>
                         <span class="small text-muted">
-                            <i class="fa-regular fa-calendar-check me-1"></i> {{ date('d/m/Y H:i', strtotime($thongBao->NgayTao)) }}
+                            <i class="fa-regular fa-calendar-check me-2"></i> {{ date('d/m/Y H:i', strtotime($thongBao->NgayTao)) }}
                         </span>
                     </div>
 
@@ -910,25 +910,25 @@
                             <div class="col-6">
                                 <div class="text-muted">Cơ quan ban hành:</div>
                                 <div class="fw-bold text-dark mt-1">
-                                    <i class="fa-solid fa-building-columns text-primary me-1"></i> Khoa CNTT
+                                    <i class="fa-solid fa-building-columns text-primary me-2"></i> Khoa CNTT
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="text-muted">Đối tượng tiếp nhận:</div>
                                 <div class="fw-bold text-dark mt-1">
-                                    <i class="fa-solid fa-users text-primary me-1"></i> {{ $thongBao->DoiTuongNhan ?? 'Toàn thể hệ thống' }}
+                                    <i class="fa-solid fa-users text-primary me-2"></i> {{ $thongBao->DoiTuongNhan ?? 'Toàn thể hệ thống' }}
                                 </div>
                             </div>
                             <div class="col-6 mt-2">
                                 <div class="text-muted">Người phát hành:</div>
                                 <div class="fw-bold text-dark mt-1">
-                                    <i class="fa-solid fa-user-check text-primary me-1"></i> {{ $thongBao->giaoVu->HoTen ?? $thongBao->MaGVu ?? 'Ban Giáo vụ' }}
+                                    <i class="fa-solid fa-user-check text-primary me-2"></i> {{ $thongBao->giaoVu->HoTen ?? $thongBao->MaGVu ?? 'Ban Giáo vụ' }}
                                 </div>
                             </div>
                             <div class="col-6 mt-2">
                                 <div class="text-muted">Trạng thái công bố:</div>
                                 <div class="fw-bold text-success mt-1">
-                                    <i class="fa-solid fa-circle-check text-success me-1"></i> Có hiệu lực ngay
+                                    <i class="fa-solid fa-circle-check text-success me-2"></i> Có hiệu lực ngay
                                 </div>
                             </div>
                         </div>
@@ -939,12 +939,12 @@
                     <div class="p-3 bg-light rounded-3 border mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-dark small">
-                                <i class="fa-solid fa-file-excel text-success me-1.5"></i>
+                                <i class="fa-solid fa-file-excel text-success me-2"></i>
                                 Bảng Dữ Liệu Khóa Luận Chính Thức
                             </span>
                             @if(!empty($fileUrl))
-                                <a href="{{ asset($fileUrl) }}" download class="badge bg-success text-white text-decoration-none px-2.5 py-1">
-                                    <i class="fa-solid fa-download me-1"></i> Xuất .xlsx
+                                <a href="{{ asset($fileUrl) }}" download class="badge bg-success text-white text-decoration-none px-3 py-1">
+                                    <i class="fa-solid fa-download me-2"></i> Xuất .xlsx
                                 </a>
                             @endif
                         </div>
@@ -974,11 +974,11 @@
                     <!-- Nội dung thông báo chi tiết -->
                     <div class="mb-4">
                         <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-align-left text-primary"></i>
+                            <i class="fa-solid fa-align-left text-primary me-2"></i>
                             <span>Nội Dung Thông Báo Chính Thức</span>
                         </h6>
-                        <div class="p-3 rounded-3 border bg-white text-dark shadow-xs" style="white-space: pre-line; font-size: 0.92rem; line-height: 1.75; border-left: 4px solid #0072ce !important;">
-                            {{ $thongBao->NoiDung }}
+                        <div class="p-3 rounded-3 border bg-white text-dark shadow-xs" style="font-size: 0.92rem; line-height: 1.75; border-left: 4px solid #0072ce !important;">
+                            {!! \App\Helpers\HtmlHelper::clean($thongBao->NoiDung) !!}
                         </div>
                     </div>
 
@@ -1051,8 +1051,8 @@
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
                     @if(!empty($fileUrl))
-                        <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-light text-success fw-bold rounded-1 px-3 py-1 shadow-sm" style="font-size: 0.78rem;">
-                            <i class="fa-solid fa-download me-1"></i> Xuất File Excel (.xlsx)
+                        <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-light text-success fw-bold rounded-1 px-3 py-1 shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;">
+                            <i class="fa-solid fa-download me-2"></i> Xuất File Excel (.xlsx)
                         </a>
                     @endif
                     <button type="button" class="btn btn-sm btn-outline-light rounded-1 px-2 py-1" onclick="window.print()" title="In bảng tính">
@@ -1358,13 +1358,13 @@
                 <button type="button" class="excel-sheet-nav-btn" title="Cuối cùng"><i class="fa-solid fa-angles-right"></i></button>
                 <div class="d-flex align-items-center ms-2" role="tablist">
                     <button class="excel-sheet-tab-item {{ $isNhomOfficial ? 'active' : '' }}" id="modal-tab-btn-2" data-bs-toggle="tab" data-bs-target="#modal-sheet-nhom" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH NHÓM SINH VIÊN ĐĂNG KÝ ĐỀ TÀI & GVHD', 'modal')">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
+                        <i class="fa-solid fa-file-excel text-success me-2"></i> {{ $isNhomOfficial ? '1.' : '2.' }} Nhóm SV &amp; Đề Tài &amp; GVHD
                     </button>
                     <button class="excel-sheet-tab-item {{ !$isNhomOfficial ? 'active' : '' }}" id="modal-tab-btn-1" data-bs-toggle="tab" data-bs-target="#modal-sheet-detai" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP CHÍNH THỨC', 'modal')">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
+                        <i class="fa-solid fa-file-excel text-success me-2"></i> {{ $isNhomOfficial ? '2.' : '1.' }} Đề Tài Đăng Ký
                     </button>
                     <button class="excel-sheet-tab-item" id="modal-tab-btn-3" data-bs-toggle="tab" data-bs-target="#modal-sheet-gvhd" type="button" role="tab" onclick="updateFormulaBar('DANH SÁCH GIẢNG VIÊN HƯỚNG DẪN KHÓA LUẬN', 'modal')">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i> 3. GV Hướng Dẫn
+                        <i class="fa-solid fa-file-excel text-success me-2"></i> 3. GV Hướng Dẫn
                     </button>
                 </div>
                 <span class="ms-2 text-muted small cursor-pointer" title="Thêm sheet mới"><i class="fa-solid fa-plus"></i></span>
@@ -1380,7 +1380,7 @@
                 <div class="d-flex align-items-center gap-3">
                     @if(!empty($fileUrl))
                         <a href="{{ asset($fileUrl) }}" download class="text-success text-decoration-none fw-bold" style="font-size: 11px;">
-                            <i class="fa-solid fa-download me-1"></i> Tải về (.xlsx)
+                            <i class="fa-solid fa-download me-2"></i> Tải về (.xlsx)
                         </a>
                     @endif
                     <span>100%</span>

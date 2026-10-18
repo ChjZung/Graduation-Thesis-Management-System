@@ -60,7 +60,7 @@
                             <div>
                                 <div class="text-end small text-muted mb-1 fw-semibold">Trạng thái đề tài:</div>
                                 <span class="badge {{ $currentConfig['class'] }} border rounded-pill px-3 py-2 fs-6 shadow-xs">
-                                    <i class="{{ $currentConfig['icon'] }} me-1"></i> {{ $tt }}
+                                    <i class="{{ $currentConfig['icon'] }} me-2"></i> {{ $tt }}
                                 </span>
                             </div>
                         </div>
@@ -74,7 +74,7 @@
                         <div class="fw-bold text-dark">Ý kiến phản hồi / Lý do yêu cầu chỉnh sửa:</div>
                         <div class="text-danger mt-1 fw-semibold">{{ $detai->LyDoTuChoi }}</div>
                         <div class="small text-muted mt-2">
-                            <i class="fa-solid fa-circle-info me-1"></i>Sau khi quý Thầy/Cô chỉnh sửa và bấm <strong>"Cập Nhật & Nộp Lại Đề Tài"</strong>, đề tài sẽ tự động được gửi lại để xem xét phê duyệt.
+                            <i class="fa-solid fa-circle-info me-2"></i>Sau khi quý Thầy/Cô chỉnh sửa và bấm <strong>"Cập Nhật & Nộp Lại Đề Tài"</strong>, đề tài sẽ tự động được gửi lại để xem xét phê duyệt.
                         </div>
                     </div>
                 </div>
@@ -103,8 +103,8 @@
                         </div>
                     </div>
                     <div>
-                        <button type="submit" form="discard-draft-form" class="btn btn-outline-danger btn-sm rounded-pill px-3" style="font-size: 13px;">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Hủy bản nháp
+                        <button type="submit" form="discard-draft-form" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-inline-flex align-items-center" style="font-size: 13px;">
+                            <i class="fa-solid fa-rotate-left me-2"></i> Hủy bản nháp
                         </button>
                     </div>
                 </div>
@@ -172,18 +172,22 @@
                         'required' => false
                     ])
 
-                    <div class="mb-3">
-                        <label for="YeuCau" class="form-label fw-bold">Yêu Cầu Năng Lực Đối Với Sinh Viên</label>
-                        <textarea name="YeuCau" id="YeuCau" class="form-control @error('YeuCau') is-invalid @enderror" rows="3" minlength="15" maxlength="1000" placeholder="Ví dụ: Thành thạo Laravel/Vue, kiến thức cơ sở dữ liệu vững vàng (tối thiểu 15 ký tự)...">{{ old('YeuCau', $banNhap['YeuCau'] ?? $detai->YeuCau) }}</textarea>
-                        @error('YeuCau')
-                            <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @include('partials.rich_text_editor', [
+                        'name' => 'YeuCau',
+                        'id' => 'YeuCau',
+                        'value' => old('YeuCau', $banNhap['YeuCau'] ?? $detai->YeuCau),
+                        'label' => 'Yêu Cầu Năng Lực Đối Với Sinh Viên',
+                        'placeholder' => 'Ví dụ: Kiến thức nền tảng vững vàng, thành thạo lập trình Web, tinh thần chủ động làm việc nhóm...',
+                        'required' => false,
+                        'minHeight' => '160px',
+                        'showTemplate' => false,
+                        'minChars' => 15
+                    ])
 
                     <div class="mb-4 p-3 bg-light rounded-3 border">
                         <div class="small text-secondary d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-circle-info text-primary"></i>
+                                <i class="fa-solid fa-circle-info text-primary me-2"></i>
                                 <span>
                                     <strong>Đề cương chi tiết:</strong> Đề tài chưa được phê duyệt. Biểu mẫu và nộp đề cương sẽ mở tại trang <strong>Nộp đề cương</strong> sau khi đề tài được duyệt và có nhóm SV đăng ký.
                                 </span>
@@ -193,20 +197,20 @@
                                     $currOutline = $banNhap['FileDeCuong'] ?? $detai->FileDeCuong;
                                     $filePathEdit = Str::startsWith($currOutline, ['http', 'storage/']) ? asset($currOutline) : asset('storage/' . $currOutline);
                                 @endphp
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center"
                                         onclick="quickPreviewOutline('{{ $filePathEdit }}', '{{ basename($currOutline) }}', '{{ addslashes($detai->TenDeTai) }}')">
-                                    <i class="fa-solid fa-eye me-1"></i> Xem đề cương hiện tại
+                                    <i class="fa-solid fa-eye me-2"></i> Xem đề cương hiện tại
                                 </button>
                             @endif
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 align-items-center pt-2">
-                        <button type="submit" name="action_type" value="draft" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold" style="font-size: 13px;">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu bản nháp (Giữ nguyên bản chính)
+                        <button type="submit" name="action_type" value="draft" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold d-inline-flex align-items-center" style="font-size: 13px;">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Lưu bản nháp (Giữ nguyên bản chính)
                         </button>
-                        <button type="submit" name="action_type" value="resubmit" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-xs" style="font-size: 13px;">
-                            <i class="fa-solid fa-paper-plane me-1"></i> {{ $banNhap ? 'Nộp lại bản nháp để duyệt' : 'Nộp lại yêu cầu phê duyệt đề tài' }}
+                        <button type="submit" name="action_type" value="resubmit" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-xs d-inline-flex align-items-center" style="font-size: 13px;">
+                            <i class="fa-solid fa-paper-plane me-2"></i> {{ $banNhap ? 'Nộp lại bản nháp để duyệt' : 'Nộp lại yêu cầu phê duyệt đề tài' }}
                         </button>
                         <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border px-4 py-2 rounded-pill text-muted" style="font-size: 13px;">Hủy bỏ</a>
                     </div>
@@ -254,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selectHocPhan.innerHTML = '<option value="">-- Không có học phần nào mở trong học kỳ này --</option>';
             selectHocPhan.disabled = true;
             if (helpHocPhan) {
-                helpHocPhan.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn <strong>${boMonTen}</strong> được kích hoạt mở. Vui lòng liên hệ Giáo vụ/Admin để mở học phần trong tab Phân bổ học kỳ.</span>`;
+                helpHocPhan.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Học kỳ này hiện chưa có học phần nào của Bộ môn <strong>${boMonTen}</strong> được kích hoạt mở. Vui lòng liên hệ Giáo vụ/Admin để mở học phần trong tab Phân bổ học kỳ.</span>`;
             }
             return;
         }

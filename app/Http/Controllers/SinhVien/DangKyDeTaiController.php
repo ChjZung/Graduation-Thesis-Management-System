@@ -40,11 +40,17 @@ class DangKyDeTaiController extends Controller
         $isGroupLocked = false;
 
         if ($thanhVienRecord) {
-            $nhom = Nhom::with(['thanhViens', 'hocPhan', 'hocKy'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
+            $nhom = Nhom::with(['thanhViens.sinhVien', 'hocPhan', 'hocKy'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
             if ($nhom) {
                 $isGroupLocked = true;
                 $soThanhVien = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
-                $dangKyCurrent = DangKyDeTai::with('deTai.giangVien')
+                $dangKyCurrent = DangKyDeTai::with([
+                    'deTai.giangVien.boMon',
+                    'deTai.hocPhanRef',
+                    'deTai.hocKy',
+                    'deTai.nganh',
+                    'nhom.thanhViens.sinhVien'
+                ])
                     ->where('MaNhom', $nhom->MaNhom)
                     ->orderBy('created_at', 'desc')
                     ->first();
@@ -134,7 +140,7 @@ class DangKyDeTaiController extends Controller
             });
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // 4. Lấy map các đề tài đã có nhóm đăng ký ('Chờ duyệt' hoặc 'Đã duyệt')
         $deTaiDaDangKys = DangKyDeTai::whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
@@ -303,5 +309,48 @@ class DangKyDeTaiController extends Controller
         $dangKy->delete();
 
         return redirect()->back()->with('success', 'Đã hủy đăng ký đề tài thành công.');
+    }
+
+    public function showDeTai($maDeTai)
+    {
+        $user = Auth::user();
+        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->first();
+
+        $deTai = DeTai::with(['giangVien.boMon', 'hocPhanRef.boMon', 'hocKy', 'nganh'])
+            ->where('MaDeTai', $maDeTai)
+            ->firstOrFail();
+
+        // Thông tin nhóm của sinh viên (nếu có)
+        $nhom = null;
+        $dangKyCurrent = null;
+        $soThanhVien = 0;
+        if ($sinhVien) {
+            $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+                ->where('TrangThai', 'da_tham_gia')
+                ->latest('created_at')
+                ->first();
+
+            if ($thanhVienRecord) {
+                $nhom = Nhom::with(['thanhViens.sinhVien', 'hocPhan', 'hocKy'])->where('MaNhom', $thanhVienRecord->MaNhom)->first();
+                if ($nhom) {
+                    $soThanhVien = $nhom->thanhViens->where('TrangThai', 'da_tham_gia')->count();
+                    $dangKyCurrent = DangKyDeTai::where('MaNhom', $nhom->MaNhom)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
+            }
+        }
+
+        // Kiểm tra đề tài này đã có nhóm nào đăng ký chưa
+        $daDangKy = DangKyDeTai::where('MaDeTai', $deTai->MaDeTai)
+            ->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt'])
+            ->with('nhom')
+            ->first();
+
+        $regState = \App\Services\PlanPhaseService::getRegistrationState();
+
+        return view('sinhvien.dangky.show_detai', compact(
+            'deTai', 'nhom', 'dangKyCurrent', 'sinhVien', 'soThanhVien', 'daDangKy', 'regState'
+        ));
     }
 }

@@ -112,9 +112,15 @@ class ChiTieuHuongDanController extends Controller
             }
         }
 
-        // 6. Phân trang thủ công Collection
-        $perPage = 20;
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        // 6. Phân trang: Giới hạn 5 thông tin / 1 trang theo yêu cầu giao diện
+        $perPage = (int) $request->get('per_page', 5);
+        if ($perPage <= 0) {
+            $perPage = 5;
+        }
+        $currentPage = (int) $request->input('page', LengthAwarePaginator::resolveCurrentPage() ?: 1);
+        if ($currentPage <= 0) {
+            $currentPage = 1;
+        }
         $currentItems = $enrichedList->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
         $paginatedGiangViens = new LengthAwarePaginator(
@@ -122,7 +128,7 @@ class ChiTieuHuongDanController extends Controller
             $enrichedList->count(),
             $perPage,
             $currentPage,
-            ['path' => LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->query()]
+            ['path' => $request->url(), 'query' => $request->query()]
         );
 
         return view('admin.chi_tieu_huong_dan.index', [
@@ -133,6 +139,7 @@ class ChiTieuHuongDanController extends Controller
             'khoas'         => $khoas,
             'bomons'        => $bomons,
             'kpiStats'      => $kpiStats,
+            'perPage'       => $perPage,
         ]);
     }
 

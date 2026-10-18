@@ -9,17 +9,17 @@
         <div>
             
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-calendar-days text-primary"></i>
+                <i class="fa-solid fa-calendar-days text-primary me-2"></i>
                 <span>Chỉnh Sửa Học Kỳ</span>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fs-6 fw-bold">{{ $hocky->MaHocKy }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+            <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách
             </a>
             <a href="{{ route('hocky.show', $hocky->MaHocKy) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-eye me-1"></i> Xem chi tiết
+                <i class="fa-solid fa-eye me-2"></i> Xem chi tiết
             </a>
         </div>
     </div>
@@ -53,15 +53,15 @@
                     <div>
                         @if(!$isEnded && !$isUpcoming)
                             <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm fs-7">
-                                <i class="fa-solid fa-circle-check me-1"></i> Đang diễn ra (Hoạt động)
+                                <i class="fa-solid fa-circle-check me-2"></i> Đang diễn ra (Hoạt động)
                             </span>
                         @elseif($isUpcoming)
                             <span class="badge bg-info text-dark px-3 py-2 rounded-pill shadow-sm fs-7 fw-semibold">
-                                <i class="fa-solid fa-clock me-1"></i> Chưa bắt đầu (Sắp diễn ra)
+                                <i class="fa-solid fa-clock me-2"></i> Chưa bắt đầu (Sắp diễn ra)
                             </span>
                         @else
                             <span class="badge bg-secondary text-white px-3 py-2 rounded-pill shadow-sm fs-7">
-                                <i class="fa-solid fa-box-archive me-1"></i> Đã kết thúc (Lưu trữ)
+                                <i class="fa-solid fa-box-archive me-2"></i> Đã kết thúc (Lưu trữ)
                             </span>
                         @endif
                     </div>
@@ -71,7 +71,7 @@
                 <div class="card-body p-4 p-md-5 bg-white">
                     @if(isset($errors) && $errors->any())
                         <div class="alert alert-danger p-3 rounded-3 mb-4 shadow-sm border-0" style="border-left: 5px solid #dc3545 !important;">
-                            <div class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>Vui lòng kiểm tra lại thông tin:</div>
+                            <div class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Vui lòng kiểm tra lại thông tin:</div>
                             <ul class="mb-0 small ps-3">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -88,21 +88,21 @@
                             <!-- Mã Học Kỳ -->
                             <div class="col-md-4">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-barcode text-primary me-1"></i> Mã Học Kỳ (Hệ Thống)
+                                    <i class="fa-solid fa-barcode text-primary me-2"></i> Mã Học Kỳ (Hệ Thống)
                                 </label>
                                 <div class="input-group shadow-xs">
                                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock"></i></span>
                                     <input type="text" class="form-control form-control-huit border-start-0 bg-light font-monospace fw-bold text-primary" value="{{ $hocky->MaHocKy }}" readonly>
                                 </div>
                                 <div class="form-text text-muted small mt-1">
-                                    <i class="fa-solid fa-circle-info me-1 text-info"></i>Mã định danh duy nhất (không thể thay đổi)
+                                    <i class="fa-solid fa-circle-info me-2 text-info"></i>Mã định danh duy nhất (không thể thay đổi)
                                 </div>
                             </div>
 
                             <!-- Tên Học Kỳ -->
                             <div class="col-md-5">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-graduation-cap text-primary me-1"></i> Tên Học Kỳ <span class="text-danger fw-bold">*</span>
+                                    <i class="fa-solid fa-graduation-cap text-primary me-2"></i> Tên Học Kỳ <span class="text-danger fw-bold">*</span>
                                 </label>
                                 <input type="text" name="TenHocKy" id="inputTenHocKy" class="form-control form-control-huit fw-semibold text-dark" value="{{ old('TenHocKy', $hocky->TenHocKy) }}" placeholder="VD: Học kỳ 1 (2025-2026)" required>
                                 <div class="d-flex align-items-center gap-1 mt-2 flex-wrap">
@@ -117,11 +117,11 @@
                             <!-- Năm Học -->
                             <div class="col-md-3">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-calendar text-primary me-1"></i> Năm Học <span class="text-danger fw-bold">*</span>
+                                    <i class="fa-solid fa-calendar text-primary me-2"></i> Năm Học <span class="text-danger fw-bold">*</span>
                                 </label>
                                 <input type="text" name="NamHoc" id="inputNamHoc" class="form-control form-control-huit fw-semibold text-dark" value="{{ old('NamHoc', $hocky->NamHoc) }}" placeholder="2025-2026" required>
                                 <div class="form-text text-muted small mt-1">
-                                    <i class="fa-regular fa-clock me-1 text-muted"></i>Định dạng niên khóa: <code>YYYY-YYYY</code>
+                                    <i class="fa-regular fa-clock me-2 text-muted"></i>Định dạng niên khóa: <code>YYYY-YYYY</code>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +130,7 @@
                             <!-- Thời Gian Bắt Đầu -->
                             <div class="col-md-4">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-calendar-day text-primary me-1"></i> Thời Gian Bắt Đầu <span class="text-danger fw-bold">*</span>
+                                    <i class="fa-solid fa-calendar-day text-primary me-2"></i> Thời Gian Bắt Đầu <span class="text-danger fw-bold">*</span>
                                 </label>
                                 <input type="date" name="NgayBatDau" id="inputNgayBatDau" class="form-control form-control-huit fw-semibold text-dark" value="{{ old('NgayBatDau', $hocky->NgayBatDau ? \Carbon\Carbon::parse($hocky->NgayBatDau)->format('Y-m-d') : '') }}" required>
                             </div>
@@ -138,7 +138,7 @@
                             <!-- Thời Gian Kết Thúc -->
                             <div class="col-md-4">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-calendar-check text-primary me-1"></i> Thời Gian Kết Thúc <span class="text-danger fw-bold">*</span>
+                                    <i class="fa-solid fa-calendar-check text-primary me-2"></i> Thời Gian Kết Thúc <span class="text-danger fw-bold">*</span>
                                 </label>
                                 <input type="date" name="NgayKetThuc" id="inputNgayKetThuc" class="form-control form-control-huit fw-semibold text-dark" value="{{ old('NgayKetThuc', $hocky->NgayKetThuc ? \Carbon\Carbon::parse($hocky->NgayKetThuc)->format('Y-m-d') : '') }}" required>
                             </div>
@@ -146,7 +146,7 @@
                             <!-- Trạng Thái Học Kỳ -->
                             <div class="col-md-4">
                                 <label class="form-label-huit">
-                                    <i class="fa-solid fa-toggle-on text-primary me-1"></i> Trạng Thái Học Kỳ <span class="text-danger fw-bold">*</span>
+                                    <i class="fa-solid fa-toggle-on text-primary me-2"></i> Trạng Thái Học Kỳ <span class="text-danger fw-bold">*</span>
                                 </label>
                                 <select name="TrangThai" class="form-select form-select-huit fw-semibold text-dark">
                                     <option value="Đang diễn ra" {{ (!$isEnded && !$isUpcoming) ? 'selected' : '' }}>
@@ -160,19 +160,19 @@
                                     </option>
                                 </select>
                                 <div class="form-text text-muted small mt-1">
-                                    <i class="fa-solid fa-circle-question me-1 text-muted"></i>Cập nhật tình trạng hoạt động đợt khóa luận
+                                    <i class="fa-solid fa-circle-question me-2 text-muted"></i>Cập nhật tình trạng hoạt động đợt khóa luận
                                 </div>
                             </div>
                         </div>
 
                         <!-- Card Footer Hành Động -->
                         <div class="card-footer-huit d-flex flex-wrap align-items-center justify-content-between p-3 p-md-4 mt-5 rounded-3 border-top bg-light">
-                            <a href="{{ route('hocky.index') }}" class="btn btn-cancel-huit">
-                                <i class="fa-solid fa-arrow-left me-1"></i> Hủy & Quay Lại
+                            <a href="{{ route('hocky.index') }}" class="btn btn-cancel-huit d-inline-flex align-items-center">
+                                <i class="fa-solid fa-arrow-left me-2"></i> Hủy & Quay Lại
                             </a>
                             <div class="d-flex align-items-center gap-2">
-                                <button type="submit" class="btn btn-save-huit shadow-sm">
-                                    <i class="fa-solid fa-floppy-disk me-1"></i> Cập Nhật Học Kỳ
+                                <button type="submit" class="btn btn-save-huit shadow-sm d-inline-flex align-items-center">
+                                    <i class="fa-solid fa-floppy-disk me-2"></i> Cập Nhật Học Kỳ
                                 </button>
                             </div>
                         </div>

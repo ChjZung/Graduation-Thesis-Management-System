@@ -93,6 +93,7 @@ class DuyetDeTaiController extends Controller
 
         // -------------------------------------------------------------
         // TÍNH TOÁN 5 THẺ THỐNG KÊ PHÍA TRÊN CHO TOÀN KHOA (CHUẨN P3.2)
+        // Ràng buộc: Trưởng khoa chỉ xem các đề tài ĐÃ ĐƯỢC TRƯỞNG BỘ MÔN DUYỆT
         // -------------------------------------------------------------
         $deTaiStats = DB::table('DeTai')
             ->select(
@@ -104,6 +105,8 @@ class DuyetDeTaiController extends Controller
             )
             ->where('MaHocKy', $selectedHocKy)
             ->whereIn('MaGV', $allGvIds)
+            ->whereNotNull('NgayDuyetBM')
+            ->whereNotIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])
             ->first();
 
         // Thống kê chỉ tiêu của tất cả GV trong khoa qua ChiTieuService batch (tránh N+1)
@@ -137,6 +140,8 @@ class DuyetDeTaiController extends Controller
             )
             ->where('DeTai.MaHocKy', $selectedHocKy)
             ->whereIn('GiangVien.MaBoMon', $boMonIds)
+            ->whereNotNull('DeTai.NgayDuyetBM')
+            ->whereNotIn('DeTai.TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])
             ->groupBy('GiangVien.MaBoMon')
             ->get()
             ->keyBy('MaBoMon');
@@ -219,12 +224,16 @@ class DuyetDeTaiController extends Controller
         // TÍNH TOÁN DỮ LIỆU THỐNG KÊ HỌC THUẬT (TAB THỐNG KÊ ĐỀ TÀI)
         // -------------------------------------------------------------
         $linhVucs = DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+            ->whereNotNull('NgayDuyetBM')
+            ->whereNotIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])
             ->whereNotNull('LinhVuc')
             ->where('LinhVuc', '!=', '')
             ->distinct()
             ->pluck('LinhVuc');
 
-        $baseCountQuery = DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+        $baseCountQuery = DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+            ->whereNotNull('NgayDuyetBM')
+            ->whereNotIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt']);
         if ($selectedHocKy && $selectedHocKy !== 'ALL') {
             $baseCountQuery->where('MaHocKy', $selectedHocKy);
         }
@@ -376,9 +385,11 @@ class DuyetDeTaiController extends Controller
         $gvIds = $boMon->giangViens()->pluck('MaGV')->toArray();
         $chiTieuStats = ChiTieuService::getChiTieuStatsBatch($gvIds, $selectedHocKy);
 
-        // Query đề tài thuộc bộ môn
+        // Query đề tài thuộc bộ môn: Ràng buộc nghiệp vụ Trưởng khoa chỉ xem đề tài ĐÃ ĐƯỢC TRƯỞNG BỘ MÔN DUYỆT
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy', 'phieuDangKys.nhom.thanhVienNhoms'])
-            ->whereHas('giangVien', fn($g) => $g->where('MaBoMon', $maBoMon));
+            ->whereHas('giangVien', fn($g) => $g->where('MaBoMon', $maBoMon))
+            ->whereNotNull('NgayDuyetBM')
+            ->whereNotIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt']);
 
         if ($selectedHocKy && $selectedHocKy !== 'ALL') {
             $query->where('MaHocKy', $selectedHocKy);
@@ -394,36 +405,11 @@ class DuyetDeTaiController extends Controller
             });
         }
 
-        // 2. Lọc theo trạng thái phê duyệt của TBM
-        if ($request->filled('trang_thai_tbm') && $request->trang_thai_tbm !== 'ALL' && $request->trang_thai_tbm !== 'tat_ca') {
-            $ttTBM = $request->trang_thai_tbm;
-            if ($ttTBM === 'cho_duyet') {
-                $query->whereIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])
-                      ->whereNull('NgayDuyetBM');
-            } elseif ($ttTBM === 'da_duyet') {
-                $query->where(function($q) {
-                    $q->whereNotNull('NgayDuyetBM')
-                      ->orWhereIn('TrangThai', [
-                          'Chờ duyệt cấp Khoa', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương',
-                          'Đã nộp đề cương - Chờ phân công PB', 'Đang phản biện đề cương',
-                          'Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương',
-                          'Đã công bố', 'Đã đăng ký', 'Hoàn thành'
-                      ]);
-                });
-            } elseif ($ttTBM === 'yeu_cau_sua') {
-                $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương'])
-                      ->whereNull('NgayDuyetBM');
-            } elseif ($ttTBM === 'tu_choi') {
-                $query->whereIn('TrangThai', ['Từ chối', 'Không đạt phản biện'])
-                      ->whereNull('NgayDuyetBM');
-            }
-        }
-
-        // 3. Lọc theo trạng thái phê duyệt của TK
+        // 2. Lọc theo trạng thái phê duyệt của TK
         if ($request->filled('trang_thai_tk') && $request->trang_thai_tk !== 'ALL' && $request->trang_thai_tk !== 'tat_ca') {
             $ttTK = $request->trang_thai_tk;
             if (in_array($ttTK, ['cho_duyet', 'chua_phe_duyet', 'Chưa phê duyệt'])) {
-                $query->whereIn('TrangThai', ['Chờ duyệt cấp Khoa', 'Chờ duyệt cấp Bộ môn', 'Đang phản biện đề cương', 'Đã phản biện - Chờ duyệt BM']);
+                $query->whereIn('TrangThai', ['Chờ duyệt cấp Khoa']);
             } elseif (in_array($ttTK, ['da_duyet', 'da_phe_duyet', 'Đã phê duyệt'])) {
                 $query->where(function($q) {
                     $q->whereIn('TrangThai', ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành'])
@@ -489,7 +475,9 @@ class DuyetDeTaiController extends Controller
         $maKhoa = $khoa ? $khoa->MaKhoa : 'CNTT';
 
         $query = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy'])
-            ->whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+            ->whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+            ->whereNotNull('NgayDuyetBM')
+            ->whereNotIn('TrangThai', ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt']);
 
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $query->where('TrangThai', $request->TrangThai);
@@ -552,6 +540,11 @@ class DuyetDeTaiController extends Controller
             ->findOrFail($id);
 
         $this->assertDeTaiBelongsToKhoa($detai, $khoa);
+
+        // Ràng buộc phân quyền: Trưởng khoa chỉ được xem đề tài đã được Trưởng bộ môn phê duyệt
+        if (empty($detai->NgayDuyetBM) || in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])) {
+            abort(403, 'Trưởng khoa chỉ có quyền xem đề tài đã được Trưởng bộ môn phê duyệt.');
+        }
 
         $phanBienHienTai = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
 
@@ -626,10 +619,16 @@ class DuyetDeTaiController extends Controller
     public function requestEdit(Request $request, $id)
     {
         $request->validate([
-            'YeuCauSua' => 'required|string|max:1000',
+            'YeuCauSua' => 'required|string',
         ], [
             'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu điều chỉnh.',
         ]);
+
+        $cleanedYeuCauSua = \App\Helpers\HtmlHelper::clean($request->YeuCauSua);
+        $plainYeuCauSua = trim(strip_tags(html_entity_decode($cleanedYeuCauSua, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainYeuCauSua) < 5) {
+            return redirect()->back()->withInput()->withErrors(['YeuCauSua' => 'Vui lòng nhập nội dung yêu cầu điều chỉnh chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
@@ -642,11 +641,10 @@ class DuyetDeTaiController extends Controller
         }
 
         $oldStatus = $detai->TrangThai;
-        $lyDo = trim($request->YeuCauSua);
 
         $detai->update([
             'TrangThai'  => 'Yêu cầu chỉnh sửa',
-            'LyDoTuChoi' => $lyDo,
+            'LyDoTuChoi' => $cleanedYeuCauSua,
         ]);
 
         // Ghi lịch sử yêu cầu chỉnh sửa cấp Khoa
@@ -659,7 +657,7 @@ class DuyetDeTaiController extends Controller
             'HanhDong'      => 'Yêu cầu chỉnh sửa',
             'TrangThaiCu'   => $oldStatus,
             'TrangThai'     => 'Yêu cầu chỉnh sửa',
-            'LyDo'          => $lyDo,
+            'LyDo'          => $cleanedYeuCauSua,
             'NgayDuyet'     => now(),
         ]);
 
@@ -667,7 +665,7 @@ class DuyetDeTaiController extends Controller
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
                 '⚠️ Yêu cầu chỉnh sửa đề tài từ Trưởng khoa',
-                "Đề tài '{$detai->TenDeTai}' có ý kiến chỉnh sửa từ Trưởng khoa: " . $lyDo,
+                "Đề tài '{$detai->TenDeTai}' có ý kiến chỉnh sửa từ Trưởng khoa: " . $plainYeuCauSua,
                 'Đề tài'
             );
         }
@@ -686,10 +684,16 @@ class DuyetDeTaiController extends Controller
     public function reject(Request $request, $id)
     {
         $request->validate([
-            'LyDoTuChoi' => 'required|string|max:1000',
+            'LyDoTuChoi' => 'required|string',
         ], [
             'LyDoTuChoi.required' => 'Vui lòng nhập lý do từ chối.',
         ]);
+
+        $cleanedLyDo = \App\Helpers\HtmlHelper::clean($request->LyDoTuChoi);
+        $plainLyDo = trim(strip_tags(html_entity_decode($cleanedLyDo, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainLyDo) < 5) {
+            return redirect()->back()->withInput()->withErrors(['LyDoTuChoi' => 'Vui lòng nhập lý do từ chối chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
 
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
@@ -702,11 +706,10 @@ class DuyetDeTaiController extends Controller
         }
 
         $oldStatus = $detai->TrangThai;
-        $lyDo = trim($request->LyDoTuChoi);
 
         $detai->update([
             'TrangThai'  => 'Từ chối',
-            'LyDoTuChoi' => $lyDo,
+            'LyDoTuChoi' => $cleanedLyDo,
         ]);
 
         // Ghi lịch sử từ chối cấp Khoa
@@ -719,7 +722,7 @@ class DuyetDeTaiController extends Controller
             'HanhDong'      => 'Từ chối',
             'TrangThaiCu'   => $oldStatus,
             'TrangThai'     => 'Từ chối',
-            'LyDo'          => $lyDo,
+            'LyDo'          => $cleanedLyDo,
             'NgayDuyet'     => now(),
         ]);
 
@@ -733,7 +736,7 @@ class DuyetDeTaiController extends Controller
             ThongBaoService::guiDen(
                 $maTK,
                 '❌ Đề tài bị Trưởng khoa từ chối',
-                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng khoa từ chối phê duyệt. Lý do: " . $lyDo,
+                "Đề tài '{$detai->TenDeTai}' đã bị Trưởng khoa từ chối phê duyệt. Lý do: " . $plainLyDo,
                 'Đề tài'
             );
         }

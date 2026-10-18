@@ -52,7 +52,7 @@
                 <div class="d-flex align-items-baseline justify-content-between gap-1 mt-auto">
                     <span class="fs-3 fw-bold text-success lh-1">{{ $stats['nganh_cntt'] ?? 4 }}</span>
                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
-                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i>Hoạt động
+                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i>Hoạt động
                     </span>
                 </div>
             </div>
@@ -110,18 +110,18 @@
                     @endif
                 </select>
                 @if(request('search') || request('ma_khoa'))
-                    <a href="{{ route('nganh.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                    <a href="{{ route('nganh.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                 @endif
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                <a href="{{ route('admin.import.template', 'nganh') }}" class="btn btn-outline-secondary shadow-xs" title="Tải file mẫu Excel">
-                    <i class="fa-solid fa-download me-1"></i> File Mẫu
+                <a href="{{ route('admin.import.template', 'nganh') }}" class="btn btn-outline-secondary shadow-xs d-inline-flex align-items-center" title="Tải file mẫu Excel">
+                    <i class="fa-solid fa-download me-2"></i> File Mẫu
                 </a>
-                <button type="button" class="btn btn-info text-white shadow-xs fw-semibold" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
-                    <i class="fa-solid fa-file-import me-1"></i> Import Excel
+                <button type="button" class="btn btn-info text-white shadow-xs fw-semibold d-inline-flex align-items-center" style="background: #0284c7;" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fa-solid fa-file-import me-2"></i> Import Excel
                 </button>
-                <button type="button" class="btn btn-success shadow-xs fw-semibold" data-bs-toggle="modal" data-bs-target="#createModal">
-                    <i class="fa-solid fa-plus me-1"></i> Thêm Ngành Mới
+                <button type="button" class="btn btn-success shadow-xs fw-semibold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fa-solid fa-plus me-2"></i> Thêm Ngành Mới
                 </button>
             </div>
         </form>
@@ -155,8 +155,8 @@
                                     <span class="fw-bold text-dark fs-6">{{ $nganh->TenNganh }}</span>
                                 </td>
                                 <td class="py-3">
-                                    <span class="badge bg-light text-primary border rounded-pill px-3 py-1.5 fw-medium">
-                                        <i class="fa-solid fa-university me-1 text-primary"></i>{{ $nganh->khoa->TenKhoa ?? 'Chưa gán Khoa' }}
+                                    <span class="badge bg-light text-primary border rounded-pill px-3 py-2 fw-medium">
+                                        <i class="fa-solid fa-university me-2 text-primary"></i>{{ $nganh->khoa->TenKhoa ?? 'Chưa gán Khoa' }}
                                     </span>
                                 </td>
                                 <td class="text-center py-3">
@@ -166,8 +166,8 @@
                                     </div>
                                 </td>
                                 <td class="text-center py-3">
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Hoạt động
                                     </span>
                                 </td>
                                 <td class="pe-4 text-center py-3">
@@ -235,13 +235,13 @@
                         <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
                     </div>
                     <div class="alert alert-info py-2 px-3 small mb-0 rounded-3 border-0">
-                        <i class="fa-solid fa-info-circle me-1"></i>Vui lòng dùng <a href="{{ route('admin.import.template', 'nganh') }}" class="fw-bold text-decoration-underline">File Mẫu Chuẩn</a> để nhập thông tin đúng định dạng.
+                        <i class="fa-solid fa-info-circle me-2"></i>Vui lòng dùng <a href="{{ route('admin.import.template', 'nganh') }}" class="fw-bold text-decoration-underline">File Mẫu Chuẩn</a> để nhập thông tin đúng định dạng.
                     </div>
                 </div>
                 <div class="modal-footer border-top-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-upload me-1"></i> Bắt Đầu Import
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center">
+                        <i class="fa-solid fa-upload me-2"></i> Bắt Đầu Import
                     </button>
                 </div>
             </form>
@@ -300,8 +300,8 @@
                     </div>
                 </div>
                 <div class="modal-footer-huit">
-                    <button type="submit" class="btn btn-save-huit">
-                        <i class="fa-solid fa-check me-1"></i> Lưu & Thêm Ngành
+                    <button type="submit" class="btn btn-save-huit d-inline-flex align-items-center">
+                        <i class="fa-solid fa-check me-2"></i> Lưu & Thêm Ngành
                     </button>
                     <button type="button" class="btn btn-cancel-huit" data-bs-dismiss="modal">Hủy Bỏ</button>
                 </div>

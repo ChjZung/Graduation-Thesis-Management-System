@@ -115,28 +115,26 @@ class LoginController extends Controller implements HasMiddleware
     {
         $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
-        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+        if ($taiKhoan && $taiKhoan->isLocked()) {
             return true;
         }
 
-        return false;
+        return $this->limiter()->tooManyAttempts(
+            $this->throttleKey($request),
+            10
+        );
     }
 
     /**
-     * Override attemptLogin để xử lý khóa tài khoản trước
+     * Override attemptLogin để xử lý khóa tài khoản trước và ghi nhận số lần sai nguyên tử
      */
     protected function attemptLogin(\Illuminate\Http\Request $request)
     {
         $inputUsername = trim($request->TenDangNhap);
         $taiKhoan = $this->findTaiKhoan($inputUsername);
 
-        // Chặn hoàn toàn việc đăng nhập bằng mật khẩu mặc định 123456
-        if ($request->get('password') === '123456') {
-            return false;
-        }
-
-        // Nếu tài khoản bị khóa → từ chối ngay
-        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+        // Nếu tài khoản đang bị khóa (bởi admin hoặc do nhập sai >= 5 lần) → từ chối ngay lập tức
+        if ($taiKhoan && $taiKhoan->isLocked()) {
             return false;
         }
 
@@ -150,15 +148,8 @@ class LoginController extends Controller implements HasMiddleware
         );
 
         if (!$attempt && $taiKhoan) {
-            // Sai mật khẩu → tăng đếm
-            $taiKhoan->increment('SoLanDangNhapSai');
-            // Nếu đủ 5 lần → tự động khóa (BR01)
-            if ($taiKhoan->SoLanDangNhapSai >= 5) {
-                $taiKhoan->update([
-                    'TrangThai' => false,
-                    'NgayKhoa'  => now(),
-                ]);
-            }
+            // Sai mật khẩu → ghi nhận lần sai an toàn chống race condition
+            $taiKhoan->recordFailedLogin();
         }
 
         return $attempt;
@@ -169,18 +160,15 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected function authenticated(\Illuminate\Http\Request $request, $user)
     {
-        // Kiểm tra tài khoản bị khóa (trường hợp khóa thủ công)
-        if (!$user->TrangThai) {
+        // Kiểm tra tài khoản bị khóa
+        if ($user->isLocked()) {
             auth()->logout();
             return redirect()->route('login')
-                ->withErrors(['TenDangNhap' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ khôi phục.']);
+                ->withErrors(['TenDangNhap' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ mở khóa.']);
         }
 
-        // Reset đếm sai mật khẩu + ghi thời gian đăng nhập
-        $user->update([
-            'SoLanDangNhapSai' => 0,
-            'LanDangNhapCuoi'  => now(),
-        ]);
+        // Reset đếm sai mật khẩu về 0 + ghi nhận thời gian đăng nhập
+        $user->recordSuccessfulLogin();
 
         // Nếu là lần đầu đăng nhập (INITIAL) → Chuyển hướng sang trang Thiết lập mật khẩu cá nhân (BR02)
         if ($user->isPasswordInitial()) {
@@ -213,25 +201,19 @@ class LoginController extends Controller implements HasMiddleware
 
 
     /**
-     * Override sendFailedLoginResponse để thêm thông tin khóa TK
+     * Override sendFailedLoginResponse để thêm thông tin số lần thử còn lại hoặc thông báo khóa TK
      */
     protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
     {
-        if ($request->get('password') === '123456') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                $this->username() => ['Mật khẩu mặc định "123456" đã bị vô hiệu hóa vì lý do an toàn. Vui lòng sử dụng mật khẩu cá nhân mới hoặc gửi yêu cầu cấp lại mật khẩu.'],
-            ]);
-        }
-
         $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
-        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+        if ($taiKhoan && $taiKhoan->isLocked()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                $this->username() => ['Tài khoản của bạn đã bị khóa.'],
+                $this->username() => ['Tài khoản của bạn đã bị khóa do nhập sai mật khẩu 5 lần hoặc do Quản trị viên khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ mở khóa.'],
             ]);
         }
 
-        $soLanCon = $taiKhoan ? max(0, 5 - $taiKhoan->SoLanDangNhapSai) : null;
+        $soLanCon = $taiKhoan ? max(0, 5 - (int)$taiKhoan->SoLanDangNhapSai) : null;
         $msg = __('auth.failed');
         if ($soLanCon !== null && $soLanCon > 0) {
             $msg .= " (Còn {$soLanCon} lần thử trước khi tài khoản bị khóa)";
@@ -244,16 +226,16 @@ class LoginController extends Controller implements HasMiddleware
 
     /**
      * Override sendLockoutResponse để phân biệt chính xác:
-     * - Tài khoản có trạng thái bị khóa -> "Tài khoản của bạn đã bị khóa."
+     * - Tài khoản có trạng thái bị khóa -> "Tài khoản của bạn đã bị khóa..."
      * - Khóa tạm do đếm ngược RateLimiter (seconds > 0) -> "Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau X giây."
      */
     protected function sendLockoutResponse(\Illuminate\Http\Request $request)
     {
         $taiKhoan = $this->findTaiKhoan($request->TenDangNhap);
 
-        if ($taiKhoan && (!$taiKhoan->TrangThai || $taiKhoan->SoLanDangNhapSai >= 5)) {
+        if ($taiKhoan && $taiKhoan->isLocked()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                $this->username() => ['Tài khoản của bạn đã bị khóa.'],
+                $this->username() => ['Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Giáo vụ Khoa để được hỗ trợ mở khóa.'],
             ]);
         }
 

@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="mb-3">
-    <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
+    <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+        <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách thông báo
     </a>
 </div>
 
@@ -63,16 +63,23 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Nội Dung Chi Tiết Thông Báo <span class="text-danger">*</span></label>
-                <textarea name="NoiDung" class="form-control" rows="6" required>{{ old('NoiDung', $thongBao->NoiDung) }}</textarea>
+                @include('partials.rich_text_editor', [
+                    'name' => 'NoiDung',
+                    'id' => 'NoiDung',
+                    'label' => 'Nội Dung Chi Tiết Thông Báo',
+                    'value' => old('NoiDung', $thongBao->NoiDung),
+                    'required' => true,
+                    'minHeight' => '200px',
+                    'placeholder' => 'Nhập nội dung chi tiết thông báo...'
+                ])
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-1 text-primary"></i> File Đính Kèm Hiện Tại</label>
+                <label class="form-label fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i> File Đính Kèm Hiện Tại</label>
                 @if($thongBao->FileDinhKem)
                     <div class="mb-2">
                         <a href="{{ asset($thongBao->FileDinhKem) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                            <i class="fa-solid fa-file-pdf me-1"></i> Xem File Hiện Tại
+                            <i class="fa-solid fa-file-pdf me-2"></i> Xem File Hiện Tại
                         </a>
                     </div>
                 @endif
@@ -81,18 +88,18 @@
             </div>
 
             <div class="p-3 bg-light rounded-3 border mb-4">
-                <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock me-1 text-primary"></i> Tùy Chọn Phát Hành</h6>
+                <h6 class="fw-bold mb-2"><i class="fa-solid fa-clock me-2 text-primary"></i> Tùy Chọn Phát Hành</h6>
                 <div class="d-flex gap-4 align-items-center">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="action_type" id="act_draft" value="save_draft" checked>
                         <label class="form-check-label fw-bold text-secondary" for="act_draft">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Lưu Thay Đổi
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="action_type" id="act_send_now" value="send_now">
                         <label class="form-check-label fw-bold text-success" for="act_send_now">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Lưu &amp; Phát Hành Ngay
+                            <i class="fa-solid fa-paper-plane me-2"></i> Lưu &amp; Phát Hành Ngay
                         </label>
                     </div>
                 </div>
@@ -100,8 +107,8 @@
 
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('thongbao.index') }}" class="btn btn-light rounded-pill px-4">Hủy</a>
-                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                    <i class="fa-solid fa-check me-1"></i> Lưu Cập Nhật
+                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center">
+                    <i class="fa-solid fa-check me-2"></i> Lưu Cập Nhật
                 </button>
             </div>
         </form>

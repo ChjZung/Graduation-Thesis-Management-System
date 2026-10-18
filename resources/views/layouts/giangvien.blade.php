@@ -32,7 +32,7 @@
 
         <div class="px-3 pb-2">
             <div class="role-badge">
-                <i class="fa-solid fa-chalkboard-user"></i>
+                <i class="fa-solid fa-chalkboard-user me-2"></i>
                 Giảng Viên
             </div>
         </div>
@@ -61,7 +61,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isGvTongQuan ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-tongquan" aria-expanded="{{ $isGvTongQuan ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-chart-pie"></i>
+                        <i class="fa-solid fa-chart-pie me-2"></i>
                         <span>Tổng Quan &amp; Lịch</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -89,7 +89,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isGvDeTai ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-detai" aria-expanded="{{ $isGvDeTai ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-folder-open"></i>
+                        <i class="fa-solid fa-folder-open me-2"></i>
                         <span>Quản Lý Đề Tài</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -114,7 +114,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isGvDanhGia ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-danhgia" aria-expanded="{{ $isGvDanhGia ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-clipboard-check"></i>
+                        <i class="fa-solid fa-clipboard-check me-2"></i>
                         <span>Đánh Giá &amp; Báo Cáo</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -138,69 +138,72 @@
     <!-- ═══ MAIN CONTENT ═══ -->
     <div id="content">
 
-        <!-- Banner -->
-        <div class="huit-banner-wrap">
-            <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
-        </div>
-
-        <!-- Topbar / Breadcrumb Bar -->
-        <div class="admin-top-bar">
-            <div class="admin-breadcrumb">
-                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 13px;"></i>
-                <a href="{{ route('giangvien.dashboard') }}">Trang chủ</a>
-                <span class="separator">&gt;</span>
-                <span>Khóa luận tốt nghiệp</span>
-                <span class="separator">&gt;</span>
-                <span class="current-page">@yield('page_title', 'Giảng Viên')</span>
+        <!-- ═══ HEADER (Sticky Top) ═══ -->
+        <header class="huit-header-sticky">
+            <!-- Banner -->
+            <div class="huit-banner-wrap">
+                <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
             </div>
-            <div class="d-flex align-items-center gap-3">
-                <!-- Notification Bell Dropdown Unified -->
-                @include('partials.header_notifications')
 
-                @php
-                    $gvDisplayName = Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap;
-                @endphp
-                <!-- User Profile Pill -->
-                <div class="dropdown">
-                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                       id="gvUserDropdown">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($gvDisplayName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
-                             alt="Avatar">
-                        <span>{{ $gvDisplayName }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="gvUserDropdown">
-                        <li>
-                            <div class="px-3 py-2 mb-1 border-bottom">
-                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
-                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $gvDisplayName }}</div>
-                                <div style="font-size: 13px; color: #0284c7; margin-top: 2px;"><i class="fa-solid fa-chalkboard-user me-1"></i>Giảng viên</div>
-                            </div>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
-                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
-                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); document.getElementById('logout-form-gv').submit();">
-                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                    <form id="logout-form-gv" action="{{ route('logout') }}" method="POST" class="d-none">
-                        @csrf
-                    </form>
+            <!-- Topbar / Breadcrumb Bar -->
+            <div class="admin-top-bar">
+                <div class="admin-breadcrumb">
+                    <i class="fa-solid fa-angle-right me-2" style="color: #64748b; font-size: 13px;"></i>
+                    <a href="{{ route('giangvien.dashboard') }}">Trang chủ</a>
+                    <span class="separator">&gt;</span>
+                    <span>Khóa luận tốt nghiệp</span>
+                    <span class="separator">&gt;</span>
+                    <span class="current-page">@yield('page_title', 'Giảng Viên')</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notification Bell Dropdown Unified -->
+                    @include('partials.header_notifications')
+
+                    @php
+                        $gvDisplayName = Auth::user()->giangVien->HoTen ?? Auth::user()->TenDangNhap;
+                    @endphp
+                    <!-- User Profile Pill -->
+                    <div class="dropdown">
+                        <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                           id="gvUserDropdown">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($gvDisplayName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                                 alt="Avatar">
+                            <span>{{ $gvDisplayName }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="gvUserDropdown">
+                            <li>
+                                <div class="px-3 py-2 mb-1 border-bottom">
+                                    <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ $gvDisplayName }}</div>
+                                    <div style="font-size: 13px; color: #0284c7; margin-top: 2px;"><i class="fa-solid fa-chalkboard-user me-2"></i>Giảng viên</div>
+                                </div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                    <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                    <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form-gv').submit();">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                        <form id="logout-form-gv" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Alerts + Content -->
         <div class="content-body">
@@ -262,6 +265,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.modal').forEach(function(modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+
         setTimeout(function () {
             document.querySelectorAll('.alert-success').forEach(function (el) {
                 let a = bootstrap.Alert.getOrCreateInstance(el);

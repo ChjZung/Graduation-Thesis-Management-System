@@ -68,12 +68,12 @@
 @section('content')
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{{ route('giangvien.thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách thông báo
+        <a href="{{ route('giangvien.thongbao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách thông báo
         </a>
         @if(!empty($fileUrl))
-            <a href="{{ asset($fileUrl) }}" download class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm">
-                <i class="fa-solid fa-download me-1"></i> Tải Công Văn Đính Kèm
+            <a href="{{ asset($fileUrl) }}" download class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-download me-2"></i> Tải Công Văn Đính Kèm
             </a>
         @endif
     </div>
@@ -85,7 +85,7 @@
             <div class="doc-viewer-card" id="gvDocViewerCard">
                 <div class="doc-viewer-header">
                     <div class="d-flex align-items-center gap-2 text-truncate me-2">
-                        <i class="fa-solid {{ ($fileType ?? '') === 'image' ? 'fa-file-image text-warning' : 'fa-file-pdf text-danger' }} fs-5"></i>
+                        <i class="fa-solid {{ ($fileType ?? '') === 'image' ? 'fa-file-image text-warning' : 'fa-file-pdf text-danger' }} fs-5 me-2"></i>
                         <span class="fw-semibold text-truncate small" title="{{ !empty($fileUrl) ? basename($fileUrl) : 'VanBan_ThongBao.pdf' }}">
                             {{ !empty($fileUrl) ? basename($fileUrl) : 'Văn Bản Công Văn Thông Báo (Khoa CNTT)' }}
                         </span>
@@ -93,11 +93,11 @@
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                         @if(!empty($fileUrl))
-                            <a href="{{ asset($fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1" style="font-size: 0.78rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở tab mới
+                            <a href="{{ asset($fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 d-inline-flex align-items-center" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                             </a>
-                            <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.78rem;">
-                                <i class="fa-solid fa-download me-1"></i> Tải về
+                            <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-download me-2"></i> Tải về
                             </a>
                         @endif
                         <button type="button" class="btn btn-sm btn-outline-light rounded-circle p-1" style="width: 32px; height: 32px;" onclick="toggleGvDocFullscreen()" title="Toàn màn hình">
@@ -139,7 +139,7 @@
                             {{ $thongBao->LoaiThongBao ?? 'Thông báo' }}
                         </span>
                         <span class="small text-muted">
-                            <i class="fa-regular fa-clock me-1"></i>{{ date('d/m/Y H:i', strtotime($thongBao->NgayTao ?? $thongBao->created_at)) }}
+                            <i class="fa-regular fa-clock me-2"></i>{{ date('d/m/Y H:i', strtotime($thongBao->NgayTao ?? $thongBao->created_at)) }}
                         </span>
                     </div>
 
@@ -167,9 +167,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-align-left text-primary me-1"></i> Nội Dung Thông Báo:</h6>
-                        <div class="p-3 rounded-3 border bg-white text-dark shadow-xs" style="white-space: pre-line; font-size: 0.92rem; line-height: 1.75; border-left: 4px solid #0072ce !important;">
-                            {{ $thongBao->NoiDung }}
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-align-left text-primary me-2"></i> Nội Dung Thông Báo:</h6>
+                        <div class="p-3 rounded-3 border bg-white text-dark shadow-xs" style="font-size: 0.92rem; line-height: 1.75; border-left: 4px solid #0072ce !important;">
+                            {!! \App\Helpers\HtmlHelper::clean($thongBao->NoiDung) !!}
                         </div>
                     </div>
                 </div>

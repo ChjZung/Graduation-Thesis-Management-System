@@ -39,12 +39,12 @@
                         <form action="{{ route('giangvien.duyet.update', $dk->MaDangKy) }}" method="POST" class="d-inline">
                             @csrf @method('PUT')
                             <input type="hidden" name="TrangThai" value="Đã duyệt">
-                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"><i class="fa-solid fa-check"></i> Duyệt</button>
+                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 d-inline-flex align-items-center"><i class="fa-solid fa-check me-2"></i> Duyệt</button>
                         </form>
                         <form action="{{ route('giangvien.duyet.update', $dk->MaDangKy) }}" method="POST" class="d-inline">
                             @csrf @method('PUT')
                             <input type="hidden" name="TrangThai" value="Từ chối">
-                            <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3"><i class="fa-solid fa-xmark"></i> Từ chối</button>
+                            <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i> Từ chối</button>
                         </form>
                         @endif
                     </td>

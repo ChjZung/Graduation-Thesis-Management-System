@@ -13,17 +13,17 @@
             </h4>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold">
-                <i class="fa-solid fa-stamp me-1"></i> Phê Duyệt Đề Tài ({{ $stats['cho_duyet_khoa'] }})
+            <a href="{{ route('truongkhoa.duyet_detai.index') }}" class="btn btn-primary btn-sm rounded-3 shadow-sm fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-stamp me-2"></i> Phê Duyệt Đề Tài ({{ $stats['cho_duyet_khoa'] }})
             </a>
-            <a href="{{ route('truongkhoa.theodoi.index') }}" class="btn btn-outline-primary btn-sm">
-                <i class="fa-solid fa-chart-line me-1"></i> Theo Dõi Tiến Độ
+            <a href="{{ route('truongkhoa.theodoi.index') }}" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-chart-line me-2"></i> Theo Dõi Tiến Độ
             </a>
-            <a href="{{ route('truongkhoa.kehoach.index') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fa-solid fa-calendar-check me-1"></i> Kế Hoạch Khóa Luận
+            <a href="{{ route('truongkhoa.kehoach.index') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-calendar-check me-2"></i> Kế Hoạch Khóa Luận
             </a>
-            <a href="{{ route('truongkhoa.ketqua.index') }}" class="btn btn-outline-success btn-sm">
-                <i class="fa-solid fa-award me-1"></i> Kết Quả Toàn Khoa
+            <a href="{{ route('truongkhoa.ketqua.index') }}" class="btn btn-outline-success btn-sm d-inline-flex align-items-center">
+                <i class="fa-solid fa-award me-2"></i> Kết Quả Toàn Khoa
             </a>
         </div>
     </div>
@@ -213,7 +213,7 @@
                                     <td>
                                         <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
                                         <div class="small text-muted">
-                                            <i class="fa-solid fa-building-columns me-1"></i>{{ $dt->giangVien->boMon->TenBoMon ?? 'N/A' }}
+                                            <i class="fa-solid fa-building-columns me-2"></i>{{ $dt->giangVien->boMon->TenBoMon ?? 'N/A' }}
                                         </div>
                                     </td>
                                     <td>{{ $dt->giangVien->HoTen ?? 'N/A' }}</td>
@@ -221,7 +221,7 @@
                                         @if($pb)
                                             <div class="small fw-semibold">{{ $pb->giangVien->HoTen ?? 'N/A' }}</div>
                                             @if($pb->KetQua === 'Đạt')
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.72rem;"><i class="fa-solid fa-check me-1"></i> Đạt</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.72rem;"><i class="fa-solid fa-check me-2"></i> Đạt</span>
                                             @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
                                                 <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.72rem;">Cần sửa</span>
                                             @elseif($pb->KetQua === 'Không đạt')
@@ -239,7 +239,7 @@
                                     <td class="text-end">
                                         <div class="d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap">
                                             <a href="{{ route('truongkhoa.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold text-nowrap shadow-xs">
-                                                <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
+                                                <i class="fa-solid fa-stamp me-2"></i> Xem &amp; Duyệt
                                             </a>
                                         </div>
                                     </td>

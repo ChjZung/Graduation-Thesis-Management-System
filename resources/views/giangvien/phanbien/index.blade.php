@@ -52,7 +52,7 @@
     <!-- HEADER TITLE -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 flex-wrap gap-2">
         <div>
-            <h4 class="fw-bold text-dark mb-1.5">
+            <h4 class="fw-bold text-dark mb-2">
                 <i class="fa-solid fa-file-pen me-2 text-primary"></i>
                 Danh Sách Đề Tài Được Phân Công Phản Biện Đề Cương
             </h4>
@@ -71,9 +71,9 @@
                 @endif
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted fw-bold mb-2">
-                        <i class="fa-regular fa-calendar me-1 text-primary"></i>Học Kỳ:
+                        <i class="fa-regular fa-calendar me-2 text-primary"></i>Học Kỳ:
                     </label>
-                    <select name="MaHocKy" class="form-select form-select-sm rounded-pill px-3.5 py-2.5" onchange="this.form.submit()">
+                    <select name="MaHocKy" class="form-select form-select-sm rounded-pill px-3 py-2" onchange="this.form.submit()">
                         <option value="ALL" {{ $selectedHocKy === 'ALL' ? 'selected' : '' }}>-- Tất cả học kỳ --</option>
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
@@ -86,12 +86,12 @@
                     @php
                         $curHkObj = $hocKies->firstWhere('MaHocKy', $selectedHocKy);
                     @endphp
-                    <span class="badge bg-light text-secondary border px-3.5 py-2.5 rounded-pill small fw-medium">
+                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small fw-medium">
                         Hiển thị: <strong class="text-dark">{{ $curHkObj?->TenHocKy ?? ($selectedHocKy === 'ALL' ? 'Tất cả học kỳ' : $selectedHocKy) }}</strong> &bull; Tổng <strong class="text-dark">{{ $phanCongs->total() }}</strong> đề tài
                     </span>
                     @if(request('MaHocKy') || request('KetQua'))
-                        <a href="{{ route('giangvien.phanbien.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-2 fw-medium" title="Đặt lại bộ lọc">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Đặt lại
+                        <a href="{{ route('giangvien.phanbien.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-medium d-inline-flex align-items-center" title="Đặt lại bộ lọc">
+                            <i class="fa-solid fa-rotate-left me-2"></i> Đặt lại
                         </a>
                     @endif
                 </div>
@@ -104,41 +104,41 @@
         <div class="card-body p-3">
             <ul class="nav nav-pills flex-column flex-sm-row gap-2">
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ !request()->filled('KetQua') ? 'active bg-primary text-white shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ !request()->filled('KetQua') ? 'active bg-primary text-white shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy])) }}">
-                        Tất cả <span class="badge {{ !request()->filled('KetQua') ? 'bg-white text-primary' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['total'] }}</span>
+                        Tất cả <span class="badge {{ !request()->filled('KetQua') ? 'bg-white text-primary' : 'bg-secondary text-white' }} ms-2">{{ $counts['total'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'chua_danh_gia' ? 'active bg-warning text-dark shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'chua_danh_gia' ? 'active bg-warning text-dark shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy, 'KetQua' => 'chua_danh_gia'])) }}">
-                        <i class="fa-solid fa-clock me-1"></i> Chưa Đánh Giá 
-                        <span class="badge {{ request('KetQua') === 'chua_danh_gia' ? 'bg-dark text-white' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['chua_danh_gia'] }}</span>
+                        <i class="fa-solid fa-clock me-2"></i> Chưa Đánh Giá 
+                        <span class="badge {{ request('KetQua') === 'chua_danh_gia' ? 'bg-dark text-white' : 'bg-secondary text-white' }} ms-2">{{ $counts['chua_danh_gia'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'da_nop_lai' ? 'active bg-primary text-white shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'da_nop_lai' ? 'active bg-primary text-white shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy, 'KetQua' => 'da_nop_lai'])) }}">
-                        <i class="fa-solid fa-rotate me-1"></i> Đã nộp lại 
-                        <span class="badge {{ request('KetQua') === 'da_nop_lai' ? 'bg-white text-primary' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['da_nop_lai'] }}</span>
+                        <i class="fa-solid fa-rotate me-2"></i> Đã nộp lại 
+                        <span class="badge {{ request('KetQua') === 'da_nop_lai' ? 'bg-white text-primary' : 'bg-secondary text-white' }} ms-2">{{ $counts['da_nop_lai'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Đạt' ? 'active bg-success text-white shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Đạt' ? 'active bg-success text-white shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy, 'KetQua' => 'Đạt'])) }}">
-                        Đạt <span class="badge {{ request('KetQua') === 'Đạt' ? 'bg-white text-success' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['dat'] }}</span>
+                        Đạt <span class="badge {{ request('KetQua') === 'Đạt' ? 'bg-white text-success' : 'bg-secondary text-white' }} ms-2">{{ $counts['dat'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Yêu cầu chỉnh sửa' ? 'active bg-warning text-dark shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Yêu cầu chỉnh sửa' ? 'active bg-warning text-dark shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy, 'KetQua' => 'Yêu cầu chỉnh sửa'])) }}">
-                        Yêu cầu sửa <span class="badge {{ request('KetQua') === 'Yêu cầu chỉnh sửa' ? 'bg-dark text-white' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['yeu_cau_sua'] }}</span>
+                        Yêu cầu sửa <span class="badge {{ request('KetQua') === 'Yêu cầu chỉnh sửa' ? 'bg-dark text-white' : 'bg-secondary text-white' }} ms-2">{{ $counts['yeu_cau_sua'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item flex-fill text-center">
-                    <a class="nav-link py-2.5 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Không đạt' ? 'active bg-danger text-white shadow-xs' : 'text-dark bg-light' }}" 
+                    <a class="nav-link py-2 px-3 rounded-pill fw-semibold small {{ request('KetQua') === 'Không đạt' ? 'active bg-danger text-white shadow-xs' : 'text-dark bg-light' }}" 
                        href="{{ route('giangvien.phanbien.index', array_filter(['MaHocKy' => $selectedHocKy, 'KetQua' => 'Không đạt'])) }}">
-                        Không đạt <span class="badge {{ request('KetQua') === 'Không đạt' ? 'bg-white text-danger' : 'bg-secondary text-white' }} ms-1.5">{{ $counts['khong_dat'] }}</span>
+                        Không đạt <span class="badge {{ request('KetQua') === 'Không đạt' ? 'bg-white text-danger' : 'bg-secondary text-white' }} ms-2">{{ $counts['khong_dat'] }}</span>
                     </a>
                 </li>
             </ul>
@@ -182,9 +182,9 @@
                                         <div class="fw-bold text-dark line-clamp-2 small mb-2" title="{{ $pc->deTai->TenDeTai ?? 'N/A' }}" style="line-height: 1.5;">
                                             {{ $pc->deTai->TenDeTai ?? 'N/A' }}
                                         </div>
-                                        <div class="small text-muted d-flex flex-wrap gap-1.5 align-items-center mt-1" style="font-size: 0.8rem;">
-                                            <span><i class="fa-solid fa-tag me-1 text-primary"></i>{{ $pc->deTai->nganh->TenNganh ?? 'Toàn ngành' }}</span>
-                                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">{{ $pc->deTai->HocPhan ?? 'Khóa luận cử nhân' }}</span>
+                                        <div class="small text-muted d-flex flex-wrap gap-2 align-items-center mt-1" style="font-size: 0.8rem;">
+                                            <span><i class="fa-solid fa-tag me-2 text-primary"></i>{{ $pc->deTai->nganh->TenNganh ?? 'Toàn ngành' }}</span>
+                                            <span class="badge bg-light text-muted border rounded-pill px-3 py-1" style="font-size: 0.72rem;">{{ $pc->deTai->HocPhan ?? 'Khóa luận cử nhân' }}</span>
                                         </div>
                                     </td>
                                     <td>
@@ -197,13 +197,13 @@
                                                 $filePath = Str::startsWith($pc->deTai->FileDeCuong, ['http', 'storage/']) ? asset($pc->deTai->FileDeCuong) : asset('storage/' . $pc->deTai->FileDeCuong);
                                                 $fileName = basename($pc->deTai->FileDeCuong);
                                             @endphp
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 py-2 shadow-xs fw-medium small"
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 shadow-xs fw-medium small d-inline-flex align-items-center"
                                                     onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($pc->deTai->TenDeTai) }}')"
                                                     title="Xem nhanh đề cương trực tiếp trên web">
-                                                <i class="fa-solid fa-eye me-1.5"></i> Xem đề cương
+                                                <i class="fa-solid fa-eye me-2"></i> Xem đề cương
                                             </button>
                                         @else
-                                            <span class="badge bg-light text-muted border rounded-pill px-3 py-1.5 small fw-normal">Chưa có file</span>
+                                            <span class="badge bg-light text-muted border rounded-pill px-3 py-2 small fw-normal">Chưa có file</span>
                                         @endif
                                     </td>
                                     <td class="small text-muted fw-medium">
@@ -216,43 +216,43 @@
                                                 || ($pc->deTai && $pc->deTai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại');
                                         @endphp
                                         @if($pc->KetQua === 'Đạt')
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3.5 py-2 fw-semibold small">
-                                                <i class="fa-solid fa-circle-check me-1"></i> Đạt
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold small">
+                                                <i class="fa-solid fa-circle-check me-2"></i> Đạt
                                             </span>
                                         @elseif($isNopLai)
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3.5 py-2 fw-semibold small d-inline-block text-truncate" style="max-width: 150px;" title="Đã nộp lại đề cương">
-                                                <i class="fa-solid fa-rotate me-1"></i> Đã nộp lại
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold small d-inline-block text-truncate" style="max-width: 150px;" title="Đã nộp lại đề cương">
+                                                <i class="fa-solid fa-rotate me-2"></i> Đã nộp lại
                                             </span>
-                                            <div class="small text-primary fw-bold mt-1.5" style="font-size: 0.76rem;">
-                                                <i class="fa-solid fa-bell me-1"></i>Chờ phản biện lại
+                                            <div class="small text-primary fw-bold mt-2" style="font-size: 0.76rem;">
+                                                <i class="fa-solid fa-bell me-2"></i>Chờ phản biện lại
                                             </div>
                                         @elseif($pc->KetQua === 'Yêu cầu chỉnh sửa')
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3.5 py-2 fw-semibold small">
-                                                <i class="fa-solid fa-pen me-1"></i> Yêu cầu sửa
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-semibold small">
+                                                <i class="fa-solid fa-pen me-2"></i> Yêu cầu sửa
                                             </span>
-                                            <div class="small text-muted mt-1.5" style="font-size: 0.76rem;">(Chờ GV sửa)</div>
+                                            <div class="small text-muted mt-2" style="font-size: 0.76rem;">(Chờ GV sửa)</div>
                                         @elseif($pc->KetQua === 'Không đạt')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3.5 py-2 fw-semibold small">
-                                                <i class="fa-solid fa-circle-xmark me-1"></i> Không đạt
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold small">
+                                                <i class="fa-solid fa-circle-xmark me-2"></i> Không đạt
                                             </span>
                                         @else
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3.5 py-2 fw-semibold small">
-                                                <i class="fa-solid fa-clock me-1"></i> Chưa đánh giá
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-semibold small">
+                                                <i class="fa-solid fa-clock me-2"></i> Chưa đánh giá
                                             </span>
                                         @endif
                                     </td>
                                     <td class="text-end pe-4">
                                         @if($isNopLai)
-                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary rounded-pill px-3.5 py-2 shadow-xs fw-semibold small d-inline-flex align-items-center justify-content-center">
-                                                <i class="fa-solid fa-pen-to-square me-1.5"></i> Phản biện lại
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-2 shadow-xs fw-semibold small d-inline-flex align-items-center justify-content-center">
+                                                <i class="fa-solid fa-pen-to-square me-2"></i> Phản biện lại
                                             </a>
                                         @elseif($pc->KetQua)
-                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-2 shadow-xs fw-medium small d-inline-flex align-items-center justify-content-center">
-                                                <i class="fa-solid fa-eye me-1.5"></i> Xem lại
+                                            <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 shadow-xs fw-medium small d-inline-flex align-items-center justify-content-center">
+                                                <i class="fa-solid fa-eye me-2"></i> Xem lại
                                             </a>
                                         @else
                                             <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-sm btn-primary rounded-pill px-4 py-2 shadow-xs fw-semibold small d-inline-flex align-items-center justify-content-center">
-                                                <i class="fa-solid fa-pen-to-square me-1.5"></i> Đánh giá
+                                                <i class="fa-solid fa-pen-to-square me-2"></i> Đánh giá
                                             </a>
                                         @endif
                                     </td>

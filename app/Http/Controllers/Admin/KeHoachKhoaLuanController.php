@@ -111,7 +111,7 @@ class KeHoachKhoaLuanController extends Controller
                 'MaHocKy'     => $request->MaHocKy,
                 'MaGVu'       => $maGVu,
                 'TenKeHoach'  => trim($request->TenKeHoach),
-                'NoiDung'     => $request->NoiDung,
+                'NoiDung'     => $request->filled('NoiDung') ? \App\Helpers\HtmlHelper::clean($request->NoiDung) : null,
                 'TrangThai'   => $request->action === 'publish' ? 'ĐÃ CÔNG BỐ' : 'NHÁP',
                 'NgayTao'     => now(),
                 'NgayCongBo'  => $request->action === 'publish' ? now() : null,
@@ -197,10 +197,14 @@ class KeHoachKhoaLuanController extends Controller
             'MaHocKy'     => 'required|exists:HocKy,MaHocKy',
         ]);
 
-        $keHoach->update($request->only([
+        $updateData = $request->only([
             'TenKeHoach', 'MaKhoa', 'MaBoMon', 'MaHocKy', 'NamHoc',
-            'NoiDung', 'NgayBatDau', 'NgayKetThuc'
-        ]));
+            'NgayBatDau', 'NgayKetThuc'
+        ]);
+        if ($request->has('NoiDung')) {
+            $updateData['NoiDung'] = $request->filled('NoiDung') ? \App\Helpers\HtmlHelper::clean($request->NoiDung) : null;
+        }
+        $keHoach->update($updateData);
 
         if ($request->has('mocs')) {
             foreach ($request->mocs as $maMoc => $mocData) {

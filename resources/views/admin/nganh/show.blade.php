@@ -8,17 +8,17 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-book-open text-primary"></i>
+                <i class="fa-solid fa-book-open text-primary me-2"></i>
                 <span>{{ $nganh->TenNganh }}</span>
                 <span class="badge-code ms-2">{{ $nganh->MaNganh }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('nganh.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('nganh.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('nganh.edit', $nganh->MaNganh) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
             </a>
         </div>
     </div>
@@ -95,11 +95,11 @@
             <div class="card border-0 shadow-sm rounded-3 mb-4">
                 <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                     <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-users-rectangle text-primary"></i>
+                        <i class="fa-solid fa-users-rectangle text-primary me-2"></i>
                         <span>Danh Sách Lớp Hành Chính Trực Thuộc</span>
                     </h6>
                     <a href="{{ route('lop.create') }}?MaNganh={{ $nganh->MaNganh }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fa-solid fa-plus me-1"></i> Thêm Lớp Mới
+                        <i class="fa-solid fa-plus me-2"></i> Thêm Lớp Mới
                     </a>
                 </div>
                 <div class="table-responsive">
@@ -159,7 +159,7 @@
                 <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-header bg-white py-3 border-bottom">
                         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-diagram-project text-primary"></i>
+                            <i class="fa-solid fa-diagram-project text-primary me-2"></i>
                             <span>Chuyên Ngành Đào Tạo Hẹp</span>
                         </h6>
                     </div>
@@ -167,7 +167,7 @@
                         <div class="d-flex flex-wrap gap-2">
                             @foreach($nganh->chuyenNganhs as $cn)
                                 <span class="badge bg-light text-dark border p-2 rounded-3">
-                                    <i class="fa-solid fa-circle-dot text-primary me-1"></i> {{ $cn->TenChuyenNganh ?? $cn->MaChuyenNganh }}
+                                    <i class="fa-solid fa-circle-dot text-primary me-2"></i> {{ $cn->TenChuyenNganh ?? $cn->MaChuyenNganh }}
                                 </span>
                             @endforeach
                         </div>
@@ -207,7 +207,7 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                             <span class="text-muted">Trạng Thái</span>
                             <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
-                                <i class="fa-solid fa-circle me-1 small" style="font-size: 0.5rem;"></i> Hoạt động
+                                <i class="fa-solid fa-circle me-2 small" style="font-size: 0.5rem;"></i> Hoạt động
                             </span>
                         </li>
                     </ul>
@@ -218,7 +218,7 @@
             <div class="card border-0 shadow-sm rounded-3 bg-light">
                 <div class="card-body p-3">
                     <h6 class="fw-bold text-primary mb-2">
-                        <i class="fa-solid fa-graduation-cap me-1"></i> Quy chế Khóa luận tốt nghiệp
+                        <i class="fa-solid fa-graduation-cap me-2"></i> Quy chế Khóa luận tốt nghiệp
                     </h6>
                     <p class="small text-muted mb-0">
                         Sinh viên ngành này cần tích lũy tối thiểu 115 tín chỉ và không bị nợ các môn điều kiện tiên quyết để được cấp quyền lập nhóm đăng ký đề tài KLTN.

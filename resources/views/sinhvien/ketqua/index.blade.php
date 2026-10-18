@@ -1,4 +1,4 @@
-@extends('layouts.sinhvien')
+﻿@extends('layouts.sinhvien')
 @section('page_title', 'Kết Quả Khóa Luận')
 @section('content')
 
@@ -47,7 +47,7 @@
     <!-- Cột trái: Thẻ Điểm Tổng Kết Nổi Bật -->
     <div class="col-lg-4">
         <div class="card border-0 text-white text-center shadow-sm h-100" style="background-color: {{ $cardBgColor }}; border-radius: 14px;">
-            <div class="card-body p-4.5 d-flex flex-column justify-content-center align-items-center" style="padding: 28px !important;">
+            <div class="card-body p-4 d-flex flex-column justify-content-center align-items-center" style="padding: 28px !important;">
                 <i class="fa-solid fa-award fa-3x mb-3" style="opacity: 0.95;"></i>
                 
                 <div class="display-4 fw-bold mb-0" style="line-height: 1.1;">
@@ -61,7 +61,7 @@
                     </span>
                 </div>
 
-                <div class="p-2.5 px-3 rounded-3 bg-white bg-opacity-10 text-white w-100" style="font-size: 13.5px;">
+                <div class="p-2 px-3 rounded-3 bg-white bg-opacity-10 text-white w-100" style="font-size: 13.5px;">
                     <div>Điểm chữ: <strong>{{ $ketQua->diem_chu }}</strong> &bull; Hệ 4: <strong>{{ number_format($ketQua->diem_he4, 1) }}</strong></div>
                     <div class="text-white-50 mt-1" style="font-size: 13px;">
                         {{ $loai === 'KLKS' ? 'Khóa luận Kỹ sư (KLKS)' : 'Khóa luận Cử nhân (KLCN)' }}
@@ -84,8 +84,8 @@
                     <div class="text-muted mb-1" style="font-size: 13px;">Đề tài khóa luận:</div>
                     <div class="fw-bold text-primary fs-6">{{ $nhom->deTai->TenDeTai ?? '' }}</div>
                     <div class="text-muted mt-2 d-flex flex-wrap gap-3" style="font-size: 13px;">
-                        <span><i class="fa-solid fa-user-tie text-secondary me-1"></i>GVHD: <strong class="text-dark">{{ $nhom->deTai->giangVien->HoTen ?? 'N/A' }}</strong></span>
-                        <span><i class="fa-solid fa-users text-secondary me-1"></i>Nhóm: <strong class="text-dark">{{ $nhom->TenNhom ?? '' }}</strong></span>
+                        <span><i class="fa-solid fa-user-tie text-secondary me-2"></i>GVHD: <strong class="text-dark">{{ $nhom->deTai->giangVien->HoTen ?? 'N/A' }}</strong></span>
+                        <span><i class="fa-solid fa-users text-secondary me-2"></i>Nhóm: <strong class="text-dark">{{ $nhom->TenNhom ?? '' }}</strong></span>
                     </div>
                 </div>
                 @endif
@@ -113,9 +113,9 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center p-3 rounded-3 bg-white border mb-3 gap-2">
                     <div style="font-size: 13.5px;">
                         <span class="text-muted">Quy đổi Tín chỉ:</span>
-                        <span class="ms-2">Điểm chữ: <strong class="text-success">{{ $ketQua->diem_chu }}</strong> &bull; Thang 4.0: <strong class="text-primary">{{ number_format($ketQua->diem_he4, 1) }}</strong></span>
+                        <span class="ms-2">Điểm chữ: <strong class="text-primary">{{ $ketQua->diem_chu }}</strong> &bull; Thang 4.0: <strong class="text-primary">{{ number_format($ketQua->diem_he4, 1) }}</strong></span>
                     </div>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
                         {{ $xepLoai }}
                     </span>
                 </div>
@@ -123,14 +123,14 @@
                 @if($ketQua->NhanXetChung)
                 <div class="p-3 rounded-3 bg-light border mb-3" style="font-size: 13.5px;">
                     <div class="fw-bold text-primary mb-1">
-                        <i class="fa-solid fa-comment-dots me-1"></i>Nhận xét từ Hội đồng:
+                        <i class="fa-solid fa-comment-dots me-2"></i>Nhận xét từ Hội đồng:
                     </div>
                     <div class="text-dark">{{ $ketQua->NhanXetChung }}</div>
                 </div>
                 @endif
 
                 <div class="text-muted" style="font-size: 13px;">
-                    <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                    <i class="fa-solid fa-circle-info text-primary me-2"></i>
                     <em>Quy chế Khoa CNTT - HUIT: Điểm khóa luận tốt nghiệp được tính 100% từ điểm đánh giá của Hội đồng bảo vệ.</em>
                 </div>
             </div>

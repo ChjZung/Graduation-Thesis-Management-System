@@ -28,3 +28,15 @@ Homestead.yaml
 /scratch/
 /storage/framework/mock_time.txt
 /database/backups/
+
+# Database engine files and SQL dumps
+*.ibd
+/database/quanly_doan/
+quanly_doan.sql
+*.sql
+!database/migrations/*.sql
+!database/migrations_sql/*.sql
+
+# Environment variants
+.env.*
+!.env.example

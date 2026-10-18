@@ -32,7 +32,7 @@
 
         <div class="px-3 pb-2">
             <div class="role-badge">
-                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-shield-halved me-2"></i>
                 Quản Trị Viên
             </div>
         </div>
@@ -45,7 +45,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isTongQuanActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-tongquan" aria-expanded="{{ $isTongQuanActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-chart-pie"></i>
+                        <i class="fa-solid fa-chart-pie me-2"></i>
                         <span>Tổng Quan</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -67,7 +67,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isQLKLActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-qlkl" aria-expanded="{{ $isQLKLActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-book-bookmark"></i>
+                        <i class="fa-solid fa-book-bookmark me-2"></i>
                         <span>Quản Lý Khóa Luận</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -94,22 +94,19 @@
                 </div>
             </div>
 
-            <!-- 3. BẢO VỆ & HỘI ĐỒNG -->
+            <!-- 3. BẢO VỆ & KẾT QUẢ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isHoiDongActive = request()->routeIs('admin.hoidong.*') || request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*');
+                    $isHoiDongActive = request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isHoiDongActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hoidong" aria-expanded="{{ $isHoiDongActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-landmark"></i>
-                        <span>Bảo Vệ &amp; Hội Đồng</span>
+                        <i class="fa-solid fa-graduation-cap me-2"></i>
+                        <span>Bảo Vệ &amp; Kết Quả</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
                 </button>
                 <div class="collapse submenu-collapse {{ $isHoiDongActive ? 'show' : '' }}" id="sub-hoidong">
-                    <a href="{{ route('admin.hoidong.index') }}" class="submenu-link {{ request()->routeIs('admin.hoidong.*') ? 'active-sub' : '' }}">
-                        <span>Hội đồng bảo vệ</span>
-                    </a>
                     <a href="{{ route('admin.hosoBaoVe.index') }}" class="submenu-link {{ request()->routeIs('admin.hosoBaoVe.*') ? 'active-sub' : '' }}">
                         <span>Hồ sơ bảo vệ</span>
                     </a>
@@ -126,7 +123,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isUserActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-user" aria-expanded="{{ $isUserActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-users-gear"></i>
+                        <i class="fa-solid fa-users-gear me-2"></i>
                         <span>Người Dùng &amp; Hồ Sơ</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -157,7 +154,7 @@
                 @endphp
                 <button class="menu-parent-btn {{ $isHocVuActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hocvu" aria-expanded="{{ $isHocVuActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
-                        <i class="fa-solid fa-graduation-cap"></i>
+                        <i class="fa-solid fa-graduation-cap me-2"></i>
                         <span>Danh Mục Học Vụ</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
@@ -191,66 +188,69 @@
     <!-- ═══ MAIN CONTENT ═══ -->
     <div id="content">
 
-        <!-- Banner -->
-        <div class="huit-banner-wrap">
-            <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
-        </div>
-
-        <!-- Topbar / Breadcrumb Bar -->
-        <div class="admin-top-bar">
-            <div class="admin-breadcrumb">
-                <i class="fa-solid fa-angle-right" style="color: #64748b; font-size: 0.75rem;"></i>
-                <a href="{{ route('admin.dashboard') }}">Trang chủ</a>
-                <span class="separator">&gt;</span>
-                <span>Khóa luận tốt nghiệp</span>
-                <span class="separator">&gt;</span>
-                <span class="current-page">@yield('page_title', 'Dashboard')</span>
+        <!-- ═══ HEADER (Sticky Top) ═══ -->
+        <header class="huit-header-sticky">
+            <!-- Banner -->
+            <div class="huit-banner-wrap">
+                <img src="{{ asset('images/anhbanner.png') }}" alt="Banner HUIT">
             </div>
-            <div class="d-flex align-items-center gap-3">
-                <!-- Notification Bell Unified -->
-                @include('partials.header_notifications')
 
-                <!-- Admin Profile Pill -->
-                <div class="dropdown">
-                    <a class="admin-user-pill dropdown-toggle text-decoration-none"
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                       id="adminUserDropdown">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->TenDangNhap ?? 'Admin') }}&background=0072CE&color=FFFFFF&bold=true&size=64"
-                             alt="Avatar">
-                        <span>{{ Auth::user()->TenDangNhap ?? 'Admin' }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="adminUserDropdown">
-                        <li>
-                            <div class="px-3 py-2 mb-1 border-bottom">
-                                <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
-                                <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
-                                <div style="font-size: 13px; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-shield-halved me-1"></i>Quản trị viên</div>
-                            </div>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
-                                <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('password.change') }}">
-                                <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); document.getElementById('logout-form-admin').submit();">
-                                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
-                            </a>
-                        </li>
-                        <form id="logout-form-admin" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf
-                        </form>
-                    </ul>
+            <!-- Topbar / Breadcrumb Bar -->
+            <div class="admin-top-bar">
+                <div class="admin-breadcrumb">
+                    <i class="fa-solid fa-angle-right me-2" style="color: #64748b; font-size: 0.75rem;"></i>
+                    <a href="{{ route('admin.dashboard') }}">Trang chủ</a>
+                    <span class="separator">&gt;</span>
+                    <span>Khóa luận tốt nghiệp</span>
+                    <span class="separator">&gt;</span>
+                    <span class="current-page">@yield('page_title', 'Dashboard')</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notification Bell Unified -->
+                    @include('partials.header_notifications')
+
+                    <!-- Admin Profile Pill -->
+                    <div class="dropdown">
+                        <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                           id="adminUserDropdown">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->TenDangNhap ?? 'Admin') }}&background=0072CE&color=FFFFFF&bold=true&size=64"
+                                 alt="Avatar">
+                            <span>{{ Auth::user()->TenDangNhap ?? 'Admin' }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="adminUserDropdown">
+                            <li>
+                                <div class="px-3 py-2 mb-1 border-bottom">
+                                    <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #003b73;">{{ Auth::user()->TenDangNhap ?? 'Admin' }}</div>
+                                    <div style="font-size: 13px; color: #10b981; margin-top: 2px;"><i class="fa-solid fa-shield-halved me-2"></i>Quản trị viên</div>
+                                </div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.show') }}">
+                                    <i class="fa-solid fa-user me-2 text-primary"></i> Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('password.change') }}">
+                                    <i class="fa-solid fa-key me-2 text-primary"></i> Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form-admin').submit();">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+                                </a>
+                            </li>
+                            <form id="logout-form-admin" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Alerts + Content -->
         <div class="content-body admin-page-transition">
@@ -337,7 +337,7 @@
                         if (!btn.dataset.originalHtml) {
                             btn.dataset.originalHtml = btn.innerHTML;
                         }
-                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang xử lý...';
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang xử lý...';
                     }, 30);
                 }
             });

@@ -10,14 +10,14 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-landmark text-primary"></i>
+                <i class="fa-solid fa-landmark text-primary me-2"></i>
                 <span>{{ $hoiDong->TenHoiDong }}</span>
                 <span class="badge-code ms-2">{{ $hoiDong->MaHoiDong }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-xs d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
         </div>
     </div>
@@ -99,11 +99,11 @@
                         <span class="badge bg-light text-muted border rounded-pill px-3 py-1 fw-medium">Đã kết thúc</span>
                     @elseif($isRunning)
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
-                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Đang diễn ra
+                            <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Đang diễn ra
                         </span>
                     @else
                         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1 fw-medium">
-                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #0284c7;"></i> Sắp diễn ra
+                            <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #0284c7;"></i> Sắp diễn ra
                         </span>
                     @endif
                 </div>
@@ -116,8 +116,8 @@
                         <tr>
                             <td class="text-muted fw-semibold">Thời gian:</td>
                             <td>
-                                <div><i class="fa-regular fa-clock text-primary me-1"></i>{{ \Carbon\Carbon::parse($hoiDong->ThoiGianBatDau)->format('H:i d/m/Y') }}</div>
-                                <div class="small text-muted mt-0.5"><i class="fa-solid fa-arrow-right-long me-1"></i>{{ \Carbon\Carbon::parse($hoiDong->ThoiGianKetThuc)->format('H:i d/m/Y') }}</div>
+                                <div><i class="fa-regular fa-clock text-primary me-2"></i>{{ \Carbon\Carbon::parse($hoiDong->ThoiGianBatDau)->format('H:i d/m/Y') }}</div>
+                                <div class="small text-muted mt-1"><i class="fa-solid fa-arrow-right-long me-2"></i>{{ \Carbon\Carbon::parse($hoiDong->ThoiGianKetThuc)->format('H:i d/m/Y') }}</div>
                             </td>
                         </tr>
                         <tr>
@@ -140,7 +140,7 @@
                             <option value="Đang diễn ra" {{ $hoiDong->TrangThai === 'Đang diễn ra' ? 'selected' : '' }}>Đang diễn ra</option>
                             <option value="Đã kết thúc" {{ $hoiDong->TrangThai === 'Đã kết thúc' ? 'selected' : '' }}>Đã kết thúc</option>
                         </select>
-                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 flex-shrink-0 fw-semibold">Cập nhật</button>
+                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 flex-shrink-0 fw-semibold align-items-center">Cập nhật</button>
                     </form>
                 </div>
             </div>
@@ -149,8 +149,8 @@
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                     <span class="fw-bold text-dark"><i class="fa-solid fa-users me-2 text-primary"></i> Thành Viên Hội Đồng ({{ $hoiDong->thanhViens->count() }})</span>
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalThemThanhVien" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-user-plus me-1"></i> Thêm TV
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalThemThanhVien" style="font-size: 0.8rem;">
+                        <i class="fa-solid fa-user-plus me-2"></i> Thêm TV
                     </button>
                 </div>
                 <div class="card-body p-0">
@@ -158,19 +158,19 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th class="ps-3 py-2.5">GIẢNG VIÊN</th>
-                                    <th class="py-2.5 text-center" width="30%">VAI TRÒ</th>
-                                    <th class="pe-3 py-2.5 text-center" width="20%">THAO TÁC</th>
+                                    <th class="ps-3 py-2">GIẢNG VIÊN</th>
+                                    <th class="py-2 text-center" width="30%">VAI TRÒ</th>
+                                    <th class="pe-3 py-2 text-center" width="20%">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
                                 @forelse($hoiDong->thanhViens as $tv)
                                 <tr>
-                                    <td class="ps-3 py-2.5">
+                                    <td class="ps-3 py-2">
                                         <div class="fw-bold text-dark" style="font-size: 0.88rem;">{{ $tv->giangVien->HoTen ?? '—' }}</div>
                                         <div class="small text-muted" style="font-size: 0.75rem;">{{ $tv->giangVien->HocVi ?? 'GV' }} &bull; {{ $tv->giangVien->boMon->TenBoMon ?? 'Bộ môn' }}</div>
                                     </td>
-                                    <td class="text-center py-2.5">
+                                    <td class="text-center py-2">
                                         @php
                                             $badgeStyle = match($tv->VaiTro) {
                                                 'Chủ tịch' => 'bg-danger-subtle text-danger border border-danger-subtle',
@@ -179,12 +179,12 @@
                                                 default    => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
                                             };
                                         @endphp
-                                        <span class="badge {{ $badgeStyle }} rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">{{ $tv->VaiTro }}</span>
+                                        <span class="badge {{ $badgeStyle }} rounded-pill px-3 py-1" style="font-size: 0.75rem;">{{ $tv->VaiTro }}</span>
                                     </td>
-                                    <td class="pe-3 text-center py-2.5">
+                                    <td class="pe-3 text-center py-2">
                                         <div class="d-flex justify-content-center gap-1">
                                             <!-- Nút sửa vai trò -->
-                                            <button type="button" class="btn btn-sm btn-light border btn-action-circle" 
+                                            <button type="button" class="btn btn-sm btn-light border btn-action-circle d-inline-flex align-items-center" 
                                                     title="Đổi vai trò" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalDoiVaiTro{{ $tv->MaGV }}">
@@ -195,7 +195,7 @@
                                             <form action="{{ route('admin.hoidong.xoaThanhVien', [$hoiDong->MaHoiDong, $tv->MaGV]) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-light border text-danger btn-action-circle" 
+                                                <button type="submit" class="btn btn-sm btn-light border text-danger btn-action-circle d-inline-flex align-items-center" 
                                                         title="Xóa thành viên này" 
                                                         onclick="return confirm('Bạn có chắc chắn muốn xóa giảng viên {{ $tv->giangVien->HoTen ?? $tv->MaGV }} khỏi Hội đồng?');">
                                                     <i class="fa-solid fa-trash" style="font-size: 0.75rem;"></i>
@@ -207,8 +207,8 @@
                                         <div class="modal fade text-start" id="modalDoiVaiTro{{ $tv->MaGV }}" tabindex="-1" aria-hidden="true">
                                             <div class="modal-dialog modal-dialog-centered modal-sm">
                                                 <div class="modal-content border-0 shadow">
-                                                    <div class="modal-header py-2.5 bg-light">
-                                                        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-gear me-1 text-primary"></i> Đổi Vai Trò</h6>
+                                                    <div class="modal-header py-2 bg-light">
+                                                        <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-gear me-2 text-primary"></i> Đổi Vai Trò</h6>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                     </div>
                                                     <form action="{{ route('admin.hoidong.doiVaiTroThanhVien', [$hoiDong->MaHoiDong, $tv->MaGV]) }}" method="POST">
@@ -261,8 +261,8 @@
 
             @if($nhomChuaPhanCong->isNotEmpty())
             <div class="card border-0 shadow-sm rounded-3 mb-4" style="background: #f8fafc; border: 1px dashed #cbd5e1 !important;">
-                <div class="card-header bg-white border-bottom py-2.5 text-primary fw-bold">
-                    <i class="fa-solid fa-user-plus me-1 text-primary"></i> Thêm Nhóm Bảo Vệ Vào Hội Đồng Này
+                <div class="card-header bg-white border-bottom py-2 text-primary fw-bold">
+                    <i class="fa-solid fa-user-plus me-2 text-primary"></i> Thêm Nhóm Bảo Vệ Vào Hội Đồng Này
                 </div>
                 <div class="card-body p-3">
                     <form action="{{ route('admin.hoidong.phanCongNhom', $hoiDong->MaHoiDong) }}" method="POST">
@@ -284,7 +284,7 @@
                                 <select name="MaGVPhanBien" class="form-select form-select-sm">
                                     <option value="">— Chọn GV Phản biện —</option>
                                     @foreach($giangViens as $gv)
-                                    <option value="{{ $gv->MaGV }}">{{ $gv->HoTen }} ({{ $gv->HocVi ?? 'GV' }})</option>
+                                    <option value="{{ $gv->MaGV }}">{{ $gv->HoTen }} ({{ $gv->boMon->TenBoMon ?? 'Bộ môn' }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -298,8 +298,8 @@
                                 <input type="text" name="PhongBaoVe" class="form-control form-control-sm" placeholder="VD: Phòng B.304" value="{{ $hoiDong->DiaDiem }}">
                             </div>
                             <div class="col-md-3 d-flex align-items-end">
-                                <button type="submit" class="btn btn-sm btn-primary rounded-pill w-100 fw-bold shadow-xs">
-                                    <i class="fa-solid fa-plus me-1"></i>Thêm Nhóm
+                                <button type="submit" class="btn btn-sm btn-primary rounded-pill w-100 fw-bold shadow-xs d-flex align-items-center justify-content-center">
+                                    <i class="fa-solid fa-plus me-2"></i>Thêm Nhóm
                                 </button>
                             </div>
                         </div>
@@ -349,10 +349,18 @@
                                             <input type="hidden" name="MaNhom" value="{{ $hoSo->MaNhom }}">
                                             <select name="MaGVPhanBien" class="form-select form-select-sm" style="font-size: 0.8rem;">
                                                 <option value="">— GVPB: Chưa chọn —</option>
+                                                @php
+                                                    $hoSoBm = str_replace('BM_', '', $hoSo->nhom?->deTai?->giangVien?->MaBoMon ?? $hoSo->nhom?->deTai?->hocPhanRef?->MaBoMon ?? '');
+                                                @endphp
                                                 @foreach($giangViens as $gv)
-                                                <option value="{{ $gv->MaGV }}" {{ $hoSo->MaGVPhanBien === $gv->MaGV ? 'selected' : '' }}>
-                                                    {{ $gv->HoTen }}
-                                                </option>
+                                                    @php
+                                                        $gvBm = str_replace('BM_', '', $gv->MaBoMon ?? '');
+                                                    @endphp
+                                                    @if(!$hoSoBm || $gvBm === $hoSoBm)
+                                                    <option value="{{ $gv->MaGV }}" {{ $hoSo->MaGVPhanBien === $gv->MaGV ? 'selected' : '' }}>
+                                                        {{ $gv->HoTen }} ({{ $gv->boMon->TenBoMon ?? 'Bộ môn' }})
+                                                    </option>
+                                                    @endif
                                                 @endforeach
                                             </select>
                                             <div class="d-flex gap-1">
@@ -373,7 +381,7 @@
                                 @empty
                                 <tr>
                                     <td colspan="4" class="text-center py-5 text-muted">
-                                        <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                        <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                         Chưa có nhóm sinh viên nào được phân công vào Hội đồng này.
                                     </td>
                                 </tr>
@@ -424,10 +432,10 @@
                         </select>
                     </div>
                     <div class="p-3 bg-light rounded-3 text-muted small">
-                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Thành viên mới sẽ có quyền truy cập vào phân hệ Chấm điểm của Hội đồng này ngay sau khi được thêm.
+                        <i class="fa-solid fa-circle-info text-primary me-2"></i> Thành viên mới sẽ có quyền truy cập vào phân hệ Chấm điểm của Hội đồng này ngay sau khi được thêm.
                     </div>
                 </div>
-                <div class="modal-footer py-2.5 bg-light">
+                <div class="modal-footer py-2 bg-light">
                     <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Xác nhận thêm</button>
                 </div>

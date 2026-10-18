@@ -8,6 +8,8 @@ use App\Models\DeTai;
 use App\Models\GiangVien;
 use App\Models\HocKy;
 use App\Models\PhanCongPhanBien;
+use App\Models\ChiTietDuyetDeTai;
+use App\Helpers\IdGenerator;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -168,12 +170,27 @@ class DuyetDeCuongController extends Controller
             return redirect()->back()->withErrors('Đề cương chưa có kết quả phản biện ĐẠT. Không thể phê duyệt công bố đề tài.');
         }
 
-        DB::transaction(function () use ($detai, $maGVTBM) {
+        $oldStatus = $detai->TrangThai;
+
+        DB::transaction(function () use ($detai, $maGVTBM, $gv, $oldStatus) {
             $detai->update([
                 'TrangThai'    => 'Đã công bố',
                 'NgayCongBo'   => now(),
                 'NgayDuyetBM'  => now(),
                 'NguoiDuyetBM' => $maGVTBM,
+            ]);
+
+            $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => $maDuyet,
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $gv ? $gv->MaGV : null,
+                'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+                'HanhDong'      => 'Phê duyệt đề cương & Công bố đề tài',
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => 'Đã công bố',
+                'LyDo'          => 'Trưởng bộ môn phê duyệt kết quả phản biện đề cương đạt yêu cầu và chính thức công bố đề tài.',
+                'NgayDuyet'     => now(),
             ]);
         });
 
@@ -193,25 +210,53 @@ class DuyetDeCuongController extends Controller
     public function requestEdit(Request $request, $id)
     {
         $request->validate([
-            'YeuCauSua' => 'required|string|max:1000',
+            'YeuCauSua' => 'required|string',
         ], [
             'YeuCauSua.required' => 'Vui lòng nhập nội dung yêu cầu Giảng viên chỉnh sửa đề cương.',
         ]);
+
+        $cleanedYeuCauSua = \App\Helpers\HtmlHelper::clean($request->YeuCauSua);
+        $plainYeuCauSua = trim(strip_tags(html_entity_decode($cleanedYeuCauSua, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if (mb_strlen($plainYeuCauSua) < 5) {
+            return redirect()->back()->withInput()->withErrors(['YeuCauSua' => 'Vui lòng nhập nội dung yêu cầu chỉnh sửa chi tiết hơn (tối thiểu 5 ký tự).']);
+        }
+
+        $user = Auth::user();
+        $gv = GiangVien::getLoggedInGiangVien($user);
+        $maGVTBM = $gv ? $gv->MaGV : ($user->TenDangNhap ?? 'TBM');
 
         $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
-        $detai->update([
-            'TrangThai'  => 'Yêu cầu chỉnh sửa đề cương',
-            'LyDoTuChoi' => trim($request->YeuCauSua),
-        ]);
+        $oldStatus = $detai->TrangThai;
+
+        DB::transaction(function () use ($detai, $cleanedYeuCauSua, $maGVTBM, $gv, $oldStatus) {
+            $detai->update([
+                'TrangThai'    => 'Yêu cầu chỉnh sửa đề cương',
+                'LyDoTuChoi'   => $cleanedYeuCauSua,
+                'NguoiDuyetBM' => $maGVTBM,
+            ]);
+
+            $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => $maDuyet,
+                'MaDeTai'       => $detai->MaDeTai,
+                'MaGV'          => $gv ? $gv->MaGV : null,
+                'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
+                'HanhDong'      => 'Yêu cầu chỉnh sửa đề cương',
+                'TrangThaiCu'   => $oldStatus,
+                'TrangThai'     => 'Yêu cầu chỉnh sửa đề cương',
+                'LyDo'          => $cleanedYeuCauSua,
+                'NgayDuyet'     => now(),
+            ]);
+        });
 
         if ($detai->giangVien && $detai->giangVien->MaTK) {
             ThongBaoService::guiDen(
                 $detai->giangVien->MaTK,
                 '⚠️ Yêu cầu chỉnh sửa đề cương từ Trưởng bộ môn',
-                "Trưởng bộ môn đã xem xét đề cương đề tài '{$detai->TenDeTai}' và yêu cầu chỉnh sửa: '{$request->YeuCauSua}'. Vui lòng nộp lại file đề cương hoàn thiện.",
+                "Trưởng bộ môn đã xem xét đề cương đề tài '{$detai->TenDeTai}' và yêu cầu chỉnh sửa: '{$plainYeuCauSua}'. Vui lòng nộp lại file đề cương hoàn thiện.",
                 'Đề tài'
             );
         }

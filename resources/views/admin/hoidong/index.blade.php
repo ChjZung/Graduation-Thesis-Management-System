@@ -14,8 +14,8 @@
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('admin.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold">
-                <i class="fa-solid fa-plus me-1"></i> Thành Lập Hội Đồng Mới
+            <a href="{{ route('admin.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold d-inline-flex align-items-center">
+                <i class="fa-solid fa-plus me-2"></i> Thành Lập Hội Đồng Mới
             </a>
         </div>
     </div>
@@ -98,12 +98,12 @@
                     <option value="Đã kết thúc" {{ request('TrangThai') === 'Đã kết thúc' ? 'selected' : '' }}>⚪ Đã kết thúc</option>
                 </select>
                 @if(request('search') || request('TrangThai'))
-                    <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-xmark me-1"></i>Xóa lọc</a>
+                    <a href="{{ route('admin.hoidong.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
                 @endif
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                <a href="{{ route('admin.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold">
-                    <i class="fa-solid fa-plus me-1"></i> Thêm Hội Đồng
+                <a href="{{ route('admin.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold d-inline-flex align-items-center">
+                    <i class="fa-solid fa-plus me-2"></i> Thêm Hội Đồng
                 </a>
             </div>
         </form>
@@ -141,7 +141,7 @@
                             <td class="py-3">
                                 <div class="fw-bold text-dark fs-6">{{ $hd->TenHoiDong }}</div>
                                 <div class="small text-muted mt-1">
-                                    <i class="fa-solid fa-location-dot me-1 text-danger"></i>
+                                    <i class="fa-solid fa-location-dot me-2 text-danger"></i>
                                     {{ $hd->DiaDiem ?? 'Phòng B.304 (Cơ sở Tân Phú)' }}
                                 </div>
                             </td>
@@ -149,11 +149,11 @@
                             {{-- Thời gian --}}
                             <td class="py-3">
                                 <div class="small fw-medium text-dark">
-                                    <i class="fa-regular fa-clock me-1 text-primary"></i>
+                                    <i class="fa-regular fa-clock me-2 text-primary"></i>
                                     {{ \Carbon\Carbon::parse($hd->ThoiGianBatDau)->format('H:i d/m/Y') }}
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    <i class="fa-solid fa-arrow-right-long me-1 text-muted"></i>
+                                    <i class="fa-solid fa-arrow-right-long me-2 text-muted"></i>
                                     {{ \Carbon\Carbon::parse($hd->ThoiGianKetThuc)->format('H:i d/m/Y') }}
                                 </div>
                             </td>
@@ -163,7 +163,7 @@
                                 <div class="d-flex flex-column gap-1" style="font-size: 0.8rem;">
                                     @forelse($hd->thanhViens->take(3) as $tv)
                                     <div>
-                                        <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.7rem;">{{ $tv->VaiTro }}</span>
+                                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.7rem;">{{ $tv->VaiTro }}</span>
                                         <strong class="text-dark">{{ $tv->giangVien->HoTen ?? '' }}</strong>
                                     </div>
                                     @empty
@@ -177,8 +177,8 @@
 
                             {{-- Nhóm bảo vệ --}}
                             <td class="text-center py-3">
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                    <i class="fa-solid fa-users me-1"></i>{{ $hd->hoSoBaoVes->count() }} nhóm
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="fa-solid fa-users me-2"></i>{{ $hd->hoSoBaoVes->count() }} nhóm
                                 </span>
                             </td>
 
@@ -190,16 +190,16 @@
                                     $isRunning = in_array($st, ['đang diễn ra', 'dang dien ra', 'active', 'running']);
                                 @endphp
                                 @if($isEnded)
-                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-1.5 fw-medium">
+                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2 fw-medium">
                                         Đã kết thúc
                                     </span>
                                 @elseif($isRunning)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #16a34a;"></i> Đang diễn ra
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Đang diễn ra
                                     </span>
                                 @else
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1.5 fw-medium">
-                                        <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem; color: #0284c7;"></i> Sắp diễn ra
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 fw-medium">
+                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #0284c7;"></i> Sắp diễn ra
                                     </span>
                                 @endif
                             </td>

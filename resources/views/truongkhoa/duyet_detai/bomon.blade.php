@@ -73,9 +73,9 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-2">
                 <a href="{{ route('truongkhoa.duyet_detai.index', ['MaHocKy' => $selectedHocKy]) }}" class="btn btn-sm btn-outline-secondary px-3 fw-semibold">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách bộ môn
+                    <i class="fa-solid fa-arrow-left me-2"></i> Quay lại danh sách bộ môn
                 </a>
-                <span class="badge bg-light text-secondary border px-2.5 py-1">
+                <span class="badge bg-light text-secondary border px-3 py-1">
                     Khoa: {{ $khoa->TenKhoa ?? '' }}
                 </span>
             </div>
@@ -102,38 +102,26 @@
                 </div>
 
                 <!-- 2. Tìm kiếm theo tên đề tài hoặc giảng viên -->
-                <div class="col-12 col-sm-6 col-lg-3">
+                <div class="col-12 col-sm-6 col-lg-4">
                     <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm:</label>
                     <input type="text" name="search" class="form-control form-control-sm" 
                            placeholder="Tên đề tài, mã ĐT hoặc tên GV..." 
                            value="{{ request('search') }}">
                 </div>
 
-                <!-- 3. Lọc theo trạng thái phê duyệt của TBM -->
-                <div class="col-12 col-sm-6 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">Trạng thái TBM:</label>
-                    <select name="trang_thai_tbm" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="ALL">Tất cả trạng thái TBM</option>
-                        <option value="cho_duyet" {{ request('trang_thai_tbm') === 'cho_duyet' ? 'selected' : '' }}>Chờ TBM duyệt</option>
-                        <option value="da_duyet" {{ request('trang_thai_tbm') === 'da_duyet' ? 'selected' : '' }}>TBM đã duyệt</option>
-                        <option value="yeu_cau_sua" {{ request('trang_thai_tbm') === 'yeu_cau_sua' ? 'selected' : '' }}>TBM yêu cầu sửa</option>
-                        <option value="tu_choi" {{ request('trang_thai_tbm') === 'tu_choi' ? 'selected' : '' }}>TBM từ chối</option>
-                    </select>
-                </div>
-
-                <!-- 4. Lọc theo trạng thái phê duyệt của TK -->
-                <div class="col-12 col-sm-6 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">Trạng thái TK:</label>
+                <!-- 3. Lọc theo trạng thái phê duyệt của TK -->
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label small fw-bold text-muted mb-1">Trạng thái phê duyệt TK:</label>
                     <select name="trang_thai_tk" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="ALL">Tất cả trạng thái TK</option>
-                        <option value="da_duyet" {{ in_array(request('trang_thai_tk'), ['da_duyet', 'da_phe_duyet', 'Đã phê duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
-                        <option value="cho_duyet" {{ in_array(request('trang_thai_tk'), ['cho_duyet', 'chua_phe_duyet', 'Chưa phê duyệt']) ? 'selected' : '' }}>Chưa duyệt / Chờ duyệt</option>
+                        <option value="cho_duyet" {{ in_array(request('trang_thai_tk'), ['cho_duyet', 'chua_phe_duyet', 'Chưa phê duyệt']) ? 'selected' : '' }}>Chờ Trưởng khoa duyệt</option>
+                        <option value="da_duyet" {{ in_array(request('trang_thai_tk'), ['da_duyet', 'da_phe_duyet', 'Đã phê duyệt']) ? 'selected' : '' }}>Trưởng khoa đã duyệt / Đã công bố</option>
                         <option value="yeu_cau_sua" {{ in_array(request('trang_thai_tk'), ['yeu_cau_sua', 'yeu_cau_chinh_sua']) ? 'selected' : '' }}>Yêu cầu chỉnh sửa</option>
                         <option value="tu_choi" {{ in_array(request('trang_thai_tk'), ['tu_choi', 'Từ chối']) ? 'selected' : '' }}>Từ chối</option>
                     </select>
                 </div>
 
-                <!-- 5. Lọc theo tình trạng chỉ tiêu -->
+                <!-- 4. Lọc theo tình trạng chỉ tiêu -->
                 <div class="col-12 col-sm-6 col-lg-2">
                     <label class="form-label small fw-bold text-muted mb-1">Chỉ tiêu GV:</label>
                     <select name="tinh_trang_chi_tieu" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -149,7 +137,7 @@
                     <button class="btn btn-sm btn-primary fw-semibold px-2 w-100" type="submit" title="Lọc">
                         <i class="fa-solid fa-filter"></i>
                     </button>
-                    @if(request()->anyFilled(['search', 'trang_thai_tbm', 'trang_thai_tk', 'tinh_trang_chi_tieu']))
+                    @if(request()->anyFilled(['search', 'trang_thai_tk', 'tinh_trang_chi_tieu']))
                         <a href="{{ route('truongkhoa.duyet_detai.bomon', ['maBoMon' => $boMon->MaBoMon, 'MaHocKy' => $selectedHocKy]) }}" class="btn btn-sm btn-outline-secondary px-2" title="Đặt lại bộ lọc">
                             <i class="fa-solid fa-rotate-left"></i>
                         </a>
@@ -219,7 +207,7 @@
                         </td>
                         <td>
                             <div class="fw-semibold text-dark">{{ $dt->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
-                            <div class="text-muted small mt-0.5">
+                            <div class="text-muted small mt-1">
                                 Mã GV: {{ $dt->giangVien?->MaGV ?? 'N/A' }}
                             </div>
                             @if($gvStat)
@@ -230,34 +218,21 @@
                                 </div>
                             @endif
                         </td>
-                        <!-- Cột Trạng Thái TBM -->
+                        <!-- Cột Trạng Thái TBM (Tất cả đề tài Trưởng khoa xem đều đã được TBM duyệt) -->
                         <td class="text-center">
-                            @if($isBmApproved)
-                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 12.5px;">
-                                    TBM đã duyệt
-                                </span>
-                            @elseif($isBmPending)
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="font-size: 12.5px;">
-                                    Chờ TBM duyệt
-                                </span>
-                            @elseif($isBmEdit)
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="font-size: 12.5px;">
-                                    TBM yêu cầu sửa
-                                </span>
-                            @elseif($isBmRejected)
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size: 12.5px;">
-                                    TBM từ chối
-                                </span>
-                            @else
-                                <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 12.5px;">
-                                    {{ $dt->TrangThai }}
-                                </span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-semibold" style="font-size: 12.5px;">
+                                <i class="fa-solid fa-check me-2"></i> TBM đã duyệt
+                            </span>
+                            @if($dt->NgayDuyetBM)
+                                <div class="text-muted mt-1" style="font-size: 11px;">
+                                    {{ \Carbon\Carbon::parse($dt->NgayDuyetBM)->format('d/m/Y') }}
+                                </div>
                             @endif
                         </td>
                         <!-- Cột Trạng Thái TK -->
                         <td class="text-center">
                             @if($isTkPending)
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 fw-bold" style="font-size: 12.5px;">
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 fw-bold" style="font-size: 12.5px;">
                                     Chờ duyệt cấp Khoa
                                 </span>
                             @elseif($isTkApproved)
@@ -283,12 +258,12 @@
                             @if($dt->TrangThai === 'Chờ duyệt cấp Khoa')
                                 <a href="{{ route('truongkhoa.duyet_detai.show', ['id' => $dt->MaDeTai, 'return_url' => url()->full()]) }}" 
                                    class="btn btn-sm btn-action btn-primary fw-semibold text-nowrap">
-                                    <i class="fa-solid fa-stamp me-1"></i> Xem &amp; Duyệt
+                                    <i class="fa-solid fa-stamp me-2"></i> Xem &amp; Duyệt
                                 </a>
                             @else
                                 <a href="{{ route('truongkhoa.duyet_detai.show', ['id' => $dt->MaDeTai, 'return_url' => url()->full()]) }}" 
                                    class="btn btn-sm btn-action btn-outline-primary text-nowrap">
-                                    <i class="fa-solid fa-eye me-1"></i> Chi Tiết
+                                    <i class="fa-solid fa-eye me-2"></i> Chi Tiết
                                 </a>
                             @endif
                         </td>

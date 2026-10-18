@@ -9,17 +9,17 @@
         <div>
            
             <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="fa-solid fa-clock text-primary"></i>
+                <i class="fa-solid fa-clock text-primary me-2"></i>
                 <span>{{ $hocky->TenHocKy }} - Năm Học {{ $hocky->NamHoc }}</span>
                 <span class="badge-code ms-2">{{ $hocky->MaHocKy }}</span>
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại
+            <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
             </a>
             <a href="{{ route('hocky.edit', $hocky->MaHocKy) }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                <i class="fa-solid fa-pen me-1"></i> Chỉnh Sửa
+                <i class="fa-solid fa-pen me-2"></i> Chỉnh Sửa
             </a>
         </div>
     </div>
@@ -94,11 +94,11 @@
             <div class="card border-0 shadow-sm rounded-3 mb-4">
                 <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                     <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-calendar-check text-primary"></i>
+                        <i class="fa-solid fa-calendar-check text-primary me-2"></i>
                         <span>Kế Hoạch Khóa Luận Trong Học Kỳ</span>
                     </h6>
                     <a href="{{ route('admin.kehoach.create') }}?MaHocKy={{ $hocky->MaHocKy }}" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fa-solid fa-plus me-1"></i> Lập Kế Hoạch Mới
+                        <i class="fa-solid fa-plus me-2"></i> Lập Kế Hoạch Mới
                     </a>
                 </div>
                 <div class="table-responsive">
@@ -134,11 +134,11 @@
                                     <td class="text-center">
                                         @if($kh->TrangThai === 'ĐÃ CÔNG BỐ')
                                             <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-circle me-1 small" style="font-size: 0.5rem;"></i> Đã công bố
+                                                <i class="fa-solid fa-circle me-2 small" style="font-size: 0.5rem;"></i> Đã công bố
                                             </span>
                                         @elseif($kh->TrangThai === 'ĐANG THỰC HIỆN')
                                             <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-spinner fa-spin me-1 small"></i> Đang thực hiện
+                                                <i class="fa-solid fa-spinner fa-spin me-2 small"></i> Đang thực hiện
                                             </span>
                                         @else
                                             <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1">
@@ -213,7 +213,7 @@
                                 </span>
                             @else
                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
-                                    <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> Đang diễn ra
+                                    <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem;"></i> Đang diễn ra
                                 </span>
                             @endif
                         </li>
@@ -227,8 +227,8 @@
                     <i class="fa-regular fa-calendar-days text-primary fs-3 mb-2"></i>
                     <h6 class="fw-bold text-dark mb-1">Lịch Quy Trình Đào Tạo</h6>
                     <p class="small text-muted mb-3">Xem toàn bộ lịch trình FullCalendar và ma trận tiến độ của học kỳ này.</p>
-                    <a href="{{ route('admin.calendar') }}" class="btn btn-sm btn-primary rounded-pill px-4 shadow-sm">
-                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở Lịch Toàn Trường
+                    <a href="{{ route('admin.calendar') }}" class="btn btn-sm btn-primary rounded-pill px-4 shadow-sm d-inline-flex align-items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở Lịch Toàn Trường
                     </a>
                 </div>
             </div>

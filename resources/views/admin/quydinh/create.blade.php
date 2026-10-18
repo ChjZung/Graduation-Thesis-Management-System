@@ -10,8 +10,8 @@
                 <div>
                     <i class="fa-solid fa-scale-balanced text-primary me-2"></i>Thêm Quy Định / Chuẩn Khóa Luận Mới
                 </div>
-                <a href="{{ route('admin.quydinh.index') }}" class="btn btn-sm btn-light border rounded-pill px-3">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                <a href="{{ route('admin.quydinh.index') }}" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center">
+                    <i class="fa-solid fa-arrow-left me-2"></i> Quay lại
                 </a>
             </div>
             <div class="card-body p-4">
@@ -54,14 +54,21 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Mô Tả Chi Tiết &amp; Căn Cứ Văn Bản</label>
-                        <textarea name="MoTa" class="form-control" rows="4" placeholder="Nhập trích dẫn quyết định hoặc nội dung chi tiết điều khoản quy định...">{{ old('MoTa') }}</textarea>
+                        @include('partials.rich_text_editor', [
+                            'name' => 'MoTa',
+                            'id' => 'MoTa',
+                            'label' => 'Mô Tả Chi Tiết & Căn Cứ Văn Bản',
+                            'value' => old('MoTa'),
+                            'minHeight' => '130px',
+                            'compact' => true,
+                            'placeholder' => 'Nhập trích dẫn quyết định hoặc nội dung chi tiết điều khoản quy định...'
+                        ])
                     </div>
 
                     <div class="d-flex justify-content-between pt-3 border-top">
                         <a href="{{ route('admin.quydinh.index') }}" class="btn btn-light border px-4 rounded-pill">Quay Lại</a>
-                        <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold">
-                            <i class="fa-solid fa-save me-1"></i> Lưu Quy Định
+                        <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold d-inline-flex align-items-center">
+                            <i class="fa-solid fa-save me-2"></i> Lưu Quy Định
                         </button>
                     </div>
                 </form>
