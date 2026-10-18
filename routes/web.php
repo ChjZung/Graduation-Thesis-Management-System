@@ -318,7 +318,9 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
 
     // Xác nhận hồ sơ bảo vệ (GVHD)
     Route::get('/xac-nhan-bao-ve', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'index'])->name('giangvien.xacnhan_baove.index');
+    Route::get('/xac-nhan-bao-ve/{id}', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'show'])->name('giangvien.xacnhan_baove.show');
     Route::post('/xac-nhan-bao-ve/{id}', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'xacNhan'])->name('giangvien.xacnhan_baove.xacNhan');
+    Route::post('/xac-nhan-bao-ve/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'yeuCauChinhSua'])->name('giangvien.xacnhan_baove.yeuCauChinhSua');
 
     // Thông báo cho Giảng viên (xem, soạn và gửi đến nhóm hướng dẫn)
     Route::get('/thongbao', [\App\Http\Controllers\GiangVien\ThongBaoController::class, 'index'])->name('giangvien.thongbao.index');

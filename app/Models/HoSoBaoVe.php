@@ -26,6 +26,18 @@ class HoSoBaoVe extends Model
         'NgayNopBanChinhSua',
         'TrangThai',
         'GhiChu',
+        'LinkSourceCode',
+        'GhiChuSourceCode',
+        'LinkDeploy',
+        'GhiChuDeploy',
+        'LyDoKhongDeploy',
+        'LienKetKhac',
+        'PhienBanHienTai',
+        'NhanXetGVHD',
+        'ThanhPhanCanSua',
+        'HanNopLai',
+        'NguoiDuyet',
+        'NgayNopGanNhat',
         'MaGVu',
         'MaHoiDong',
         'MaNhom',
@@ -37,10 +49,14 @@ class HoSoBaoVe extends Model
     protected function casts(): array
     {
         return [
-            'NgayLap' => 'date',
-            'NgayNop' => 'date',
-            'NgayXacNhan' => 'date',
-            'ThoiGianBaoVe' => 'datetime',
+            'NgayLap'         => 'date',
+            'NgayNop'         => 'date',
+            'NgayXacNhan'     => 'date',
+            'ThoiGianBaoVe'   => 'datetime',
+            'HanNopLai'       => 'datetime',
+            'NgayNopGanNhat'  => 'datetime',
+            'LienKetKhac'     => 'array',
+            'ThanhPhanCanSua' => 'array',
         ];
     }
 
@@ -106,8 +122,22 @@ class HoSoBaoVe extends Model
         })?->DuongDanFile;
     }
 
+    public function phienBans()
+    {
+        return $this->hasMany(PhienBanHoSoBaoVe::class, 'MaHoSo', 'MaHoSo')->orderBy('id', 'desc');
+    }
+
+    public function phienBanMoiNhat()
+    {
+        return $this->hasOne(PhienBanHoSoBaoVe::class, 'MaHoSo', 'MaHoSo')->latestOfMany('id');
+    }
+
     public function getToanVanKhoaLuanAttribute()
     {
+        if ($this->relationLoaded('phienBanMoiNhat') && $this->phienBanMoiNhat?->DuongDanBaoCao) {
+            return $this->phienBanMoiNhat->DuongDanBaoCao;
+        }
+
         return $this->tepHoSoBaoVes->first(function ($tep) {
             $loai = mb_strtolower($tep->LoaiTep ?? '');
             $ten = mb_strtolower($tep->TenTep ?? '');

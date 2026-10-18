@@ -154,20 +154,37 @@
 
                             {{-- File nộp --}}
                             <td class="py-3">
-                                @if($hs->ToanVanKhoaLuan)
-                                    <a href="{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}" target="_blank" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-3 py-1">
-                                        <i class="fa-solid fa-file-pdf me-2"></i>Toàn văn (PDF)
-                                    </a>
-                                @else
-                                    <span class="text-muted small fst-italic">Chưa có tệp</span>
-                                @endif
-                                @if($hs->FileBanChinhSua)
-                                    <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $hs->FileBanChinhSua) }}" target="_blank" class="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-1" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-file-circle-check me-2"></i>Bản sau bảo vệ
+                                <div class="d-flex flex-column gap-1">
+                                    @if($hs->ToanVanKhoaLuan)
+                                        <a href="{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}" target="_blank" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-2 py-1 text-start text-truncate" style="max-width: 180px;">
+                                            <i class="fa-solid fa-file-pdf me-1"></i>Toàn văn (PDF)
                                         </a>
-                                    </div>
-                                @endif
+                                    @else
+                                        <span class="text-muted small fst-italic">Chưa có tệp</span>
+                                    @endif
+
+                                    @if($hs->LinkSourceCode)
+                                        <a href="{{ $hs->LinkSourceCode }}" target="_blank" class="badge bg-dark-subtle text-dark border text-decoration-none px-2 py-1 text-start text-truncate" style="max-width: 180px;">
+                                            <i class="fa-brands fa-github me-1"></i>Source Code (Git)
+                                        </a>
+                                    @endif
+
+                                    @if($hs->LinkDeploy)
+                                        <a href="{{ $hs->LinkDeploy }}" target="_blank" class="badge bg-info-subtle text-info border border-info-subtle text-decoration-none px-2 py-1 text-start text-truncate" style="max-width: 180px;">
+                                            <i class="fa-solid fa-globe me-1"></i>Deploy Trực Tuyến
+                                        </a>
+                                    @elseif($hs->LyDoKhongDeploy)
+                                        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 text-start text-truncate" style="max-width: 180px;" title="{{ $hs->LyDoKhongDeploy }}">
+                                            <i class="fa-solid fa-ban me-1"></i>Không deploy
+                                        </span>
+                                    @endif
+
+                                    @if($hs->FileBanChinhSua)
+                                        <a href="{{ asset('storage/' . $hs->FileBanChinhSua) }}" target="_blank" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none px-2 py-1 text-start text-truncate" style="max-width: 180px;">
+                                            <i class="fa-solid fa-file-circle-check me-1"></i>Bản sau bảo vệ
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- Turnitin % --}}
