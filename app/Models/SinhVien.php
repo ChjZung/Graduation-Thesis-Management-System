@@ -136,4 +136,51 @@ class SinhVien extends Model
 
         return $bm;
     }
+
+    /**
+     * Lấy thực thể Sinh viên của tài khoản đang đăng nhập
+     */
+    public static function getLoggedInSinhVien($user = null): ?self
+    {
+        $user = $user ?: \Illuminate\Support\Facades\Auth::user();
+        if (!$user) return null;
+        return self::where('MaTK', $user->MaTK)->first();
+    }
+
+    /**
+     * Kiểm tra sinh viên đã có Hội đồng và hoàn tất phiên báo cáo bảo vệ để hiển thị chức năng Kết quả
+     */
+    public function daCoHoiDongVaBaoCaoXong(): bool
+    {
+        $tv = $this->thanhVienNhoms()->where('TrangThai', 'da_tham_gia')->first();
+        if (!$tv) return false;
+
+        $hoSo = HoSoBaoVe::with('hoiDong')->where('MaNhom', $tv->MaNhom)->first();
+        if (!$hoSo || empty($hoSo->MaHoiDong)) {
+            return false;
+        }
+
+        // Đã có Hội đồng bảo vệ. Kiểm tra điều kiện xác nhận báo cáo xong:
+        // 1. Đã có điểm tổng kết / điểm bảo vệ trong bảng KetQuaSinhVien
+        if ($this->ketQuaSinhViens()->exists() || KetQuaSinhVien::where('MaHoSo', $hoSo->MaHoSo)->exists()) {
+            return true;
+        }
+
+        // 2. Hoặc Hội đồng đã có phiếu chấm điểm rubric cho hồ sơ này
+        if (\App\Models\PhieuChamDiem::where('MaHoSo', $hoSo->MaHoSo)->exists()) {
+            return true;
+        }
+
+        // 3. Hoặc Hội đồng bảo vệ có trạng thái đã kết thúc
+        if ($hoSo->hoiDong && in_array(mb_strtolower(trim((string)$hoSo->hoiDong->TrangThai)), ['đã kết thúc', 'da ket thuc', 'completed', 'hoàn thành', 'hoan thanh'])) {
+            return true;
+        }
+
+        // 4. Hoặc hồ sơ bảo vệ có trạng thái đã bảo vệ, đã lưu trữ
+        if (in_array($hoSo->TrangThai, ['Đã bảo vệ', 'Đã lưu trữ', 'Hoàn thành']) || !empty($hoSo->FileBanChinhSua)) {
+            return true;
+        }
+
+        return false;
+    }
 }

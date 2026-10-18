@@ -119,10 +119,21 @@ class DuyetDeCuongController extends Controller
         $query = clone $baseQuery;
 
         if ($statusTab === 'cho_duyet') {
-            // Đề tài đã phản biện xong (Đạt) đang chờ TBM duyệt công bố
+            // Đề tài đã phản biện xong (Đạt) đang chờ TBM duyệt công bố (loại trừ các đề tài đang yêu cầu sửa)
             $query->where(function($q) {
                 $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])
-                  ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt'));
+                  ->orWhere(function($subQ) {
+                      $subQ->whereNotIn('TrangThai', [
+                          'Đã công bố',
+                          'Yêu cầu chỉnh sửa đề cương',
+                          'Yêu cầu chỉnh sửa',
+                          'Đang phản biện đề cương',
+                          'Đã nộp đề cương - Chờ phân công PB',
+                          'Đã cập nhật đề cương - Chờ phản biện lại',
+                          'Không đạt phản biện',
+                          'Từ chối'
+                      ])->whereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt'));
+                  });
             })->where('TrangThai', '!=', 'Đã công bố');
         } elseif ($statusTab === 'dang_phan_bien') {
             $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
@@ -140,7 +151,18 @@ class DuyetDeCuongController extends Controller
         $counts = [
             'cho_duyet' => (clone $baseQuery)->where(function($q) {
                 $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])
-                  ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt'));
+                  ->orWhere(function($subQ) {
+                      $subQ->whereNotIn('TrangThai', [
+                          'Đã công bố',
+                          'Yêu cầu chỉnh sửa đề cương',
+                          'Yêu cầu chỉnh sửa',
+                          'Đang phản biện đề cương',
+                          'Đã nộp đề cương - Chờ phân công PB',
+                          'Đã cập nhật đề cương - Chờ phản biện lại',
+                          'Không đạt phản biện',
+                          'Từ chối'
+                      ])->whereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->where('KetQua', 'Đạt'));
+                  });
             })->where('TrangThai', '!=', 'Đã công bố')->count(),
 
             'dang_phan_bien' => (clone $baseQuery)->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại'])->count(),
@@ -164,6 +186,11 @@ class DuyetDeCuongController extends Controller
         $boMon = $this->getBoMon();
         $detai = DeTai::findOrFail($id);
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
+
+        // Khóa duyệt nếu đề tài đang bị yêu cầu chỉnh sửa đề cương hoặc từ chối
+        if (in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa', 'Không đạt phản biện', 'Từ chối'])) {
+            return redirect()->back()->withErrors("Đề cương đang ở trạng thái '{$detai->TrangThai}'. Nút duyệt đã bị khóa, vui lòng chờ Giảng viên nộp lại bản đề cương hoàn thiện đạt yêu cầu trước khi phê duyệt.");
+        }
 
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
         if (!$phanBien || $phanBien->KetQua !== 'Đạt') {
@@ -237,6 +264,13 @@ class DuyetDeCuongController extends Controller
                 'LyDoTuChoi'   => $cleanedYeuCauSua,
                 'NguoiDuyetBM' => $maGVTBM,
             ]);
+
+            // Cập nhật trạng thái phân công phản biện để khóa duyệt và chờ giảng viên nộp lại
+            PhanCongPhanBien::where('MaDeTai', $detai->MaDeTai)
+                ->where('VaiTro', 'Phản biện đề cương')
+                ->update([
+                    'TrangThai' => 'Yêu cầu chỉnh sửa đề cương',
+                ]);
 
             $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
             ChiTietDuyetDeTai::create([

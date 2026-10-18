@@ -86,10 +86,10 @@
             </div>
 
             <!-- 3. THỰC HIỆN & KẾT QUẢ -->
+            @php
+                $isSvBaoCao = request()->routeIs('sinhvien.baocao.*') || request()->routeIs('sinhvien.hoso.*') || request()->routeIs('sinhvien.ketqua.*');
+            @endphp
             <div class="sidebar-menu-group">
-                @php
-                    $isSvBaoCao = request()->routeIs('sinhvien.baocao.*') || request()->routeIs('sinhvien.hoso.*') || request()->routeIs('sinhvien.ketqua.*');
-                @endphp
                 <button class="menu-parent-btn {{ $isSvBaoCao ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-sv-baocao" aria-expanded="{{ $isSvBaoCao ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
                         <i class="fa-solid fa-clipboard-check me-2"></i>
@@ -104,8 +104,11 @@
                     <a href="{{ route('sinhvien.hoso.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.hoso.*') ? 'active-sub' : '' }}">
                         <span>Hồ sơ bảo vệ</span>
                     </a>
-                    <a href="{{ route('sinhvien.ketqua.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.*') ? 'active-sub' : '' }}">
+                    <a href="{{ route('sinhvien.ketqua.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.index') ? 'active-sub' : '' }}">
                         <span>Kết quả khóa luận</span>
+                    </a>
+                    <a href="{{ route('sinhvien.ketqua.hoanthien') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.hoanthien*') ? 'active-sub' : '' }}">
+                        <span>Hoàn thiện BC sau bảo vệ</span>
                     </a>
                 </div>
             </div>

@@ -245,7 +245,7 @@
                                     <i class="fa-solid fa-comment-dots text-warning me-2"></i>Ý kiến nhận xét &amp; hướng dẫn sửa đổi của GVHD:
                                 </div>
                                 <div class="text-secondary" style="font-size: 13.5px; line-height: 1.6;">
-                                    {!! nl2br(e($hoSo->NhanXetGVHD ?: 'Vui lòng hoàn thiện các thành phần được đánh dấu và nộp lại hồ sơ.')) !!}
+                                    {!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD ?: 'Vui lòng hoàn thiện các thành phần được đánh dấu và nộp lại hồ sơ.') !!}
                                 </div>
                             </div>
                         </div>
@@ -267,7 +267,7 @@
                             @if($hoSo->NhanXetGVHD)
                                 <div class="p-3 bg-white rounded-3 border border-danger-subtle">
                                     <div class="fw-bold text-danger small mb-1">Lý do từ chối:</div>
-                                    <div class="text-dark small">{!! nl2br(e($hoSo->NhanXetGVHD)) !!}</div>
+                                    <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD) !!}</div>
                                 </div>
                             @endif
                             <div class="mt-3">
@@ -339,9 +339,14 @@
                                 </div>
                                 <div>
                                     @if($hoSo->ToanVanKhoaLuan)
-                                        <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" target="_blank" class="btn btn-sm btn-outline-danger w-100 rounded-pill">
-                                            <i class="fa-solid fa-eye me-2"></i>Xem / Tải Báo Cáo
-                                        </a>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                                <i class="fa-solid fa-eye me-1"></i>Xem Báo Cáo
+                                            </button>
+                                            <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" download class="btn btn-sm btn-danger rounded-circle px-2.5 d-flex align-items-center justify-content-center" style="width: 31px; height: 31px;" title="Tải xuống tệp PDF">
+                                                <i class="fa-solid fa-download"></i>
+                                            </a>
+                                        </div>
                                     @else
                                         <span class="badge bg-secondary w-100 py-2">Chưa có tệp</span>
                                     @endif
@@ -467,36 +472,77 @@
                                 </div>
                                 <div>
                                     @if($hoSo->MinhChungDaoVan)
-                                        <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
-                                            <i class="fa-solid fa-file-shield me-2"></i>Xem Minh Chứng
-                                        </a>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-pill" onclick="openPdfModal('{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}', 'Minh Chứng Kết Quả Turnitin')">
+                                                <i class="fa-solid fa-file-shield me-1"></i>Xem Minh Chứng
+                                            </button>
+                                            <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" download class="btn btn-sm btn-primary rounded-circle px-2.5 d-flex align-items-center justify-content-center" style="width: 31px; height: 31px;" title="Tải xuống tệp PDF">
+                                                <i class="fa-solid fa-download"></i>
+                                            </a>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Danh sách liên kết bổ sung & Demo nếu có -->
+                    <!-- Danh sách tài liệu, slide & liên kết bổ sung nếu có -->
                     @if(!empty($hoSo->LienKetKhac) && is_array($hoSo->LienKetKhac) && count($hoSo->LienKetKhac) > 0)
                         <div class="mt-4 pt-3 border-top">
                             <h6 class="fw-bold text-dark mb-3">
-                                <i class="fa-solid fa-link text-primary me-2"></i>Tài Liệu &amp; Liên Kết Bổ Sung Đã Nộp:
+                                <i class="fa-solid fa-paperclip text-primary me-2"></i>Tài Liệu, Slide &amp; Liên Kết Bổ Sung Đã Nộp:
                             </h6>
                             <div class="row g-2">
                                 @foreach($hoSo->LienKetKhac as $lk)
+                                    @php
+                                        $isLkFile = ($lk['loai'] ?? '') === 'file' || !empty($lk['file_path']);
+                                        $fileExt = $isLkFile ? strtolower(pathinfo($lk['ten_file'] ?? $lk['file_path'], PATHINFO_EXTENSION)) : '';
+                                        $badgeIcon = 'fa-solid fa-link text-primary';
+                                        if ($isLkFile) {
+                                            if (in_array($fileExt, ['ppt', 'pptx'])) {
+                                                $badgeIcon = 'fa-solid fa-file-powerpoint text-danger';
+                                            } elseif ($fileExt === 'pdf') {
+                                                $badgeIcon = 'fa-solid fa-file-pdf text-danger';
+                                            } elseif (in_array($fileExt, ['doc', 'docx'])) {
+                                                $badgeIcon = 'fa-solid fa-file-word text-primary';
+                                            } elseif (in_array($fileExt, ['zip', 'rar', '7z'])) {
+                                                $badgeIcon = 'fa-solid fa-file-zipper text-secondary';
+                                            } elseif (in_array($fileExt, ['mp4', 'avi', 'mov', 'mkv'])) {
+                                                $badgeIcon = 'fa-solid fa-file-video text-info';
+                                            } else {
+                                                $badgeIcon = 'fa-solid fa-file-lines text-secondary';
+                                            }
+                                        }
+                                    @endphp
                                     <div class="col-md-6 col-lg-4">
-                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-2 shadow-xs">
+                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-2 shadow-xs h-100">
                                             <div class="text-truncate">
-                                                <div class="fw-bold text-dark small text-truncate">
-                                                    <i class="fa-solid fa-circle-chevron-right text-primary me-2"></i>{{ $lk['tieu_de'] ?? 'Tài liệu' }}
+                                                <div class="fw-bold text-dark small text-truncate d-flex align-items-center gap-2">
+                                                    <i class="{{ $badgeIcon }}"></i>
+                                                    <span title="{{ $lk['tieu_de'] ?? 'Tài liệu' }}">{{ $lk['tieu_de'] ?? 'Tài liệu' }}</span>
                                                 </div>
+                                                @if($isLkFile && !empty($lk['ten_file']))
+                                                    <div class="text-muted small text-truncate" style="font-size: 11.5px;">
+                                                        <i class="fa-solid fa-paperclip me-1"></i>{{ $lk['ten_file'] }}
+                                                    </div>
+                                                @endif
                                                 @if(!empty($lk['mo_ta']))
-                                                    <div class="text-muted small text-truncate">{{ $lk['mo_ta'] }}</div>
+                                                    <div class="text-muted small text-truncate" title="{{ $lk['mo_ta'] }}">{{ $lk['mo_ta'] }}</div>
                                                 @endif
                                             </div>
-                                            @if(!empty($lk['url']))
-                                                <a href="{{ $lk['url'] }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 px-3">
-                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            @if($isLkFile && !empty($lk['file_path']))
+                                                @if($fileExt === 'pdf')
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill flex-shrink-0 px-3" onclick="openPdfModal('{{ asset('storage/' . $lk['file_path']) }}', '{{ addslashes($lk['tieu_de'] ?? 'Tài liệu PDF') }}')">
+                                                        <i class="fa-solid fa-eye me-1"></i> Xem file
+                                                    </button>
+                                                @else
+                                                    <a href="{{ asset('storage/' . $lk['file_path']) }}" download class="btn btn-sm btn-outline-success rounded-pill flex-shrink-0 px-3" title="Tải xuống tệp">
+                                                        <i class="fa-solid fa-download me-1"></i> Tải file
+                                                    </a>
+                                                @endif
+                                            @elseif(!empty($lk['url']))
+                                                <a href="{{ $lk['url'] }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 px-3" title="Mở liên kết">
+                                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở link
                                                 </a>
                                             @endif
                                         </div>
@@ -507,6 +553,41 @@
                     @endif
                 </div>
             </div>
+
+            {{-- BẢN XEM TRỰC TIẾP BÁO CÁO KHÓA LUẬN TOÀN VĂN TRÊN MÀN HÌNH (KHÔNG QUA TAB MỚI) --}}
+            @if($hoSo->ToanVanKhoaLuan)
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                            Bản Xem Trực Tiếp Báo Cáo Khóa Luận Toàn Văn (PDF)
+                        </h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="togglePdfInlineViewer()">
+                                <i class="fa-solid fa-arrows-up-down me-1"></i> <span id="togglePdfText">Thu gọn</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                <i class="fa-solid fa-maximize me-1"></i> Phóng to màn hình
+                            </button>
+                            <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" download class="btn btn-sm btn-danger rounded-pill px-3">
+                                <i class="fa-solid fa-download me-1"></i> Tải Về PDF
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0" id="pdfInlineContainer">
+                        <div style="height: 650px; width: 100%; background: #f8fafc;">
+                            <iframe src="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}#toolbar=1" width="100%" height="100%" style="border: none;">
+                                <div class="p-4 text-center">
+                                    <p class="text-muted">Trình duyệt không hỗ trợ nhúng tệp PDF trực tiếp.</p>
+                                    <button type="button" class="btn btn-primary rounded-pill" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                        Xem Báo Cáo Trên Màn Hình
+                                    </button>
+                                </div>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endif
 
         {{-- CHI TIẾT KHI ĐÃ ĐƯỢC PHÊ DUYỆT ĐỦ ĐIỀU KIỆN HOẶC ĐÃ CÓ LỊCH BẢO VỆ --}}
@@ -532,26 +613,32 @@
                                 </div>
                             </div>
 
-                            <table class="table table-sm table-borderless mb-3" style="font-size: 13.5px;">
-                                <tr>
-                                    <td class="text-muted" width="40%">Giảng viên phê duyệt:</td>
-                                    <td class="fw-bold text-dark">{{ $nhom->deTai->giangVien->HoTen ?? 'GVHD' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Ngày xác nhận:</td>
-                                    <td class="fw-semibold text-dark">{{ $hoSo->NgayXacNhan ? \Carbon\Carbon::parse($hoSo->NgayXacNhan)->format('d/m/Y') : 'Đã duyệt' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Trạng thái hồ sơ:</td>
-                                    <td><span class="badge bg-success rounded-pill px-3 py-1">Đủ điều kiện bảo vệ</span></td>
-                                </tr>
-                                @if($hoSo->NhanXetGVHD)
-                                <tr>
-                                    <td class="text-muted align-top">Ý kiến nhận xét:</td>
-                                    <td class="text-dark">{!! nl2br(e($hoSo->NhanXetGVHD)) !!}</td>
-                                </tr>
-                                @endif
-                            </table>
+                            <div class="border rounded-3 p-3 bg-light-subtle mb-3" style="font-size: 13.5px;">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Giảng viên phê duyệt:</span>
+                                    <span class="fw-bold text-dark text-end">{{ $nhom->deTai->giangVien->HoTen ?? 'GVHD' }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Ngày xác nhận:</span>
+                                    <span class="fw-semibold text-dark text-end">{{ $hoSo->NgayXacNhan ? \Carbon\Carbon::parse($hoSo->NgayXacNhan)->format('d/m/Y') : 'Đã duyệt' }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <span class="text-muted">Trạng thái hồ sơ:</span>
+                                    <span class="badge bg-success rounded-pill px-3 py-1">Đủ điều kiện bảo vệ</span>
+                                </div>
+                            </div>
+
+                            @if($hoSo->NhanXetGVHD)
+                                <div class="p-3 bg-light rounded-3 border" style="font-size: 13.5px;">
+                                    <div class="text-muted fw-bold mb-1 d-flex align-items-center gap-1.5">
+                                        <i class="fa-solid fa-comment-dots text-success"></i>
+                                        <span>Ý kiến nhận xét &amp; đánh giá của Giảng viên:</span>
+                                    </div>
+                                    <div class="text-dark bg-white p-2.5 rounded border mt-1" style="word-break: break-word; overflow-wrap: anywhere; white-space: normal;">
+                                        {!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD) !!}
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -566,10 +653,15 @@
                             </h6>
                         </div>
                         <div class="card-body p-4">
-                            @if($hoSo->hoiDong)
+                            @if($hoSo->hoiDong && $hoSo->hoiDong->TrangThaiCongBo === 'Đã công bố')
                                 <div class="p-3 bg-light rounded-3 border mb-3">
-                                    <div class="fw-bold text-primary fs-6 mb-2">
-                                        <i class="fa-solid fa-building-columns me-2"></i>{{ $hoSo->hoiDong->TenHoiDong }}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold text-primary fs-6">
+                                            <i class="fa-solid fa-building-columns me-2"></i>{{ $hoSo->hoiDong->TenHoiDong }}
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Đã công bố chính thức
+                                        </span>
                                     </div>
                                     <div class="row g-2 text-secondary small">
                                         <div class="col-sm-6">
@@ -583,6 +675,13 @@
                                             {{ $hoSo->PhongBaoVe ?? $hoSo->hoiDong->DiaDiem ?? 'Theo thông báo' }}
                                         </div>
                                     </div>
+                                    @if($hoSo->hoiDong->FileQuyetDinh)
+                                    <div class="mt-2 pt-2 border-top">
+                                        <a href="{{ asset($hoSo->hoiDong->FileQuyetDinh) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-file-pdf me-1"></i> Tải Quyết định &amp; Danh sách bảo vệ (PDF)
+                                        </a>
+                                    </div>
+                                    @endif
                                 </div>
 
                                 <div class="mb-2">
@@ -602,12 +701,20 @@
                                         @endforeach
                                     </div>
                                 </div>
+                            @elseif($hoSo->hoiDong)
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fa-solid fa-clock-rotate-left fa-2x text-warning mb-2"></i>
+                                    <div class="fw-bold text-dark">Lịch bảo vệ đang được Trưởng khoa chuẩn bị &amp; phê duyệt</div>
+                                    <p class="mb-0 mt-1 small">
+                                        Hội đồng bảo vệ của nhóm đang trong quá trình hoàn thiện quyết định thành lập. Thông tin hội đồng, thời gian và địa điểm chính thức sẽ được công bố ngay sau khi Trưởng khoa ký ban hành văn bản.
+                                    </p>
+                                </div>
                             @else
                                 <div class="text-center py-4 text-muted">
                                     <i class="fa-solid fa-hourglass-start fa-2x text-warning mb-2"></i>
                                     <div class="fw-bold text-dark">Hồ sơ đã sẵn sàng để xếp lịch bảo vệ</div>
                                     <p class="mb-0 mt-1 small">
-                                        Giáo vụ Khoa đang tổng hợp danh sách các nhóm đủ điều kiện để phân công Hội đồng và công bố lịch bảo vệ chính thức.
+                                        Khoa đang tổng hợp danh sách các nhóm đủ điều kiện để phân công Hội đồng và công bố lịch bảo vệ chính thức.
                                     </p>
                                 </div>
                             @endif
@@ -615,71 +722,50 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Nộp Bản Hoàn Chỉnh Sau Bảo Vệ (Nếu cần) -->
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
-                <div class="card-header bg-white py-3 px-4 border-bottom">
-                    <h6 class="fw-bold text-dark mb-0">
-                        <i class="fa-solid fa-file-circle-check text-success me-2"></i>
-                        Nộp Bản Khóa Luận Hoàn Chỉnh Sau Bảo Vệ (Lưu Trữ Khoa)
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted small mb-3">
-                        Sau khi bảo vệ thành công trước Hội đồng, nhóm tiếp thu ý kiến đóng góp của Hội đồng, chỉnh sửa và tải lên bản khóa luận hoàn thiện cuối cùng để lưu trữ tại Khoa và xét cấp bằng tốt nghiệp.
-                    </p>
-
-                    @if($hoSo->FileBanChinhSua)
-                        <div class="alert alert-success d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <i class="fa-solid fa-circle-check me-2"></i>
-                                <strong>Nhóm đã nộp bản hoàn chỉnh sau bảo vệ!</strong>
-                                <span class="text-muted ms-2 small">
-                                    ({{ $hoSo->NgayNopBanChinhSua ? \Carbon\Carbon::parse($hoSo->NgayNopBanChinhSua)->format('d/m/Y H:i') : '' }})
-                                </span>
-                            </div>
-                            <a href="{{ asset('storage/' . $hoSo->FileBanChinhSua) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                <i class="fa-solid fa-download me-2"></i>Tải Về Bản Hoàn Chỉnh
-                            </a>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('sinhvien.hoso.nopBanHoanChinh') }}" method="POST" enctype="multipart/form-data" class="row g-3 align-items-center">
-                        @csrf
-                        <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
-                        <div class="col-md-8">
-                            <input type="file" name="FileBanChinhSua" class="form-control" required accept=".pdf,.doc,.docx,.zip,.rar">
-                            <div class="form-text text-muted small">Định dạng: .pdf, .docx, .zip, .rar (Tối đa 50MB).</div>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-success rounded-pill w-100 d-flex align-items-center justify-content-center" onclick="return confirm('Xác nhận nộp bản báo cáo khóa luận hoàn chỉnh sau bảo vệ?');">
-                                <i class="fa-solid fa-cloud-arrow-up me-2"></i> {{ $hoSo->FileBanChinhSua ? 'Cập Nhật Bản Mới' : 'Nộp Bản Hoàn Chỉnh' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
         @endif
 
         {{-- FORM NỘP / CẬP NHẬT HỒ SƠ BẢO VỆ (Hiển thị khi chưa nộp, hoặc khi GVHD yêu cầu sửa, hoặc từ chối) --}}
         @if(!$isApproved)
-            <div class="card border-0 shadow-sm mb-4" id="formNopHoSo" style="border-radius: 14px;">
-                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up text-primary fs-5"></i>
-                        <h6 class="fw-bold text-dark mb-0">
-                            {{ $hasSubmitted ? 'Cập Nhật / Nộp Lại Hồ Sơ Bảo Vệ' : 'Nộp Hồ Sơ Bảo Vệ Khóa Luận Tốt Nghiệp' }}
+            @if(!$isLeader)
+                <!-- KHU VỰC THÔNG BÁO CHO THÀNH VIÊN KHÔNG PHẢI NHÓM TRƯỞNG -->
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+                    <div class="card-header bg-white py-3 px-4 border-bottom">
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-user-lock text-warning"></i>
+                            Khu Vực Nộp Hồ Sơ Bảo Vệ
                         </h6>
                     </div>
-                    @if($hasSubmitted)
-                        <span class="badge bg-warning-subtle text-dark border px-3 py-1">
-                            Sẽ tạo Phiên bản {{ number_format(($hoSo->PhienBanHienTai ?? 1) + 1, 1, '.', '') }}
+                    <div class="card-body p-4 text-center py-5">
+                        <div class="rounded-circle bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="fa-solid fa-user-shield fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Quyền Nộp Hồ Sơ Dành Riêng Cho Nhóm Trưởng</h5>
+                        <p class="text-secondary mb-3 mx-auto" style="max-width: 580px;">
+                            Theo quy định, chỉ <strong>Nhóm trưởng ({{ $nhom->truongNhom?->sinhVien?->HoTen ?? 'Trưởng nhóm' }})</strong> mới có quyền đại diện nhóm nộp hoặc cập nhật các tài liệu trong Hồ sơ bảo vệ. Các thành viên khác có quyền theo dõi tiến độ và xem lại tài liệu trực tiếp trên hệ thống.
+                        </p>
+                        <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
+                            <i class="fa-solid fa-info-circle me-1"></i> Bạn đang đăng nhập với vai trò thành viên nhóm
                         </span>
-                    @endif
+                    </div>
                 </div>
+            @else
+                <div class="card border-0 shadow-sm mb-4" id="formNopHoSo" style="border-radius: 14px;">
+                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-primary fs-5"></i>
+                            <h6 class="fw-bold text-dark mb-0">
+                                {{ $hasSubmitted ? 'Cập Nhật / Nộp Lại Hồ Sơ Bảo Vệ' : 'Nộp Hồ Sơ Bảo Vệ Khóa Luận Tốt Nghiệp' }}
+                            </h6>
+                        </div>
+                        @if($hasSubmitted)
+                            <span class="badge bg-warning-subtle text-dark border px-3 py-1">
+                                Sẽ tạo Phiên bản {{ number_format(($hoSo->PhienBanHienTai ?? 1) + 1, 1, '.', '') }}
+                            </span>
+                        @endif
+                    </div>
 
-                <div class="card-body p-4">
-                    <form action="{{ route('sinhvien.hoso.store') }}" method="POST" enctype="multipart/form-data" id="dossierForm">
+                    <div class="card-body p-4">
+                        <form action="{{ route('sinhvien.hoso.store') }}" method="POST" enctype="multipart/form-data" id="dossierForm">
                         @csrf
                         <input type="hidden" name="MaNhom" value="{{ $nhom->MaNhom }}">
 
@@ -846,11 +932,11 @@
                                     Tài Liệu Bổ Sung, Video Demo &amp; Slide Thuyết Trình
                                 </h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="addLienKetRow()">
-                                    <i class="fa-solid fa-plus me-2"></i>Thêm Liên Kết
+                                    <i class="fa-solid fa-plus me-2"></i>Thêm Mục (Link / File)
                                 </button>
                             </div>
                             <p class="text-muted small mb-3">
-                                Cung cấp thêm các liên kết hữu ích như Video Demo sản phẩm (YouTube/Google Drive), Slide thuyết trình, Tài liệu hướng dẫn sử dụng (User Manual) hoặc Swagger API Docs.
+                                Bạn có thể nộp <strong>Đường dẫn liên kết (URL)</strong> (YouTube, Google Drive, Swagger API...) hoặc <strong>Tải lên tệp đính kèm (File)</strong> (Slide thuyết trình PowerPoint <code>.ppt, .pptx</code>, Hướng dẫn sử dụng <code>.pdf, .docx</code>, Video offline <code>.mp4</code>, tệp nén <code>.zip</code>).
                             </p>
 
                             <div id="lienKetContainer" class="d-flex flex-column gap-3">
@@ -858,28 +944,61 @@
                                     $existingLinks = old('LienKetKhac', $hoSo->LienKetKhac ?? []);
                                     if (empty($existingLinks)) {
                                         $existingLinks = [
-                                            ['tieu_de' => 'Video Demo Sản Phẩm', 'url' => '', 'mo_ta' => 'Video giới thiệu các chức năng chính'],
+                                            ['tieu_de' => 'Slide Thuyết Trình Bảo Vệ', 'loai' => 'file', 'url' => '', 'mo_ta' => 'Slide trình bày PowerPoint khóa luận'],
                                         ];
                                     }
                                 @endphp
 
                                 @foreach($existingLinks as $index => $item)
+                                    @php
+                                        $isTypeFile = ($item['loai'] ?? '') === 'file' || (!empty($item['file_path']) && empty($item['url']));
+                                    @endphp
                                     <div class="card p-3 border bg-white rounded-3 lien-ket-row shadow-xs">
                                         <div class="row g-2 align-items-center">
+                                            <div class="col-md-2">
+                                                <select name="LienKetKhac[{{ $index }}][loai]" class="form-select form-select-sm fw-semibold" onchange="toggleLienKetType(this)">
+                                                    <option value="link" {{ !$isTypeFile ? 'selected' : '' }}>🔗 Link URL</option>
+                                                    <option value="file" {{ $isTypeFile ? 'selected' : '' }}>📁 Tệp File</option>
+                                                </select>
+                                            </div>
                                             <div class="col-md-3">
                                                 <input type="text" name="LienKetKhac[{{ $index }}][tieu_de]" class="form-control form-control-sm" 
-                                                    placeholder="Tiêu đề (VD: Video Demo)" value="{{ $item['tieu_de'] ?? '' }}">
+                                                    placeholder="Tiêu đề (VD: Slide, User Manual...)" value="{{ $item['tieu_de'] ?? '' }}">
                                             </div>
-                                            <div class="col-md-5">
-                                                <input type="url" name="LienKetKhac[{{ $index }}][url]" class="form-control form-control-sm" 
-                                                    placeholder="URL (https://...)" value="{{ $item['url'] ?? '' }}">
+                                            <div class="col-md-4">
+                                                <!-- Link Box -->
+                                                <div class="input-url-box {{ $isTypeFile ? 'd-none' : '' }}">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-link"></i></span>
+                                                        <input type="url" name="LienKetKhac[{{ $index }}][url]" class="form-control form-control-sm" 
+                                                            placeholder="https://..." value="{{ $item['url'] ?? '' }}">
+                                                    </div>
+                                                </div>
+                                                <!-- File Box -->
+                                                <div class="input-file-box {{ !$isTypeFile ? 'd-none' : '' }}">
+                                                    <input type="file" name="LienKetKhac[{{ $index }}][file]" class="form-control form-control-sm" 
+                                                        accept=".ppt,.pptx,.pdf,.doc,.docx,.zip,.rar,.mp4,.png,.jpg,.jpeg">
+                                                    @if(!empty($item['file_path']))
+                                                        <input type="hidden" name="LienKetKhac[{{ $index }}][file_path]" value="{{ $item['file_path'] }}">
+                                                        <input type="hidden" name="LienKetKhac[{{ $index }}][ten_file]" value="{{ $item['ten_file'] ?? '' }}">
+                                                        <input type="hidden" name="LienKetKhac[{{ $index }}][dung_luong]" value="{{ $item['dung_luong'] ?? '' }}">
+                                                        <div class="d-flex align-items-center gap-1 mt-1 small">
+                                                            <span class="badge bg-success-subtle text-success border border-success-subtle text-truncate" style="max-width: 220px;" title="{{ $item['ten_file'] ?? basename($item['file_path']) }}">
+                                                                <i class="fa-solid fa-file-circle-check me-1"></i>{{ $item['ten_file'] ?? basename($item['file_path']) }}
+                                                            </span>
+                                                            <a href="{{ asset('storage/' . $item['file_path']) }}" target="_blank" download class="text-primary small text-decoration-none ms-1">
+                                                                <i class="fa-solid fa-download"></i> Tải
+                                                            </a>
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <input type="text" name="LienKetKhac[{{ $index }}][mo_ta]" class="form-control form-control-sm" 
                                                     placeholder="Mô tả ngắn" value="{{ $item['mo_ta'] ?? '' }}">
                                             </div>
                                             <div class="col-md-1 text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="removeLienKetRow(this)" title="Xóa liên kết">
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="removeLienKetRow(this)" title="Xóa mục này">
                                                     <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </div>
@@ -908,6 +1027,7 @@
                     </form>
                 </div>
             </div>
+            @endif
         @endif
 
         {{-- LỊCH SỬ CÁC PHIÊN BẢN HỒ SƠ ĐÃ NỘP (AUDIT TRAIL) --}}
@@ -950,9 +1070,9 @@
                                         <td>
                                             <div class="d-flex flex-column gap-1">
                                                 @if($pb->DuongDanBaoCao)
-                                                    <a href="{{ asset('storage/' . $pb->DuongDanBaoCao) }}" target="_blank" class="text-danger text-truncate" style="max-width: 240px;">
+                                                    <button type="button" class="btn btn-link text-danger p-0 text-start text-truncate text-decoration-none" style="max-width: 240px;" onclick="openPdfModal('{{ asset('storage/' . $pb->DuongDanBaoCao) }}', 'Báo Cáo Khóa Luận Toàn Văn - Phiên Bản v{{ $pb->PhienBan }}')">
                                                         <i class="fa-solid fa-file-pdf me-2"></i>{{ $pb->TenFileBaoCao ?: 'Báo cáo toàn văn' }}
-                                                    </a>
+                                                    </button>
                                                 @endif
                                                 @if($pb->LinkSourceCode)
                                                     <a href="{{ $pb->LinkSourceCode }}" target="_blank" class="text-dark text-truncate" style="max-width: 240px;">
@@ -967,9 +1087,16 @@
                                                     <span class="text-muted small"><i class="fa-solid fa-ban me-2"></i>Không deploy: {{ Str::limit($pb->LyDoKhongDeploy, 30) }}</span>
                                                 @endif
                                                 @if($pb->TyLeTurnitin !== null)
-                                                    <span class="small {{ $pb->TyLeTurnitin <= 20 ? 'text-success' : 'text-danger' }}">
-                                                        <i class="fa-solid fa-shield-halved me-2"></i>Turnitin: <strong>{{ number_format($pb->TyLeTurnitin, 1) }}%</strong>
-                                                    </span>
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <span class="small {{ $pb->TyLeTurnitin <= 20 ? 'text-success' : 'text-danger' }}">
+                                                            <i class="fa-solid fa-shield-halved me-1"></i>Turnitin: <strong>{{ number_format($pb->TyLeTurnitin, 1) }}%</strong>
+                                                        </span>
+                                                        @if($pb->DuongDanTurnitin)
+                                                            <button type="button" class="btn btn-link text-primary p-0 text-decoration-none small" onclick="openPdfModal('{{ asset('storage/' . $pb->DuongDanTurnitin) }}', 'Minh Chứng Turnitin - Phiên Bản v{{ $pb->PhienBan }}')" title="Xem minh chứng Turnitin">
+                                                                (Xem)
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                                 @endif
                                             </div>
                                         </td>
@@ -993,7 +1120,7 @@
                                         </td>
                                         <td>
                                             @if($pb->NhanXetGVHD)
-                                                <div class="text-dark small">{!! nl2br(e($pb->NhanXetGVHD)) !!}</div>
+                                                <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($pb->NhanXetGVHD) !!}</div>
                                             @else
                                                 <span class="text-muted small">Chưa có nhận xét</span>
                                             @endif
@@ -1046,11 +1173,69 @@
                 </button>
             </div>
         </div>
+    <!-- MODAL XEM BÁO CÁO TRỰC TIẾP TRÊN MÀN HÌNH (KHÔNG CHUYỂN TAB) -->
+<div class="modal fade" id="modalPdfPreview" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 92vh;">
+        <div class="modal-content h-100 shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-2.5 px-4">
+                <div class="d-flex align-items-center gap-2 text-truncate">
+                    <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                    <h6 class="modal-title fw-bold mb-0 text-truncate" id="pdfPreviewTitle">Xem Báo Cáo Khóa Luận</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" id="btnDownloadPdfModal" download class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        <i class="fa-solid fa-download me-1"></i> Tải về máy
+                    </a>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-secondary bg-opacity-10" style="height: calc(100% - 58px);">
+                <iframe id="pdfPreviewIframe" src="" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
+    function openPdfModal(url, title = 'Xem Báo Cáo Khóa Luận') {
+        const titleEl = document.getElementById('pdfPreviewTitle');
+        const iframeEl = document.getElementById('pdfPreviewIframe');
+        const dlBtn = document.getElementById('btnDownloadPdfModal');
+        
+        if (titleEl) titleEl.textContent = title;
+        if (iframeEl) iframeEl.src = url + '#toolbar=1';
+        if (dlBtn) dlBtn.href = url;
+
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+
+    function togglePdfInlineViewer() {
+        const container = document.getElementById('pdfInlineContainer');
+        const textSpan = document.getElementById('togglePdfText');
+        if (!container) return;
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            if (textSpan) textSpan.textContent = 'Thu gọn';
+        } else {
+            container.style.display = 'none';
+            if (textSpan) textSpan.textContent = 'Mở rộng';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                const iframeEl = document.getElementById('pdfPreviewIframe');
+                if (iframeEl) iframeEl.src = '';
+            });
+        }
+    });
     function toggleDeploySection() {
         const isCo = document.getElementById('deploy_co').checked;
         const sectionCo = document.getElementById('sectionDeployCo');
@@ -1078,17 +1263,31 @@
         div.className = 'card p-3 border bg-white rounded-3 lien-ket-row shadow-xs';
         div.innerHTML = `
             <div class="row g-2 align-items-center">
-                <div class="col-md-3">
-                    <input type="text" name="LienKetKhac[${linkIndex}][tieu_de]" class="form-control form-control-sm" placeholder="Tiêu đề (VD: Slide, Video...)">
+                <div class="col-md-2">
+                    <select name="LienKetKhac[${linkIndex}][loai]" class="form-select form-select-sm fw-semibold" onchange="toggleLienKetType(this)">
+                        <option value="link">🔗 Link URL</option>
+                        <option value="file">📁 Tệp File</option>
+                    </select>
                 </div>
-                <div class="col-md-5">
-                    <input type="url" name="LienKetKhac[${linkIndex}][url]" class="form-control form-control-sm" placeholder="https://...">
-                </div>
                 <div class="col-md-3">
+                    <input type="text" name="LienKetKhac[${linkIndex}][tieu_de]" class="form-control form-control-sm" placeholder="Tiêu đề (VD: Slide, User Manual...)">
+                </div>
+                <div class="col-md-4">
+                    <div class="input-url-box">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-link"></i></span>
+                            <input type="url" name="LienKetKhac[${linkIndex}][url]" class="form-control form-control-sm" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="input-file-box d-none">
+                        <input type="file" name="LienKetKhac[${linkIndex}][file]" class="form-control form-control-sm" accept=".ppt,.pptx,.pdf,.doc,.docx,.zip,.rar,.mp4,.png,.jpg,.jpeg">
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <input type="text" name="LienKetKhac[${linkIndex}][mo_ta]" class="form-control form-control-sm" placeholder="Mô tả ngắn">
                 </div>
                 <div class="col-md-1 text-end">
-                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="removeLienKetRow(this)" title="Xóa liên kết">
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="removeLienKetRow(this)" title="Xóa mục này">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -1096,6 +1295,20 @@
         `;
         container.appendChild(div);
         linkIndex++;
+    }
+
+    function toggleLienKetType(select) {
+        const row = select.closest('.lien-ket-row');
+        if (!row) return;
+        const urlBox = row.querySelector('.input-url-box');
+        const fileBox = row.querySelector('.input-file-box');
+        if (select.value === 'file') {
+            urlBox.classList.add('d-none');
+            fileBox.classList.remove('d-none');
+        } else {
+            fileBox.classList.add('d-none');
+            urlBox.classList.remove('d-none');
+        }
     }
 
     function removeLienKetRow(btn) {

@@ -9,10 +9,17 @@ use App\Models\GiangVien;
 use App\Models\HoSoBaoVe;
 use App\Models\PhanCongPhanBien;
 use App\Models\Khoa;
+use App\Models\HocKy;
+use App\Models\Nganh;
+use App\Models\BoMon;
+use App\Models\TaiKhoan;
 use App\Helpers\IdGenerator;
+use App\Services\HoiDongPdfService;
+use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class HoiDongController extends Controller
 {
@@ -51,25 +58,25 @@ class HoiDongController extends Controller
         $khoa = $this->getKhoa();
         $maKhoa = $khoa->MaKhoa;
 
-        $query = HoiDong::with(['thanhViens.giangVien.boMon', 'hoSoBaoVes.nhom.deTai.giangVien'])
-            ->where(function($q) use ($maKhoa) {
-                // Hội đồng có nhóm thuộc Khoa hoặc có thành viên thuộc Khoa
-                $q->whereHas('hoSoBaoVes.nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
-                  ->orWhereHas('thanhViens.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
-                  ->orDoesntHave('hoSoBaoVes'); // Các hội đồng mới lập chưa gán nhóm
-            })
-            ->orderBy('ThoiGianBatDau', 'desc');
+        $query = HoiDong::with([
+            'thanhViens.giangVien.boMon',
+            'hoSoBaoVes.nhom.deTai.giangVien',
+            'hocKy',
+            'nganh',
+        ])->where(function($q) use ($maKhoa) {
+            $q->where('MaKhoa', $maKhoa)
+              ->orWhereHas('hoSoBaoVes.nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
+              ->orWhereHas('thanhViens.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
+              ->orDoesntHave('hoSoBaoVes');
+        })->orderBy('ThoiGianBatDau', 'desc');
 
         if ($request->filled('search')) {
             $s = trim($request->search);
-            $sClean = preg_replace('/[^A-Za-z0-9]/', '', $s);
-            $query->where(function($q) use ($s, $sClean) {
+            $query->where(function($q) use ($s) {
                 $q->where('TenHoiDong', 'like', "%{$s}%")
                   ->orWhere('MaHoiDong', 'like', "%{$s}%")
-                  ->orWhere('DiaDiem', 'like', "%{$s}%");
-                if (!empty($sClean)) {
-                    $q->orWhere('MaHoiDong', 'like', "%{$sClean}%");
-                }
+                  ->orWhere('DiaDiem', 'like', "%{$s}%")
+                  ->orWhere('SoQuyetDinh', 'like', "%{$s}%");
             });
         }
 
@@ -77,17 +84,40 @@ class HoiDongController extends Controller
             $query->where('TrangThai', $request->TrangThai);
         }
 
-        $hoiDongs = $query->paginate(10)->withQueryString();
+        if ($request->filled('TrangThaiCongBo')) {
+            $query->where('TrangThaiCongBo', $request->TrangThaiCongBo);
+        }
 
-        return view('truongkhoa.hoidong.index', compact('hoiDongs', 'khoa'));
+        if ($request->filled('MaHocKy')) {
+            $query->where('MaHocKy', $request->MaHocKy);
+        }
+
+        if ($request->filled('DotBaoVe')) {
+            $query->where('DotBaoVe', 'like', "%{$request->DotBaoVe}%");
+        }
+
+        $hoiDongs = $query->paginate(12)->withQueryString();
+        $hocKys = HocKy::orderBy('created_at', 'desc')->get();
+
+        return view('truongkhoa.hoidong.index', compact('hoiDongs', 'khoa', 'hocKys'));
     }
 
     /**
-     * Màn hình thành lập Hội đồng mới
+     * Màn hình Wizard 4 bước thành lập Hội đồng mới
      */
     public function create()
     {
         $khoa = $this->getKhoa();
+
+        // 1. Học kỳ & Ngành
+        $hocKys = HocKy::orderBy('created_at', 'desc')->get();
+        $nganhs = Nganh::where('MaKhoa', $khoa->MaKhoa)->get();
+        if ($nganhs->isEmpty()) {
+            $nganhs = Nganh::all();
+        }
+        $boMons = BoMon::where('MaKhoa', $khoa->MaKhoa)->get();
+
+        // 2. Toàn bộ Giảng viên thuộc Khoa (Không giới hạn bộ môn)
         $giangViens = GiangVien::with('boMon')
             ->whereHas('boMon', fn($bm) => $bm->where('MaKhoa', $khoa->MaKhoa))
             ->orderBy('HoTen')
@@ -97,67 +127,216 @@ class HoiDongController extends Controller
             $giangViens = GiangVien::with('boMon')->orderBy('HoTen')->get();
         }
 
-        return view('truongkhoa.hoidong.create', compact('giangViens', 'khoa'));
+        // 3. Danh sách Đề tài / Nhóm sinh viên đủ điều kiện tham gia bảo vệ
+        // Bao gồm hồ sơ đã duyệt/đủ điều kiện và chưa gắn vào Hội đồng nào
+        $danhSachHoSo = HoSoBaoVe::with([
+            'nhom.truongNhom',
+            'nhom.thanhVienNhoms.sinhVien.lop',
+            'nhom.deTai.giangVien.boMon',
+            'hoiDong',
+        ])
+        ->whereHas('nhom.deTai')
+        ->where(function($q) {
+            $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt', 'Đã nộp'])
+              ->orWhere('XacNhanGVHD', 'Đã duyệt');
+        })
+        ->get();
+
+        // Gợi ý mã Hội đồng tiếp theo
+        $nextMaHoiDong = IdGenerator::nextHoiDong();
+
+        return view('truongkhoa.hoidong.create', compact(
+            'khoa',
+            'hocKys',
+            'nganhs',
+            'boMons',
+            'giangViens',
+            'danhSachHoSo',
+            'nextMaHoiDong'
+        ));
     }
 
     /**
-     * Lưu quyết định thành lập Hội đồng mới
+     * Lưu quyết định thành lập Hội đồng mới (Xử lý toàn bộ Wizard)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'TenHoiDong'     => 'required|string|max:200',
-            'ThoiGianBatDau' => 'required|date',
-            'ThoiGianKetThuc'=> 'required|date|after:ThoiGianBatDau',
-            'DiaDiem'        => 'nullable|string|max:200',
-            'GhiChu'         => 'nullable|string|max:255',
-            'thanh_viens'    => 'required|array|min:3',
-            'thanh_viens.*.MaGV'  => 'required|exists:GiangVien,MaGV',
-            'thanh_viens.*.VaiTro'=> 'required|in:Chủ tịch,Thư ký,Thành viên,Phản biện',
+            // Bước 1: Thông tin hội đồng & Quyết định
+            'TenHoiDong'      => 'required|string|max:200',
+            'MaHocKy'         => 'required|exists:HocKy,MaHocKy',
+            'MaNganh'         => 'nullable|exists:Nganh,MaNganh',
+            'DotBaoVe'        => 'required|string|max:100',
+            'NgayBaoVe'       => 'required|date',
+            'ThoiGianBatDau'  => 'required|date',
+            'ThoiGianKetThuc' => 'required|date|after:ThoiGianBatDau',
+            'DiaDiem'         => 'required|string|max:200',
+            'GhiChu'          => 'nullable|string|max:500',
+            'SoQuyetDinh'     => 'nullable|string|max:100',
+            'NgayBanHanh'     => 'nullable|date',
+            'NguoiKy'         => 'nullable|string|max:150',
+            'ChucVuNguoiKy'   => 'nullable|string|max:150',
+
+            // Bước 2: Danh sách đề tài đã chọn (tối thiểu 1 đề tài)
+            'danh_sach_ho_so' => 'required|array|min:1',
+            'danh_sach_ho_so.*' => 'required|exists:HoSoBaoVe,MaHoSo',
+
+            // Bước 3: Thành viên hội đồng (tối thiểu 3 giảng viên)
+            'thanh_viens'     => 'required|array|min:3',
+            'thanh_viens.*.MaGV'   => 'required|exists:GiangVien,MaGV',
+            'thanh_viens.*.VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
         ], [
-            'TenHoiDong.required'         => 'Vui lòng nhập tên Hội đồng.',
-            'ThoiGianBatDau.required'     => 'Vui lòng chọn thời gian bắt đầu.',
+            'TenHoiDong.required'         => 'Vui lòng nhập tên Hội đồng bảo vệ.',
+            'MaHocKy.required'            => 'Vui lòng chọn học kỳ áp dụng.',
+            'DotBaoVe.required'           => 'Vui lòng nhập hoặc chọn đợt bảo vệ khóa luận.',
+            'NgayBaoVe.required'          => 'Vui lòng chọn ngày tổ chức bảo vệ.',
+            'ThoiGianBatDau.required'     => 'Vui lòng chọn thời gian bắt đầu bảo vệ.',
             'ThoiGianKetThuc.required'    => 'Vui lòng chọn thời gian kết thúc.',
             'ThoiGianKetThuc.after'       => 'Thời gian kết thúc phải sau thời gian bắt đầu.',
-            'thanh_viens.required'        => 'Vui lòng thêm ít nhất 3 thành viên Hội đồng.',
-            'thanh_viens.min'             => 'Hội đồng cần ít nhất 3 Giảng viên.',
+            'DiaDiem.required'            => 'Vui lòng nhập địa điểm / phòng bảo vệ.',
+            'danh_sach_ho_so.required'    => 'Vui lòng chọn ít nhất 01 đề tài/nhóm sinh viên cho Hội đồng.',
+            'danh_sach_ho_so.min'         => 'Hội đồng cần ít nhất 01 đề tài để tổ chức chấm.',
+            'thanh_viens.required'        => 'Vui lòng phân công thành viên Hội đồng.',
+            'thanh_viens.min'             => 'Hội đồng bảo vệ cần ít nhất 3 Giảng viên.',
         ]);
 
-        DB::transaction(function () use ($request) {
+        // Kiểm tra cơ cấu thành viên bắt buộc
+        $vaiTros = array_map(function($tv) {
+            $v = trim($tv['VaiTro']);
+            if ($v === 'Ủy viên thư ký') return 'Thư ký';
+            if ($v === 'Ủy viên phản biện') return 'Phản biện';
+            if ($v === 'Ủy viên') return 'Thành viên';
+            return $v;
+        }, $request->thanh_viens);
+
+        if (!in_array('Chủ tịch', $vaiTros)) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Chủ tịch Hội đồng.']);
+        }
+        if (!in_array('Thư ký', $vaiTros)) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Thư ký (hoặc Ủy viên thư ký).']);
+        }
+        if (!in_array('Phản biện', $vaiTros)) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Phản biện (hoặc Ủy viên phản biện).']);
+        }
+
+        // Kiểm tra không phân công trùng lặp 1 giảng viên vào nhiều vị trí trong cùng Hội đồng
+        $maGVs = array_column($request->thanh_viens, 'MaGV');
+        if (count($maGVs) !== count(array_unique($maGVs))) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Không được phân công cùng một Giảng viên vào nhiều chức danh trong cùng một Hội đồng.']);
+        }
+
+        // Kiểm tra trùng lặp đề tài ở phía máy chủ
+        $alreadyAssigned = HoSoBaoVe::whereIn('MaHoSo', $request->danh_sach_ho_so)
+            ->whereNotNull('MaHoiDong')
+            ->with(['hoiDong', 'nhom.deTai'])
+            ->get();
+
+        if ($alreadyAssigned->isNotEmpty()) {
+            $dsBiTrung = $alreadyAssigned->map(function($hs) {
+                return "Đề tài '{$hs->nhom?->deTai?->TenDeTai}' (Nhóm {$hs->MaNhom}) đã thuộc Hội đồng {$hs->hoiDong?->TenHoiDong}";
+            })->join('; ');
+            return redirect()->back()->withInput()->withErrors(['danh_sach_ho_so' => "Phát hiện đề tài đã được phân công vào Hội đồng khác: {$dsBiTrung}."]);
+        }
+
+        $khoa = $this->getKhoa();
+        $hoiDongMoi = null;
+        $isCongBoNgay = $request->boolean('cong_bo_ngay');
+
+        DB::transaction(function () use ($request, $khoa, &$hoiDongMoi, $isCongBoNgay) {
             $maHoiDong = IdGenerator::nextHoiDong();
 
-            $hoiDong = HoiDong::create([
+            $hoiDongMoi = HoiDong::create([
                 'MaHoiDong'       => $maHoiDong,
                 'TenHoiDong'      => $request->TenHoiDong,
+                'MaHocKy'         => $request->MaHocKy,
+                'MaKhoa'          => $khoa->MaKhoa,
+                'MaNganh'         => $request->MaNganh,
+                'DotBaoVe'        => $request->DotBaoVe,
+                'NgayBaoVe'       => $request->NgayBaoVe,
                 'ThoiGianBatDau'  => $request->ThoiGianBatDau,
                 'ThoiGianKetThuc' => $request->ThoiGianKetThuc,
                 'DiaDiem'         => $request->DiaDiem,
                 'TrangThai'       => 'Chưa diễn ra',
                 'GhiChu'          => $request->GhiChu,
+                'SoQuyetDinh'     => $request->SoQuyetDinh,
+                'NgayBanHanh'     => $request->NgayBanHanh ?: now()->toDateString(),
+                'NguoiKy'         => $request->NguoiKy ?: ($khoa->TruongKhoa ?: 'PGS.TS. Nguyễn Xuân Hoàn'),
+                'ChucVuNguoiKy'   => $request->ChucVuNguoiKy ?: 'HIỆU TRƯỞNG',
+                'TrangThaiCongBo' => 'Chưa công bố',
             ]);
 
+            // Thêm thành viên Hội đồng
             foreach ($request->thanh_viens as $tv) {
+                $vaiTro = $tv['VaiTro'];
+                // Chuẩn hóa tên vai trò
+                if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
+                if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
+                if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+
                 ThanhVienHoiDong::create([
-                    'MaHoiDong' => $hoiDong->MaHoiDong,
+                    'MaHoiDong' => $hoiDongMoi->MaHoiDong,
                     'MaGV'      => $tv['MaGV'],
-                    'VaiTro'    => $tv['VaiTro'],
+                    'VaiTro'    => $vaiTro,
                 ]);
+            }
+
+            // Tìm giảng viên phản biện của Hội đồng để đồng bộ phân công phản biện cho đề tài
+            $gvPhanBien = collect($request->thanh_viens)->first(function($tv) {
+                return str_contains(mb_strtolower($tv['VaiTro']), 'phản biện');
+            })['MaGV'] ?? null;
+
+            // Gắn danh sách đề tài vào Hội đồng
+            foreach ($request->danh_sach_ho_so as $maHoSo) {
+                $hoSo = HoSoBaoVe::where('MaHoSo', $maHoSo)->first();
+                if ($hoSo) {
+                    $hoSo->update([
+                        'MaHoiDong'     => $hoiDongMoi->MaHoiDong,
+                        'TrangThai'     => 'Đã phân công',
+                        'ThoiGianBaoVe' => $request->ThoiGianBatDau,
+                        'PhongBaoVe'    => $request->DiaDiem,
+                    ]);
+
+                    // Đồng bộ phản biện đề tài nếu có
+                    if ($gvPhanBien && $hoSo->MaDeTai) {
+                        PhanCongPhanBien::updateOrCreate(
+                            ['MaDeTai' => $hoSo->MaDeTai],
+                            [
+                                'MaPhanCong'   => IdGenerator::nextPhanCong(),
+                                'MaGV'         => $gvPhanBien,
+                                'VaiTro'       => 'Phản biện',
+                                'NgayPhanCong' => now()->toDateString(),
+                                'TrangThai'    => 'Đã phân công',
+                            ]
+                        );
+                    }
+                }
             }
         });
 
-        return redirect()->route('truongkhoa.hoidong.index')
-            ->with('success', 'Trưởng khoa đã ban hành quyết định thành lập Hội đồng thành công!');
+        // Nếu người dùng chọn Công bố ngay
+        if ($isCongBoNgay && $hoiDongMoi) {
+            $this->executeCongBo($hoiDongMoi);
+            return redirect()->route('truongkhoa.hoidong.show', $hoiDongMoi->MaHoiDong)
+                ->with('success', "Thành lập và Công bố chính thức Hội đồng {$hoiDongMoi->TenHoiDong} thành công!");
+        }
+
+        return redirect()->route('truongkhoa.hoidong.show', $hoiDongMoi->MaHoiDong)
+            ->with('success', "Trưởng khoa đã thành lập Hội đồng {$hoiDongMoi->TenHoiDong} thành công! Bạn có thể xem trước văn bản và thực hiện công bố chính thức.");
     }
 
     /**
-     * Chi tiết Hội đồng & Phân công các nhóm vào Hội đồng bảo vệ
+     * Chi tiết Hội đồng, quản lý thành viên, đề tài và văn bản công bố
      */
     public function show($id)
     {
         $khoa = $this->getKhoa();
         $hoiDong = HoiDong::with([
+            'khoa',
+            'nganh',
+            'hocKy',
             'thanhViens.giangVien.boMon',
             'hoSoBaoVes.nhom.truongNhom',
+            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.lop',
             'hoSoBaoVes.nhom.deTai.giangVien.boMon',
             'hoSoBaoVes.phanCongPhanBien.giangVien.boMon',
             'hoSoBaoVes.tepHoSoBaoVes',
@@ -173,20 +352,167 @@ class HoiDongController extends Controller
         }
 
         // Nhóm đủ điều kiện chưa được phân công hoặc đang ở hội đồng này
-        $nhomDuDieuKien = HoSoBaoVe::with(['nhom.truongNhom', 'nhom.deTai.giangVien.boMon'])
+        $nhomDuDieuKien = HoSoBaoVe::with(['nhom.truongNhom', 'nhom.deTai.giangVien.boMon', 'nhom.thanhVienNhoms.sinhVien'])
             ->where(function ($q) use ($id) {
                 $q->whereNull('MaHoiDong')
                   ->orWhere('MaHoiDong', $id);
             })
-            ->where('TrangThai', 'Đủ điều kiện bảo vệ')
-            ->whereHas('nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $khoa->MaKhoa))
+            ->where(function($q) {
+                $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt', 'Đã phân công'])
+                  ->orWhere('XacNhanGVHD', 'Đã duyệt');
+            })
             ->get();
 
         return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa'));
     }
 
     /**
-     * Cập nhật trạng thái Hội đồng
+     * Xem trước file PDF văn bản công bố Hội đồng
+     */
+    public function previewPdf($id)
+    {
+        $hoiDong = HoiDong::findOrFail($id);
+        $pdf = HoiDongPdfService::generatePdf($hoiDong);
+        return $pdf->stream("Quyet_Dinh_Hoi_Dong_{$hoiDong->MaHoiDong}.pdf");
+    }
+
+    /**
+     * Tải xuống file PDF văn bản công bố Hội đồng
+     */
+    public function downloadPdf($id)
+    {
+        $hoiDong = HoiDong::findOrFail($id);
+        $pdf = HoiDongPdfService::generatePdf($hoiDong);
+        return $pdf->download("Quyet_Dinh_Hoi_Dong_{$hoiDong->MaHoiDong}.pdf");
+    }
+
+    /**
+     * Công bố chính thức Hội đồng bảo vệ
+     */
+    public function congBo($id)
+    {
+        $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes'])->findOrFail($id);
+
+        if ($hoiDong->thanhViens->count() < 3) {
+            return redirect()->back()->with('error', 'Hội đồng cần tối thiểu 3 thành viên (Chủ tịch, Thư ký, Phản biện) trước khi công bố.');
+        }
+
+        if ($hoiDong->hoSoBaoVes->isEmpty()) {
+            return redirect()->back()->with('error', 'Hội đồng chưa có đề tài/nhóm sinh viên nào. Vui lòng phân công đề tài trước khi công bố.');
+        }
+
+        $this->executeCongBo($hoiDong);
+
+        return redirect()->back()->with('success', "Đã công bố chính thức Hội đồng bảo vệ {$hoiDong->TenHoiDong}! Hệ thống đã tạo văn bản PDF và phát thông báo đến Giáo vụ, Giảng viên và Sinh viên liên quan.");
+    }
+
+    /**
+     * Logic phát hành công bố & phân phối thông báo
+     */
+    private function executeCongBo(HoiDong $hoiDong)
+    {
+        // 1. Tạo và lưu file PDF văn bản quyết định hợp nhất
+        $filePath = HoiDongPdfService::savePdfToStorage($hoiDong);
+
+        // 2. Cập nhật trạng thái công bố
+        $hoiDong->update([
+            'TrangThaiCongBo' => 'Đã công bố',
+            'NgayCongBo'      => now(),
+            'NguoiCongBo'     => Auth::user()->TenDangNhap ?? 'Trưởng khoa',
+            'FileQuyetDinh'   => $filePath,
+        ]);
+
+        $hoiDong->loadMissing([
+            'thanhViens.giangVien.taiKhoan',
+            'hoSoBaoVes.nhom.deTai.giangVien.taiKhoan',
+            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.taiKhoan',
+        ]);
+
+        $tieuDe = "Thông báo công bố Hội đồng bảo vệ khóa luận: {$hoiDong->TenHoiDong}";
+        $ngayBvFormatted = $hoiDong->NgayBaoVe ? Carbon::parse($hoiDong->NgayBaoVe)->format('d/m/Y') : ($hoiDong->ThoiGianBatDau ? Carbon::parse($hoiDong->ThoiGianBatDau)->format('d/m/Y') : 'Xem chi tiết');
+        $gioBvFormatted = $hoiDong->ThoiGianBatDau ? Carbon::parse($hoiDong->ThoiGianBatDau)->format('H:i') : '07:30';
+
+        // 3. Thông báo cho Giảng viên thành viên Hội đồng
+        foreach ($hoiDong->thanhViens as $tv) {
+            $maTK = $tv->giangVien?->MaTK ?? $tv->giangVien?->taiKhoan?->MaTK;
+            if ($maTK) {
+                $noiDung = "Kính gửi Thầy/Cô {$tv->giangVien->HoTen},\n\nKhoa đã công bố Quyết định thành lập Hội đồng bảo vệ khóa luận tốt nghiệp.\nThầy/Cô được phân công tham gia: {$hoiDong->TenHoiDong} với vai trò {$tv->VaiTro}.\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}\n\nKính đề nghị Thầy/Cô sắp xếp thời gian tham gia đúng giờ.";
+                ThongBaoService::guiDen($maTK, $tieuDe, $noiDung, 'Hội đồng', asset($filePath));
+            }
+        }
+
+        // 4. Thông báo cho Giảng viên hướng dẫn & Sinh viên
+        foreach ($hoiDong->hoSoBaoVes as $hoSo) {
+            $nhom = $hoSo->nhom;
+            $deTai = $nhom?->deTai;
+
+            // GVHD
+            $gvhdTK = $deTai?->giangVien?->MaTK ?? $deTai?->giangVien?->taiKhoan?->MaTK;
+            if ($gvhdTK) {
+                $noiDungGVHD = "Kính gửi Thầy/Cô {$deTai->giangVien->HoTen},\n\nĐề tài '{$deTai->TenDeTai}' (Nhóm: {$nhom->MaNhom}) do Thầy/Cô hướng dẫn đã được xếp lịch bảo vệ tại: {$hoiDong->TenHoiDong}.\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}.";
+                ThongBaoService::guiDen($gvhdTK, $tieuDe, $noiDungGVHD, 'Hội đồng', asset($filePath));
+            }
+
+            // Sinh viên trong nhóm
+            if ($nhom && $nhom->thanhVienNhoms) {
+                foreach ($nhom->thanhVienNhoms as $tvn) {
+                    $svTK = $tvn->sinhVien?->MaTK ?? $tvn->sinhVien?->taiKhoan?->MaTK;
+                    if ($svTK) {
+                        $noiDungSV = "Chào bạn {$tvn->sinhVien->HoTen},\n\nKhoa đã công bố chính thức Lịch bảo vệ Khóa luận tốt nghiệp của nhóm bạn ({$nhom->MaNhom}) cho đề tài '{$deTai->TenDeTai}'.\n- Hội đồng: {$hoiDong->TenHoiDong}\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}\n\nChúc bạn chuẩn bị chu đáo và bảo vệ thành công!";
+                        ThongBaoService::guiDen($svTK, $tieuDe, $noiDungSV, 'Hội đồng', asset($filePath));
+                    }
+                }
+            }
+        }
+
+        // 5. Thông báo cho Giáo vụ / Admin
+        $giaoVus = TaiKhoan::whereHas('vaiTro', fn($q) => $q->whereIn('TenVaiTro', ['Admin', 'Giáo vụ']))->get();
+        foreach ($giaoVus as $gvu) {
+            $noiDungGVu = "Trưởng khoa đã ban hành và công bố Hội đồng bảo vệ khóa luận: {$hoiDong->TenHoiDong} (Số QĐ: {$hoiDong->SoQuyetDinh}).\nVăn bản quyết định đã được số hóa và sẵn sàng tra cứu, xuất báo cáo.";
+            ThongBaoService::guiDen($gvu->MaTK, $tieuDe, $noiDungGVu, 'Hội đồng', asset($filePath));
+        }
+    }
+
+    /**
+     * Thu hồi công bố Hội đồng để điều chỉnh
+     */
+    public function thuHoiCongBo($id)
+    {
+        $hoiDong = HoiDong::findOrFail($id);
+
+        $hoiDong->update([
+            'TrangThaiCongBo' => 'Đã thu hồi',
+        ]);
+
+        return redirect()->back()->with('warning', "Đã thu hồi công bố Hội đồng {$hoiDong->TenHoiDong}. Hội đồng hiện ở trạng thái nội bộ để Trưởng khoa điều chỉnh.");
+    }
+
+    /**
+     * Cập nhật thông tin Quyết định thành lập Hội đồng
+     */
+    public function updateQuyetDinh(Request $request, $id)
+    {
+        $request->validate([
+            'SoQuyetDinh'   => 'nullable|string|max:100',
+            'NgayBanHanh'   => 'nullable|date',
+            'NguoiKy'       => 'nullable|string|max:150',
+            'ChucVuNguoiKy' => 'nullable|string|max:150',
+            'DotBaoVe'      => 'nullable|string|max:100',
+        ]);
+
+        $hoiDong = HoiDong::findOrFail($id);
+        $hoiDong->update($request->only(['SoQuyetDinh', 'NgayBanHanh', 'NguoiKy', 'ChucVuNguoiKy', 'DotBaoVe']));
+
+        // Nếu đã công bố thì làm mới lại file PDF
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
+
+        return redirect()->back()->with('success', 'Đã cập nhật thông tin quyết định thành công!');
+    }
+
+    /**
+     * Cập nhật trạng thái diễn ra của Hội đồng
      */
     public function updateTrangThai(Request $request, $id)
     {
@@ -201,7 +527,7 @@ class HoiDongController extends Controller
     }
 
     /**
-     * Phân công nhóm sinh viên vào Hội đồng bảo vệ
+     * Phân công thêm nhóm sinh viên vào Hội đồng bảo vệ
      */
     public function phanCongNhom(Request $request, $id)
     {
@@ -209,7 +535,6 @@ class HoiDongController extends Controller
             'MaNhom'        => 'required|exists:HoSoBaoVe,MaNhom',
             'ThoiGianBaoVe' => 'nullable|date',
             'PhongBaoVe'    => 'nullable|string|max:100',
-            'MaGVPhanBien'  => 'nullable|exists:GiangVien,MaGV',
         ]);
 
         $hoiDong = HoiDong::findOrFail($id);
@@ -217,20 +542,6 @@ class HoiDongController extends Controller
 
         if (!$hoSo) {
             return redirect()->back()->with('error', 'Nhóm này chưa nộp hồ sơ bảo vệ.');
-        }
-
-        // Kiểm tra ràng buộc cùng Bộ môn đối với Giảng viên phản biện
-        if ($request->filled('MaGVPhanBien')) {
-            $hoSo->loadMissing('nhom.deTai.giangVien', 'nhom.deTai.hocPhanRef');
-            $detai = $hoSo->nhom?->deTai;
-            $gvPB = GiangVien::find($request->MaGVPhanBien);
-            if ($detai && $gvPB) {
-                $dtBm = str_replace('BM_', '', $detai->giangVien?->MaBoMon ?? $detai->hocPhanRef?->MaBoMon ?? '');
-                $gvBm = str_replace('BM_', '', $gvPB->MaBoMon ?? '');
-                if ($dtBm && $gvBm && $dtBm !== $gvBm) {
-                    return redirect()->back()->withErrors("Giảng viên phản biện ({$gvPB->HoTen}) phải thuộc cùng Bộ môn với đề tài!");
-                }
-            }
         }
 
         DB::transaction(function () use ($request, $hoiDong, $hoSo) {
@@ -252,28 +563,28 @@ class HoiDongController extends Controller
 
             $hoSo->update($updateData);
 
-            if ($request->filled('MaGVPhanBien') && $hoSo->MaDeTai) {
-                $pc = PhanCongPhanBien::where('MaDeTai', $hoSo->MaDeTai)->first();
-                if ($pc) {
-                    $pc->update([
-                        'MaGV'         => $request->MaGVPhanBien,
-                        'NgayPhanCong' => now()->toDateString(),
-                        'TrangThai'    => 'Đã phân công',
-                    ]);
-                } else {
-                    PhanCongPhanBien::create([
+            // Tự động phân công phản biện từ thành viên phản biện của Hội đồng nếu có
+            $tvPhanBien = $hoiDong->thanhViens->first(fn($tv) => str_contains(mb_strtolower($tv->VaiTro), 'phản biện'));
+            if ($tvPhanBien && $hoSo->MaDeTai) {
+                PhanCongPhanBien::updateOrCreate(
+                    ['MaDeTai' => $hoSo->MaDeTai],
+                    [
                         'MaPhanCong'   => IdGenerator::nextPhanCong(),
+                        'MaGV'         => $tvPhanBien->MaGV,
                         'VaiTro'       => 'Phản biện',
                         'NgayPhanCong' => now()->toDateString(),
                         'TrangThai'    => 'Đã phân công',
-                        'MaGV'         => $request->MaGVPhanBien,
-                        'MaDeTai'      => $hoSo->MaDeTai,
-                    ]);
-                }
+                    ]
+                );
             }
         });
 
-        return redirect()->back()->with('success', "Đã phân công nhóm vào Hội đồng {$hoiDong->TenHoiDong} thành công!");
+        // Nếu đã công bố thì làm mới lại file PDF
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
+
+        return redirect()->back()->with('success', "Đã phân công nhóm {$hoSo->MaNhom} vào Hội đồng {$hoiDong->TenHoiDong} thành công!");
     }
 
     /**
@@ -286,6 +597,12 @@ class HoiDongController extends Controller
             'MaHoiDong' => null,
             'TrangThai' => 'Đủ điều kiện bảo vệ',
         ]);
+
+        $hoiDong = HoiDong::find($id);
+        if ($hoiDong && $hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
+
         return redirect()->back()->with('success', 'Đã hủy phân công nhóm khỏi hội đồng!');
     }
 
@@ -296,7 +613,7 @@ class HoiDongController extends Controller
     {
         $request->validate([
             'MaGV'   => 'required|exists:GiangVien,MaGV',
-            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Thành viên,Phản biện',
+            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
         ]);
 
         $hoiDong = HoiDong::findOrFail($id);
@@ -306,11 +623,20 @@ class HoiDongController extends Controller
             return redirect()->back()->with('error', 'Giảng viên này đã có trong Hội đồng.');
         }
 
+        $vaiTro = $request->VaiTro;
+        if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
+        if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
+        if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+
         ThanhVienHoiDong::create([
             'MaHoiDong' => $hoiDong->MaHoiDong,
             'MaGV'      => $request->MaGV,
-            'VaiTro'    => $request->VaiTro,
+            'VaiTro'    => $vaiTro,
         ]);
+
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
 
         return redirect()->back()->with('success', 'Đã thêm thành viên vào Hội đồng thành công!');
     }
@@ -321,11 +647,21 @@ class HoiDongController extends Controller
     public function doiVaiTroThanhVien(Request $request, $id, $maGV)
     {
         $request->validate([
-            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Thành viên,Phản biện',
+            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
         ]);
 
+        $vaiTro = $request->VaiTro;
+        if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
+        if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
+        if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+
         $tv = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $maGV)->firstOrFail();
-        $tv->update(['VaiTro' => $request->VaiTro]);
+        $tv->update(['VaiTro' => $vaiTro]);
+
+        $hoiDong = HoiDong::find($id);
+        if ($hoiDong && $hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
 
         return redirect()->back()->with('success', 'Đã cập nhật vai trò thành viên thành công!');
     }
@@ -335,9 +671,47 @@ class HoiDongController extends Controller
      */
     public function xoaThanhVien($id, $maGV)
     {
+        $hoiDong = HoiDong::with('thanhViens')->findOrFail($id);
+        if ($hoiDong->thanhViens->count() <= 3) {
+            return redirect()->back()->with('error', 'Hội đồng cần duy trì tối thiểu 3 thành viên theo quy định.');
+        }
+
         $tv = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $maGV)->firstOrFail();
         $tv->delete();
 
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            HoiDongPdfService::savePdfToStorage($hoiDong);
+        }
+
         return redirect()->back()->with('success', 'Đã xóa thành viên khỏi Hội đồng thành công!');
+    }
+
+    /**
+     * Xóa hoàn toàn Hội đồng (nếu chưa diễn ra chấm điểm)
+     */
+    public function destroy($id)
+    {
+        $hoiDong = HoiDong::with(['hoSoBaoVes', 'phieuChamDiems'])->findOrFail($id);
+
+        if ($hoiDong->phieuChamDiems->isNotEmpty()) {
+            return redirect()->back()->with('error', 'Hội đồng đã có phiếu chấm điểm của Giảng viên, không thể xóa!');
+        }
+
+        DB::transaction(function() use ($hoiDong) {
+            // Hủy liên kết hồ sơ bảo vệ
+            foreach ($hoiDong->hoSoBaoVes as $hs) {
+                $hs->update([
+                    'MaHoiDong' => null,
+                    'TrangThai' => 'Đủ điều kiện bảo vệ',
+                ]);
+            }
+            // Xóa thành viên
+            ThanhVienHoiDong::where('MaHoiDong', $hoiDong->MaHoiDong)->delete();
+            // Xóa hội đồng
+            $hoiDong->delete();
+        });
+
+        return redirect()->route('truongkhoa.hoidong.index')
+            ->with('success', 'Đã xóa Hội đồng bảo vệ thành công!');
     }
 }

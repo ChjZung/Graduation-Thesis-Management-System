@@ -94,7 +94,26 @@
                 </div>
             </div>
 
-            <!-- 3. BẢO VỆ & KẾT QUẢ -->
+            <!-- 3. QUẢN LÝ HỘI ĐỒNG BẢO VỆ -->
+            <div class="sidebar-menu-group">
+                @php
+                    $isHoiDongMenu = request()->routeIs('admin.hoidong.*');
+                @endphp
+                <button class="menu-parent-btn {{ $isHoiDongMenu ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-ql-hoidong" aria-expanded="{{ $isHoiDongMenu ? 'true' : 'false' }}">
+                    <span class="parent-icon-title">
+                        <i class="fa-solid fa-landmark me-2"></i>
+                        <span>Quản lý hội đồng bảo vệ</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down chevron-arrow"></i>
+                </button>
+                <div class="collapse submenu-collapse {{ $isHoiDongMenu ? 'show' : '' }}" id="sub-ql-hoidong">
+                    <a href="{{ route('admin.hoidong.index') }}" class="submenu-link {{ request()->routeIs('admin.hoidong.*') ? 'active-sub' : '' }}">
+                        <span>Danh sách hội đồng</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4. BẢO VỆ & KẾT QUẢ -->
             <div class="sidebar-menu-group">
                 @php
                     $isHoiDongActive = request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*');
@@ -102,7 +121,7 @@
                 <button class="menu-parent-btn {{ $isHoiDongActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hoidong" aria-expanded="{{ $isHoiDongActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
                         <i class="fa-solid fa-graduation-cap me-2"></i>
-                        <span>Bảo Vệ &amp; Kết Quả</span>
+                        <span>Hồ Sơ &amp; Kết Quả</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
                 </button>

@@ -1,6 +1,6 @@
 @extends('layouts.giangvien')
 
-@section('page_title', 'Chi Tiết Đề Tài - ' . $detai->TenDeTai)
+@section('page_title', 'Chi Tiết Đề Tài - ' . $detai->MaDeTai)
 
 @push('styles')
 <style>
@@ -49,8 +49,9 @@
         $dangKyApproved = $detai->dangKyDeTais->where('TrangThai', 'Đã duyệt')->first();
         $hasGroupAssigned = !empty($dangKyApproved) && !empty($dangKyApproved->nhom);
         $phanBienHienTai = $detai->phanCongPhanBiens?->firstWhere('VaiTro', 'Phản biện đề cương');
-        $isOutlineFinalized = !empty($detai->FileDeCuong) && $phanBienHienTai && $phanBienHienTai->KetQua === 'Đạt' && !empty($detai->NgayDuyetBM);
-        $canNop = !in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Từ chối']) && $hasGroupAssigned && !$isOutlineFinalized && $detai->TrangThai !== 'Hoàn thành';
+        // Đề cương chỉ thực sự kết thúc và khóa nộp khi TBM đã phê duyệt công bố chính thức hoặc hoàn thành đề tài
+        $isOutlineFinalized = in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành']);
+        $canNop = !in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Từ chối']) && $hasGroupAssigned && !$isOutlineFinalized;
         $canEdit = in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh']) && !$hasGroupAssigned && $detai->TrangThai !== 'Từ chối';
     @endphp
 
@@ -76,7 +77,7 @@
             @endif
             @if($canNop)
                 <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs">
-                    <i class="fa-solid fa-file-arrow-up me-2"></i> Trang Nộp Đề Cương
+                    <i class="fa-solid fa-file-arrow-up me-2"></i> {{ in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']) ? 'Nộp Lại Đề Cương' : 'Trang Nộp Đề Cương' }}
                 </a>
             @endif
         </div>
@@ -349,7 +350,7 @@
                     @if(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương']) && $detai->LyDoTuChoi)
                         <div class="alert alert-warning border-0 p-3 rounded-3 mb-3 small bg-warning-subtle text-warning-emphasis">
                             <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Ý kiến góp ý:</strong>
-                            <div class="fw-medium">{{ $detai->LyDoTuChoi }}</div>
+                            <div class="fw-medium">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         </div>
                     @endif
 
@@ -435,7 +436,7 @@
 
                     @if($canNop)
                         <a href="{{ route('giangvien.detai.nop_decuong.show', $detai->MaDeTai) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill py-2 fw-semibold d-inline-flex align-items-center justify-content-center">
-                            <i class="fa-solid fa-file-arrow-up me-2"></i> Mở Trang Nộp Đề Cương
+                            <i class="fa-solid fa-file-arrow-up me-2"></i> {{ in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']) ? 'Nộp Lại Đề Cương Sau Chỉnh Sửa' : 'Mở Trang Nộp Đề Cương' }}
                         </a>
                     @endif
                 </div>

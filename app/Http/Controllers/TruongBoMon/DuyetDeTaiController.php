@@ -604,6 +604,11 @@ class DuyetDeTaiController extends Controller
         $detai = DeTai::with('giangVien')->findOrFail($id);
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
+        // Khóa duyệt nếu đề tài đang bị yêu cầu chỉnh sửa đề cương hoặc từ chối
+        if (in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa', 'Không đạt phản biện', 'Từ chối'])) {
+            return redirect()->back()->withErrors("Đề cương đang ở trạng thái '{$detai->TrangThai}'. Nút duyệt đã bị khóa, vui lòng chờ Giảng viên nộp lại bản đề cương hoàn thiện đạt yêu cầu trước khi phê duyệt.");
+        }
+
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
         if (!$phanBien || $phanBien->KetQua !== 'Đạt') {
             return redirect()->back()->withErrors('Đề cương chưa có kết quả phản biện ĐẠT. Không thể duyệt công bố đề tài.');
@@ -674,10 +679,30 @@ class DuyetDeTaiController extends Controller
         $user = Auth::user();
         $gv = GiangVien::getLoggedInGiangVien($user);
 
+        // Phân biệt nếu đề tài đang trong giai đoạn phản biện/duyệt đề cương thì cập nhật chính xác 'Yêu cầu chỉnh sửa đề cương'
+        $isOutlineStage = !empty($detai->FileDeCuong) || in_array($oldStatus, [
+            'Đã nộp đề cương - Chờ phân công PB',
+            'Đang phản biện đề cương',
+            'Đã phản biện - Chờ duyệt BM',
+            'Đã phản biện - Chờ TBM duyệt đề cương',
+            'Đã cập nhật đề cương - Chờ phản biện lại',
+            'Yêu cầu chỉnh sửa đề cương'
+        ]);
+
+        $newTargetStatus = $isOutlineStage ? 'Yêu cầu chỉnh sửa đề cương' : 'Yêu cầu chỉnh sửa';
+
         $detai->update([
-            'TrangThai'   => 'Yêu cầu chỉnh sửa',
+            'TrangThai'   => $newTargetStatus,
             'LyDoTuChoi'  => $cleanedYeuCauSua,
         ]);
+
+        if ($isOutlineStage) {
+            PhanCongPhanBien::where('MaDeTai', $detai->MaDeTai)
+                ->where('VaiTro', 'Phản biện đề cương')
+                ->update([
+                    'TrangThai' => 'Yêu cầu chỉnh sửa đề cương',
+                ]);
+        }
 
         $maDuyet = IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT));
         ChiTietDuyetDeTai::create([
@@ -685,9 +710,9 @@ class DuyetDeTaiController extends Controller
             'MaDeTai'       => $detai->MaDeTai,
             'MaGV'          => $gv ? $gv->MaGV : null,
             'NguoiThucHien' => ($gv ? $gv->HoTen : 'Trưởng Bộ Môn') . ' - Trưởng Bộ Môn',
-            'HanhDong'      => 'Yêu cầu chỉnh sửa đề tài',
+            'HanhDong'      => $isOutlineStage ? 'Yêu cầu chỉnh sửa đề cương' : 'Yêu cầu chỉnh sửa đề tài',
             'TrangThaiCu'   => $oldStatus,
-            'TrangThai'     => 'Yêu cầu chỉnh sửa',
+            'TrangThai'     => $newTargetStatus,
             'LyDo'          => $cleanedYeuCauSua,
             'NgayDuyet'     => now(),
         ]);

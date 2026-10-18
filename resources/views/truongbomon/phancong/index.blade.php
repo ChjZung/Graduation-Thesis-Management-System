@@ -328,13 +328,35 @@
                                     <span class="badge {{ $pcStatusBadge }} px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">{{ $dt->TrangThai }}</span>
                                 </td>
                                 <td class="text-center">
-                                    @if($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố')
+                                    @php
+                                        $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
+                                        $canApproveDC = ($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua);
+                                    @endphp
+
+                                    @if($canApproveDC)
                                         {{-- Nút duyệt đề cương lần 2 & công bố đề tài của TBM --}}
                                         <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 text-nowrap fw-bold shadow-sm mb-1 d-inline-flex align-items-center gap-1"
                                                 data-bs-toggle="modal" data-bs-target="#modalDuyetDeCuong{{ $dt->MaDeTai }}"
                                                 title="Phê duyệt kết quả phản biện và Công bố đề tài">
                                             <i class="fa-solid fa-bullhorn me-2"></i> Duyệt ĐC
                                         </button>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-warning rounded-3 px-2 py-1 text-nowrap d-inline-flex align-items-center"
+                                                    data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}" title="Yêu cầu GV chỉnh sửa đề cương">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-1 text-nowrap d-inline-flex align-items-center" 
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}" title="Đổi giảng viên phản biện">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                            </button>
+                                            <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-3 px-2 py-1" title="Xem chi tiết đề tài">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    @elseif($isDangYeuCauSua)
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 mb-1 small d-inline-block" title="Đã gửi yêu cầu chỉnh sửa đề cương. Nút duyệt đã bị khóa cho tới khi GV nộp lại đề cương mới.">
+                                            <i class="fa-solid fa-lock me-1"></i> Khóa duyệt (Chờ GV sửa)
+                                        </span>
                                         <div class="d-flex justify-content-center gap-1">
                                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-1 text-nowrap d-inline-flex align-items-center" 
                                                     data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}" title="Đổi giảng viên phản biện">
@@ -512,7 +534,7 @@
                             </div>
                             @endif
 
-                            @if($pb && $pb->KetQua === 'Yêu cầu chỉnh sửa')
+                            @if($pb && $dt->TrangThai !== 'Đã công bố')
                             <!-- Modal Yêu Cầu Chỉnh Sửa Đề Cương -->
                             <div class="modal fade" id="modalYeuCauSuaDC{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">

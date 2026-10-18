@@ -153,9 +153,9 @@
                                         <div class="d-flex flex-column gap-1">
                                             <!-- Báo cáo PDF -->
                                             @if($hs->ToanVanKhoaLuan)
-                                                <a href="{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}" target="_blank" class="text-danger small text-truncate" style="max-width: 220px;" title="Xem Báo cáo khóa luận">
+                                                <button type="button" class="btn btn-link text-danger p-0 text-start small text-truncate text-decoration-none" style="max-width: 220px;" onclick="openPdfModal('{{ asset('storage/' . $hs->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận - Đề Tài {{ $hs->MaDeTai }}')">
                                                     <i class="fa-solid fa-file-pdf me-1"></i> Báo cáo toàn văn
-                                                </a>
+                                                </button>
                                             @else
                                                 <span class="text-muted small"><i class="fa-solid fa-file-pdf me-1"></i> Chưa có báo cáo</span>
                                             @endif
@@ -229,4 +229,58 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL XEM BÁO CÁO TRỰC TIẾP TRÊN MÀN HÌNH (KHÔNG CHUYỂN TAB) -->
+<div class="modal fade" id="modalPdfPreview" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 92vh;">
+        <div class="modal-content h-100 shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-2.5 px-4">
+                <div class="d-flex align-items-center gap-2 text-truncate">
+                    <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                    <h6 class="modal-title fw-bold mb-0 text-truncate" id="pdfPreviewTitle">Xem Báo Cáo Khóa Luận</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" id="btnDownloadPdfModal" download class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        <i class="fa-solid fa-download me-1"></i> Tải về máy
+                    </a>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-secondary bg-opacity-10" style="height: calc(100% - 58px);">
+                <iframe id="pdfPreviewIframe" src="" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function openPdfModal(url, title = 'Xem Báo Cáo Khóa Luận') {
+        const titleEl = document.getElementById('pdfPreviewTitle');
+        const iframeEl = document.getElementById('pdfPreviewIframe');
+        const dlBtn = document.getElementById('btnDownloadPdfModal');
+        
+        if (titleEl) titleEl.textContent = title;
+        if (iframeEl) iframeEl.src = url + '#toolbar=1';
+        if (dlBtn) dlBtn.href = url;
+
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                const iframeEl = document.getElementById('pdfPreviewIframe');
+                if (iframeEl) iframeEl.src = '';
+            });
+        }
+    });
+</script>
+@endpush
+
 @endsection

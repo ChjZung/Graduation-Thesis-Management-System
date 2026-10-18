@@ -26,6 +26,15 @@ class KetQuaSinhVien extends Model
         'MaSV',
         'MaHoSo',
         'MaHocKy',
+        'DiemChinhThuc',
+        'DiemKhuyenKhich',
+        'TrangThai',
+        'NguoiXacNhan',
+        'NgayXacNhan',
+        'NguoiCongBo',
+        'NgayCongBo',
+        'GhiChuDieuChinh',
+        'LichSuDieuChinh',
     ];
 
     public $timestamps = true;
@@ -36,7 +45,12 @@ class KetQuaSinhVien extends Model
             'DiemPhanBien' => 'float',
             'DiemHoiDongTB' => 'float',
             'DiemTongKet' => 'float',
+            'DiemChinhThuc' => 'float',
+            'DiemKhuyenKhich' => 'float',
             'NgayCham' => 'date',
+            'NgayXacNhan' => 'datetime',
+            'NgayCongBo' => 'datetime',
+            'LichSuDieuChinh' => 'array',
         ];
     }
 

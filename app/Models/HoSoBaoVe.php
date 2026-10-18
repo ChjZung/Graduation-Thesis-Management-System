@@ -42,6 +42,13 @@ class HoSoBaoVe extends Model
         'MaHoiDong',
         'MaNhom',
         'MaDeTai',
+        'LoaiKhoaLuan',
+        'TrangThaiKetQua',
+        'YeuCauChinhSuaSauBaoVe',
+        'HanNopBaoCaoSauBaoVe',
+        'NguoiKiemTraChinhSua',
+        'TrangThaiChinhSuaSauBaoVe',
+        'NgayXacNhanHoanThanhSauBaoVe',
     ];
 
     public $timestamps = true;
@@ -49,14 +56,16 @@ class HoSoBaoVe extends Model
     protected function casts(): array
     {
         return [
-            'NgayLap'         => 'date',
-            'NgayNop'         => 'date',
-            'NgayXacNhan'     => 'date',
-            'ThoiGianBaoVe'   => 'datetime',
-            'HanNopLai'       => 'datetime',
-            'NgayNopGanNhat'  => 'datetime',
-            'LienKetKhac'     => 'array',
-            'ThanhPhanCanSua' => 'array',
+            'NgayLap'                      => 'date',
+            'NgayNop'                      => 'date',
+            'NgayXacNhan'                  => 'date',
+            'ThoiGianBaoVe'                => 'datetime',
+            'HanNopLai'                    => 'datetime',
+            'NgayNopGanNhat'               => 'datetime',
+            'HanNopBaoCaoSauBaoVe'         => 'datetime',
+            'NgayXacNhanHoanThanhSauBaoVe' => 'datetime',
+            'LienKetKhac'                  => 'array',
+            'ThanhPhanCanSua'              => 'array',
         ];
     }
 
@@ -144,4 +153,45 @@ class HoSoBaoVe extends Model
             return str_contains($loai, 'toàn văn') || str_contains($loai, 'báo cáo') || str_contains($ten, 'toanvan');
         })?->DuongDanFile;
     }
+
+    public function baoCaoSauBaoVes()
+    {
+        return $this->hasMany(BaoCaoSauBaoVe::class, 'MaHoSo', 'MaHoSo')->orderBy('LanChinhSua', 'desc');
+    }
+
+    public function baoCaoSauBaoVeMoiNhat()
+    {
+        return $this->hasOne(BaoCaoSauBaoVe::class, 'MaHoSo', 'MaHoSo')->latestOfMany('id');
+    }
+
+    public function xacDinhLoaiKhoaLuan(): ?string
+    {
+        if (!empty($this->LoaiKhoaLuan)) {
+            return $this->LoaiKhoaLuan;
+        }
+
+        $tenDeTai = mb_strtolower($this->nhom?->deTai?->TenDeTai ?? $this->deTai?->TenDeTai ?? '');
+        $maHP = mb_strtolower($this->nhom?->deTai?->MaHocPhan ?? $this->deTai?->MaHocPhan ?? '');
+        $tenHP = mb_strtolower($this->nhom?->deTai?->hocPhanRef?->TenHocPhan ?? $this->deTai?->hocPhanRef?->TenHocPhan ?? '');
+
+        if (str_contains($tenHP, 'cử nhân') || str_contains($maHP, 'klcn') || str_contains($tenDeTai, 'cử nhân') || str_contains($tenDeTai, 'cu nhan')) {
+            return 'KLCN';
+        }
+
+        if (str_contains($tenHP, 'kỹ sư') || str_contains($maHP, 'klks') || str_contains($tenDeTai, 'kỹ sư') || str_contains($tenDeTai, 'ky su')) {
+            return 'KLKS';
+        }
+
+        $firstMember = $this->nhom?->thanhViens?->first()?->sinhVien;
+        if ($firstMember && $firstMember->MaNganh === '7480103') {
+            return 'KLKS';
+        }
+
+        if (str_contains($maHP, 'kltn') || str_contains($tenHP, 'tốt nghiệp')) {
+            return 'KLCN';
+        }
+
+        return null;
+    }
 }
+

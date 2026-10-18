@@ -84,7 +84,7 @@ class BaoCaoController extends Controller
             $activeMembership = $allStudentMemberships->first();
         }
 
-        $nhom = Nhom::with(['deTai.giangVien.boMon', 'hocPhan', 'hocKy'])->find($activeMembership->MaNhom);
+        $nhom = Nhom::with(['deTai.giangVien.boMon', 'hocPhan', 'hocKy', 'truongNhom'])->find($activeMembership->MaNhom);
 
         if (!$nhom || !$nhom->deTai) {
             return view('sinhvien.baocao.index', [
@@ -97,8 +97,11 @@ class BaoCaoController extends Controller
                 'mocDeadlines'          => [],
                 'allStudentMemberships' => $allStudentMemberships,
                 'stageBreakdown'        => [],
+                'isLeader'              => false,
             ]);
         }
+
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($activeMembership->VaiTro, 'trưởng') !== false);
 
         $stageBreakdownData = ThesisProgressService::getStageProgressBreakdown($nhom);
         $stageBreakdown = $stageBreakdownData['stages'] ?? [];
@@ -134,7 +137,7 @@ class BaoCaoController extends Controller
 
         return view('sinhvien.baocao.index', compact(
             'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines', 'timeCheckHienTai', 'giaiDoans',
-            'allStudentMemberships', 'stageBreakdown'
+            'allStudentMemberships', 'stageBreakdown', 'isLeader'
         ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
@@ -157,6 +160,11 @@ class BaoCaoController extends Controller
 
         if (!$deTai) {
             return back()->with('error', 'Nhóm của bạn chưa có đề tài được duyệt.');
+        }
+
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVienRecord->VaiTro, 'trưởng') !== false);
+        if (!$isLeader) {
+            return back()->with('error', 'Chỉ Nhóm trưởng mới có quyền đại diện nhóm nộp báo cáo tiến độ.');
         }
 
         $lan = (int) $request->input('LanBaoCao');
@@ -520,11 +528,16 @@ class BaoCaoController extends Controller
         if (!$thanhVien) {
             $thanhVien = $thanhVienQuery->firstOrFail();
         }
-        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
+        $nhom = Nhom::with(['deTai.giangVien', 'truongNhom'])->findOrFail($thanhVien->MaNhom);
         $deTai = $nhom->deTai;
 
         if (!$deTai) {
             return redirect()->route('sinhvien.baocao.index')->with('error', 'Nhóm chưa có đề tài.');
+        }
+
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
+        if (!$isLeader) {
+            return redirect()->back()->with('error', 'Chỉ Nhóm trưởng mới có quyền thêm nội dung báo cáo tiến độ.');
         }
 
         $lan = (int)$request->input('LanBaoCao');
@@ -826,13 +839,19 @@ class BaoCaoController extends Controller
     {
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
-        $nhom = Nhom::with('deTai')->findOrFail($thanhVien->MaNhom);
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->firstOrFail();
+        $nhom = Nhom::with(['deTai', 'truongNhom'])->findOrFail($thanhVien->MaNhom);
 
         $dotNop = DotNopBaoCao::with(['giaiDoan', 'deTai'])->findOrFail($id);
 
         if (!$nhom->deTai || $nhom->deTai->MaDeTai !== $dotNop->MaDeTai) {
             abort(403, 'Đợt nộp báo cáo này không thuộc đề tài của nhóm bạn.');
+        }
+
+        // CHỈ CHO PHÉP NHÓM TRƯỞNG NỘP BÁO CÁO TIẾN ĐỘ
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
+        if (!$isLeader) {
+            return redirect()->back()->with('error', 'Chỉ Nhóm trưởng mới có quyền đại diện nhóm nộp báo cáo tiến độ.');
         }
 
         // Kiểm tra quyền hạn nộp: Phải đang mở hoặc được yêu cầu nộp lại
@@ -895,8 +914,8 @@ class BaoCaoController extends Controller
     {
         $user = Auth::user();
         $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->firstOrFail();
-        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($thanhVien->MaNhom);
+        $thanhVien = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)->where('TrangThai', 'da_tham_gia')->firstOrFail();
+        $nhom = Nhom::with(['deTai.giangVien', 'truongNhom'])->findOrFail($thanhVien->MaNhom);
 
         $dotNop = DotNopBaoCao::with([
             'giaiDoan',
@@ -910,9 +929,10 @@ class BaoCaoController extends Controller
 
         $phienBans = $dotNop->khoiBaoCaos;
         $latestPhienBan = $phienBans->first();
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
 
         return view('sinhvien.baocao.show_dot', compact(
-            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan'
+            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader'
         ));
     }
 }

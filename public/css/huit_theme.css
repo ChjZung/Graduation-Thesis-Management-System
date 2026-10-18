@@ -2095,8 +2095,9 @@ small, .small, .text-muted.small, .form-text, .pill-count,
 .table tbody tr:last-child td {
     border-bottom: none;
 }
-.table th:last-child, .table td:last-child {
-    white-space: nowrap !important;
+.table:not(.table-borderless):not(.table-wrap) th:last-child,
+.table:not(.table-borderless):not(.table-wrap) td:last-child {
+    white-space: nowrap;
 }
 
 /* 4. CARD Ô VUÔNG / KPI CARD ĐỒNG BỘ - KHÔNG DÙNG VIỀN MÀU SẶC SỠ */

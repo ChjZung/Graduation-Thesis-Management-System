@@ -27,6 +27,10 @@ class PhieuChamDiem extends Model
         'MaSV',
         'MaHoSo',
         'MaHocKy',
+        'TrangThai',
+        'DiemKhuyenKhich',
+        'NgayXacNhan',
+        'GhiChuMoKhoa',
     ];
 
     public $timestamps = true;
@@ -35,7 +39,9 @@ class PhieuChamDiem extends Model
     {
         return [
             'Diem' => 'float',
+            'DiemKhuyenKhich' => 'float',
             'NgayCham' => 'date',
+            'NgayXacNhan' => 'datetime',
             'ChiTietDiem' => 'array',
         ];
     }

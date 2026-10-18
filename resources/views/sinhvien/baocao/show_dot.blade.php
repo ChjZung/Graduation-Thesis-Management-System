@@ -223,7 +223,17 @@
                 $nextVersionNumber = ($latestPhienBan ? $latestPhienBan->LanNop : 0) + 1;
             @endphp
 
-            @if($latestPhienBan && $latestPhienBan->TrangThai === 'Đạt')
+            @if(!($isLeader ?? true))
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all" style="border: 1px solid #e2e8f0 !important;">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
+                        <i class="fa-solid fa-user-lock fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Quyền Nộp Dành Riêng Cho Nhóm Trưởng</h5>
+                    <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">
+                        Theo quy định, chỉ <strong>Nhóm trưởng</strong> ({{ $nhom->truongNhom->HoTen ?? 'Trưởng nhóm' }}) mới có quyền đại diện nhóm nộp hoặc cập nhật báo cáo tiến độ. Bạn có thể theo dõi tiến độ và xem các phiên bản đã nộp ở cột bên trái.
+                    </p>
+                </div>
+            @elseif($latestPhienBan && $latestPhienBan->TrangThai === 'Đạt')
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all" style="border: 1px solid #e2e8f0 !important;">
                     <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
                         <i class="fa-solid fa-circle-check fa-2x"></i>

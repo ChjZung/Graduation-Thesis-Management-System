@@ -245,15 +245,24 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-flex justify-content-end align-items-center gap-1 flex-wrap">
-                                            @if($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố')
+                                            @php
+                                                $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
+                                                $canApproveDC = ($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua);
+                                            @endphp
+
+                                            @if($canApproveDC)
                                                 <!-- Nút Duyệt và công bố -->
                                                 <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center"
                                                         data-bs-toggle="modal" data-bs-target="#modalDuyetDC{{ $dt->MaDeTai }}">
                                                     <i class="fa-solid fa-bullhorn me-2"></i> Duyệt & Công bố
                                                 </button>
+                                            @elseif($isDangYeuCauSua)
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 small" title="Đã gửi yêu cầu chỉnh sửa đề cương cho GVHD. Nút duyệt đã bị khóa cho tới khi GVHD nộp lại đề cương đạt yêu cầu.">
+                                                    <i class="fa-solid fa-lock me-1"></i> Khóa duyệt (Chờ GV sửa ĐC)
+                                                </span>
                                             @endif
 
-                                            @if($dt->TrangThai !== 'Đã công bố')
+                                            @if($dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua)
                                                 <!-- Nút Yêu cầu chỉnh sửa đề cương -->
                                                 <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1 d-inline-flex align-items-center"
                                                         data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}"
@@ -272,7 +281,7 @@
                                 </tr>
 
                                 <!-- MODAL PHÊ DUYỆT & CÔNG BỐ -->
-                                @if($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố')
+                                @if($canApproveDC)
                                 <div class="modal fade" id="modalDuyetDC{{ $dt->MaDeTai }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content rounded-4 shadow border-0">

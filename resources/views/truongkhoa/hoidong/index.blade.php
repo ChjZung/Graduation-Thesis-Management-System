@@ -12,15 +12,36 @@
                 <i class="fa-solid fa-landmark text-primary me-2"></i>Quản Lý Hội Đồng Bảo Vệ Khóa Luận
             </h4>
             <div class="text-muted small mt-1">
-                Quyết định thành lập Hội đồng và phân công các nhóm sinh viên vào Hội đồng bảo vệ — {{ $khoa->TenKhoa ?? 'Khoa' }}
+                Trưởng khoa lập Hội đồng, phân công thành viên, tạo văn bản quyết định và công bố chính thức — {{ $khoa->TenKhoa ?? 'Khoa' }}
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('truongkhoa.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold d-inline-flex align-items-center">
-                <i class="fa-solid fa-plus me-2"></i> Thành Lập Hội Đồng Mới
+            <a href="{{ route('truongkhoa.hoidong.create') }}" class="btn btn-primary shadow-xs fw-semibold d-inline-flex align-items-center rounded-pill px-4">
+                <i class="fa-solid fa-plus me-2"></i> Lập Hội Đồng Mới
             </a>
         </div>
     </div>
+
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
+    @if(session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ session('warning') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
+        <i class="fa-solid fa-circle-xmark me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
     <!-- 4 KPI Cards -->
     <div class="row g-3 mb-4">
@@ -42,14 +63,14 @@
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Nhóm Đã Phân Công</span>
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Đã Công Bố Chính Thức</span>
                     <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #dcfce7; color: #16a34a;">
-                        <i class="fa-solid fa-users-rectangle fs-5"></i>
+                        <i class="fa-solid fa-bullhorn fs-5"></i>
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2 mt-auto">
-                    <span class="fs-3 fw-bold text-success lh-1">{{ $hoiDongs->sum(fn($h) => $h->hoSoBaoVes->count()) }}</span>
-                    <span class="small text-muted fw-medium">nhóm bảo vệ</span>
+                    <span class="fs-3 fw-bold text-success lh-1">{{ $hoiDongs->where('TrangThaiCongBo', 'Đã công bố')->count() }}</span>
+                    <span class="small text-muted fw-medium">hội đồng công bố</span>
                 </div>
             </div>
         </div>
@@ -57,14 +78,14 @@
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">GV Tham Gia HĐ</span>
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Đề Tài / Nhóm Đã Gắn</span>
                     <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #fef3c7; color: #d97706;">
-                        <i class="fa-solid fa-chalkboard-user fs-5"></i>
+                        <i class="fa-solid fa-graduation-cap fs-5"></i>
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2 mt-auto">
-                    <span class="fs-3 fw-bold text-dark lh-1">{{ max($hoiDongs->count() * 5, 5) }}</span>
-                    <span class="small text-muted fw-medium">lượt thành viên</span>
+                    <span class="fs-3 fw-bold text-dark lh-1">{{ $hoiDongs->sum(fn($h) => $h->hoSoBaoVes->count()) }}</span>
+                    <span class="small text-muted fw-medium">đề tài bảo vệ</span>
                 </div>
             </div>
         </div>
@@ -72,14 +93,14 @@
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card h-100 border border-light-subtle rounded-3 shadow-sm bg-white p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Phòng Bảo Vệ</span>
+                    <span class="text-uppercase fw-semibold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Chưa Công Bố (Nháp)</span>
                     <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #ede9fe; color: #7c3aed;">
-                        <i class="fa-solid fa-door-open fs-5"></i>
+                        <i class="fa-solid fa-file-pen fs-5"></i>
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2 mt-auto">
-                    <span class="fs-3 fw-bold text-primary lh-1">{{ max($hoiDongs->pluck('DiaDiem')->filter()->unique()->count(), 1) }}</span>
-                    <span class="small text-muted fw-medium">phòng hội đồng</span>
+                    <span class="fs-3 fw-bold text-primary lh-1">{{ $hoiDongs->where('TrangThaiCongBo', '!=', 'Đã công bố')->count() }}</span>
+                    <span class="small text-muted fw-medium">đang chuẩn bị</span>
                 </div>
             </div>
         </div>
@@ -87,32 +108,45 @@
 
     <!-- Filter Bar -->
     <div class="card border-0 shadow-sm rounded-3 mb-4 p-3 bg-white">
-        <form method="GET" action="{{ route('truongkhoa.hoidong.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
-            <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
-                <div class="input-group" style="min-width: 240px; flex: 1;">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm tên hội đồng, mã HĐ, địa điểm...">
-                </div>
-                <select name="TrangThai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
-                    <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Chưa diễn ra" {{ request('TrangThai') === 'Chưa diễn ra' ? 'selected' : '' }}>🔵 Chưa diễn ra / Sắp diễn ra</option>
-                    <option value="Đang diễn ra" {{ request('TrangThai') === 'Đang diễn ra' ? 'selected' : '' }}>🟢 Đang diễn ra</option>
-                    <option value="Đã kết thúc" {{ request('TrangThai') === 'Đã kết thúc' ? 'selected' : '' }}>⚪ Đã kết thúc</option>
-                </select>
-                @if(request('search') || request('TrangThai'))
-                    <a href="{{ route('truongkhoa.hoidong.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
-                @endif
+        <form method="GET" action="{{ route('truongkhoa.hoidong.index') }}" class="d-flex flex-wrap align-items-center gap-2 w-100">
+            <div class="input-group" style="min-width: 240px; flex: 2;">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0" placeholder="Tìm tên Hội đồng, mã HĐ, địa điểm, số QĐ...">
             </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
-                <a href="{{ route('truongkhoa.hoidong.create') }}" class="btn btn-success shadow-xs fw-semibold d-inline-flex align-items-center">
-                    <i class="fa-solid fa-plus me-2"></i> Thêm Hội Đồng
+
+            <select name="MaHocKy" class="form-select" style="min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                <option value="">-- Tất cả Học kỳ --</option>
+                @foreach($hocKys as $hk)
+                <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
+                    {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                </option>
+                @endforeach
+            </select>
+
+            <select name="TrangThaiCongBo" class="form-select" style="min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                <option value="">-- Trạng thái công bố --</option>
+                <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>🟢 Đã công bố</option>
+                <option value="Chưa công bố" {{ request('TrangThaiCongBo') === 'Chưa công bố' ? 'selected' : '' }}>🟡 Chưa công bố (Nháp)</option>
+                <option value="Đã thu hồi" {{ request('TrangThaiCongBo') === 'Đã thu hồi' ? 'selected' : '' }}>🔴 Đã thu hồi</option>
+            </select>
+
+            <select name="TrangThai" class="form-select" style="min-width: 160px; flex: 1;" onchange="this.form.submit()">
+                <option value="">-- Trạng thái diễn ra --</option>
+                <option value="Chưa diễn ra" {{ request('TrangThai') === 'Chưa diễn ra' ? 'selected' : '' }}>Chưa diễn ra</option>
+                <option value="Đang diễn ra" {{ request('TrangThai') === 'Đang diễn ra' ? 'selected' : '' }}>Đang diễn ra</option>
+                <option value="Đã kết thúc" {{ request('TrangThai') === 'Đã kết thúc' ? 'selected' : '' }}>Đã kết thúc</option>
+            </select>
+
+            @if(request('search') || request('TrangThai') || request('TrangThaiCongBo') || request('MaHocKy'))
+                <a href="{{ route('truongkhoa.hoidong.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center">
+                    <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                 </a>
-            </div>
+            @endif
         </form>
     </div>
 
     <!-- Main Table Card -->
-    <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden">
         <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
             <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Danh Sách Hội Đồng Thuộc {{ $khoa->TenKhoa ?? 'Khoa' }}</span>
             <span class="small text-muted">Tổng số: <strong>{{ $hoiDongs->total() }}</strong> hội đồng</span>
@@ -120,15 +154,16 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
-                            <th class="ps-3" style="width: 140px;">MÃ HỘI ĐỒNG</th>
-                            <th style="min-width: 230px;">TÊN HỘI ĐỒNG &amp; ĐỊA ĐIỂM</th>
-                            <th style="min-width: 200px;">THỜI GIAN DIỄN RA</th>
-                            <th style="min-width: 270px;">THÀNH VIÊN HỘI ĐỒNG</th>
-                            <th class="text-center" style="width: 140px;">NHÓM BẢO VỆ</th>
-                            <th class="text-center" style="width: 140px;">TRẠNG THÁI</th>
-                            <th class="pe-3 text-center" style="width: 100px;">THAO TÁC</th>
+                            <th class="ps-3" style="width: 110px;">MÃ HĐ</th>
+                            <th style="min-width: 250px;">TÊN HỘI ĐỒNG &amp; VĂN BẢN QUYẾT ĐỊNH</th>
+                            <th style="min-width: 180px;">THỜI GIAN &amp; PHÒNG</th>
+                            <th style="min-width: 240px;">THÀNH VIÊN HỘI ĐỒNG</th>
+                            <th class="text-center" style="width: 120px;">ĐỀ TÀI / NHÓM</th>
+                            <th class="text-center" style="width: 140px;">CÔNG BỐ</th>
+                            <th class="text-center" style="width: 130px;">DIỄN RA</th>
+                            <th class="pe-3 text-center" style="width: 180px;">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -136,27 +171,34 @@
                         <tr>
                             {{-- Mã HĐ --}}
                             <td class="ps-3 py-3">
-                                <span class="badge bg-light text-primary border fw-bold px-2 py-1">{{ $hd->MaHoiDong }}</span>
+                                <span class="badge bg-light text-primary border fw-bold px-2 py-1 font-monospace">{{ $hd->MaHoiDong }}</span>
                             </td>
 
-                            {{-- Tên Hội đồng & Địa điểm --}}
+                            {{-- Tên Hội đồng & Văn bản Quyết định --}}
                             <td class="py-3">
                                 <div class="fw-bold text-dark fs-6">{{ $hd->TenHoiDong }}</div>
-                                <div class="small text-muted mt-1">
-                                    <i class="fa-solid fa-location-dot me-2 text-danger"></i>
-                                    {{ $hd->DiaDiem ?? 'Phòng B.304' }}
+                                <div class="small text-muted mt-1 d-flex flex-wrap gap-2 align-items-center">
+                                    <span><i class="fa-solid fa-calendar me-1 text-secondary"></i>{{ $hd->hocKy?->TenHocKy ?? $hd->MaHocKy }}</span>
+                                    <span>• Đợt: <strong>{{ $hd->DotBaoVe ?? '1' }}</strong></span>
+                                    @if($hd->SoQuyetDinh)
+                                    <span class="badge bg-light text-dark border">Số QĐ: {{ $hd->SoQuyetDinh }}</span>
+                                    @endif
                                 </div>
                             </td>
 
-                            {{-- Thời gian --}}
+                            {{-- Thời gian & Phòng --}}
                             <td class="py-3">
-                                <div class="small fw-medium text-dark">
-                                    <i class="fa-regular fa-clock me-2 text-primary"></i>
-                                    {{ \Carbon\Carbon::parse($hd->ThoiGianBatDau)->format('H:i d/m/Y') }}
+                                <div class="small fw-semibold text-dark">
+                                    <i class="fa-regular fa-calendar-days me-1 text-primary"></i>
+                                    {{ $hd->NgayBaoVe ? \Carbon\Carbon::parse($hd->NgayBaoVe)->format('d/m/Y') : (\Carbon\Carbon::parse($hd->ThoiGianBatDau)->format('d/m/Y')) }}
                                 </div>
                                 <div class="small text-muted mt-1">
-                                    <i class="fa-solid fa-arrow-right-long me-2 text-muted"></i>
-                                    {{ \Carbon\Carbon::parse($hd->ThoiGianKetThuc)->format('H:i d/m/Y') }}
+                                    <i class="fa-regular fa-clock me-1"></i>
+                                    {{ \Carbon\Carbon::parse($hd->ThoiGianBatDau)->format('H:i') }} - {{ \Carbon\Carbon::parse($hd->ThoiGianKetThuc)->format('H:i') }}
+                                </div>
+                                <div class="small text-danger mt-1">
+                                    <i class="fa-solid fa-location-dot me-1"></i>
+                                    {{ $hd->DiaDiem ?? 'Chưa xếp phòng' }}
                                 </div>
                             </td>
 
@@ -177,52 +219,106 @@
                                 </div>
                             </td>
 
-                            {{-- Nhóm bảo vệ --}}
+                            {{-- Đề tài / Nhóm bảo vệ --}}
                             <td class="text-center py-3">
                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
-                                    <i class="fa-solid fa-users me-2"></i>{{ $hd->hoSoBaoVes->count() }} nhóm
+                                    <i class="fa-solid fa-users me-1"></i>{{ $hd->hoSoBaoVes->count() }} đề tài
                                 </span>
                             </td>
 
-                            {{-- Trạng thái --}}
+                            {{-- Trạng thái công bố --}}
                             <td class="text-center py-3">
-                                @php
-                                    $st = mb_strtolower(trim((string)$hd->TrangThai));
-                                    $isEnded = in_array($st, ['đã kết thúc', 'da ket thuc', 'completed', 'ended']);
-                                    $isRunning = in_array($st, ['đang diễn ra', 'dang dien ra', 'active', 'running']);
-                                @endphp
-                                @if($isEnded)
-                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2 fw-medium">
-                                        Đã kết thúc
-                                    </span>
-                                @elseif($isRunning)
+                                @if($hd->TrangThaiCongBo === 'Đã công bố')
                                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
-                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #16a34a;"></i> Đang diễn ra
+                                        <i class="fa-solid fa-circle-check me-1"></i> Đã công bố
+                                    </span>
+                                @elseif($hd->TrangThaiCongBo === 'Đã thu hồi')
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-arrow-rotate-left me-1"></i> Đã thu hồi
                                     </span>
                                 @else
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 fw-medium">
-                                        <i class="fa-solid fa-circle me-2" style="font-size: 0.45rem; color: #0284c7;"></i> Sắp diễn ra
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2 fw-semibold">
+                                        <i class="fa-solid fa-pen-ruler me-1"></i> Bản nháp
                                     </span>
+                                @endif
+                            </td>
+
+                            {{-- Trạng thái diễn ra --}}
+                            <td class="text-center py-3">
+                                @if($hd->TrangThai === 'Đã kết thúc')
+                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">Đã kết thúc</span>
+                                @elseif($hd->TrangThai === 'Đang diễn ra')
+                                    <span class="badge bg-success text-white rounded-pill px-2 py-1 small">Đang chấm</span>
+                                @else
+                                    <span class="badge bg-info-subtle text-info border rounded-pill px-2 py-1 small">Chưa diễn ra</span>
                                 @endif
                             </td>
 
                             {{-- Thao tác --}}
                             <td class="pe-3 text-center py-3">
-                                <div class="d-flex justify-content-center gap-1">
-                                    <a href="{{ route('truongkhoa.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" title="Xem chi tiết & Phân công nhóm">
-                                        <i class="fa-solid fa-users-gear me-1"></i> Phân công
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <a href="{{ route('truongkhoa.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Xem chi tiết & Điều chỉnh">
+                                        <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                     </a>
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light border rounded-circle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('truongkhoa.hoidong.previewPdf', $hd->MaHoiDong) }}" target="_blank">
+                                                    <i class="fa-solid fa-file-pdf text-danger me-2"></i>Xem trước PDF Quyết định
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('truongkhoa.hoidong.downloadPdf', $hd->MaHoiDong) }}">
+                                                    <i class="fa-solid fa-download text-primary me-2"></i>Tải file PDF
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            @if($hd->TrangThaiCongBo !== 'Đã công bố')
+                                            <li>
+                                                <form action="{{ route('truongkhoa.hoidong.congBo', $hd->MaHoiDong) }}" method="POST" onsubmit="return confirm('Xác nhận công bố chính thức Hội đồng này? Văn bản PDF sẽ được ban hành và gửi thông báo tới các bên liên quan.');">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item text-success fw-semibold">
+                                                        <i class="fa-solid fa-bullhorn me-2"></i>Công bố chính thức
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            @else
+                                            <li>
+                                                <form action="{{ route('truongkhoa.hoidong.thuHoiCongBo', $hd->MaHoiDong) }}" method="POST" onsubmit="return confirm('Xác nhận thu hồi công bố Hội đồng này để điều chỉnh?');">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item text-warning fw-semibold">
+                                                        <i class="fa-solid fa-arrow-rotate-left me-2"></i>Thu hồi công bố
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            @endif
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{{ route('truongkhoa.hoidong.destroy', $hd->MaHoiDong) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa Hội đồng này? Các đề tài sẽ được giải phóng trở về trạng thái đủ điều kiện bảo vệ.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="dropdown-item text-danger">
+                                                        <i class="fa-solid fa-trash me-2"></i>Xóa Hội đồng
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="8" class="text-center py-5">
                                 <div class="empty-state-box">
                                     <i class="fa-solid fa-landmark text-muted mb-3" style="font-size: 2.5rem;"></i>
                                     <h6 class="fw-bold text-secondary">Chưa có Hội đồng nào được thành lập trong Khoa</h6>
                                     <p class="small text-muted mb-3">Trưởng khoa có thẩm quyền ra quyết định thành lập các Hội đồng đánh giá khóa luận tốt nghiệp.</p>
-                                    <a href="{{ route('truongkhoa.hoidong.create') }}" class="btn btn-primary btn-sm rounded-pill px-4">Thành Lập Hội Đồng Mới</a>
+                                    <a href="{{ route('truongkhoa.hoidong.create') }}" class="btn btn-primary btn-sm rounded-pill px-4">Lập Hội Đồng Mới Ngay</a>
                                 </div>
                             </td>
                         </tr>

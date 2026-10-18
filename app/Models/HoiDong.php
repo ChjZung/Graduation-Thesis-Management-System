@@ -26,6 +26,17 @@ class HoiDong extends Model
         'MaDeTai',
         'MaGV',
         'MaHocKy',
+        'MaKhoa',
+        'MaNganh',
+        'DotBaoVe',
+        'SoQuyetDinh',
+        'NgayBanHanh',
+        'NguoiKy',
+        'ChucVuNguoiKy',
+        'FileQuyetDinh',
+        'TrangThaiCongBo',
+        'NgayCongBo',
+        'NguoiCongBo',
     ];
 
     public $timestamps = true;
@@ -36,7 +47,19 @@ class HoiDong extends Model
             'ThoiGianBatDau' => 'datetime',
             'ThoiGianKetThuc' => 'datetime',
             'NgayBaoVe' => 'date',
+            'NgayBanHanh' => 'date',
+            'NgayCongBo' => 'datetime',
         ];
+    }
+
+    public function khoa()
+    {
+        return $this->belongsTo(Khoa::class, 'MaKhoa', 'MaKhoa');
+    }
+
+    public function nganh()
+    {
+        return $this->belongsTo(Nganh::class, 'MaNganh', 'MaNganh');
     }
 
     public function deTai()

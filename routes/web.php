@@ -185,11 +185,14 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::post('/duyet-dangky-detai/gan-ngoai-le', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'assignTopicForNgoaiLe'])->name('admin.duyet_dangky.assignTopicForNgoaiLe');
     Route::post('/duyet-dangky-detai/cong-bo-chinh-thuc', [\App\Http\Controllers\Admin\DuyetDangKyDeTaiController::class, 'publishOfficialList'])->name('admin.duyet_dangky.publishOfficialList');
 
-    // ── GĐ6: Hội Đồng & Hồ Sơ Bảo Vệ ──
+    // ── Quản Lý Hội Đồng Bảo Vệ (Giáo vụ: Theo dõi, Tra cứu, Tải văn bản & Xuất báo cáo) ──
+    Route::get('/hoi-dong/export-report', [\App\Http\Controllers\Admin\HoiDongController::class, 'exportReport'])->name('admin.hoidong.exportReport');
     Route::get('/hoi-dong', [\App\Http\Controllers\Admin\HoiDongController::class, 'index'])->name('admin.hoidong.index');
+    Route::get('/hoi-dong/{id}', [\App\Http\Controllers\Admin\HoiDongController::class, 'show'])->name('admin.hoidong.show');
+    Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\Admin\HoiDongController::class, 'previewPdf'])->name('admin.hoidong.previewPdf');
+    Route::get('/hoi-dong/{id}/download-pdf', [\App\Http\Controllers\Admin\HoiDongController::class, 'downloadPdf'])->name('admin.hoidong.downloadPdf');
     Route::get('/hoi-dong/create', [\App\Http\Controllers\Admin\HoiDongController::class, 'create'])->name('admin.hoidong.create');
     Route::post('/hoi-dong', [\App\Http\Controllers\Admin\HoiDongController::class, 'store'])->name('admin.hoidong.store');
-    Route::get('/hoi-dong/{id}', [\App\Http\Controllers\Admin\HoiDongController::class, 'show'])->name('admin.hoidong.show');
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\Admin\HoiDongController::class, 'updateTrangThai'])->name('admin.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\Admin\HoiDongController::class, 'phanCongNhom'])->name('admin.hoidong.phanCongNhom');
     Route::post('/hoi-dong/{id}/huy-phan-cong/{maHoSo}', [\App\Http\Controllers\Admin\HoiDongController::class, 'huyPhanCongNhom'])->name('admin.hoidong.huyPhanCongNhom');
@@ -304,6 +307,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     // ── GĐ6: Chấm Điểm Hội Đồng ──
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
     Route::post('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store'])->name('giangvien.chamdiem.store');
+    Route::post('/chamdiem/yeu-cau-mo-khoa', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'yeuCauMoKhoa'])->name('giangvien.chamdiem.yeuCauMoKhoa');
     Route::get('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index']);
     Route::post('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store']);
 
@@ -323,6 +327,11 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/xac-nhan-bao-ve/{id}', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'show'])->name('giangvien.xacnhan_baove.show');
     Route::post('/xac-nhan-bao-ve/{id}', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'xacNhan'])->name('giangvien.xacnhan_baove.xacNhan');
     Route::post('/xac-nhan-bao-ve/{id}/yeu-cau-chinh-sua', [\App\Http\Controllers\GiangVien\XacNhanBaoVeController::class, 'yeuCauChinhSua'])->name('giangvien.xacnhan_baove.yeuCauChinhSua');
+
+    // Kiểm tra & Đánh giá Báo cáo hoàn thiện sau bảo vệ
+    Route::get('/kiem-tra-bao-cao-sau-bao-ve', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'index'])->name('giangvien.kiemtra_baocao_sau_baove.index');
+    Route::get('/kiem-tra-bao-cao-sau-bao-ve/{id}', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'show'])->name('giangvien.kiemtra_baocao_sau_baove.show');
+    Route::post('/kiem-tra-bao-cao-sau-bao-ve/{id}/danh-gia', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'danhGia'])->name('giangvien.kiemtra_baocao_sau_baove.danhgia');
 
     // Thông báo cho Giảng viên (xem, soạn và gửi đến nhóm hướng dẫn)
     Route::get('/thongbao', [\App\Http\Controllers\GiangVien\ThongBaoController::class, 'index'])->name('giangvien.thongbao.index');
@@ -387,6 +396,9 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('/ho-so-bao-ve', [\App\Http\Controllers\SinhVien\HoSoBaoVeController::class, 'store'])->name('sinhvien.hoso.store');
     Route::post('/ho-so-bao-ve/nop-ban-hoan-chinh', [\App\Http\Controllers\SinhVien\HoSoBaoVeController::class, 'nopBanHoanChinh'])->name('sinhvien.hoso.nopBanHoanChinh');
     Route::get('/ket-qua', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'index'])->name('sinhvien.ketqua.index');
+    Route::get('/ket-qua/hoan-thien-bao-cao', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'hoanThienBaoCao'])->name('sinhvien.ketqua.hoanthien');
+    Route::post('/ket-qua/nop-bao-cao-chinh-sua', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopBaoCaoChinhSua'])->name('sinhvien.ketqua.nopBaoCaoChinhSua');
+    Route::post('/ket-qua/nop-hoan-chinh', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopKetQuaHoanChinh'])->name('sinhvien.ketqua.nopKetQuaHoanChinh');
 
     // Thông báo
     Route::get('/thongbao', [\App\Http\Controllers\SinhVien\ThongBaoController::class, 'index'])->name('sinhvien.thongbao.index');
@@ -477,20 +489,32 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     // Kế hoạch khóa luận cấp Khoa
     Route::get('/ke-hoach', [\App\Http\Controllers\TruongKhoa\KeHoachController::class, 'index'])->name('truongkhoa.kehoach.index');
 
-    // Hội đồng bảo vệ (Trưởng khoa thành lập & phân công nhóm)
+    // Hội đồng bảo vệ (Trưởng khoa thành lập, phân công, công bố & văn bản PDF)
     Route::get('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'index'])->name('truongkhoa.hoidong.index');
     Route::get('/hoi-dong/create', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'create'])->name('truongkhoa.hoidong.create');
     Route::post('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'store'])->name('truongkhoa.hoidong.store');
     Route::get('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'show'])->name('truongkhoa.hoidong.show');
+    Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewPdf'])->name('truongkhoa.hoidong.previewPdf');
+    Route::get('/hoi-dong/{id}/download-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'downloadPdf'])->name('truongkhoa.hoidong.downloadPdf');
+    Route::post('/hoi-dong/{id}/cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'congBo'])->name('truongkhoa.hoidong.congBo');
+    Route::post('/hoi-dong/{id}/thu-hoi-cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'thuHoiCongBo'])->name('truongkhoa.hoidong.thuHoiCongBo');
+    Route::post('/hoi-dong/{id}/update-quyet-dinh', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateQuyetDinh'])->name('truongkhoa.hoidong.updateQuyetDinh');
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateTrangThai'])->name('truongkhoa.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'phanCongNhom'])->name('truongkhoa.hoidong.phanCongNhom');
     Route::post('/hoi-dong/{id}/huy-phan-cong/{maHoSo}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'huyPhanCongNhom'])->name('truongkhoa.hoidong.huyPhanCongNhom');
     Route::post('/hoi-dong/{id}/them-thanh-vien', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'themThanhVien'])->name('truongkhoa.hoidong.themThanhVien');
     Route::post('/hoi-dong/{id}/doi-vai-tro/{maGV}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'doiVaiTroThanhVien'])->name('truongkhoa.hoidong.doiVaiTroThanhVien');
     Route::delete('/hoi-dong/{id}/xoa-thanh-vien/{maGV}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'xoaThanhVien'])->name('truongkhoa.hoidong.xoaThanhVien');
+    Route::delete('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'destroy'])->name('truongkhoa.hoidong.destroy');
 
     // Kết quả khóa luận & Bảng điểm
     Route::get('/ket-qua', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'index'])->name('truongkhoa.ketqua.index');
+    Route::get('/ket-qua/hoidong/{id}', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'showHoiDong'])->name('truongkhoa.ketqua.hoidong');
+    Route::post('/ket-qua/xac-nhan', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'xacNhanKetQua'])->name('truongkhoa.ketqua.xacnhan');
+    Route::post('/ket-qua/cong-bo', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'congBoKetQua'])->name('truongkhoa.ketqua.congbo');
+    Route::post('/ket-qua/nhac-nho', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'nhacNhoChamDiem'])->name('truongkhoa.ketqua.nhacnho');
+    Route::post('/ket-qua/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'yeuCauChinhSua'])->name('truongkhoa.ketqua.yeucauchinhsua');
+    Route::post('/ket-qua/mo-khoa-phieu', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'moKhoaPhieu'])->name('truongkhoa.ketqua.mokhoaphieu');
     Route::get('/ket-qua/export', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'exportExcel'])->name('truongkhoa.ketqua.export');
 
     // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)

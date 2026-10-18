@@ -883,19 +883,12 @@ class DuyetBaoCaoController extends Controller
             );
 
             // 6. Gửi thông báo cho toàn bộ thành viên nhóm
-            foreach ($nhom->thanhViens as $tv) {
-                if ($tv->sinhVien && $tv->sinhVien->MaTK) {
-                    \App\Models\ThongBao::create([
-                        'TieuDe' => 'Cổng nộp hồ sơ bảo vệ đã mở',
-                        'NoiDung' => "Giảng viên hướng dẫn {$nguoiXacNhan} đã xác nhận nhóm {$nhom->TenNhom} hoàn thành giai đoạn thực hiện đề tài. Cổng nộp hồ sơ bảo vệ chính thức đã mở, các bạn hãy vào khu vực Hồ sơ bảo vệ để nộp báo cáo và các liên kết dự án.",
-                        'LoaiThongBao' => 'Nhóm',
-                        'MaNguoiGui' => $user->MaTK,
-                        'MaNguoiNhan' => $tv->sinhVien->MaTK,
-                        'DaDoc' => false,
-                        'NgayGui' => now(),
-                    ]);
-                }
-            }
+            \App\Services\ThongBaoService::guiDenNhom(
+                $nhom->MaNhom,
+                'Cổng nộp hồ sơ bảo vệ đã mở',
+                "Giảng viên hướng dẫn {$nguoiXacNhan} đã xác nhận nhóm {$nhom->TenNhom} hoàn thành giai đoạn thực hiện đề tài. Cổng nộp hồ sơ bảo vệ chính thức đã mở, các bạn hãy vào khu vực Hồ sơ bảo vệ để nộp báo cáo và các liên kết dự án.",
+                'Nhóm'
+            );
         });
 
         return redirect()->back()->with('success', "Đã xác nhận hoàn thành giai đoạn thực hiện cho nhóm '{$nhom->TenNhom}'! Cổng nộp hồ sơ bảo vệ đã được mở cho sinh viên.");
@@ -925,6 +918,10 @@ class DuyetBaoCaoController extends Controller
             return redirect()->back()->with('error', "Không thể thu hồi do sinh viên đã nộp hồ sơ bảo vệ (trạng thái: {$hoSo->TrangThai}).");
         }
 
+        if ($hoSo && $hoSo->TrangThai === 'Chưa nộp') {
+            $hoSo->delete();
+        }
+
         $tienDo = TienDoNghiepVuKhoaLuan::where('MaNhom', $nhom->MaNhom)->first();
         if ($tienDo) {
             $tienDo->update([
@@ -935,6 +932,28 @@ class DuyetBaoCaoController extends Controller
 
         BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->where('LanBaoCao', 5)->delete();
 
-        return redirect()->back()->with('success', "Đã thu hồi xác nhận giai đoạn nộp hồ sơ bảo vệ của nhóm '{$nhom->TenNhom}'. Nhóm sẽ quay lại trạng thái hoàn thiện tiến độ.");
+        // Đặt lại giai đoạn 6 sang CHUA_MO và giai đoạn 5 sang DANG_THUC_HIEN
+        $gd6 = GiaiDoanThucHien::where('MaDeTai', $deTai->MaDeTai)->where('ThuTu', 6)->first();
+        if ($gd6) {
+            $gd6->update(['TrangThai' => 'CHUA_MO']);
+        }
+        $gd5 = GiaiDoanThucHien::where('MaDeTai', $deTai->MaDeTai)->where('ThuTu', 5)->first();
+        if ($gd5) {
+            $gd5->update(['TrangThai' => 'DANG_THUC_HIEN']);
+        }
+
+        $nguoiXacNhan = ($giangVien->HocHam ? $giangVien->HocHam . '.' : '') . ($giangVien->HocVi ? $giangVien->HocVi . '. ' : '') . $giangVien->HoTen;
+        LichSuChuyenGiaiDoan::create([
+            'MaNhom' => $nhom->MaNhom,
+            'GiaiDoanTruoc' => 6,
+            'GiaiDoanSau' => 5,
+            'TrangThaiTruoc' => 'DANG_THUC_HIEN',
+            'TrangThaiSau' => 'DANG_THUC_HIEN',
+            'HanhDong' => 'GVHD thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ',
+            'NguoiThucHien' => $nguoiXacNhan,
+            'LyDo' => $request->input('LyDo', 'GVHD thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ để nhóm hoàn thiện thêm nội dung đề tài.'),
+        ]);
+
+        return redirect()->back()->with('success', "Đã thu hồi xác nhận giai đoạn nộp hồ sơ bảo vệ của nhóm '{$nhom->TenNhom}'. Nhóm đã quay lại Giai đoạn 5 (hoàn thiện tiến độ).");
     }
 }

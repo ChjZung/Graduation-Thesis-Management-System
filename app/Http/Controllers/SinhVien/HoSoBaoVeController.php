@@ -80,7 +80,14 @@ class HoSoBaoVeController extends Controller
             'deTai.giangVien'
         ])->where('MaNhom', $nhom->MaNhom)->first() : null;
 
-        return view('sinhvien.hoso_baove.index', compact('sinhVien', 'memberships', 'nhom', 'hoSo', 'moc5Dat', 'duDieuKien'));
+        $isLeader = false;
+        if ($nhom) {
+            $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV)
+                || ($nhom->MaTruongNhom === $sinhVien->MaSV)
+                || ($selectedMembership && mb_stripos($selectedMembership->VaiTro, 'trưởng') !== false);
+        }
+
+        return view('sinhvien.hoso_baove.index', compact('sinhVien', 'memberships', 'nhom', 'hoSo', 'moc5Dat', 'duDieuKien', 'isLeader'));
     }
 
     /**
@@ -139,17 +146,17 @@ class HoSoBaoVeController extends Controller
             $tongDot = $dotNops->count();
             $dotHoanThanh = $dotNops->filter(function ($dot) {
                 if ($dot->TrangThai === 'HOAN_THANH') return true;
-                return \App\Models\PhienBanBaoCao::where('MaDotNop', $dot->MaDotNop)
-                    ->where('TrangThaiDanhGia', 'Đạt')
+                return \App\Models\KhoiBaoCaoTienDo::where('MaDotNop', $dot->MaDotNop)
+                    ->where('TrangThai', 'Đạt')
                     ->exists();
             })->count();
 
             $tiLe = $tongDot > 0 ? round(($dotHoanThanh / $tongDot) * 100) : 0;
 
-            if ($dotHoanThanh >= $tongDot && $tongDot > 0) {
+            if ($dotHoanThanh >= $tongDot && $tongDot > 0 && ($tienDo && $tienDo->GiaiDoanHienTai >= 6)) {
                 return [
                     'du_dieu_kien' => true,
-                    'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo tiến độ ({$tiLe}%).",
+                    'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo tiến độ ({$tiLe}%) và GVHD đã xác nhận mở cổng nộp bảo vệ.",
                     'ti_le_hoan_thanh' => $tiLe,
                     'dot_hoan_thanh' => $dotHoanThanh,
                     'tong_dot' => $tongDot,
@@ -159,7 +166,7 @@ class HoSoBaoVeController extends Controller
 
             return [
                 'du_dieu_kien' => false,
-                'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo ({$tiLe}%). Chờ hoàn tất hoặc GVHD xác nhận mở cổng nộp hồ sơ bảo vệ.",
+                'ly_do' => "Nhóm đã hoàn thành {$dotHoanThanh}/{$tongDot} đợt báo cáo ({$tiLe}%). Đang chờ Giảng viên hướng dẫn bấm nút 'Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ' trên hệ thống.",
                 'ti_le_hoan_thanh' => $tiLe,
                 'dot_hoan_thanh' => $dotHoanThanh,
                 'tong_dot' => $tongDot,
@@ -173,10 +180,10 @@ class HoSoBaoVeController extends Controller
             $tongGd = $giaiDoans->count();
             $gdHoanThanh = $giaiDoans->where('TrangThai', 'HOAN_THANH')->count();
             $tiLe = $tongGd > 0 ? round(($gdHoanThanh / $tongGd) * 100) : 0;
-            if ($gdHoanThanh >= $tongGd && $tongGd > 0) {
+            if ($gdHoanThanh >= $tongGd && $tongGd > 0 && ($tienDo && $tienDo->GiaiDoanHienTai >= 6)) {
                 return [
                     'du_dieu_kien' => true,
-                    'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn thực hiện đề tài.",
+                    'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn thực hiện đề tài và GVHD đã xác nhận mở cổng nộp bảo vệ.",
                     'ti_le_hoan_thanh' => $tiLe,
                     'dot_hoan_thanh' => $gdHoanThanh,
                     'tong_dot' => $tongGd,
@@ -185,7 +192,7 @@ class HoSoBaoVeController extends Controller
             }
             return [
                 'du_dieu_kien' => false,
-                'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn ({$tiLe}%). Chờ GVHD xác nhận mở cổng nộp hồ sơ bảo vệ.",
+                'ly_do' => "Nhóm đã hoàn thành {$gdHoanThanh}/{$tongGd} giai đoạn ({$tiLe}%). Đang chờ Giảng viên hướng dẫn bấm nút 'Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ' trên hệ thống.",
                 'ti_le_hoan_thanh' => $tiLe,
                 'dot_hoan_thanh' => $gdHoanThanh,
                 'tong_dot' => $tongGd,
@@ -222,7 +229,16 @@ class HoSoBaoVeController extends Controller
             return back()->with('error', 'Bạn không phải là thành viên hợp lệ của nhóm này.');
         }
 
-        $nhom = Nhom::with(['deTai.giangVien'])->findOrFail($request->MaNhom);
+        $nhom = Nhom::with(['deTai.giangVien', 'truongNhom'])->findOrFail($request->MaNhom);
+
+        // Chỉ có Nhóm trưởng mới có quyền nộp / cập nhật hồ sơ bảo vệ
+        $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV)
+            || ($nhom->MaTruongNhom === $sinhVien->MaSV)
+            || ($thanhVienRecord && mb_stripos($thanhVienRecord->VaiTro, 'trưởng') !== false);
+
+        if (!$isLeader) {
+            return back()->with('error', 'Chỉ có Nhóm trưởng mới có quyền đại diện nhóm nộp hoặc cập nhật hồ sơ bảo vệ.');
+        }
 
         if (!$nhom->deTai) {
             return back()->with('error', 'Nhóm của bạn chưa có đề tài được duyệt.');
@@ -249,11 +265,16 @@ class HoSoBaoVeController extends Controller
             'LinkDeploy'        => 'nullable|required_if:CoTrienKhai,co|url|max:500',
             'GhiChuDeploy'      => 'nullable|string|max:1000',
             'LyDoKhongDeploy'   => 'nullable|required_if:CoTrienKhai,khong|string|max:1000',
-            'LienKetKhac'       => 'nullable|array',
+            'LienKetKhac'           => 'nullable|array',
+            'LienKetKhac.*.loai'    => 'nullable|in:link,file',
             'LienKetKhac.*.tieu_de' => 'nullable|string|max:150',
             'LienKetKhac.*.url'     => 'nullable|url|max:500',
+            'LienKetKhac.*.file'    => 'nullable|file|mimes:ppt,pptx,pdf,doc,docx,zip,rar,mp4,png,jpg,jpeg|max:51200',
+            'LienKetKhac.*.file_path' => 'nullable|string|max:500',
+            'LienKetKhac.*.ten_file' => 'nullable|string|max:255',
+            'LienKetKhac.*.dung_luong' => 'nullable|numeric',
             'LienKetKhac.*.mo_ta'   => 'nullable|string|max:300',
-            'GhiChuSinhVien'    => 'nullable|string|max:1000',
+            'GhiChuSinhVien'        => 'nullable|string|max:1000',
         ];
 
         // Nếu là nộp lần đầu thì FileToanVan, MinhChungTurnitin và TyLeTrungLap bắt buộc
@@ -284,20 +305,53 @@ class HoSoBaoVeController extends Controller
             'TyLeTrungLap.required'       => 'Vui lòng nhập tỷ lệ trùng lặp Turnitin (%).',
             'TyLeTrungLap.numeric'        => 'Tỷ lệ trùng lặp Turnitin phải là số.',
             'TyLeTrungLap.max'            => 'Tỷ lệ trùng lặp không thể vượt quá 100%.',
+            'LienKetKhac.*.file.mimes'    => 'Tệp đính kèm bổ sung phải thuộc các định dạng cho phép: PPT, PPTX, PDF, DOC, DOCX, ZIP, RAR, MP4, ảnh.',
+            'LienKetKhac.*.file.max'      => 'Dung lượng tệp đính kèm bổ sung không được vượt quá 50MB.',
+            'LienKetKhac.*.url.url'       => 'Đường dẫn liên kết bổ sung phải là URL hợp lệ (http:// hoặc https://).',
         ];
 
         $request->validate($rules, $messages);
 
-        // Chuẩn hóa danh sách liên kết bổ sung
+        // Chuẩn hóa danh sách liên kết / tệp bổ sung (Link hoặc File PPT, PDF, Video...)
         $lienKetKhacList = [];
         if ($request->has('LienKetKhac') && is_array($request->LienKetKhac)) {
-            foreach ($request->LienKetKhac as $lk) {
-                if (!empty($lk['url']) && !empty($lk['tieu_de'])) {
-                    $lienKetKhacList[] = [
-                        'tieu_de' => trim($lk['tieu_de']),
-                        'url'     => trim($lk['url']),
-                        'mo_ta'   => trim($lk['mo_ta'] ?? ''),
-                    ];
+            foreach ($request->LienKetKhac as $idx => $lk) {
+                $tieuDe = trim($lk['tieu_de'] ?? '');
+                $loai = $lk['loai'] ?? (($request->hasFile("LienKetKhac.{$idx}.file") || !empty($lk['file_path'])) ? 'file' : 'link');
+                $moTa = trim($lk['mo_ta'] ?? '');
+
+                if ($loai === 'file') {
+                    $filePath = $lk['file_path'] ?? null;
+                    $tenFile = $lk['ten_file'] ?? null;
+                    $dungLuong = isset($lk['dung_luong']) ? (int)$lk['dung_luong'] : null;
+
+                    if ($request->hasFile("LienKetKhac.{$idx}.file")) {
+                        $uploaded = $request->file("LienKetKhac.{$idx}.file");
+                        $tenFile = $uploaded->getClientOriginalName();
+                        $filePath = $uploaded->store("hoso/{$nhom->MaNhom}/bo_sung", 'public');
+                        $dungLuong = $uploaded->getSize();
+                    }
+
+                    if (!empty($filePath)) {
+                        $lienKetKhacList[] = [
+                            'loai'       => 'file',
+                            'tieu_de'    => $tieuDe ?: ($tenFile ?: 'Tệp đính kèm'),
+                            'file_path'  => $filePath,
+                            'ten_file'   => $tenFile,
+                            'dung_luong' => $dungLuong,
+                            'mo_ta'      => $moTa,
+                        ];
+                    }
+                } else {
+                    $url = trim($lk['url'] ?? '');
+                    if (!empty($url)) {
+                        $lienKetKhacList[] = [
+                            'loai'    => 'link',
+                            'tieu_de' => $tieuDe ?: 'Đường dẫn liên kết',
+                            'url'     => $url,
+                            'mo_ta'   => $moTa,
+                        ];
+                    }
                 }
             }
         }
@@ -464,49 +518,13 @@ class HoSoBaoVeController extends Controller
     }
 
     /**
-     * Sinh viên nộp bản khóa luận hoàn chỉnh sau khi bảo vệ tại Hội đồng
+     * Sinh viên nộp bản khóa luận hoàn chỉnh sau khi bảo vệ tại Hội đồng (Đã chuyển sang trang Kết quả)
      */
     public function nopBanHoanChinh(Request $request)
     {
-        $request->validate([
-            'MaNhom'        => 'required|string|exists:Nhom,MaNhom',
-            'FileBanChinhSua' => 'required|file|mimes:pdf,doc,docx,zip,rar|max:51200',
-            'GhiChu'        => 'nullable|string|max:500',
-        ], [
-            'FileBanChinhSua.required' => 'Vui lòng đính kèm tệp Báo cáo khóa luận bản hoàn chỉnh sau bảo vệ.',
-            'FileBanChinhSua.mimes'    => 'Tệp phải có định dạng .pdf, .doc, .docx, .zip, .rar.',
-            'FileBanChinhSua.max'      => 'Dung lượng tệp không được vượt quá 50MB.',
-        ]);
-
-        $user = Auth::user();
-        $sinhVien = SinhVien::where('MaTK', $user->MaTK)->firstOrFail();
-        $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
-            ->where('MaNhom', $request->MaNhom)
-            ->where('TrangThai', 'da_tham_gia')
-            ->firstOrFail();
-
-        $hoSo = HoSoBaoVe::where('MaNhom', $thanhVienRecord->MaNhom)->firstOrFail();
-
-        $file = $request->file('FileBanChinhSua');
-        $path = $file->store("hoso/{$hoSo->MaNhom}", 'public');
-
-        $hoSo->update([
-            'FileBanChinhSua'    => $path,
-            'NgayNopBanChinhSua' => now(),
-            'GhiChu'             => $hoSo->GhiChu . ($request->GhiChu ? ' | Bản hoàn chỉnh: ' . $request->GhiChu : ' | Đã nộp bản hoàn chỉnh sau bảo vệ'),
-        ]);
-
-        TepHoSoBaoVe::create([
-            'MaTep'        => IdGenerator::nextTepHoSoBaoVe(),
-            'TenTep'       => $file->getClientOriginalName(),
-            'LoaiTep'      => 'Bản hoàn chỉnh sau bảo vệ',
-            'DuongDanFile' => $path,
-            'PhienBan'     => 'Final',
-            'NgayNop'      => now()->toDateString(),
-            'TrangThai'    => 'Đã nộp',
-            'MaHoSo'       => $hoSo->MaHoSo,
-        ]);
-
-        return redirect()->back()->with('success', 'Nộp bản khóa luận hoàn chỉnh sau bảo vệ thành công! Hồ sơ đã sẵn sàng để Giáo vụ lưu trữ.');
+        return redirect()->route('sinhvien.ketqua.index')->with(
+            'info',
+            'Vui lòng nộp bản khóa luận hoàn chỉnh và các kết quả sau bảo vệ tại trang Kết Quả Khóa Luận.'
+        );
     }
 }

@@ -179,8 +179,9 @@
         ]);
 
         $phanBien = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
-        $isOutlineFinalized = !empty($dt->FileDeCuong) && $phanBien && $phanBien->KetQua === 'Đạt' && !empty($dt->NgayDuyetBM);
-        $isLocked = $isOutlineFinalized || ($dt->TrangThai === 'Hoàn thành');
+        // Đề cương chỉ thực sự kết thúc và khóa nộp khi TBM đã phê duyệt công bố chính thức hoặc hoàn thành đề tài
+        $isOutlineFinalized = in_array($dt->TrangThai, ['Đã công bố', 'Hoàn thành']);
+        $isLocked = $isOutlineFinalized;
 
         $canNopDeCuong = $isProposalApproved && $hasGroupAssigned && !$isLocked;
         $isNopLai = in_array($dt->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
@@ -342,8 +343,8 @@
                             <i class="fa-solid fa-file-arrow-up me-2"></i>{{ $isNopLai ? 'Nộp lại ĐC' : 'Nộp ĐC' }}
                         </a>
                     @elseif($isLocked)
-                        <span class="badge bg-light text-muted border py-2 px-2 rounded-2 small" title="Đã khóa nộp đề cương">
-                            <i class="fa-solid fa-lock text-secondary me-2"></i>Đã khóa
+                        <span class="badge bg-light text-muted border py-2 px-2 rounded-2 small" title="Đề cương đã được duyệt và công bố chính thức">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>Đã duyệt ĐC
                         </span>
                     @elseif(in_array($dt->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt']) && !$hasGroupAssigned)
                         <span class="badge bg-warning-subtle text-warning-emphasis border py-2 px-2 rounded-2 small">

@@ -275,9 +275,15 @@ class ThesisProgressService
                 $dotNopHoanThanh = $oldBaoCaos->where('TrangThai', 'Đạt')->count();
             }
 
-            if ($tongDotNop > 0 && $dotNopHoanThanh >= $tongDotNop) {
+            // Giai đoạn 5 chỉ hoàn thành để chuyển sang Giai đoạn 6 (Bảo vệ) khi:
+            // Hoàn thành các đợt nộp VÀ GVHD xác nhận cho phép nộp hồ sơ bảo vệ
+            $daXacNhanBaoVe = ($tienDo && $tienDo->GiaiDoanHienTai >= 6);
+            if ($tongDotNop > 0 && $dotNopHoanThanh >= $tongDotNop && $daXacNhanBaoVe) {
                 $gd5Dat = true;
-                $gd5Msg = "Hoàn thành toàn bộ {$dotNopHoanThanh}/{$tongDotNop} đợt nộp báo cáo GVHD";
+                $gd5Msg = "Hoàn thành toàn bộ {$dotNopHoanThanh}/{$tongDotNop} đợt nộp và GVHD đã xác nhận cho nộp hồ sơ bảo vệ";
+            } elseif ($tongDotNop > 0 && $dotNopHoanThanh >= $tongDotNop) {
+                $gd5Dat = false;
+                $gd5Msg = "Đã hoàn thành {$dotNopHoanThanh}/{$tongDotNop} đợt nộp báo cáo. Đang chờ GVHD xác nhận cho phép bảo vệ.";
             } else {
                 $gd5Msg = "Đã hoàn thành {$dotNopHoanThanh}/{$tongDotNop} đợt nộp báo cáo";
             }

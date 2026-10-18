@@ -171,6 +171,10 @@ class XacNhanBaoVeController extends Controller
             abort(403, 'Bạn không phải Giảng viên hướng dẫn của nhóm này.');
         }
 
+        if (in_array($hoSo->TrangThai, ['Đã phê duyệt', 'Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã phân công hội đồng', 'Đã lưu trữ']) || $hoSo->XacNhanGVHD === 'Đã duyệt') {
+            return back()->with('error', 'Hồ sơ này đã được phê duyệt chính thức đủ điều kiện bảo vệ. Không thể thực hiện lại thao tác này.');
+        }
+
         $isApprove = ($request->HanhDong === 'dong_y');
 
         if (!$isApprove && empty(trim($request->NhanXet ?? ''))) {
@@ -252,6 +256,10 @@ class XacNhanBaoVeController extends Controller
 
         if (!$hoSo->deTai || $hoSo->deTai->MaGV !== $gv->MaGV) {
             abort(403, 'Bạn không phải Giảng viên hướng dẫn của nhóm này.');
+        }
+
+        if (in_array($hoSo->TrangThai, ['Đã phê duyệt', 'Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã phân công hội đồng', 'Đã lưu trữ']) || $hoSo->XacNhanGVHD === 'Đã duyệt') {
+            return back()->with('error', 'Hồ sơ này đã được phê duyệt đủ điều kiện bảo vệ. Không thể yêu cầu chỉnh sửa.');
         }
 
         $cleanedNhanXet = HtmlHelper::clean($request->NhanXet);

@@ -110,7 +110,7 @@
             <!-- 3. ĐÁNH GIÁ & TIẾN ĐỘ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*');
+                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*') || request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isGvDanhGia ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-danhgia" aria-expanded="{{ $isGvDanhGia ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -128,6 +128,9 @@
                     </a>
                     <a href="{{ route('giangvien.xacnhan_baove.index') }}" class="submenu-link {{ request()->routeIs('giangvien.xacnhan_baove.*') ? 'active-sub' : '' }}">
                         <span>Xác nhận hồ sơ BV</span>
+                    </a>
+                    <a href="{{ route('giangvien.kiemtra_baocao_sau_baove.index') }}" class="submenu-link {{ request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*') ? 'active-sub' : '' }}">
+                        <span>Kiểm tra BC sau bảo vệ</span>
                     </a>
                 </div>
             </div>

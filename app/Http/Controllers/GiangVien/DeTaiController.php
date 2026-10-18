@@ -333,9 +333,8 @@ class DeTaiController extends Controller
         }
 
         // 3. Kiểm tra đề cương đã hoàn tất thẩm định và chốt công bố chưa
-        $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
-        $isOutlineFinalized = !empty($detai->FileDeCuong) && $phanBien && $phanBien->KetQua === 'Đạt' && !empty($detai->NgayDuyetBM);
-        $isLocked = $isOutlineFinalized || ($detai->TrangThai === 'Hoàn thành');
+        // Chỉ khóa khi Trưởng bộ môn đã duyệt công bố chính thức hoặc đề tài đã hoàn thành
+        $isLocked = in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành']);
         $isNopLai = in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
 
         return view('giangvien.detai.nop_decuong', compact('detai', 'gv', 'isLocked', 'isNopLai'));
@@ -356,11 +355,9 @@ class DeTaiController extends Controller
             return redirect()->back()->withErrors('Đề tài chưa có nhóm sinh viên đăng ký! Vui lòng chờ sinh viên đăng ký đề tài hoặc gán nhóm trước khi nộp đề cương.');
         }
 
-        // 2. Ràng buộc: Khi đề cương đã hoàn tất thẩm định đạt và TBM đã duyệt chốt thì khóa nộp
-        $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
-        $isOutlineFinalized = !empty($detai->FileDeCuong) && $phanBien && $phanBien->KetQua === 'Đạt' && !empty($detai->NgayDuyetBM);
-        if ($isOutlineFinalized || $detai->TrangThai === 'Hoàn thành') {
-            return redirect()->back()->withErrors('Đề cương đã hoàn tất quy trình thẩm định và đã được phê duyệt chính thức. Đề cương hiện đã bị khóa chỉnh sửa.');
+        // 2. Ràng buộc: Khi đề cương đã được Trưởng bộ môn duyệt công bố chính thức hoặc hoàn thành thì khóa nộp
+        if (in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành'])) {
+            return redirect()->back()->withErrors('Đề cương đã hoàn tất quy trình thẩm định và đã được Trưởng bộ môn phê duyệt công bố chính thức. Đề cương hiện đã bị khóa chỉnh sửa.');
         }
 
         $allowedStates = [
@@ -415,62 +412,118 @@ class DeTaiController extends Controller
         if ($phanCongPB) {
             // Đã có phân công phản biện trước đó -> Đây là lần nộp lại sau khi chỉnh sửa
             $oldStatus = $detai->TrangThai;
-            $detai->update([
-                'FileDeCuong' => 'storage/' . $path,
-                'TrangThai'   => 'Đã cập nhật đề cương - Chờ phản biện lại',
-            ]);
 
-            $phanCongPB->update([
-                'TrangThai'   => 'Đã nộp lại đề cương',
-                'KetQua'      => 'Đã nộp lại',
-                'NgayDanhGia' => null,
-            ]);
+            // KIỂM TRA: Nếu GVPB đã đánh giá 'Đạt' (Trưởng bộ môn là người yêu cầu chỉnh sửa),
+            // thì khi nộp lại sẽ chuyển thẳng lên Trưởng bộ môn phê duyệt (không cần bắt GVPB thẩm định lại)
+            $isGvpbApproved = ($phanCongPB->KetQua === 'Đạt');
 
-            // Ghi nhận lịch sử nộp lại đề cương vào ChiTietDuyetDeTai
-            ChiTietDuyetDeTai::create([
-                'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
-                'MaDeTai'       => $detai->MaDeTai,
-                'MaGV'          => $gv->MaGV,
-                'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên hướng dẫn',
-                'HanhDong'      => "Nộp lại đề cương chi tiết (Lần {$lanNop})",
-                'TrangThaiCu'   => $oldStatus,
-                'TrangThai'     => 'Đã cập nhật đề cương - Chờ phản biện lại',
-                'LyDo'          => "Giảng viên nộp lại đề cương sau khi chỉnh sửa theo góp ý phản biện/TBM (Tệp: {$file->getClientOriginalName()})",
-                'NgayDuyet'     => now(),
-            ]);
+            if ($isGvpbApproved) {
+                $targetStatus = 'Đã phản biện - Chờ TBM duyệt đề cương';
 
-            // Gửi thông báo đến GV phản biện
-            if ($phanCongPB->giangVien && $phanCongPB->giangVien->MaTK) {
-                ThongBaoService::guiDen(
-                    $phanCongPB->giangVien->MaTK,
-                    '🔔 Giảng viên đã nộp lại Đề cương chỉnh sửa',
-                    "Giảng viên {$gv->HoTen} đã cập nhật và nộp lại Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' theo góp ý của Thầy/Cô. Vui lòng vào xem và phản biện lại.",
-                    'Đề tài'
-                );
+                $detai->update([
+                    'FileDeCuong' => 'storage/' . $path,
+                    'TrangThai'   => $targetStatus,
+                ]);
+
+                $phanCongPB->update([
+                    'TrangThai'   => 'Đã nộp lại - Chờ TBM duyệt',
+                    'KetQua'      => 'Đạt',
+                ]);
+
+                ChiTietDuyetDeTai::create([
+                    'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                    'MaDeTai'       => $detai->MaDeTai,
+                    'MaGV'          => $gv->MaGV,
+                    'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên hướng dẫn',
+                    'HanhDong'      => "Nộp lại đề cương chi tiết (Lần {$lanNop})",
+                    'TrangThaiCu'   => $oldStatus,
+                    'TrangThai'     => $targetStatus,
+                    'LyDo'          => "Giảng viên nộp lại đề cương sau khi chỉnh sửa theo yêu cầu của Trưởng bộ môn (Tệp: {$file->getClientOriginalName()})",
+                    'NgayDuyet'     => now(),
+                ]);
+
+                // Gửi thông báo đến Trưởng Bộ Môn để xem xét và duyệt công bố
+                $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
+                $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                        $q->where('MaVaiTro', 'VT04')
+                          ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+                    })
+                    ->where(function($q) use ($maBoMon) {
+                        if ($maBoMon) {
+                            $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                        }
+                    })->first();
+
+                if ($tbmUser) {
+                    ThongBaoService::guiDen(
+                        $tbmUser->MaTK,
+                        '📄 Đề cương đã nộp lại - Chờ Trưởng bộ môn phê duyệt',
+                        "Giảng viên {$gv->HoTen} đã cập nhật và nộp lại file Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' theo yêu cầu chỉnh sửa của Thầy/Cô. Vui lòng vào xem và phê duyệt công bố.",
+                        'Đề tài'
+                    );
+                }
+
+                return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp lại Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' thành công! Đề cương đã được chuyển trực tiếp lên Trưởng bộ môn để xem xét và phê duyệt công bố.");
+            } else {
+                // GVPB chưa đánh giá đạt hoặc yêu cầu sửa -> Chuyển lại cho GVPB thẩm định
+                $targetStatus = 'Đã cập nhật đề cương - Chờ phản biện lại';
+
+                $detai->update([
+                    'FileDeCuong' => 'storage/' . $path,
+                    'TrangThai'   => $targetStatus,
+                ]);
+
+                $phanCongPB->update([
+                    'TrangThai'   => 'Đã nộp lại đề cương',
+                    'KetQua'      => 'Đã nộp lại',
+                    'NgayDanhGia' => null,
+                ]);
+
+                ChiTietDuyetDeTai::create([
+                    'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                    'MaDeTai'       => $detai->MaDeTai,
+                    'MaGV'          => $gv->MaGV,
+                    'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên hướng dẫn',
+                    'HanhDong'      => "Nộp lại đề cương chi tiết (Lần {$lanNop})",
+                    'TrangThaiCu'   => $oldStatus,
+                    'TrangThai'     => $targetStatus,
+                    'LyDo'          => "Giảng viên nộp lại đề cương sau khi chỉnh sửa theo góp ý phản biện (Tệp: {$file->getClientOriginalName()})",
+                    'NgayDuyet'     => now(),
+                ]);
+
+                // Gửi thông báo đến GV phản biện
+                if ($phanCongPB->giangVien && $phanCongPB->giangVien->MaTK) {
+                    ThongBaoService::guiDen(
+                        $phanCongPB->giangVien->MaTK,
+                        '🔔 Giảng viên đã nộp lại Đề cương chỉnh sửa',
+                        "Giảng viên {$gv->HoTen} đã cập nhật và nộp lại Đề cương chi tiết cho đề tài '{$detai->TenDeTai}' theo góp ý của Thầy/Cô. Vui lòng vào xem và phản biện lại.",
+                        'Đề tài'
+                    );
+                }
+
+                // Gửi thông báo đến Trưởng Bộ Môn
+                $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
+                $tbmUser = \App\Models\TaiKhoan::where(function($q) {
+                        $q->where('MaVaiTro', 'VT04')
+                          ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
+                    })
+                    ->where(function($q) use ($maBoMon) {
+                        if ($maBoMon) {
+                            $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
+                        }
+                    })->first();
+
+                if ($tbmUser) {
+                    ThongBaoService::guiDen(
+                        $tbmUser->MaTK,
+                        '📄 Đề cương đã được nộp lại sau chỉnh sửa',
+                        "Giảng viên {$gv->HoTen} đã nộp lại file Đề cương đã chỉnh sửa cho đề tài '{$detai->TenDeTai}'. Đề cương đã được chuyển lại cho GV phản biện ({$phanCongPB->giangVien->HoTen}) xem xét.",
+                        'Đề tài'
+                    );
+                }
+
+                return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp lại Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
             }
-
-            // Gửi thông báo đến Trưởng Bộ Môn
-            $maBoMon = $gv->MaBoMon ?? $detai->giangVien?->MaBoMon;
-            $tbmUser = \App\Models\TaiKhoan::where(function($q) {
-                    $q->where('MaVaiTro', 'VT04')
-                      ->orWhere('TenDangNhap', 'LIKE', 'TBM_%');
-                })
-                ->where(function($q) use ($maBoMon) {
-                    if ($maBoMon) {
-                        $q->where('TenDangNhap', 'LIKE', '%' . $maBoMon . '%');
-                    }
-                })->first();
-
-            if ($tbmUser) {
-                ThongBaoService::guiDen(
-                    $tbmUser->MaTK,
-                    '📄 Đề cương đã được nộp lại sau chỉnh sửa',
-                    "Giảng viên {$gv->HoTen} đã nộp lại file Đề cương đã chỉnh sửa cho đề tài '{$detai->TenDeTai}'. Đề cương đã được chuyển lại cho GV phản biện ({$phanCongPB->giangVien->HoTen}) xem xét.",
-                    'Đề tài'
-                );
-            }
-
-            return redirect()->route('giangvien.detai.nop_decuong.show', $detai->MaDeTai)->with('success', "Đã nộp lại Đề cương chi tiết (Lần {$lanNop}) cho đề tài '{$detai->TenDeTai}' thành công! Hệ thống đã gửi thông báo đến Giảng viên phản biện ({$phanCongPB->giangVien->HoTen}) để thẩm định lại.");
         } else {
             // Nộp lần đầu
             $oldStatus = $detai->TrangThai;

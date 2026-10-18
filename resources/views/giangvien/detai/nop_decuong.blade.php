@@ -1,27 +1,11 @@
 @extends('layouts.giangvien')
 
-@section('page_title', 'Nộp & Quản Lý Đề Cương - ' . $detai->TenDeTai)
+@section('page_title', 'Nộp & Quản Lý Đề Cương - ' . $detai->MaDeTai)
 
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <!-- Header & Breadcrumb -->
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('giangvien.detai.index') }}" class="text-decoration-none">Đề tài của tôi</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Nộp đề cương chi tiết</li>
-                </ol>
-            </nav>
-            <div class="d-flex align-items-center gap-2">
-                <a href="{{ route('giangvien.detai.show', $detai->MaDeTai) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                    <i class="fa-solid fa-circle-info me-2"></i> Chi Tiết Đề Tài
-                </a>
-                <a href="{{ route('giangvien.detai.index') }}" class="btn btn-light border btn-sm rounded-pill px-3 d-inline-flex align-items-center">
-                    <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại
-                </a>
-            </div>
-        </div>
+       
 
         <!-- Card Thông Tin Đề Tài -->
         <div class="card card-premium mb-4">
@@ -94,7 +78,7 @@
                                         $ttDeCuong = 'Đã duyệt đề cương';
                                     } elseif ($detai->TrangThai === 'Yêu cầu chỉnh sửa đề cương') {
                                         $ttDeCuong = 'Yêu cầu chỉnh sửa đề cương';
-                                    } elseif ($detai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại') {
+                                    } elseif (in_array($detai->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM'])) {
                                         $ttDeCuong = 'Đã nộp lại đề cương';
                                     } elseif ($detai->FileDeCuong) {
                                         $ttDeCuong = 'Đã nộp đề cương';

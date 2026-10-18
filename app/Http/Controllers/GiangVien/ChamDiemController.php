@@ -10,6 +10,7 @@ use App\Models\ThanhVienHoiDong;
 use App\Models\HoSoBaoVe;
 use App\Models\HocKy;
 use App\Services\GradeCalculationService;
+use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -55,21 +56,45 @@ class ChamDiemController extends Controller
             }
         }
 
-        // Xác định loại khóa luận: Cử nhân (KLCN) hoặc Kỹ sư (KLKS)
-        $tenDeTai = mb_strtolower($activeHoSo?->nhom?->deTai?->TenDeTai ?? '');
-        $maHP = mb_strtolower($activeHoSo?->nhom?->deTai?->MaHocPhan ?? '');
-        $isEngineers = str_contains($tenDeTai, 'kỹ sư') || str_contains($tenDeTai, 'ky su') || str_contains($maHP, 'klks') || str_contains($maHP, '0101102534');
-        
-        $defaultLoai = $isEngineers ? 'KLKS' : 'KLCN';
-        $loaiKhoaLuan = $request->query('loai', $defaultLoai);
+        // Tự động nhận diện loại khóa luận: Cử nhân (KLCN) hoặc Kỹ sư (KLKS)
+        $loaiKhoaLuan = null;
+        $canhBaoChuaXacDinhLoai = false;
 
-        // Lấy điểm đã chấm của giảng viên này cho hội đồng đang chọn
+        if ($activeHoSo) {
+            $loaiKhoaLuan = $activeHoSo->xacDinhLoaiKhoaLuan();
+            if (!$loaiKhoaLuan) {
+                // Nếu chưa tự nhận diện được, kiểm tra query parameter hoặc cảnh báo
+                $loaiKhoaLuan = $request->query('loai', null);
+                if (!$loaiKhoaLuan) {
+                    $canhBaoChuaXacDinhLoai = true;
+                    $loaiKhoaLuan = 'KLCN'; // Tạm thời để hiển thị form nhưng kèm cảnh báo
+                }
+            } else {
+                // Nếu có query param ghi đè mà người dùng click
+                if ($request->filled('loai')) {
+                    $loaiKhoaLuan = $request->query('loai');
+                }
+            }
+        } else {
+            $loaiKhoaLuan = $request->query('loai', 'KLCN');
+        }
+
+        // Lấy phiếu điểm đã chấm của giảng viên này cho hồ sơ đang chọn
         $diemDaCham = [];
-        if ($activeHoiDong) {
-            $diemDaCham = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)
+        $daKhoaPhieu = false;
+        $phieuCu = null;
+
+        if ($activeHoiDong && $activeHoSo) {
+            $phieuRecords = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)
+                ->where('MaHoSo', $activeHoSo->MaHoSo)
                 ->where('MaGV', $giangVien->MaGV)
-                ->get()
-                ->keyBy('MaSV');
+                ->get();
+
+            $diemDaCham = $phieuRecords->keyBy('MaSV');
+            $phieuCu = $phieuRecords->first();
+            if ($phieuCu && $phieuCu->TrangThai === 'Đã hoàn thành') {
+                $daKhoaPhieu = true;
+            }
         }
 
         $rubricKLCN = PhieuChamDiem::getRubricKLCN();
@@ -81,7 +106,10 @@ class ChamDiemController extends Controller
             'activeHoiDong',
             'activeHoSo',
             'loaiKhoaLuan',
+            'canhBaoChuaXacDinhLoai',
             'diemDaCham',
+            'daKhoaPhieu',
+            'phieuCu',
             'rubricKLCN',
             'rubricKLKS'
         ));
@@ -94,6 +122,7 @@ class ChamDiemController extends Controller
             'MaHoSo'        => 'required|exists:HoSoBaoVe,MaHoSo',
             'LoaiKhoaLuan'  => 'required|in:KLCN,KLKS',
             'diems'         => 'required|array|min:1',
+            'action_type'   => 'required|in:luu_nhap,xac_nhan_hoan_thanh',
         ]);
 
         $user = Auth::user();
@@ -118,6 +147,23 @@ class ChamDiemController extends Controller
             abort(403, 'Hồ sơ bảo vệ này không thuộc Hội đồng bạn đang tham gia chấm điểm.');
         }
 
+        // Kiểm tra xem phiếu chấm đã hoàn thành và khóa chưa
+        $existingPhieu = PhieuChamDiem::where('MaHoiDong', $request->MaHoiDong)
+            ->where('MaHoSo', $hoSo->MaHoSo)
+            ->where('MaGV', $giangVien->MaGV)
+            ->first();
+
+        if ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành' && !$request->has('unlock_token')) {
+            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Ký xác nhận & Khóa. Nếu cần điều chỉnh, vui lòng gửi yêu cầu mở khóa đến Trưởng khoa.');
+        }
+
+        $isFinal = ($request->action_type === 'xac_nhan_hoan_thanh');
+        $trangThaiPhieu = $isFinal ? 'Đã hoàn thành' : 'Lưu nháp';
+
+        // Lấy rubric tương ứng
+        $rubric = ($request->LoaiKhoaLuan === 'KLKS') ? PhieuChamDiem::getRubricKLKS() : PhieuChamDiem::getRubricKLCN();
+        $rubricMap = collect($rubric)->keyBy('id');
+
         // Danh sách sinh viên hợp lệ của nhóm
         $validStudentIds = $hoSo->nhom?->thanhViens->pluck('MaSV')->toArray() ?? [];
 
@@ -127,7 +173,13 @@ class ChamDiemController extends Controller
         $activeHocKy = HocKy::where('TrangThai', true)->first() ?? HocKy::latest()->first();
         $maHocKy = $hoSo->MaHocKy ?? ($activeHocKy?->MaHocKy ?? 'HK_DEF');
 
-        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds) {
+        // Cập nhật LoaiKhoaLuan cho HoSoBaoVe nếu chưa có
+        if (empty($hoSo->LoaiKhoaLuan)) {
+            $hoSo->LoaiKhoaLuan = $request->LoaiKhoaLuan;
+            $hoSo->save();
+        }
+
+        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu) {
             foreach ($request->diems as $key => $diemData) {
                 $maSV = is_numeric($key) ? ($diemData['MaSV'] ?? null) : $key;
                 if (!$maSV) continue;
@@ -137,9 +189,46 @@ class ChamDiemController extends Controller
                     abort(403, "Sinh viên [{$maSV}] không thuộc nhóm bảo vệ của hồ sơ này.");
                 }
 
-                $diemSo = floatval($diemData['Diem'] ?? 0);
+                $rawChiTiet = isset($diemData['ChiTietDiem'])
+                    ? (is_array($diemData['ChiTietDiem']) ? $diemData['ChiTietDiem'] : json_decode($diemData['ChiTietDiem'], true))
+                    : [];
+
+                $validatedChiTiet = [];
+                $tongDiemCoBan = 0.0;
+                $diemKhuyenKhich = 0.0;
+
+                foreach ($rubricMap as $cId => $criterion) {
+                    $maxVal = (float)$criterion['max'];
+                    $isBonus = !empty($criterion['is_bonus']);
+                    $val = isset($rawChiTiet[$cId]) ? floatval($rawChiTiet[$cId]) : null;
+
+                    if ($isFinal && $val === null && !$isBonus) {
+                        abort(422, "Tiêu chí '{$criterion['noi_dung']}' của sinh viên [{$maSV}] chưa được chấm điểm.");
+                    }
+
+                    if ($val !== null) {
+                        if ($val < 0) $val = 0.0;
+                        if ($val > $maxVal) $val = $maxVal;
+
+                        $validatedChiTiet[$cId] = round($val, 2);
+
+                        if ($isBonus) {
+                            $diemKhuyenKhich += $val;
+                        } else {
+                            $tongDiemCoBan += $val;
+                        }
+                    } else {
+                        $validatedChiTiet[$cId] = 0.0;
+                    }
+                }
+
+                // Điểm khuyến khích không vượt quá 1.0
+                if ($diemKhuyenKhich > 1.0) $diemKhuyenKhich = 1.0;
+
+                // Tổng điểm tối đa là 10.0
+                $diemSo = round(min(10.0, $tongDiemCoBan + $diemKhuyenKhich), 2);
+
                 $nhanXet = $diemData['NhanXet'] ?? null;
-                $chiTiet = isset($diemData['ChiTietDiem']) ? (is_array($diemData['ChiTietDiem']) ? $diemData['ChiTietDiem'] : json_decode($diemData['ChiTietDiem'], true)) : null;
 
                 // Tạo mã phiếu chấm duy nhất
                 $hashId = substr(md5($request->MaHoiDong . '_' . $giangVien->MaGV . '_' . $maSV), 0, 8);
@@ -153,10 +242,13 @@ class ChamDiemController extends Controller
                     ],
                     [
                         'MaPhieuChamDiem' => $maPhieu,
-                        'Diem'            => min(10.0, max(0.0, $diemSo)),
+                        'Diem'            => $diemSo,
+                        'DiemKhuyenKhich' => $diemKhuyenKhich,
                         'LoaiKhoaLuan'    => $request->LoaiKhoaLuan,
-                        'ChiTietDiem'     => $chiTiet,
+                        'ChiTietDiem'     => $validatedChiTiet,
                         'NhanXet'         => $nhanXet,
+                        'TrangThai'       => $trangThaiPhieu,
+                        'NgayXacNhan'     => $isFinal ? now() : null,
                         'MaDeTai'         => $maDeTai,
                         'MaHoSo'          => $hoSo->MaHoSo,
                         'MaHocKy'         => $maHocKy,
@@ -165,14 +257,77 @@ class ChamDiemController extends Controller
                 );
             }
 
-            // Tổng hợp kết quả điểm Hội đồng tự động (100% từ điểm các thành viên HĐ)
+            // Tổng hợp kết quả điểm Hội đồng
             $this->gradeService->tongHopKetQuaHoiDong($request->MaHoiDong);
         });
+
+        // Kiểm tra xem toàn bộ hội đồng đã hoàn tất chưa để thông báo cho Trưởng khoa
+        if ($isFinal) {
+            $tienDo = $this->gradeService->kiemTraTienDoChamHoiDong($request->MaHoiDong);
+            if ($tienDo['exists'] && $tienDo['hoiDongDuPhieu']) {
+                $hoiDong = $tienDo['hoiDong'];
+                if ($hoiDong->MaKhoa) {
+                    $truongKhoaGV = GiangVien::whereHas('boMon.khoa', fn($q) => $q->where('MaKhoa', $hoiDong->MaKhoa))
+                        ->whereHas('taiKhoan.vaiTro', fn($v) => $v->where('TenVaiTro', 'like', '%Trưởng khoa%'))
+                        ->first();
+                    if ($truongKhoaGV) {
+                        ThongBaoService::gui(
+                            $truongKhoaGV->MaGV,
+                            'Hội đồng đã hoàn tất chấm điểm',
+                            "Hội đồng {$hoiDong->TenHoiDong} đã hoàn tất 100% phiếu chấm điểm từ các giám khảo. Trưởng khoa có thể xem tổng hợp và xác nhận/công bố kết quả.",
+                            'Hội đồng'
+                        );
+                    }
+                }
+            }
+        }
+
+        $msg = $isFinal
+            ? 'Đã Ký xác nhận & Khóa phiếu chấm điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
+            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Ký xác nhận.';
 
         return redirect()->route('giangvien.chamdiem.index', [
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
             'loai' => $request->LoaiKhoaLuan,
-        ])->with('success', 'Đã lưu phiếu chấm điểm của Giám khảo thành công! Điểm Hội đồng đã được cập nhật.');
+        ])->with('success', $msg);
+    }
+
+    /**
+     * Giảng viên gửi yêu cầu mở khóa phiếu chấm đã ký
+     */
+    public function yeuCauMoKhoa(Request $request)
+    {
+        $request->validate([
+            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
+            'MaHoSo'    => 'required|exists:HoSoBaoVe,MaHoSo',
+            'LyDo'      => 'required|string|max:1000',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(403);
+        }
+
+        $hoiDong = HoiDong::findOrFail($request->MaHoiDong);
+        $hoSo = HoSoBaoVe::with('nhom.deTai')->findOrFail($request->MaHoSo);
+
+        // Gửi thông báo đến Trưởng khoa
+        if ($hoiDong->MaKhoa) {
+            $truongKhoaGV = GiangVien::whereHas('boMon.khoa', fn($q) => $q->where('MaKhoa', $hoiDong->MaKhoa))
+                ->whereHas('taiKhoan.vaiTro', fn($v) => $v->where('TenVaiTro', 'like', '%Trưởng khoa%'))
+                ->first();
+            if ($truongKhoaGV) {
+                ThongBaoService::gui(
+                    $truongKhoaGV->MaGV,
+                    'Yêu cầu mở khóa phiếu chấm điểm',
+                    "Giám khảo {$giangVien->HoTen} gửi yêu cầu mở khóa phiếu chấm điểm đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' (HĐ: {$hoiDong->TenHoiDong}). Lý do: {$request->LyDo}",
+                    'Yêu cầu'
+                );
+            }
+        }
+
+        return redirect()->back()->with('success', 'Đã gửi yêu cầu mở khóa phiếu chấm điểm đến Trưởng khoa thành công!');
     }
 }

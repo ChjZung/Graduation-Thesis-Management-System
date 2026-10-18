@@ -93,7 +93,12 @@
         </div>
     </div>
 
-    <!-- Alert Thông Báo Yêu Cầu Sửa / Từ Chối Nếu Đang Có -->
+    @php
+        $isDaPheDuyet = in_array($hoSo->TrangThai, ['Đã phê duyệt', 'Đủ điều kiện bảo vệ', 'Đã phân công', 'Đã phân công hội đồng', 'Đã lưu trữ']) 
+            || $hoSo->XacNhanGVHD === 'Đã duyệt';
+    @endphp
+
+    <!-- Alert Thông Báo Yêu Cầu Sửa / Từ Chối / Đã Phê Duyệt -->
     @if($hoSo->TrangThai === 'Yêu cầu chỉnh sửa')
         <div class="alert alert-warning border-warning shadow-sm mb-4" style="border-radius: 12px;">
             <div class="d-flex align-items-start gap-3">
@@ -107,7 +112,7 @@
                             </span>
                         @endif
                     </div>
-                    <div class="text-dark small mb-2">{!! nl2br(e($hoSo->NhanXetGVHD)) !!}</div>
+                    <div class="text-dark small mb-2">{!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD) !!}</div>
                     @if(!empty($hoSo->ThanhPhanCanSua) && is_array($hoSo->ThanhPhanCanSua))
                         @php
                             $labels = [
@@ -130,6 +135,18 @@
                 </div>
             </div>
         </div>
+    @elseif($isDaPheDuyet)
+        <div class="alert alert-success border-success shadow-sm mb-4" style="border-radius: 12px; background: #f0fdf4;">
+            <div class="d-flex align-items-center gap-3">
+                <i class="fa-solid fa-circle-check text-success fs-3"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-dark fs-6">Hồ sơ bảo vệ của nhóm đã được Thầy/Cô phê duyệt đủ điều kiện</div>
+                    <div class="small text-secondary">
+                        Nhóm sinh viên đã đủ điều kiện và sẵn sàng tham gia Hội đồng bảo vệ khóa luận tốt nghiệp.
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
     <div class="row g-4">
@@ -144,9 +161,9 @@
                     </div>
                     @if($hoSo->ToanVanKhoaLuan)
                         <div class="d-flex gap-2">
-                            <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem Toàn Màn Hình
-                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                <i class="fa-solid fa-maximize me-1"></i> Phóng To Màn Hình
+                            </button>
                             <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" download class="btn btn-sm btn-danger rounded-pill px-3">
                                 <i class="fa-solid fa-download me-1"></i> Tải Về PDF
                             </a>
@@ -176,9 +193,9 @@
                             <iframe src="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}#toolbar=1" width="100%" height="100%" style="border: none;">
                                 <div class="p-4 text-center">
                                     <p class="text-muted">Trình duyệt không hỗ trợ xem trước tệp PDF trực tiếp.</p>
-                                    <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" target="_blank" class="btn btn-primary rounded-pill">
-                                        Mở xem trong tab mới
-                                    </a>
+                                    <button type="button" class="btn btn-primary rounded-pill" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                        Xem Báo Cáo Trên Màn Hình
+                                    </button>
                                 </div>
                             </iframe>
                         </div>
@@ -310,9 +327,9 @@
                         <h6 class="fw-bold text-dark mb-0">Kết Quả Kiểm Tra Đạo Văn (Turnitin)</h6>
                     </div>
                     @if($hoSo->MinhChungDaoVan)
-                        <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                            <i class="fa-solid fa-file-shield me-1"></i> Xem Báo Cáo Turnitin (PDF)
-                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openPdfModal('{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}', 'Minh Chứng Kết Quả Turnitin (PDF)')">
+                            <i class="fa-solid fa-file-shield me-1"></i> Xem Báo Cáo Turnitin
+                        </button>
                     @endif
                 </div>
                 <div class="card-body p-4">
@@ -350,9 +367,9 @@
                                         <i class="fa-solid fa-file-pdf text-danger me-2"></i>
                                         {{ $hoSo->phienBans->first()?->TenFileTurnitin ?: 'Minh chứng Turnitin.pdf' }}
                                     </div>
-                                    <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" target="_blank" class="btn btn-sm btn-link text-primary p-0 ms-2">
+                                    <button type="button" class="btn btn-sm btn-link text-primary p-0 ms-2 text-decoration-none fw-semibold" onclick="openPdfModal('{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}', 'Minh Chứng Kết Quả Turnitin')">
                                         Xem file
-                                    </a>
+                                    </button>
                                 </div>
                             @endif
                         </div>
@@ -360,31 +377,67 @@
                 </div>
             </div>
 
-            <!-- 5. TÀI LIỆU BỔ SUNG & DEMO -->
+            <!-- 5. TÀI LIỆU BỔ SUNG, SLIDE & LIÊN KẾT KHÁC -->
             @if(!empty($hoSo->LienKetKhac) && is_array($hoSo->LienKetKhac) && count($hoSo->LienKetKhac) > 0)
                 <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
                     <div class="card-header bg-white py-3 px-4 border-bottom">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-secondary text-white rounded-circle px-2">5</span>
-                            <h6 class="fw-bold text-dark mb-0">Tài Liệu Bổ Sung &amp; Liên Kết Khác</h6>
+                            <h6 class="fw-bold text-dark mb-0">Tài Liệu Bổ Sung, Slide Thuyết Trình &amp; Liên Kết Khác</h6>
                         </div>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">
                             @foreach($hoSo->LienKetKhac as $lk)
+                                @php
+                                    $isLkFile = ($lk['loai'] ?? '') === 'file' || !empty($lk['file_path']);
+                                    $fileExt = $isLkFile ? strtolower(pathinfo($lk['ten_file'] ?? $lk['file_path'], PATHINFO_EXTENSION)) : '';
+                                    $badgeIcon = 'fa-solid fa-link text-primary';
+                                    if ($isLkFile) {
+                                        if (in_array($fileExt, ['ppt', 'pptx'])) {
+                                            $badgeIcon = 'fa-solid fa-file-powerpoint text-danger';
+                                        } elseif ($fileExt === 'pdf') {
+                                            $badgeIcon = 'fa-solid fa-file-pdf text-danger';
+                                        } elseif (in_array($fileExt, ['doc', 'docx'])) {
+                                            $badgeIcon = 'fa-solid fa-file-word text-primary';
+                                        } elseif (in_array($fileExt, ['zip', 'rar', '7z'])) {
+                                            $badgeIcon = 'fa-solid fa-file-zipper text-secondary';
+                                        } elseif (in_array($fileExt, ['mp4', 'avi', 'mov', 'mkv'])) {
+                                            $badgeIcon = 'fa-solid fa-file-video text-info';
+                                        } else {
+                                            $badgeIcon = 'fa-solid fa-file-lines text-secondary';
+                                        }
+                                    }
+                                @endphp
                                 <div class="col-md-6">
-                                    <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between gap-2">
+                                    <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between gap-2 h-100">
                                         <div class="text-truncate">
-                                            <div class="fw-bold text-dark small text-truncate">
-                                                <i class="fa-solid fa-link text-primary me-2"></i>{{ $lk['tieu_de'] ?? 'Tài liệu' }}
+                                            <div class="fw-bold text-dark small text-truncate d-flex align-items-center gap-2">
+                                                <i class="{{ $badgeIcon }}"></i>
+                                                <span title="{{ $lk['tieu_de'] ?? 'Tài liệu' }}">{{ $lk['tieu_de'] ?? 'Tài liệu' }}</span>
                                             </div>
+                                            @if($isLkFile && !empty($lk['ten_file']))
+                                                <div class="text-muted small text-truncate" style="font-size: 11.5px;">
+                                                    <i class="fa-solid fa-paperclip me-1"></i>{{ $lk['ten_file'] }}
+                                                </div>
+                                            @endif
                                             @if(!empty($lk['mo_ta']))
-                                                <div class="text-muted small text-truncate">{{ $lk['mo_ta'] }}</div>
+                                                <div class="text-muted small text-truncate" title="{{ $lk['mo_ta'] }}">{{ $lk['mo_ta'] }}</div>
                                             @endif
                                         </div>
-                                        @if(!empty($lk['url']))
-                                            <a href="{{ $lk['url'] }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 flex-shrink-0">
-                                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        @if($isLkFile && !empty($lk['file_path']))
+                                            @if($fileExt === 'pdf')
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 flex-shrink-0" onclick="openPdfModal('{{ asset('storage/' . $lk['file_path']) }}', '{{ addslashes($lk['tieu_de'] ?? 'Tài liệu PDF') }}')">
+                                                    <i class="fa-solid fa-eye me-1"></i> Xem file
+                                                </button>
+                                            @else
+                                                <a href="{{ asset('storage/' . $lk['file_path']) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3 flex-shrink-0" title="Tải xuống tệp đính kèm">
+                                                    <i class="fa-solid fa-download me-1"></i> Tải file
+                                                </a>
+                                            @endif
+                                        @elseif(!empty($lk['url']))
+                                            <a href="{{ $lk['url'] }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 flex-shrink-0" title="Mở liên kết">
+                                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở link
                                             </a>
                                         @endif
                                     </div>
@@ -409,7 +462,7 @@
                             <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 100px;">Phiên bản</th>
+                                        <th style="width: 110px;">Phiên bản</th>
                                         <th style="min-width: 150px;">Thời gian nộp</th>
                                         <th style="min-width: 140px;">Trạng thái</th>
                                         <th style="min-width: 250px;">Đánh giá của GVHD</th>
@@ -422,6 +475,13 @@
                                                 <span class="badge bg-primary px-3 py-1 rounded-pill font-monospace">
                                                     v{{ $pb->PhienBan }}
                                                 </span>
+                                                @if($pb->DuongDanBaoCao)
+                                                    <div class="mt-1">
+                                                        <button type="button" class="btn btn-link text-danger p-0 text-start small text-decoration-none" onclick="openPdfModal('{{ asset('storage/' . $pb->DuongDanBaoCao) }}', 'Báo Cáo Khóa Luận - Phiên Bản v{{ $pb->PhienBan }}')">
+                                                            <i class="fa-solid fa-file-pdf me-1"></i>Xem PDF
+                                                        </button>
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td>
                                                 <div class="fw-semibold text-dark">{{ $pb->NgayNop ? \Carbon\Carbon::parse($pb->NgayNop)->format('d/m/Y H:i') : '' }}</div>
@@ -442,7 +502,7 @@
                                             </td>
                                             <td>
                                                 @if($pb->NhanXetGVHD)
-                                                    <div class="text-dark small">{!! nl2br(e($pb->NhanXetGVHD)) !!}</div>
+                                                    <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($pb->NhanXetGVHD) !!}</div>
                                                 @else
                                                     <span class="text-muted small">Chưa có nhận xét</span>
                                                 @endif
@@ -472,57 +532,100 @@
                     </h6>
                 </div>
                 <div class="card-body p-4">
-                    <p class="text-muted small mb-3">
-                        Sau khi kiểm tra kỹ lưỡng 4 thành phần hồ sơ, Thầy/Cô vui lòng đưa ra kết luận đánh giá chính thức cho nhóm sinh viên:
-                    </p>
-
-                    <!-- NÚT 1: PHÊ DUYỆT ĐỦ ĐIỀU KIỆN BẢO VỆ -->
-                    <button type="button" class="btn btn-success w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
-                        <i class="fa-solid fa-circle-check fs-5 me-2"></i>
-                        <div class="text-start">
-                            <div class="fw-bold" style="font-size: 14.5px;">Phê Duyệt Đủ Điều Kiện</div>
-                            <div style="font-size: 11.5px; opacity: 0.9;">Xác nhận cho nhóm ra bảo vệ trước Hội đồng</div>
-                        </div>
-                    </button>
-
-                    <!-- NÚT 2: YÊU CẦU CHỈNH SỬA / BỔ SUNG -->
-                    <button type="button" class="btn btn-warning w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                        <i class="fa-solid fa-pen-to-square fs-5 me-2"></i>
-                        <div class="text-start">
-                            <div class="fw-bold" style="font-size: 14.5px;">Yêu Cầu Chỉnh Sửa / Bổ Sung</div>
-                            <div style="font-size: 11.5px; opacity: 0.9;">Chỉ rõ thành phần cần sửa và hạn nộp lại</div>
-                        </div>
-                    </button>
-
-                    <!-- NÚT 3: TỪ CHỐI CHO BẢO VỆ -->
-                    <button type="button" class="btn btn-outline-danger w-100 py-2 rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                        <i class="fa-solid fa-circle-xmark me-2"></i>
-                        <span>Không Đồng Ý Cho Bảo Vệ</span>
-                    </button>
-
-                    <hr class="my-4">
-
-                    <!-- Thông Tin Trạng Thái Hiện Tại -->
-                    <div class="small">
-                        <div class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 11px;">Trạng thái ghi nhận:</div>
-                        <div class="p-3 bg-light rounded-3 border">
-                            <div class="mb-2">
-                                <span class="text-muted">Xác nhận GVHD:</span>
-                                <strong>{{ $hoSo->XacNhanGVHD ?: 'Chưa xác nhận' }}</strong>
-                            </div>
-                            @if($hoSo->NgayXacNhan)
-                                <div class="mb-2">
-                                    <span class="text-muted">Ngày xác nhận:</span>
-                                    <span>{{ \Carbon\Carbon::parse($hoSo->NgayXacNhan)->format('d/m/Y') }}</span>
-                                </div>
-                            @endif
-                            @if($hoSo->NhanXetGVHD)
+                    @if($isDaPheDuyet)
+                        <!-- ĐÃ PHÊ DUYỆT: ẨN CÁC NÚT THAO TÁC, HIỂN THỊ THÔNG TIN PHÊ DUYỆT ĐỂ TRÁNH PHÊ DUYỆT NHIỀU LẦN -->
+                        <div class="alert alert-success bg-success-subtle border-success-subtle p-3 rounded-3 mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-circle-check text-success fs-4"></i>
                                 <div>
-                                    <span class="text-muted">Nhận xét gần nhất:</span>
-                                    <div class="mt-1 text-dark small">{!! nl2br(e($hoSo->NhanXetGVHD)) !!}</div>
+                                    <div class="fw-bold text-success" style="font-size: 15px;">Đã Phê Duyệt Đủ Điều Kiện</div>
+                                    <div class="text-secondary small">Hồ sơ đã được xác nhận chính thức cho nhóm tham gia bảo vệ.</div>
                                 </div>
-                            @endif
+                            </div>
+                            <div class="mt-2 pt-2 border-top border-success-subtle small">
+                                <div class="d-flex justify-content-between mb-1.5">
+                                    <span class="text-muted">Trạng thái:</span>
+                                    <span class="badge bg-success rounded-pill px-2.5 py-1">{{ $hoSo->TrangThai }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1.5">
+                                    <span class="text-muted">Kết luận:</span>
+                                    <span class="fw-bold text-success">{{ $hoSo->XacNhanGVHD }}</span>
+                                </div>
+                                @if($hoSo->NgayXacNhan)
+                                    <div class="d-flex justify-content-between mb-1.5">
+                                        <span class="text-muted">Ngày xác nhận:</span>
+                                        <span>{{ \Carbon\Carbon::parse($hoSo->NgayXacNhan)->format('d/m/Y H:i') }}</span>
+                                    </div>
+                                @endif
+                                @if($hoSo->NguoiDuyet)
+                                    <div class="d-flex justify-content-between mb-1.5">
+                                        <span class="text-muted">Người duyệt:</span>
+                                        <span class="fw-semibold text-dark">{{ $gv->HoTen ?? $hoSo->NguoiDuyet }}</span>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
+
+                        <div class="p-3 bg-light rounded-3 border small">
+                            <div class="text-muted fw-bold mb-1"><i class="fa-solid fa-comment-dots text-success me-1"></i> Ý kiến đánh giá của Thầy/Cô:</div>
+                            <div class="text-dark bg-white p-2.5 rounded border">
+                                {!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD ?: 'Đồng ý cho nhóm tham gia bảo vệ khóa luận trước Hội đồng.') !!}
+                            </div>
+                        </div>
+                    @else
+                        <p class="text-muted small mb-3">
+                            Sau khi kiểm tra kỹ lưỡng 4 thành phần hồ sơ, Thầy/Cô vui lòng đưa ra kết luận đánh giá chính thức cho nhóm sinh viên:
+                        </p>
+
+                        <!-- NÚT 1: PHÊ DUYỆT ĐỦ ĐIỀU KIỆN BẢO VỆ -->
+                        <button type="button" class="btn btn-success w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
+                            <i class="fa-solid fa-circle-check fs-5 me-2"></i>
+                            <div class="text-start">
+                                <div class="fw-bold" style="font-size: 14.5px;">Phê Duyệt Đủ Điều Kiện</div>
+                                <div style="font-size: 11.5px; opacity: 0.9;">Xác nhận cho nhóm ra bảo vệ trước Hội đồng</div>
+                            </div>
+                        </button>
+
+                        <!-- NÚT 2: YÊU CẦU CHỈNH SỬA / BỔ SUNG -->
+                        <button type="button" class="btn btn-warning w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                            <i class="fa-solid fa-pen-to-square fs-5 me-2"></i>
+                            <div class="text-start">
+                                <div class="fw-bold" style="font-size: 14.5px;">Yêu Cầu Chỉnh Sửa / Bổ Sung</div>
+                                <div style="font-size: 11.5px; opacity: 0.9;">Chỉ rõ thành phần cần sửa và hạn nộp lại</div>
+                            </div>
+                        </button>
+
+                        <!-- NÚT 3: TỪ CHỐI CHO BẢO VỆ -->
+                        <button type="button" class="btn btn-outline-danger w-100 py-2 rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                            <i class="fa-solid fa-circle-xmark me-2"></i>
+                            <span>Không Đồng Ý Cho Bảo Vệ</span>
+                        </button>
+
+                        <hr class="my-4">
+
+                        <!-- Thông Tin Trạng Thái Hiện Tại -->
+                        <div class="small">
+                            <div class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 11px;">Trạng thái ghi nhận:</div>
+                            <div class="p-3 bg-light rounded-3 border">
+                                <div class="mb-2">
+                                    <span class="text-muted">Xác nhận GVHD:</span>
+                                    <strong>{{ $hoSo->XacNhanGVHD ?: 'Chưa xác nhận' }}</strong>
+                                </div>
+                                @if($hoSo->NgayXacNhan)
+                                    <div class="mb-2">
+                                        <span class="text-muted">Ngày xác nhận:</span>
+                                        <span>{{ \Carbon\Carbon::parse($hoSo->NgayXacNhan)->format('d/m/Y') }}</span>
+                                    </div>
+                                @endif
+                                @if($hoSo->NhanXetGVHD)
+                                    <div>
+                                        <span class="text-muted">Nhận xét gần nhất:</span>
+                                        <div class="mt-1 text-dark small">{!! \App\Helpers\HtmlHelper::clean($hoSo->NhanXetGVHD) !!}</div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                     </div>
                 </div>
             </div>
@@ -692,5 +795,58 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL XEM BÁO CÁO TRỰC TIẾP TRÊN MÀN HÌNH (KHÔNG CHUYỂN TAB) -->
+<div class="modal fade" id="modalPdfPreview" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 92vh;">
+        <div class="modal-content h-100 shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-2.5 px-4">
+                <div class="d-flex align-items-center gap-2 text-truncate">
+                    <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                    <h6 class="modal-title fw-bold mb-0 text-truncate" id="pdfPreviewTitle">Xem Báo Cáo Khóa Luận</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" id="btnDownloadPdfModal" download class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        <i class="fa-solid fa-download me-1"></i> Tải về máy
+                    </a>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-secondary bg-opacity-10" style="height: calc(100% - 58px);">
+                <iframe id="pdfPreviewIframe" src="" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function openPdfModal(url, title = 'Xem Báo Cáo Khóa Luận') {
+        const titleEl = document.getElementById('pdfPreviewTitle');
+        const iframeEl = document.getElementById('pdfPreviewIframe');
+        const dlBtn = document.getElementById('btnDownloadPdfModal');
+        
+        if (titleEl) titleEl.textContent = title;
+        if (iframeEl) iframeEl.src = url + '#toolbar=1';
+        if (dlBtn) dlBtn.href = url;
+
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('modalPdfPreview');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                const iframeEl = document.getElementById('pdfPreviewIframe');
+                if (iframeEl) iframeEl.src = '';
+            });
+        }
+    });
+</script>
+@endpush
 
 @endsection
