@@ -464,7 +464,7 @@
 
         <!-- CỘT BÊN PHẢI: BẢNG HÀNH ĐỘNG ĐÁNH GIÁ (STICKY ACTION PANEL) -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm sticky-top" style="border-radius: 14px; top: 85px; z-index: 10;">
+            <div class="card border-0 shadow-sm sticky-under-header" style="border-radius: 14px;">
                 <div class="card-header bg-white py-3 px-4 border-bottom">
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="fa-solid fa-gavel text-primary"></i>

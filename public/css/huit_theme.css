@@ -226,12 +226,30 @@ body {
     position: -webkit-sticky;
     position: sticky;
     top: 0;
-    z-index: 1020;
+    z-index: 1030;
     background: #ffffff;
     box-shadow: 0 2px 10px rgba(0, 40, 85, 0.08);
     width: 100%;
     flex-shrink: 0;
     transition: none !important;
+}
+
+/* Helper cho các panel/card sticky phía dưới header HUIT */
+.sticky-under-header {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 155px;
+    z-index: 1010;
+    max-height: calc(100vh - 175px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+@media (max-width: 991.98px) {
+    .sticky-under-header {
+        position: static !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
 }
 
 /* ── Banner ── */

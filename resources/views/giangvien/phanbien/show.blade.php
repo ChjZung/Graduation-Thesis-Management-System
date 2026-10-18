@@ -20,8 +20,12 @@
     }
 
     .sticky-evaluation-card {
+        position: -webkit-sticky;
         position: sticky;
-        top: 2rem;
+        top: 155px;
+        z-index: 1010;
+        max-height: calc(100vh - 175px);
+        overflow-y: auto;
     }
 
     /* Radio Card Customization */

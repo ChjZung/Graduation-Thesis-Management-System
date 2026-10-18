@@ -216,7 +216,7 @@
 
         {{-- CỘT PHẢI: KHUNG ĐÁNH GIÁ CHUYÊN MÔN CỦA GIẢNG VIÊN --}}
         <div class="col-12 col-lg-5">
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 sticky-top" style="top: 85px; border: 1px solid #e2e8f0 !important;">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 sticky-under-header" style="border: 1px solid #e2e8f0 !important;">
                 <h6 class="fw-bold text-dark mb-1">
                     <i class="fa-solid fa-pen-clip text-primary me-2"></i>Đánh Giá &amp; Nhận Xét Chuyên Môn
                 </h6>

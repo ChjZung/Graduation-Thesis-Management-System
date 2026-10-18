@@ -240,7 +240,7 @@
                     <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">Thời hạn nộp bài đã kết thúc hoặc đợt nộp đã được Giảng viên hướng dẫn tạm khóa.</p>
                 </div>
             @else
-                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-4 sticky-top transition-all" style="top: 85px; border: 1px solid #e2e8f0 !important;">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-4 sticky-under-header transition-all" style="border: 1px solid #e2e8f0 !important;">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <h6 class="fw-bold text-dark mb-0">
                             <i class="fa-solid fa-file-arrow-up text-primary me-2"></i>Nộp Báo Cáo Phiên Bản v{{ $nextVersionNumber }}

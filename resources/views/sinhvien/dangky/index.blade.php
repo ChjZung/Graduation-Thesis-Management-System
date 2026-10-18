@@ -571,7 +571,7 @@
         <div class="card-body p-0">
             <div class="table-responsive topic-scroll-container">
                 <table class="table table-topic align-middle mb-0">
-                    <thead class="sticky-top bg-light">
+                    <thead class="bg-light">
                         <tr>
                             <th width="12%">Mã Đề Tài</th>
                             <th width="42%">Tên Đề Tài &amp; Thông Tin</th>

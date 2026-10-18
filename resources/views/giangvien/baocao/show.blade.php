@@ -376,7 +376,7 @@
         {{-- ── CỘT PHẢI (38%): TRỢ LÝ AI ĐỐI CHIẾU & TỰ ĐỘNG TỔNG HỢP ── --}}
         {{-- ═════════════════════════════════════════════════════════════════════ --}}
         <div class="col-lg-5 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-3 bg-white sticky-top" style="top: 80px; z-index: 10;">
+            <div class="card border-0 shadow-sm rounded-3 bg-white sticky-under-header">
                 <div class="card-header py-3 px-3 text-white d-flex justify-content-between align-items-center"
                      style="background: linear-gradient(135deg, #1e3a8a 0%, #0072ce 100%);">
                     <div class="d-flex align-items-center gap-2">
