@@ -149,7 +149,7 @@
                     <div class="mt-3 pt-3 border-top border-white border-opacity-25 w-100 text-start small">
                         @if($hoSo->ThoiGianBaoVe)
                             <div class="text-white-50">
-                                <i class="fa-regular fa-calendar-check me-2"></i>Bảo vệ: <strong class="text-white">{{ \Carbon\Carbon::parse($hoSo->ThoiGianBaoVe)->format('H:i &bull; d/m/Y') }}</strong>
+                                <i class="fa-regular fa-calendar-check me-2"></i>Bảo vệ: <strong class="text-white">{{ \Carbon\Carbon::parse($hoSo->ThoiGianBaoVe)->format('H:i') }} &bull; {{ \Carbon\Carbon::parse($hoSo->ThoiGianBaoVe)->format('d/m/Y') }}</strong>
                             </div>
                         @endif
                         @if($hoSo->PhongBaoVe)
@@ -290,7 +290,7 @@
                         <div>
                             <div class="fw-bold text-success fs-6">Nhóm đã nộp bản khóa luận hoàn chỉnh sau bảo vệ!</div>
                             <div class="text-muted small mt-1">
-                                Thời gian nộp: <strong>{{ $hoSo->NgayNopBanChinhSua ? \Carbon\Carbon::parse($hoSo->NgayNopBanChinhSua)->format('H:i &bull; d/m/Y') : 'Chưa ghi nhận' }}</strong>
+                                Thời gian nộp: <strong>{{ $hoSo->NgayNopBanChinhSua ? \Carbon\Carbon::parse($hoSo->NgayNopBanChinhSua)->format('H:i') . ' &bull; ' . \Carbon\Carbon::parse($hoSo->NgayNopBanChinhSua)->format('d/m/Y') : 'Chưa ghi nhận' }}</strong>
                                 &bull; Trạng thái lưu trữ: 
                                 @if($isDaLuuTru)
                                     <span class="badge bg-success text-white rounded-pill px-2 py-0">Đã lưu trữ chính thức</span>
