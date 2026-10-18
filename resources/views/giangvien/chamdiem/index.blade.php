@@ -109,7 +109,9 @@
                         <option value="{{ route('giangvien.chamdiem.index', ['hd' => $activeHoiDong->MaHoiDong, 'hoso' => $hs->MaHoSo, 'loai' => $loaiKhoaLuan]) }}" {{ $activeHoSo && $hs->MaHoSo === $activeHoSo->MaHoSo ? 'selected' : '' }}>
                             {{ $hs->nhom->TenNhom ?? $hs->MaHoSo }} — {{ Str::limit($hs->nhom->deTai->TenDeTai ?? 'Chưa có tên đề tài', 45) }}
                         </option>
-                    @endempty
+                    @empty
+                        <option value="">Chưa có nhóm nào trong hội đồng này</option>
+                    @endforelse
                 </select>
             </div>
 
@@ -472,6 +474,7 @@
                     </div>
                 </div>
 
+                @if(isset($sinhViens) && $sinhViens->isNotEmpty())
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm align-middle text-center mb-0" style="font-size: 0.8rem;">
                         <thead class="table-light">
@@ -486,7 +489,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($rubric as $cr)
+                            @foreach(($rubric ?? []) as $cr)
                             <tr>
                                 <td>{{ $cr['stt'] }}</td>
                                 <td class="text-start">{{ $cr['noi_dung'] }}</td>
@@ -507,6 +510,11 @@
                         </tbody>
                     </table>
                 </div>
+                @else
+                <div class="text-center py-4 text-muted small fst-italic">
+                    Chưa có danh sách sinh viên thực hiện để hiển thị bảng điểm xem trước.
+                </div>
+                @endif
 
                 <div class="mt-4 row">
                     <div class="col-6 text-center text-muted small">

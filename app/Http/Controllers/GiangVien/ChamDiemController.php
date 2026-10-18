@@ -100,11 +100,27 @@ class ChamDiemController extends Controller
         $rubricKLCN = PhieuChamDiem::getRubricKLCN();
         $rubricKLKS = PhieuChamDiem::getRubricKLKS();
 
+        $activeNhom = $activeHoSo?->nhom;
+        $activeDeTai = $activeNhom?->deTai;
+        $activeThanhViens = $activeNhom?->thanhViens ?? collect();
+        $sinhViens = $activeThanhViens->pluck('sinhVien')->filter();
+
+        $tvRecord = $activeHoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV);
+        $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
+
+        $rubric = ($loaiKhoaLuan === 'KLKS') ? $rubricKLKS : $rubricKLCN;
+        $tenBieuMau = ($loaiKhoaLuan === 'KLKS') ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
+
         return view('giangvien.chamdiem.index', compact(
             'giangVien',
             'hoiDongs',
             'activeHoiDong',
             'activeHoSo',
+            'activeDeTai',
+            'sinhViens',
+            'vaiTroGV',
+            'rubric',
+            'tenBieuMau',
             'loaiKhoaLuan',
             'canhBaoChuaXacDinhLoai',
             'diemDaCham',
