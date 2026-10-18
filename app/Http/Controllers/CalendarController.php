@@ -311,16 +311,16 @@ class CalendarController extends Controller
         if ($role === 'SINH_VIEN') {
             $shifts = [
                 'SINH_VIEN' => [
-                    'name'  => 'Lịch Báo Cáo Với GV & Kế Hoạch',
-                    'icon'  => 'fa-solid fa-user-graduate',
-                    'desc'  => 'Mốc kế hoạch & Lịch nộp báo cáo GVHD',
+                    'name'  => 'Tiến Độ & Kế Hoạch Thực Hiện',
+                    'icon'  => 'fa-solid fa-list-check',
+                    'desc'  => 'Mốc thời gian & Hạn nộp báo cáo tiến độ',
                     'bg'    => '#f0f9ff',
                     'color' => '#0369a1',
                 ],
                 'KHOA_HDS' => [
-                    'name'  => 'Lịch Báo Cáo Hội Đồng',
+                    'name'  => 'Lịch Bảo Vệ & Hội Đồng',
                     'icon'  => 'fa-solid fa-building-columns',
-                    'desc'  => 'Nộp hồ sơ & Lịch chấm Hội đồng',
+                    'desc'  => 'Hồ sơ bảo vệ & Phiên chấm Hội đồng',
                     'bg'    => '#fffbeb',
                     'color' => '#854d0e',
                 ],

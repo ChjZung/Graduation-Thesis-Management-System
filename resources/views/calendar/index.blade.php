@@ -396,11 +396,11 @@
                         </label>
                         <label class="segmented-btn">
                             <input type="radio" name="filter_role" value="SINH_VIEN" onchange="filterMilestoneRole('SINH_VIEN')">
-                            <span class="segmented-label">Báo cáo GV &amp; Kế hoạch</span>
+                            <span class="segmented-label">Tiến độ &amp; Kế hoạch</span>
                         </label>
                         <label class="segmented-btn">
                             <input type="radio" name="filter_role" value="KHOA_HDS" onchange="filterMilestoneRole('KHOA_HDS')">
-                            <span class="segmented-label">Báo cáo Hội đồng</span>
+                            <span class="segmented-label">Bảo vệ &amp; Hội đồng</span>
                         </label>
                     @else
                         <label class="segmented-btn">
