@@ -108,7 +108,7 @@
                         <span>Kết quả khóa luận</span>
                     </a>
                     <a href="{{ route('sinhvien.ketqua.hoanthien') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.hoanthien*') ? 'active-sub' : '' }}">
-                        <span>Hoàn thiện BC sau bảo vệ</span>
+                        <span>Hoàn thiện báo cáo</span>
                     </a>
                 </div>
             </div>
