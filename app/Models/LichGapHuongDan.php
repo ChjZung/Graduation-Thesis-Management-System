@@ -117,4 +117,17 @@ class LichGapHuongDan extends Model
     {
         return ($this->trang_thai_thuc_te === 'MoDangKy') && ($this->so_cho_con_lai > 0);
     }
+
+    /**
+     * Tự động loại bỏ thẻ HTML (nếu có) để hiển thị thuần văn bản sạch
+     */
+    public function getNoiDungAttribute($value): string
+    {
+        return trim(strip_tags($value ?? ''));
+    }
+
+    public function getLyDoHuyAttribute($value): ?string
+    {
+        return $value !== null ? trim(strip_tags($value)) : null;
+    }
 }

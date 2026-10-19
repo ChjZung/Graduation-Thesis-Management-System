@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\IdGenerator;
-use App\Helpers\HtmlHelper;
 use App\Models\GiangVien;
 use App\Models\SinhVien;
 use App\Models\ThanhVienNhom;
@@ -91,7 +90,7 @@ class LichHenHuongDanController extends Controller
                 'DiaDiem'         => $request->HinhThuc === 'TrucTiep' ? trim($request->DiaDiem) : null,
                 'HinhThuc'        => $request->HinhThuc,
                 'LinkCuocHop'     => $request->HinhThuc === 'TrucTuyen' ? trim($request->LinkCuocHop) : null,
-                'NoiDung'         => HtmlHelper::clean($request->NoiDung),
+                'NoiDung'         => trim(strip_tags($request->NoiDung)),
                 'SoNhomToiDa'     => (int) $request->SoNhomToiDa,
                 'SoNhomDaDangKy'  => 0,
                 'TrangThai'       => 'MoDangKy',
@@ -186,7 +185,7 @@ class LichHenHuongDanController extends Controller
             'DiaDiem'         => $request->HinhThuc === 'TrucTiep' ? trim($request->DiaDiem) : null,
             'HinhThuc'        => $request->HinhThuc,
             'LinkCuocHop'     => $request->HinhThuc === 'TrucTuyen' ? trim($request->LinkCuocHop) : null,
-            'NoiDung'         => HtmlHelper::clean($request->NoiDung),
+            'NoiDung'         => trim(strip_tags($request->NoiDung)),
             'SoNhomToiDa'     => (int) $request->SoNhomToiDa,
         ]);
 
@@ -257,7 +256,7 @@ class LichHenHuongDanController extends Controller
             return redirect()->back()->with('error', 'Khung giờ này đã ở trạng thái hủy trước đó.');
         }
 
-        $lyDoHuy = HtmlHelper::clean($request->LyDoHuy);
+        $lyDoHuy = trim(strip_tags($request->LyDoHuy));
 
         DB::transaction(function () use ($slot, $lyDoHuy, $giangVien) {
             $slot->update([
@@ -320,7 +319,7 @@ class LichHenHuongDanController extends Controller
             return redirect()->back()->with('error', 'Lượt đặt lịch này đã bị hủy trước đó.');
         }
 
-        $lyDoHuy = HtmlHelper::clean($request->LyDoHuy);
+        $lyDoHuy = trim(strip_tags($request->LyDoHuy));
 
         DB::transaction(function () use ($booking, $slot, $lyDoHuy, $giangVien) {
             $booking->update([
@@ -463,7 +462,7 @@ class LichHenHuongDanController extends Controller
                     'MaNhom'      => $nhom->MaNhom,
                     'MaSV'        => $sinhVien->MaSV,
                     'NgayDangKy'  => now(),
-                    'GhiChu'      => HtmlHelper::clean($request->GhiChu ?? ''),
+                    'GhiChu'      => trim(strip_tags($request->GhiChu ?? '')),
                     'TrangThai'   => 'DaXacNhan',
                 ]);
 
@@ -550,7 +549,7 @@ class LichHenHuongDanController extends Controller
             return redirect()->back()->with('error', 'Lịch hẹn này đã diễn ra trong quá khứ, không thể hủy.');
         }
 
-        $lyDoHuy = HtmlHelper::clean($request->LyDoHuy);
+        $lyDoHuy = trim(strip_tags($request->LyDoHuy));
 
         DB::transaction(function () use ($booking, $slot, $lyDoHuy, $sinhVien) {
             $booking->update([

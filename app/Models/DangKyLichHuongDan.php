@@ -46,4 +46,17 @@ class DangKyLichHuongDan extends Model
     {
         return $this->belongsTo(SinhVien::class, 'MaSV', 'MaSV');
     }
+
+    /**
+     * Tự động loại bỏ thẻ HTML (nếu có) để hiển thị thuần văn bản sạch
+     */
+    public function getGhiChuAttribute($value): ?string
+    {
+        return $value !== null ? trim(strip_tags($value)) : null;
+    }
+
+    public function getLyDoHuyAttribute($value): ?string
+    {
+        return $value !== null ? trim(strip_tags($value)) : null;
+    }
 }

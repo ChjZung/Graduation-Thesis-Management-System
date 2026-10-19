@@ -258,6 +258,8 @@
         font-size: 0.78rem;
         margin: 3px 0 4px 0;
         line-height: 1.35;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
     .tt-card-meta {
         font-size: 0.7rem;

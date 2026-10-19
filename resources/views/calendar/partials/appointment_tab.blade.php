@@ -1,3 +1,74 @@
+<style>
+    /* Cố định chiều rộng cột 7 ngày trên desktop để bảng lịch luôn đều tăm tắp */
+    @media (min-width: 992px) {
+        .week-day-col {
+            flex: 0 0 14.2857% !important;
+            max-width: 14.2857% !important;
+        }
+    }
+
+    /* Thẻ ngày và khung giờ cố định cấu trúc */
+    .day-col-card {
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .day-col-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    }
+    .day-slots-container {
+        height: 480px;
+        max-height: 480px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+    .day-slots-container::-webkit-scrollbar {
+        width: 4px;
+    }
+    .day-slots-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .day-slots-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .day-slots-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Giới hạn cấu trúc ô mỗi lịch */
+    .slot-item-card {
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .slot-item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Mô tả thì xuống hàng, giới hạn 3 dòng để không vỡ cấu trúc ô */
+    .slot-desc-text {
+        font-size: 11.5px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: #1e293b;
+        margin-bottom: 6px;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
 {{-- ═══ TAB 2: LỊCH HẸN HƯỚNG DẪN (GIẢNG VIÊN & SINH VIÊN) ═══ --}}
 <div class="appointment-tab-wrapper">
 
@@ -67,20 +138,6 @@
         </div>
     </div>
 
-    {{-- Thông báo Flash nếu có --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-xs small mb-3" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-xs small mb-3" role="alert">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     {{-- ── 2. GIAO DIỆN DÀNH CHO GIẢNG VIÊN ── --}}
     @if(($roleCode ?? '') === 'GIANG_VIEN')
         <div class="card border-0 shadow-xs mb-3 bg-light rounded-3">
@@ -119,8 +176,8 @@
                     $daySlots = $appointmentSlotsByDay[$day['iso_date']] ?? collect();
                     $isToday = $day['is_today'];
                 @endphp
-                <div class="col-lg col-md-4 col-sm-6 col-12">
-                    <div class="card h-100 border-0 shadow-xs rounded-3 {{ $isToday ? 'border-primary border-2 shadow-sm' : 'border' }}">
+                <div class="col-lg week-day-col col-md-4 col-sm-6 col-12">
+                    <div class="card h-100 day-col-card border-0 shadow-xs rounded-3 {{ $isToday ? 'border-primary border-2 shadow-sm' : 'border' }}">
                         <div class="card-header py-2 px-3 {{ $isToday ? 'bg-primary text-white' : 'bg-light text-dark' }} d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="fw-bold small">{{ $day['day_name'] }}</span>
@@ -131,7 +188,7 @@
                             </span>
                         </div>
 
-                        <div class="card-body p-2 d-flex flex-column gap-2" style="min-height: 220px; background-color: {{ $isToday ? '#f0f9ff' : '#ffffff' }};">
+                        <div class="card-body day-slots-container p-2 d-flex flex-column gap-2" style="background-color: {{ $isToday ? '#f0f9ff' : '#ffffff' }};">
                             @forelse($daySlots as $slot)
                                 @php
                                     $status = $slot->trang_thai_thuc_te;
@@ -173,7 +230,7 @@
                                         @endif
                                     </div>
 
-                                    <div class="text-dark small mb-1 fw-semibold text-truncate" style="font-size: 12px;" title="{{ $slot->NoiDung }}">
+                                    <div class="slot-desc-text" title="{{ $slot->NoiDung }}">
                                         {{ $slot->NoiDung }}
                                     </div>
 
@@ -329,8 +386,8 @@
                         $daySlots = $appointmentSlotsByDay[$day['iso_date']] ?? collect();
                         $isToday = $day['is_today'];
                     @endphp
-                    <div class="col-lg col-md-4 col-sm-6 col-12">
-                        <div class="card h-100 border-0 shadow-xs rounded-3 {{ $isToday ? 'border-primary border-2 shadow-sm' : 'border' }}">
+                    <div class="col-lg week-day-col col-md-4 col-sm-6 col-12">
+                        <div class="card h-100 day-col-card border-0 shadow-xs rounded-3 {{ $isToday ? 'border-primary border-2 shadow-sm' : 'border' }}">
                             <div class="card-header py-2 px-3 {{ $isToday ? 'bg-primary text-white' : 'bg-light text-dark' }} d-flex justify-content-between align-items-center">
                                 <div>
                                     <span class="fw-bold small">{{ $day['day_name'] }}</span>
@@ -341,7 +398,7 @@
                                 </span>
                             </div>
 
-                            <div class="card-body p-2 d-flex flex-column gap-2" style="min-height: 220px; background-color: {{ $isToday ? '#f0f9ff' : '#ffffff' }};">
+                            <div class="card-body day-slots-container p-2 d-flex flex-column gap-2" style="background-color: {{ $isToday ? '#f0f9ff' : '#ffffff' }};">
                                 @forelse($daySlots as $slot)
                                     @php
                                         $status = $slot->trang_thai_thuc_te;
@@ -381,7 +438,7 @@
                                             @endif
                                         </div>
 
-                                        <div class="text-dark small mb-2 fw-semibold text-truncate" style="font-size: 12px;" title="{{ $slot->NoiDung }}">
+                                        <div class="slot-desc-text" title="{{ $slot->NoiDung }}">
                                             {{ $slot->NoiDung }}
                                         </div>
 
@@ -483,14 +540,14 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <div class="fw-semibold text-dark">{{ $slot?->NoiDung }}</div>
+                                        <div class="fw-semibold text-dark text-break">{{ $slot?->NoiDung }}</div>
                                         @if($bk->GhiChu)
-                                            <div class="text-muted mt-1 fst-italic">
+                                            <div class="text-muted mt-1 fst-italic text-break">
                                                 <strong>Ghi chú của nhóm:</strong> {{ $bk->GhiChu }}
                                             </div>
                                         @endif
                                         @if($bk->TrangThai === 'DaHuy' && $bk->LyDoHuy)
-                                            <div class="text-danger mt-1">
+                                            <div class="text-danger mt-1 text-break">
                                                 <strong>Lý do hủy (bởi {{ $bk->NguoiHuy === 'GiangVien' ? 'GVHD' : 'Sinh viên' }}):</strong> {{ $bk->LyDoHuy }}
                                             </div>
                                         @endif
