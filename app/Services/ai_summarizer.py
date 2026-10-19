@@ -24,6 +24,7 @@ import time
 import urllib.request
 import urllib.error
 import concurrent.futures
+from pdf_document_analysis import compact, exact_quote, document_structure
 
 # Ensure UTF-8 output on Windows
 if hasattr(sys.stdout, 'reconfigure'):
@@ -99,7 +100,8 @@ def extract_pdf_pages(pdf_path):
             "text": cleaned_text,
             "char_count": char_cnt,
             "word_count": words,
-            "headings": headings
+            "headings": headings,
+            "visual_unread": bool(page.get_images()),
         })
 
     doc.close()
@@ -251,21 +253,26 @@ def call_gemini_api(prompt, api_key, model="gemini-3.5-flash", timeout=60):
     }
 
     last_error = None
+    deadline = time.monotonic() + timeout
 
     for current_model in candidate_models:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent"
 
         max_attempts = 2
         for attempt in range(max_attempts):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise RuntimeError("Đã hết thời gian gọi dịch vụ AI; chưa xử lý đầy đủ tài liệu.")
+            request_timeout = max(1, min(12, remaining))
             try:
                 if requests:
-                    resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
+                    resp = requests.post(url, json=payload, headers=headers, timeout=request_timeout)
                     status_code = resp.status_code
                     resp_text = resp.text
                 else:
                     req = urllib.request.Request(url, data=payload_bytes, headers=headers, method="POST")
                     try:
-                        with urllib.request.urlopen(req, timeout=timeout) as response:
+                        with urllib.request.urlopen(req, timeout=request_timeout) as response:
                             status_code = response.status
                             resp_text = response.read().decode("utf-8")
                     except urllib.error.HTTPError as he:
@@ -274,7 +281,11 @@ def call_gemini_api(prompt, api_key, model="gemini-3.5-flash", timeout=60):
 
                 if status_code == 200:
                     data = json.loads(resp_text)
-                    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    candidates = data.get("candidates") or []
+                    parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+                    raw_text = "".join(part.get("text", "") for part in parts if not part.get("thought"))
+                    if not raw_text:
+                        raise RuntimeError("Dịch vụ AI không trả nội dung văn bản để đối chiếu.")
                     cleaned = clean_json_markdown(raw_text)
                     return json.loads(cleaned), current_model
 
@@ -336,60 +347,30 @@ def normalize_text_for_search(text):
 
 
 def verify_evidence_in_pages(items, pages_by_num):
-    """
-    Verify each extracted item by checking if its evidence string actually appears
-    in the text of the claimed source_pages in the PDF.
-    Marks verified=True/False and flags unverified items for inspection.
-    """
     verified_items = []
     for item in items:
         if not isinstance(item, dict):
             continue
-        content = item.get("content", "").strip()
-        evidence = item.get("evidence", "").strip()
-        claimed_pages = item.get("source_pages", [])
-        if not isinstance(claimed_pages, list):
-            claimed_pages = [claimed_pages] if claimed_pages else [1]
-
-        is_verified = False
-        norm_evidence = normalize_text_for_search(evidence)
-        norm_content = normalize_text_for_search(content)
-
-        # Check in the claimed pages first
-        checked_pages = []
-        for p_num in claimed_pages:
-            checked_pages.append(p_num)
-            page_text = pages_by_num.get(p_num, "")
-            norm_page = normalize_text_for_search(page_text)
-
-            # Check if evidence snippet (or key phrases) appears in page
-            if norm_evidence and len(norm_evidence) >= 8:
-                # Substring match or partial phrase match (at least 5 consecutive words)
-                evidence_words = norm_evidence.split()
-                if norm_evidence in norm_page:
-                    is_verified = True
-                    break
-                elif len(evidence_words) >= 4:
-                    phrase = " ".join(evidence_words[:min(6, len(evidence_words))])
-                    if phrase in norm_page:
-                        is_verified = True
-                        break
-
-            # Fallback check on content
-            if norm_content and len(norm_content) >= 10:
-                content_words = norm_content.split()
-                if len(content_words) >= 4:
-                    phrase = " ".join(content_words[:min(5, len(content_words))])
-                    if phrase in norm_page:
-                        is_verified = True
-                        break
-
-        item_copy = dict(item)
-        item_copy["verified"] = is_verified
-        if not is_verified:
-            item_copy["verification_note"] = f"Cần đối chiếu thêm với trang {', '.join(map(str, claimed_pages))}"
-        verified_items.append(item_copy)
-
+        evidence = str(item.get("evidence", "")).strip()
+        pages = item.get("source_pages", [])
+        pages = pages if isinstance(pages, list) else [pages]
+        matches = []
+        quote = None
+        for value in pages:
+            try:
+                number = int(value)
+            except (TypeError, ValueError):
+                continue
+            found = exact_quote(evidence, pages_by_num.get(number, ""))
+            if found:
+                matches.append(number)
+                quote = found
+        checked = dict(item, verified=bool(matches))
+        if matches:
+            checked.update(source_pages=matches, evidence=quote)
+        else:
+            checked["verification_note"] = "Chưa có câu trích dẫn đầy đủ khớp đúng trang PDF."
+        verified_items.append(checked)
     return verified_items
 
 
@@ -397,7 +378,7 @@ def verify_evidence_in_pages(items, pages_by_num):
 # 4. ZERO-HALLUCINATION HEURISTIC NLP EXTRACTOR
 # ==============================================================================
 
-def nlp_extract_from_text(pages, stage=1):
+def nlp_extract_from_text(pages, stage=1, review_context=None):
     """
     Factual NLP extractor for fallback situations.
     STRICT ZERO-HALLUCINATION POLICY:
@@ -558,18 +539,29 @@ def nlp_extract_from_text(pages, stage=1):
     # Missing info & warnings
     if len(pages) < 2:
         missing_info.append("Báo cáo có dung lượng ngắn (< 2 trang), đề nghị bổ sung chi tiết nội dung và hình ảnh minh chứng.")
-    if not technical_links and stage >= 2:
+    if not technical_links and (review_context or {}).get('require_source_code'):
         missing_info.append("Chưa phát hiện liên kết mã nguồn (GitHub/GitLab) hoặc tài nguyên triển khai trong tài liệu.")
     if not completed:
         missing_info.append("Chưa tìm thấy đoạn văn bản nêu rõ công việc đã hoàn tất cụ thể trong tài liệu nộp.")
 
     # Objective recommendations based on factual findings
     recs = []
-    if not technical_links:
+    if not technical_links and (review_context or {}).get('require_source_code'):
         recs.append("Cần cập nhật link repository Git hoặc tài liệu minh chứng để GVHD có căn cứ đánh giá mã nguồn.")
     if not difficulties:
         recs.append("Nếu có vướng mắc kỹ thuật trong quá trình thực hiện, nhóm cần ghi rõ để GVHD kịp thời hướng dẫn.")
     recs.append(f"Chuẩn bị các tài liệu nghiệm thu cho Giai đoạn {stage} theo đúng tiến độ kế hoạch.")
+
+    structure = document_structure(pages)
+    # A thesis report describes the software's users as well as the author's work.
+    # Do not call a user's workflow ("when grading is completed") the author's completed work.
+    if structure['document_outline']:
+        completed = structure['completed_work']
+        deliverables = structure['deliverables']
+        difficulties = structure['difficulties']
+        next_steps = structure['next_steps']
+        citations = [{'page': item['source_pages'][0], 'topic': item['content'][:100], 'snippet': item['evidence'], 'verified': True}
+                     for item in completed + deliverables + difficulties + next_steps]
 
     # ZERO HALLUCINATION SUMMARY:
     if completed:
@@ -582,6 +574,10 @@ def nlp_extract_from_text(pages, stage=1):
             summary_text += " Tài liệu không nêu khó khăn cụ thể."
     else:
         summary_text = f"Đã đọc tài liệu ({len(pages)} trang), tuy nhiên văn bản không có các đề mục thể hiện rõ công việc đã hoàn thành."
+
+    if structure['document_outline']:
+        titles = '; '.join(item['content'] for item in structure['document_outline'])
+        summary_text = f"Tài liệu {len(pages)} trang gồm các phần: {titles}. Tìm được {len(deliverables)} phần thiết kế/thực nghiệm, {len(difficulties)} nội dung hạn chế và {len(next_steps)} định hướng phát triển. Đây là nội dung tài liệu, chưa phải xác nhận phần mềm đã chạy đúng."
 
     ref_pages = sorted(list(set([c["page"] for c in citations] + [1]))) if citations else [1]
 
@@ -609,7 +605,9 @@ def nlp_extract_from_text(pages, stage=1):
         "next_steps": next_steps[:5],
         "missing_information": missing_info,
         "citations": citations[:8],
-        "ai_recommendations": recs
+        "ai_recommendations": recs,
+        "document_outline": structure['document_outline'],
+        "completion_basis": "pdf_explicit" if explicit_progress_percent is not None else None,
     }
 
     return standard_report, presentation_data
@@ -619,14 +617,15 @@ def nlp_extract_from_text(pages, stage=1):
 # 5. FULL MAP-REDUCE PIPELINE INTEGRATION
 # ==============================================================================
 
-def run_map_reduce_pipeline(
+def _run_map_reduce_pipeline(
     pdf_path,
     api_key=None,
     model="gemini-3.5-flash",
     stage=1,
     chunk_size=3500,
     chunk_overlap=350,
-    method="map_reduce"
+    method="map_reduce",
+    review_context=None
 ):
     """
     Execute full structure-aware Map-Reduce summarization using Google Gemini API.
@@ -654,7 +653,7 @@ def run_map_reduce_pipeline(
 
     pages_by_num = {p["page"]: p["text"] for p in pages}
     chunks, chunking_time = build_structured_chunks(pages, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    standard_nlp, pres_nlp = nlp_extract_from_text(pages, stage=stage)
+    standard_nlp, pres_nlp = nlp_extract_from_text(pages, stage=stage, review_context=review_context)
 
     # If no API key or method is explicitly set to heuristic NLP
     if not api_key or method == "heuristic_nlp":
@@ -802,7 +801,7 @@ YÊU CẦU:
 3. "ket_qua_dat_duoc": Mảng các sản phẩm/kết quả cụ thể đã bàn giao.
 4. "kho_khan": Mảng các khó khăn thực tế. Nếu không có khó khăn nào được nhắc đến, để [].
 5. "ke_hoach_tiep_theo": Mảng kế hoạch tuần tới hoặc giai đoạn sau.
-6. "completion_percentage": Lấy giá trị phần trăm nếu tài liệu có ghi rõ; nếu không ghi, tính toán ước lượng hợp lý (0 đến 100) dựa trên khối lượng công việc thực tế, hoặc để null nếu không thể ước tính.
+6. "completion_percentage": Chỉ lấy phần trăm tiến độ được tài liệu ghi rõ; không ghi thì trả null. Không suy ra phần trăm từ số trang hay số chức năng.
 7. "completed_work", "deliverables", "difficulties", "pending_items", "next_steps":
    Mảng các đối tượng chứa {{"content": "...", "evidence": "...", "source_pages": [...]}}.
 8. "tech_stack": Danh sách các công nghệ/ngôn ngữ được tài liệu nhắc đến.
@@ -893,9 +892,7 @@ Trả về đúng JSON theo định dạng sau:
 
     # Summary
     summary_text = reduced.get("tom_tat") or pres_nlp["overall_summary"]
-    pct = reduced.get("completion_percentage")
-    if pct is None:
-        pct = pres_nlp.get("completion_percentage")
+    pct = pres_nlp.get("completion_percentage")
 
     # Formulate standard report (Matching Section 3 research schema)
     std_report = {
@@ -938,6 +935,7 @@ Trả về đúng JSON theo định dạng sau:
             "chunk_count": len(chunks),
             "chunk_size": chunk_size,
             "chunk_overlap": chunk_overlap,
+            "analyzed_chunks": len(map_results),
             "method": "gemini_map_reduce",
             "model_used": actual_model_used,
             "extraction_time": meta["extraction_time"],
@@ -952,6 +950,43 @@ Trả về đúng JSON theo định dạng sau:
     }
 
 
+def run_map_reduce_pipeline(pdf_path, api_key=None, model="gemini-3.5-flash", stage=1,
+                            chunk_size=12000, chunk_overlap=350, method="map_reduce", review_context=None):
+    result = _run_map_reduce_pipeline(pdf_path, api_key, model, stage, chunk_size, chunk_overlap, method, review_context)
+    if not result.get("success"):
+        return result
+    pages, total, _ = extract_pdf_pages(pdf_path)
+    data = result["data"]
+    by_page = {p["page"]: p["text"] for p in pages}
+    for field in ("completed_work", "deliverables", "difficulties", "pending_items", "next_steps"):
+        data[field] = [i for i in verify_evidence_in_pages(data.get(field, []), by_page) if i["verified"]]
+    structure = document_structure(pages)
+    data["document_outline"] = structure["document_outline"]
+    data["completion_basis"] = "pdf_explicit" if data.get("completion_percentage") is not None else None
+    citations = []
+    for field in ("completed_work", "deliverables", "difficulties", "next_steps"):
+        for item in data[field]:
+            for number in item["source_pages"]:
+                cite = {"page": number, "topic": item["content"][:100], "snippet": item["evidence"], "verified": True}
+                if cite not in citations:
+                    citations.append(cite)
+    data["citations"] = citations
+    metrics = result.get("metrics", {})
+    source = result.get("source", "unknown")
+    visual = [p["page"] for p in pages if p.get("visual_unread")]
+    analyzed = metrics.get("analyzed_chunks", 0)
+    data["analysis"] = {
+        "version": 2, "source": source, "method": "gemini" if source == "gemini_map_reduce" else "document_structure",
+        "total_pages": total, "text_pages": sum(bool(p["text"].strip()) for p in pages),
+        "visual_unread_pages": visual, "total_chunks": metrics.get("chunk_count", 0), "analyzed_chunks": analyzed,
+        "matched_citations": len(citations),
+        "status": "completed" if source == "gemini_map_reduce" and analyzed == metrics.get("chunk_count") and not visual else "partial",
+        "note": ("Đang dùng trích xuất cấu trúc và văn bản tại máy chủ; dịch vụ AI chưa tổng hợp đầy đủ. " if source != "gemini_map_reduce" else "")
+                + ("Một số trang có sơ đồ hoặc ảnh chưa được phân tích nội dung; không dùng chúng để kết luận thiếu yêu cầu." if visual else ""),
+    }
+    return result
+
+
 # ==============================================================================
 # 6. COMMAND LINE ENTRYPOINT
 # ==============================================================================
@@ -959,26 +994,42 @@ Trả về đúng JSON theo định dạng sau:
 def main():
     parser = argparse.ArgumentParser(description="PDF Progress Report Scientific AI Summarizer (Map-Reduce & Gemini API)")
     parser.add_argument("--pdf", required=True, help="Đường dẫn đến tệp PDF báo cáo")
-    parser.add_argument("--api-key", default=None, help="Google Gemini API Key")
+    parser.add_argument("--api-key", default=os.environ.get("GEMINI_API_KEY"), help="Google Gemini API Key")
     parser.add_argument("--model", default="gemini-3.5-flash", help="Mã model Gemini API (ví dụ: gemini-3.5-flash, gemini-3.5-flash-lite)")
     parser.add_argument("--stage", type=int, default=1, help="Giai đoạn tiến độ hiện tại (1 đến 6)")
-    parser.add_argument("--chunk-size", type=int, default=3500, help="Kích thước chunk theo số ký tự")
+    parser.add_argument("--chunk-size", type=int, default=12000, help="Kích thước chunk theo số ký tự")
     parser.add_argument("--chunk-overlap", type=int, default=350, help="Độ chồng lặp giữa các chunk")
     parser.add_argument("--method", default="map_reduce", choices=["map_reduce", "heuristic_nlp"], help="Phương pháp xử lý")
     parser.add_argument("--output", default=None, help="Đường dẫn file JSON xuất ra (tùy chọn)")
+    parser.add_argument("--review-context", default=None, help="Ngữ cảnh yêu cầu của giảng viên dạng JSON")
+    parser.add_argument("--review-only", action="store_true", help="Chỉ đối chiếu yêu cầu, giữ nguyên bản tóm tắt đã có")
 
     args = parser.parse_args()
 
     try:
-        result = run_map_reduce_pipeline(
+        context = json.loads(args.review_context) if args.review_context else None
+        if context is not None and not isinstance(context, dict):
+            raise ValueError("Ngữ cảnh đối chiếu phải là JSON object.")
+        result = {"success": True, "data": {}} if args.review_only else run_map_reduce_pipeline(
             args.pdf,
             api_key=args.api_key,
             model=args.model,
             stage=args.stage,
             chunk_size=args.chunk_size,
             chunk_overlap=args.chunk_overlap,
-            method=args.method
+            method=args.method, review_context=context
         )
+        if args.review_context:
+            from ai_requirement_review import review_requirements
+            context = json.loads(args.review_context)
+            if not isinstance(context, dict):
+                raise ValueError("Ngữ cảnh đối chiếu phải là JSON object.")
+            review_pages, review_total, _ = extract_pdf_pages(args.pdf)
+            review = review_requirements(context, review_pages, args.api_key, args.model, call_gemini_api)
+            if not isinstance(result.get("data"), dict):
+                result["data"] = {}
+            result["data"]["requirements_review"] = review
+            result["total_pages"] = review_total
         json_str = json.dumps(result, ensure_ascii=False, indent=2)
 
         if args.output:

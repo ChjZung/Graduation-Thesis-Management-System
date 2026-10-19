@@ -269,7 +269,7 @@
                                     <div class="small text-muted">{{ $dt->giangVien->MaGV ?? '' }}</div>
                                 </td>
                                 <td class="text-center">
-                                    @if($dt->FileDeCuong)
+                                    @if($dt->coTepDeCuong())
                                         @php
                                             $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
                                             $fileName = basename($dt->FileDeCuong);
@@ -325,12 +325,12 @@
                                             default => 'bg-light text-muted border',
                                         };
                                     @endphp
-                                    <span class="badge {{ $pcStatusBadge }} px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">{{ $dt->TrangThai }}</span>
+                                    <span class="badge {{ $pcStatusBadge }} px-2 py-1" style="font-size: 0.76rem; border-radius: 6px;">{{ !$dt->coTepDeCuong() ? 'Chưa có tệp đề cương' : ($dt->daDuyetDeCuong() ? 'Đã duyệt đề cương' : ($dt->TrangThai === 'Đã công bố' ? 'Đã nộp đề cương, chưa duyệt' : $dt->TrangThai)) }}</span>
                                 </td>
                                 <td class="text-center">
                                     @php
                                         $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
-                                        $canApproveDC = ($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua);
+                                        $canApproveDC = ($dt->coTepDeCuong() && $pb && $pb->KetQua === 'Đạt' && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua);
                                     @endphp
 
                                     @if($canApproveDC)
@@ -381,9 +381,9 @@
                                                 <i class="fa-solid fa-eye"></i>
                                             </a>
                                         </div>
-                                    @elseif($dt->TrangThai === 'Đã công bố')
+                                    @elseif($dt->daDuyetDeCuong())
                                         <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 mb-1 d-inline-block">
-                                            <i class="fa-solid fa-circle-check me-2"></i> Đã công bố
+                                            <i class="fa-solid fa-circle-check me-2"></i> Đã duyệt đề cương
                                         </span>
                                         <div class="d-flex justify-content-center gap-1">
                                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-1 text-nowrap d-inline-flex align-items-center" 
@@ -395,7 +395,7 @@
                                             </a>
                                         </div>
                                     @else
-                                        @if($dt->FileDeCuong)
+                                        @if($dt->coTepDeCuong() && !$dt->khoaNopDeCuong())
                                             <button type="button" class="btn btn-sm {{ $pb ? 'btn-outline-secondary' : 'btn-primary' }} rounded-3 px-2 py-1 text-nowrap" 
                                                     data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
                                                 <i class="fa-solid {{ $pb ? 'fa-user-pen' : 'fa-user-plus' }} me-2"></i>

@@ -336,7 +336,7 @@ class DuyetBaoCaoController extends Controller
      */
     private function ensureAiSummaryForKhoi(KhoiBaoCaoTienDo $khoi, BaoCaoTienDo $baoCao): void
     {
-        if (!empty($khoi->TomTatJson) && !empty($khoi->tomTat)) {
+        if (!empty($khoi->TomTatJson)) {
             return;
         }
 
@@ -355,68 +355,20 @@ class DuyetBaoCaoController extends Controller
         if ($pdfPath) {
             try {
                 $aiService = app(\App\Services\AiSummaryService::class);
-                $aiRes = $aiService->summarizePdf($pdfPath, $khoi->LanBaoCao ?? 1);
+                $aiRes = $aiService->summarizePdf($pdfPath, $khoi->giaiDoan?->ThuTu ?? $khoi->LanBaoCao ?? 1,
+                    $khoi->dotNop ? ['review_context' => $khoi->dotNop->nguCanhDoiChieuAi()] : []);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning("Auto AI summarize for Lecturer view failed: " . $e->getMessage());
             }
         }
 
-        // Nếu không có file PDF hoặc phân tích PDF lỗi, tự động tổng hợp thông minh từ nội dung báo cáo nộp
-        if (empty($aiRes) || empty($aiRes['success'])) {
-            $completedText = $khoi->KetQuaDatDuoc ?: ($khoi->NoiDungBaoCao ?: 'Đã hoàn thành các hạng mục theo kế hoạch giai đoạn.');
-            $difficultyText = $khoi->KhoKhan ?: 'Không ghi nhận vướng mắc kỹ thuật lớn.';
-            $nextPlanText = $khoi->KeHoachTiepTheo ?: 'Tiếp tục triển khai theo lộ trình đồ án.';
-
-            $aiRes = [
-                'success' => true,
-                'total_pages' => 1,
-                'processing_time' => 0.1,
-                'data' => [
-                    'overall_summary' => "AI tự động trích xuất: Nhóm đã thực hiện {$completedText}",
-                    'completion_percentage' => $khoi->PhanTramHoanThanh ?: 70,
-                    'completed_work' => [
-                        ['content' => $completedText, 'source_pages' => [1], 'evidence' => 'Nội dung nộp trực tiếp từ sinh viên']
-                    ],
-                    'difficulties' => [
-                        ['content' => $difficultyText, 'source_pages' => [1]]
-                    ],
-                    'next_stage_plan' => [
-                        ['content' => $nextPlanText]
-                    ],
-                ],
-                'formatted' => [
-                    'completed_work' => "- " . $completedText,
-                    'difficulties' => "- " . $difficultyText,
-                    'next_plan' => "- " . $nextPlanText,
-                ]
-            ];
+        if (empty($aiRes['success']) || empty($aiRes['data'])) {
+            // Do not fabricate completed work or cite an imaginary page when PDF analysis fails.
+            return;
         }
 
         try {
-            $maTomTat = \App\Helpers\IdGenerator::nextTomTat();
-            \App\Models\TomTatBaoCao::updateOrCreate(
-                ['MaBaoCao' => $baoCao->MaBaoCao],
-                [
-                    'MaTomTat' => $maTomTat,
-                    'MaKhoi' => $khoi->MaKhoi,
-                    'TenFile' => $khoi->TenFile,
-                    'DuongDanFile' => $khoi->DuongDanFile,
-                    'SoTrang' => (int)($aiRes['total_pages'] ?? 1),
-                    'CongViecDaHoanThanh' => $aiRes['formatted']['completed_work'] ?? '',
-                    'KhoKhan' => $aiRes['formatted']['difficulties'] ?? '',
-                    'KeHoachTuanToi' => $aiRes['formatted']['next_plan'] ?? '',
-                    'NoiDungAI' => $aiRes['data']['overall_summary'] ?? '',
-                    'TomTatJson' => $aiRes,
-                    'TrangThai' => 'Đã tạo',
-                    'TrangThaiXuLy' => 'hoan_thanh',
-                    'NgayTomTat' => now(),
-                ]
-            );
-
-            $khoi->update([
-                'TomTatAI' => $aiRes['data']['overall_summary'] ?? '',
-                'TomTatJson' => $aiRes,
-            ]);
+            app(\App\Services\AiSummaryService::class)->saveVersionSummary($khoi, $aiRes);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning("Save auto AI summary failed: " . $e->getMessage());
         }
@@ -661,7 +613,9 @@ class DuyetBaoCaoController extends Controller
             abort(403, 'Bạn không phải GVHD của đề tài này.');
         }
 
-        $dotNop = $this->progressService->taoDotNop($giaiDoan, $request->all());
+        $dotNop = $this->progressService->taoDotNop($giaiDoan, array_merge($request->all(), [
+            'YeuCauSourceCode' => $request->boolean('YeuCauSourceCode'),
+        ]));
         return redirect()->back()->with('success', "Đã tạo đợt nộp '{$dotNop->TenDotNop}' thành công!");
     }
 
@@ -703,6 +657,23 @@ class DuyetBaoCaoController extends Controller
         ]);
 
         return redirect()->back()->with('success', "Đã cập nhật đợt nộp '{$dotNop->TenDotNop}' thành công!");
+    }
+
+    public function capNhatYeuCauMaNguon(Request $request, $id)
+    {
+        $request->validate(['YeuCauSourceCode' => 'required|boolean']);
+
+        $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        if (!$giangVien || !$dotNop->deTai || $dotNop->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $dotNop->update(['YeuCauSourceCode' => $request->boolean('YeuCauSourceCode')]);
+
+        return redirect()->back()->with('success', $dotNop->YeuCauSourceCode
+            ? 'Đã bật yêu cầu nộp link GitHub / GitLab / Bitbucket cho đợt này.'
+            : 'Đã tắt yêu cầu nộp link mã nguồn cho đợt này.');
     }
 
     /**

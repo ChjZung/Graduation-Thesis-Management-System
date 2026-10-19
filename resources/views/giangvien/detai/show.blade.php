@@ -50,7 +50,7 @@
         $hasGroupAssigned = !empty($dangKyApproved) && !empty($dangKyApproved->nhom);
         $phanBienHienTai = $detai->phanCongPhanBiens?->firstWhere('VaiTro', 'Phản biện đề cương');
         // Đề cương chỉ thực sự kết thúc và khóa nộp khi TBM đã phê duyệt công bố chính thức hoặc hoàn thành đề tài
-        $isOutlineFinalized = in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành']);
+        $isOutlineFinalized = $detai->khoaNopDeCuong();
         $canNop = !in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt cấp Khoa', 'Từ chối']) && $hasGroupAssigned && !$isOutlineFinalized;
         $canEdit = in_array($detai->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh']) && !$hasGroupAssigned && $detai->TrangThai !== 'Từ chối';
     @endphp
@@ -393,14 +393,14 @@
                     <span class="fw-bold text-dark">
                         <i class="fa-solid fa-paperclip text-primary me-2"></i> File Đề Cương Chi Tiết
                     </span>
-                    @if($detai->FileDeCuong)
+                    @if($detai->coTepDeCuong())
                         <span class="badge bg-success-subtle text-success border border-success-subtle small fw-semibold">Đã có file</span>
                     @else
                         <span class="badge bg-light text-muted border small fw-normal">Chưa nộp</span>
                     @endif
                 </div>
                 <div class="card-body p-4">
-                    @if($detai->FileDeCuong)
+                    @if($detai->coTepDeCuong())
                         @php
                             $filePathShow = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                             $fileName = basename($detai->FileDeCuong);

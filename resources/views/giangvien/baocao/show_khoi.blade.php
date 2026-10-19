@@ -48,8 +48,9 @@
     </div>
 
     @php
-        $tomTatData = $khoi->tomTat?->TomTatJson ?? ($khoi->TomTatJson ?? null);
-        $hasAi = !empty($tomTatData) && !empty($tomTatData['data']);
+        $tomTatData = $khoi->TomTatJson ?? $khoi->tomTat?->TomTatJson;
+        if (is_string($tomTatData)) $tomTatData = json_decode($tomTatData, true);
+        $hasAi = is_array($tomTatData) && (!empty($tomTatData['overall_summary']) || !empty($tomTatData['data']['overall_summary']));
     @endphp
 
     <!-- KHUNG ĐỐI CHIẾU SONG SONG (2 CỘT): SINH VIÊN vs AI TRÍCH XUẤT -->
@@ -132,7 +133,7 @@
                         <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Trích Xuất Đối Chiếu Từ AI Map-Reduce
                     </h6>
                     <span class="badge bg-primary-subtle text-primary border rounded-pill px-3 py-1" style="font-size: 11.5px;">
-                        Độ tin cậy: {{ $khoi->tomTat?->DoTinCayAI ?? 95 }}%
+                        Đối chiếu theo dẫn chứng PDF
                     </span>
                 </div>
                 <div class="card-body p-3">

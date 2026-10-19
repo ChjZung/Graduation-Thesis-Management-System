@@ -872,15 +872,7 @@ class BaoCaoController extends Controller
             'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
         ];
 
-        if ($dotNop->YeuCauSourceCode) {
-            $rules['LinkCode'] = [
-                'required',
-                'url',
-                'regex:#^(https?://)?(www\.)?(github\.com|gitlab\.com|bitbucket\.org)/.+#i'
-            ];
-        } else {
-            $rules['LinkCode'] = ['nullable', 'url'];
-        }
+        $rules['LinkCode'] = $dotNop->quyTacLinkMaNguon();
 
         $messages = [
             'FilePdf.required' => 'Vui lòng đính kèm file báo cáo định dạng PDF để AI tự động phân tích.',
@@ -890,13 +882,13 @@ class BaoCaoController extends Controller
             'LinkCode.regex' => 'Đường dẫn mã nguồn phải thuộc GitHub, GitLab hoặc Bitbucket hợp lệ.',
         ];
 
-        $request->validate($rules, $messages);
+        $submissionData = $request->validate($rules, $messages);
 
         try {
             $khoi = $this->progressService->nopBaoCaoPhienBanMoi(
                 $dotNop,
                 $sinhVien,
-                $request->all(),
+                $submissionData,
                 $request->file('FilePdf')
             );
 

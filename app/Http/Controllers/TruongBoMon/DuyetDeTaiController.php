@@ -476,7 +476,7 @@ class DuyetDeTaiController extends Controller
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         // 1. Chỉ phân công đề tài đủ điều kiện phản biện (phải có file đề cương)
-        if (!$detai->FileDeCuong) {
+        if (!$detai->coTepDeCuong()) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
         }
 
@@ -607,6 +607,13 @@ class DuyetDeTaiController extends Controller
         // Khóa duyệt nếu đề tài đang bị yêu cầu chỉnh sửa đề cương hoặc từ chối
         if (in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa', 'Không đạt phản biện', 'Từ chối'])) {
             return redirect()->back()->withErrors("Đề cương đang ở trạng thái '{$detai->TrangThai}'. Nút duyệt đã bị khóa, vui lòng chờ Giảng viên nộp lại bản đề cương hoàn thiện đạt yêu cầu trước khi phê duyệt.");
+        }
+
+        if (!$detai->coTepDeCuong()) {
+            return redirect()->back()->withErrors('Chưa có tệp đề cương hợp lệ. Giảng viên hướng dẫn cần nộp đề cương trước khi phê duyệt.');
+        }
+        if ($detai->khoaNopDeCuong()) {
+            return redirect()->back()->withErrors('Đề cương đã được phê duyệt hoặc đề tài đã hoàn thành.');
         }
 
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');

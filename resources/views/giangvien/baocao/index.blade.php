@@ -825,11 +825,13 @@
                     </div>
 
                     <div class="form-check form-switch mb-2">
-                        <input class="form-check-input" type="checkbox" name="YeuCauSourceCode" value="1" id="switchYeuCauCode" checked>
+                        <input type="hidden" name="YeuCauSourceCode" value="0">
+                        <input class="form-check-input" type="checkbox" name="YeuCauSourceCode" value="1" id="switchYeuCauCode" @checked(old('YeuCauSourceCode', false))>
                         <label class="form-check-label small fw-bold text-dark" for="switchYeuCauCode">
-                            Yêu cầu cung cấp đường dẫn mã nguồn (Git repository)
+                            Yêu cầu link GitHub / GitLab / Bitbucket
                         </label>
                     </div>
+                    <div class="form-text small">Chỉ tích khi đợt này cần kiểm tra mã nguồn. Không tích thì sinh viên không thấy ô nhập link Git.</div>
                 </div>
 
                 <div class="modal-footer border-top px-4 py-2">
@@ -865,6 +867,7 @@ window.openAddGiaiDoanModal = function(maDeTai) {
 };
 
 window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan) {
+    document.querySelector('#modalAddDotNop form')?.reset();
     const input = document.getElementById('inputAddDotNopMaGiaiDoan');
     const label = document.getElementById('labelAddDotNopTenGiaiDoan');
     if (input) input.value = maGiaiDoan;

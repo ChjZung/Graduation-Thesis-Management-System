@@ -12,6 +12,10 @@ class DotNopBaoCao extends Model
     protected $table = 'dotnopbaocao';
     protected $primaryKey = 'MaDotNop';
 
+    protected $attributes = [
+        'YeuCauSourceCode' => false,
+    ];
+
     protected $fillable = [
         'MaGiaiDoan',
         'MaDeTai',
@@ -36,6 +40,37 @@ class DotNopBaoCao extends Model
             'SoLanNopToiDa' => 'integer',
             'ThuTu' => 'integer',
         ];
+    }
+
+    public function quyTacLinkMaNguon(): array
+    {
+        return $this->YeuCauSourceCode
+            ? ['required', 'url', 'regex:#^https?://(www\.)?(github\.com|gitlab\.com|bitbucket\.org)/.+#i']
+            : ['exclude'];
+    }
+
+    public function nguCanhDoiChieuAi(): array
+    {
+        $plain = static function ($text): string {
+            $text = preg_replace('/<\/(?:p|div|li|h[1-6])>|<br\s*\/?\s*>/iu', "\n", (string) $text);
+            return trim(html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        };
+
+        return [
+            'stage_title' => $plain($this->giaiDoan?->TenGiaiDoan),
+            'stage_requirements' => $plain($this->giaiDoan?->YeuCauCanDat),
+            'round_title' => $plain($this->TenDotNop),
+            'round_description' => $plain($this->MoTa),
+            'submission_requirements' => $plain($this->NoiDungYeuCau),
+            'require_source_code' => (bool) $this->YeuCauSourceCode,
+        ];
+    }
+
+    public function maNguCanhDoiChieuAi(): string
+    {
+        $context = $this->nguCanhDoiChieuAi();
+        ksort($context);
+        return hash('sha256', json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
     }
 
     public function giaiDoan()

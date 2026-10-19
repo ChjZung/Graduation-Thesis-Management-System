@@ -74,11 +74,15 @@
                                     
                                     // 2. Trạng thái đề cương
                                     $ttDeCuong = 'Chưa nộp đề cương';
-                                    if ($detai->TrangThai === 'Đã công bố') {
+                                    if (!$detai->coTepDeCuong()) {
+                                        $ttDeCuong = 'Chưa có tệp đề cương';
+                                    } elseif ($detai->daDuyetDeCuong()) {
                                         $ttDeCuong = 'Đã duyệt đề cương';
                                     } elseif ($detai->TrangThai === 'Yêu cầu chỉnh sửa đề cương') {
                                         $ttDeCuong = 'Yêu cầu chỉnh sửa đề cương';
-                                    } elseif (in_array($detai->TrangThai, ['Đã cập nhật đề cương - Chờ phản biện lại', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM'])) {
+                                    } elseif (in_array($detai->TrangThai, ['Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM'])) {
+                                        $ttDeCuong = 'Đã phản biện - Chờ Bộ môn duyệt';
+                                    } elseif ($detai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại') {
                                         $ttDeCuong = 'Đã nộp lại đề cương';
                                     } elseif ($detai->FileDeCuong) {
                                         $ttDeCuong = 'Đã nộp đề cương';
@@ -86,7 +90,7 @@
 
                                     // 3. Trạng thái phản biện đề cương
                                     $pbMain = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
-                                    if (!$detai->FileDeCuong) {
+                                    if (!$detai->coTepDeCuong()) {
                                         $ttPhanBien = 'Chưa phản biện (Chờ nộp ĐC)';
                                         $badgePbClass = 'bg-secondary-subtle text-secondary border';
                                     } elseif (!$pbMain) {
@@ -124,7 +128,9 @@
                                     </div>
                                 </div>
                                 <div class="small text-muted border-top pt-2">
-                                    @if($isLocked)
+                                    @if($detai->TrangThai === 'Hoàn thành')
+                                        Đề tài đã hoàn thành. Chức năng nộp đề cương đã khóa.
+                                    @elseif($isLocked)
                                         Đề tài đã hoàn tất quy trình thẩm định đề cương và đã công bố chính thức.
                                     @elseif($isNopLai)
                                         Cán bộ phản biện đã có ý kiến góp ý. Quý Thầy/Cô vui lòng chỉnh sửa và nộp lại file đề cương.
@@ -134,7 +140,7 @@
                                 </div>
                             </div>
 
-                            @if($detai->FileDeCuong)
+                            @if($detai->coTepDeCuong())
                                 @php
                                     $filePathCurrent = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                                 @endphp
@@ -157,7 +163,7 @@
             </div>
         </div>
 
-        <!-- Form Tải Lên Đề Cương (Chỉ mở khi CHƯA CÔNG BỐ) -->
+        <!-- Chỉ khóa nộp khi đề cương đã được duyệt hoặc đề tài đã hoàn thành. -->
         @if(!$isLocked)
         <div class="card card-premium mb-4">
             <div class="card-header-premium d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -227,11 +233,11 @@
                         <i class="fa-solid fa-lock"></i>
                     </span>
                 </div>
-                <h5 class="fw-bold text-dark mb-2">Đề Cương Đã Được Công Bố Chính Thức</h5>
+                <h5 class="fw-bold text-dark mb-2">{{ $detai->TrangThai === 'Hoàn thành' ? 'Đề Tài Đã Hoàn Thành' : 'Đề Cương Đã Được Phê Duyệt' }}</h5>
                 <p class="text-muted small mx-auto mb-3" style="max-width: 620px;">
-                    Đề tài đã hoàn tất mọi thủ tục thẩm định và đã được công bố chính thức cho sinh viên. Chức năng nộp và chỉnh sửa đề cương hiện đã được khóa để đảm bảo tính toàn vẹn hồ sơ.
+                    Chức năng nộp và chỉnh sửa đề cương đã khóa vì {{ $detai->TrangThai === 'Hoàn thành' ? 'đề tài đã hoàn thành' : 'Trưởng bộ môn đã phê duyệt đề cương' }}.
                 </p>
-                @if($detai->FileDeCuong)
+                @if($detai->coTepDeCuong())
                     @php
                         $filePathLocked = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                     @endphp
@@ -337,7 +343,7 @@
                     Lịch Sử Nộp Đề Cương Chi Tiết
                 </span>
                 <span class="badge bg-light text-secondary border">
-                    {{ $detai->taiLieuNops->count() > 0 ? $detai->taiLieuNops->count() : ($detai->FileDeCuong ? 1 : 0) }} lần nộp
+                    {{ $detai->taiLieuNops->count() > 0 ? $detai->taiLieuNops->count() : ($detai->coTepDeCuong() ? 1 : 0) }} lần nộp
                 </span>
             </div>
             <div class="card-body p-0">
@@ -395,7 +401,7 @@
                                     </td>
                                 </tr>
                                 @endforeach
-                            @elseif($detai->FileDeCuong)
+                            @elseif($detai->coTepDeCuong())
                                 @php
                                     $linkCurrent = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                                 @endphp

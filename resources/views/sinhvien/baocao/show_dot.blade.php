@@ -132,7 +132,7 @@
 
                                     {{-- File đính kèm & Git repository --}}
                                     <div class="row g-3 mb-4">
-                                        <div class="col-12 col-md-6">
+                                        <div class="col-12 {{ ($dotNop->YeuCauSourceCode || $pb->LinkCode) ? 'col-md-6' : '' }}">
                                             <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between transition-all hover-shadow-sm">
                                                 <div class="d-flex align-items-center gap-3 text-truncate me-2">
                                                     <i class="fa-solid fa-file-pdf text-danger fs-3"></i>
@@ -149,6 +149,7 @@
                                             </div>
                                         </div>
 
+                                        @if($dotNop->YeuCauSourceCode || $pb->LinkCode)
                                         <div class="col-12 col-md-6">
                                             <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between transition-all hover-shadow-sm">
                                                 <div class="d-flex align-items-center gap-3 text-truncate me-2">
@@ -167,6 +168,7 @@
                                                 @endif
                                             </div>
                                         </div>
+                                        @endif
                                     </div>
 
                                     {{-- Nhận xét của Giảng viên hướng dẫn --}}
@@ -291,17 +293,19 @@
                         </div>
 
                         {{-- Đường dẫn mã nguồn (Git) --}}
+                        @if($dotNop->YeuCauSourceCode)
                         <div class="mb-3.5">
                             <label class="form-label fw-bold small text-dark">
                                 Đường dẫn mã nguồn (GitHub / GitLab / Bitbucket) 
-                                @if($dotNop->YeuCauSourceCode)<span class="text-danger">*</span>@else<span class="text-muted fw-normal">(tùy chọn)</span>@endif
+                                <span class="text-danger">*</span>
                             </label>
                             <input type="url" name="LinkCode" class="form-control form-control-sm py-2 px-3 rounded-3 transition-all" 
                                    placeholder="https://github.com/username/repository" 
                                    value="{{ old('LinkCode', $latestPhienBan->LinkCode ?? '') }}"
-                                   {{ $dotNop->YeuCauSourceCode ? 'required' : '' }}>
+                                   required>
                             <div class="form-text small mt-1" style="font-size: 11px;">Đường dẫn repository mã nguồn của nhóm tại thời điểm nộp phiên bản này.</div>
                         </div>
+                        @endif
 
                         {{-- Ghi chú chi tiết cho GVHD (Trình soạn thảo văn bản có định dạng) --}}
                         <div class="mb-3.5">
@@ -325,7 +329,7 @@
                                 Tỷ lệ hoàn thành tự đánh giá (%) <span class="text-muted fw-normal">(tùy chọn)</span>
                             </label>
                             <div class="input-group input-group-sm shadow-sm rounded-3 overflow-hidden">
-                                <input type="number" name="PhanTramHoanThanh" class="form-control form-control-sm py-2 px-3" min="0" max="100" placeholder="Để trống để AI tự ước lượng theo tài liệu" value="{{ old('PhanTramHoanThanh') }}">
+                                <input type="number" name="PhanTramHoanThanh" class="form-control form-control-sm py-2 px-3" min="0" max="100" placeholder="Để trống nếu chưa xác định tỷ lệ tiến độ" value="{{ old('PhanTramHoanThanh') }}">
                                 <span class="input-group-text bg-light px-3 fw-bold">%</span>
                             </div>
                             <div class="form-text small mt-1" style="font-size: 11px;">Nếu để trống, Trợ lý AI sẽ tự động ước tính dựa trên khối lượng công việc và số trang báo cáo.</div>

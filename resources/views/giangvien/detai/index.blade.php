@@ -180,7 +180,7 @@
 
         $phanBien = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
         // Đề cương chỉ thực sự kết thúc và khóa nộp khi TBM đã phê duyệt công bố chính thức hoặc hoàn thành đề tài
-        $isOutlineFinalized = in_array($dt->TrangThai, ['Đã công bố', 'Hoàn thành']);
+        $isOutlineFinalized = $dt->khoaNopDeCuong();
         $isLocked = $isOutlineFinalized;
 
         $canNopDeCuong = $isProposalApproved && $hasGroupAssigned && !$isLocked;
@@ -250,7 +250,7 @@
                         <span class="badge bg-light text-secondary border px-2 py-1 small">{{ $dt->LinhVuc }}</span>
                     @endif
 
-                    @if($dt->FileDeCuong)
+                    @if($dt->coTepDeCuong())
                         @php
                             $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
                             $pbDt = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
@@ -343,8 +343,8 @@
                             <i class="fa-solid fa-file-arrow-up me-2"></i>{{ $isNopLai ? 'Nộp lại ĐC' : 'Nộp ĐC' }}
                         </a>
                     @elseif($isLocked)
-                        <span class="badge bg-light text-muted border py-2 px-2 rounded-2 small" title="Đề cương đã được duyệt và công bố chính thức">
-                            <i class="fa-solid fa-circle-check text-success me-2"></i>Đã duyệt ĐC
+                        <span class="badge bg-light text-muted border py-2 px-2 rounded-2 small" title="Chức năng nộp đề cương đã khóa">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>{{ $dt->TrangThai === 'Hoàn thành' ? 'Đề tài đã hoàn thành' : 'Đã duyệt ĐC' }}
                         </span>
                     @elseif(in_array($dt->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt']) && !$hasGroupAssigned)
                         <span class="badge bg-warning-subtle text-warning-emphasis border py-2 px-2 rounded-2 small">

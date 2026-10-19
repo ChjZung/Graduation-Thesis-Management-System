@@ -12,8 +12,29 @@ class AiSummaryService
 {
     private const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent';
     private const MAX_RETRIES     = 3;
-    private const CHUNK_SIZE      = 3500;
+    private const CHUNK_SIZE      = 12000;
     private const CHUNK_OVERLAP   = 350;
+
+    public function saveVersionSummary(\App\Models\KhoiBaoCaoTienDo $report, array $result): void
+    {
+        // Each submission keeps its own JSON. The legacy table has ONE snapshot per MaBaoCao.
+        \Illuminate\Support\Facades\DB::transaction(function () use ($report, $result) {
+            $report->update(['TomTatJson' => $result['data'], 'TomTatAI' => $result['data']['overall_summary'] ?? '']);
+            $summary = \App\Models\TomTatBaoCao::firstOrNew(['MaBaoCao' => $report->MaBaoCao]);
+            if (!$summary->exists) {
+                $summary->MaTomTat = \App\Helpers\IdGenerator::nextTomTat();
+            }
+            $summary->fill([
+                'MaKhoi' => $report->MaKhoi, 'TenFile' => $report->TenFile, 'DuongDanFile' => $report->DuongDanFile,
+                'SoTrang' => (int) ($result['total_pages'] ?? 0),
+                'CongViecDaHoanThanh' => $result['formatted']['completed_work'] ?? '',
+                'KhoKhan' => $result['formatted']['difficulties'] ?? '', 'KeHoachTuanToi' => $result['formatted']['next_steps'] ?? '',
+                'NoiDungAI' => $result['data']['overall_summary'] ?? '', 'TomTatJson' => $result['data'],
+                'TrangThai' => 'Đã tạo', 'TrangThaiXuLy' => 'hoan_thanh',
+                'ThoiGianXuLy' => $result['processing_time'] ?? 0, 'NgayTomTat' => now(),
+            ])->save();
+        });
+    }
 
     /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
@@ -22,6 +43,9 @@ class AiSummaryService
      */
     public function summarizePdf(string $pdfPath, int $stage = 1, array $options = []): array
     {
+        if (function_exists('set_time_limit')) {
+            set_time_limit(420);
+        }
         $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
         $model = config('services.gemini.model', 'gemini-3.5-flash');
         $scriptPath = base_path('app/Services/ai_summarizer.py');
@@ -49,9 +73,12 @@ class AiSummaryService
             $model,
         ];
 
-        if (!empty($apiKey)) {
-            $command[] = '--api-key';
-            $command[] = $apiKey;
+        if (!empty($options['review_context'])) {
+            $command[] = '--review-context';
+            $command[] = json_encode($options['review_context'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        }
+        if (!empty($options['review_only'])) {
+            $command[] = '--review-only';
         }
 
         $errorReason = '';
@@ -67,10 +94,11 @@ class AiSummaryService
                 'TMP' => getenv('TMP') ?: 'C:\Windows\Temp',
                 'PYTHONUTF8' => '1',
                 'PYTHONIOENCODING' => 'utf-8',
+                'GEMINI_API_KEY' => $apiKey,
             ]);
 
             // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
-            $result = Process::timeout(240)->env($processEnv)->run($command);
+            $result = Process::timeout(360)->env($processEnv)->run($command);
 
             if ($result->successful()) {
                 $output = trim($result->output());
@@ -178,7 +206,13 @@ class AiSummaryService
             'missing_information' => $missingInfo,
             'citations' => $citations,
             'ai_recommendations' => $aiRecs,
+            'analysis' => $data['analysis'] ?? ['version' => 2, 'source' => $source, 'status' => 'partial', 'note' => 'Chưa có thông tin kiểm chứng đầy đủ.'],
+            'document_outline' => $data['document_outline'] ?? [],
+            'completion_basis' => $data['completion_basis'] ?? null,
         ];
+        if (isset($data['requirements_review']) && is_array($data['requirements_review'])) {
+            $sectionsData['requirements_review'] = $data['requirements_review'];
+        }
 
         $stdReport = $raw['standard_report'] ?? [
             'tom_tat' => $overallSummary,

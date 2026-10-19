@@ -101,7 +101,7 @@
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">File Đề Cương Chi Tiết Đính Kèm:</label>
                         <div>
-                            @if($detai->FileDeCuong)
+                            @if($detai->coTepDeCuong())
                                 @php
                                     $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                                     $fileName = basename($detai->FileDeCuong);
@@ -310,7 +310,11 @@
                             @endif
                         </div>
 
-                        @if(in_array($detai->TrangThai, ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương']) || ($phanBienHienTai && $phanBienHienTai->KetQua === 'Đạt' && $detai->TrangThai !== 'Đã công bố'))
+                        @if(!$detai->coTepDeCuong())
+                            <div class="alert alert-warning small mb-2">Chưa có tệp đề cương. Chờ giảng viên hướng dẫn nộp đề cương chi tiết.</div>
+                        @elseif($detai->daDuyetDeCuong())
+                            <div class="alert alert-success small mb-2">Trưởng bộ môn đã phê duyệt đề cương.</div>
+                        @elseif(!$detai->khoaNopDeCuong() && $phanBienHienTai && $phanBienHienTai->KetQua === 'Đạt')
                             <div class="alert alert-info py-2 px-3 small mb-2 text-start rounded-3">
                                 <i class="fa-solid fa-circle-info me-2"></i> Đề cương đã phản biện Đạt. Thao tác chốt duyệt đề cương được quản lý tại mục <strong>Phân công phản biện</strong>.
                             </div>
