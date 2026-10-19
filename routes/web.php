@@ -308,6 +308,10 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index'])->name('giangvien.chamdiem.index');
     Route::post('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store'])->name('giangvien.chamdiem.store');
     Route::post('/chamdiem/yeu-cau-mo-khoa', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'yeuCauMoKhoa'])->name('giangvien.chamdiem.yeuCauMoKhoa');
+    Route::post('/chamdiem/cap-nhat-chuc-nang', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'capNhatChucNang'])->name('giangvien.chamdiem.capNhatChucNang');
+    Route::get('/chamdiem/xuat-pdf', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatPdf'])->name('giangvien.chamdiem.xuatPdf');
+    Route::get('/chamdiem/xuat-word', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatWord'])->name('giangvien.chamdiem.xuatWord');
+    Route::post('/chamdiem/ky-ten', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'kyTen'])->name('giangvien.chamdiem.kyTen');
     Route::get('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index']);
     Route::post('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store']);
 

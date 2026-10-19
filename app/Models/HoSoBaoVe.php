@@ -43,6 +43,7 @@ class HoSoBaoVe extends Model
         'MaNhom',
         'MaDeTai',
         'LoaiKhoaLuan',
+        'TieuChiChucNang',
         'TrangThaiKetQua',
         'YeuCauChinhSuaSauBaoVe',
         'HanNopBaoCaoSauBaoVe',
@@ -97,6 +98,11 @@ class HoSoBaoVe extends Model
     public function phieuChamDiems()
     {
         return $this->hasMany(PhieuChamDiem::class, 'MaHoSo', 'MaHoSo');
+    }
+
+    public function ketQuaSinhViens()
+    {
+        return $this->hasMany(KetQuaSinhVien::class, 'MaHoSo', 'MaHoSo');
     }
 
     public function phanCongPhanBien()

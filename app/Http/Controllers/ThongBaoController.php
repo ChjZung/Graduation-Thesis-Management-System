@@ -278,6 +278,11 @@ class ThongBaoController extends Controller
             if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
                 $fileUrl = 'storage/' . $fileUrl;
             }
+            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = null;
+            }
+        } else {
+            $fileUrl = null;
         }
 
         // 2. Tự động kiểm tra và sinh file Excel danh sách nếu là thông báo công bố sinh viên đủ điều kiện (TB_DK_*)
@@ -293,17 +298,6 @@ class ThongBaoController extends Controller
                 if ($relPath) {
                     $thongBao->update(['FileDinhKem' => $relPath]);
                     $fileUrl = 'storage/' . $relPath;
-                }
-            }
-        }
-
-        // 3. Nếu thông báo chưa có file, tự động lấy file công văn từ kế hoạch khóa luận tương ứng hoặc mới nhất
-        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
-            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
-            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
-                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
-                if (file_exists(public_path($candidate))) {
-                    $fileUrl = $candidate;
                 }
             }
         }
@@ -548,21 +542,40 @@ class ThongBaoController extends Controller
         $curUserMaTK = $curUser->MaTK ?? '';
         $curUserTen = $curUser->TenDangNhap ?? '';
 
-        $notiQuery = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'da_gui', 'ACTIVE', 'DaPhatHanh']);
-
-        if ($role === 'Sinh viên') {
+        if (in_array($role, ['Admin', 'Giáo vụ'])) {
+            // Admin & Giáo vụ quản lý toàn bộ các thông báo chính thức của hệ thống
+            $notiQuery = ThongBao::whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
+                ->where(function($q) use ($curUserMaTK, $curUserTen) {
+                    $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
+                      ->orWhereNull('DoiTuongNhan')
+                      ->orWhere('DoiTuongNhan', '')
+                      ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                      ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+                    if ($curUserMaTK) {
+                        $q->orWhere('DoiTuongNhan', $curUserMaTK);
+                    }
+                    if ($curUserTen) {
+                        $q->orWhere('DoiTuongNhan', $curUserTen);
+                    }
+                });
+        } elseif ($role === 'Sinh viên') {
             $sv = \App\Models\SinhVien::where('MaTK', $curUserMaTK)->orWhere('MaSV', $curUserTen)->first();
             $userNhomCodes = $sv ? \App\Models\ThanhVienNhom::where('MaSV', $sv->MaSV)->where('TrangThai', 'da_tham_gia')->pluck('MaNhom')->toArray() : [];
+            $curMaSV = $sv?->MaSV ?? '';
 
-            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $userNhomCodes) {
-                $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV'])
+            $notiQuery = ThongBao::where(function($q) use ($curUserMaTK, $curUserTen, $curMaSV, $userNhomCodes) {
+                $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', ''])
                   ->orWhereNull('DoiTuongNhan')
-                  ->orWhere('DoiTuongNhan', '');
+                  ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
                 if ($curUserMaTK) {
                     $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
                 }
                 if ($curUserTen) {
                     $q->orWhere('DoiTuongNhan', $curUserTen)->orWhere('DoiTuongNhan', 'like', "%{$curUserTen}%");
+                }
+                if ($curMaSV) {
+                    $q->orWhere('DoiTuongNhan', $curMaSV)->orWhere('DoiTuongNhan', 'like', "%{$curMaSV}%");
                 }
                 if (!empty($userNhomCodes)) {
                     $q->orWhere('DoiTuongNhan', 'like', '%Tất cả các nhóm%');
@@ -574,10 +587,11 @@ class ThongBaoController extends Controller
         } elseif (in_array($role, ['Giảng viên', 'Trưởng bộ môn', 'Trưởng khoa'])) {
             $gv = \App\Models\GiangVien::getLoggedInGiangVien($curUser);
             $curMaGV = $gv?->MaGV ?? ($curUser?->MaGV ?? '');
-            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $curMaGV) {
-                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+            $notiQuery = ThongBao::where(function($q) use ($curUserMaTK, $curUserTen, $curMaGV) {
+                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', ''])
                   ->orWhereNull('DoiTuongNhan')
-                  ->orWhere('DoiTuongNhan', '');
+                  ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
                 if ($curUserMaTK) {
                     $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
                 }
@@ -588,23 +602,16 @@ class ThongBaoController extends Controller
                     $q->orWhere('DoiTuongNhan', $curMaGV)->orWhere('DoiTuongNhan', 'like', "%{$curMaGV}%");
                 }
             });
-        } elseif (in_array($role, ['Admin', 'Giáo vụ'])) {
-            $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen) {
-                $q->whereIn('DoiTuongNhan', ['Admin', 'Giáo vụ', 'Toàn thể', 'Tất cả', 'Toàn trường'])
-                  ->orWhereNull('DoiTuongNhan')
-                  ->orWhere('DoiTuongNhan', '');
-                if ($curUserMaTK) {
-                    $q->orWhere('DoiTuongNhan', $curUserMaTK);
-                }
-                if ($curUserTen) {
-                    $q->orWhere('DoiTuongNhan', $curUserTen);
-                }
-            })->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);
+        } else {
+            $notiQuery = ThongBao::query();
         }
 
         $allIds = $notiQuery->pluck('MaThongBao')->toArray();
         $curUserMaTK = $curUser->MaTK ?? '';
         $merged = \App\Services\ThongBaoService::markAsRead($curUserMaTK, $allIds);
+        if ($curUserTen && $curUserTen !== $curUserMaTK) {
+            \App\Services\ThongBaoService::markAsRead($curUserTen, $allIds);
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -628,12 +635,20 @@ class ThongBaoController extends Controller
         }
 
         $curUserMaTK = $curUser->MaTK ?? '';
+        $curUserTen = $curUser->TenDangNhap ?? '';
         $readIds = \App\Services\ThongBaoService::markAsRead($curUserMaTK, $id);
+        if ($curUserTen && $curUserTen !== $curUserMaTK) {
+            \App\Services\ThongBaoService::markAsRead($curUserTen, $id);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã đánh dấu thông báo là đã đọc!',
-            'readIds' => $readIds
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã đánh dấu thông báo là đã đọc!',
+                'readIds' => $readIds
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Đã đánh dấu thông báo là đã đọc!');
     }
 }

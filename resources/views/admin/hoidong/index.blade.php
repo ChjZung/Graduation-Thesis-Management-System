@@ -141,13 +141,13 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3" style="width: 110px;">MÃ HĐ</th>
-                            <th style="min-width: 250px;">TÊN HỘI ĐỒNG &amp; VĂN BẢN QUYẾT ĐỊNH</th>
-                            <th style="min-width: 180px;">THỜI GIAN &amp; PHÒNG</th>
-                            <th style="min-width: 240px;">THÀNH VIÊN HỘI ĐỒNG</th>
-                            <th class="text-center" style="width: 120px;">ĐỀ TÀI / NHÓM</th>
-                            <th class="text-center" style="width: 140px;">CÔNG BỐ</th>
-                            <th class="text-center" style="width: 130px;">DIỄN RA</th>
+                            <th class="ps-3" style="width: 95px;">MÃ HĐ</th>
+                            <th style="min-width: 230px;">TÊN HỘI ĐỒNG &amp; VĂN BẢN QUYẾT ĐỊNH</th>
+                            <th style="min-width: 175px;">THỜI GIAN &amp; PHÒNG</th>
+                            <th style="min-width: 290px;">THÀNH VIÊN HỘI ĐỒNG</th>
+                            <th class="text-center" style="width: 110px;">ĐỀ TÀI / NHÓM</th>
+                            <th class="text-center" style="width: 130px;">CÔNG BỐ</th>
+                            <th class="text-center" style="width: 115px;">DIỄN RA</th>
                             <th class="pe-3 text-center" style="width: 160px;">THAO TÁC</th>
                         </tr>
                     </thead>
@@ -189,17 +189,38 @@
 
                             {{-- Thành viên Hội đồng --}}
                             <td class="py-3">
-                                <div class="d-flex flex-column gap-1" style="font-size: 0.8rem;">
+                                <div class="d-flex flex-column gap-1.5" style="font-size: 0.82rem;">
                                     @forelse($hd->thanhViens->take(3) as $tv)
-                                    <div>
-                                        <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">{{ $tv->VaiTro }}</span>
-                                        <strong class="text-dark">{{ $tv->giangVien->HoTen ?? '' }}</strong>
+                                    @php
+                                        $vt = $tv->VaiTro;
+                                        $shortVt = match($vt) {
+                                            'Ủy viên phản biện', 'Phản biện' => 'Phản biện',
+                                            'Ủy viên thư ký', 'Thư ký' => 'Thư ký',
+                                            'Chủ tịch' => 'Chủ tịch',
+                                            default => 'Ủy viên',
+                                        };
+                                        $badgeBg = match($shortVt) {
+                                            'Chủ tịch' => 'bg-danger-subtle text-danger border-danger-subtle',
+                                            'Phản biện' => 'bg-primary-subtle text-primary border-primary-subtle',
+                                            'Thư ký' => 'bg-info-subtle text-info border-info-subtle',
+                                            default => 'bg-secondary-subtle text-secondary border-secondary-subtle',
+                                        };
+                                    @endphp
+                                    <div class="d-flex align-items-center gap-2 text-nowrap">
+                                        <span class="badge {{ $badgeBg }} border px-2 py-1 fw-semibold flex-shrink-0" style="font-size: 0.72rem; min-width: 68px; text-align: center;">
+                                            {{ $shortVt }}
+                                        </span>
+                                        <span class="fw-semibold text-dark text-truncate" title="{{ $tv->giangVien->HoTen ?? '' }} ({{ $tv->VaiTro }})">
+                                            {{ $tv->giangVien->HoTen ?? '—' }}
+                                        </span>
                                     </div>
                                     @empty
                                     <span class="text-muted fst-italic small">Chưa phân công thành viên</span>
                                     @endforelse
                                     @if($hd->thanhViens->count() > 3)
-                                        <div class="text-muted small">+{{ $hd->thanhViens->count() - 3 }} thành viên khác</div>
+                                        <div class="text-muted small ps-1" style="font-size: 0.75rem;">
+                                            +{{ $hd->thanhViens->count() - 3 }} thành viên khác
+                                        </div>
                                     @endif
                                 </div>
                             </td>

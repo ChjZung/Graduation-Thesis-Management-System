@@ -756,6 +756,29 @@
                 alert('Không được phân công cùng một Giảng viên vào nhiều vị trí trong cùng một Hội đồng.');
                 return false;
             }
+
+            // Kiểm tra quy định: GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn
+            const selectedDeTaiGVHDs = [];
+            document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
+                const row = cb.closest('tr');
+                if (row) {
+                    const gvhd = row.getAttribute('data-gvhd');
+                    const tendt = row.getAttribute('data-tendetai');
+                    if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
+                }
+            });
+
+            for (const sel of document.querySelectorAll('.select-faculty')) {
+                if (!sel.value) continue;
+                const opt = sel.options[sel.selectedIndex];
+                const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
+                const conflict = selectedDeTaiGVHDs.find(item => item.gvhd === tenGV);
+                if (conflict) {
+                    alert(`QUY ĐỊNH BẮT BUỘC:\n\nGiảng viên hướng dẫn KHÔNG ĐƯỢC tham gia Hội đồng chấm nhóm do mình hướng dẫn!\n\nPhát hiện: Giảng viên ${opt?.getAttribute('data-hoten')} đang là GVHD của đề tài: "${conflict.tendt}".\n\nVui lòng thay đổi thành viên này trước khi tiếp tục.`);
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -902,8 +925,9 @@
         const box = document.getElementById('conflictWarningBox');
         const text = document.getElementById('conflictWarningText');
         if (conflicts.length > 0) {
+            box.className = 'alert alert-danger d-flex align-items-center mb-4';
             box.classList.remove('d-none');
-            text.innerHTML = '<strong>Lưu ý về xung đột lợi ích:</strong> ' + conflicts.join(' ');
+            text.innerHTML = '<strong class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> VI PHẠM QUY ĐỊNH ĐÀO TẠO:</strong> ' + conflicts.join(' ') + ' <br><span class="fw-semibold text-danger">Theo quy định, Giảng viên hướng dẫn không được tham gia Hội đồng chấm nhóm do mình hướng dẫn. Vui lòng chọn Giảng viên khác.</span>';
         } else {
             box.classList.add('d-none');
         }

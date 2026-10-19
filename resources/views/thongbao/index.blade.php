@@ -515,6 +515,24 @@
                     if (dot) dot.remove();
                 }
                 btn.remove();
+
+                // Cập nhật số đếm chuông thông báo header nếu có
+                const bellBadge = document.getElementById('headerNotificationBadge');
+                if (bellBadge) {
+                    let cur = parseInt(bellBadge.textContent || '0', 10);
+                    if (cur > 1) {
+                        bellBadge.textContent = (cur - 1) > 99 ? '99+' : (cur - 1);
+                    } else {
+                        bellBadge.textContent = '0';
+                        bellBadge.classList.add('d-none');
+                        bellBadge.style.display = 'none';
+                        const ping = document.getElementById('headerBellPing');
+                        if (ping) {
+                            ping.classList.add('d-none');
+                            ping.style.display = 'none';
+                        }
+                    }
+                }
             }
         })
         .catch(err => console.error(err));

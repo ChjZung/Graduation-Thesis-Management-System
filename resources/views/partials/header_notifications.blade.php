@@ -17,16 +17,21 @@
     if ($role === 'Sinh viên') {
         $sv = \App\Models\SinhVien::where('MaTK', $curUserMaTK)->orWhere('MaSV', $curUserTen)->first();
         $userNhomCodes = $sv ? \App\Models\ThanhVienNhom::where('MaSV', $sv->MaSV)->where('TrangThai', 'da_tham_gia')->pluck('MaNhom')->toArray() : [];
+        $curMaSV = $sv?->MaSV ?? '';
 
-        $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $userNhomCodes) {
-            $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV'])
+        $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $curMaSV, $userNhomCodes) {
+            $q->whereIn('DoiTuongNhan', ['Sinh viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', ''])
               ->orWhereNull('DoiTuongNhan')
-              ->orWhere('DoiTuongNhan', '');
+              ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+              ->orWhere('MaThongBao', 'like', 'TB_DK_%');
             if ($curUserMaTK) {
                 $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
             }
             if ($curUserTen) {
                 $q->orWhere('DoiTuongNhan', $curUserTen)->orWhere('DoiTuongNhan', 'like', "%{$curUserTen}%");
+            }
+            if ($curMaSV) {
+                $q->orWhere('DoiTuongNhan', $curMaSV)->orWhere('DoiTuongNhan', 'like', "%{$curMaSV}%");
             }
             if (!empty($userNhomCodes)) {
                 $q->orWhere('DoiTuongNhan', 'like', '%Tất cả các nhóm%');
@@ -39,9 +44,10 @@
         $gv = \App\Models\GiangVien::getLoggedInGiangVien($curUser);
         $curMaGV = $gv?->MaGV ?? ($curUser?->MaGV ?? '');
         $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen, $curMaGV) {
-            $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV'])
+            $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', ''])
               ->orWhereNull('DoiTuongNhan')
-              ->orWhere('DoiTuongNhan', '');
+              ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+              ->orWhere('MaThongBao', 'like', 'TB_DK_%');
             if ($curUserMaTK) {
                 $q->orWhere('DoiTuongNhan', $curUserMaTK)->orWhere('DoiTuongNhan', 'like', "%{$curUserMaTK}%");
             }
@@ -53,17 +59,20 @@
             }
         });
     } elseif (in_array($role, ['Admin', 'Giáo vụ'])) {
-        $notiQuery->where(function($q) use ($curUserMaTK, $curUserTen) {
-            $q->whereIn('DoiTuongNhan', ['Admin', 'Giáo vụ', 'Toàn thể', 'Tất cả', 'Toàn trường', 'Toàn thể GV và SV'])
-              ->orWhereNull('DoiTuongNhan')
-              ->orWhere('DoiTuongNhan', '');
-            if ($curUserMaTK) {
-                $q->orWhere('DoiTuongNhan', $curUserMaTK);
-            }
-            if ($curUserTen) {
-                $q->orWhere('DoiTuongNhan', $curUserTen);
-            }
-        })->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);
+        $notiQuery->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
+                  ->where(function($q) use ($curUserMaTK, $curUserTen) {
+                      $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
+                        ->orWhereNull('DoiTuongNhan')
+                        ->orWhere('DoiTuongNhan', '')
+                        ->orWhere('MaThongBao', 'like', 'TB_KH_%')
+                        ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+                      if ($curUserMaTK) {
+                          $q->orWhere('DoiTuongNhan', $curUserMaTK);
+                      }
+                      if ($curUserTen) {
+                          $q->orWhere('DoiTuongNhan', $curUserTen);
+                      }
+                  });
     }
 
     $readIds = \App\Services\ThongBaoService::getReadIds($curUserMaTK);
@@ -568,6 +577,11 @@
 
                 btnMarkAll.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i>Đã đọc';
                 btnMarkAll.style.pointerEvents = 'none';
+
+                // Đồng bộ cập nhật ngay trên trang danh sách nếu người dùng đang ở trang thông báo
+                document.querySelectorAll('.unread-indicator-dot').forEach(el => el.remove());
+                document.querySelectorAll('tr.bg-light-subtle').forEach(tr => tr.classList.remove('bg-light-subtle'));
+                document.querySelectorAll('button[onclick*="markSingleRead"]').forEach(btn => btn.remove());
 
                 // Nếu đang ở tab unread, hiển thị ngay unread empty state
                 const tabUnread = document.getElementById('tabBtnUnread');

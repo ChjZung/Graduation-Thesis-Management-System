@@ -232,15 +232,11 @@ class ThongBaoController extends Controller
             if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
                 $fileUrl = 'storage/' . $fileUrl;
             }
-        }
-        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
-            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
-            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
-                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
-                if (file_exists(public_path($candidate))) {
-                    $fileUrl = $candidate;
-                }
+            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = null;
             }
+        } else {
+            $fileUrl = null;
         }
 
         $fileType = 'other';
