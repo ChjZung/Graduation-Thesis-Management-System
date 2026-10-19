@@ -221,7 +221,7 @@
                                             </td>
                                             <td>
                                                 <div class="fw-bold text-dark">{{ $tv->hoiDong->TenHoiDong ?? $tv->MaHoiDong }}</div>
-                                                <div class="small text-muted">{{ $tv->hoiDong->PhongBaoVe ? 'Phòng ' . $tv->hoiDong->PhongBaoVe : '' }}</div>
+                                                <div class="small text-muted">{{ $tv->hoiDong->DiaDiem ?? '' }}</div>
                                             </td>
                                             <td>
                                                 <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">

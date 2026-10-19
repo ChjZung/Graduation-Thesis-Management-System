@@ -22,27 +22,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
-        <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
-    @if(session('warning'))
-    <div class="alert alert-warning alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
-        <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ session('warning') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show p-3 rounded-3 mb-4 shadow-xs" role="alert">
-        <i class="fa-solid fa-circle-xmark me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
     <!-- 4 KPI Cards -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
@@ -156,14 +135,14 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3" style="width: 110px;">MÃ HĐ</th>
-                            <th style="min-width: 250px;">TÊN HỘI ĐỒNG &amp; VĂN BẢN QUYẾT ĐỊNH</th>
-                            <th style="min-width: 180px;">THỜI GIAN &amp; PHÒNG</th>
-                            <th style="min-width: 240px;">THÀNH VIÊN HỘI ĐỒNG</th>
-                            <th class="text-center" style="width: 120px;">ĐỀ TÀI / NHÓM</th>
-                            <th class="text-center" style="width: 140px;">CÔNG BỐ</th>
-                            <th class="text-center" style="width: 130px;">DIỄN RA</th>
-                            <th class="pe-3 text-center" style="width: 180px;">THAO TÁC</th>
+                            <th class="ps-3" style="width: 95px;">MÃ HĐ</th>
+                            <th style="min-width: 230px;">TÊN HỘI ĐỒNG &amp; VĂN BẢN QUYẾT ĐỊNH</th>
+                            <th style="min-width: 175px;">THỜI GIAN &amp; PHÒNG</th>
+                            <th style="min-width: 290px;">THÀNH VIÊN HỘI ĐỒNG</th>
+                            <th class="text-center" style="width: 110px;">ĐỀ TÀI / NHÓM</th>
+                            <th class="text-center" style="width: 130px;">CÔNG BỐ</th>
+                            <th class="text-center" style="width: 115px;">DIỄN RA</th>
+                            <th class="pe-3 text-center" style="width: 170px;">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -204,17 +183,38 @@
 
                             {{-- Thành viên Hội đồng --}}
                             <td class="py-3">
-                                <div class="d-flex flex-column gap-1" style="font-size: 0.8rem;">
+                                <div class="d-flex flex-column gap-1.5" style="font-size: 0.82rem;">
                                     @forelse($hd->thanhViens->take(3) as $tv)
-                                    <div>
-                                        <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">{{ $tv->VaiTro }}</span>
-                                        <strong class="text-dark">{{ $tv->giangVien->HoTen ?? '' }}</strong>
+                                    @php
+                                        $vt = $tv->VaiTro;
+                                        $shortVt = match($vt) {
+                                            'Ủy viên phản biện', 'Phản biện' => 'Phản biện',
+                                            'Ủy viên thư ký', 'Thư ký' => 'Thư ký',
+                                            'Chủ tịch' => 'Chủ tịch',
+                                            default => 'Ủy viên',
+                                        };
+                                        $badgeBg = match($shortVt) {
+                                            'Chủ tịch' => 'bg-danger-subtle text-danger border-danger-subtle',
+                                            'Phản biện' => 'bg-primary-subtle text-primary border-primary-subtle',
+                                            'Thư ký' => 'bg-info-subtle text-info border-info-subtle',
+                                            default => 'bg-secondary-subtle text-secondary border-secondary-subtle',
+                                        };
+                                    @endphp
+                                    <div class="d-flex align-items-center gap-2 text-nowrap">
+                                        <span class="badge {{ $badgeBg }} border px-2 py-1 fw-semibold flex-shrink-0" style="font-size: 0.72rem; min-width: 68px; text-align: center;">
+                                            {{ $shortVt }}
+                                        </span>
+                                        <span class="fw-semibold text-dark text-truncate" title="{{ $tv->giangVien->HoTen ?? '' }} ({{ $tv->VaiTro }})">
+                                            {{ $tv->giangVien->HoTen ?? '—' }}
+                                        </span>
                                     </div>
                                     @empty
                                     <span class="text-muted fst-italic small">Chưa phân công thành viên</span>
                                     @endforelse
                                     @if($hd->thanhViens->count() > 3)
-                                        <div class="text-muted small">+{{ $hd->thanhViens->count() - 3 }} thành viên khác</div>
+                                        <div class="text-muted small ps-1" style="font-size: 0.75rem;">
+                                            +{{ $hd->thanhViens->count() - 3 }} thành viên khác
+                                        </div>
                                     @endif
                                 </div>
                             </td>
@@ -257,9 +257,18 @@
                             {{-- Thao tác --}}
                             <td class="pe-3 text-center py-3">
                                 <div class="d-flex justify-content-center align-items-center gap-1">
-                                    <a href="{{ route('truongkhoa.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Xem chi tiết & Điều chỉnh">
+                                    <a href="{{ route('truongkhoa.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Xem chi tiết & Điều chỉnh">
                                         <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                     </a>
+
+                                    @if($hd->TrangThaiCongBo !== 'Đã công bố')
+                                        <form action="{{ route('truongkhoa.hoidong.congBo', $hd->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận công bố chính thức Hội đồng {{ $hd->TenHoiDong }}? Hệ thống sẽ tạo văn bản Quyết định kèm phụ lục đề tài và phát thông báo.');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-2 fw-semibold shadow-xs" title="Công bố danh sách Hội đồng & Đề tài">
+                                                <i class="fa-solid fa-bullhorn me-1"></i> Công bố
+                                            </button>
+                                        </form>
+                                    @endif
 
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-light border rounded-circle" type="button" data-bs-toggle="dropdown">

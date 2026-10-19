@@ -337,6 +337,8 @@
         </div>
     </div>
 
+    {{-- KIỂM TRA THÔNG BÁO CÓ FILE ĐÍNH KÈM HOẶC BẢNG DỮ LIỆU CHÍNH THỨC HAY KHÔNG --}}
+    @if(!empty($fileUrl) || (isset($officialListData) && !empty($officialListData['isOfficial'])))
     {{-- GIAO DIỆN SONG SONG 2 BÊN (SPLIT VIEW): 1 BÊN CÔNG VĂN - 1 BÊN THÔNG TIN THÔNG BÁO --}}
     <div class="row g-3">
         {{-- CỘT TRÁI: KHUNG XEM TRỰC TIẾP FILE CÔNG VĂN / ẢNH (58%) --}}
@@ -1031,6 +1033,114 @@
             </div>
         </div>
     </div>
+    @else
+    {{-- GIAO DIỆN THUẦN THÔNG TIN KHI THÔNG BÁO KHÔNG CÓ FILE ĐÍNH KÈM --}}
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-9 col-lg-10">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 pb-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fa-solid fa-bullhorn me-2"></i> {{ $thongBao->LoaiThongBao ?? 'Thông báo Khóa luận' }}
+                        </span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fa-solid fa-circle-check me-1"></i> {{ $thongBao->TrangThai ?? 'Đã phát hành' }}
+                        </span>
+                    </div>
+                    <span class="text-muted small">
+                        <i class="fa-regular fa-clock me-1"></i> {{ date('d/m/Y H:i', strtotime($thongBao->NgayTao ?? $thongBao->created_at)) }}
+                    </span>
+                </div>
+
+                <h4 class="fw-bold text-dark mb-4" style="line-height: 1.45;">
+                    {{ $thongBao->TieuDe }}
+                </h4>
+
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <div class="row g-3 small">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Cơ quan / Người phát hành:</div>
+                            <div class="fw-bold text-dark mt-1">
+                                <i class="fa-solid fa-building-columns text-primary me-2"></i>
+                                {{ $thongBao->giangVien ? 'GV ' . $thongBao->giangVien->HoTen : ($thongBao->giaoVu->HoTen ?? 'Khoa Công nghệ Thông tin') }}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Đối tượng tiếp nhận:</div>
+                            <div class="fw-bold text-dark mt-1">
+                                <i class="fa-solid fa-users text-primary me-2"></i>
+                                {{ $thongBao->DoiTuongNhan ?? 'Toàn thể sinh viên & giảng viên' }}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Mã số thông báo:</div>
+                            <div class="fw-bold text-dark mt-1 font-monospace">
+                                <i class="fa-solid fa-hashtag text-primary me-2"></i>
+                                {{ $thongBao->MaThongBao }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-align-left text-primary me-2"></i>
+                        <span>Nội Dung Thông Báo</span>
+                    </h6>
+                    <div class="p-4 rounded-3 border bg-light-subtle text-dark shadow-xs" style="font-size: 0.98rem; line-height: 1.85; border-left: 5px solid #0072ce !important; min-height: 160px;">
+                        {!! \App\Helpers\HtmlHelper::clean($thongBao->NoiDung) !!}
+                    </div>
+                </div>
+
+                @if($thongBao->keHoach)
+                <div class="p-3 rounded-3 bg-primary-subtle border border-primary-subtle mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <div class="small text-muted fw-semibold">Kế hoạch Khóa luận liên kết:</div>
+                            <div class="fw-bold text-primary">{{ $thongBao->keHoach->TenKeHoach }}</div>
+                            <div class="small text-muted mt-1">Học kỳ: {{ $thongBao->keHoach->hocKy->TenHocKy ?? $thongBao->keHoach->MaHocKy }}</div>
+                        </div>
+                        @if(auth()->check() && auth()->user()->MaVaiTro === 'VT01')
+                        <a href="{{ route('admin.kehoach.show', $thongBao->keHoach->MaKeHoach) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                            Xem Kế Hoạch <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                @if(isset($totalSent) && (!isset($layout) || $layout === 'layouts.admin'))
+                <div class="pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted fw-bold text-uppercase" style="letter-spacing: 0.5px;">Phân phối thông báo:</span>
+                        <span class="badge bg-light text-primary border rounded-pill px-3">{{ $totalSent ?? 0 }} Tài khoản tiếp nhận</span>
+                    </div>
+                    <div class="row g-2 text-center small">
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3 border">
+                                <div class="fw-bold text-primary fs-6">{{ $totalSent ?? 0 }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Đã gửi</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-success-subtle text-success rounded-3 border border-success-subtle">
+                                <div class="fw-bold fs-6">{{ $readCount ?? 0 }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Đã xem</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-warning-subtle text-warning-emphasis rounded-3 border border-warning-subtle">
+                                <div class="fw-bold fs-6">{{ $unreadCount ?? 0 }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Chờ xem</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @if(isset($officialListData) && !empty($officialListData['isOfficial']))

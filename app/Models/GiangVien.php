@@ -26,6 +26,7 @@ class GiangVien extends Model
         'HocVi',
         'TrangThai',
         'MaBoMon',
+        'ChuKy',
     ];
 
     public $timestamps = true;
