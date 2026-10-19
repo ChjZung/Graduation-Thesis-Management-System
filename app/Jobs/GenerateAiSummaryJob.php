@@ -25,7 +25,7 @@ class GenerateAiSummaryJob implements ShouldQueue
     /**
      * Thời gian chờ tối đa (giây).
      */
-    public int $timeout = 60;
+    public int $timeout = 240;
 
     public function __construct(private string $maBaoCao) {}
 
@@ -55,7 +55,9 @@ class GenerateAiSummaryJob implements ShouldQueue
                 'KhoKhan'             => $aiData['KhoKhan'] ?? '',
                 'KeHoachTuanToi'      => $aiData['KeHoachTuanToi'] ?? '',
                 'NoiDungAI'           => $aiData['NoiDungAI'] ?? '',
+                'TomTatJson'          => $aiData['TomTatJson'] ?? null,
                 'TrangThai'           => $aiData['TrangThai'] ?? 'Đã tạo',
+                'TrangThaiXuLy'       => 'hoan_thanh',
                 'NgayTomTat'          => $aiData['NgayTomTat'] ?? now(),
             ]);
 

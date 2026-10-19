@@ -10,19 +10,20 @@ use Illuminate\Support\Facades\Storage;
 
 class AiSummaryService
 {
-    private const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}';
-    private const MAX_RETRIES    = 3;
-    private const CHUNK_SIZE     = 3000;
-    private const CHUNK_OVERLAP  = 300;
+    private const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent';
+    private const MAX_RETRIES     = 3;
+    private const CHUNK_SIZE      = 3500;
+    private const CHUNK_OVERLAP   = 350;
 
     /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
-     * Sử dụng Python PyMuPDF + Gemini API / Fallback NLP rule-based.
-     * Hỗ trợ cấu hình tham số thực nghiệm: chunk_size, chunk_overlap, method.
+     * Sử dụng Python PyMuPDF + Google Gemini API (xác thực qua header x-goog-api-key).
+     * Hỗ trợ cấu hình tham số thực nghiệm: chunk_size, chunk_overlap, method, model.
      */
     public function summarizePdf(string $pdfPath, int $stage = 1, array $options = []): array
     {
         $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
+        $model = config('services.gemini.model', 'gemini-3.5-flash');
         $scriptPath = base_path('app/Services/ai_summarizer.py');
 
         $chunkSize = $options['chunk_size'] ?? self::CHUNK_SIZE;
@@ -42,6 +43,8 @@ class AiSummaryService
             (string)$chunkOverlap,
             '--method',
             $method,
+            '--model',
+            $model,
         ];
 
         if (!empty($apiKey)) {
@@ -49,8 +52,11 @@ class AiSummaryService
             $command[] = $apiKey;
         }
 
+        $errorReason = '';
+
         try {
-            $result = Process::timeout(90)->run($command);
+            // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
+            $result = Process::timeout(240)->run($command);
 
             if ($result->successful()) {
                 $output = trim($result->output());
@@ -58,26 +64,30 @@ class AiSummaryService
                 if (is_array($data) && !empty($data['success'])) {
                     return $this->formatSummarizeResult($data, $stage);
                 }
-                Log::warning('AiSummaryService python returned invalid json or failure: ' . substr($output, 0, 500));
+                $errorReason = 'Python trả về kết quả không hợp lệ hoặc đánh dấu thất bại';
+                Log::warning('AiSummaryService: python returned invalid json or failure: ' . substr($output, 0, 500));
             } else {
+                $errorReason = 'Lỗi thực thi tiến trình Python: ' . trim($result->errorOutput());
                 Log::warning('AiSummaryService python process error: ' . $result->errorOutput());
             }
         } catch (\Throwable $e) {
+            $errorReason = 'Ngoại lệ khi gọi script Python: ' . $e->getMessage();
             Log::error('AiSummaryService error executing python script: ' . $e->getMessage());
         }
 
-        return $this->fallbackSummarize($pdfPath, $stage);
+        return $this->fallbackSummarize($pdfPath, $stage, $errorReason);
     }
 
     /**
      * Định dạng kết quả từ Map-Reduce sang schema chuẩn 11 phần và text preview cho form.
+     * Đảm bảo nguyên tắc Không tự tạo nội dung (Zero Hallucination).
      */
     public function formatSummarizeResult(array $raw, int $stage = 1): array
     {
         $data = $raw['data'] ?? [];
         $totalPages = $raw['total_pages'] ?? 1;
         $procTime = $raw['processing_time'] ?? 0.0;
-        $source = $raw['source'] ?? 'ai_map_reduce';
+        $source = $raw['source'] ?? 'gemini_map_reduce';
 
         $completedWork = $data['completed_work'] ?? [];
         $deliverables = $data['deliverables'] ?? [];
@@ -89,8 +99,10 @@ class AiSummaryService
         $missingInfo = $data['missing_information'] ?? [];
         $citations = $data['citations'] ?? [];
         $aiRecs = $data['ai_recommendations'] ?? [];
-        $overallSummary = $data['overall_summary'] ?? "Báo cáo tiến độ hoàn thành tốt giai đoạn {$stage}.";
-        $completionPct = (int)($data['completion_percentage'] ?? min(100, max(25, $stage * 16)));
+        $overallSummary = $data['overall_summary'] ?? ($raw['standard_report']['tom_tat'] ?? "Báo cáo tiến độ Giai đoạn {$stage}.");
+        $completionPct = isset($data['completion_percentage']) && $data['completion_percentage'] !== null 
+            ? (int)$data['completion_percentage'] 
+            : null;
 
         // Chuẩn hóa text cho 1-click Autofill
         $formattedCompleted = [];
@@ -98,7 +110,8 @@ class AiSummaryService
             $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
             $line = "• " . ($item['content'] ?? '') . $pagesStr;
             if (!empty($item['evidence'])) {
-                $line .= "\n  - Dẫn chứng: " . $item['evidence'];
+                $verNote = !empty($item['verified']) ? ' [Đã khớp PDF]' : ' [Cần đối chiếu]';
+                $line .= "\n  - Dẫn chứng: " . $item['evidence'] . $verNote;
             }
             $formattedCompleted[] = $line;
         }
@@ -158,7 +171,7 @@ class AiSummaryService
             'cong_viec_hoan_thanh' => array_values(array_filter($congViecHoanThanh)),
             'ket_qua_dat_duoc'     => array_values(array_filter($ketQuaDatDuoc)),
             'kho_khan'             => array_values(array_filter($khoKhan)),
-            'ke_hoach_tiep_theo'   => array_values(array_filter($keHoachTiepTheo)) ?: ['Tài liệu chưa đề cập đến kế hoạch tiếp theo'],
+            'ke_hoach_tiep_theo'   => array_values(array_filter($keHoachTiepTheo)),
             'moc_thoi_gian'        => $data['moc_thoi_gian'] ?? ["Giai đoạn {$stage}"],
             'noi_dung_chua_ro'     => array_values(array_filter($noiDungChuaRo)),
             'canh_bao'             => is_array($canhBao) ? $canhBao : [],
@@ -180,7 +193,7 @@ class AiSummaryService
             'total_pages' => $totalPages,
             'processing_time' => $procTime,
             'completion_percentage' => $completionPct,
-            // Cấu trúc báo cáo khoa học chuẩn theo Mục 3
+            // Cấu trúc báo cáo khoa học chuẩn
             'standard_report'      => $stdReport,
             'metrics'              => $metrics,
             // 11 phần dữ liệu chi tiết
@@ -211,82 +224,46 @@ class AiSummaryService
 
     /**
      * Fallback khi không chạy được python hoặc file bị lỗi.
+     * TUYỆT ĐỐI KHÔNG TỰ BỊA NỘI DUNG / KHÔNG TỰ GÁN TECH STACK HOẶC KHÓ KHĂN GIẢ.
      */
-    private function fallbackSummarize(string $pdfPath, int $stage = 1): array
+    private function fallbackSummarize(string $pdfPath, int $stage = 1, string $reason = ''): array
     {
         $stageNames = [
-            1 => 'Nhận đề cương và thiết kế CSDL',
-            2 => 'Thiết kế hệ thống và xây dựng chức năng',
-            3 => 'Kiểm thử, hoàn thiện và báo cáo dự thảo',
-            4 => 'Hoàn thiện hồ sơ bảo vệ',
-            5 => 'Tiến hành bảo vệ trước Hội đồng',
-            6 => 'Nhận kết quả và nộp lại kết quả hoàn chỉnh',
+            1 => 'Giai đoạn 1',
+            2 => 'Giai đoạn 2',
+            3 => 'Giai đoạn 3',
+            4 => 'Giai đoạn 4',
+            5 => 'Giai đoạn 5',
+            6 => 'Giai đoạn 6',
         ];
         $stageName = $stageNames[$stage] ?? "Giai đoạn {$stage}";
 
-        $completed = [
-            [
-                'content' => "Hoàn thành các nội dung cốt lõi của {$stageName} theo đúng kế hoạch đề ra.",
-                'evidence' => "Tài liệu kỹ thuật và mã nguồn đính kèm",
-                'source_pages' => [1]
-            ]
-        ];
-
-        $deliverables = [
-            [
-                'content' => "Tài liệu báo cáo tiến độ và mã nguồn các chức năng Giai đoạn {$stage}.",
-                'evidence' => "Minh chứng trong tài liệu",
-                'source_pages' => [1]
-            ]
-        ];
-
-        $difficulties = [
-            [
-                'content' => "Một số yêu cầu kỹ thuật và tích hợp hệ thống cần tối ưu thêm hiệu năng và xử lý ngoại lệ.",
-                'evidence' => "Phần tổng hợp khó khăn kỹ thuật",
-                'source_pages' => [1]
-            ]
-        ];
-
-        $pending = [
-            [
-                'content' => "Kiểm thử các trường hợp ngoại lệ và viết tài liệu hướng dẫn vận hành.",
-                'evidence' => "Rà soát tồn đọng",
-                'source_pages' => [1]
-            ]
-        ];
-
-        $nextSteps = [
-            [
-                'content' => "Tiếp tục triển khai và kiểm thử các chức năng theo lộ trình giai đoạn tiếp theo.",
-                'evidence' => "Kế hoạch phân công và thời hạn nộp mốc tiếp theo",
-                'source_pages' => [1]
-            ]
-        ];
+        $explanation = "Hệ thống đã tiếp nhận tệp báo cáo ({$stageName}). Trợ lý AI chưa thể hoàn tất thẩm định tự động" . 
+            ($reason ? " (Nguyên nhân: {$reason})." : " do chưa kết nối được dịch vụ AI.");
 
         return $this->formatSummarizeResult([
             'success' => true,
-            'source' => 'fallback_template',
+            'source' => 'system_fallback',
             'total_pages' => 1,
             'processing_time' => 0.05,
             'data' => [
-                'completed_work' => $completed,
-                'deliverables' => $deliverables,
+                'completed_work' => [],
+                'deliverables' => [],
                 'technical_links' => [],
-                'tech_stack' => ['Laravel', 'MySQL', 'Bootstrap'],
-                'difficulties' => $difficulties,
-                'pending_items' => $pending,
-                'next_steps' => $nextSteps,
-                'missing_information' => [],
-                'citations' => [
-                    ['page' => 1, 'topic' => 'Nội dung cốt lõi', 'snippet' => "Hoàn thành các nội dung cốt lõi của {$stageName}"]
+                'tech_stack' => [],
+                'difficulties' => [],
+                'pending_items' => [],
+                'next_steps' => [],
+                'missing_information' => [
+                    'Chưa trích xuất được nội dung tự động từ AI. Giảng viên vui lòng xem trực tiếp tệp PDF báo cáo đính kèm.'
                 ],
+                'citations' => [],
                 'ai_recommendations' => [
-                    "Bổ sung thêm hình ảnh màn hình kết quả chạy thực tế và link Git repository.",
-                    "Trao đổi kỹ với GVHD các yêu cầu cần hoàn thiện trước mốc nộp tiếp theo."
+                    'Kiểm tra lại cấu hình GEMINI_API_KEY trong tệp .env và kích hoạt lại chức năng phân tích.',
+                    'Đảm bảo tệp PDF báo cáo có nội dung văn bản (không phải ảnh chụp scan chưa OCR).'
                 ],
-                'overall_summary' => "Tóm tắt tiến độ thực hiện {$stageName}.",
-                'completion_percentage' => min(100, max(25, $stage * 16)),
+                'overall_summary' => $explanation,
+                'completion_percentage' => null,
             ]
         ], $stage);
     }
@@ -302,13 +279,17 @@ class AiSummaryService
                 $aiRes = $this->summarizePdf($fullPath, $baoCao->LanBaoCao ?? 1);
                 $formatted = $aiRes['formatted'];
 
+                $completedText = !empty($formatted['completed_work']) ? $formatted['completed_work'] : 'Chưa có thông tin hoàn thành trong văn bản';
+                $diffText = !empty($formatted['difficulties']) ? $formatted['difficulties'] : 'Tài liệu không ghi nhận khó khăn';
+                $nextText = !empty($formatted['next_steps']) ? $formatted['next_steps'] : 'Tài liệu không ghi nhận kế hoạch tiếp theo';
+
                 return [
-                    'CongViecDaHoanThanh' => $formatted['completed_work'],
-                    'KhoKhan'             => $formatted['difficulties'],
-                    'KeHoachTuanToi'      => $formatted['next_steps'],
-                    'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao}: {$baoCao->TieuDe}**\n\n✅ **Đã hoàn thành:**\n{$formatted['completed_work']}\n\n⚠️ **Khó khăn:**\n{$formatted['difficulties']}\n\n📅 **Kế hoạch tiếp theo:**\n{$formatted['next_steps']}",
+                    'CongViecDaHoanThanh' => $completedText,
+                    'KhoKhan'             => $diffText,
+                    'KeHoachTuanToi'      => $nextText,
+                    'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao}: {$baoCao->TieuDe}**\n\n✅ **Đã hoàn thành:**\n{$completedText}\n\n⚠️ **Khó khăn:**\n{$diffText}\n\n📅 **Kế hoạch tiếp theo:**\n{$nextText}",
                     'TomTatJson'          => $aiRes['data'],
-                    'DoTinCayAI'          => $aiRes['source'] === 'gemini_map_reduce' ? 95.00 : 88.00,
+                    'DoTinCayAI'          => $aiRes['source'] === 'gemini_map_reduce' ? 95.00 : 85.00,
                     'NgayTomTat'          => now(),
                     'TrangThai'           => 'Đã tạo',
                 ];
@@ -323,53 +304,87 @@ class AiSummaryService
         return $this->generateMock($baoCao);
     }
 
+    /**
+     * Gọi trực tiếp Gemini API qua HTTP Client trong Laravel (Header x-goog-api-key)
+     * Có fallback sang gemini-2.5-flash và exponential backoff.
+     */
     private function generateWithGemini(BaoCaoTienDo $baoCao, string $apiKey): array
     {
         $vanBan = $this->extractText($baoCao);
         $prompt = $this->buildPrompt($baoCao->LanBaoCao, $vanBan);
+        $configuredModel = config('services.gemini.model', 'gemini-2.5-flash');
 
-        for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
-            try {
-                $url = str_replace(
-                    ['{model}', '{key}'],
-                    ['gemini-2.0-flash', $apiKey],
-                    self::GEMINI_API_URL
-                );
+        $candidateModels = array_unique([$configuredModel, 'gemini-2.5-flash', 'gemini-flash-latest']);
 
-                $response = Http::timeout(30)->post($url, [
-                    'contents' => [[
-                        'parts' => [['text' => $prompt]],
-                    ]],
-                    'generationConfig' => [
-                        'temperature'       => 0.2,
-                        'maxOutputTokens'   => 1024,
-                        'responseMimeType'  => 'application/json',
-                    ],
-                ]);
+        foreach ($candidateModels as $currentModel) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$currentModel}:generateContent";
 
-                if ($response->failed()) {
-                    throw new \RuntimeException("Gemini API HTTP error: " . $response->status());
+            for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
+                try {
+                    $response = Http::withHeaders([
+                        'x-goog-api-key' => $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->timeout(45)->post($url, [
+                        'contents' => [[
+                            'parts' => [['text' => $prompt]],
+                        ]],
+                        'generationConfig' => [
+                            'temperature'       => 0.1,
+                            'maxOutputTokens'   => 1500,
+                            'responseMimeType'  => 'application/json',
+                        ],
+                    ]);
+
+                    if ($response->successful()) {
+                        $rawText = $response->json('candidates.0.content.parts.0.text');
+                        $cleaned = trim($rawText);
+                        if (str_starts_with($cleaned, '```')) {
+                            $lines = explode("\n", $cleaned);
+                            if (str_starts_with($lines[0], '```')) {
+                                array_shift($lines);
+                            }
+                            if (!empty($lines) && trim(end($lines)) === '```') {
+                                array_pop($lines);
+                            }
+                            $cleaned = trim(implode("\n", $lines));
+                        }
+
+                        $data = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
+
+                        $cong = $data['CongViecDaHoanThanh'] ?? 'Văn bản chưa nêu rõ chi tiết công việc hoàn thành.';
+                        $kho  = $data['KhoKhan'] ?? 'Tài liệu không ghi nhận khó khăn đặc biệt.';
+                        $ke   = $data['KeHoachTuanToi'] ?? 'Tài liệu không đề cập đến kế hoạch cụ thể.';
+
+                        return [
+                            'CongViecDaHoanThanh' => $cong,
+                            'KhoKhan'             => $kho,
+                            'KeHoachTuanToi'      => $ke,
+                            'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao} ({$currentModel})**\n\n✅ **Đã hoàn thành:** {$cong}\n\n⚠️ **Khó khăn:** {$kho}\n\n📅 **Kế hoạch tiếp theo:** {$ke}",
+                            'DoTinCayAI'          => 95.00,
+                            'NgayTomTat'          => now(),
+                            'TrangThai'           => 'Đã tạo',
+                        ];
+                    }
+
+                    $status = $response->status();
+                    // Lỗi client 400, 401, 403 không retry model này
+                    if (in_array($status, [400, 401, 403])) {
+                        Log::error("AiSummaryService: Gemini API client error HTTP {$status}: " . $response->body());
+                        break 2;
+                    }
+
+                    // Nếu 404 (model dừng), chuyển ngay sang candidate model tiếp theo
+                    if ($status === 404) {
+                        Log::warning("AiSummaryService: Model {$currentModel} không tồn tại hoặc đã dừng (404), chuyển model dự phòng.");
+                        break;
+                    }
+
+                    // 429 hoặc 503: chờ theo exponential backoff
+                    sleep($attempt * 2);
+                } catch (\Throwable $e) {
+                    Log::warning("AiSummaryService: Lần thử {$attempt}/" . self::MAX_RETRIES . " model {$currentModel} thất bại: " . $e->getMessage());
+                    sleep($attempt * 2);
                 }
-
-                $rawText = $response->json('candidates.0.content.parts.0.text');
-                $data = json_decode($rawText, true, 512, JSON_THROW_ON_ERROR);
-
-                $cong = $data['CongViecDaHoanThanh'] ?? 'Hoàn thành các công việc theo kế hoạch.';
-                $kho  = $data['KhoKhan'] ?? 'Không ghi nhận khó khăn đặc biệt.';
-                $ke   = $data['KeHoachTuanToi'] ?? 'Tiếp tục các bước theo lộ trình.';
-
-                return [
-                    'CongViecDaHoanThanh' => $cong,
-                    'KhoKhan'             => $kho,
-                    'KeHoachTuanToi'      => $ke,
-                    'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao}**\n\n✅ **Đã hoàn thành:** {$cong}\n\n⚠️ **Khó khăn:** {$kho}\n\n📅 **Kế hoạch tiếp theo:** {$ke}",
-                    'DoTinCayAI'          => 92.00,
-                    'NgayTomTat'          => now(),
-                    'TrangThai'           => 'Đã tạo',
-                ];
-            } catch (\Throwable $e) {
-                Log::warning("AiSummaryService: Lần thử {$attempt}/" . self::MAX_RETRIES . " thất bại: " . $e->getMessage());
-                sleep(1);
             }
         }
 
@@ -391,13 +406,15 @@ class AiSummaryService
     private function buildPrompt(int $lan, string $vanBan): string
     {
         return <<<PROMPT
-Bạn là trợ lý AI chuyên phân tích báo cáo tiến độ khóa luận tốt nghiệp (Mốc {$lan}/6).
-Đọc nội dung báo cáo dưới đây và trích xuất thông tin, trả về ĐÚNG FORMAT JSON sau (không thêm markdown):
+Bạn là trợ lý AI thẩm định báo cáo tiến độ khóa luận tốt nghiệp (Mốc {$lan}/6).
+Đọc nội dung dưới đây và trích xuất thông tin ĐÚNG SỰ THỰC, KHÔNG TỰ BỊA NỘI DUNG.
+Nếu tài liệu không nhắc đến khó khăn hoặc kế hoạch, hãy ghi rõ "Tài liệu không đề cập".
 
+Trả về ĐÚNG FORMAT JSON sau (không thêm markdown ngoài JSON):
 {
   "CongViecDaHoanThanh": "Mô tả ngắn gọn công việc đã hoàn thành",
-  "KhoKhan": "Các khó khăn đã gặp và giải pháp",
-  "KeHoachTuanToi": "Kế hoạch cụ thể cho giai đoạn tiếp theo"
+  "KhoKhan": "Các khó khăn thực tế gặp phải (nếu có)",
+  "KeHoachTuanToi": "Kế hoạch cụ thể cho giai đoạn tiếp theo (nếu có)"
 }
 
 NỘI DUNG BÁO CÁO:
@@ -408,47 +425,13 @@ PROMPT;
     private function generateMock(BaoCaoTienDo $baoCao): array
     {
         $lan = $baoCao->LanBaoCao ?? 1;
-        $map = [
-            1 => [
-                'cong_viec' => "Hoàn thành nhận đề cương, phân tích yêu cầu nghiệp vụ và thiết kế cơ sở dữ liệu chi tiết.",
-                'kho_khan'  => "Khó khăn trong chuẩn hóa dữ liệu quan hệ, đã tối ưu bảng theo góp ý của GVHD.",
-                'ke_hoach'  => "Tiến hành thiết kế giao diện và xây dựng các API cơ bản.",
-            ],
-            2 => [
-                'cong_viec' => "Thiết kế kiến trúc hệ thống và xây dựng các chức năng cốt lõi (xác thực, phân quyền, CRUD nghiệp vụ chính).",
-                'kho_khan'  => "Tích hợp thư viện xử lý tài liệu gặp vấn đề tương thích, đã giải quyết bằng giải pháp độc lập.",
-                'ke_hoach'  => "Hoàn thiện các chức năng nâng cao và chuẩn bị kịch bản kiểm thử.",
-            ],
-            3 => [
-                'cong_viec' => "Kiểm thử hệ thống (Unit test, Integration test), sửa lỗi và hoàn thành bản báo cáo dự thảo.",
-                'kho_khan'  => "Một số luồng dữ liệu bất đồng bộ cần kiểm tra kỹ lưỡng.",
-                'ke_hoach'  => "Hoàn thiện toàn bộ hồ sơ bảo vệ và tài liệu hướng dẫn.",
-            ],
-            4 => [
-                'cong_viec' => "Hoàn thiện hồ sơ bảo vệ, phiếu nhận xét của GVHD và tài liệu minh chứng phần mềm.",
-                'kho_khan'  => "Cần đối chiếu số liệu và format theo quy chuẩn của Khoa.",
-                'ke_hoach'  => "Nộp hồ sơ cho Hội đồng và chuẩn bị slide bảo vệ.",
-            ],
-            5 => [
-                'cong_viec' => "Bảo vệ khóa luận thành công trước Hội đồng chấm khóa luận tốt nghiệp.",
-                'kho_khan'  => "Ghi nhận các câu hỏi phản biện từ Hội đồng chuyên môn.",
-                'ke_hoach'  => "Tiếp thu ý kiến góp ý để chỉnh sửa hoàn thiện sản phẩm.",
-            ],
-            6 => [
-                'cong_viec' => "Tiếp thu ý kiến Hội đồng, chỉnh sửa hoàn thiện sản phẩm và báo cáo cuối cùng để nộp lưu chiểu.",
-                'kho_khan'  => "Không ghi nhận khó khăn.",
-                'ke_hoach'  => "Hoàn tất thủ tục tốt nghiệp.",
-            ],
-        ];
-
-        $data = $map[$lan] ?? $map[1];
 
         return [
-            'CongViecDaHoanThanh' => $data['cong_viec'],
-            'KhoKhan'             => $data['kho_khan'],
-            'KeHoachTuanToi'      => $data['ke_hoach'],
-            'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$lan}**\n\n✅ **Đã hoàn thành:** {$data['cong_viec']}\n\n⚠️ **Khó khăn:** {$data['kho_khan']}\n\n📅 **Kế hoạch tiếp theo:** {$data['ke_hoach']}",
-            'DoTinCayAI'          => 80.00,
+            'CongViecDaHoanThanh' => "Tiếp nhận và rà soát báo cáo tiến độ Mốc {$lan}. (Chưa kích hoạt AI trực tuyến)",
+            'KhoKhan'             => "Chưa ghi nhận khó khăn qua hệ thống tự động.",
+            'KeHoachTuanToi'      => "Thực hiện theo kế hoạch khóa luận và hướng dẫn của GVHD.",
+            'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$lan} [Dữ liệu cơ bản - Chưa qua Gemini]**\n\nHệ thống đã lưu nhận báo cáo. Vui lòng cấu hình GEMINI_API_KEY trong .env để kích hoạt thẩm định tự động chuyên sâu.",
+            'DoTinCayAI'          => 70.00,
             'NgayTomTat'          => now(),
             'TrangThai'           => 'Đã tạo',
         ];
