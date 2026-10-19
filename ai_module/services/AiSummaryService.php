@@ -30,8 +30,10 @@ class AiSummaryService
         $chunkOverlap = $options['chunk_overlap'] ?? self::CHUNK_OVERLAP;
         $method = $options['method'] ?? 'map_reduce';
 
+        $pythonBin = env('PYTHON_PATH') ?: (file_exists('C:\laragon\bin\python\python-3.10\python.exe') ? 'C:\laragon\bin\python\python-3.10\python.exe' : 'python');
+
         $command = [
-            'python',
+            $pythonBin,
             $scriptPath,
             '--pdf',
             $pdfPath,
@@ -55,8 +57,20 @@ class AiSummaryService
         $errorReason = '';
 
         try {
+            // Đảm bảo các biến môi trường thiết yếu của Windows (SystemRoot, PATH) được truyền cho tiến trình con
+            // để tránh lỗi _Py_HashRandomization_Init khi chạy dưới web server Apache/PHP Laragon
+            $processEnv = array_filter([
+                'SystemRoot' => getenv('SystemRoot') ?: 'C:\Windows',
+                'SYSTEMROOT' => getenv('SYSTEMROOT') ?: 'C:\Windows',
+                'PATH' => getenv('PATH') ?: 'C:\Windows\system32;C:\Windows;C:\laragon\bin\python\python-3.10',
+                'TEMP' => getenv('TEMP') ?: 'C:\Windows\Temp',
+                'TMP' => getenv('TMP') ?: 'C:\Windows\Temp',
+                'PYTHONUTF8' => '1',
+                'PYTHONIOENCODING' => 'utf-8',
+            ]);
+
             // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
-            $result = Process::timeout(240)->run($command);
+            $result = Process::timeout(240)->env($processEnv)->run($command);
 
             if ($result->successful()) {
                 $output = trim($result->output());
