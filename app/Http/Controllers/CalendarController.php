@@ -66,7 +66,6 @@ class CalendarController extends Controller
         $plans = KeHoachKhoaLuan::orderBy('created_at', 'desc')->get();
         $activePlan = KeHoachKhoaLuan::whereIn('TrangThai', ['ĐANG THỰC HIỆN', 'ĐÃ CÔNG BỐ'])->first() ?? $plans->first();
         $weeklyData = $this->buildWeeklyScheduleData($request, $allMilestones);
-        $appointmentData = $this->buildAppointmentScheduleData($request, 'ADMIN');
 
         return view('calendar.index', array_merge([
             'layout'        => 'layouts.admin',
@@ -77,7 +76,8 @@ class CalendarController extends Controller
             'activePlan'    => $activePlan,
             'roleTitle'     => 'Giáo Vụ Khoa',
             'roleCode'      => 'ADMIN',
-        ], $weeklyData, $appointmentData));
+            'activeTab'     => 'quy_trinh',
+        ], $weeklyData));
     }
 
     public function giangVienCalendar(Request $request)

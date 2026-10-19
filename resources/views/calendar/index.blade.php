@@ -337,7 +337,8 @@
 @section('content')
 <div class="container-fluid px-0">
 
-    {{-- ── THANH CHUYỂN TAB CHÍNH: TAB 1 LỊCH QUY TRÌNH vs TAB 2 LỊCH HẸN HƯỚNG DẪN ── --}}
+    {{-- ── THANH CHUYỂN TAB CHÍNH: CHỈ DÀNH CHO GIẢNG VIÊN VÀ SINH VIÊN (ADMIN KHÔNG CÓ LỊCH HẸN HƯỚNG DẪN) ── --}}
+    @if(($roleCode ?? '') !== 'ADMIN')
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <ul class="nav nav-pills custom-calendar-main-tabs p-1 bg-white rounded-pill border shadow-xs d-inline-flex m-0">
             <li class="nav-item">
@@ -368,14 +369,15 @@
             </div>
         @endif
     </div>
+    @endif
 
-    @if(($activeTab ?? 'quy_trinh') === 'lich_hen')
-        {{-- ── TAB 2: LỊCH HẸN HƯỚNG DẪN ── --}}
+    @if(($roleCode ?? '') !== 'ADMIN' && ($activeTab ?? 'quy_trinh') === 'lich_hen')
+        {{-- ── TAB 2: LỊCH HẸN HƯỚNG DẪN (GIẢNG VIÊN & SINH VIÊN) ── --}}
         <div class="timetable-wrapper">
             @include('calendar.partials.appointment_tab')
         </div>
     @else
-        {{-- ── TAB 1: LỊCH QUY TRÌNH THEO TUẦN (GIỮ NGUYÊN HOÀN TOÀN) ── --}}
+        {{-- ── TAB 1: LỊCH QUY TRÌNH THEO TUẦN (ADMIN, GIẢNG VIÊN, SINH VIÊN) ── --}}
         <div class="timetable-wrapper" id="weeklyTimetableContainer">
             {{-- Toolbar trên cùng --}}
             <div class="timetable-toolbar">

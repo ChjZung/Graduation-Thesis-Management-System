@@ -102,7 +102,7 @@
                 <button class="menu-parent-btn {{ $isHoiDongMenu ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-ql-hoidong" aria-expanded="{{ $isHoiDongMenu ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
                         <i class="fa-solid fa-landmark me-2"></i>
-                        <span>Quản lý hội đồng bảo vệ</span>
+                        <span>Theo dõi hội đồng</span>
                     </span>
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
                 </button>
