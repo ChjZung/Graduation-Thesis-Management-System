@@ -25,7 +25,10 @@ class HtmlHelper
 
         $raw = trim($html);
 
-        // 1. Nếu nội dung là văn bản thuần không chứa thẻ HTML, chuyển đổi \n thành <p> và <br>
+        // 1. Loại bỏ các khối UI toolbar/footer của rich text editor lọt vào nội dung (ngăn chặn lỗi lồng editor)
+        $raw = preg_replace('/<div[^>]*class=["\'][^"\']*(rte-toolbar|rte-footer)[^"\']*["\'][^>]*>[\s\S]*?<\/div>/i', '', $raw);
+
+        // 2. Nếu nội dung là văn bản thuần không chứa thẻ HTML, chuyển đổi \n thành <p> và <br>
         if (!preg_match('/<[a-z][\s\S]*>/i', $raw)) {
             $paragraphs = preg_split('/\r\n\r\n|\n\n/', $raw);
             $formatted = '';
@@ -38,27 +41,26 @@ class HtmlHelper
             return $formatted ?: nl2br(e($raw));
         }
 
-        // 2. Loại bỏ các thẻ nguy hiểm và nội dung bên trong chúng (script, iframe, style, applet, object...)
+        // 3. Loại bỏ các thẻ nguy hiểm và nội dung bên trong chúng (script, iframe, style, applet, object...)
         $sanitized = preg_replace('/<(script|style|iframe|object|embed|applet)[\s\S]*?<\/\1>/i', '', $raw);
         $sanitized = preg_replace('/<(script|style|iframe|object|embed|applet)[\s\S]*?>/i', '', $sanitized);
 
-        // 3. Sử dụng strip_tags để chỉ giữ lại các thẻ an toàn trong $allowedTags
+        // 4. Sử dụng strip_tags để chỉ giữ lại các thẻ an toàn trong $allowedTags (không bao gồm img)
         $allowedTagString = '<' . implode('><', self::$allowedTags) . '>';
         $sanitized = strip_tags($sanitized, $allowedTagString);
 
-        // 4. Loại bỏ các thuộc tính nguy hiểm: on*, javascript:, data:text/html, vbscript:
-        // Loại bỏ các sự kiện inline: onclick, onerror, onload, onmouseover...
+        // 5. Loại bỏ các thuộc tính nguy hiểm: on* (onclick, onerror...), javascript:, vbscript:
         $sanitized = preg_replace('/\s+on[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $sanitized);
 
-        // Loại bỏ href/src chứa javascript:, vbscript:, data:
+        // 6. Loại bỏ href/src chứa javascript:, vbscript:, data:
         $sanitized = preg_replace('/\s+(href|src)\s*=\s*(["\']?\s*(javascript|vbscript|data):[^"\'>]*["\']?)/i', '', $sanitized);
 
-        // 5. Chuẩn hóa thuộc tính style: chỉ cho phép text-align
+        // 7. Chuẩn hóa thuộc tính các thẻ: chỉ cho phép text-align trong style
         $sanitized = preg_replace_callback('/<([a-z0-9]+)\s+([^>]+)>/i', function ($matches) {
             $tag = strtolower($matches[1]);
             $attrs = $matches[2];
 
-            // Trích xuất text-align nếu có
+            // Trích xuất text-align nếu có cho các block văn bản
             $styleAttr = '';
             if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/i', $attrs, $sm)) {
                 $styleContent = $sm[1];

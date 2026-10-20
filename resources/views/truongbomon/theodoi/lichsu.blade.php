@@ -268,7 +268,7 @@
                             </td>
                             <td>
                                 <div class="text-dark small lh-base" style="word-break: break-word;">
-                                    {{ $item->LyDo ?: 'Không có nội dung bổ sung' }}
+                                    {!! \App\Helpers\HtmlHelper::clean($item->LyDo ?: 'Không có nội dung bổ sung') !!}
                                 </div>
                             </td>
                         </tr>

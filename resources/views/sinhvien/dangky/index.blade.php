@@ -366,7 +366,8 @@
                 <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 py-3 px-3 mb-4" style="font-size: 0.875rem;">
                     <i class="fa-solid fa-triangle-exclamation fs-5 flex-shrink-0"></i>
                     <div>
-                        <strong>Lý do từ chối:</strong> {{ $dangKyCurrent->LyDoTuChoi ?? 'Đề tài không phù hợp hoặc đã đủ chỉ tiêu. Vui lòng chọn đăng ký đề tài khác trong danh sách bên dưới.' }}
+                        <strong>Lý do từ chối:</strong>
+                        <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dangKyCurrent->LyDoTuChoi ?? 'Đề tài không phù hợp hoặc đã đủ chỉ tiêu. Vui lòng chọn đăng ký đề tài khác trong danh sách bên dưới.') !!}</div>
                     </div>
                 </div>
             @endif
@@ -644,7 +645,7 @@
                             <td class="text-center">
                                 @if($myGroupRegThis)
                                     @if($myGroupRegThis->TrangThai === 'Từ chối')
-                                        <span class="badge bg-danger rounded-pill px-3 py-2" title="{{ $myGroupRegThis->LyDoTuChoi }}" style="font-size: 0.8rem;">
+                                        <span class="badge bg-danger rounded-pill px-3 py-2" title="{{ strip_tags($myGroupRegThis->LyDoTuChoi) }}" style="font-size: 0.8rem;">
                                             <i class="fa-solid fa-circle-xmark me-2"></i>Đã Từ Chối
                                         </span>
                                     @else

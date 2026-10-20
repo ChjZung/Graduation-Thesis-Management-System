@@ -69,10 +69,10 @@
 
                 @if(in_array($detai->TrangThai, ['Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện']) && $detai->LyDoTuChoi)
                 <div class="alert alert-warning border-warning d-flex align-items-start mb-4 rounded-3 shadow-sm">
-                    <i class="fa-solid fa-triangle-exclamation text-warning fs-4 me-3 mt-1"></i>
-                    <div>
+                    <i class="fa-solid fa-triangle-exclamation text-warning fs-4 me-3 mt-1 flex-shrink-0"></i>
+                    <div class="flex-grow-1" style="min-width: 0;">
                         <div class="fw-bold text-dark">Ý kiến phản hồi / Lý do yêu cầu chỉnh sửa:</div>
-                        <div class="text-danger mt-1 fw-semibold">{{ $detai->LyDoTuChoi }}</div>
+                        <div class="text-danger mt-1 fw-semibold text-break" style="word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         <div class="small text-muted mt-2">
                             <i class="fa-solid fa-circle-info me-2"></i>Sau khi quý Thầy/Cô chỉnh sửa và bấm <strong>"Cập Nhật & Nộp Lại Đề Tài"</strong>, đề tài sẽ tự động được gửi lại để xem xét phê duyệt.
                         </div>
