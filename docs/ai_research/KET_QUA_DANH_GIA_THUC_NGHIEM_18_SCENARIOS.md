@@ -1,3 +1,5 @@
+> **Tài liệu lịch sử, chưa tái xác nhận cho phiên bản ba nhóm hiện tại.** Các điểm F1/Fidelity và tỷ lệ trong tài liệu này không được dùng làm bằng chứng độ chính xác của LLM hiện tại. Dùng lệnh và phương pháp có đáp án chuẩn trong README để đánh giá lại.
+
 # BÁO CÁO KẾT QUẢ ĐÁNH GIÁ THỰC NGHIỆM HỆ THỐNG TIẾN ĐỘ KHÓA LUẬN VỚI AI
 
 **Đề tài:** Xây dựng hệ thống quản lý công tác khóa luận tốt nghiệp — Khoa CNTT (HUIT)

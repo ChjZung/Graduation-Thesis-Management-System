@@ -225,6 +225,25 @@ class HoiDongController extends Controller
             return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Không được phân công cùng một Giảng viên vào nhiều chức danh trong cùng một Hội đồng.']);
         }
 
+        // Kiểm tra quy định: GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn
+        $hoSosChon = HoSoBaoVe::with(['nhom.deTai.giangVien'])
+            ->whereIn('MaHoSo', $request->danh_sach_ho_so)
+            ->get();
+
+        $gvhdXungDot = [];
+        foreach ($hoSosChon as $hs) {
+            $gvhd = $hs->nhom?->deTai?->giangVien;
+            if ($gvhd && in_array($gvhd->MaGV, $maGVs)) {
+                $vaiTro = collect($request->thanh_viens)->firstWhere('MaGV', $gvhd->MaGV)['VaiTro'] ?? 'Thành viên';
+                $gvhdXungDot[] = "Giảng viên {$gvhd->HoTen} (chức vụ: {$vaiTro}) đang là GVHD của nhóm {$hs->MaNhom} (Đề tài: '{$hs->nhom?->deTai?->TenDeTai}')";
+            }
+        }
+        if (!empty($gvhdXungDot)) {
+            return redirect()->back()->withInput()->withErrors([
+                'thanh_viens' => 'Theo quy chế đào tạo, Giảng viên hướng dẫn KHÔNG ĐƯỢC tham gia Hội đồng chấm nhóm do mình hướng dẫn. Phát hiện vi phạm: ' . implode('; ', $gvhdXungDot) . '.'
+            ]);
+        }
+
         // Kiểm tra trùng lặp đề tài ở phía máy chủ
         $alreadyAssigned = HoSoBaoVe::whereIn('MaHoSo', $request->danh_sach_ho_so)
             ->whereNotNull('MaHoiDong')
@@ -235,7 +254,7 @@ class HoiDongController extends Controller
             $dsBiTrung = $alreadyAssigned->map(function($hs) {
                 return "Đề tài '{$hs->nhom?->deTai?->TenDeTai}' (Nhóm {$hs->MaNhom}) đã thuộc Hội đồng {$hs->hoiDong?->TenHoiDong}";
             })->join('; ');
-            return redirect()->back()->withInput()->withErrors(['danh_sach_ho_so' => "Phát hiện đề tài đã được phân công vào Hội đồng khác: {$dsBiTrung}."]);
+            return redirect()->back()->withInput()->withErrors(['danh_sach_ho_so' => "Phát hiện đề tài đã được phân công vào Hội đồng khác: {$dsBiTrung}. Khi nào nhóm được hủy phân công hoặc Hội đồng cũ bị xóa thì mới được gán sang Hội đồng mới!"]);
         }
 
         $khoa = $this->getKhoa();
@@ -334,7 +353,7 @@ class HoiDongController extends Controller
             'khoa',
             'nganh',
             'hocKy',
-            'thanhViens.giangVien.boMon',
+            'thanhViens.giangVien.boMon.khoa',
             'hoSoBaoVes.nhom.truongNhom',
             'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.lop',
             'hoSoBaoVes.nhom.deTai.giangVien.boMon',
@@ -351,19 +370,26 @@ class HoiDongController extends Controller
             $giangViens = GiangVien::with('boMon')->orderBy('HoTen')->get();
         }
 
-        // Nhóm đủ điều kiện chưa được phân công hoặc đang ở hội đồng này
+        // Nhóm đủ điều kiện chưa được phân công vào bất kỳ Hội đồng nào
         $nhomDuDieuKien = HoSoBaoVe::with(['nhom.truongNhom', 'nhom.deTai.giangVien.boMon', 'nhom.thanhVienNhoms.sinhVien'])
-            ->where(function ($q) use ($id) {
-                $q->whereNull('MaHoiDong')
-                  ->orWhere('MaHoiDong', $id);
-            })
+            ->whereNull('MaHoiDong')
             ->where(function($q) {
-                $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt', 'Đã phân công'])
+                $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt'])
                   ->orWhere('XacNhanGVHD', 'Đã duyệt');
             })
             ->get();
 
-        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa'));
+        // Danh sách MaGV đang là GVHD của các nhóm trong Hội đồng này (không được làm thành viên HĐ)
+        $assignedGvhdMaGVs = $hoiDong->hoSoBaoVes
+            ->map(fn($hs) => $hs->nhom?->deTai?->MaGV)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        // Danh sách MaGV đang là thành viên Hội đồng (nhóm do các GV này hướng dẫn không được gán vào HĐ)
+        $councilMemberMaGVs = $hoiDong->thanhViens->pluck('MaGV')->toArray();
+
+        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa', 'assignedGvhdMaGVs', 'councilMemberMaGVs'));
     }
 
     /**
@@ -537,11 +563,30 @@ class HoiDongController extends Controller
             'PhongBaoVe'    => 'nullable|string|max:100',
         ]);
 
-        $hoiDong = HoiDong::findOrFail($id);
-        $hoSo = HoSoBaoVe::where('MaNhom', $request->MaNhom)->first();
+        $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($id);
+        $hoSo = HoSoBaoVe::with(['nhom.deTai.giangVien'])->where('MaNhom', $request->MaNhom)->first();
 
         if (!$hoSo) {
             return redirect()->back()->with('error', 'Nhóm này chưa nộp hồ sơ bảo vệ.');
+        }
+
+        // 1. Kiểm tra nhóm đã thuộc Hội đồng khác chưa
+        if (!empty($hoSo->MaHoiDong)) {
+            if ($hoSo->MaHoiDong == $hoiDong->MaHoiDong) {
+                return redirect()->back()->with('error', "Nhóm {$hoSo->MaNhom} đã được phân công vào Hội đồng này rồi.");
+            }
+            $hdKhac = HoiDong::find($hoSo->MaHoiDong);
+            $tenHdKhac = $hdKhac ? $hdKhac->TenHoiDong : $hoSo->MaHoiDong;
+            return redirect()->back()->with('error', "Nhóm {$hoSo->MaNhom} đã được gán vào Hội đồng khác ({$tenHdKhac}). Theo quy định, một nhóm chỉ được tham gia 01 Hội đồng bảo vệ. Khi nào nhóm được hủy phân công hoặc Hội đồng cũ bị xóa thì mới được gán sang Hội đồng mới!");
+        }
+
+        // 2. Kiểm tra GVHD của nhóm có đang là thành viên của Hội đồng này không
+        $gvhd = $hoSo->nhom?->deTai?->giangVien;
+        if ($gvhd) {
+            $memberConflict = $hoiDong->thanhViens->firstWhere('MaGV', $gvhd->MaGV);
+            if ($memberConflict) {
+                return redirect()->back()->with('error', "Không thể phân công nhóm {$hoSo->MaNhom} vào Hội đồng này! Giảng viên hướng dẫn của nhóm ({$gvhd->HoTen}) hiện đang là {$memberConflict->VaiTro} của Hội đồng. Theo quy định của Bộ và Nhà trường, GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn.");
+            }
         }
 
         DB::transaction(function () use ($request, $hoiDong, $hoSo) {
@@ -616,11 +661,24 @@ class HoiDongController extends Controller
             'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
         ]);
 
-        $hoiDong = HoiDong::findOrFail($id);
+        $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($id);
 
         $exists = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $request->MaGV)->exists();
         if ($exists) {
             return redirect()->back()->with('error', 'Giảng viên này đã có trong Hội đồng.');
+        }
+
+        // Kiểm tra giảng viên có đang là GVHD của bất kỳ nhóm nào đã gán vào Hội đồng này không
+        $gvhdConflicts = [];
+        foreach ($hoiDong->hoSoBaoVes as $hs) {
+            if ($hs->nhom?->deTai?->MaGV === $request->MaGV) {
+                $gvhdConflicts[] = "Nhóm {$hs->nhom?->MaNhom} (Đề tài: '{$hs->nhom?->deTai?->TenDeTai}')";
+            }
+        }
+        if (!empty($gvhdConflicts)) {
+            $gv = GiangVien::find($request->MaGV);
+            $tenGV = $gv ? $gv->HoTen : $request->MaGV;
+            return redirect()->back()->with('error', "Không thể thêm Giảng viên {$tenGV} vào Hội đồng vì Giảng viên đang là Cán bộ hướng dẫn của: " . implode(', ', $gvhdConflicts) . ". Theo quy định đào tạo, GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn.");
         }
 
         $vaiTro = $request->VaiTro;

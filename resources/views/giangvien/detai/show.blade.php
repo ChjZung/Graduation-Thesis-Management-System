@@ -89,10 +89,11 @@
             <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 mt-1" style="width: 36px; height: 36px;">
                 <i class="fa-solid fa-circle-xmark fs-5"></i>
             </div>
-            <div>
+            <div class="flex-grow-1" style="min-width: 0;">
                 <h6 class="fw-bold mb-1">ĐỀ TÀI ĐÃ BỊ TỪ CHỐI PHÊ DUYỆT</h6>
                 <div class="small" style="line-height: 1.5;">
-                    <strong>Lý do từ chối:</strong> {{ $detai->LyDoTuChoi ?: 'Chưa có ghi chú lý do chi tiết từ cấp phê duyệt.' }}
+                    <strong>Lý do từ chối:</strong>
+                    <div class="mt-1 text-break" style="word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi ?: 'Chưa có ghi chú lý do chi tiết từ cấp phê duyệt.') !!}</div>
                 </div>
             </div>
         </div>
@@ -302,7 +303,7 @@
                         </div>
                         <div>
                             <div class="small text-muted fw-semibold mb-2">Nội dung nhận xét chi tiết:</div>
-                            <div class="p-3 bg-white rounded-3 border text-dark small" style="line-height: 1.6; white-space: pre-line;">{{ $pb->NhanXet ?: 'Chưa có nhận xét chi tiết.' }}</div>
+                            <div class="p-3 bg-white rounded-3 border text-dark small" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($pb->NhanXet ?: 'Chưa có nhận xét chi tiết.') !!}</div>
                         </div>
                     </div>
                     @endforeach
@@ -350,7 +351,7 @@
                     @if(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương']) && $detai->LyDoTuChoi)
                         <div class="alert alert-warning border-0 p-3 rounded-3 mb-3 small bg-warning-subtle text-warning-emphasis">
                             <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Ý kiến góp ý:</strong>
-                            <div class="fw-medium">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
+                            <div class="fw-medium text-break" style="word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         </div>
                     @endif
 

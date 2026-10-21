@@ -1075,7 +1075,7 @@
                 @if($dt->LyDoTuChoi)
                     <div class="mt-3 p-3 bg-danger-subtle rounded-3 border border-danger-subtle text-danger small">
                         <strong class="d-block mb-1"><i class="fa-solid fa-circle-exclamation me-2"></i>Ý Kiến Phản Hồi / Lý Do Từ Chối:</strong>
-                        {{ $dt->LyDoTuChoi }}
+                        <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dt->LyDoTuChoi) !!}</div>
                     </div>
                 @endif
             </div>

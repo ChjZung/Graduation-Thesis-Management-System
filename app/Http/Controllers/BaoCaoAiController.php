@@ -39,7 +39,8 @@ class BaoCaoAiController extends Controller
             $prefix = strtolower($prefix);
             $normalized = strtolower($normalized);
         }
-        abort_unless($path && is_file($path) && $prefix && str_starts_with($normalized, $prefix), 404, 'Không tìm thấy tệp PDF của báo cáo.');
+        abort_unless($path && is_file($path) && $prefix && str_starts_with($normalized, $prefix), 404, 'Không tìm thấy tệp báo cáo.');
+        abort_unless(in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['pdf', 'docx']), 422, 'Chỉ hỗ trợ PDF và DOCX.');
         return $path;
     }
 
@@ -55,9 +56,11 @@ class BaoCaoAiController extends Controller
                 'PATH' => getenv('PATH') ?: 'C:\\Windows\\system32;C:\\Windows',
                 'TEMP' => getenv('TEMP') ?: sys_get_temp_dir(), 'TMP' => getenv('TMP') ?: sys_get_temp_dir(),
                 'PYTHONUTF8' => '1', 'PYTHONIOENCODING' => 'utf-8',
-            ])->run([$python, base_path('app/Services/pdf_citation_preview.py'), '--pdf', $path, '--page', (string) $input['page'], '--quote=' . ($input['quote'] ?? '')]);
+            ])->run(strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'docx'
+                ? [$python, base_path('app/Services/report_document.py'), '--file', $path, '--unit', (string) $input['page'], '--quote=' . ($input['quote'] ?? '')]
+                : [$python, base_path('app/Services/pdf_citation_preview.py'), '--pdf', $path, '--page', (string) $input['page'], '--quote=' . ($input['quote'] ?? '')]);
             $data = json_decode($process->output(), true);
-            if ($process->successful() && is_array($data) && isset($data['image'])) {
+            if ($process->successful() && is_array($data) && (isset($data['image']) || ($data['kind'] ?? '') === 'docx')) {
                 return response()->json($data)->header('Cache-Control', 'private, no-store');
             }
         } catch (\Throwable $e) {
@@ -69,53 +72,52 @@ class BaoCaoAiController extends Controller
     public function pdf(string $id)
     {
         $report = $this->authorizedReport($id);
+        $path = $this->pdfPath($report);
+        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'docx') {
+            return response()->download($path, basename($report->TenFile ?: 'bao-cao.docx'), [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
+            ]);
+        }
         return response()->file($this->pdfPath($report), [
             'Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
         ]);
     }
 
-    public function review(string $id, AiSummaryService $ai)
+    public function download(string $id)
     {
         $report = $this->authorizedReport($id);
-        abort_unless($report->dotNop, 422, 'Báo cáo chưa liên kết với đợt nộp của giảng viên.');
-        $result = $ai->summarizePdf($this->pdfPath($report), $report->dotNop->giaiDoan?->ThuTu ?? 1, [
-            'review_context' => $report->dotNop->nguCanhDoiChieuAi(), 'review_only' => true,
+        $path = $this->pdfPath($report);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $name = basename(str_replace('\\', '/', $report->TenFile ?: ('bao-cao.' . $extension)));
+        return response()->download($path, $name, [
+            'Content-Type' => $extension === 'docx'
+                ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                : 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
         ]);
-        $review = $result['data']['requirements_review'] ?? null;
-        if (!is_array($review)) {
-            return back()->with('error', 'Chưa đối chiếu được yêu cầu. Vui lòng kiểm tra dịch vụ AI hoặc nội dung văn bản của PDF.');
-        }
-        DB::transaction(function () use ($report, $review) {
-            // Only append the review; keep all existing summary sections.
-            $report->update(['TomTatJson' => $this->withReview($report->TomTatJson, $review)]);
-            if ($report->tomTat) {
-                $report->tomTat->update(['TomTatJson' => $this->withReview($report->tomTat->TomTatJson, $review)]);
-            }
-        });
-        return back()->with('success', 'Đã cập nhật phần đối chiếu yêu cầu. Xem kết quả bên dưới báo cáo AI.');
     }
 
-    public function reanalyze(string $id, AiSummaryService $ai)
+    public function status(string $id, \App\Services\AiReportProcessingService $processing)
+    {
+        return response()->json($processing->status($this->authorizedReport($id)))->header('Cache-Control','private, no-store');
+    }
+
+    public function review(string $id, \App\Services\AiReportProcessingService $processing)
     {
         $report = $this->authorizedReport($id);
-        $options = $report->dotNop ? ['review_context' => $report->dotNop->nguCanhDoiChieuAi()] : [];
-        $result = $ai->summarizePdf($this->pdfPath($report), $report->dotNop?->giaiDoan?->ThuTu ?? 1, $options);
-        if (empty($result['success']) || empty($result['data']['analysis']['total_pages'])) {
-            return back()->with('error', 'Chưa đọc được PDF để phân tích lại. Bản tóm tắt cũ vẫn được giữ.');
-        }
-        $ai->saveVersionSummary($report, $result);
-        return back()->with('success', 'Đã phân tích lại PDF và cập nhật trích dẫn. Nội dung báo cáo do sinh viên nhập được giữ nguyên.');
+        abort_unless($report->dotNop,422,'Báo cáo chưa liên kết với đợt nộp của giảng viên.');
+        $this->pdfPath($report);
+        $state = $processing->enqueue($report,true);
+        return back()->with('success',$state['message']);
     }
 
-    private function withReview($payload, array $review): array
+    public function reanalyze(string $id, \App\Services\AiReportProcessingService $processing)
     {
-        if (is_string($payload)) $payload = json_decode($payload, true);
-        $payload = is_array($payload) ? $payload : [];
-        if (isset($payload['data']) && is_array($payload['data'])) {
-            $payload['data']['requirements_review'] = $review;
-        } else {
-            $payload['requirements_review'] = $review;
-        }
-        return $payload;
+        $report = $this->authorizedReport($id);
+        $this->pdfPath($report);
+        $state = $processing->enqueue($report);
+        return back()->with('success',$state['message']);
     }
 }

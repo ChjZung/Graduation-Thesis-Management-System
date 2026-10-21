@@ -100,13 +100,17 @@
     <div class="admin-filter-bar mb-4">
         <form method="GET" action="{{ route('khoa.index') }}" class="d-flex flex-wrap flex-xl-nowrap align-items-center justify-content-between gap-3 w-100">
             <div class="d-flex flex-grow-1 flex-wrap flex-md-nowrap align-items-center gap-2" style="min-width: 300px;">
-                <div class="input-group" style="min-width: 260px; flex: 1;">
+                <div class="input-group" style="min-width: 240px; flex: 1;">
                     <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control border-start-0 ps-0" placeholder="Tìm theo tên khoa, mã khoa...">
-                    @if(request('search'))
-                        <a href="{{ route('khoa.index') }}" class="btn btn-outline-secondary border-start-0"><i class="fa-solid fa-xmark"></i></a>
-                    @endif
                 </div>
+                <select name="trang_thai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Hoạt động" {{ request('trang_thai') == 'Hoạt động' ? 'selected' : '' }}>🟢 Đang hoạt động</option>
+                </select>
+                @if(request('search') || request('trang_thai'))
+                    <a href="{{ route('khoa.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
+                @endif
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap ms-auto">
                 <a href="{{ route('admin.import.template', 'khoa') }}" class="btn btn-outline-secondary shadow-xs d-inline-flex align-items-center" title="Tải file mẫu Excel">

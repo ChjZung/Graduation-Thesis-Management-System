@@ -25,4 +25,16 @@ class AiSummaryIntegrityTest extends TestCase
         $this->assertSame(0, $result['data']['completion_percentage']);
         $this->assertSame('pdf_explicit', $result['data']['completion_basis']);
     }
+
+    public function test_content_overview_and_partial_processing_diagnostics_survive_formatting(): void
+    {
+        $content = [['content' => 'Báo cáo mô tả khảo sát.', 'evidence' => 'Thông tin quản lý bị phân tán.', 'source_pages' => [9], 'verified' => true]];
+        $analysis = ['status' => 'partial', 'total_chunks' => 5, 'analyzed_chunks' => 2,
+            'errors' => [['code' => 'timeout', 'message' => 'Chưa xử lý đầy đủ.']]];
+        $result = (new AiSummaryService)->formatSummarizeResult(['data' => [
+            'overall_summary' => 'Báo cáo mô tả khảo sát.', 'document_content' => $content, 'analysis' => $analysis,
+        ]]);
+        $this->assertSame($content, $result['data']['document_content']);
+        $this->assertSame($analysis, $result['data']['analysis']);
+    }
 }

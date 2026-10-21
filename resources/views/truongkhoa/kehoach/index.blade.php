@@ -15,36 +15,85 @@
 
     <!-- ═══ MỐC THỜI GIAN SẮP TỚI / ĐANG DIỄN RA ═══ -->
     @if(isset($upcomingMocs) && $upcomingMocs->isNotEmpty())
-        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #003859 0%, #0072ce 100%); color: #fff;">
+        <style>
+            .timeline-card-item {
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.22);
+                transition: all 0.25s ease-in-out;
+                min-height: 146px;
+            }
+            .timeline-card-item:hover {
+                background: rgba(255, 255, 255, 0.18) !important;
+                border-color: rgba(255, 255, 255, 0.38) !important;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+            }
+            .timeline-card-title {
+                font-size: 0.88rem;
+                font-weight: 700;
+                line-height: 1.38;
+                color: #ffffff;
+                height: 42px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .timeline-card-date {
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.88);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        </style>
+
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px; background: linear-gradient(135deg, #003859 0%, #0072ce 100%); color: #fff;">
             <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                    <h6 class="fw-bold mb-0 text-white">
-                        <i class="fa-solid fa-bell me-2 text-warning"></i>
-                        Các Mốc Thời Gian Quy Trình Đang Diễn Ra / Sắp Tới
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-warning fs-5"></i>
+                        <span>Các Mốc Thời Gian Quy Trình Đang Diễn Ra / Sắp Tới</span>
                     </h6>
-                    <span class="badge bg-warning text-dark px-3 py-1">Timeline quan trọng</span>
+                    <span class="badge bg-warning text-dark px-3 py-1 fw-bold rounded-pill shadow-xs">
+                        <i class="fa-solid fa-bolt me-1"></i>Timeline quan trọng
+                    </span>
                 </div>
-                <div class="row g-3">
+
+                <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-lg-3 align-items-stretch">
                     @foreach($upcomingMocs as $moc)
-                        <div class="col-md-4">
-                            <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
-                                <div class="fw-bold text-white small mb-1">{{ $moc->TenMoc }}</div>
-                                <div class="small opacity-75 mb-2">
-                                    <i class="fa-regular fa-calendar-days me-2"></i>
-                                    {{ \Carbon\Carbon::parse($moc->NgayBatDau)->format('d/m/Y') }} – {{ \Carbon\Carbon::parse($moc->NgayKetThuc)->format('d/m/Y') }}
+                        @php
+                            $now = now()->toDateString();
+                            $isNow = $moc->NgayBatDau <= $now && $now <= $moc->NgayKetThuc;
+                        @endphp
+                        <div class="col d-flex">
+                            <div class="p-3 rounded-3 w-100 d-flex flex-column justify-content-between timeline-card-item">
+                                <!-- Phần thông tin tiêu đề và ngày (cố định chiều cao) -->
+                                <div class="mb-2">
+                                    <div class="timeline-card-title mb-2" title="{{ $moc->TenMoc }}">
+                                        {{ $moc->TenMoc }}
+                                    </div>
+                                    <div class="timeline-card-date d-flex align-items-center gap-1">
+                                        <i class="fa-regular fa-calendar-days text-warning me-1 flex-shrink-0"></i>
+                                        <span>{{ \Carbon\Carbon::parse($moc->NgayBatDau)->format('d/m/Y') }} – {{ \Carbon\Carbon::parse($moc->NgayKetThuc)->format('d/m/Y') }}</span>
+                                    </div>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-white text-primary" style="font-size: 0.65rem;">
-                                        {{ $moc->keHoachKhoaLuan->hocKy->TenHocKy ?? 'Kế hoạch HK' }}
+
+                                <!-- Thanh trạng thái cố định ở đáy ô -->
+                                <div class="d-flex justify-content-between align-items-center mt-auto pt-2" style="border-top: 1px solid rgba(255, 255, 255, 0.16);">
+                                    <span class="badge bg-white text-primary fw-semibold text-truncate px-2 py-1 shadow-xs" style="font-size: 0.68rem; max-width: 140px;" title="{{ $moc->keHoachKhoaLuan->hocKy->TenHocKy ?? 'Kế hoạch HK' }}">
+                                        <i class="fa-solid fa-graduation-cap me-1"></i>{{ $moc->keHoachKhoaLuan->hocKy->TenHocKy ?? 'Kế hoạch HK' }}
                                     </span>
-                                    @php
-                                        $now = now()->toDateString();
-                                        $isNow = $moc->NgayBatDau <= $now && $now <= $moc->NgayKetThuc;
-                                    @endphp
                                     @if($isNow)
-                                        <span class="badge bg-danger text-white" style="font-size: 0.65rem;">Đang diễn ra</span>
+                                        <span class="badge bg-danger text-white px-2 py-1 shadow-xs d-inline-flex align-items-center gap-1 rounded-pill" style="font-size: 0.68rem; font-weight: 700;">
+                                            <span class="spinner-grow spinner-grow-sm" style="width: 5px; height: 5px;" role="status"></span>
+                                            Đang diễn ra
+                                        </span>
                                     @else
-                                        <span class="badge bg-info text-white" style="font-size: 0.65rem;">Sắp diễn ra</span>
+                                        <span class="badge bg-info text-white px-2 py-1 shadow-xs d-inline-flex align-items-center gap-1 rounded-pill" style="font-size: 0.68rem; font-weight: 600;">
+                                            <i class="fa-regular fa-clock"></i>
+                                            Sắp diễn ra
+                                        </span>
                                     @endif
                                 </div>
                             </div>
@@ -121,10 +170,17 @@
                                 <div class="col-md-8">
                                     <div class="small text-muted fw-bold">Nội dung / Mô tả kế hoạch:</div>
                                     <div class="text-secondary small mt-1" style="white-space: pre-line;">{{ $kh->NoiDung ?? 'Chưa có mô tả chi tiết.' }}</div>
+                                    @if($kh->FileDinhKem)
+                                        <div class="mt-2">
+                                            <a href="{{ asset('storage/' . $kh->FileDinhKem) }}" target="_blank" class="inline-flex align-items-center gap-1 badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill text-decoration-none px-3 py-2 shadow-xs">
+                                                <i class="fa-solid fa-file-pdf me-2"></i> Văn bản thông báo chính thức đính kèm: {{ basename($kh->FileDinhKem) }} (Bấm để xem)
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="col-md-4 border-start-md">
                                     <div class="small text-muted">
-                                        <div><i class="fa-solid fa-user-pen me-2 text-primary"></i> Người lập: <strong>{{ $kh->giaoVu->HoTen ?? ($kh->MaGVu ?? 'Giáo vụ Khoa') }}</strong></div>
+                                        <div><i class="fa-solid fa-user-pen me-2 text-primary"></i> Người lập: <strong>{{ $kh->giaoVu->HoTen ?? ($kh->MaGVu ?? 'Quản trị viên Giáo vụ') }}</strong></div>
                                         <div class="mt-1"><i class="fa-regular fa-clock me-2 text-secondary"></i> Ngày lập: <strong>{{ $kh->NgayTao ? \Carbon\Carbon::parse($kh->NgayTao)->format('d/m/Y') : 'N/A' }}</strong></div>
                                     </div>
                                 </div>
@@ -133,33 +189,66 @@
                             <!-- Mốc thời gian chi tiết của kế hoạch -->
                             @if($kh->mocThoiGians && $kh->mocThoiGians->isNotEmpty())
                                 <div class="border-top pt-3 mt-3">
-                                    <h6 class="fw-bold small text-dark mb-2">
-                                        <i class="fa-solid fa-timeline text-danger me-2"></i>
-                                        Các Mốc Thời Gian Quy Trình:
-                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                        <h6 class="fw-bold small text-dark mb-0 d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-timeline text-danger me-1"></i>
+                                            <span>Các Mốc Thời Gian Quy Trình (Chuẩn Thông Báo Khoa):</span>
+                                        </h6>
+                                        <span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-semibold">
+                                            {{ $kh->mocThoiGians->count() }} Mốc quy trình
+                                        </span>
+                                    </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 0.8rem;">
-                                            <thead>
+                                        <table class="table table-hover table-bordered align-middle mb-0" style="font-size: 0.8rem;">
+                                            <thead class="table-light text-secondary text-uppercase fs-7 fw-bold">
                                                 <tr>
                                                     <th style="width: 50px;" class="text-center">STT</th>
-                                                    <th>Nội Dung Giai Đoạn / Mốc Quy Trình</th>
-                                                    <th style="width: 140px;" class="text-center">Ngày Bắt Đầu</th>
-                                                    <th style="width: 140px;" class="text-center">Ngày Kết Thúc</th>
+                                                    <th style="min-width: 250px;">Nội Dung Giai Đoạn / Mốc Quy Trình</th>
+                                                    <th style="width: 140px;" class="text-center">Đối Tượng</th>
+                                                    <th style="width: 210px;" class="text-center">Thời Gian Thực Hiện</th>
+                                                    <th style="width: 135px;" class="text-center">Trạng Thái Mở</th>
                                                     <th>Ghi Chú / Yêu Cầu</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach($kh->mocThoiGians->sortBy('NgayBatDau') as $mIdx => $mItem)
-                                                    <tr>
-                                                        <td class="text-center fw-bold">{{ $mIdx + 1 }}</td>
-                                                        <td class="fw-semibold text-dark">{{ $mItem->TenMoc }}</td>
-                                                        <td class="text-center text-primary fw-semibold">
-                                                            {{ $mItem->NgayBatDau ? \Carbon\Carbon::parse($mItem->NgayBatDau)->format('d/m/Y') : '-' }}
+                                                @foreach($kh->mocThoiGians->sortBy('NgayBatDau')->values() as $mIdx => $mItem)
+                                                    @php
+                                                        $statusInfo = \App\Services\PlanPhaseService::getPhaseStatus($mItem);
+                                                    @endphp
+                                                    <tr class="{{ $statusInfo['is_open'] ? 'table-success bg-opacity-25' : '' }}">
+                                                        <td class="text-center fw-bold text-muted">{{ $loop->iteration }}</td>
+                                                        <td>
+                                                            <div class="fw-bold text-primary">{{ $mItem->TenMoc }}</div>
+                                                            @if($mItem->LoaiGiaiDoan)
+                                                                <span class="badge bg-light text-secondary border small mt-1">{{ $mItem->LoaiGiaiDoan }}</span>
+                                                            @endif
                                                         </td>
-                                                        <td class="text-center text-danger fw-semibold">
-                                                            {{ $mItem->NgayKetThuc ? \Carbon\Carbon::parse($mItem->NgayKetThuc)->format('d/m/Y') : '-' }}
+                                                        <td class="text-center">
+                                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
+                                                                {{ $mItem->DoiTuongThucHien ?? 'Tất cả' }}
+                                                            </span>
                                                         </td>
-                                                        <td class="text-muted small">{{ $mItem->MoTa ?? '-' }}</td>
+                                                        <td class="text-center">
+                                                            <div class="fw-semibold text-dark">
+                                                                <i class="fa-regular fa-calendar-days text-primary me-1"></i>
+                                                                {{ $mItem->NgayBatDau ? \Carbon\Carbon::parse($mItem->NgayBatDau)->format('d/m/Y') : '-' }}
+                                                                <i class="fa-solid fa-arrow-right text-muted mx-1"></i>
+                                                                {{ $mItem->NgayKetThuc ? \Carbon\Carbon::parse($mItem->NgayKetThuc)->format('d/m/Y') : '-' }}
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span class="badge {{ $statusInfo['badge'] }} rounded-pill px-3 py-1">
+                                                                {{ $statusInfo['label'] }}
+                                                            </span>
+                                                            @if($statusInfo['is_open'])
+                                                                <div class="small text-success fw-bold mt-1">
+                                                                    <i class="fa-solid fa-clock me-1"></i>Còn {{ $statusInfo['days_left'] }} ngày
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-muted small">
+                                                            {{ preg_replace('/\[[A-Z0-9_]+\]/', '', $mItem->MoTa ?? '') ?: '-' }}
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

@@ -133,7 +133,7 @@
                     @if($detai->LyDoTuChoi)
                         <div class="alert alert-warning border-0 mt-3" style="border-left: 4px solid #ffc107 !important; border-radius: 8px;">
                             <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2 text-warning"></i> Ghi chú / Ý kiến phản hồi trước đó:</h6>
-                            <div class="mb-0 text-dark" style="line-height: 1.5;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
+                            <div class="mb-0 text-dark text-break" style="line-height: 1.5; word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         </div>
                     @endif
 
@@ -404,7 +404,8 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="alert alert-danger py-2 px-3 small rounded-3 mb-0">
-                            <strong>Lý do từ chối:</strong> {{ $detai->LyDoTuChoi ?? 'Không đạt yêu cầu chuyên môn' }}
+                            <strong>Lý do từ chối:</strong>
+                            <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi ?: 'Không đạt yêu cầu chuyên môn') !!}</div>
                         </div>
                     </div>
                 </div>

@@ -422,50 +422,22 @@ class DuyetBaoCaoController extends Controller
     {
         if ($baoCao->tomTatBaoCao) return;
 
-        $completedText = $baoCao->NoiDungBaoCao ?: 'Đã hoàn thành các công việc theo đúng yêu cầu đề ra của giai đoạn ' . $baoCao->LanBaoCao . '.';
-        $aiRes = [
-            'success' => true,
-            'total_pages' => 1,
-            'processing_time' => 0.1,
-            'data' => [
-                'overall_summary' => "AI tự động phân tích: Nhóm đã nộp báo cáo và thực hiện nội dung: {$completedText}",
-                'completion_percentage' => $baoCao->PhanTramHoanThanh ?: 80,
-                'completed_work' => [
-                    ['content' => $completedText, 'source_pages' => [1], 'evidence' => 'Bản nộp giai đoạn của nhóm']
-                ],
-                'difficulties' => [
-                    ['content' => 'Không ghi nhận trở ngại lớn trong quá trình thực hiện giai đoạn.', 'source_pages' => [1]]
-                ],
-                'next_stage_plan' => [
-                    ['content' => 'Chuẩn bị chuyển sang các mốc kế tiếp theo quy định.']
-                ],
-            ],
-            'formatted' => [
-                'completed_work' => "- " . $completedText,
-                'difficulties' => "- Không ghi nhận trở ngại lớn.",
-                'next_plan' => "- Chuẩn bị chuyển sang giai đoạn kế tiếp.",
-            ]
-        ];
-
+        if (!$baoCao->DuongDanFile || !is_file(storage_path('app/public/' . $baoCao->DuongDanFile))) return;
         try {
-            $maTomTat = \App\Helpers\IdGenerator::nextTomTat();
-            \App\Models\TomTatBaoCao::create([
-                'MaTomTat' => $maTomTat,
-                'MaBaoCao' => $baoCao->MaBaoCao,
-                'TenFile' => $baoCao->TenFile,
-                'DuongDanFile' => $baoCao->DuongDanFile,
-                'SoTrang' => 1,
-                'CongViecDaHoanThanh' => $aiRes['formatted']['completed_work'],
-                'KhoKhan' => $aiRes['formatted']['difficulties'],
-                'KeHoachTuanToi' => $aiRes['formatted']['next_plan'],
-                'NoiDungAI' => $aiRes['data']['overall_summary'],
-                'TomTatJson' => $aiRes,
-                'TrangThai' => 'Đã tạo',
-                'TrangThaiXuLy' => 'hoan_thanh',
-                'NgayTomTat' => now(),
-            ]);
+            $aiRes = app(\App\Services\AiSummaryService::class)->summarizePdf(storage_path('app/public/' . $baoCao->DuongDanFile), $baoCao->LanBaoCao ?? 1);
+            if (empty($aiRes['data'])) return;
+            $summary = \App\Models\TomTatBaoCao::firstOrNew(['MaBaoCao' => $baoCao->MaBaoCao]);
+            if (!$summary->exists) $summary->MaTomTat = \App\Helpers\IdGenerator::nextTomTat();
+            $summary->fill([
+                'TenFile' => $baoCao->TenFile, 'DuongDanFile' => $baoCao->DuongDanFile,
+                'SoTrang' => ($aiRes['data']['document_type'] ?? 'pdf') === 'docx' ? 0 : (int) ($aiRes['total_pages'] ?? 0),
+                'CongViecDaHoanThanh' => $aiRes['formatted']['completed_work'] ?? '',
+                'KhoKhan' => $aiRes['formatted']['difficulties'] ?? '', 'KeHoachTuanToi' => $aiRes['formatted']['next_steps'] ?? '',
+                'NoiDungAI' => $aiRes['data']['overall_summary'] ?? '', 'TomTatJson' => $aiRes['data'],
+                'TrangThai' => 'Đã tạo', 'TrangThaiXuLy' => 'hoan_thanh', 'NgayTomTat' => now(),
+            ])->save();
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("ensureAiSummaryForBaoCao failed: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('ensureAiSummaryForBaoCao failed: ' . $e->getMessage());
         }
     }
 

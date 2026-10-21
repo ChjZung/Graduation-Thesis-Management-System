@@ -383,89 +383,14 @@
                         <i class="fa-solid fa-wand-magic-sparkles text-warning fa-lg"></i>
                         <h6 class="fw-bold mb-0">Trợ Lý AI Map-Reduce</h6>
                     </div>
-                    <span class="badge bg-white text-dark rounded-pill px-3 py-1 fw-bold shadow-xs" style="font-size: 11px;">
-                        <i class="fa-solid fa-circle-check text-success me-2"></i>{{ $tomTat->DoTinCayAI ?? 95 }}% tin cậy
-                    </span>
+
                 </div>
 
-                <div class="card-body p-3" style="max-height: calc(100vh - 160px); overflow-y: auto;">
+                <div class="card-body p-3">
                     @php
-                        $tomTatData = $tomTat?->TomTatJson ?? null;
+                        $summaryReport = (object) ['TomTatJson' => $tomTat?->TomTatJson ?? [], 'TomTatAI' => $tomTat?->NoiDungAI ?? '', 'TenFile' => $baoCao->TenFile, 'DuongDanFile' => $baoCao->DuongDanFile, 'MaKhoi' => $tomTat?->MaKhoi, 'dotNop' => null];
                     @endphp
-
-                    {{-- 1. Tổng quan phân tích --}}
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary small mb-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-chart-pie me-2"></i>
-                            <span>1. Tổng quan phân tích:</span>
-                        </div>
-                        <div class="p-2 rounded-2 bg-light border text-dark small" style="line-height: 1.5; font-size: 12.5px;">
-                            {{ $tomTat?->NoiDungAI ?: ($tomTat?->CongViecDaHoanThanh ?: 'AI đã tự động trích xuất các hạng mục công việc chính của nhóm từ báo cáo tiến độ.') }}
-                        </div>
-                    </div>
-
-                    {{-- 2. Hạng mục công việc tìm thấy trong tài liệu --}}
-                    <div class="mb-3">
-                        <div class="fw-bold text-success small mb-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-circle-check me-2"></i>
-                            <span>2. Công việc hoàn thành (kèm trích dẫn):</span>
-                        </div>
-                        @if(!empty($tomTatData['data']['completed_work']))
-                            <div class="list-group list-group-flush border rounded-2 bg-white" style="max-height: 220px; overflow-y: auto;">
-                                @foreach($tomTatData['data']['completed_work'] as $item)
-                                    <div class="list-group-item p-2" style="font-size: 12px;">
-                                        <div class="d-flex justify-content-between align-items-start gap-1">
-                                            <span class="fw-semibold text-dark">{{ $item['content'] ?? '' }}</span>
-                                            @if(!empty($item['source_pages']))
-                                                <span class="badge bg-secondary-subtle text-secondary rounded-pill text-nowrap" style="font-size: 10px;">
-                                                    Trang {{ implode(', ', (array)$item['source_pages']) }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                        @if(!empty($item['evidence']))
-                                            <div class="text-muted mt-1 fst-italic" style="font-size: 11px;">
-                                                "{{ Str::limit($item['evidence'], 90) }}"
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
-                                {{ $tomTat?->CongViecDaHoanThanh ?: 'Đã hoàn thành các hạng mục theo kế hoạch giai đoạn.' }}
-                            </div>
-                        @endif
-                    </div>
-
-                    {{-- 3. Khó khăn & Rào cản phát hiện --}}
-                    <div class="mb-3">
-                        <div class="fw-bold text-warning-emphasis small mb-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
-                            <span>3. Khó khăn & Vướng mắc:</span>
-                        </div>
-                        <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
-                            {{ $tomTat?->KhoKhan ?: 'Không ghi nhận vướng mắc kỹ thuật đặc biệt nào trong tài liệu nộp.' }}
-                        </div>
-                    </div>
-
-                    {{-- 4. Kế hoạch tiếp theo trích xuất --}}
-                    @if($tomTat?->KeHoachTuanToi)
-                    <div class="mb-3">
-                        <div class="fw-bold text-info small mb-2 d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-calendar-check text-info me-2"></i>
-                            <span>4. Kế hoạch giai đoạn tiếp theo:</span>
-                        </div>
-                        <div class="p-2 rounded-2 bg-light border text-dark small" style="white-space: pre-line; font-size: 12px;">
-                            {{ $tomTat->KeHoachTuanToi }}
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Gợi ý kiểm tra đối chiếu --}}
-                    <div class="p-2 rounded-2 border border-info border-opacity-25 bg-info-subtle bg-opacity-25 text-info-emphasis small" style="font-size: 11.5px; line-height: 1.5;">
-                        <i class="fa-solid fa-lightbulb text-warning me-2"></i>
-                        <strong>Mẹo đối chiếu:</strong> Bạn có thể so sánh giữa nội dung sinh viên tự khai báo ở cột trái và kết quả AI trích xuất từ file PDF ở đây để quyết định đánh giá <strong>Đạt</strong> hay <strong>Yêu cầu nộp lại</strong>.
-                    </div>
+                    @include('partials.ai_summary_11_sections', ['pb' => $summaryReport])
                 </div>
             </div>
         </div>

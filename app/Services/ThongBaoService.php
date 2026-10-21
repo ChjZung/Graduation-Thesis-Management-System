@@ -206,6 +206,18 @@ class ThongBaoService
         if (!is_array($cached)) $cached = [];
         if (!is_array($sess)) $sess = [];
         $all = array_values(array_unique(array_merge($cached, $sess)));
+
+        // Hợp nhất dữ liệu nếu tài khoản hiện tại có TenDangNhap khác MaTK
+        $curUser = \Illuminate\Support\Facades\Auth::user();
+        if ($curUser && $curUser->TenDangNhap && $curUser->TenDangNhap !== $maTK) {
+            $altKey = 'read_thong_bao_ids_' . $curUser->TenDangNhap;
+            $altCached = \Illuminate\Support\Facades\Cache::get($altKey, []);
+            $altSess = session()->get($altKey, []);
+            if (is_array($altCached)) $all = array_merge($all, $altCached);
+            if (is_array($altSess)) $all = array_merge($all, $altSess);
+            $all = array_values(array_unique($all));
+        }
+
         return $all;
     }
 
@@ -240,14 +252,11 @@ class ThongBaoService
         $noiDung = mb_strtolower($thongBao->NoiDung ?? '');
 
         $isOfficial = (
+            str_starts_with($thongBao->MaThongBao, 'TB_CONGBO_') ||
+            str_starts_with($thongBao->MaThongBao, 'TB_CB_') ||
             str_contains($tieuDe, 'danh sách sinh viên đăng ký đề tài') ||
             str_contains($tieuDe, 'danh sách đề tài & gvhd') ||
-            str_contains($tieuDe, 'đăng ký đề tài & gvhd') ||
-            str_contains($tieuDe, 'công bố danh mục đề tài') ||
-            str_contains($tieuDe, 'danh sách đề tài') ||
-            (str_contains($noiDung, 'danh sách') && str_contains($noiDung, 'đề tài') && str_contains($noiDung, 'hướng dẫn')) ||
-            str_starts_with($thongBao->MaThongBao, 'TB_CONGBO_') ||
-            str_starts_with($thongBao->MaThongBao, 'TB_CB_')
+            str_contains($tieuDe, 'công bố danh mục đề tài')
         );
 
         if (!$isOfficial) {

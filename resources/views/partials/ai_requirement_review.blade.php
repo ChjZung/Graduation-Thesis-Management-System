@@ -1,11 +1,13 @@
 @php
     $currentBrief = $reviewRound->nguCanhDoiChieuAi();
     $reviewStale = is_array($requirementsReview) && ($requirementsReview['context_hash'] ?? '') !== $reviewRound->maNguCanhDoiChieuAi();
+    $reviewProcessingFailed = ($requirementsReview['status'] ?? '') === 'service_error' || ($requirementsReview['decision_status'] ?? '') === 'failed';
+    $reviewInProgress = in_array($aiData['_processing']['status'] ?? '', ['queued','running','waiting']);
     $reviewStatusLabels = ['met' => 'Đã đáp ứng', 'partial' => 'Đáp ứng một phần', 'not_found' => 'Chưa tìm thấy trong PDF', 'insufficient_evidence' => 'Chưa đủ bằng chứng'];
 @endphp
 <div class="ai-review-block">
     <div class="ai-review-heading">
-        <div><h3>Đối chiếu yêu cầu của giảng viên</h3><p>Kết quả hỗ trợ đối chiếu PDF; giảng viên quyết định đánh giá cuối cùng.</p></div>
+        <div><h3>Đối chiếu yêu cầu của giảng viên</h3><p>Kết quả hỗ trợ đối chiếu tài liệu; giảng viên quyết định đánh giá cuối cùng.</p></div>
         @if($reviewUrl)
             <form method="POST" action="{{ $reviewUrl }}" class="ai-review-submit">
                 @csrf
@@ -26,26 +28,29 @@
             <div class="ai-review-note">Kết quả này được tạo trước khi có bước kiểm chứng mức độ liên quan của trích dẫn. Chọn Đối chiếu lại để lọc bằng chứng trực tiếp cho từng yêu cầu.</div>
         @endif
         @if(($requirementsReview['method'] ?? '') === 'document_structure')
-            <div class="ai-review-note">Đối chiếu cấu trúc tài liệu: tìm đúng phần đặc tả và kiểm tra từng mục bằng trích dẫn nguyên văn. Kết quả xác nhận nội dung có trong PDF, không đánh giá phần mềm chạy đúng.</div>
+            <div class="ai-review-note">Đối chiếu cấu trúc tài liệu: tìm đúng phần đặc tả và kiểm tra từng mục bằng trích dẫn nguyên văn. Kết quả xác nhận nội dung có trong tài liệu, không đánh giá phần mềm chạy đúng.</div>
         @elseif(isset($requirementsReview['coverage']['batches']))
             <div class="ai-review-note">Dịch vụ AI đã xử lý {{ $requirementsReview['coverage']['analyzed_batches'] ?? 0 }}/{{ $requirementsReview['coverage']['batches'] }} phần văn bản.</div>
         @endif
         @if(isset($requirementsReview['coverage']['verified_candidates']))
-            <div class="ai-review-note">Đã tìm {{ $requirementsReview['coverage']['verified_candidates'] }} đoạn trích khớp PDF. Bước kết luận đã trả kết quả cho {{ $requirementsReview['coverage']['decision_items'] ?? 0 }}/{{ count($requirementsReview['items'] ?? []) }} yêu cầu.</div>
+            <div class="ai-review-note">Đã tìm {{ $requirementsReview['coverage']['verified_candidates'] }} đoạn trích khớp tài liệu. Bước kết luận đã trả kết quả cho {{ $requirementsReview['coverage']['decision_items'] ?? 0 }}/{{ count($requirementsReview['items'] ?? []) }} yêu cầu.</div>
         @endif
         @if(in_array($requirementsReview['citation_audit']['status'] ?? '', ['failed', 'partial']))
-            <div class="ai-review-note">Bước kiểm chứng trích dẫn chưa hoàn tất cho một số yêu cầu. Các mục đó chưa được kết luận đáp ứng; chọn Đối chiếu lại để thử lại. Đây không phải kết luận báo cáo thiếu nội dung.</div>
+            <div class="ai-review-note">Bước kiểm chứng trích dẫn chưa hoàn tất cho một số yêu cầu. Các mục đó chưa được kết luận đáp ứng. {{ $reviewInProgress ? 'Hệ thống sẽ tự tiếp tục sau thời gian chờ.' : 'Chọn Đối chiếu lại để thử lại.' }} Đây không phải kết luận báo cáo thiếu nội dung.</div>
         @elseif(($requirementsReview['decision_status'] ?? '') === 'failed')
             <div class="ai-review-note">Đã tìm các đoạn PDF liên quan nhưng bước kết luận của dịch vụ AI chưa trả kết quả hợp lệ. Đây là lỗi xử lý, không phải kết luận báo cáo thiếu nội dung. Bạn có thể xem các đoạn đã tìm được bên dưới và chọn Đối chiếu lại.</div>
         @elseif(($requirementsReview['status'] ?? '') !== 'completed')
             <div class="ai-review-note">Việc đối chiếu chưa hoàn tất hoặc chưa đủ độ bao phủ. Những mục chưa có bằng chứng không đồng nghĩa sinh viên chưa thực hiện.</div>
         @endif
+        @foreach(collect(array_merge($requirementsReview['errors'] ?? [], array_filter([$requirementsReview['citation_audit']['error'] ?? null])))->unique(fn ($e) => ($e['stage'] ?? '').'|'.($e['code'] ?? '')) as $reviewError)
+            <div class="ai-review-note">{{ ($reviewError['stage'] ?? '') === 'citation_audit' ? 'Kiểm chứng trích dẫn: ' : '' }}{{ $reviewError['message'] ?? 'Dịch vụ AI chưa đối chiếu hoàn tất.' }}</div>
+        @endforeach
         <p class="ai-review-summary">{{ $requirementsReview['summary'] ?? '' }}</p>
         <div class="ai-review-list">
             @foreach(($requirementsReview['items'] ?? []) as $requirement)
                 @php $assessmentStatus = array_key_exists($requirement['status'] ?? '', $reviewStatusLabels) ? $requirement['status'] : 'insufficient_evidence'; @endphp
                 <article class="ai-review-item">
-                    <div class="ai-review-result"><h4>{{ $requirement['id'] ?? $loop->iteration }}. {{ $requirement['requirement'] ?? '' }}</h4><span class="ai-review-status ai-review-status-{{ $assessmentStatus }}">{{ $reviewStatusLabels[$assessmentStatus] }}</span></div>
+                    <div class="ai-review-result"><h4>{{ $requirement['id'] ?? $loop->iteration }}. {{ $requirement['requirement'] ?? '' }}</h4><span class="ai-review-status ai-review-status-{{ $assessmentStatus }}">{{ $reviewInProgress && $assessmentStatus === 'insufficient_evidence' ? 'Đang chờ đối chiếu' : ($reviewProcessingFailed && $assessmentStatus === 'insufficient_evidence' ? 'Chưa đánh giá được · Lỗi xử lý' : $reviewStatusLabels[$assessmentStatus]) }}</span></div>
                     <p>{{ $requirement['explanation'] ?? '' }}</p>
                     @foreach(($requirement['evidence'] ?? []) as $evidence)
                         @if(!empty($evidence['verified']))

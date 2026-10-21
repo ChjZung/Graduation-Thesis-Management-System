@@ -78,7 +78,8 @@
         @endif
     </div>
 
-    {{-- Giao diện Song Song (Split-view) 2 bên --}}
+    @if(!empty($fileUrl))
+    {{-- Giao diện Song Song (Split-view) 2 bên khi CÓ TỆP ĐÍNH KÈM --}}
     <div class="row g-3">
         {{-- Cột Trái: Trình Xem File Văn Bản (58%) --}}
         <div class="col-12 col-xl-7">
@@ -107,24 +108,12 @@
                 </div>
 
                 <div class="doc-viewer-body">
-                    @if(!empty($fileUrl))
-                        @if(($fileType ?? '') === 'image')
-                            <div class="w-100 h-100 d-flex align-items-center justify-content-center p-3 overflow-auto" style="background: #334155;">
-                                <img src="{{ asset($fileUrl) }}" alt="Ảnh công văn thông báo" class="img-fluid rounded shadow" style="max-height: 100%; object-fit: contain;">
-                            </div>
-                        @else
-                            <iframe src="{{ asset($fileUrl) }}#toolbar=1&navpanes=0"></iframe>
-                        @endif
-                    @else
-                        <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-center p-4" style="background: #f8fafc;">
-                            <div class="rounded-circle bg-primary-subtle text-primary p-4 mb-3">
-                                <i class="fa-solid fa-file-circle-check fs-1"></i>
-                            </div>
-                            <h5 class="fw-bold text-dark mb-2">Văn Bản Thông Báo Chính Thức</h5>
-                            <p class="text-muted small mb-0" style="max-width: 420px;">
-                                Thông báo được phát hành trực tiếp từ Khoa Công nghệ Thông tin đến Giảng viên.
-                            </p>
+                    @if(($fileType ?? '') === 'image')
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center p-3 overflow-auto" style="background: #334155;">
+                            <img src="{{ asset($fileUrl) }}" alt="Ảnh công văn thông báo" class="img-fluid rounded shadow" style="max-height: 100%; object-fit: contain;">
                         </div>
+                    @else
+                        <iframe src="{{ asset($fileUrl) }}#toolbar=1&navpanes=0"></iframe>
                     @endif
                 </div>
             </div>
@@ -176,6 +165,72 @@
             </div>
         </div>
     </div>
+    @else
+    {{-- Giao diện Thuần Thông Tin khi KHÔNG CÓ TỆP ĐÍNH KÈM --}}
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-9 col-lg-10">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 pb-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fa-solid fa-bullhorn me-2"></i> {{ $thongBao->LoaiThongBao ?? 'Thông báo' }}
+                        </span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fa-solid fa-circle-check me-1"></i> {{ $thongBao->TrangThai ?? 'Đã phát hành' }}
+                        </span>
+                    </div>
+                    <span class="text-muted small">
+                        <i class="fa-regular fa-clock me-1"></i> {{ date('d/m/Y H:i', strtotime($thongBao->NgayTao ?? $thongBao->created_at)) }}
+                    </span>
+                </div>
+
+                <h4 class="fw-bold text-dark mb-4" style="line-height: 1.45;">{{ $thongBao->TieuDe }}</h4>
+
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <div class="row g-3 small">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Cơ quan / Người gửi:</div>
+                            <div class="fw-bold text-dark mt-1">
+                                <i class="fa-solid fa-building-columns text-primary me-2"></i>
+                                @if($thongBao->giangVien)
+                                    GV {{ $thongBao->giangVien->HoTen }}
+                                @elseif($thongBao->giaoVu)
+                                    {{ $thongBao->giaoVu->HoTen }} (Khoa)
+                                @else
+                                    Khoa CNTT
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Phạm vi đối tượng:</div>
+                            <div class="fw-bold text-dark mt-1">
+                                <i class="fa-solid fa-users text-primary me-2"></i>
+                                {{ $thongBao->DoiTuongNhan ?? 'Giảng viên' }}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="text-muted">Mã số thông báo:</div>
+                            <div class="fw-bold text-dark mt-1 font-monospace">
+                                <i class="fa-solid fa-hashtag text-primary me-2"></i>
+                                {{ $thongBao->MaThongBao }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-align-left text-primary me-2"></i>
+                        <span>Nội Dung Chi Tiết</span>
+                    </h6>
+                    <div class="p-4 rounded-3 border bg-light-subtle text-dark shadow-xs" style="font-size: 0.98rem; line-height: 1.85; border-left: 5px solid #0072ce !important; min-height: 160px;">
+                        {!! \App\Helpers\HtmlHelper::clean($thongBao->NoiDung) !!}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @push('scripts')

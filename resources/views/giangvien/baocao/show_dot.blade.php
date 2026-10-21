@@ -151,24 +151,7 @@
                             {{-- File PDF & Link Git repository --}}
                             <div class="row g-2 mb-3">
                                 <div class="col-12 {{ ($dotNop->YeuCauSourceCode || $pb->LinkCode) ? 'col-md-6' : '' }}">
-                                    <div class="p-2 rounded-3 border bg-light d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center gap-2 text-truncate me-2">
-                                            <i class="fa-solid fa-file-pdf text-danger fs-4"></i>
-                                            <div class="text-truncate">
-                                                <div class="fw-bold text-dark text-truncate small" title="{{ $pb->TenFile ?? 'Báo cáo PDF' }}">
-                                                    {{ $pb->TenFile ?? 'baocao.pdf' }}
-                                                </div>
-                                                <span class="text-muted small" style="font-size: 11px;">Tài liệu báo cáo</span>
-                                            </div>
-                                        </div>
-                                        @if($pb->DuongDanFile)
-                                            <a href="{{ asset('storage/' . $pb->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-eye me-2"></i>Xem PDF
-                                            </a>
-                                        @else
-                                            <span class="badge bg-secondary">Không có file</span>
-                                        @endif
-                                    </div>
+                                    @include('partials.report_attachment', ['report' => $pb])
                                 </div>
 
                                 @if($dotNop->YeuCauSourceCode || $pb->LinkCode)
@@ -193,7 +176,7 @@
                                 @endif
                             </div>
 
-                            {{-- KẾT QUẢ THẨM ĐỊNH AI 11 MỤC --}}
+                            {{-- KẾT QUẢ THẨM ĐỊNH AI 3 NHÓM --}}
                             @include('partials.ai_summary_11_sections', ['pb' => $pb])
 
                             {{-- Ghi chú bổ sung của sinh viên (nếu có nhập riêng) --}}
@@ -221,7 +204,7 @@
                                         <span class="fw-bold text-dark small"><i class="fa-solid fa-comment-dots text-warning me-2"></i>Nhận xét của GVHD ({{ $pb->NguoiNhanXet }}):</span>
                                         <span class="text-muted small" style="font-size: 11px;">{{ \Carbon\Carbon::parse($pb->NgayNhanXet)->format('H:i d/m/Y') }}</span>
                                     </div>
-                                    <div class="text-dark small whitespace-pre-line">{{ $pb->NhanXetGV }}</div>
+                                    <div class="text-dark small">{!! \App\Helpers\HtmlHelper::clean($pb->NhanXetGV) !!}</div>
                                 </div>
                             @endif
 
@@ -248,15 +231,17 @@
 
                     {{-- Chọn Hành Động --}}
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-dark">Kết quả đánh giá đợt nộp <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-2">
-                            <input type="radio" class="btn-check" name="HanhDong" id="actionDat" value="DAT" {{ ($latestPhienBan->TrangThai ?? '') === 'Đạt' ? 'checked' : '' }} required>
-                            <label class="btn btn-outline-success w-50 rounded-3 py-2 fw-bold small" for="actionDat">
+                        <label class="form-label fw-bold small text-dark" id="label-eval-group">
+                            Kết quả đánh giá đợt nộp <span class="text-danger">*</span>
+                        </label>
+                        <div class="eval-btn-group d-flex gap-2" role="radiogroup" aria-labelledby="label-eval-group">
+                            <input type="radio" class="btn-check eval-radio-input" name="HanhDong" id="actionDat" value="DAT" {{ ($latestPhienBan->TrangThai ?? '') === 'Đạt' ? 'checked' : '' }} required>
+                            <label class="btn eval-btn eval-btn-pass w-50 rounded-3 py-2 fw-bold small" for="actionDat" id="label-actionDat" role="radio" aria-checked="{{ ($latestPhienBan->TrangThai ?? '') === 'Đạt' ? 'true' : 'false' }}" tabindex="0">
                                 <i class="fa-solid fa-check-circle me-2"></i>Xác nhận Đạt
                             </label>
 
-                            <input type="radio" class="btn-check" name="HanhDong" id="actionNopLai" value="YEU_CAU_NOP_LAI" {{ ($latestPhienBan->TrangThai ?? '') === 'Yêu cầu nộp lại' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-warning w-50 rounded-3 py-2 fw-bold small text-dark" for="actionNopLai">
+                            <input type="radio" class="btn-check eval-radio-input" name="HanhDong" id="actionNopLai" value="YEU_CAU_NOP_LAI" {{ ($latestPhienBan->TrangThai ?? '') === 'Yêu cầu nộp lại' ? 'checked' : '' }}>
+                            <label class="btn eval-btn eval-btn-redo w-50 rounded-3 py-2 fw-bold small" for="actionNopLai" id="label-actionNopLai" role="radio" aria-checked="{{ ($latestPhienBan->TrangThai ?? '') === 'Yêu cầu nộp lại' ? 'true' : 'false' }}" tabindex="0">
                                 <i class="fa-solid fa-rotate-left me-2"></i>Yêu cầu nộp lại
                             </label>
                         </div>
@@ -284,3 +269,211 @@
 
 </div>
 @endsection
+
+@push('styles')
+<style>
+    /* ═══════════════════════════════════════════════════════════
+       GIAI ĐOẠN 1: TÙY BIẾN CẶP NÚT ĐÁNH GIÁ CHUYÊN MÔN
+       (GỌN GÀNG, ĐÚNG MÀU, HOÀN TOÀN KHÔNG TỎA LIGHTING)
+       ═══════════════════════════════════════════════════════════ */
+    .eval-btn-group {
+        position: relative;
+    }
+
+    .eval-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.18s ease-in-out !important;
+        cursor: pointer !important;
+        position: relative;
+        user-select: none;
+        min-height: 44px;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        box-shadow: none !important; /* Không tỏa lighting */
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       A. NÚT "XÁC NHẬN ĐẠT" (TÔNG XANH LÁ)
+       ══════════════════════════════════════════════════════════════ */
+    /* 1. Mặc định / Khi chưa được chọn: Nền xanh nhạt, viền nét liền, chữ xanh, KHÔNG tỏa lighting */
+    .eval-btn-pass,
+    .eval-btn-group:has(#actionNopLai:checked) .eval-btn-pass:not(:hover),
+    .eval-btn-pass.is-unselected:not(:hover) {
+        background-color: #ecfdf5 !important;
+        border: 1.5px solid #10b981 !important;
+        color: #059669 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    .eval-btn-pass i {
+        color: #059669;
+        transition: color 0.18s ease;
+    }
+
+    /* 2. Khi ĐƯỢC CHỌN (Active / Selected): Nền xanh đậm, viền đậm, chữ trắng, bóng phẳng nhẹ */
+    #actionDat:checked + .eval-btn-pass,
+    .eval-btn-pass.is-selected {
+        background-color: #10b981 !important;
+        border: 1.8px solid #059669 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+    #actionDat:checked + .eval-btn-pass i,
+    .eval-btn-pass.is-selected i {
+        color: #ffffff !important;
+    }
+
+    /* 3. Khi TRỎ CHUỘT VÀO (HOVER): Đậm màu hơn, nâng nhẹ, KHÔNG tỏa lighting */
+    .eval-btn-pass:hover,
+    #actionDat:checked + .eval-btn-pass:hover,
+    .eval-btn-pass.is-selected:hover {
+        background-color: #059669 !important;
+        border-color: #047857 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12) !important;
+        transform: translateY(-1px) !important;
+    }
+    .eval-btn-pass:hover i,
+    #actionDat:checked + .eval-btn-pass:hover i,
+    .eval-btn-pass.is-selected:hover i {
+        color: #ffffff !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       B. NÚT "YÊU CẦU NỘP LẠI" (TÔNG VÀNG CAM)
+       ══════════════════════════════════════════════════════════════ */
+    /* 1. Mặc định / Khi chưa được chọn: Nền cam nhạt (KHÔNG BỊ TRẮNG), viền nét liền, chữ cam, KHÔNG tỏa lighting */
+    .eval-btn-redo,
+    .eval-btn-group:has(#actionDat:checked) .eval-btn-redo:not(:hover),
+    .eval-btn-redo.is-unselected:not(:hover) {
+        background-color: #fffbeb !important;
+        border: 1.5px solid #f59e0b !important;
+        color: #d97706 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    .eval-btn-redo i {
+        color: #d97706;
+        transition: color 0.18s ease;
+    }
+
+    /* 2. Khi ĐƯỢC CHỌN (Active / Selected): Nền cam đậm, viền đậm, chữ trắng, bóng phẳng nhẹ */
+    #actionNopLai:checked + .eval-btn-redo,
+    .eval-btn-redo.is-selected {
+        background-color: #f59e0b !important;
+        border: 1.8px solid #d97706 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+    #actionNopLai:checked + .eval-btn-redo i,
+    .eval-btn-redo.is-selected i {
+        color: #ffffff !important;
+    }
+
+    /* 3. Khi TRỎ CHUỘT VÀO (HOVER): Đậm màu hơn, nâng nhẹ, KHÔNG tỏa lighting */
+    .eval-btn-redo:hover,
+    #actionNopLai:checked + .eval-btn-redo:hover,
+    .eval-btn-redo.is-selected:hover {
+        background-color: #d97706 !important;
+        border-color: #b45309 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12) !important;
+        transform: translateY(-1px) !important;
+    }
+    .eval-btn-redo:hover i,
+    #actionNopLai:checked + .eval-btn-redo:hover i,
+    .eval-btn-redo.is-selected:hover i {
+        color: #ffffff !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       C. ACCESSIBILITY & DISABLED
+       ══════════════════════════════════════════════════════════════ */
+    .eval-radio-input:focus-visible + .eval-btn,
+    .eval-btn:focus-visible {
+        outline: 2px solid #0284c7 !important;
+        outline-offset: 2px !important;
+    }
+
+    .eval-radio-input:disabled + .eval-btn,
+    .eval-btn.disabled,
+    fieldset:disabled .eval-btn {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const radioDat = document.getElementById('actionDat');
+    const radioNopLai = document.getElementById('actionNopLai');
+    const labelDat = document.getElementById('label-actionDat');
+    const labelNopLai = document.getElementById('label-actionNopLai');
+
+    if (!radioDat || !radioNopLai || !labelDat || !labelNopLai) return;
+
+    function syncRadioVisuals() {
+        if (radioDat.checked) {
+            labelDat.classList.add('is-selected');
+            labelDat.classList.remove('is-unselected');
+            labelDat.setAttribute('aria-checked', 'true');
+
+            labelNopLai.classList.remove('is-selected');
+            labelNopLai.classList.add('is-unselected');
+            labelNopLai.setAttribute('aria-checked', 'false');
+        } else if (radioNopLai.checked) {
+            labelNopLai.classList.add('is-selected');
+            labelNopLai.classList.remove('is-unselected');
+            labelNopLai.setAttribute('aria-checked', 'true');
+
+            labelDat.classList.remove('is-selected');
+            labelDat.classList.add('is-unselected');
+            labelDat.setAttribute('aria-checked', 'false');
+        } else {
+            labelDat.classList.remove('is-selected');
+            labelDat.classList.remove('is-unselected');
+            labelDat.setAttribute('aria-checked', 'false');
+
+            labelNopLai.classList.remove('is-selected');
+            labelNopLai.classList.remove('is-unselected');
+            labelNopLai.setAttribute('aria-checked', 'false');
+        }
+    }
+
+    // Lắng nghe sự kiện change từ bàn phím hoặc click
+    radioDat.addEventListener('change', syncRadioVisuals);
+    radioNopLai.addEventListener('change', syncRadioVisuals);
+
+    // Hỗ trợ accessibility khi focus trực tiếp vào label bằng phím Space / Enter
+    [labelDat, labelNopLai].forEach(label => {
+        label.addEventListener('keydown', function (e) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                const targetInput = document.getElementById(this.getAttribute('for'));
+                if (targetInput && !targetInput.disabled) {
+                    targetInput.checked = true;
+                    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    targetInput.focus();
+                }
+            }
+        });
+    });
+
+    // Đồng bộ ban đầu khi load trang
+    syncRadioVisuals();
+});
+</script>
+@endpush

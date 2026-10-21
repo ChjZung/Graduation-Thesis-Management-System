@@ -401,8 +401,8 @@
                             <div class="small fw-bold text-danger mb-1">
                                 <i class="fa-solid fa-message me-2"></i> Lý do từ chối:
                             </div>
-                            <div class="small text-dark fst-italic">
-                                "{{ $detai->LyDoTuChoi }}"
+                            <div class="small text-dark fst-italic text-break" style="word-break: break-word; overflow-wrap: anywhere;">
+                                {!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}
                             </div>
                         </div>
                         @endif

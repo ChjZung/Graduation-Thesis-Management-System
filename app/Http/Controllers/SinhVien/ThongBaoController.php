@@ -96,15 +96,25 @@ class ThongBaoController extends Controller
     public function markRead($id)
     {
         $user = Auth::user();
-        \App\Services\ThongBaoService::markAsRead($user?->MaTK, $id);
+        if ($user) {
+            \App\Services\ThongBaoService::markAsRead($user->MaTK, $id);
+            if ($user->TenDangNhap && $user->TenDangNhap !== $user->MaTK) {
+                \App\Services\ThongBaoService::markAsRead($user->TenDangNhap, $id);
+            }
+        }
         return redirect()->back();
     }
 
     public function markAllRead()
     {
         $user = Auth::user();
-        $allIds = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'ACTIVE'])->pluck('MaThongBao')->toArray();
-        \App\Services\ThongBaoService::markAsRead($user?->MaTK, $allIds);
+        if ($user) {
+            $allIds = ThongBao::whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'Đã gửi', 'da_gui', 'ACTIVE', 'Đã tạo', 'DaPhatHanh'])->pluck('MaThongBao')->toArray();
+            \App\Services\ThongBaoService::markAsRead($user->MaTK, $allIds);
+            if ($user->TenDangNhap && $user->TenDangNhap !== $user->MaTK) {
+                \App\Services\ThongBaoService::markAsRead($user->TenDangNhap, $allIds);
+            }
+        }
         return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc!');
     }
 
@@ -143,15 +153,11 @@ class ThongBaoController extends Controller
             if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
                 $fileUrl = 'storage/' . $fileUrl;
             }
-        }
-        if (empty($fileUrl) || !file_exists(public_path($fileUrl))) {
-            $latestPlan = \App\Models\KeHoachKhoaLuan::whereNotNull('FileDinhKem')->latest()->first();
-            if ($latestPlan && !empty($latestPlan->FileDinhKem)) {
-                $candidate = 'storage/' . ltrim($latestPlan->FileDinhKem, '/');
-                if (file_exists(public_path($candidate))) {
-                    $fileUrl = $candidate;
-                }
+            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
+                $fileUrl = null;
             }
+        } else {
+            $fileUrl = null;
         }
 
         $fileType = 'other';

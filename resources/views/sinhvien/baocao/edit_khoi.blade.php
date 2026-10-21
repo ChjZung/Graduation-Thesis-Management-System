@@ -101,9 +101,9 @@
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark" style="font-size: 13px;">
-                            Tệp đính kèm (PDF):
+                            Tệp đính kèm (PDF hoặc DOCX):
                         </label>
-                        <input type="file" name="FileBaoCao" class="form-control" accept=".pdf">
+                        <input type="file" name="FileBaoCao" class="form-control" accept=".pdf,.docx">
                         <div class="form-text text-muted" style="font-size: 12px;">
                             @if($khoi->TenFile)
                                 <span class="text-primary"><i class="fa-solid fa-file-pdf me-2"></i>Đang có: {{ $khoi->TenFile }}</span> (Chọn file mới nếu muốn thay thế).

@@ -1,26 +1,16 @@
 {{-- Tóm tắt AI dùng chung cho Sinh viên và Giảng viên, theo giao diện HUIT admin. --}}
 @php
-    $aiJson = $pb->TomTatJson ?? [];
+    $aiJson = $pb->TomTatJson ?? ($pb->tomTat->TomTatJson ?? []);
     if (is_string($aiJson)) {
         $aiJson = json_decode($aiJson, true) ?? [];
     }
     $aiData = isset($aiJson['data']) && is_array($aiJson['data']) ? $aiJson['data'] : $aiJson;
-    $overallSummary = $aiData['overall_summary'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
-    $completionPct = ($aiData['completion_basis'] ?? null) === 'pdf_explicit' && is_numeric($aiData['completion_percentage'] ?? null)
-        ? max(0, min(100, (int) $aiData['completion_percentage'])) : null;
-    $completedWork = $aiData['completed_work'] ?? [];
-    $deliverables = $aiData['deliverables'] ?? [];
-    $techLinks = $aiData['technical_links'] ?? [];
-    $techStack = $aiData['tech_stack'] ?? [];
-    $difficulties = $aiData['difficulties'] ?? [];
-    $pendingItems = $aiData['pending_items'] ?? [];
-    $nextSteps = $aiData['next_steps'] ?? [];
-    $missingInfo = $aiData['missing_information'] ?? [];
-    $citations = $aiData['citations'] ?? [];
-    $aiRecs = $aiData['ai_recommendations'] ?? ($aiJson['canh_bao'] ?? []);
+    $overallSummary = $aiData['overall_summary'] ?? $aiData['tom_tat'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
+    $documentContent = $aiData['document_content'] ?? [];
+    $completedWork = $aiData['completed_work'] ?? $aiData['cong_viec_hoan_thanh'] ?? [];
+    $difficulties = $aiData['difficulties'] ?? $aiData['kho_khan'] ?? [];
+    $nextSteps = $aiData['next_steps'] ?? $aiData['ke_hoach_tiep_theo'] ?? [];
     $analysis = $aiData['analysis'] ?? [];
-    $outline = $aiData['document_outline'] ?? [];
-    $checkedCitations = isset($analysis['matched_citations']) ? (int) $analysis['matched_citations'] : null;
     $reviewRound = $dotNop ?? ($pb->dotNop ?? null);
     $requirementsReview = $aiData['requirements_review'] ?? null;
     $citationAvailable = !empty($pb->MaKhoi) && !empty($pb->DuongDanFile);
@@ -28,19 +18,25 @@
     $pdfUrl = $citationAvailable ? route('baocao.ai.pdf', $pb->MaKhoi) : '';
     $reviewUrl = $citationAvailable && $reviewRound ? route('baocao.ai.doi_chieu', $pb->MaKhoi) : '';
     $reanalyzeUrl = $citationAvailable ? route('baocao.ai.phan_tich_lai', $pb->MaKhoi) : '';
-    if (!empty($pb->LinkCode) && !collect($techLinks)->contains('url', $pb->LinkCode)) {
-        array_unshift($techLinks, ['name' => 'Mã nguồn nộp đợt này', 'url' => $pb->LinkCode, 'type' => 'repository', 'source_pages' => [1]]);
-    }
     $uniqueId = 'ai-summary-' . uniqid();
+    $documentType = strtolower(pathinfo($pb->DuongDanFile ?? '', PATHINFO_EXTENSION)) === 'docx' ? 'docx' : ($aiData['document_type'] ?? 'pdf');
+    $sourceLabels = $analysis['source_labels'] ?? [];
+    $analysisComplete = ($analysis['status'] ?? '') === 'completed';
+    if (!$analysisComplete && !$documentContent && isset($analysis['analyzed_chunks'], $analysis['total_chunks']) && $analysis['analyzed_chunks'] < $analysis['total_chunks']) {
+        $overallSummary = 'Bản tóm tắt chưa hoàn tất. Các thông tin đã trích xuất được giữ bên dưới; chưa thể kết luận những nội dung còn lại không có trong báo cáo.';
+    }
     $sections = [
-        ['number' => 3, 'title' => 'Công việc đã làm', 'icon' => 'fa-circle-check', 'tone' => 'success', 'items' => $completedWork, 'empty' => 'Chưa có công việc được trích xuất.'],
-        ['number' => 4, 'title' => 'Sản phẩm đầu ra', 'icon' => 'fa-box-archive', 'tone' => 'primary', 'items' => $deliverables, 'empty' => 'Chưa có sản phẩm đầu ra được liệt kê.'],
-        ['number' => 5, 'title' => 'Mã nguồn và công nghệ', 'icon' => 'fa-code-branch', 'tone' => 'primary', 'items' => $techLinks],
-        ['number' => 6, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties, 'empty' => 'Chưa ghi nhận khó khăn trong kết quả trích xuất.'],
-        ['number' => 7, 'title' => 'Hạng mục tồn đọng', 'icon' => 'fa-hourglass-half', 'tone' => 'warning', 'items' => $pendingItems, 'empty' => 'Chưa có hạng mục tồn đọng được liệt kê.'],
-        ['number' => 8, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps, 'empty' => 'Chưa có kế hoạch tiếp theo được trích xuất.'],
-        ['number' => 9, 'title' => 'Điểm cần làm rõ', 'icon' => 'fa-circle-question', 'tone' => 'warning', 'items' => $missingInfo, 'empty' => 'Chưa có nội dung cần làm rõ được liệt kê.'],
+        ['key' => 'completed_work', 'number' => 1, 'title' => 'Công việc đã thực hiện', 'icon' => 'fa-circle-check', 'tone' => 'success', 'items' => $completedWork],
+        ['key' => 'difficulties', 'number' => 2, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties],
+        ['key' => 'next_steps', 'number' => 3, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps],
     ];
+    $missingGroups = [];
+    foreach ($sections as &$summarySection) {
+        $summarySection['items'] = array_values(array_filter((array) $summarySection['items'], fn ($item) => trim(is_array($item) ? (string) ($item['content'] ?? '') : (string) $item) !== ''));
+        if (!$summarySection['items']) $missingGroups[] = mb_strtolower($summarySection['title']);
+    }
+    unset($summarySection);
+
 @endphp
 
 @once
@@ -102,6 +98,8 @@
 .ai-summary .ai-list-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: #f8fafc; border: 1px solid #edf1f5; border-radius: 6px; }
 .ai-summary .ai-list-item > i { color: var(--ai-blue); margin-top: 4px; font-size: 13px; flex-shrink: 0; }
 .ai-summary .ai-item-content { min-width: 0; flex: 1; overflow-wrap: anywhere; white-space: pre-line; }
+.ai-summary [data-document-content] .ai-item-content { white-space: normal; }
+.ai-summary [data-document-content] .ai-evidence { white-space: pre-line; }
 .ai-summary .ai-source { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ai-summary .ai-evidence { display: block; color: var(--ai-muted); border-left: 2px solid #c8dff7; padding-left: 8px; margin: 8px 0 0; font-size: 13px; }
 .ai-summary .ai-empty { padding: 12px; border-radius: 6px; background: #f8fafc; color: var(--ai-muted); font-size: 13px; }
@@ -182,7 +180,7 @@
 @include('partials.ai_review_styles')
 @endonce
 
-<section class="ai-summary ai-summary-card" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-citation-url="{{ $citationUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
+<section class="ai-summary ai-summary-card" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
     <header class="ai-header">
         <div class="ai-heading">
             <div class="ai-brand-icon" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
@@ -193,114 +191,78 @@
         </div>
         <div class="ai-actions">
             @if($reanalyzeUrl)
-                <form method="POST" action="{{ $reanalyzeUrl }}" style="margin:0">@csrf<button type="submit" class="ai-button" data-ai-review-submit data-busy-label="Đang phân tích PDF…"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Phân tích lại PDF</button></form>
+                <form method="POST" action="{{ $reanalyzeUrl }}" style="margin:0">@csrf<button type="submit" class="ai-button" data-ai-review-submit data-busy-label="Đang phân tích báo cáo…"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Phân tích lại</button></form>
             @endif
             <button type="button" class="ai-button ai-button-primary" data-ai-action="open-large" aria-haspopup="dialog" title="Mở báo cáo trong cửa sổ lớn để dễ đọc"><i class="fa-solid fa-expand" aria-hidden="true"></i><span>Xem lớn</span></button>
             <button type="button" class="ai-button" data-ai-action="copy-summary" title="Sao chép báo cáo và phần đối chiếu yêu cầu"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Sao chép</span></button>
             <button type="button" class="ai-button" data-ai-action="toggle" aria-expanded="true" aria-controls="{{ $uniqueId }}-body"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span class="ai-toggle-label">Thu gọn</span></button>
         </div>
     </header>
-    <div class="ai-stats" aria-label="Tổng quan kết quả phân tích">
-        <div class="ai-stat"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><div><span class="ai-stat-label">Trích dẫn đã khớp</span><strong class="ai-stat-value">{{ $checkedCitations !== null ? $checkedCitations . ' đoạn' : 'Chưa kiểm chứng' }}</strong></div></div>
-        <div class="ai-stat"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><div><span class="ai-stat-label">Tiến độ trong PDF</span><strong class="ai-stat-value">{{ $completionPct !== null ? $completionPct . '%' : 'Chưa xác định' }}</strong></div></div>
-        <div class="ai-stat"><i class="fa-solid fa-list-check" aria-hidden="true"></i><div><span class="ai-stat-label">Công việc đã làm</span><strong class="ai-stat-value">{{ count($completedWork) }} mục</strong></div></div>
-        <div class="ai-stat"><i class="fa-solid fa-link" aria-hidden="true"></i><div><span class="ai-stat-label">Liên kết kỹ thuật</span><strong class="ai-stat-value">{{ count($techLinks) }} liên kết</strong></div></div>
-    </div>
+    @include('partials.ai_processing_status')
     <p class="ai-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="ai-details ai-details-body ai-copy-content" id="{{ $uniqueId }}-body" tabindex="0" role="region" aria-label="Nội dung tóm tắt AI, có thể cuộn để xem đầy đủ">
-        <div class="ai-empty" style="margin-bottom:14px;line-height:1.65">
-            @if(!empty($analysis['version']))
-                <strong>{{ ($analysis['method'] ?? '') === 'gemini' ? 'Tổng hợp bằng dịch vụ AI' : 'Trích xuất cấu trúc và văn bản tại máy chủ' }}</strong>
-                <div>Đã lấy văn bản từ {{ $analysis['text_pages'] ?? 0 }}/{{ $analysis['total_pages'] ?? 0 }} trang PDF.</div>
-                @if(($analysis['method'] ?? '') === 'gemini')<div>AI xử lý {{ $analysis['analyzed_chunks'] ?? 0 }}/{{ $analysis['total_chunks'] ?? 0 }} phần văn bản.</div>@endif
-                @if(!empty($analysis['note']))<div>{{ $analysis['note'] }}</div>@endif
-                @if(!empty($analysis['visual_unread_pages']))<div>Trang có ảnh/sơ đồ cần kiểm tra thêm: {{ implode(', ', $analysis['visual_unread_pages']) }}.</div>@endif
-            @else
-                Kết quả cũ chưa có thông tin kiểm chứng mức độ đọc tài liệu. Chọn <strong>Phân tích lại PDF</strong> để cập nhật.
-            @endif
-        </div>
-        <h3 class="ai-report-caption">Nội dung có trong báo cáo PDF</h3>
+        @if(!$analysisComplete && empty($aiData['_processing']))
+            <p class="ai-review-note">{{ $analysis['note'] ?? 'Kết quả chưa xác nhận đã đọc đầy đủ tài liệu. Bạn có thể phân tích lại để cập nhật.' }} Các nhóm chưa có thông tin chưa đồng nghĩa tài liệu không đề cập.</p>
+        @endif
+        @if(isset($analysis['total_chunks']) && $analysis['total_chunks'] > 0)
+            <p class="ai-empty" data-analysis-coverage>Văn bản: {{ $analysis['analyzed_chunks'] ?? 0 }}/{{ $analysis['total_chunks'] }} phần đã xử lý. {{ !empty($analysis['text_complete']) ? 'Đã đọc đủ các phần văn bản.' : 'Chưa hoàn tất phân tích văn bản; chưa dùng để kết luận báo cáo thiếu nội dung.' }}</p>
+        @endif
+        @foreach(collect(empty($aiData['_processing']) ? ($analysis['errors'] ?? []) : [])->unique('code') as $processingError)
+            <p class="ai-review-note">{{ $processingError['message'] ?? 'Một phần xử lý AI chưa hoàn tất.' }}</p>
+        @endforeach
+        @if(!empty($aiData['_processing']) && !empty($analysis['visual_unread_pages']))
+            <p class="ai-review-note">Một số trang có sơ đồ hoặc ảnh chưa được phân tích nội dung; chưa dùng các trang đó để kết luận thiếu yêu cầu.</p>
+        @endif
+        @if(!empty($analysis['checkpoint_warning']))<p class="ai-review-note">{{ $analysis['checkpoint_warning'] }}</p>@endif
         <div class="ai-grid">
-            <section class="ai-section ai-section-wide ai-section-overview">
-                <div class="ai-section-head"><h3 class="ai-section-title"><span class="ai-number">01</span><span>Tổng Quan Tiến Độ</span></h3><span class="ai-count">Tổng quan</span></div>
-                <p class="ai-text-summary">{{ $overallSummary }}</p>
-                @if($outline)
-                    <ul class="ai-list">@foreach($outline as $chapter)<li class="ai-list-item"><div>{{ $chapter['content'] }} <span class="ai-source">@foreach(($chapter['source_pages'] ?? []) as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $chapter['evidence'] ?? '']) @endforeach</span></div></li>@endforeach</ul>
-                @endif
-            </section>
-            <section class="ai-section ai-section-wide">
-                <div class="ai-section-head"><h3 class="ai-section-title"><span class="ai-number">02</span><span>Tiến độ được nêu trong PDF</span></h3><strong class="ai-progress-value">{{ $completionPct !== null ? $completionPct . '%' : 'Chưa xác định' }}</strong></div>
-                @if($completionPct !== null)
-                <div class="ai-progress" role="progressbar" aria-label="Tiến độ hoàn thành ước tính" aria-valuenow="{{ $completionPct }}" aria-valuemin="0" aria-valuemax="100"><div class="ai-progress-fill" style="width: {{ $completionPct }}%"></div></div>
-                <div class="ai-progress-labels"><span>Khởi đầu · 0%</span><span>Hoàn thành · 100%</span></div>
-                @else
-                    <p class="ai-empty">Chưa có phần trăm tiến độ được xác định từ PDF. Hệ thống không tự gán phần trăm theo số trang hoặc số chức năng.</p>
-                @endif
-            </section>
+            @if(trim((string) $overallSummary) !== '')
+                <section class="ai-section ai-section-wide ai-section-overview" data-summary-overview>
+                    <div class="ai-section-head"><h3 class="ai-section-title">Tóm tắt chung</h3></div>
+                    <p class="ai-text-summary">{{ $overallSummary }}</p>
+                    @if($documentContent)
+                        <ul class="ai-list" style="margin-top:12px" data-document-content>
+                            @foreach($documentContent as $contentItem)
+                                <li class="ai-list-item"><div class="ai-item-content">
+                                    <div>{{ $contentItem['content'] ?? '' }}</div>
+                                    @if(!empty($contentItem['evidence']))
+                                        <q class="ai-evidence">{{ \Illuminate\Support\Str::limit($contentItem['evidence'], 260) }}</q>
+                                        <div class="ai-source">@foreach(($contentItem['source_pages'] ?? []) as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $contentItem['evidence'], 'citationProminent' => false, 'citationContext' => $contentItem['content'] ?? 'Nội dung báo cáo']) @endforeach</div>
+                                    @endif
+                                </div></li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </section>
+            @endif
             @foreach($sections as $section)
-                <section class="ai-section ai-tone-{{ $section['tone'] }} {{ $section['number'] === 5 ? 'ai-section-wide' : '' }}">
-                    <div class="ai-section-head">
-                        <h3 class="ai-section-title"><span class="ai-number">{{ str_pad($section['number'], 2, '0', STR_PAD_LEFT) }}</span><span>{{ $section['title'] }}</span></h3>
-                        <span class="ai-count">{{ count($section['items']) }} {{ $section['number'] === 5 ? 'liên kết' : 'mục' }}</span>
-                    </div>
-                    @if($section['number'] === 5)
-                        @if(!empty($techStack))
-                            <div class="ai-tags">@foreach($techStack as $technology)<span class="ai-tag"><i class="fa-solid fa-code" aria-hidden="true"></i>{{ $technology }}</span>@endforeach</div>
-                        @endif
-                        @if(!empty($techLinks))
-                            <div class="ai-link-list">
-                                @foreach($techLinks as $link)
-                                    <div class="ai-link">
-                                        <div class="ai-link-info"><span class="ai-link-name">{{ $link['name'] ?? 'Liên kết kỹ thuật' }}</span><span class="ai-link-url">{{ $link['url'] }}</span></div>
-                                        <div class="ai-link-actions">
-                                            <button type="button" class="ai-button" data-ai-action="copy-link" data-copy-value="{{ $link['url'] }}" aria-label="Sao chép liên kết {{ $link['name'] ?? 'kỹ thuật' }}" title="Sao chép liên kết"><i class="fa-regular fa-copy" aria-hidden="true"></i></button>
-                                            <a href="{{ $link['url'] }}" target="_blank" rel="noopener noreferrer" class="ai-button ai-button-primary" aria-label="Mở {{ $link['name'] ?? 'liên kết kỹ thuật' }} trong thẻ mới"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>Truy cập</a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="ai-empty">Chưa có liên kết mã nguồn hoặc tài liệu kỹ thuật.</div>
-                        @endif
-                    @elseif(!empty($section['items']))
+                @if($section['items'])
+                    <section class="ai-section ai-section-wide ai-tone-{{ $section['tone'] }}" data-summary-group="{{ $section['key'] }}">
+                        <div class="ai-section-head"><h3 class="ai-section-title">{{ $section['title'] }}</h3><span class="ai-count">{{ count($section['items']) }} mục</span></div>
                         <ul class="ai-list">
                             @foreach($section['items'] as $item)
                                 @php
                                     $itemContent = is_array($item) ? ($item['content'] ?? '') : (string) $item;
                                     $itemPages = is_array($item) ? (array) ($item['source_pages'] ?? []) : [];
-                                    $itemEvidence = is_array($item) ? ($item['evidence'] ?? null) : null;
+                                    $itemEvidence = is_array($item) ? ($item['evidence'] ?? '') : '';
                                 @endphp
-                                <li class="ai-list-item"><i class="fa-solid {{ $section['icon'] }}" aria-hidden="true"></i><div class="ai-item-content"><div>{{ $itemContent }}</div>@if(!empty($itemPages))<div class="ai-source">@foreach($itemPages as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $itemEvidence ?? '']) @endforeach</div>@endif @if(!empty($itemEvidence))<q class="ai-evidence">{{ \Illuminate\Support\Str::limit($itemEvidence, 160) }}</q>@endif</div></li>
+                                <li class="ai-list-item"><i class="fa-solid {{ $section['icon'] }}" aria-hidden="true"></i><div class="ai-item-content">
+                                    <div>{{ $itemContent }}</div>
+                                    @if($itemEvidence)<q class="ai-evidence">{{ \Illuminate\Support\Str::limit($itemEvidence, 260) }}</q>@endif
+                                    @if($itemPages && $itemEvidence)<div class="ai-source">@foreach($itemPages as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $itemEvidence, 'citationProminent' => false, 'citationContext' => $itemContent]) @endforeach</div>@endif
+                                </div></li>
                             @endforeach
                         </ul>
-                    @else
-                        <div class="ai-empty">{{ $section['empty'] }}</div>
-                    @endif
-                </section>
+                    </section>
+                @endif
             @endforeach
-            <section class="ai-section ai-section-wide">
-                <div class="ai-section-head"><h3 class="ai-section-title"><span class="ai-number">10</span><span>Trích dẫn và số trang</span></h3><span class="ai-count">{{ count($citations) }} trích dẫn</span></div>
-                @if(!empty($citations))
-                    <div class="ai-citations">
-                        @foreach($citations as $cite)
-                            <div class="ai-citation"><div class="ai-citation-head">@include('partials.ai_citation_button', ['citationPage' => $cite['page'] ?? 1, 'citationQuote' => $cite['snippet'] ?? ''])<span>{{ $cite['topic'] ?? 'Nội dung tham chiếu' }}</span></div><blockquote>{{ $cite['snippet'] ?? '' }}</blockquote></div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="ai-empty">Chưa có trích dẫn kèm số trang trong kết quả phân tích.</div>
-                @endif
-            </section>
-            <section class="ai-section ai-section-wide ai-tone-warning">
-                <div class="ai-section-head"><h3 class="ai-section-title"><span class="ai-number">11</span><span>Khuyến nghị và cảnh báo từ AI</span></h3></div>
-                @if(!empty($aiRecs))
-                    <ul class="ai-list">@foreach($aiRecs as $recommendation)<li class="ai-list-item"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><div class="ai-item-content">{{ $recommendation }}</div></li>@endforeach</ul>
-                @else
-                    <div class="ai-empty">Chưa có khuyến nghị bổ sung trong kết quả phân tích.</div>
-                @endif
-            </section>
         </div>
+        @if($missingGroups)
+            <p class="ai-empty" data-summary-missing>{{ $analysisComplete ? 'Báo cáo chưa đề cập: ' : 'Chưa trích xuất được từ phần văn bản đã đọc: ' }}{{ implode(', ', $missingGroups) }}.</p>
+        @endif
         @if($reviewRound)
-            @include('partials.ai_requirement_review')
+            <details class="ai-review-disclosure"><summary>Đối chiếu yêu cầu của giảng viên · Xem thêm</summary>
+                @include('partials.ai_requirement_review')
+            </details>
         @endif
     </div>
 </section>
@@ -315,14 +277,15 @@
         if (!endpoint) return;
         const originalPage = Number(opener.dataset.citationPage);
         const originalQuote = opener.dataset.citationQuote || '';
+        const isDocx = card.dataset.documentType === 'docx';
         const citationContext = opener.dataset.citationContext || '';
         const dialog = document.createElement('dialog');
         dialog.className = 'ai-citation-dialog';
-        dialog.setAttribute('aria-label', 'Xem nhanh PDF và đối chiếu trích dẫn');
+        dialog.setAttribute('aria-label', 'Xem nhanh tài liệu và đối chiếu trích dẫn');
         const toolbar = document.createElement('div');
         toolbar.className = 'ai-citation-toolbar';
         const title = document.createElement('h3');
-        title.textContent = 'Trang ' + originalPage + ' · Báo cáo PDF';
+        title.textContent = isDocx ? 'Bằng chứng trong DOCX' : 'Trang ' + originalPage + ' · Báo cáo PDF';
         toolbar.appendChild(title);
         const controls = document.createElement('div');
         function control(label, handler) {
@@ -333,13 +296,13 @@
             return button;
         }
         let currentPage = originalPage, totalPages = originalPage, pendingRequest = null;
-        const previous = control('Trang trước', () => loadPage(currentPage - 1));
-        const next = control('Trang sau', () => loadPage(currentPage + 1));
+        const previous = control(isDocx ? 'Vị trí trước' : 'Trang trước', () => loadPage(currentPage - 1));
+        const next = control(isDocx ? 'Vị trí sau' : 'Trang sau', () => loadPage(currentPage + 1));
         control('Về đoạn trích', () => loadPage(originalPage));
         const fullPdf = document.createElement('a');
         fullPdf.href = card.dataset.pdfUrl + '#page=' + originalPage;
         fullPdf.target = '_blank'; fullPdf.rel = 'noopener noreferrer';
-        fullPdf.textContent = 'Mở PDF đầy đủ'; controls.appendChild(fullPdf);
+        fullPdf.textContent = isDocx ? 'Tải DOCX gốc' : 'Mở PDF đầy đủ'; controls.appendChild(fullPdf);
         const close = control('Đóng', () => dialog.close());
         toolbar.appendChild(controls);
         const quote = document.createElement('blockquote'); quote.className = 'ai-citation-quote';
@@ -368,7 +331,7 @@
             quote.textContent = page === originalPage && originalQuote ? originalQuote : 'Xem nội dung trang PDF để đối chiếu trực tiếp.';
             transcript.open = false;
             transcript.hidden = page !== originalPage || !originalQuote;
-            state.textContent = 'Đang mở trang PDF…'; viewer.replaceChildren();
+            state.textContent = 'Đang mở vị trí dẫn chứng…'; viewer.replaceChildren();
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST', credentials: 'same-origin', signal: request.signal,
@@ -378,6 +341,28 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Không mở được trang PDF.');
                 if (request.signal.aborted || !dialog.open) return;
+                if (data.kind === 'docx') {
+                    currentPage = Number(data.page); totalPages = Number(data.total_pages);
+                    title.textContent = 'Bằng chứng · ' + data.label + ' · DOCX';
+                    fullPdf.href = card.dataset.pdfUrl;
+                    const source = document.createElement('article'); source.className = 'ai-docx-source';
+                    const text = String(data.text || '');
+                    const characters = Array.from(text);
+                    const start = Number(data.highlight_start), end = Number(data.highlight_end);
+                    const matched = data.matched && Number.isInteger(start) && Number.isInteger(end) && start >= 0 && end > start && end <= characters.length;
+                    let mark = null;
+                    if (matched) {
+                        source.appendChild(document.createTextNode(characters.slice(0, start).join('')));
+                        mark = document.createElement('mark'); mark.textContent = characters.slice(start, end).join(''); source.appendChild(mark);
+                        source.appendChild(document.createTextNode(characters.slice(end).join('')));
+                    } else source.textContent = text;
+                    viewer.appendChild(source);
+                    state.textContent = matched ? 'Đã tô vàng đoạn trích trong nội dung DOCX. Đây là vị trí đoạn/bảng, không phải số trang Word.' : 'Chưa khớp chính xác đoạn trích. Hãy đối chiếu trực tiếp nội dung nguồn.';
+                    if (mark) mark.scrollIntoView({ block: 'center', inline: 'nearest' });
+                    else viewer.scrollTop = 0;
+                    previous.disabled = currentPage <= 1; next.disabled = currentPage >= totalPages;
+                    return;
+                }
                 if (typeof data.image !== 'string' || !data.image.startsWith('data:image/png;base64,')) throw new Error('Dữ liệu xem PDF chưa hợp lệ.');
                 currentPage = Number(data.page); totalPages = Number(data.total_pages);
                 title.textContent = 'Bằng chứng · Trang PDF ' + currentPage + ' / ' + totalPages;
@@ -413,7 +398,7 @@
         panel.querySelector('[data-ai-action="open-large"]').remove();
         panel.querySelector('[data-ai-action="toggle"]').remove();
         panel.querySelector('.ai-feedback').textContent = '';
-        panel.querySelectorAll('button').forEach((button) => { button.disabled = false; });
+        panel.querySelectorAll('button').forEach((button) => { button.disabled = button.matches('[data-ai-review-submit]') && panel.querySelector('[data-processing-active="1"]') !== null; });
         const body = panel.querySelector('.ai-details');
         body.id = panel.id + '-body';
         body.hidden = false;
@@ -484,7 +469,7 @@
             return;
         }
         const feedback = card.querySelector('.ai-feedback');
-        const text = action === 'copy-link' ? button.dataset.copyValue : Array.from(card.querySelectorAll('.ai-section, .ai-review-block'))
+        const text = action === 'copy-link' ? button.dataset.copyValue : Array.from(card.querySelectorAll('.ai-section, [data-summary-missing], .ai-review-block'))
             .map((section) => section.textContent.replace(/[ \t]+/g, ' ').replace(/\n\s*\n/g, '\n').trim()).join('\n\n');
         button.disabled = true;
         try {

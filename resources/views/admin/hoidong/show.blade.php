@@ -196,8 +196,22 @@
                                 @forelse($hoiDong->thanhViens as $tv)
                                 <tr>
                                     <td class="ps-3 py-2">
-                                        <div class="fw-bold text-dark" style="font-size: 0.88rem;">{{ $tv->giangVien->HoTen ?? '—' }}</div>
-                                        <div class="small text-muted" style="font-size: 0.75rem;">{{ $tv->giangVien->HocVi ?? ($tv->giangVien->HocHam ?? 'GV') }} &bull; {{ $tv->giangVien->boMon->TenBoMon ?? 'Khoa' }}</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; font-weight: 700; font-size: 0.85rem;">
+                                                {{ mb_substr($tv->giangVien->HoTen ?? 'GV', 0, 1) }}
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">{{ $tv->giangVien->HoTen ?? '—' }}</span>
+                                                    <span class="badge bg-light text-muted border font-monospace" style="font-size: 0.68rem;">{{ $tv->MaGV }}</span>
+                                                </div>
+                                                <div class="small text-muted d-flex align-items-center gap-1 flex-wrap mt-1" style="font-size: 0.75rem;">
+                                                    <span class="text-secondary fw-semibold">{{ $tv->giangVien->HocVi ?? ($tv->giangVien->HocHam ?? 'Giảng viên') }}</span>
+                                                    <span>&bull;</span>
+                                                    <span>{{ $tv->giangVien->boMon->TenBoMon ?? 'Khoa CNTT' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="pe-3 text-center py-2">
                                         @php
@@ -227,56 +241,102 @@
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Đề Tài &amp; Sinh Viên Bảo Vệ Thuộc Hội Đồng ({{ $hoiDong->hoSoBaoVes->count() }})</span>
+                    <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Đề Tài &amp; Sinh Viên Bảo Vệ Thuộc Hội Đồng ({{ $hoiDong->hoSoBaoVes->count() }} nhóm)</span>
+                    <span class="small text-muted">
+                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Tên đề tài &amp; Cán bộ hướng dẫn gộp chung ô theo nhóm
+                    </span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-bordered table-hover align-middle mb-0" style="border-color: #e2e8f0;">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-3 py-3" style="width: 50%;">ĐỀ TÀI &amp; NHÓM SINH VIÊN</th>
-                                    <th class="py-3" style="width: 30%;">CÁN BỘ HƯỚNG DẪN</th>
-                                    <th class="pe-3 py-3 text-center" style="width: 20%;">TURNITIN</th>
+                                    <th class="ps-3 py-3 text-center" style="width: 45px;">STT</th>
+                                    <th class="py-3 text-center" style="width: 105px;">MSSV</th>
+                                    <th class="py-3" style="width: 160px;">HỌ VÀ TÊN</th>
+                                    <th class="py-3 text-center" style="width: 85px;">LỚP</th>
+                                    <th class="py-3">TÊN ĐỀ TÀI KHÓA LUẬN</th>
+                                    <th class="py-3" style="width: 175px;">CÁN BỘ HƯỚNG DẪN</th>
+                                    <th class="pe-3 py-3 text-center" style="width: 85px;">TURNITIN</th>
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
+                                @php $currentStt = 1; @endphp
                                 @forelse($hoiDong->hoSoBaoVes as $hoSo)
                                 @php
                                     $nhom = $hoSo->nhom;
                                     $deTai = $nhom?->deTai;
                                     $thanhViens = $nhom?->thanhVienNhoms ?? collect();
+                                    $soSV = max($thanhViens->count(), 1);
                                 @endphp
-                                <tr>
-                                    <td class="ps-3 py-3">
-                                        <div class="fw-bold text-primary">{{ $deTai?->TenDeTai ?? 'Chưa có tên đề tài' }}</div>
-                                        <div class="d-flex flex-wrap align-items-center gap-1 mt-1 small text-muted">
-                                            <span class="badge bg-light text-dark border">Nhóm {{ $nhom?->MaNhom }}</span>
-                                            <span>• Sinh viên:</span>
-                                            @foreach($thanhViens as $tvn)
-                                                <span class="fw-semibold text-dark">{{ $tvn->sinhVien?->HoTen }} ({{ $tvn->sinhVien?->MaSV }})</span>
-                                                @if(!$loop->last) , @endif
-                                            @endforeach
-                                        </div>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="fw-semibold text-dark">{{ $deTai?->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
-                                        <div class="small text-muted">{{ $deTai?->giangVien?->boMon?->TenBoMon ?? 'Bộ môn' }}</div>
-                                    </td>
-                                    <td class="pe-3 text-center py-3">
-                                        @php $pct = (float)$hoSo->TyLeTrungLap; @endphp
-                                        <span class="fw-bold {{ $pct <= 20 ? 'text-success' : 'text-danger' }}">{{ number_format($pct, 2) }}%</span>
-                                        @if($hoSo->MinhChungDaoVan)
-                                        <div>
-                                            <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" target="_blank" class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none">
-                                                Minh chứng
-                                            </a>
-                                        </div>
+                                @if($thanhViens->isNotEmpty())
+                                    @foreach($thanhViens as $svIndex => $tvn)
+                                    <tr>
+                                        <td class="ps-3 py-2 text-center text-muted small" style="vertical-align: middle;">{{ $currentStt++ }}</td>
+                                        <td class="py-2 text-center font-monospace fw-bold text-dark" style="vertical-align: middle;">
+                                            {{ $tvn->sinhVien?->MaSV ?? '—' }}
+                                        </td>
+                                        <td class="py-2" style="vertical-align: middle;">
+                                            <div class="fw-semibold text-dark">{{ $tvn->sinhVien?->HoTen ?? '—' }}</div>
+                                            @if($tvn->VaiTroTrongNhom === 'Trưởng nhóm' || $nhom?->MaTruongNhom === $tvn->MaSV)
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem;">Trưởng nhóm</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-2 text-center text-muted small" style="vertical-align: middle;">
+                                            {{ $tvn->sinhVien?->lop?->TenLop ?? ($tvn->sinhVien?->MaLop ?? '—') }}
+                                        </td>
+
+                                        {{-- Tên đề tài & Cán bộ hướng dẫn: Hiển thị CHUNG Ô TRÊN BẢNG nếu chung 1 nhóm --}}
+                                        @if($svIndex === 0)
+                                            <td rowspan="{{ $soSV }}" class="py-3 bg-white" style="vertical-align: middle;">
+                                                <div class="fw-bold text-primary">{{ $deTai?->TenDeTai ?? 'Chưa có tên đề tài' }}</div>
+                                                <div class="d-flex flex-wrap align-items-center gap-1 mt-1 small text-muted">
+                                                    <span class="badge bg-light text-dark border">Nhóm {{ $nhom?->MaNhom }}</span>
+                                                    @if($deTai?->MaDeTai)
+                                                        <span class="badge bg-secondary-subtle text-secondary border font-monospace">{{ $deTai->MaDeTai }}</span>
+                                                    @endif
+                                                    <span class="badge bg-info-subtle text-info border">{{ $soSV }} SV</span>
+                                                </div>
+                                            </td>
+                                            <td rowspan="{{ $soSV }}" class="py-3 bg-white" style="vertical-align: middle;">
+                                                <div class="fw-semibold text-dark">{{ $deTai?->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
+                                                <div class="small text-muted">{{ $deTai?->giangVien?->boMon?->TenBoMon ?? 'Bộ môn' }}</div>
+                                            </td>
+                                            <td rowspan="{{ $soSV }}" class="pe-3 text-center py-3 bg-white" style="vertical-align: middle;">
+                                                @php $pct = (float)$hoSo->TyLeTrungLap; @endphp
+                                                <span class="fw-bold {{ $pct <= 20 ? 'text-success' : 'text-danger' }}">{{ number_format($pct, 2) }}%</span>
+                                                @if($hoSo->MinhChungDaoVan)
+                                                <div>
+                                                    <a href="{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}" target="_blank" class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none" style="font-size: 0.68rem;">
+                                                        Minh chứng
+                                                    </a>
+                                                </div>
+                                                @endif
+                                            </td>
                                         @endif
-                                    </td>
-                                </tr>
+                                    </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td class="ps-3 py-2 text-center text-muted small">{{ $currentStt++ }}</td>
+                                        <td class="py-2 text-center text-muted">—</td>
+                                        <td class="py-2 text-muted fst-italic">Chưa có sinh viên</td>
+                                        <td class="py-2 text-center text-muted">—</td>
+                                        <td class="py-3 bg-white">
+                                            <div class="fw-bold text-primary">{{ $deTai?->TenDeTai ?? 'Chưa có tên đề tài' }}</div>
+                                            <div class="small text-muted mt-1">
+                                                <span class="badge bg-light text-dark border">Nhóm {{ $nhom?->MaNhom }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 bg-white">
+                                            <div class="fw-semibold text-dark">{{ $deTai?->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
+                                        </td>
+                                        <td class="pe-3 text-center py-3 bg-white">—</td>
+                                    </tr>
+                                @endif
                                 @empty
                                 <tr>
-                                    <td colspan="3" class="text-center py-5 text-muted">
+                                    <td colspan="7" class="text-center py-5 text-muted">
                                         <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                         Chưa có nhóm sinh viên nào được phân công vào Hội đồng này.
                                     </td>

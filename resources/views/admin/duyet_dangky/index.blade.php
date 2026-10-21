@@ -273,7 +273,8 @@
                                             </div>
                                             @if($dk->TrangThai === 'Từ chối' && $dk->LyDoTuChoi)
                                                 <div class="mt-2 text-danger small">
-                                                    <strong>Lý do phản hồi:</strong> {{ $dk->LyDoTuChoi }}
+                                                    <strong>Lý do phản hồi:</strong>
+                                                    <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dk->LyDoTuChoi) !!}</div>
                                                 </div>
                                             @endif
                                             @if($dk->NgayDuyet)

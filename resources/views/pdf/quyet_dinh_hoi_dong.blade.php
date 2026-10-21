@@ -349,16 +349,47 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($danhSachSinhVien as $sv)
-                <tr>
-                    <td class="text-center">{{ $sv['stt'] }}</td>
-                    <td class="text-center text-bold">{{ $sv['mssv'] }}</td>
-                    <td>{{ $sv['ho_ten'] }}</td>
-                    <td class="text-center">{{ $sv['lop'] }}</td>
-                    <td>{{ $sv['ten_de_tai'] }}</td>
-                    <td>{{ $sv['gvhd'] }}</td>
-                    <td class="text-center font-monospace" style="font-size: 8.5pt;">{{ $sv['ghi_chu'] }}</td>
-                </tr>
+            @php $currentStt = 1; @endphp
+            @forelse($danhSachDeTai as $dt)
+                @php
+                    $soSV = max(count($dt['sinh_viens']), 1);
+                @endphp
+                @if(count($dt['sinh_viens']) > 0)
+                    @foreach($dt['sinh_viens'] as $svIndex => $sv)
+                        <tr>
+                            <td class="text-center" style="vertical-align: middle;">{{ $currentStt++ }}</td>
+                            <td class="text-center text-bold" style="vertical-align: middle;">{{ $sv['mssv'] }}</td>
+                            <td style="vertical-align: middle;">{{ $sv['ho_ten'] }}</td>
+                            <td class="text-center" style="vertical-align: middle;">{{ $sv['lop'] }}</td>
+                            @if($svIndex === 0)
+                                <td rowspan="{{ $soSV }}" style="vertical-align: middle;">
+                                    <div class="text-bold">{{ $dt['ten_de_tai'] }}</div>
+                                    @if(!empty($dt['ma_de_tai']))
+                                        <div style="font-size: 8pt; color: #555; margin-top: 2px;">(Mã ĐT: {{ $dt['ma_de_tai'] }})</div>
+                                    @endif
+                                </td>
+                                <td rowspan="{{ $soSV }}" style="vertical-align: middle;">
+                                    {{ $dt['gvhd'] }}
+                                </td>
+                                <td rowspan="{{ $soSV }}" class="text-center font-monospace" style="vertical-align: middle; font-size: 8.5pt;">
+                                    Nhóm {{ $dt['ma_nhom'] }}
+                                </td>
+                            @endif
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td class="text-center" style="vertical-align: middle;">{{ $currentStt++ }}</td>
+                        <td class="text-center text-muted" style="vertical-align: middle;">—</td>
+                        <td class="text-muted" style="vertical-align: middle;">Chưa cập nhật sinh viên</td>
+                        <td class="text-center text-muted" style="vertical-align: middle;">—</td>
+                        <td style="vertical-align: middle;">
+                            <div class="text-bold">{{ $dt['ten_de_tai'] }}</div>
+                        </td>
+                        <td style="vertical-align: middle;">{{ $dt['gvhd'] }}</td>
+                        <td class="text-center font-monospace" style="vertical-align: middle; font-size: 8.5pt;">Nhóm {{ $dt['ma_nhom'] }}</td>
+                    </tr>
+                @endif
             @empty
                 <tr>
                     <td colspan="7" class="text-center text-italic">Chưa có sinh viên/đề tài nào được gắn vào hội đồng này.</td>

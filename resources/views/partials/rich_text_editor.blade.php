@@ -155,16 +155,24 @@
 
 <style>
     /* Styling thanh công cụ và vùng soạn thảo Rich Text Editor */
+    .rich-text-editor-container {
+        position: relative;
+        clear: both;
+        margin-bottom: 1.5rem !important;
+    }
     .rich-text-editor-container .rte-wrapper {
         border: 1px solid #cbd5e1 !important;
         border-radius: 10px !important;
         transition: border-color 0.18s ease, box-shadow 0.18s ease;
         background-color: #ffffff;
+        position: relative;
+        z-index: 1;
     }
     .rich-text-editor-container .rte-wrapper.focus-within,
     .rich-text-editor-container .rte-wrapper:focus-within {
         border-color: #00838C !important;
         box-shadow: 0 0 0 3px rgba(0, 131, 140, 0.16) !important;
+        z-index: 2;
     }
     .rich-text-editor-container .rte-toolbar {
         background-color: #f8fafc !important;
@@ -197,14 +205,22 @@
         font-weight: 700;
     }
     .rich-text-editor-container .rte-editor {
-        max-height: 480px;
-        overflow-y: auto;
+        min-height: {{ $editorMinHeight }};
         font-size: 14px;
         line-height: 1.65;
         color: #1e293b;
         outline: none;
         word-break: break-word;
         padding: 16px 18px !important;
+        height: auto;
+        overflow: visible;
+    }
+    .rich-text-editor-container .rte-editor img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 6px;
+        display: inline-block;
+        margin: 8px 0;
     }
     /* Typography bên trong vùng soạn thảo */
     .rich-text-editor-container .rte-editor p {
@@ -258,6 +274,29 @@
         if (editorEl.dataset.rteInitialized === 'true') return;
         editorEl.dataset.rteInitialized = 'true';
 
+        // 0. Dọn sạch cấu trúc lồng nhau và loại bỏ hoàn toàn thẻ img nếu có trong dữ liệu
+        function cleanNestedEditors() {
+            const nestedWrappers = editorEl.querySelectorAll('.rich-text-editor-container, .rte-wrapper, .rte-toolbar, .rte-footer');
+            if (nestedWrappers.length > 0) {
+                const innerEditor = editorEl.querySelector('.rte-editor');
+                if (innerEditor) {
+                    editorEl.innerHTML = innerEditor.innerHTML;
+                } else {
+                    nestedWrappers.forEach(function (w) {
+                        w.remove();
+                    });
+                }
+            }
+            // Không cho phép hình ảnh tồn tại trong editor
+            const imgs = editorEl.querySelectorAll('img');
+            if (imgs.length > 0) {
+                imgs.forEach(function (img) {
+                    img.remove();
+                });
+            }
+        }
+        cleanNestedEditors();
+
         // 1. Kiểm tra trạng thái rỗng để kích hoạt placeholder
         function checkEmptyState() {
             const text = editorEl.innerText.trim();
@@ -299,14 +338,64 @@
         editorEl.addEventListener('input', syncToTextarea);
         editorEl.addEventListener('keyup', syncToTextarea);
         editorEl.addEventListener('blur', syncToTextarea);
-        editorEl.addEventListener('paste', function () {
-            setTimeout(syncToTextarea, 20);
+        
+        // CHẶN HOÀN TOÀN VIỆC PASTE HÌNH ẢNH (Từ clipboard hoặc chụp màn hình)
+        editorEl.addEventListener('paste', function (e) {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                // Kiểm tra nếu dán file ảnh trực tiếp (clipboard items)
+                if (clipboardData.items) {
+                    for (let i = 0; i < clipboardData.items.length; i++) {
+                        if (clipboardData.items[i].type.indexOf('image') !== -1) {
+                            e.preventDefault();
+                            alert('Trình soạn thảo chỉ hỗ trợ nội dung văn bản, không cho phép chèn hoặc dán hình ảnh.');
+                            return;
+                        }
+                    }
+                }
+                // Kiểm tra nếu dán HTML có chứa thẻ <img>
+                const pastedHtml = clipboardData.getData('text/html');
+                if (pastedHtml && /<img\s[^>]*>/i.test(pastedHtml)) {
+                    e.preventDefault();
+                    // Loại bỏ hoàn toàn thẻ img, chỉ dán phần text và markup văn bản an toàn
+                    const cleaned = pastedHtml.replace(/<img[^>]*>/gi, '');
+                    document.execCommand('insertHTML', false, cleaned);
+                    alert('Đã tự động loại bỏ hình ảnh. Trình soạn thảo chỉ nhận nội dung văn bản.');
+                    setTimeout(function () {
+                        cleanNestedEditors();
+                        syncToTextarea();
+                    }, 20);
+                    return;
+                }
+            }
+            setTimeout(function () {
+                cleanNestedEditors();
+                syncToTextarea();
+            }, 20);
+        });
+
+        // CHẶN KÉO THẢ (DRAG & DROP) FILE ẢNH VÀO EDITOR
+        editorEl.addEventListener('dragover', function (e) {
+            e.preventDefault();
+        });
+        editorEl.addEventListener('drop', function (e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                for (let i = 0; i < dt.files.length; i++) {
+                    if (dt.files[i].type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        alert('Không cho phép kéo thả hình ảnh vào trình soạn thảo.');
+                        return;
+                    }
+                }
+            }
         });
 
         // 5. Đồng bộ trước khi submit form
         const parentForm = hiddenTextarea.closest('form');
         if (parentForm) {
             parentForm.addEventListener('submit', function () {
+                cleanNestedEditors();
                 syncToTextarea();
             });
         }
@@ -334,7 +423,7 @@
                 });
             });
 
-            // 7. Cập nhật trạng thái active của các nút dựa trên con trỏ
+            // Cập nhật trạng thái active của các nút dựa trên con trỏ
             function updateToolbarStates() {
                 toolbarButtons.forEach(function (btn) {
                     const cmd = btn.dataset.command;

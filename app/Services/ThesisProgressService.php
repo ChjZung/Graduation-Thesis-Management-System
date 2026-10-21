@@ -975,42 +975,9 @@ class ThesisProgressService
                 $giaiDoan->save();
             }
 
-            // Tự động phân tích PDF bằng AI và lưu kết quả vào database
+            // Persist a database job with the submission; no API/network work in this transaction.
             if ($duongDanFile && file_exists(storage_path('app/public/' . $duongDanFile))) {
-                try {
-                    $aiService = app(AiSummaryService::class);
-                    $fullPdfPath = storage_path('app/public/' . $duongDanFile);
-                    $aiResult = $aiService->summarizePdf($fullPdfPath, $dotNop->giaiDoan?->ThuTu ?? 1, [
-                        'review_context' => $dotNop->nguCanhDoiChieuAi(),
-                    ]);
-                    if (!empty($aiResult['data'])) {
-                        $khoi->TomTatJson = $aiResult['data'];
-                        $khoi->TomTatAI = $aiResult['formatted']['overall_summary'] ?? ($aiResult['data']['overall_summary'] ?? '');
-                        
-                        // Nếu sinh viên để trống nội dung thủ công, tự động điền từ kết quả AI
-                        if (empty(trim((string)$khoi->NoiDungBaoCao))) {
-                            $khoi->NoiDungBaoCao = $khoi->TomTatAI;
-                        }
-                        if (empty(trim((string)$khoi->KetQuaDatDuoc)) && !empty($aiResult['formatted']['completed_work'])) {
-                            $khoi->KetQuaDatDuoc = $aiResult['formatted']['completed_work'];
-                        }
-                        if (empty(trim((string)$khoi->KhoKhan)) && !empty($aiResult['formatted']['difficulties'])) {
-                            $khoi->KhoKhan = $aiResult['formatted']['difficulties'];
-                        }
-                        if (empty(trim((string)$khoi->KeHoachTiepTheo)) && !empty($aiResult['formatted']['next_steps'])) {
-                            $khoi->KeHoachTiepTheo = $aiResult['formatted']['next_steps'];
-                        }
-                        if ($userCompletionPct === null && isset($aiResult['completion_percentage']) && ($aiResult['data']['completion_basis'] ?? null) === 'pdf_explicit') {
-                            $khoi->PhanTramHoanThanh = (int)$aiResult['completion_percentage'];
-                            $baoCaoCha->update(['PhanTramHoanThanh' => $khoi->PhanTramHoanThanh]);
-                        }
-                        $khoi->save();
-
-                        $aiService->saveVersionSummary($khoi, $aiResult);
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning("AI Summarize error for Khoi {$maKhoi}: " . $e->getMessage());
-                }
+                app(AiReportProcessingService::class)->enqueue($khoi);
             }
 
             return $khoi;

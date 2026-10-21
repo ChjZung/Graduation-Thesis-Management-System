@@ -30,6 +30,15 @@ return [
     */
 
     'connections' => [
+        // Longer visibility timeout than the AI job (390s); never share sync/default.
+        'ai' => [
+            'driver' => 'database',
+            'connection' => env('DB_QUEUE_CONNECTION'),
+            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue' => 'ai-reports',
+            'retry_after' => 450,
+            'after_commit' => false,
+        ],
 
         'sync' => [
             'driver' => 'sync',

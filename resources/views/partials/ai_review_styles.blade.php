@@ -1,4 +1,9 @@
 <style>
+.ai-summary .ai-review-disclosure { margin-top: 20px; border-top: 1px solid var(--ai-border); padding-top: 14px; }
+.ai-summary .ai-review-disclosure > summary { cursor: pointer; color: var(--ai-navy); font-size: 15px; font-weight: 600; padding: 8px 0; }
+.ai-summary .ai-review-disclosure > summary:focus-visible { outline: 3px solid #a2d2ff; outline-offset: 2px; }
+.ai-docx-source { max-width: 1050px; margin: auto; padding: 28px; background: #fff; color: #1a2b4a; font-size: 17px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.ai-docx-source mark { background: #ffe68a; color: inherit; padding: 2px 0; }
 .ai-summary .ai-report-caption { margin: 0 0 16px; font-size: 15px; font-weight: 700; color: var(--ai-navy); }
 .ai-summary .ai-review-block { margin-top: 24px; padding-top: 24px; border-top: 2px solid #c8dff7; }
 .ai-summary .ai-review-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }

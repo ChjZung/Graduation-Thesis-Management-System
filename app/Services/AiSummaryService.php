@@ -15,22 +15,32 @@ class AiSummaryService
     private const CHUNK_SIZE      = 12000;
     private const CHUNK_OVERLAP   = 350;
 
-    public function saveVersionSummary(\App\Models\KhoiBaoCaoTienDo $report, array $result): void
+    public function saveVersionSummary(\App\Models\KhoiBaoCaoTienDo $report, array $result, array $options = []): void
     {
         // Each submission keeps its own JSON. The legacy table has ONE snapshot per MaBaoCao.
-        \Illuminate\Support\Facades\DB::transaction(function () use ($report, $result) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($report, $result, $options) {
+            $report = \App\Models\KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
+            $old = app(AiReportProcessingService::class)->payload($report);
+            if (isset($options['token']) && ($old['_processing']['token'] ?? '') !== $options['token']) return;
+            $merged = (new AiResultMerger)->merge($old,$result['data'],!empty($options['review_only']));
+            if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
+            $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
+            $result['data'] = $merged;
             $report->update(['TomTatJson' => $result['data'], 'TomTatAI' => $result['data']['overall_summary'] ?? '']);
+            // A late worker from an older version cannot replace the latest legacy snapshot.
+            $latest = \App\Models\KhoiBaoCaoTienDo::where('MaBaoCao',$report->MaBaoCao)->orderByDesc('LanNop')->orderByDesc('NgayNop')->value('MaKhoi');
+            if ($latest !== $report->MaKhoi) return;
             $summary = \App\Models\TomTatBaoCao::firstOrNew(['MaBaoCao' => $report->MaBaoCao]);
             if (!$summary->exists) {
                 $summary->MaTomTat = \App\Helpers\IdGenerator::nextTomTat();
             }
             $summary->fill([
                 'MaKhoi' => $report->MaKhoi, 'TenFile' => $report->TenFile, 'DuongDanFile' => $report->DuongDanFile,
-                'SoTrang' => (int) ($result['total_pages'] ?? 0),
+                'SoTrang' => ($result['data']['document_type'] ?? 'pdf') === 'docx' ? 0 : (int) ($result['data']['analysis']['total_pages'] ?? $result['total_pages'] ?? 0),
                 'CongViecDaHoanThanh' => $result['formatted']['completed_work'] ?? '',
                 'KhoKhan' => $result['formatted']['difficulties'] ?? '', 'KeHoachTuanToi' => $result['formatted']['next_steps'] ?? '',
                 'NoiDungAI' => $result['data']['overall_summary'] ?? '', 'TomTatJson' => $result['data'],
-                'TrangThai' => 'Đã tạo', 'TrangThaiXuLy' => 'hoan_thanh',
+                'TrangThai' => 'Đã tạo', 'TrangThaiXuLy' => (($result['data']['analysis']['status'] ?? '') === 'completed' ? 'hoan_thanh' : 'chua_hoan_thanh'),
                 'ThoiGianXuLy' => $result['processing_time'] ?? 0, 'NgayTomTat' => now(),
             ])->save();
         });
@@ -47,7 +57,7 @@ class AiSummaryService
             set_time_limit(420);
         }
         $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
-        $model = config('services.gemini.model', 'gemini-3.5-flash');
+        $model = config('services.gemini.model', 'gemini-3.5-flash-lite');
         $scriptPath = base_path('app/Services/ai_summarizer.py');
 
         $chunkSize = $options['chunk_size'] ?? self::CHUNK_SIZE;
@@ -71,6 +81,8 @@ class AiSummaryService
             $method,
             '--model',
             $model,
+            '--cache-dir',
+            storage_path('app/private/ai_cache'),
         ];
 
         if (!empty($options['review_context'])) {
@@ -95,6 +107,13 @@ class AiSummaryService
                 'PYTHONUTF8' => '1',
                 'PYTHONIOENCODING' => 'utf-8',
                 'GEMINI_API_KEY' => $apiKey,
+                'AI_RATE_DB' => storage_path('app/private/ai_limits.sqlite'),
+                'AI_RATE_SCOPE' => config('ai_processing.quota_scope'),
+                'AI_SAFE_RPM' => (string) config('ai_processing.rpm',4),
+                'AI_LITE_SAFE_RPM' => (string) config('ai_processing.lite_rpm',12),
+                'AI_SAFE_TPM' => (string) config('ai_processing.tpm',200000),
+                'AI_PROGRESS_FILE' => $options['progress_path'] ?? '',
+
             ]);
 
             // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
@@ -107,17 +126,21 @@ class AiSummaryService
                     return $this->formatSummarizeResult($data, $stage);
                 }
                 $errorReason = 'Python trả về kết quả không hợp lệ hoặc đánh dấu thất bại';
-                Log::warning('AiSummaryService: python returned invalid json or failure: ' . substr($output, 0, 500));
+                Log::warning('AiSummaryService: invalid Python result.');
             } else {
                 $errorReason = 'Lỗi thực thi tiến trình Python: ' . trim($result->errorOutput());
-                Log::warning('AiSummaryService python process error: ' . $result->errorOutput());
+                Log::warning('AiSummaryService: Python process failed.', ['exit_code'=>$result->exitCode()]);
             }
         } catch (\Throwable $e) {
             $errorReason = 'Ngoại lệ khi gọi script Python: ' . $e->getMessage();
-            Log::error('AiSummaryService error executing python script: ' . $e->getMessage());
+            Log::error('AiSummaryService: Python process exception.', ['type'=>get_class($e)]);
         }
 
-        return $this->fallbackSummarize($pdfPath, $stage, $errorReason);
+        $fallback = $this->fallbackSummarize($pdfPath, $stage, 'Chưa hoàn tất xử lý tài liệu.');
+        $parsed = isset($result) && is_object($result) ? json_decode($result->output(),true) : [];
+        $failure = $parsed['processing_error'] ?? ['stage'=>'process','code'=>'extraction_failed','message'=>'Không đọc được tài liệu hoặc chưa chạy được tiến trình phân tích.'];
+        $fallback['data']['processing_errors'] = [$failure];
+        return $fallback;
     }
 
     /**
@@ -149,10 +172,10 @@ class AiSummaryService
         // Chuẩn hóa text cho 1-click Autofill
         $formattedCompleted = [];
         foreach ($completedWork as $item) {
-            $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
+            $pagesStr = !empty($item['source_locations']) ? ' (' . implode(', ', array_column($item['source_locations'], 'label')) . ')' : (!empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '');
             $line = "• " . ($item['content'] ?? '') . $pagesStr;
             if (!empty($item['evidence'])) {
-                $verNote = !empty($item['verified']) ? ' [Đã khớp PDF]' : ' [Cần đối chiếu]';
+                $verNote = !empty($item['verified']) ? ' [Đã khớp tài liệu]' : ' [Cần đối chiếu]';
                 $line .= "\n  - Dẫn chứng: " . $item['evidence'] . $verNote;
             }
             $formattedCompleted[] = $line;
@@ -160,14 +183,14 @@ class AiSummaryService
 
         $formattedDeliverables = [];
         foreach ($deliverables as $item) {
-            $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
+            $pagesStr = !empty($item['source_locations']) ? ' (' . implode(', ', array_column($item['source_locations'], 'label')) . ')' : (!empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '');
             $line = "• " . ($item['content'] ?? '') . $pagesStr;
             $formattedDeliverables[] = $line;
         }
 
         $formattedDifficulties = [];
         foreach ($difficulties as $item) {
-            $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
+            $pagesStr = !empty($item['source_locations']) ? ' (' . implode(', ', array_column($item['source_locations'], 'label')) . ')' : (!empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '');
             $line = "• " . ($item['content'] ?? '') . $pagesStr;
             if (!empty($item['evidence'])) {
                 $line .= "\n  - Dẫn chứng: " . $item['evidence'];
@@ -177,7 +200,7 @@ class AiSummaryService
 
         $formattedNextSteps = [];
         foreach ($nextSteps as $item) {
-            $pagesStr = !empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '';
+            $pagesStr = !empty($item['source_locations']) ? ' (' . implode(', ', array_column($item['source_locations'], 'label')) . ')' : (!empty($item['source_pages']) ? ' (Trang ' . implode(', ', (array)$item['source_pages']) . ')' : '');
             $line = "• " . ($item['content'] ?? '') . $pagesStr;
             if (!empty($item['evidence'])) {
                 $line .= "\n  - Dẫn chứng: " . $item['evidence'];
@@ -213,6 +236,14 @@ class AiSummaryService
         if (isset($data['requirements_review']) && is_array($data['requirements_review'])) {
             $sectionsData['requirements_review'] = $data['requirements_review'];
         }
+        $sectionsData['processing_errors'] = $data['processing_errors'] ?? [];
+        $sectionsData['document_content'] = $data['document_content'] ?? [];
+        $sectionsData['schema_version'] = 3;
+        $sectionsData['document_type'] = $data['document_type'] ?? $data['analysis']['document_type'] ?? 'pdf';
+        $sectionsData = array_intersect_key($sectionsData, array_flip([
+            'overall_summary', 'document_content', 'completed_work', 'difficulties', 'next_steps', 'analysis',
+            'citations', 'document_outline', 'requirements_review', 'schema_version', 'document_type', 'completion_percentage', 'completion_basis', 'processing_errors',
+        ]));
 
         $stdReport = $raw['standard_report'] ?? [
             'tom_tat' => $overallSummary,
@@ -286,8 +317,7 @@ class AiSummaryService
         ];
         $stageName = $stageNames[$stage] ?? "Giai đoạn {$stage}";
 
-        $explanation = "Hệ thống đã tiếp nhận tệp báo cáo ({$stageName}). Trợ lý AI chưa thể hoàn tất thẩm định tự động" . 
-            ($reason ? " (Nguyên nhân: {$reason})." : " do chưa kết nối được dịch vụ AI.");
+        $explanation = "Hệ thống đã tiếp nhận báo cáo ({$stageName}) nhưng chưa đọc và tóm tắt được đầy đủ. Bạn có thể kiểm tra tệp hoặc thử phân tích lại.";
 
         return $this->formatSummarizeResult([
             'success' => true,
@@ -354,15 +384,15 @@ class AiSummaryService
 
     /**
      * Gọi trực tiếp Gemini API qua HTTP Client trong Laravel (Header x-goog-api-key)
-     * Có fallback sang gemini-2.5-flash và exponential backoff.
+     * Ưu tiên Gemini 3.5 Flash, dự phòng Gemini 3.5 Flash-Lite khi dịch vụ lỗi.
      */
     private function generateWithGemini(BaoCaoTienDo $baoCao, string $apiKey): array
     {
         $vanBan = $this->extractText($baoCao);
         $prompt = $this->buildPrompt($baoCao->LanBaoCao, $vanBan);
-        $configuredModel = config('services.gemini.model', 'gemini-2.5-flash');
+        $configuredModel = config('services.gemini.model', 'gemini-3.5-flash-lite');
 
-        $candidateModels = array_unique([$configuredModel, 'gemini-2.5-flash', 'gemini-flash-latest']);
+        $candidateModels = array_unique([$configuredModel, 'gemini-3.5-flash-lite']);
 
         foreach ($candidateModels as $currentModel) {
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$currentModel}:generateContent";
@@ -376,15 +406,17 @@ class AiSummaryService
                         'contents' => [[
                             'parts' => [['text' => $prompt]],
                         ]],
-                        'generationConfig' => [
-                            'temperature'       => 0.1,
-                            'maxOutputTokens'   => 1500,
-                            'responseMimeType'  => 'application/json',
-                        ],
+                        'generationConfig' => array_merge([
+                            'maxOutputTokens' => 4096,
+                            'responseMimeType' => 'application/json',
+                        ], (str_starts_with($currentModel, 'gemini-3.8') || str_starts_with($currentModel, 'gemini-3.6'))
+                            ? ['thinkingConfig' => ['thinkingLevel' => 'low']] : []),
                     ]);
 
                     if ($response->successful()) {
-                        $rawText = $response->json('candidates.0.content.parts.0.text');
+                        $rawText = collect($response->json('candidates.0.content.parts', []))
+                            ->reject(fn ($part) => !empty($part['thought']))
+                            ->pluck('text')->implode('');
                         $cleaned = trim($rawText);
                         if (str_starts_with($cleaned, '```')) {
                             $lines = explode("\n", $cleaned);

@@ -193,7 +193,7 @@ class BaoCaoController extends Controller
 
         if (in_array($mocInfo['loai'], ['pdf', 'pdf_git'])) {
             // Nếu đã có file trước đó và đang chỉnh sửa thì không bắt buộc upload lại file mới
-            $fileRule = ($existing && $existing->DuongDanFile) ? 'nullable|file|mimes:pdf|max:20480' : 'required|file|mimes:pdf|max:20480';
+            $fileRule = ($existing && $existing->DuongDanFile) ? 'nullable|file|mimes:pdf,docx|max:20480' : 'required|file|mimes:pdf,docx|max:20480';
             $rules['FileBaoCao'] = $fileRule;
             $messages['FileBaoCao.required'] = 'Vui lòng đính kèm file PDF.';
             $messages['FileBaoCao.mimes'] = 'Chỉ chấp nhận file PDF.';
@@ -360,7 +360,8 @@ class BaoCaoController extends Controller
         });
 
         // BƯỚC 5: Dispatch Queue Job bất đồng bộ
-        GenerateAiSummaryJob::dispatch($maBaoCao);
+        $aiVersion = KhoiBaoCaoTienDo::where('MaBaoCao',$maBaoCao)->orderByDesc('LanNop')->first();
+        if ($aiVersion && $aiVersion->DuongDanFile) app(\App\Services\AiReportProcessingService::class)->enqueue($aiVersion);
 
         $successMsg = $isResubmit
             ? "Nộp lại báo cáo tiến độ GĐ {$lan} thành công (Lần nộp {$lanNop})! Hệ thống đã tạo khối nộp bài mới và gửi đến Giảng viên hướng dẫn."
@@ -551,7 +552,7 @@ class BaoCaoController extends Controller
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
             'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
-            'FileBaoCao' => 'nullable|file|mimes:pdf|max:25600',
+            'FileBaoCao' => 'nullable|file|mimes:pdf,docx|max:25600',
             'LinkCode' => 'nullable|url',
         ], [
             'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
@@ -592,38 +593,9 @@ class BaoCaoController extends Controller
             $tenFile = $request->input('ExistingFileName') ?: basename($duongDanFile);
         }
 
-        $tomTatJsonStr = $request->input('TomTatJson');
+        // AI results are produced by the server worker, never trusted from hidden form fields.
         $tomTatJson = null;
-        if (!empty($tomTatJsonStr)) {
-            $tomTatJson = is_string($tomTatJsonStr) ? json_decode($tomTatJsonStr, true) : $tomTatJsonStr;
-        }
-        $tomTatAi = $request->input('TomTatAI');
-
-        // Tự động kích hoạt AI phân tích PDF nếu chưa có tóm tắt
-        if (empty($tomTatJson) && $duongDanFile && file_exists(storage_path('app/public/' . $duongDanFile))) {
-            try {
-                $aiService = app(\App\Services\AiSummaryService::class);
-                $aiResult = $aiService->summarizePdf(storage_path('app/public/' . $duongDanFile), $lan);
-                if (!empty($aiResult['data'])) {
-                    $tomTatJson = $aiResult['data'];
-                    $tomTatAi = $aiResult['formatted']['overall_summary'] ?? ($aiResult['data']['overall_summary'] ?? '');
-                    if (empty($cleanedKetQua) && !empty($aiResult['formatted']['completed_work'])) {
-                        $cleanedKetQua = $aiResult['formatted']['completed_work'];
-                    }
-                    if (empty($cleanedKhoKhan) && !empty($aiResult['formatted']['difficulties'])) {
-                        $cleanedKhoKhan = $aiResult['formatted']['difficulties'];
-                    }
-                    if (empty($cleanedKeHoach) && !empty($aiResult['formatted']['next_steps'])) {
-                        $cleanedKeHoach = $aiResult['formatted']['next_steps'];
-                    }
-                    if ($phanTram === 0) {
-                        $phanTram = (int)($aiResult['completion_percentage'] ?? 60);
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::warning("StoreKhoi AI summary error: " . $e->getMessage());
-            }
-        }
+        $tomTatAi = null;
 
         $khoi = KhoiBaoCaoTienDo::create([
             'MaKhoi' => $maKhoi,
@@ -655,27 +627,7 @@ class BaoCaoController extends Controller
             'DuongDanFile' => $duongDanFile ?: $baoCao->DuongDanFile,
         ]);
 
-        if (!empty($tomTatJson)) {
-            $maTomTat = IdGenerator::nextTomTat();
-            TomTatBaoCao::updateOrCreate(
-                ['MaKhoi' => $maKhoi],
-                [
-                    'MaTomTat' => $maTomTat,
-                    'MaBaoCao' => $baoCao->MaBaoCao,
-                    'TenFile' => $tenFile,
-                    'DuongDanFile' => $duongDanFile,
-                    'SoTrang' => (int)($tomTatJson['total_pages'] ?? 1),
-                    'CongViecDaHoanThanh' => $cleanedKetQua,
-                    'KhoKhan' => $cleanedKhoKhan,
-                    'KeHoachTuanToi' => $cleanedKeHoach,
-                    'NoiDungAI' => $tomTatAi ?: ($tomTatJson['overall_summary'] ?? ''),
-                    'TomTatJson' => $tomTatJson,
-                    'TrangThai' => 'Đã tạo',
-                    'TrangThaiXuLy' => 'hoan_thanh',
-                    'NgayTomTat' => now(),
-                ]
-            );
-        }
+        if ($khoi->DuongDanFile) app(\App\Services\AiReportProcessingService::class)->enqueue($khoi);
 
         return redirect()->route('sinhvien.baocao.index')->with('success', "Đã tạo và nộp báo cáo nhỏ (Báo cáo đợt {$lanNop}) cho Giai đoạn {$lan} thành công!");
     }
@@ -741,7 +693,7 @@ class BaoCaoController extends Controller
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
             'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
-            'FileBaoCao' => 'nullable|file|mimes:pdf|max:25600',
+            'FileBaoCao' => 'nullable|file|mimes:pdf,docx|max:25600',
             'LinkCode' => 'nullable|url',
         ], [
             'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
@@ -806,7 +758,7 @@ class BaoCaoController extends Controller
     public function ajaxAiSummary(Request $request)
     {
         $request->validate([
-            'FilePdf' => 'required|file|mimes:pdf|max:25600',
+            'FilePdf' => 'required|file|mimes:pdf,docx|max:25600',
             'LanBaoCao' => 'nullable|integer|between:1,6',
         ]);
 
@@ -863,7 +815,7 @@ class BaoCaoController extends Controller
         }
 
         $rules = [
-            'FilePdf' => $latest ? 'nullable|file|mimes:pdf|max:25600' : 'required|file|mimes:pdf|max:25600',
+            'FilePdf' => $latest ? 'nullable|file|mimes:pdf,docx|max:25600' : 'required|file|mimes:pdf,docx|max:25600',
             'NoiDungBaoCao' => 'nullable|string',
             'KetQuaDatDuoc' => 'nullable|string',
             'KhoKhan' => 'nullable|string',
@@ -875,8 +827,8 @@ class BaoCaoController extends Controller
         $rules['LinkCode'] = $dotNop->quyTacLinkMaNguon();
 
         $messages = [
-            'FilePdf.required' => 'Vui lòng đính kèm file báo cáo định dạng PDF để AI tự động phân tích.',
-            'FilePdf.mimes' => 'File báo cáo phải có định dạng .PDF.',
+            'FilePdf.required' => 'Vui lòng đính kèm file báo cáo định dạng PDF hoặc DOCX để AI tự động phân tích.',
+            'FilePdf.mimes' => 'File báo cáo phải có định dạng PDF hoặc DOCX.',
             'FilePdf.max' => 'Dung lượng file tối đa là 25MB.',
             'LinkCode.required' => 'Đợt nộp này yêu cầu cung cấp đường dẫn mã nguồn dự án (GitHub / GitLab / Bitbucket).',
             'LinkCode.regex' => 'Đường dẫn mã nguồn phải thuộc GitHub, GitLab hoặc Bitbucket hợp lệ.',

@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Http\Controllers\BaoCaoAiController;
+use App\Services\AiResultMerger;
+use App\Services\AiReportProcessingService;
+use App\Models\KhoiBaoCaoTienDo;
 use App\Models\DotNopBaoCao;
 use App\Models\GiaiDoanThucHien;
 use App\Services\AiSummaryService;
@@ -46,9 +48,8 @@ class AiRequirementsReviewTest extends TestCase
 
     public function test_recheck_preserves_existing_summary_and_metadata(): void
     {
-        $method = new \ReflectionMethod(BaoCaoAiController::class, 'withReview');
         $payload = ['overall_summary' => 'Báo cáo đầy đủ', 'citations' => [['page' => 2]], 'version' => 3];
-        $result = $method->invoke(new BaoCaoAiController, $payload, ['status' => 'completed']);
+        $result = (new AiResultMerger)->merge($payload, ['requirements_review'=>['status'=>'completed']],true);
         $this->assertSame($payload['overall_summary'], $result['overall_summary']);
         $this->assertSame($payload['citations'], $result['citations']);
         $this->assertSame(3, $result['version']);
@@ -57,10 +58,8 @@ class AiRequirementsReviewTest extends TestCase
 
     public function test_legacy_nested_json_retains_its_summary(): void
     {
-        $method = new \ReflectionMethod(BaoCaoAiController::class, 'withReview');
-        $result = $method->invoke(new BaoCaoAiController, '{"data":{"overall_summary":"Original"},"source":"legacy"}', ['status' => 'partial']);
-        $this->assertSame('Original', $result['data']['overall_summary']);
-        $this->assertSame('partial', $result['data']['requirements_review']['status']);
-        $this->assertSame('legacy', $result['source']);
+        $result = (new AiResultMerger)->merge((new AiReportProcessingService)->payload(new KhoiBaoCaoTienDo(['TomTatJson'=>['data'=>['overall_summary'=>'Original']]])), ['requirements_review'=>['status'=>'partial']],true);
+        $this->assertSame('Original', $result['overall_summary']);
+        $this->assertSame('partial', $result['requirements_review']['status']);
     }
 }
