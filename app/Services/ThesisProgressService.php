@@ -23,115 +23,6 @@ use Carbon\Carbon;
 
 class ThesisProgressService
 {
-    /**
-     * 6 Giai đoạn kỹ thuật chuẩn mẫu cho Giảng viên hướng dẫn (có thể tùy chỉnh thoải mái)
-     */
-    public const GIAI_DOAN_KY_THUAT_MAU = [
-        1 => [
-            'ten' => 'Giai đoạn 1: Lập kế hoạch & Khảo sát hiện trạng',
-            'mo_ta' => 'Xác định mục tiêu, phạm vi nghiên cứu, khảo sát các hệ thống tương tự và lập kế hoạch chi tiết.',
-            'cong_viec' => 'Khảo sát thực tế, phỏng vấn thu thập nghiệp vụ, tổng hợp tài liệu tham khảo, lập timeline đề tài.',
-            'dau_ra' => 'Báo cáo khảo sát hiện trạng, tài liệu đặc tả mục tiêu đề tài, kế hoạch phân chia công việc.',
-            'yeu_cau' => 'Nắm rõ nghiệp vụ bài toán, phân công công việc cụ thể cho từng thành viên trong nhóm.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 1.1: Báo cáo khảo sát hiện trạng & Xác định bài toán',
-                    'mo_ta' => 'Nộp báo cáo khảo sát nghiệp vụ thực tế và mô tả phạm vi giải pháp.',
-                    'yeu_cau' => 'Phân tích ít nhất 2 giải pháp tương tự và làm rõ sự cần thiết của đề tài.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-        2 => [
-            'ten' => 'Giai đoạn 2: Phân tích yêu cầu hệ thống',
-            'mo_ta' => 'Thu thập, phân tích và mô hình hóa toàn bộ yêu cầu chức năng và phi chức năng của hệ thống.',
-            'cong_viec' => 'Xác định tác nhân (Actors), lập danh sách Usecase/User Stories, vẽ sơ đồ Use Case, sơ đồ Activity.',
-            'dau_ra' => 'Tài liệu đặc tả yêu cầu phần mềm (SRS), sơ đồ ca sử dụng và luồng nghiệp vụ.',
-            'yeu_cau' => 'Bao quát đầy đủ các phân hệ chức năng đã đăng ký trong đề cương khóa luận.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 2.1: Đặc tả Usecase & Luồng nghiệp vụ',
-                    'mo_ta' => 'Nộp file tài liệu phân tích yêu cầu SRS và biểu đồ Use Case chi tiết.',
-                    'yeu_cau' => 'Mô tả kịch bản chính và kịch bản ngoại lệ cho các chức năng trọng yếu.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-        3 => [
-            'ten' => 'Giai đoạn 3: Thiết kế hệ thống & CSDL',
-            'mo_ta' => 'Thiết kế kiến trúc hệ thống, lược đồ cơ sở dữ liệu và thiết kế giao diện người dùng (UI/UX).',
-            'cong_viec' => 'Thiết kế kiến trúc giải pháp, thiết kế ERD, chuẩn hóa CSDL (3NF), thiết kế wireframe/prototype UI.',
-            'dau_ra' => 'Lược đồ CSDL chi tiết (Data Dictionary), sơ đồ lớp (Class Diagram), link Figma thiết kế giao diện.',
-            'yeu_cau' => 'CSDL chuẩn hóa không dư thừa dữ liệu, giao diện đáp ứng tiêu chuẩn trải nghiệm người dùng.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 3.1: Thiết kế Cơ sở dữ liệu & Kiến trúc hệ thống',
-                    'mo_ta' => 'Nộp báo cáo thiết kế CSDL (ERD, từ điển dữ liệu) và cấu trúc kiến trúc phần mềm.',
-                    'yeu_cau' => 'Có script tạo bảng hoặc Migration CSDL, có sơ đồ kiến trúc module.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-        4 => [
-            'ten' => 'Giai đoạn 4: Xây dựng & Tích hợp hệ thống',
-            'mo_ta' => 'Hiện thực hóa mã nguồn các chức năng theo thiết kế, tích hợp các module và dịch vụ.',
-            'cong_viec' => 'Lập trình Backend API, lập trình Frontend UI, kết nối CSDL, cấu hình bảo mật và phân quyền.',
-            'dau_ra' => 'Mã nguồn hệ thống chạy được trên môi trường thử nghiệm (Staging/Local), repository Git có commit đều đặn.',
-            'yeu_cau' => 'Mã nguồn rõ ràng, clean code, tuân thủ kiến trúc đã thiết kế, có tài liệu hướng dẫn cài đặt.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 4.1: Báo cáo hoàn thành các chức năng cốt lõi (Module Core)',
-                    'mo_ta' => 'Nộp báo cáo tiến độ lập trình các chức năng chính.',
-                    'yeu_cau' => 'Mô tả các chức năng đã hoàn thành và có hướng dẫn chạy thử.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ],
-                [
-                    'ten' => 'Đợt 4.2: Báo cáo tích hợp toàn diện & Hoàn thiện các module phụ trợ',
-                    'mo_ta' => 'Nộp báo cáo tích hợp hệ thống, phân quyền người dùng và kiểm thử tích hợp.',
-                    'yeu_cau' => 'Hệ thống vận hành trơn tru giữa Frontend và Backend.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-        5 => [
-            'ten' => 'Giai đoạn 5: Kiểm thử & Đánh giá kết quả',
-            'mo_ta' => 'Kiểm thử toàn diện hệ thống, phát hiện và khắc phục lỗi, đánh giá hiệu năng và bảo mật.',
-            'cong_viec' => 'Viết kịch bản kiểm thử (Test Cases), kiểm thử chức năng, kiểm thử giao diện, đo đạc độ trễ và tải.',
-            'dau_ra' => 'Biên bản kiểm thử (Test Report), nhật ký sửa lỗi (Bug Log), báo cáo đánh giá kết quả nghiệm thu.',
-            'yeu_cau' => 'Không còn lỗi nghiêm trọng (Critical bugs), hệ thống hoạt động ổn định.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 5.1: Báo cáo kiểm thử phần mềm & Khắc phục lỗi',
-                    'mo_ta' => 'Nộp Test Report chi tiết và kết quả khắc phục các lỗi phát hiện.',
-                    'yeu_cau' => 'Báo cáo tổng hợp số lượng ca kiểm thử đạt/không đạt và kết quả khắc phục lỗi.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-        6 => [
-            'ten' => 'Giai đoạn 6: Hoàn thiện sản phẩm & Viết báo cáo khóa luận',
-            'mo_ta' => 'Viết toàn văn báo cáo khóa luận tốt nghiệp, đóng gói sản phẩm và chuẩn bị tài liệu nghiệm thu.',
-            'cong_viec' => 'Soạn thảo toàn văn thuyết minh khóa luận theo quy định mẫu của Khoa, quay video demo sản phẩm.',
-            'dau_ra' => 'Bản thảo toàn văn khóa luận (PDF), video demo hoặc link deploy sản phẩm, slide thuyết trình.',
-            'yeu_cau' => 'Trình bày đúng quy cách chuẩn của Nhà trường, nội dung trung thực, có trích dẫn nguồn đầy đủ.',
-            'dot_nops' => [
-                [
-                    'ten' => 'Đợt 6.1: Nộp toàn văn dự thảo Khóa luận & Demo sản phẩm',
-                    'mo_ta' => 'Nộp bản toàn văn khóa luận hoàn chỉnh để GVHD xem xét và duyệt bảo vệ.',
-                    'yeu_cau' => 'Nộp file PDF toàn văn và tài liệu minh chứng sản phẩm hoạt động.',
-                    'dinh_dang' => 'pdf',
-                    'source_code' => false,
-                ]
-            ]
-        ],
-    ];
-
     // =========================================================================
     // PHẦN 1: DÀNH CHO GIÁO VỤ - QUẢN LÝ 6 GIAI ĐOẠN NGHIỆP VỤ KHÓA LUẬN
     // =========================================================================
@@ -687,66 +578,6 @@ class ThesisProgressService
     // =========================================================================
 
     /**
-     * Khởi tạo template 6 giai đoạn kỹ thuật & các đợt nộp mẫu cho Đề tài nếu chưa có
-     */
-    public function khoiTaoGiaiDoanMauChoDeTai(DeTai $deTai): int
-    {
-        return DB::transaction(function () use ($deTai) {
-            $existingCount = GiaiDoanThucHien::where('MaDeTai', $deTai->MaDeTai)->count();
-            if ($existingCount > 0) {
-                return $existingCount;
-            }
-
-            $now = Carbon::now();
-            $index = 1;
-
-            foreach (self::GIAI_DOAN_KY_THUAT_MAU as $stNum => $meta) {
-                $startDate = (clone $now)->addWeeks(($stNum - 1) * 2)->startOfDay();
-                $endDate = (clone $startDate)->addWeeks(2)->endOfDay();
-
-                $giaiDoan = GiaiDoanThucHien::create([
-                    'MaDeTai' => $deTai->MaDeTai,
-                    'TenGiaiDoan' => $meta['ten'],
-                    'MoTa' => $meta['mo_ta'],
-                    'NoiDungCongViec' => $meta['cong_viec'],
-                    'KetQuaDauRa' => $meta['dau_ra'],
-                    'NgayBatDau' => $startDate->toDateString(),
-                    'NgayKetThuc' => $endDate->toDateString(),
-                    'YeuCauCanDat' => $meta['yeu_cau'],
-                    'ThuTu' => $index,
-                    'TrangThai' => ($index === 1) ? 'DANG_THUC_HIEN' : 'CHUA_BAT_DAU',
-                ]);
-
-                // Tạo các đợt nộp trong giai đoạn
-                $dotIndex = 1;
-                foreach ($meta['dot_nops'] as $dotMeta) {
-                    $openDate = clone $startDate;
-                    $deadline = clone $endDate;
-
-                    DotNopBaoCao::create([
-                        'MaGiaiDoan' => $giaiDoan->MaGiaiDoan,
-                        'MaDeTai' => $deTai->MaDeTai,
-                        'TenDotNop' => $dotMeta['ten'],
-                        'MoTa' => $dotMeta['mo_ta'],
-                        'NoiDungYeuCau' => $dotMeta['yeu_cau'],
-                        'NgayMoNop' => $openDate,
-                        'HanNop' => $deadline,
-                        'DinhDangChoPhep' => $dotMeta['dinh_dang'],
-                        'YeuCauSourceCode' => $dotMeta['source_code'],
-                        'SoLanNopToiDa' => null,
-                        'TrangThai' => ($index === 1) ? 'DANG_MO' : 'TAM_DONG',
-                        'ThuTu' => $dotIndex++,
-                    ]);
-                }
-
-                $index++;
-            }
-
-            return count(self::GIAI_DOAN_KY_THUAT_MAU);
-        });
-    }
-
-    /**
      * Giảng viên thêm giai đoạn mới
      */
     public function taoGiaiDoan(DeTai $deTai, array $data): GiaiDoanThucHien
@@ -771,17 +602,11 @@ class ThesisProgressService
      */
     public function capNhatGiaiDoan(GiaiDoanThucHien $giaiDoan, array $data): bool
     {
-        return $giaiDoan->update([
-            'TenGiaiDoan' => $data['TenGiaiDoan'] ?? $giaiDoan->TenGiaiDoan,
-            'MoTa' => $data['MoTa'] ?? $giaiDoan->MoTa,
-            'NoiDungCongViec' => $data['NoiDungCongViec'] ?? $giaiDoan->NoiDungCongViec,
-            'KetQuaDauRa' => $data['KetQuaDauRa'] ?? $giaiDoan->KetQuaDauRa,
-            'NgayBatDau' => $data['NgayBatDau'] ?? $giaiDoan->NgayBatDau,
-            'NgayKetThuc' => $data['NgayKetThuc'] ?? $giaiDoan->NgayKetThuc,
-            'YeuCauCanDat' => $data['YeuCauCanDat'] ?? $giaiDoan->YeuCauCanDat,
-            'ThuTu' => $data['ThuTu'] ?? $giaiDoan->ThuTu,
-            'TrangThai' => $data['TrangThai'] ?? $giaiDoan->TrangThai,
-        ]);
+        // Keep omitted fields, while allowing optional fields to be cleared explicitly.
+        return $giaiDoan->update(array_intersect_key($data, array_flip([
+            'TenGiaiDoan', 'MoTa', 'NoiDungCongViec', 'KetQuaDauRa',
+            'NgayBatDau', 'NgayKetThuc', 'YeuCauCanDat', 'ThuTu', 'TrangThai',
+        ])));
     }
 
     /**
@@ -789,14 +614,30 @@ class ThesisProgressService
      */
     public function xoaGiaiDoan(GiaiDoanThucHien $giaiDoan): bool
     {
-        $hasSubmissions = KhoiBaoCaoTienDo::where('MaGiaiDoan', $giaiDoan->MaGiaiDoan)->exists();
-        if ($hasSubmissions) {
-            throw new \Exception('Không thể xóa giai đoạn đã có báo cáo nộp từ sinh viên. Vui lòng chuyển trạng thái hoặc lưu trữ.');
-        }
-
         return DB::transaction(function () use ($giaiDoan) {
+            GiaiDoanThucHien::whereKey($giaiDoan->getKey())->lockForUpdate()->firstOrFail();
+            $roundIds = $giaiDoan->dotNops()->lockForUpdate()->pluck('MaDotNop');
+            $hasSubmissions = KhoiBaoCaoTienDo::where(function ($query) use ($giaiDoan, $roundIds) {
+                $query->where('MaGiaiDoan', $giaiDoan->MaGiaiDoan)
+                    ->orWhereIn('MaDotNop', $roundIds);
+            })->exists();
+            if ($hasSubmissions) {
+                throw new \DomainException('Không thể xóa giai đoạn đã có bài nộp của sinh viên. Bạn vẫn có thể sửa thông tin giai đoạn.');
+            }
+
             $giaiDoan->dotNops()->delete();
             return $giaiDoan->delete();
+        });
+    }
+
+    public function xoaDotNop(DotNopBaoCao $dotNop): bool
+    {
+        return DB::transaction(function () use ($dotNop) {
+            $locked = DotNopBaoCao::whereKey($dotNop->getKey())->lockForUpdate()->firstOrFail();
+            if ($locked->khoiBaoCaos()->exists()) {
+                throw new \DomainException('Không thể xóa đợt đã có bài nộp của sinh viên. Bạn có thể sửa thông tin hoặc đóng đợt nộp.');
+            }
+            return (bool) $locked->delete();
         });
     }
 

@@ -10,7 +10,7 @@
         $diem = round((float) $phieuChamDiems->avg('Diem'), 2);
     }
 
-    $xepLoai = $ketQua?->KetQua ?? ($diem !== null ? \App\Services\GradeCalculationService::xepLoai($diem) : 'Đang xử lý');
+    $xepLoai = $ketQua?->KetQua ?? ($diem !== null ? \App\Models\KetQuaSinhVien::xepLoai($diem) : 'Đang xử lý');
     $cardBgColor = match(true) {
         $diem === null => '#475569',
         $diem >= 8.5   => '#00529b', // Xanh Navy HUIT trang trọng
@@ -233,7 +233,7 @@
                 @if($ketQua?->NhanXetChung || $phieuChamDiems->whereNotNull('NhanXet')->isNotEmpty())
                 <div class="p-3 rounded-3 bg-light border mb-3" style="font-size: 13.5px;">
                     <div class="fw-bold text-primary mb-1">
-                        <i class="fa-solid fa-comments me-2"></i>Ý kiến đóng góp &amp; Nhận xét của Hội đồng:
+                        <i class="fa-solid fa-comments me-2"></i>Ý kiến đóng góp &amp; Nhận xét của Hội đồng dành cho bạn:
                     </div>
                     @if($ketQua?->NhanXetChung)
                         <div class="text-dark mb-2">{!! \App\Helpers\HtmlHelper::clean($ketQua->NhanXetChung) !!}</div>

@@ -7,6 +7,68 @@ use PHPUnit\Framework\TestCase;
 
 class AiSummaryIntegrityTest extends TestCase
 {
+    public function test_flexible_sections_and_scope_survive_formatting(): void
+    {
+        $item = ['content'=>'Nhóm đề xuất mô hình', 'kind'=>'proposal', 'evidence'=>'Nhóm đề xuất mô hình Transformer.',
+            'source_pages'=>[12], 'source_ids'=>['F3_1'], 'verified'=>true];
+        $sections = [['id'=>'summary_sections_1','title'=>'Mô hình đề xuất','items'=>[$item]]];
+        $extra = [['id'=>'additional_sections_1','title'=>'Bối cảnh nghiên cứu','items'=>[$item]]];
+        $scope = ['mode'=>'focused','note'=>'Theo yêu cầu giảng viên','context_hash'=>'brief-v2'];
+        $result = (new AiSummaryService)->formatSummarizeResult(['data'=>[
+            'schema_version'=>5, 'summary_sections'=>$sections, 'additional_sections'=>$extra, 'summary_scope'=>$scope,
+        ]]);
+        $this->assertSame(5, $result['data']['schema_version']);
+        $this->assertSame($sections, $result['data']['summary_sections']);
+        $this->assertSame($extra, $result['data']['additional_sections']);
+        $this->assertSame($scope, $result['data']['summary_scope']);
+        $this->assertSame($sections, $result['standard_report']['sections']);
+        $this->assertArrayNotHasKey('kho_khan', $result['standard_report']);
+    }
+
+    public function test_process_failure_does_not_reintroduce_fixed_groups_or_fabricate_page_count(): void
+    {
+        $method = new \ReflectionMethod(AiSummaryService::class, 'fallbackSummarize');
+        $result = $method->invoke(new AiSummaryService, 'fixture.pdf', 100, ['submission_requirements'=>'Khảo sát']);
+        $this->assertSame(5, $result['data']['schema_version']);
+        $this->assertSame([], $result['data']['summary_sections']);
+        $this->assertSame('document_fallback', $result['data']['summary_scope']['mode']);
+        $this->assertSame(0, $result['data']['analysis']['total_pages']);
+        $this->assertFalse($result['data']['analysis']['text_complete']);
+    }
+
+    public function test_new_brief_does_not_inherit_more_complete_summary_with_old_focus(): void
+    {
+        $old = ['schema_version'=>5, 'summary_scope'=>['context_hash'=>'old-brief'],
+            'analysis'=>['status'=>'completed','analyzed_chunks'=>20]];
+        $new = ['schema_version'=>5, 'summary_scope'=>['context_hash'=>'new-brief'],
+            'analysis'=>['status'=>'partial','analyzed_chunks'=>3]];
+        $this->assertSame($new, (new \App\Services\AiResultMerger)->merge($old, $new));
+        $new['summary_scope']['context_hash'] = 'old-brief';
+        $this->assertSame($old, (new \App\Services\AiResultMerger)->merge($old, $new));
+    }
+
+    public function test_hierarchy_version_and_source_ids_survive_formatting(): void
+    {
+        $item = ['content' => 'Đã khảo sát', 'evidence' => 'Nhóm đã khảo sát hiện trạng.',
+            'source_pages' => [9], 'source_chunk_ids' => [2], 'source_ids' => ['C2_completed_work_1'], 'verified' => true];
+        $result = (new AiSummaryService)->formatSummarizeResult(['data' => [
+            'schema_version' => 4, 'completed_work' => [$item], 'difficulties' => [], 'next_steps' => [],
+        ]]);
+        $this->assertSame(4, $result['data']['schema_version']);
+        $this->assertSame([$item], $result['data']['completed_work']);
+        $this->assertSame([], $result['data']['difficulties']);
+        $this->assertSame([], $result['data']['next_steps']);
+    }
+
+    public function test_old_complete_schema_does_not_mask_new_partial_pipeline(): void
+    {
+        $old = ['schema_version' => 3, 'overall_summary' => 'Kết quả cũ',
+            'analysis' => ['status' => 'completed', 'analyzed_chunks' => 12]];
+        $new = ['schema_version' => 4, 'overall_summary' => 'Kết quả mới có nguồn',
+            'analysis' => ['status' => 'partial', 'analyzed_chunks' => 2]];
+        $this->assertSame($new, (new \App\Services\AiResultMerger)->merge($old, $new));
+    }
+
     public function test_analysis_provenance_and_outline_survive_formatting_and_persistence_payload(): void
     {
         $analysis = ['version' => 2, 'source' => 'fallback_nlp', 'total_pages' => 72, 'matched_citations' => 4];

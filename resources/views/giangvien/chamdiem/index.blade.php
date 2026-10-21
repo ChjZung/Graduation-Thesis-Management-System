@@ -64,6 +64,57 @@
         margin: 12mm 15mm 15mm 15mm;
     }
 }
+
+/* Preview controls use the admin theme; document printing keeps its own rules. */
+@media screen {
+    body:has(#modalXemTruoc.show) #time-machine-widget { visibility: hidden; pointer-events: none; }
+    #modalXemTruoc .modal-dialog {
+        width: calc(100% - 32px);
+        max-width: 1400px;
+        height: calc(100vh - 32px);
+        height: calc(100dvh - 32px);
+        margin: 16px auto;
+    }
+    #modalXemTruoc .modal-content { height: 100%; max-height: 100%; border-radius: 16px !important; }
+    #modalXemTruoc .grading-preview-header { gap: 16px; flex-shrink: 0; }
+    #modalXemTruoc .grading-preview-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    #modalXemTruoc .grading-preview-title-block { min-width: 0; }
+    #modalXemTruoc .grading-preview-icon {
+        width: 42px; height: 42px; flex: 0 0 42px; display: inline-flex;
+        align-items: center; justify-content: center; border-radius: 10px;
+        background: rgba(255,255,255,.15); color: #fff; font-size: 19px;
+    }
+    #modalXemTruoc .modal-title { font-size: 18px !important; line-height: 1.4; text-transform: none !important; margin: 0; }
+    #modalXemTruoc .grading-preview-subtitle { color: #dbeafe !important; font-size: 13px !important; line-height: 1.5; margin-top: 3px; overflow-wrap: anywhere; }
+    #modalXemTruoc .grading-preview-header .btn-close { flex-shrink: 0; margin: 0; }
+    #modalXemTruoc .grading-preview-body {
+        flex: 1 1 auto; min-height: 0; max-height: none !important;
+        overflow: auto !important; overscroll-behavior: contain;
+        background: #f1f5f9 !important; padding: 24px !important;
+    }
+    #modalXemTruoc #printPaperA4 {
+        width: 1120px; min-width: 1120px; max-width: 1120px !important;
+        border: 1px solid #dce4ef !important; border-radius: 8px !important;
+        box-shadow: 0 3px 14px rgba(15,23,42,.08) !important;
+    }
+    #modalXemTruoc .grading-preview-footer { justify-content: space-between !important; flex-shrink: 0; flex-wrap: wrap; gap: 12px !important; }
+    #modalXemTruoc .grading-preview-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+    #modalXemTruoc .grading-preview-footer .btn {
+        min-height: 40px !important; padding: 8px 14px !important;
+        border-radius: 8px !important; font-size: 13px !important;
+        line-height: 1.4; white-space: nowrap; box-shadow: none !important;
+    }
+    @media (max-width: 575.98px) {
+        #modalXemTruoc .modal-dialog { width: calc(100% - 16px); height: calc(100vh - 16px); height: calc(100dvh - 16px); margin: 8px auto; }
+        #modalXemTruoc .grading-preview-header { padding: 16px !important; gap: 10px; }
+        #modalXemTruoc .modal-title { font-size: 16px !important; }
+        #modalXemTruoc .grading-preview-icon { width: 36px; height: 36px; flex-basis: 36px; font-size: 16px; }
+        #modalXemTruoc .grading-preview-body { padding: 12px !important; }
+        #modalXemTruoc .grading-preview-footer { padding: 12px !important; }
+        #modalXemTruoc .grading-preview-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; gap: 8px; }
+        #modalXemTruoc .grading-preview-actions .btn { width: 100%; min-width: 0; height: auto; white-space: normal !important; overflow-wrap: anywhere; }
+    }
+}
 </style>
 @endpush
 
@@ -361,7 +412,7 @@
                     <i class="fa-solid fa-list-check text-primary me-2"></i>Bảng Tiêu Chí Đánh Giá &amp; Điểm Chấm Cho Từng Sinh Viên (Thang 10.0)
                 </span>
                 <div class="d-flex align-items-center gap-2">
-                    @if($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin())))
+                    @if($activeHoiDong && $activeHoSo && ($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin()))))
                     <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1 d-inline-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.78rem; background: #fff8e6; border-color: #f59e0b;">
                         <i class="fa-solid fa-pen-to-square text-warning-emphasis me-1"></i> Cài đặt chức năng theo yêu cầu bài toán (Chủ tịch)
                     </button>
@@ -800,47 +851,22 @@
     @endif
 </div>
 
+@if($activeHoiDong && $activeHoSo)
 {{-- MODAL XEM TRƯỚC PHIẾU CHẤM (CHÍNH XÁC THEO BIỂU MẪU WORD KHOA CNTT) --}}
 <div class="modal fade" id="modalXemTruoc" tabindex="-1" aria-labelledby="modalXemTruocLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-light border-bottom py-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="p-2 rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                        <i class="fa-solid fa-file-word"></i>
-                    </span>
-                    <div>
-                        <h6 class="modal-title fw-bold text-dark mb-0" id="modalXemTruocLabel">
-                            Xem Trước Phiếu Chấm Điểm Chuẩn Khoa CNTT (Theo Mẫu Word Chính Thức)
-                        </h6>
-                        <span class="text-muted" style="font-size: 0.72rem;">Bố cục, font chữ, khung điểm và chi tiết các mục đúng theo văn bản Word mẫu của Khoa</span>
+            <div class="modal-header grading-preview-header">
+                <div class="grading-preview-heading">
+                    <span class="grading-preview-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></span>
+                    <div class="grading-preview-title-block">
+                        <h6 class="modal-title" id="modalXemTruocLabel">Xem trước phiếu chấm điểm</h6>
+                        <p class="grading-preview-subtitle mb-0">{{ $loaiKhoaLuan === 'KLKS' ? 'Khóa luận kỹ sư' : 'Khóa luận cử nhân' }} · {{ $activeHoiDong->MaHoiDong }} · {{ $activeNhom->TenNhom ?? 'Nhóm sinh viên' }}</p>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    @if(isset($activeHoiDong) && isset($activeHoSo))
-                        @if($coThongTinChucNang)
-                        <button type="button" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold shadow-sm" onclick="inPhieuTrucTiep()">
-                            <i class="fa-solid fa-print me-1"></i> In Phiếu Chuẩn (PDF)
-                        </button>
-                        <a href="{{ route('giangvien.chamdiem.xuatWord', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
-                            <i class="fa-solid fa-file-word me-1"></i> Xuất Word (.docx)
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-semibold shadow-sm" onclick="window.print()">
-                            <i class="fa-solid fa-print me-1"></i> In Trực Tiếp (A4)
-                        </button>
-                        @else
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 text-muted fw-semibold" onclick="alertChuaCoChucNang()">
-                            <i class="fa-solid fa-print me-1"></i> In Phiếu (Chưa có mục 6)
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 text-muted fw-semibold" onclick="alertChuaCoChucNang()">
-                            <i class="fa-solid fa-file-word me-1"></i> Xuất Word (Chưa có mục 6)
-                        </button>
-                        @endif
-                    @endif
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng xem trước"></button>
             </div>
-            <div class="modal-body p-4 bg-secondary-subtle">
+            <div class="modal-body grading-preview-body">
                 {{-- Khung Trang Giấy A4 Mô Phỏng Chính Xác Bản Word Mẫu --}}
                 <div class="mx-auto bg-white p-4 p-md-5 border shadow-sm rounded-1 print-paper-a4" id="printPaperA4" style="max-width: 900px; font-family: 'Times New Roman', Times, serif; color: #000; line-height: 1.45;">
                     
@@ -1054,39 +1080,39 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light py-2">
-                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
-                @if(isset($activeHoiDong) && isset($activeHoSo))
+            <div class="modal-footer grading-preview-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary grading-preview-close" data-bs-dismiss="modal">Đóng</button>
+                <div class="grading-preview-actions">
                     @if($coThongTinChucNang)
-                    <button type="button" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm" onclick="inPhieuTrucTiep()">
-                        <i class="fa-solid fa-print me-1"></i> In Phiếu Chuẩn (PDF)
-                    </button>
-                    <a href="{{ route('giangvien.chamdiem.xuatWord', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
-                        <i class="fa-solid fa-file-word me-1"></i> Xuất File Word (.docx)
-                    </a>
-                    <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-semibold shadow-sm" onclick="window.print()">
-                        <i class="fa-solid fa-print me-1"></i> In Trực Tiếp (A4)
-                    </button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="inPhieuTrucTiep()">
+                            <i class="fa-solid fa-file-pdf me-1"></i> Xuất PDF
+                        </button>
+                        <a href="{{ route('giangvien.chamdiem.xuatWord', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-file-word me-1"></i> Xuất Word
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                            <i class="fa-solid fa-print me-1"></i> In A4
+                        </button>
                     @else
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 text-muted fw-semibold" onclick="alertChuaCoChucNang()">
-                        <i class="fa-solid fa-print me-1"></i> In Phiếu (Chưa có mục 6)
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 text-muted fw-semibold" onclick="alertChuaCoChucNang()">
-                        <i class="fa-solid fa-file-word me-1"></i> Xuất Word (Chưa có mục 6)
-                    </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alertChuaCoChucNang()">
+                            <i class="fa-solid fa-file-pdf me-1"></i> Xuất PDF
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alertChuaCoChucNang()">
+                            <i class="fa-solid fa-file-word me-1"></i> Xuất Word
+                        </button>
                     @endif
-                @endif
-                @if(!$daKhoaPhieu)
-                    @if($daKyTen)
-                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
-                        <i class="fa-solid fa-lock me-2"></i> Xác Nhận &amp; Khóa Phiếu Chấm
-                    </button>
-                    @else
-                    <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-4 fw-bold shadow-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalKyTen">
-                        <i class="fa-solid fa-signature me-2"></i> Ký Phiếu Điểm
-                    </button>
+                    @if(!$daKhoaPhieu)
+                        @if($daKyTen)
+                            <button type="button" class="btn btn-sm btn-success" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
+                                <i class="fa-solid fa-lock me-1"></i> Xác nhận &amp; khóa phiếu
+                            </button>
+                        @else
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalKyTen">
+                                <i class="fa-solid fa-signature me-1"></i> Ký phiếu điểm
+                            </button>
+                        @endif
                     @endif
-                @endif
+                </div>
             </div>
         </div>
     </div>
@@ -1173,7 +1199,7 @@
 </div>
 
 {{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO CHỦ TỊCH HỘI ĐỒNG) --}}
-@if($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin())))
+@if($activeHoiDong && $activeHoSo && ($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin()))))
 <div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <form action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
@@ -1879,4 +1905,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+@endif
 @endsection

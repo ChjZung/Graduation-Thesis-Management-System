@@ -28,7 +28,7 @@ class AiReportProcessingService
 
     public function fingerprint(KhoiBaoCaoTienDo $report): string
     {
-        return hash('sha256', json_encode([hash_file('sha256',$this->path($report)), $report->dotNop?->nguCanhDoiChieuAi(), config('services.gemini.model'), 'processing-v3'], JSON_UNESCAPED_UNICODE));
+        return hash('sha256', json_encode([hash_file('sha256',$this->path($report)), $report->dotNop?->nguCanhDoiChieuAi(), config('services.gemini.model'), 'processing-v5'], JSON_UNESCAPED_UNICODE));
     }
 
     public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false): array
@@ -42,6 +42,11 @@ class AiReportProcessingService
             $fingerprint = $this->fingerprint($locked);
             if (($state['fingerprint'] ?? '') === $fingerprint && in_array($state['status'] ?? '', ['queued','running','waiting'])) {
                 return $state; // The worker owns retries; repeated clicks cannot bypass cooldown.
+            }
+            // A changed brief also changes the focus of a flexible summary. Map checkpoints remain reusable.
+            if ($reviewOnly && (int) ($data['schema_version'] ?? 0) >= 5 &&
+                ($data['summary_scope']['context_hash'] ?? '') !== $locked->dotNop?->maNguCanhDoiChieuAi()) {
+                $reviewOnly = false;
             }
             $state = ['token'=>(string) Str::uuid(), 'fingerprint'=>$fingerprint, 'status'=>'queued', 'mode'=>$reviewOnly ? 'review' : 'full',
                 'attempts'=>0, 'updated_at'=>time(), 'queued_at'=>time(), 'message'=>'Đã lưu bài nộp. AI đang chờ xử lý nền.', 'errors'=>[]];
@@ -70,6 +75,22 @@ class AiReportProcessingService
         return storage_path('app/private/ai_progress/'.hash('sha256',$token).'.json');
     }
 
+    public function workerRunning(): bool
+    {
+        // ai:work holds this OS lock for its lifetime; a leftover file is not a heartbeat.
+        $path = storage_path('app/private/ai-worker.lock');
+        if (!is_file($path)) return false;
+        $handle = @fopen($path, 'r');
+        if (!$handle) return false;
+        try {
+            $available = flock($handle, LOCK_EX | LOCK_NB);
+            if ($available) flock($handle, LOCK_UN);
+            return !$available;
+        } finally {
+            fclose($handle);
+        }
+    }
+
     public function status(KhoiBaoCaoTienDo $report): array
     {
         $data = $this->payload($report);
@@ -80,7 +101,17 @@ class AiReportProcessingService
             $value = is_file($path) ? json_decode(file_get_contents($path),true) : [];
             if (is_array($value)) $progress = array_intersect_key($value,array_flip(['stage','completed_calls','reused_calls','waiting_seconds','model']));
         }
+        $active = in_array($state['status'] ?? '', ['queued', 'running', 'waiting']);
+        $workerRunning = $active ? $this->workerRunning() : null;
+        if ($active && !$workerRunning && time() - ($state['queued_at'] ?? $state['updated_at'] ?? time()) >= 15) {
+            $state['message'] = 'Tiến trình xử lý AI đang tắt. Bài nộp đã được lưu; vui lòng báo quản trị viên khởi động lại tiến trình xử lý AI. Không cần nộp lại bài.';
+            $state['errors'] = array_merge($state['errors'] ?? [], [[
+                'stage' => 'worker', 'code' => 'worker_offline',
+                'message' => 'Chưa có tiến trình xử lý nền hoạt động; bài đang chờ, chưa phải lỗi gọi API.',
+            ]]);
+        }
         return array_intersect_key($state,array_flip(['token','status','message','attempts','next_retry_at','updated_at','errors'])) + [
+            'worker_running' => $workerRunning,
             'progress'=>$progress,
             'summary_coverage'=>['done'=>$data['analysis']['analyzed_chunks'] ?? 0,'total'=>$data['analysis']['total_chunks'] ?? 0],
             'review_coverage'=>$data['requirements_review']['coverage'] ?? [],

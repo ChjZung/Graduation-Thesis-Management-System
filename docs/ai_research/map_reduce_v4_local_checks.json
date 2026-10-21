@@ -1,0 +1,29 @@
+{
+  "scope": "Local extraction and segmentation checks; not an LLM quality evaluation.",
+  "results": [
+    {
+      "file": "baocao_dot26_v1_1792515385.pdf",
+      "sha256": "dd0e71ec3cc7a6a1f818a431d5b0688dfbe3eba5feffd24d6d5961f70a365a76",
+      "total_pages": 62,
+      "text_pages": 61,
+      "visual_unread_pages": 30,
+      "chunks": 30,
+      "largest_estimated_tokens": 5059,
+      "uncovered_non_whitespace_characters": 0,
+      "elapsed_seconds": 0.268,
+      "llm_calls": 0
+    },
+    {
+      "file": "baocao_dot17_v1_1792394248.pdf",
+      "sha256": "44a3076b92d7f139139e29987b89857eebbbae2cb67bd5d797719fdeeddbf3f0",
+      "total_pages": 72,
+      "text_pages": 72,
+      "visual_unread_pages": 41,
+      "chunks": 16,
+      "largest_estimated_tokens": 4783,
+      "uncovered_non_whitespace_characters": 0,
+      "elapsed_seconds": 0.388,
+      "llm_calls": 0
+    }
+  ]
+}

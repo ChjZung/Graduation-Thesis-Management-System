@@ -348,7 +348,7 @@
             @foreach($nhoms as $index => $nhom)
             @php
                 $deTai = $nhom->deTai;
-                $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
+                $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->withCount('khoiBaoCaos')->get() : collect();
                 $groupProgress = $nhom->progress_percent ?? 0;
                 $tienDoNghiepVu = \App\Models\TienDoNghiepVuKhoaLuan::where('MaNhom', $nhom->MaNhom)->first();
                 $daMoCongBaoVe = ($tienDoNghiepVu && $tienDoNghiepVu->GiaiDoanHienTai >= 6) 
@@ -396,14 +396,6 @@
                                     </button>
                                 @endif
 
-                                @if($giaiDoans->isEmpty())
-                                    <form method="POST" action="{{ route('giangvien.tiendo.giai_doan.khoi_tao', $deTai->MaDeTai) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center">
-                                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Khởi tạo 6 Giai Đoạn Mẫu
-                                        </button>
-                                    </form>
-                                @endif
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center" 
                                         onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}')">
                                     <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn
@@ -432,15 +424,9 @@
                         <div class="text-center py-5 bg-light rounded-4 border border-dashed">
                             <i class="fa-solid fa-diagram-project fa-3x text-muted opacity-50 mb-3 d-block"></i>
                             <h6 class="fw-bold text-dark mb-1">Chưa thiết lập lộ trình giai đoạn cho đề tài này</h6>
-                            <p class="text-muted small mb-3">Bạn có thể bấm nút khởi tạo lộ trình 6 giai đoạn kỹ thuật mẫu hoặc tự tạo giai đoạn riêng phù hợp với đặc thù đề tài.</p>
+                            <p class="text-muted small mb-3">Thêm giai đoạn phù hợp với đề tài, sau đó thiết lập các đợt nộp và yêu cầu báo cáo cho từng giai đoạn.</p>
                             @if($deTai)
                                 <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                                    <form method="POST" action="{{ route('giangvien.tiendo.giai_doan.khoi_tao', $deTai->MaDeTai) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center">
-                                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Khởi Tạo Lộ Trình 6 Giai Đoạn Mẫu
-                                        </button>
-                                    </form>
                                     <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center"
                                             onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}')">
                                         <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn Tùy Chỉnh
@@ -530,7 +516,7 @@
                             </div>
                         </div>
 
-                        {{-- Accordion danh sách 6 giai đoạn của nhóm --}}
+                        {{-- Accordion danh sách giai đoạn của nhóm --}}
                         <div class="accordion stage-accordion-group d-flex flex-column gap-2" id="stageAccordionGV_{{ $nhom->MaNhom }}">
                             @foreach($giaiDoans as $gd)
                                 @php
@@ -541,6 +527,16 @@
                                     $countDots = $stageDots->count();
                                     $countSubmitted = $stageDots->filter(fn($d) => $d->khoiBaoCaos->isNotEmpty())->count();
                                     $countUnsubmitted = $stageDots->filter(fn($d) => $d->khoiBaoCaos->isEmpty())->count();
+                                    $hasStageSubmissions = $countSubmitted > 0 || $gd->khoi_bao_caos_count > 0;
+                                    $editStageData = [
+                                        'TenGiaiDoan' => $gd->TenGiaiDoan,
+                                        'MoTa' => $gd->MoTa,
+                                        'NoiDungCongViec' => $gd->NoiDungCongViec,
+                                        'KetQuaDauRa' => $gd->KetQuaDauRa,
+                                        'NgayBatDau' => $gd->NgayBatDau?->format('Y-m-d'),
+                                        'NgayKetThuc' => $gd->NgayKetThuc?->format('Y-m-d'),
+                                        'TrangThai' => $gd->TrangThai,
+                                    ];
                                     $cleanTitle = preg_replace('/^Giai\s+đoạn\s+\d+[\s:.-]*/ui', '', $gd->TenGiaiDoan);
                                 @endphp
 
@@ -584,11 +580,28 @@
                                             @endif
                                         </div>
 
-                                        <div class="d-flex align-items-center gap-2 ms-auto">
+                                        <div class="d-flex align-items-center flex-wrap gap-2 ms-auto" onclick="event.stopPropagation()">
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                                    data-edit-stage data-stage-id="{{ $gd->MaGiaiDoan }}"
+                                                    data-stage="{{ json_encode($editStageData, JSON_UNESCAPED_UNICODE) }}"
+                                                    data-update-url="{{ route('giangvien.tiendo.giai_doan.update', $gd->MaGiaiDoan) }}"
+                                                    onclick="openEditGiaiDoanModal(this)">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
+                                            </button>
+                                            <form method="POST" action="{{ route('giangvien.tiendo.giai_doan.destroy', $gd->MaGiaiDoan) }}"
+                                                  class="m-0" onsubmit="return confirm('Xóa giai đoạn này? Các đợt nộp chưa có bài trong giai đoạn cũng sẽ bị xóa. Thao tác không thể hoàn tác.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                        @disabled($hasStageSubmissions)
+                                                        title="{{ $hasStageSubmissions ? 'Không thể xóa vì giai đoạn đã có bài nộp của sinh viên' : 'Xóa giai đoạn và các đợt nộp chưa có bài' }}">
+                                                    <i class="fa-solid fa-trash-can me-1"></i>Xóa
+                                                </button>
+                                            </form>
                                             <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1 d-inline-flex align-items-center" 
                                                     style="font-size: 11px;"
                                                     title="Tạo đợt nộp báo cáo trong giai đoạn này"
-                                                    onclick="event.stopPropagation(); openAddDotNopModal({{ $gd->MaGiaiDoan }}, '{{ addslashes($gd->TenGiaiDoan) }}')">
+                                                    data-stage-name="{{ $gd->TenGiaiDoan }}" onclick="openAddDotNopModal({{ $gd->MaGiaiDoan }}, this.dataset.stageName)">
                                                 <i class="fa-solid fa-plus me-1"></i>Thêm Đợt Nộp
                                             </button>
                                             <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 10.5px;">
@@ -617,6 +630,15 @@
                                                             $tt = $dot->getTrangThaiHienThi();
                                                             $latest = $dot->phienBanMoiNhat;
                                                             $countVersions = $dot->khoiBaoCaos->count();
+                                                            $editRoundData = [
+                                                                'TenDotNop' => $dot->TenDotNop,
+                                                                'NoiDungYeuCau' => $dot->NoiDungYeuCau,
+                                                                'NgayMoNop' => $dot->NgayMoNop?->format('Y-m-d\TH:i'),
+                                                                'HanNop' => $dot->HanNop?->format('Y-m-d\TH:i'),
+                                                                'YeuCauSourceCode' => (bool) $dot->YeuCauSourceCode,
+                                                                'SoLanNopToiDa' => $dot->SoLanNopToiDa,
+                                                                'TrangThai' => $dot->TrangThai,
+                                                            ];
                                                         @endphp
                                                         <div class="dot-nop-row d-flex justify-content-between align-items-center flex-wrap gap-2">
                                                             <div class="flex-grow-1" style="min-width: 240px;">
@@ -640,7 +662,25 @@
                                                                 @endif
                                                             </div>
 
-                                                            <div class="d-flex align-items-center gap-1">
+                                                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                                                        data-edit-round data-round-id="{{ $dot->MaDotNop }}"
+                                                                        data-round="{{ json_encode($editRoundData, JSON_UNESCAPED_UNICODE) }}"
+                                                                        data-stage-name="{{ $gd->TenGiaiDoan }}"
+                                                                        data-update-url="{{ route('giangvien.tiendo.dot_nop.update', $dot->MaDotNop) }}"
+                                                                        onclick="openEditDotNopModal(this)">
+                                                                    <i class="fa-solid fa-pen-to-square me-1"></i>Sửa đợt
+                                                                </button>
+                                                                <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.destroy', $dot->MaDotNop) }}"
+                                                                      class="m-0" onsubmit="return confirm('Xóa đợt nộp này? Thao tác không thể hoàn tác.');">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                                            @disabled($countVersions > 0)
+                                                                            title="{{ $countVersions > 0 ? 'Không thể xóa đợt đã có bài nộp của sinh viên' : 'Xóa đợt nộp này' }}">
+                                                                        <i class="fa-solid fa-trash-can me-1"></i>Xóa đợt
+                                                                    </button>
+                                                                </form>
                                                                 @if($latest && $latest->DuongDanFile)
                                                                     <a href="{{ asset('storage/' . $latest->DuongDanFile) }}" target="_blank" 
                                                                        class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" style="font-size: 11px;" title="Xem file PDF">
@@ -782,6 +822,77 @@
     </div>
 </div>
 
+{{-- MODAL SỬA GIAI ĐOẠN --}}
+<div class="modal fade" id="modalEditGiaiDoan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow rounded-4">
+            <form method="POST" id="formEditGiaiDoan" class="d-flex flex-column overflow-hidden" style="max-height: 100%;">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="_stage_id" id="inputEditGiaiDoanId">
+
+                <div class="modal-header border-bottom px-4 py-3">
+                    <h6 class="modal-title fw-bold text-dark">
+                        <i class="fa-solid fa-pen-to-square text-primary me-2"></i>Sửa Giai Đoạn Thực Hiện Khóa Luận
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body px-4 py-3">
+                    <div id="editStageErrors" class="alert alert-danger small {{ $errors->updateStage->any() ? '' : 'd-none' }}">
+                        @foreach($errors->updateStage->all() as $message)
+                            <div>{{ $message }}</div>
+                        @endforeach
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Tên giai đoạn <span class="text-danger">*</span></label>
+                        <input type="text" name="TenGiaiDoan" maxlength="255" class="form-control form-control-sm" placeholder="VD: Giai đoạn 4: Xây dựng & Tích hợp hệ thống" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-dark">Ngày bắt đầu</label>
+                            <input type="date" name="NgayBatDau" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-dark">Ngày kết thúc dự kiến</label>
+                            <input type="date" name="NgayKetThuc" class="form-control form-control-sm">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Mô tả mục tiêu</label>
+                        <textarea name="MoTa" class="form-control form-control-sm" rows="2" placeholder="Mục tiêu cốt lõi cần đạt được..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Nội dung công việc sinh viên cần làm</label>
+                        <textarea name="NoiDungCongViec" class="form-control form-control-sm" rows="2" placeholder="Các đầu việc cụ thể..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark" for="editStageStatus">Trạng thái</label>
+                        <select id="editStageStatus" name="TrangThai" class="form-select form-select-sm" required>
+                            <option value="CHUA_BAT_DAU">Chưa bắt đầu</option>
+                            <option value="DANG_THUC_HIEN">Đang thực hiện</option>
+                            <option value="HOAN_THANH">Hoàn thành</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small text-dark">Kết quả đầu ra dự kiến</label>
+                        <input type="text" name="KetQuaDauRa" class="form-control form-control-sm" placeholder="VD: Tài liệu thiết kế CSDL, Mã nguồn API...">
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-2">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- MODAL THÊM ĐỢT NỘP BÁO CÁO --}}
 <div class="modal fade" id="modalAddDotNop" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -843,6 +954,83 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalEditDotNop" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow rounded-4">
+            <form method="POST" id="formEditDotNop" class="d-flex flex-column overflow-hidden" style="max-height:100%;">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="_round_id" id="inputEditDotNopId">
+
+                <div class="modal-header border-bottom px-4 py-3">
+                    <h6 class="modal-title fw-bold text-dark">
+                        <i class="fa-solid fa-file-circle-plus text-success me-2"></i>Sửa Đợt Nộp Báo Cáo
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body px-4 py-3">
+                    <div id="editRoundErrors" class="alert alert-danger small {{ $errors->updateRound->any() ? '' : 'd-none' }}">
+                        @foreach($errors->updateRound->all() as $message)<div>{{ $message }}</div>@endforeach
+                    </div>
+                    <div class="alert alert-light border small mb-3">
+                        <span class="text-muted">Thuộc giai đoạn:</span>
+                        <strong class="text-dark d-block" id="labelEditDotNopTenGiaiDoan">---</strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Tên đợt nộp báo cáo <span class="text-danger">*</span></label>
+                        <input type="text" name="TenDotNop" maxlength="255" class="form-control form-control-sm" placeholder="VD: Đợt 1: Báo cáo kết quả phân tích & Usecase" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark">Ngày mở nộp</label>
+                            <input type="datetime-local" name="NgayMoNop" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark">Hạn nộp (Deadline)</label>
+                            <input type="datetime-local" name="HanNop" class="form-control form-control-sm">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Nội dung yêu cầu sinh viên báo cáo</label>
+                        <textarea name="NoiDungYeuCau" class="form-control form-control-sm" rows="3" placeholder="Yêu cầu cụ thể những phần sinh viên phải trình bày trong báo cáo..."></textarea>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label for="editRoundStatus" class="form-label small fw-bold">Trạng thái</label>
+                            <select id="editRoundStatus" name="TrangThai" class="form-select form-select-sm" required>
+                                <option value="DANG_MO">Đang mở</option><option value="TAM_DONG">Tạm đóng</option>
+                                <option value="DA_DONG">Đã đóng</option><option value="HOAN_THANH">Hoàn thành</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="editRoundLimit" class="form-label small fw-bold">Số lần nộp tối đa</label>
+                            <input id="editRoundLimit" type="number" name="SoLanNopToiDa" min="1" class="form-control form-control-sm" placeholder="Để trống: không giới hạn">
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input type="hidden" name="YeuCauSourceCode" value="0">
+                        <input class="form-check-input" type="checkbox" name="YeuCauSourceCode" value="1" id="switchEditYeuCauCode">
+                        <label class="form-check-label small fw-bold text-dark" for="switchEditYeuCauCode">
+                            Yêu cầu link GitHub / GitLab / Bitbucket
+                        </label>
+                    </div>
+                    <div class="form-text small">Chỉ tích khi đợt này cần kiểm tra mã nguồn. Không tích thì sinh viên không thấy ô nhập link Git.</div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-2">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-4 fw-bold">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 window.selectGroup = function(groupId) {
@@ -856,6 +1044,31 @@ window.selectGroup = function(groupId) {
     if (selectedPanel) selectedPanel.classList.remove('d-none');
 };
 
+window.openEditGiaiDoanModal = function(button, restoredValues = null) {
+    const form = document.getElementById('formEditGiaiDoan');
+    const values = restoredValues || JSON.parse(button.dataset.stage);
+    form.reset();
+    form.action = button.dataset.updateUrl;
+    document.getElementById('inputEditGiaiDoanId').value = button.dataset.stageId;
+    ['TenGiaiDoan', 'MoTa', 'NoiDungCongViec', 'KetQuaDauRa', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'].forEach(name => {
+        form.elements.namedItem(name).value = values[name] ?? '';
+    });
+    document.getElementById('editStageErrors').classList.toggle('d-none', !restoredValues);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditGiaiDoan')).show();
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    @if($errors->updateStage->any())
+        const stageId = @json((string) old('_stage_id'));
+        const button = Array.from(document.querySelectorAll('[data-edit-stage]')).find(el => el.dataset.stageId === stageId);
+        if (button) {
+            const panel = button.closest('[id^="panel-group-"]');
+            if (panel) selectGroup(panel.id.replace('panel-group-', ''));
+            openEditGiaiDoanModal(button, @json(old()));
+        }
+    @endif
+});
+
 window.openAddGiaiDoanModal = function(maDeTai) {
     const input = document.getElementById('inputAddGiaiDoanMaDeTai');
     if (input) input.value = maDeTai;
@@ -865,6 +1078,32 @@ window.openAddGiaiDoanModal = function(maDeTai) {
         modal.show();
     }
 };
+
+window.openEditDotNopModal = function(button, restoredValues = null) {
+    const form = document.getElementById('formEditDotNop');
+    const values = restoredValues || JSON.parse(button.dataset.round);
+    form.reset();
+    form.action = button.dataset.updateUrl;
+    document.getElementById('inputEditDotNopId').value = button.dataset.roundId;
+    document.getElementById('labelEditDotNopTenGiaiDoan').textContent = button.dataset.stageName;
+    ['TenDotNop', 'NoiDungYeuCau', 'NgayMoNop', 'HanNop', 'TrangThai', 'SoLanNopToiDa'].forEach(name => {
+        form.elements.namedItem(name).value = values[name] ?? '';
+    });
+    document.getElementById('switchEditYeuCauCode').checked = [true, 1, '1'].includes(values.YeuCauSourceCode);
+    document.getElementById('editRoundErrors').classList.toggle('d-none', !restoredValues);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditDotNop')).show();
+};
+document.addEventListener('DOMContentLoaded', function() {
+    @if($errors->updateRound->any())
+        const roundId = @json((string) old('_round_id'));
+        const button = Array.from(document.querySelectorAll('[data-edit-round]')).find(el => el.dataset.roundId === roundId);
+        if (button) {
+            const panel = button.closest('[id^="panel-group-"]');
+            if (panel) selectGroup(panel.id.replace('panel-group-', ''));
+            openEditDotNopModal(button, @json(old()));
+        }
+    @endif
+});
 
 window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan) {
     document.querySelector('#modalAddDotNop form')?.reset();

@@ -475,19 +475,6 @@ class DuyetBaoCaoController extends Controller
     // =========================================================================
 
     /**
-     * Khởi tạo lộ trình 6 giai đoạn kỹ thuật & các đợt nộp mẫu cho Đề tài
-     */
-    public function khoiTaoGiaiDoanMau(Request $request, $maDeTai)
-    {
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        $deTai = DeTai::where('MaDeTai', $maDeTai)->where('MaGV', $giangVien->MaGV)->firstOrFail();
-
-        $count = $this->progressService->khoiTaoGiaiDoanMauChoDeTai($deTai);
-        return redirect()->back()->with('success', "Đã khởi tạo thành công {$count} giai đoạn kỹ thuật mẫu cho đề tài '{$deTai->TenDeTai}'!");
-    }
-
-    /**
      * Tạo giai đoạn thực hiện mới cho đề tài
      */
     public function storeGiaiDoan(Request $request)
@@ -516,26 +503,27 @@ class DuyetBaoCaoController extends Controller
      */
     public function updateGiaiDoan(Request $request, $id)
     {
-        $request->validate([
+        $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
+        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
+        abort_unless($giangVien && $giaiDoan->deTai && $giaiDoan->deTai->MaGV === $giangVien->MaGV,
+            403, 'Bạn không phải GVHD của đề tài này.');
+
+        $data = $request->validateWithBag('updateStage', [
             'TenGiaiDoan' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
             'NoiDungCongViec' => 'nullable|string',
             'KetQuaDauRa' => 'nullable|string',
             'NgayBatDau' => 'nullable|date',
-            'NgayKetThuc' => 'nullable|date',
+            'NgayKetThuc' => $request->filled('NgayBatDau')
+                ? 'nullable|date|after_or_equal:NgayBatDau' : 'nullable|date',
             'YeuCauCanDat' => 'nullable|string',
             'TrangThai' => 'required|in:CHUA_BAT_DAU,DANG_THUC_HIEN,HOAN_THANH',
+        ], [
+            'NgayKetThuc.after_or_equal' => 'Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.',
+            'TenGiaiDoan.required' => 'Vui lòng nhập tên giai đoạn.',
         ]);
 
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
-
-        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
-            abort(403, 'Bạn không phải GVHD của đề tài này.');
-        }
-
-        $this->progressService->capNhatGiaiDoan($giaiDoan, $request->all());
+        $this->progressService->capNhatGiaiDoan($giaiDoan, $data);
         return redirect()->back()->with('success', "Đã cập nhật giai đoạn '{$giaiDoan->TenGiaiDoan}' thành công!");
     }
 
@@ -548,9 +536,8 @@ class DuyetBaoCaoController extends Controller
         $giangVien = GiangVien::getLoggedInGiangVien($user);
         $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
 
-        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
-            abort(403, 'Bạn không phải GVHD của đề tài này.');
-        }
+        abort_unless($giangVien && $giaiDoan->deTai && $giaiDoan->deTai->MaGV === $giangVien->MaGV,
+            403, 'Bạn không phải GVHD của đề tài này.');
 
         try {
             $this->progressService->xoaGiaiDoan($giaiDoan);
@@ -596,39 +583,43 @@ class DuyetBaoCaoController extends Controller
      */
     public function updateDotNop(Request $request, $id)
     {
-        $request->validate([
+        $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        abort_unless($giangVien && $dotNop->deTai && $dotNop->deTai->MaGV === $giangVien->MaGV,
+            403, 'Bạn không phải GVHD của đề tài này.');
+
+        $data = $request->validateWithBag('updateRound', [
             'TenDotNop' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
             'NoiDungYeuCau' => 'nullable|string',
             'NgayMoNop' => 'nullable|date',
-            'HanNop' => 'nullable|date',
+            'HanNop' => $request->filled('NgayMoNop') ? 'nullable|date|after_or_equal:NgayMoNop' : 'nullable|date',
             'DinhDangChoPhep' => 'nullable|string',
             'YeuCauSourceCode' => 'nullable|boolean',
             'SoLanNopToiDa' => 'nullable|integer|min:1',
             'TrangThai' => 'required|in:DANG_MO,TAM_DONG,DA_DONG,HOAN_THANH',
+        ], [
+            'TenDotNop.required' => 'Vui lòng nhập tên đợt nộp.',
+            'HanNop.after_or_equal' => 'Hạn nộp phải bằng hoặc sau ngày mở nộp.',
         ]);
-
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
-
-        if ($dotNop->deTai->MaGV !== $giangVien->MaGV) {
-            abort(403, 'Bạn không phải GVHD của đề tài này.');
-        }
-
-        $dotNop->update([
-            'TenDotNop' => $request->TenDotNop,
-            'MoTa' => $request->MoTa,
-            'NoiDungYeuCau' => $request->NoiDungYeuCau,
-            'NgayMoNop' => $request->NgayMoNop,
-            'HanNop' => $request->HanNop,
-            'DinhDangChoPhep' => $request->DinhDangChoPhep ?? 'pdf',
-            'YeuCauSourceCode' => $request->boolean('YeuCauSourceCode'),
-            'SoLanNopToiDa' => $request->SoLanNopToiDa ? (int)$request->SoLanNopToiDa : null,
-            'TrangThai' => $request->TrangThai,
-        ]);
+        $data['YeuCauSourceCode'] = $request->boolean('YeuCauSourceCode');
+        $dotNop->update($data);
 
         return redirect()->back()->with('success', "Đã cập nhật đợt nộp '{$dotNop->TenDotNop}' thành công!");
+    }
+
+    public function destroyDotNop($id)
+    {
+        $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
+        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        abort_unless($giangVien && $dotNop->deTai && $dotNop->deTai->MaGV === $giangVien->MaGV,
+            403, 'Bạn không phải GVHD của đề tài này.');
+        try {
+            $this->progressService->xoaDotNop($dotNop);
+            return redirect()->back()->with('success', 'Đã xóa đợt nộp báo cáo.');
+        } catch (\DomainException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     public function capNhatYeuCauMaNguon(Request $request, $id)

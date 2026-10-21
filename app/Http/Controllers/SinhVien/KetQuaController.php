@@ -82,10 +82,12 @@ class KetQuaController extends Controller
             ? KetQuaSinhVien::whereIn('MaSV', $memberIds)->get()->keyBy('MaSV')
             : collect();
 
-        // Danh sách phiếu chấm điểm từ các thành viên Hội đồng (chỉ hiển thị khi đã công bố)
+        // Chỉ lấy phiếu của sinh viên hiện tại trong hội đồng của hồ sơ đã công bố.
         $phieuChamDiems = ($hoSo && $daCongBoChinhThuc)
             ? PhieuChamDiem::with('giangVien.boMon')
                 ->where('MaHoSo', $hoSo->MaHoSo)
+                ->where('MaHoiDong', $hoSo->MaHoiDong)
+                ->where('MaSV', $sinhVien->MaSV)
                 ->where('TrangThai', 'Đã hoàn thành')
                 ->get()
             : collect();

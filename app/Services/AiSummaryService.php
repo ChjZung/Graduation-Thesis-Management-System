@@ -136,7 +136,7 @@ class AiSummaryService
             Log::error('AiSummaryService: Python process exception.', ['type'=>get_class($e)]);
         }
 
-        $fallback = $this->fallbackSummarize($pdfPath, $stage, 'Chưa hoàn tất xử lý tài liệu.');
+        $fallback = $this->fallbackSummarize($pdfPath, $stage, $options['review_context'] ?? []);
         $parsed = isset($result) && is_object($result) ? json_decode($result->output(),true) : [];
         $failure = $parsed['processing_error'] ?? ['stage'=>'process','code'=>'extraction_failed','message'=>'Không đọc được tài liệu hoặc chưa chạy được tiến trình phân tích.'];
         $fallback['data']['processing_errors'] = [$failure];
@@ -144,8 +144,7 @@ class AiSummaryService
     }
 
     /**
-     * Định dạng kết quả từ Map-Reduce sang schema chuẩn 11 phần và text preview cho form.
-     * Đảm bảo nguyên tắc Không tự tạo nội dung (Zero Hallucination).
+     * Giữ các mục linh hoạt, ngữ cảnh và nguồn; hỗ trợ JSON lịch sử.
      */
     public function formatSummarizeResult(array $raw, int $stage = 1): array
     {
@@ -238,14 +237,21 @@ class AiSummaryService
         }
         $sectionsData['processing_errors'] = $data['processing_errors'] ?? [];
         $sectionsData['document_content'] = $data['document_content'] ?? [];
-        $sectionsData['schema_version'] = 3;
+        foreach (['summary_sections', 'additional_sections', 'summary_scope'] as $field) {
+            if (isset($data[$field]) && is_array($data[$field])) $sectionsData[$field] = $data[$field];
+        }
+        $sectionsData['schema_version'] = (int) ($data['schema_version'] ?? 3);
         $sectionsData['document_type'] = $data['document_type'] ?? $data['analysis']['document_type'] ?? 'pdf';
         $sectionsData = array_intersect_key($sectionsData, array_flip([
-            'overall_summary', 'document_content', 'completed_work', 'difficulties', 'next_steps', 'analysis',
+            'overall_summary', 'document_content', 'summary_sections', 'additional_sections', 'summary_scope', 'completed_work', 'difficulties', 'next_steps', 'analysis',
             'citations', 'document_outline', 'requirements_review', 'schema_version', 'document_type', 'completion_percentage', 'completion_basis', 'processing_errors',
         ]));
 
-        $stdReport = $raw['standard_report'] ?? [
+        $stdReport = $raw['standard_report'] ?? ((int) ($data['schema_version'] ?? 0) >= 5 ? [
+            'tom_tat' => $overallSummary,
+            'sections' => $data['summary_sections'] ?? [],
+            'additional_sections' => $data['additional_sections'] ?? [],
+        ] : [
             'tom_tat' => $overallSummary,
             'cong_viec_hoan_thanh' => array_values(array_filter($congViecHoanThanh)),
             'ket_qua_dat_duoc'     => array_values(array_filter($ketQuaDatDuoc)),
@@ -255,7 +261,7 @@ class AiSummaryService
             'noi_dung_chua_ro'     => array_values(array_filter($noiDungChuaRo)),
             'canh_bao'             => is_array($canhBao) ? $canhBao : [],
             'nguon_tham_chieu'     => array_map(fn($c) => 'Trang ' . ($c['page'] ?? 1), $citations) ?: ['Trang 1'],
-        ];
+        ]);
 
         $metrics = $raw['metrics'] ?? [
             'total_pages' => $totalPages,
@@ -275,7 +281,7 @@ class AiSummaryService
             // Cấu trúc báo cáo khoa học chuẩn
             'standard_report'      => $stdReport,
             'metrics'              => $metrics,
-            // 11 phần dữ liệu chi tiết
+            // Các trường tương thích với bản lưu và chức năng cũ.
             'cong_viec_hoan_thanh' => array_values(array_filter($congViecHoanThanh)),
             'ket_qua_dat_duoc'     => array_values(array_filter($ketQuaDatDuoc)),
             'kho_khan'             => array_values(array_filter($khoKhan)),
@@ -305,26 +311,27 @@ class AiSummaryService
      * Fallback khi không chạy được python hoặc file bị lỗi.
      * TUYỆT ĐỐI KHÔNG TỰ BỊA NỘI DUNG / KHÔNG TỰ GÁN TECH STACK HOẶC KHÓ KHĂN GIẢ.
      */
-    private function fallbackSummarize(string $pdfPath, int $stage = 1, string $reason = ''): array
+    private function fallbackSummarize(string $pdfPath, int $stage = 1, array $context = []): array
     {
-        $stageNames = [
-            1 => 'Giai đoạn 1',
-            2 => 'Giai đoạn 2',
-            3 => 'Giai đoạn 3',
-            4 => 'Giai đoạn 4',
-            5 => 'Giai đoạn 5',
-            6 => 'Giai đoạn 6',
-        ];
-        $stageName = $stageNames[$stage] ?? "Giai đoạn {$stage}";
-
-        $explanation = "Hệ thống đã tiếp nhận báo cáo ({$stageName}) nhưng chưa đọc và tóm tắt được đầy đủ. Bạn có thể kiểm tra tệp hoặc thử phân tích lại.";
+        $explanation = 'Hệ thống đã tiếp nhận báo cáo nhưng chưa đọc và tóm tắt được đầy đủ. Bạn có thể kiểm tra tệp hoặc thử phân tích lại.';
+        ksort($context);
+        $contextHash = hash('sha256', json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        $documentType = strtolower(pathinfo($pdfPath, PATHINFO_EXTENSION)) === 'docx' ? 'docx' : 'pdf';
 
         return $this->formatSummarizeResult([
             'success' => true,
             'source' => 'system_fallback',
-            'total_pages' => 1,
-            'processing_time' => 0.05,
+            'total_pages' => 0,
+            'processing_time' => 0,
             'data' => [
+                'schema_version' => 5,
+                'document_type' => $documentType,
+                'document_content' => [], 'summary_sections' => [], 'additional_sections' => [],
+                'summary_scope' => ['mode'=>'document_fallback', 'context_hash'=>$contextHash,
+                    'note'=>'Chưa xác định được nội dung trọng tâm; không dùng trạng thái lỗi để kết luận sinh viên thiếu yêu cầu.'],
+                'analysis' => ['version'=>5, 'source'=>'system_fallback', 'status'=>'partial',
+                    'total_pages'=>0, 'total_units'=>0, 'analyzed_chunks'=>0, 'total_chunks'=>0,
+                    'text_complete'=>false, 'reduce_completed'=>false, 'note'=>$explanation],
                 'completed_work' => [],
                 'deliverables' => [],
                 'technical_links' => [],

@@ -1,0 +1,27 @@
+{
+  "scope": "Local extraction/segmentation and literal-extract fallback; not an LLM quality evaluation.",
+  "results": [
+    {
+      "file": "baocao_dot26_v1_1792515385.pdf",
+      "pages": 62,
+      "chunks": 30,
+      "uncovered_text_characters": 0,
+      "preserved_exact_extracts": 3,
+      "fallback_marked_partial": true,
+      "original_file_unchanged": true,
+      "visual_unread_pages": 33,
+      "llm_calls": 0
+    },
+    {
+      "file": "baocao_dot17_v1_1792394248.pdf",
+      "pages": 72,
+      "chunks": 16,
+      "uncovered_text_characters": 0,
+      "preserved_exact_extracts": 4,
+      "fallback_marked_partial": true,
+      "original_file_unchanged": true,
+      "visual_unread_pages": 41,
+      "llm_calls": 0
+    }
+  ]
+}

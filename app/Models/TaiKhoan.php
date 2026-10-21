@@ -96,6 +96,17 @@ class TaiKhoan extends Authenticatable
         return $this->MatKhau;
     }
 
+    public function isTruongKhoa(): bool
+    {
+        return $this->vaiTro?->TenVaiTro === 'Trưởng khoa';
+    }
+
+    public function isAdmin(): bool
+    {
+        // Keep the same Admin / Giáo vụ compatibility as CheckRole middleware.
+        return in_array($this->vaiTro?->TenVaiTro, ['Admin', 'Giáo vụ'], true);
+    }
+
     public function isPasswordInitial(): bool
     {
         return ($this->TrangThaiMatKhau === 'INITIAL' || $this->BatBuocDoiMatKhau === true);

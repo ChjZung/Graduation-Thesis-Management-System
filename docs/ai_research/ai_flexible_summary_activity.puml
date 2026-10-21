@@ -1,0 +1,98 @@
+@startuml
+title Tóm tắt linh hoạt theo yêu cầu giảng viên — V5
+|Người dùng|
+start
+:Nộp PDF và ghi chú;
+|Laravel|
+:Kiểm tra quyền, định dạng và lưu bài nộp;
+:Đưa công việc vào hàng đợi AI;
+|Worker|
+:Đọc cấu hình và checkpoint riêng;
+:Tính hash nội dung PDF;
+if (Có cache trích xuất hợp lệ?) then (có)
+  :Dùng lại văn bản và số trang;
+else (không)
+  :PyMuPDF trích xuất văn bản từng trang;
+  :Lưu cache; ghi nhận trang ảnh/scan chưa đọc;
+endif
+if (Có văn bản đọc được?) then (không)
+  :Lưu lỗi trích xuất và giới hạn OCR;
+  :Hiển thị chưa đánh giá được;
+  stop
+endif
+:Chia theo chương/mục;
+:Chia tiếp phần dài theo ngân sách, có overlap;
+while (Còn chunk chưa Map thành công?) is (có)
+  if (Checkpoint Map hợp lệ?) then (có)
+    :Dùng lại JSON Map;
+  else (không)
+    :Điều tiết quota và gọi LLM Map;
+    :Kiểm tra JSON, câu trích trong chunk và trang gốc;
+    if (Map hợp lệ?) then (có)
+      :Gắn mã nguồn và lưu checkpoint;
+    else (không)
+      :Thử lại có giới hạn nếu lỗi cho phép;
+      :Giữ các phần thành công, ghi phần lỗi;
+    endif
+  endif
+  if (Hết ngân sách hoặc quota?) then (có)
+    :Đánh dấu chờ thử tiếp;
+    break
+  endif
+endwhile (không)
+:Đọc tên giai đoạn, đợt và yêu cầu cụ thể;
+:Không suy nội dung từ số giai đoạn;
+:Đóng gói các JSON Map theo ngân sách Reduce;
+while (Cần tổng hợp thêm tầng và còn giới hạn?) is (có)
+  :Đưa ngữ cảnh giảng viên vào mỗi tầng Reduce;
+  :Gọi LLM Reduce hoặc dùng checkpoint;
+  :Giải mã các source_ids về ý nguồn;
+  :Giữ nội dung, tính chất ý, câu trích và trang;
+  if (Hợp lệ và thu gọn được?) then (có)
+    :Lưu kết quả tầng và đóng gói tầng tiếp;
+  else (không)
+    :Giữ nguồn đã xác thực; đánh dấu Reduce chưa hoàn tất;
+    break
+  endif
+endwhile (không)
+if (Yêu cầu rõ và đủ ngữ cảnh?) then (có)
+  :Tạo tổng quan và các mục trọng tâm theo yêu cầu;
+  :Nội dung khác quan trọng đưa vào Xem thêm;
+else (không)
+  :Tóm tắt theo nội dung thực tế của tài liệu;
+  :Nêu giới hạn yêu cầu trống, chung chung hoặc mâu thuẫn;
+endif
+if (Giảng viên có yêu cầu đối chiếu?) then (có)
+  :Đọc tên giai đoạn, đợt nộp và yêu cầu;
+  :Tách tiêu chí, tìm bằng chứng trong văn bản PDF gốc;
+  :LLM chọn bằng chứng và kết luận từng tiêu chí;
+  :Sửa riêng tiêu chí sai nguồn có giới hạn;
+  :Kiểm chứng nguyên văn và mức liên quan;
+  :Không công bố kết luận đáp ứng nếu kiểm chứng lỗi;
+endif
+:Tính độ bao phủ, ghi lỗi và trang hình chưa đọc;
+|Laravel|
+:Lưu JSON theo phiên bản bài nộp;
+if (Còn lỗi có thể thử lại?) then (có)
+  :Lên lịch thử tiếp với checkpoint;
+else (không)
+  :Đánh dấu hoàn tất hoặc hoàn tất một phần;
+endif
+|Người dùng|
+:Xem tổng quan, các mục linh hoạt và nội dung khác;
+:Xem đối chiếu riêng bên dưới;
+:Bấm trích dẫn;
+|Laravel|
+:Kiểm tra phiên đăng nhập, quyền và tệp;
+if (Được phép xem?) then (có)
+  :Mở trang PDF gốc;
+  if (Khớp đoạn trích?) then (có)
+    :Tô vàng và cuộn đến đoạn;
+  else (không)
+    :Báo không khớp, không tô sai đoạn;
+  endif
+else (không)
+  :Thông báo hết phiên, thiếu quyền hoặc mất tệp;
+endif
+stop
+@enduml

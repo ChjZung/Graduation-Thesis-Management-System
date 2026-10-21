@@ -4,13 +4,17 @@ Luồng nộp theo đợt, nộp báo cáo nhỏ và hai nút Phân tích lại 
 
 ## Chạy trên Laragon
 
-Mở terminal ở thư mục project và chạy:
+Nhấp đúp `CHAY_AI.bat` trong thư mục project, giữ cửa sổ đó mở khi dùng AI. Script chỉ chạy worker, không migrate/seed hoặc thay đổi dữ liệu nghiệp vụ. Nếu đã có worker, khóa file sẽ chặn chạy trùng.
+
+Hoặc mở terminal ở thư mục project và chạy:
 
 ```powershell
 php artisan ai:work
 ```
 
 Giữ tiến trình này chạy khi sử dụng chức năng AI. Sau khi khởi động lại máy hoặc dừng các tiến trình PHP, chạy lại lệnh. Worker dùng khóa file để tránh mở trùng trên cùng máy. Để kiểm tra một job có sẵn rồi thoát: `php artisan ai:work --once`.
+
+Nếu giao diện báo **Tiến trình xử lý AI đang tắt**, chạy lại file/lệnh trên; các bài đang chờ sẽ tiếp tục, không cần nộp lại. Trạng thái này được kiểm tra qua khóa hệ điều hành, không suy đoán từ quota.
 
 Khi triển khai server, dùng process manager của hệ điều hành cho lệnh trên, bật tự khởi động lại. Worker timeout 390 giây; `retry_after` của connection là 450 giây để tránh một job đang chạy bị nhận lại quá sớm. Không dùng worker connection mặc định để thay thế lệnh này.
 
@@ -36,6 +40,8 @@ HTTP 429 không tự chuyển model và không tự gọi lại bên trong lớp
 Hạn mức ngày sử dụng mốc nửa đêm Pacific khi Python có dữ liệu múi giờ; nếu không có (có thể gặp trên Windows), dùng thời gian chờ thận trọng 24 giờ. Thời điểm hiển thị là lịch thử tiếp dự kiến, không đảm bảo Google sẽ cấp lại quota. Hệ thống thử tối đa 20 lượt xử lý cho mỗi yêu cầu, sau đó giữ kết quả và yêu cầu xem lại nguyên nhân. Lỗi xác thực, request không hợp lệ, file không đọc được dừng sớm.
 
 ## Tiếp tục và giữ kết quả
+
+Pipeline tóm tắt hiện tại dùng [V5 linh hoạt theo yêu cầu giảng viên](ai_research/AI_FLEXIBLE_SUMMARY_V5.md). Khi yêu cầu thay đổi, Map độc lập ngữ cảnh được tái sử dụng; Reduce tổ chức lại trọng tâm và phần đối chiếu chạy lại. “Đối chiếu lại” cũng cập nhật trọng tâm nếu JSON V5 đang theo ngữ cảnh cũ.
 
 - Checkpoint của phản hồi thành công nằm trong `storage/app/private/ai_cache`, có thời hạn 3 ngày; gắn với hash nội dung file, phiên bản pipeline, prompt, model và hash tài khoản. Thay nội dung file/đề bài/model không dùng nhầm checkpoint. Đề bài đối chiếu nằm trong prompt; thay đề bài có thể vẫn tái sử dụng phần tóm tắt không phụ thuộc đề bài.
 - `_processing` trong JSON của từng khối chứa token thế hệ xử lý, trạng thái, số lượt, nguyên nhân và lịch thử tiếp; không thay trạng thái duyệt bài của giảng viên.

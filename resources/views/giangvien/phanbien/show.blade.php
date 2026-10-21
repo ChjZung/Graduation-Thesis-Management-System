@@ -166,12 +166,6 @@
                     </div>
                     @endif
 
-                    <!-- Mục tiêu -->
-                    <div class="mb-4 pb-3 border-bottom">
-                        <label class="form-label text-muted small fw-bold text-uppercase mb-2" style="letter-spacing: 0.5px;">Mục Tiêu &amp; Sản Phẩm Dự Kiến</label>
-                        <div class="p-4 bg-light rounded-4 border text-dark fs-6" style="line-height: 1.7; white-space: pre-line;">{{ $detai->MucTieu ?? 'Chưa cập nhật' }}</div>
-                    </div>
-
                     <!-- Mô tả -->
                     <div class="mb-4 pb-3 border-bottom">
                         <label class="form-label text-muted small fw-bold text-uppercase mb-2" style="letter-spacing: 0.5px;">Mô Tả Tóm Tắt Nội Dung</label>
@@ -181,7 +175,7 @@
                     <!-- Yêu cầu -->
                     <div class="mb-4 pb-3 border-bottom">
                         <label class="form-label text-muted small fw-bold text-uppercase mb-2" style="letter-spacing: 0.5px;">Yêu Cầu Đối Với Sinh Viên</label>
-                        <div class="p-4 bg-light rounded-4 border text-dark fs-6" style="line-height: 1.7; white-space: pre-line;">{{ $detai->YeuCau ?? 'Chưa cập nhật' }}</div>
+                        <div class="p-4 bg-light rounded-4 border text-dark fs-6 rich-content-display" style="line-height: 1.7;">{!! \App\Helpers\HtmlHelper::clean($detai->YeuCau) ?: 'Chưa cập nhật' !!}</div>
                     </div>
 
                     <!-- File đề cương -->

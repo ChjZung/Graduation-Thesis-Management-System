@@ -154,6 +154,8 @@ evidence chỉ chứa nguồn thực sự hỗ trợ kết luận, relation ph�
                     citation_audit_status='completed')
         if not accepted:
             item['related_evidence'] = original_evidence
+        else:
+            item.pop('related_evidence', None)
     failed = sum(item.get('citation_audit_status') == 'failed' for item in positive)
     return {'status': 'failed' if failed == len(positive) else ('partial' if failed else 'completed'),
             'checked_items': checked, 'total_items': len(positive), 'rejected_quotes': rejected,

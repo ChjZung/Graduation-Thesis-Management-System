@@ -13,6 +13,10 @@
     $analysis = $aiData['analysis'] ?? [];
     $reviewRound = $dotNop ?? ($pb->dotNop ?? null);
     $requirementsReview = $aiData['requirements_review'] ?? null;
+    $flexibleSummary = (int) ($aiData['schema_version'] ?? 0) >= 5 && is_array($aiData['summary_sections'] ?? null);
+    $summaryScope = $aiData['summary_scope'] ?? [];
+    $additionalSections = $flexibleSummary ? ($aiData['additional_sections'] ?? []) : [];
+    $summaryStale = $flexibleSummary && $reviewRound && ($summaryScope['context_hash'] ?? '') !== $reviewRound->maNguCanhDoiChieuAi();
     $citationAvailable = !empty($pb->MaKhoi) && !empty($pb->DuongDanFile);
     $citationUrl = $citationAvailable ? route('baocao.ai.trich_dan', $pb->MaKhoi) : '';
     $pdfUrl = $citationAvailable ? route('baocao.ai.pdf', $pb->MaKhoi) : '';
@@ -30,10 +34,18 @@
         ['key' => 'difficulties', 'number' => 2, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties],
         ['key' => 'next_steps', 'number' => 3, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps],
     ];
+    if ($flexibleSummary) {
+        $sections = array_map(fn ($section) => array_merge($section, [
+            'key' => $section['id'] ?? 'topic', 'icon' => 'fa-file-lines', 'tone' => 'primary',
+        ]), $aiData['summary_sections']);
+        $additionalSections = array_map(fn ($section) => array_merge($section, [
+            'key' => $section['id'] ?? 'additional', 'icon' => 'fa-file-lines', 'tone' => 'primary',
+        ]), $additionalSections);
+    }
     $missingGroups = [];
     foreach ($sections as &$summarySection) {
         $summarySection['items'] = array_values(array_filter((array) $summarySection['items'], fn ($item) => trim(is_array($item) ? (string) ($item['content'] ?? '') : (string) $item) !== ''));
-        if (!$summarySection['items']) $missingGroups[] = mb_strtolower($summarySection['title']);
+        if (!$flexibleSummary && !$summarySection['items']) $missingGroups[] = mb_strtolower($summarySection['title']);
     }
     unset($summarySection);
 
@@ -97,11 +109,14 @@
 .ai-summary .ai-list { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
 .ai-summary .ai-list-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: #f8fafc; border: 1px solid #edf1f5; border-radius: 6px; }
 .ai-summary .ai-list-item > i { color: var(--ai-blue); margin-top: 4px; font-size: 13px; flex-shrink: 0; }
-.ai-summary .ai-item-content { min-width: 0; flex: 1; overflow-wrap: anywhere; white-space: pre-line; }
+.ai-summary .ai-item-content { min-width: 0; flex: 1; overflow-wrap: anywhere; white-space: normal; }
+.ai-summary .ai-item-content > div:not(.ai-source), .ai-summary .ai-item-content > q { white-space: pre-line; }
 .ai-summary [data-document-content] .ai-item-content { white-space: normal; }
 .ai-summary [data-document-content] .ai-evidence { white-space: pre-line; }
 .ai-summary .ai-source { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ai-summary .ai-evidence { display: block; color: var(--ai-muted); border-left: 2px solid #c8dff7; padding-left: 8px; margin: 8px 0 0; font-size: 13px; }
+.ai-summary [data-fact-kind] { display: block; color: var(--ai-muted); margin-bottom: 4px; font-size: 12px; }
+.ai-summary .ai-review-note[data-summary-scope="focused"] { background: var(--ai-tint); border-color: #c8dff7; color: var(--ai-navy); }
 .ai-summary .ai-empty { padding: 12px; border-radius: 6px; background: #f8fafc; color: var(--ai-muted); font-size: 13px; }
 .ai-summary .ai-tone-success .ai-list-item > i { color: #16815c; }
 .ai-summary .ai-tone-danger .ai-list-item > i { color: #c2414b; }
@@ -214,10 +229,19 @@
             <p class="ai-review-note">Một số trang có sơ đồ hoặc ảnh chưa được phân tích nội dung; chưa dùng các trang đó để kết luận thiếu yêu cầu.</p>
         @endif
         @if(!empty($analysis['checkpoint_warning']))<p class="ai-review-note">{{ $analysis['checkpoint_warning'] }}</p>@endif
+        @if($flexibleSummary)
+            <div class="ai-review-note" data-summary-scope="{{ $summaryScope['mode'] ?? 'document_fallback' }}">
+                <strong>{{ ($summaryScope['mode'] ?? '') === 'focused' ? 'Tóm tắt trọng tâm theo yêu cầu đợt nộp.' : 'Tóm tắt theo nội dung tài liệu.' }}</strong>
+                {{ $summaryScope['note'] ?? '' }}
+            </div>
+            @if($summaryStale)
+                <p class="ai-review-note" data-summary-stale>Yêu cầu hoặc tên giai đoạn/đợt đã thay đổi. Bản tóm tắt này theo ngữ cảnh cũ; chọn Phân tích lại hoặc Đối chiếu lại để cập nhật trọng tâm.</p>
+            @endif
+        @endif
         <div class="ai-grid">
             @if(trim((string) $overallSummary) !== '')
                 <section class="ai-section ai-section-wide ai-section-overview" data-summary-overview>
-                    <div class="ai-section-head"><h3 class="ai-section-title">Tóm tắt chung</h3></div>
+                    <div class="ai-section-head"><h3 class="ai-section-title">{{ $flexibleSummary ? 'Tổng quan tài liệu' : 'Tóm tắt chung' }}</h3></div>
                     <p class="ai-text-summary">{{ $overallSummary }}</p>
                     @if($documentContent)
                         <ul class="ai-list" style="margin-top:12px" data-document-content>
@@ -235,27 +259,27 @@
                 </section>
             @endif
             @foreach($sections as $section)
-                @if($section['items'])
-                    <section class="ai-section ai-section-wide ai-tone-{{ $section['tone'] }}" data-summary-group="{{ $section['key'] }}">
-                        <div class="ai-section-head"><h3 class="ai-section-title">{{ $section['title'] }}</h3><span class="ai-count">{{ count($section['items']) }} mục</span></div>
-                        <ul class="ai-list">
-                            @foreach($section['items'] as $item)
-                                @php
-                                    $itemContent = is_array($item) ? ($item['content'] ?? '') : (string) $item;
-                                    $itemPages = is_array($item) ? (array) ($item['source_pages'] ?? []) : [];
-                                    $itemEvidence = is_array($item) ? ($item['evidence'] ?? '') : '';
-                                @endphp
-                                <li class="ai-list-item"><i class="fa-solid {{ $section['icon'] }}" aria-hidden="true"></i><div class="ai-item-content">
-                                    <div>{{ $itemContent }}</div>
-                                    @if($itemEvidence)<q class="ai-evidence">{{ \Illuminate\Support\Str::limit($itemEvidence, 260) }}</q>@endif
-                                    @if($itemPages && $itemEvidence)<div class="ai-source">@foreach($itemPages as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $itemEvidence, 'citationProminent' => false, 'citationContext' => $itemContent]) @endforeach</div>@endif
-                                </div></li>
-                            @endforeach
-                        </ul>
-                    </section>
+                @if(!empty($section['items']))
+                    @include('partials.ai_summary_section')
                 @endif
             @endforeach
         </div>
+        @if($flexibleSummary && !$sections)
+            <p class="ai-empty">Chưa có mục trọng tâm được trích xuất. Đây chưa phải kết luận tài liệu thiếu yêu cầu; hãy xem độ bao phủ và phần đối chiếu bên dưới.</p>
+        @endif
+        @if($additionalSections)
+            <details class="ai-review-disclosure" data-summary-additional>
+                <summary>Nội dung khác trong tài liệu · Xem thêm ({{ count($additionalSections) }} mục)</summary>
+                <p class="ai-empty">Các nội dung này giúp hiểu toàn bộ tài liệu, không phải tiêu chí bắt buộc của đợt nộp hiện tại.</p>
+                <div class="ai-grid">
+                    @foreach($additionalSections as $section)
+                        @if(!empty($section['items']))
+                            @include('partials.ai_summary_section')
+                        @endif
+                    @endforeach
+                </div>
+            </details>
+        @endif
         @if($missingGroups)
             <p class="ai-empty" data-summary-missing>{{ $analysisComplete ? 'Báo cáo chưa đề cập: ' : 'Chưa trích xuất được từ phần văn bản đã đọc: ' }}{{ implode(', ', $missingGroups) }}.</p>
         @endif
@@ -338,6 +362,11 @@
                     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': card.dataset.csrfToken },
                     body: JSON.stringify({ page, quote: page === originalPage ? originalQuote : '' }),
                 });
+                if (response.redirected || [401, 419].includes(response.status)) throw new Error('Phiên đăng nhập đã hết. Vui lòng đăng nhập lại để xem bằng chứng.');
+                if (response.status === 403) throw new Error('Bạn không có quyền xem tài liệu này.');
+                if (response.status === 404) throw new Error('Không tìm thấy tệp báo cáo. Vui lòng kiểm tra lại bài nộp.');
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) throw new Error('Máy chủ chưa trả dữ liệu xem tài liệu hợp lệ. Hãy tải lại trang và thử lại.');
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Không mở được trang PDF.');
                 if (request.signal.aborted || !dialog.open) return;

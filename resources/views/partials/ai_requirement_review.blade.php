@@ -50,11 +50,11 @@
             @foreach(($requirementsReview['items'] ?? []) as $requirement)
                 @php $assessmentStatus = array_key_exists($requirement['status'] ?? '', $reviewStatusLabels) ? $requirement['status'] : 'insufficient_evidence'; @endphp
                 <article class="ai-review-item">
-                    <div class="ai-review-result"><h4>{{ $requirement['id'] ?? $loop->iteration }}. {{ $requirement['requirement'] ?? '' }}</h4><span class="ai-review-status ai-review-status-{{ $assessmentStatus }}">{{ $reviewInProgress && $assessmentStatus === 'insufficient_evidence' ? 'Đang chờ đối chiếu' : ($reviewProcessingFailed && $assessmentStatus === 'insufficient_evidence' ? 'Chưa đánh giá được · Lỗi xử lý' : $reviewStatusLabels[$assessmentStatus]) }}</span></div>
+                    <div class="ai-review-result"><h4>{{ $requirement['id'] ?? $loop->iteration }}. {{ $requirement['requirement'] ?? '' }}</h4><span class="ai-review-status ai-review-status-{{ $assessmentStatus }}" data-review-result="{{ $assessmentStatus }}">{{ $reviewInProgress && $assessmentStatus === 'insufficient_evidence' ? 'Đang chờ đối chiếu' : ($reviewProcessingFailed && $assessmentStatus === 'insufficient_evidence' ? 'Chưa đánh giá được · Lỗi xử lý' : $reviewStatusLabels[$assessmentStatus]) }}</span></div>
                     <p>{{ $requirement['explanation'] ?? '' }}</p>
-                    @foreach(($requirement['evidence'] ?? []) as $evidence)
+                    @foreach(array_merge($requirement['evidence'] ?? [], $requirement['related_evidence'] ?? []) as $evidence)
                         @if(!empty($evidence['verified']))
-                            @php $evidencePart = ['actor' => 'Tác nhân', 'precondition' => 'Tiền điều kiện', 'main_flow' => 'Luồng hoạt động chính'][$evidence['part'] ?? ''] ?? 'Nội dung làm bằng chứng'; @endphp
+                            @php $evidencePart = ['actor' => 'Tác nhân', 'precondition' => 'Tiền điều kiện', 'main_flow' => 'Luồng hoạt động chính'][$evidence['part'] ?? ''] ?? (!empty($evidence['relevance_verified']) ? 'Bằng chứng đã kiểm chứng' : 'Đoạn liên quan cần kiểm tra'); @endphp
                             <div class="ai-citation ai-review-evidence">
                                 <div class="ai-citation-head">
                                     <strong>{{ $evidencePart }}</strong>
@@ -63,7 +63,10 @@
                                 @if(!empty($evidence['relevance_verified']))
                                     <p class="ai-evidence-excerpt">“{{ \Illuminate\Support\Str::limit(preg_replace('/\s+/u', ' ', trim($evidence['quote'] ?? '')), 420) }}”</p>
                                 @endif
-                                <p class="ai-evidence-hint">Bấm để đến đúng vị trí được tô vàng trong báo cáo.</p>
+                                @if(empty($evidence['relevance_verified']) && ($requirementsReview['method'] ?? '') !== 'document_structure')
+                                    <p class="ai-evidence-hint">Đoạn này khớp văn bản nguồn nhưng chưa được xác nhận đủ để chứng minh yêu cầu.</p>
+                                @endif
+                                <p class="ai-evidence-hint">Bấm để mở trang nguồn; hệ thống chỉ tô vàng khi khớp chính xác đoạn trích.</p>
                                 <details class="ai-evidence-transcript">
                                     <summary>Xem trích dẫn nguyên văn</summary>
                                     <blockquote>{{ $evidence['quote'] ?? '' }}</blockquote>

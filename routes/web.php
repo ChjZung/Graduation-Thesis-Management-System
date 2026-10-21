@@ -298,12 +298,12 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::post('/baocao/{maBaoCao}/xac-nhan-giai-doan', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'xacNhanGiaiDoan'])->name('giangvien.baocao.xacnhan_giaidoan');
 
     // Quản lý giai đoạn và các đợt nộp báo cáo (Giảng viên hướng dẫn)
-    Route::post('/tiendo/giai-doan/khoi-tao/{maDeTai}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'khoiTaoGiaiDoanMau'])->name('giangvien.tiendo.giai_doan.khoi_tao');
     Route::post('/tiendo/giai-doan', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeGiaiDoan'])->name('giangvien.tiendo.giai_doan.store');
     Route::put('/tiendo/giai-doan/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'updateGiaiDoan'])->name('giangvien.tiendo.giai_doan.update');
     Route::delete('/tiendo/giai-doan/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'destroyGiaiDoan'])->name('giangvien.tiendo.giai_doan.destroy');
     Route::post('/tiendo/dot-nop', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeDotNop'])->name('giangvien.tiendo.dot_nop.store');
     Route::put('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'updateDotNop'])->name('giangvien.tiendo.dot_nop.update');
+    Route::delete('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'destroyDotNop'])->name('giangvien.tiendo.dot_nop.destroy');
     Route::patch('/tiendo/dot-nop/{id}/yeu-cau-ma-nguon', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'capNhatYeuCauMaNguon'])->name('giangvien.tiendo.dot_nop.yeu_cau_ma_nguon');
     Route::post('/tiendo/dot-nop/{id}/toggle', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'toggleDotNop'])->name('giangvien.tiendo.dot_nop.toggle');
     Route::get('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showDotNop'])->name('giangvien.tiendo.dot_nop.show');

@@ -161,6 +161,20 @@ class HoiDongController extends Controller
      */
     public function store(Request $request)
     {
+        // Older open wizard tabs submit display labels such as "Ủy viên 1".
+        // Persist the canonical role; numbering belongs only to the presentation.
+        $members = $request->input('thanh_viens');
+        if (is_array($members)) {
+            foreach ($members as &$member) {
+                if (is_array($member) && is_string($member['VaiTro'] ?? null)
+                    && preg_match('/^Ủy viên\s+[1-9]\d*$/u', trim($member['VaiTro']))) {
+                    $member['VaiTro'] = 'Ủy viên';
+                }
+            }
+            unset($member);
+            $request->merge(['thanh_viens' => $members]);
+        }
+
         $request->validate([
             // Bước 1: Thông tin hội đồng & Quyết định
             'TenHoiDong'      => 'required|string|max:200',
@@ -198,6 +212,10 @@ class HoiDongController extends Controller
             'danh_sach_ho_so.min'         => 'Hội đồng cần ít nhất 01 đề tài để tổ chức chấm.',
             'thanh_viens.required'        => 'Vui lòng phân công thành viên Hội đồng.',
             'thanh_viens.min'             => 'Hội đồng bảo vệ cần ít nhất 3 Giảng viên.',
+            'thanh_viens.*.VaiTro.in'     => 'Vai trò thành viên hội đồng không hợp lệ. Vui lòng chọn đúng chức danh.',
+            'thanh_viens.*.VaiTro.required' => 'Vui lòng chọn vai trò cho thành viên hội đồng.',
+            'thanh_viens.*.MaGV.required' => 'Vui lòng chọn giảng viên cho mỗi chức danh.',
+
         ]);
 
         // Kiểm tra cơ cấu thành viên bắt buộc

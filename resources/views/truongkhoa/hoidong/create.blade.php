@@ -865,7 +865,8 @@
             <div class="row g-2 align-items-center">
                 <div class="col-md-3">
                     <label class="form-label small fw-bold text-secondary mb-1">Chức danh:</label>
-                    <input type="text" name="thanh_viens[${index}][VaiTro]" class="form-control form-control-sm fw-semibold" value="Ủy viên ${soUyVienThem}">
+                    <input type="hidden" name="thanh_viens[${index}][VaiTro]" value="Ủy viên">
+                    <input type="text" class="form-control form-control-sm fw-semibold" value="Ủy viên ${soUyVienThem}" readonly aria-label="Chức danh ủy viên bổ sung">
                 </div>
                 <div class="col-md-8">
                     <label class="form-label small fw-bold text-secondary mb-1">Giảng viên thành viên:</label>
@@ -1027,5 +1028,29 @@
             tbody.appendChild(tr);
         }
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        const oldMembers = @json(old('thanh_viens', []));
+        for (const [index, member] of Object.entries(oldMembers || {})) {
+            if (!member || typeof member !== 'object') continue;
+            let select;
+            if (Number(index) >= 3) {
+                document.getElementById('btnThemUyVien').click();
+                select = document.querySelector('#containerUyVienThem .dong-uy-vien-them:last-child select');
+            } else {
+                select = document.getElementsByName(`thanh_viens[${index}][MaGV]`)[0];
+            }
+            if (select) select.value = member.MaGV || '';
+        }
+        const oldDossiers = @json(old('danh_sach_ho_so', []));
+        if (Array.isArray(oldDossiers)) {
+            document.querySelectorAll('.check-item-detai').forEach(input => {
+                input.checked = oldDossiers.includes(input.value);
+            });
+        }
+        validateFacultySelection();
+        @if(collect($errors->keys())->contains(fn($key) => str_starts_with($key, 'thanh_viens')))
+            setStep(3);
+        @endif
+    });
 </script>
 @endpush

@@ -1,0 +1,241 @@
+{
+  "scope": "Synthetic fixture facts and mocked API outputs. Not real Gemini results or a quality benchmark.",
+  "examples": [
+    {
+      "brief": "Chỉ khảo sát hiện trạng",
+      "schema_version": 5,
+      "overall_summary": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên. Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản. Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+      "summary_scope": {
+        "mode": "focused",
+        "note": "Phạm vi theo yêu cầu hiện có.",
+        "context_hash": "518a75077fdda3a6545c13499bd6076536cf25950f835a7eeddd18db577d4415"
+      },
+      "summary_sections": [
+        {
+          "id": "summary_sections_1",
+          "title": "Khảo sát theo yêu cầu",
+          "items": [
+            {
+              "topic": "Khảo sát hiện trạng",
+              "kind": "reported_work",
+              "content": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên.",
+              "evidence": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên.",
+              "source_pages": [
+                1
+              ],
+              "source_ids": [
+                "F1_1"
+              ],
+              "source_chunk_ids": [
+                1
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 1,
+                  "label": "Trang 1",
+                  "kind": "pdf"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "additional_sections": [
+        {
+          "id": "additional_sections_1",
+          "title": "Nội dung khác của tài liệu",
+          "items": [
+            {
+              "topic": "Mô hình đề xuất",
+              "kind": "proposal",
+              "content": "Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản.",
+              "evidence": "Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản.",
+              "source_pages": [
+                2
+              ],
+              "source_ids": [
+                "F2_1"
+              ],
+              "source_chunk_ids": [
+                2
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 2,
+                  "label": "Trang 2",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Thiết kế thực nghiệm",
+              "kind": "future_work",
+              "content": "Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+              "evidence": "Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+              "source_pages": [
+                3
+              ],
+              "source_ids": [
+                "F3_1"
+              ],
+              "source_chunk_ids": [
+                3
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 3,
+                  "label": "Trang 3",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Kết quả thực nghiệm",
+              "kind": "reported_result",
+              "content": "Kết quả thử nghiệm ghi nhận macro F1 là 0.84 trên tập kiểm thử độc lập.",
+              "evidence": "Kết quả thử nghiệm ghi nhận macro F1 là 0.84 trên tập kiểm thử độc lập.",
+              "source_pages": [
+                4
+              ],
+              "source_ids": [
+                "F4_1"
+              ],
+              "source_chunk_ids": [
+                4
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 4,
+                  "label": "Trang 4",
+                  "kind": "pdf"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "brief": "Trình bày mô hình đề xuất và thực nghiệm",
+      "schema_version": 5,
+      "overall_summary": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên. Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản. Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+      "summary_scope": {
+        "mode": "focused",
+        "note": "Phạm vi theo yêu cầu hiện có.",
+        "context_hash": "ac7dc249afcd445118ab4592e59fcb7fb82e87ccfbb59183c4ac52b8ed532df8"
+      },
+      "summary_sections": [
+        {
+          "id": "summary_sections_1",
+          "title": "Phương pháp và thực nghiệm",
+          "items": [
+            {
+              "topic": "Mô hình đề xuất",
+              "kind": "proposal",
+              "content": "Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản.",
+              "evidence": "Nhóm đề xuất sử dụng mô hình Transformer cho bài toán phân loại văn bản.",
+              "source_pages": [
+                2
+              ],
+              "source_ids": [
+                "F2_1"
+              ],
+              "source_chunk_ids": [
+                2
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 2,
+                  "label": "Trang 2",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Thiết kế thực nghiệm",
+              "kind": "future_work",
+              "content": "Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+              "evidence": "Dự kiến thực nghiệm với bộ dữ liệu tiếng Việt và so sánh với mô hình cơ sở.",
+              "source_pages": [
+                3
+              ],
+              "source_ids": [
+                "F3_1"
+              ],
+              "source_chunk_ids": [
+                3
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 3,
+                  "label": "Trang 3",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Kết quả thực nghiệm",
+              "kind": "reported_result",
+              "content": "Kết quả thử nghiệm ghi nhận macro F1 là 0.84 trên tập kiểm thử độc lập.",
+              "evidence": "Kết quả thử nghiệm ghi nhận macro F1 là 0.84 trên tập kiểm thử độc lập.",
+              "source_pages": [
+                4
+              ],
+              "source_ids": [
+                "F4_1"
+              ],
+              "source_chunk_ids": [
+                4
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 4,
+                  "label": "Trang 4",
+                  "kind": "pdf"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "additional_sections": [
+        {
+          "id": "additional_sections_1",
+          "title": "Nội dung khác của tài liệu",
+          "items": [
+            {
+              "topic": "Khảo sát hiện trạng",
+              "kind": "reported_work",
+              "content": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên.",
+              "evidence": "Nhóm đã khảo sát quy trình quản lý hiện tại qua phỏng vấn ba giảng viên.",
+              "source_pages": [
+                1
+              ],
+              "source_ids": [
+                "F1_1"
+              ],
+              "source_chunk_ids": [
+                1
+              ],
+              "verified": true,
+              "source_locations": [
+                {
+                  "id": 1,
+                  "label": "Trang 1",
+                  "kind": "pdf"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

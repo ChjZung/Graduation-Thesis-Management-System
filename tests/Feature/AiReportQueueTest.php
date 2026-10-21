@@ -16,6 +16,24 @@ class AiReportQueueTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_review_with_changed_brief_reorganizes_flexible_summary(): void
+    {
+        $report = $this->report();
+        $report->update(['TomTatJson'=>['schema_version'=>5,
+            'summary_scope'=>['context_hash'=>'previous-brief']]]);
+        $state = app(AiReportProcessingService::class)->enqueue($report, true);
+        $this->assertSame('full', $state['mode']);
+    }
+
+    public function test_review_with_same_brief_preserves_flexible_summary(): void
+    {
+        $report = $this->report();
+        $report->update(['TomTatJson'=>['schema_version'=>5,
+            'summary_scope'=>['context_hash'=>$report->dotNop->maNguCanhDoiChieuAi()]]]);
+        $state = app(AiReportProcessingService::class)->enqueue($report, true);
+        $this->assertSame('review', $state['mode']);
+    }
+
     private function report(): KhoiBaoCaoTienDo
     {
         $source=KhoiBaoCaoTienDo::whereNotNull('MaDotNop')->whereNotNull('DuongDanFile')->first();
@@ -119,4 +137,44 @@ class AiReportQueueTest extends TestCase
         $this->getJson('/bao-cao-ai/UNKNOWN/trang-thai')->assertRedirect(route('login'));
     }
 
+
+    public function test_offline_worker_is_reported_without_mutating_or_requeueing_submission(): void
+    {
+        $report = $this->report();
+        $processing = app(AiReportProcessingService::class);
+        $state = $processing->enqueue($report);
+        $processing->updateState($report->MaKhoi, $state['token'], [
+            'queued_at' => time() - 60, 'updated_at' => time() - 60,
+        ]);
+        $before = $report->fresh()->TomTatJson;
+        $jobCount = DB::table('jobs')->where('queue', 'ai-reports')->count();
+        $offline = Mockery::mock(AiReportProcessingService::class)->makePartial();
+        $offline->shouldReceive('workerRunning')->once()->andReturn(false);
+        $status = $offline->status($report->fresh());
+        $this->assertFalse($status['worker_running']);
+        $this->assertSame('queued', $status['status']);
+        $this->assertSame('worker_offline', $status['errors'][0]['code']);
+        $this->assertStringContainsString('Không cần nộp lại', $status['message']);
+        $this->assertSame($before, $report->fresh()->TomTatJson);
+        $this->assertSame($jobCount, DB::table('jobs')->where('queue', 'ai-reports')->count());
+    }
+
+    public function test_healthy_worker_does_not_replace_api_cooldown_message(): void
+    {
+        $report = $this->report();
+        $processing = app(AiReportProcessingService::class);
+        $state = $processing->enqueue($report);
+        $processing->updateState($report->MaKhoi, $state['token'], [
+            'status'=>'waiting', 'queued_at'=>time()-60, 'next_retry_at'=>time()+65,
+            'message'=>'Đang chờ giới hạn API.',
+            'errors'=>[['stage'=>'summary_part','code'=>'rate_limit','message'=>'Đang chờ API']],
+        ]);
+        $healthy = Mockery::mock(AiReportProcessingService::class)->makePartial();
+        $healthy->shouldReceive('workerRunning')->once()->andReturn(true);
+        $status = $healthy->status($report->fresh());
+        $this->assertTrue($status['worker_running']);
+        $this->assertSame('Đang chờ giới hạn API.', $status['message']);
+        $this->assertSame('rate_limit', $status['errors'][0]['code']);
+        $this->assertGreaterThan(time(), $status['next_retry_at']);
+    }
 }

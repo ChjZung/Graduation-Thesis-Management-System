@@ -69,28 +69,40 @@ class ReportDocumentsTest(unittest.TestCase):
             archive.writestr('word/document.xml', '<!DOCTYPE test [<!ENTITY x "boom">]><test/>')
         with self.assertRaises(ValueError): extract_docx_units(self.path)
 
-    def test_three_groups_and_source_locations_survive_pipeline(self):
-        payload = {'completed_work':[{'content':'Đã thiết kế CSDL','evidence':self.work,'source_pages':[1]}],
-                   'difficulties':[{'content':'Chưa kết nối máy chủ','evidence':self.problem,'source_pages':[2]}],
-                   'next_steps':[{'content':'Kiểm thử đăng ký','evidence':self.plan,'source_pages':[3]}],
-                   'tom_tat':'Nhóm đã thiết kế CSDL, còn khó khăn kết nối máy chủ. Kế hoạch là kiểm thử đăng ký.'}
-        with patch('ai_summarizer.call_gemini_api', return_value=(payload,'test')):
+    def test_flexible_sections_and_source_locations_survive_pipeline(self):
+        payload = {'items':[
+            {'topic':'Thiết kế dữ liệu','kind':'reported_work','content':'Đã thiết kế CSDL','evidence':self.work,'source_pages':[1]},
+            {'topic':'Môi trường thử nghiệm','kind':'limitation','content':'Chưa kết nối máy chủ','evidence':self.problem,'source_pages':[2]},
+            {'topic':'Kiểm thử','kind':'future_work','content':'Kiểm thử đăng ký','evidence':self.plan,'source_pages':[3]}]}
+        def api(prompt,*args,**kwargs):
+            if 'MAP LINH HOẠT' in prompt: return payload,'test'
+            return {'overview_source_ids':['F1_1'], 'scope':{'mode':'focused','note':'Theo yêu cầu'},
+                    'summary_sections':[{'title':'Thiết kế và kiểm thử','source_ids':['F1_1','F1_3']}],
+                    'additional_sections':[{'title':'Môi trường thử nghiệm','source_ids':['F1_2']}]},'test'
+        with patch('ai_summarizer.call_gemini_api', side_effect=api):
             result = run_map_reduce_pipeline(str(self.path),api_key='test')
         data = result['data']
         self.assertEqual('docx', data['document_type'])
         self.assertEqual(0, data['analysis']['total_pages'])
         self.assertEqual(3, data['analysis']['total_units'])
         self.assertEqual({'id':3,'label':'Đoạn 3','kind':'docx'}, data['next_steps'][0]['source_locations'][0])
-        self.assertEqual(3, data['schema_version'])
+        self.assertEqual(5, data['schema_version'])
+        self.assertEqual(['Thiết kế và kiểm thử'], [s['title'] for s in data['summary_sections']])
+        self.assertTrue(data['analysis']['text_complete'])
         self.assertNotIn('deliverables',data)
 
-    def test_empty_groups_are_preserved_as_arrays(self):
-        payload = {'completed_work':[{'content':'Đã thiết kế','evidence':self.work,'source_pages':[1]}], 'difficulties':[], 'next_steps':[], 'tom_tat':'Nhóm đã thiết kế CSDL.'}
+    def test_absent_topics_do_not_create_artificial_sections(self):
+        payload = {'items':[{'topic':'Thiết kế','kind':'reported_work','content':'Đã thiết kế','evidence':self.work,'source_pages':[1]}]}
         docx_fixture(self.path,'<w:p><w:r><w:t>'+self.work+'</w:t></w:r></w:p>')
-        with patch('ai_summarizer.call_gemini_api', return_value=(payload,'test')):
+        def api(prompt,*args,**kwargs):
+            if 'MAP LINH HOẠT' in prompt: return payload,'test'
+            return {'overview_source_ids':['F1_1'], 'scope':{'mode':'focused','note':'Theo yêu cầu'},
+                    'summary_sections':[{'title':'Thiết kế','source_ids':['F1_1']}], 'additional_sections':[]},'test'
+        with patch('ai_summarizer.call_gemini_api', side_effect=api):
             data=run_map_reduce_pipeline(str(self.path),api_key='test')['data']
         self.assertEqual([],data['difficulties'])
         self.assertEqual([],data['next_steps'])
+        self.assertEqual(1,len(data['summary_sections']))
 
 
 if __name__ == '__main__': unittest.main()

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2280" viewBox="0 0 1400 2280">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#174b75"/></marker></defs>
+<rect width="1400" height="2280" fill="#f5f9fd"/>
+<style>text{font-family:Arial,sans-serif;fill:#123958;font-size:18px} .edge{fill:none;stroke:#174b75;stroke-width:2;marker-end:url(#arrow)}</style>
+<text x="700" y="43" text-anchor="middle" style="font-size:25px;font-weight:700">TÓM TẮT AI LINH HOẠT — MAP–REDUCE V5</text>
+<text x="700" y="75" text-anchor="middle">Sơ đồ hoạt động · LLM API · nguồn trích dẫn kiểm tra được</text>
+<circle cx="420" cy="110" r="12" fill="#123958"/>
+<path class="edge" d="M420,122 V145"/>
+<rect x="95.0" y="145" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="175" text-anchor="middle" style="font-size:18px">Nộp PDF → kiểm tra quyền → lưu bài nộp</text>
+<text x="420" y="200" text-anchor="middle" style="font-size:18px">Laravel đưa công việc vào hàng đợi AI</text>
+<path class="edge" d="M420,223 V281"/>
+<rect x="95.0" y="281" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="311" text-anchor="middle" style="font-size:18px">Đọc cache theo hash PDF hoặc trích xuất bằng PyMuPDF</text>
+<text x="420" y="336" text-anchor="middle" style="font-size:18px">Giữ trang gốc; ghi nhận ảnh/scan chưa đọc</text>
+<path class="edge" d="M420,359 V417"/>
+<path d="M420,417 L655,460 L420,503 L185,460 Z" fill="#e7f2fe" stroke="#2476b9" stroke-width="2"/>
+<text x="420" y="465" text-anchor="middle" style="font-size:17px">Có văn bản đọc được?</text>
+<path class="edge" d="M420,503 V553"/>
+<text x="458" y="530" text-anchor="middle" style="font-size:15px">Có</text>
+<path class="edge" d="M655,460 H890"/>
+<rect x="900.0" y="422" width="480" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="1140" y="452" text-anchor="middle" style="font-size:18px">Không có văn bản đọc được</text>
+<text x="1140" y="477" text-anchor="middle" style="font-size:18px">Báo giới hạn OCR; chưa đánh giá</text>
+<circle cx="1140" cy="527" r="11" fill="#123958"/>
+<path class="edge" d="M1140,500 V514"/>
+<text x="804" y="447" text-anchor="middle" style="font-size:15px">Không</text>
+<rect x="95.0" y="553" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="583" text-anchor="middle" style="font-size:18px">Chia theo chương/mục, chia tiếp phần quá dài</text>
+<text x="420" y="608" text-anchor="middle" style="font-size:18px">Giới hạn đầu vào, overlap và khoảng ký tự nguồn</text>
+<path class="edge" d="M420,631 V689"/>
+<rect x="95.0" y="689" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="719" text-anchor="middle" style="font-size:18px">MAP: dùng checkpoint hoặc gọi LLM cho từng phần</text>
+<text x="420" y="744" text-anchor="middle" style="font-size:18px">JSON ý chính: chủ đề, tính chất, câu trích và trang</text>
+<path class="edge" d="M420,767 V825"/>
+<path d="M420,825 L655,868 L420,911 L185,868 Z" fill="#e7f2fe" stroke="#2476b9" stroke-width="2"/>
+<text x="420" y="873" text-anchor="middle" style="font-size:17px">JSON, câu trích và trang khớp chunk?</text>
+<path class="edge" d="M420,911 V961"/>
+<text x="458" y="938" text-anchor="middle" style="font-size:15px">Có</text>
+<path class="edge" d="M655,868 H890"/>
+<rect x="900.0" y="830" width="480" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="1140" y="860" text-anchor="middle" style="font-size:18px">Lỗi API / sai JSON hoặc nguồn</text>
+<text x="1140" y="885" text-anchor="middle" style="font-size:18px">Thử lại giới hạn; giữ phần thành công</text>
+<path class="edge" d="M1140,908 V935 H820 V946 H420"/>
+<text x="804" y="855" text-anchor="middle" style="font-size:15px">Không</text>
+<rect x="95.0" y="961" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="991" text-anchor="middle" style="font-size:18px">REDUCE: đóng gói JSON và tổng hợp nhiều tầng</text>
+<text x="420" y="1016" text-anchor="middle" style="font-size:18px">Mỗi tầng có yêu cầu; giữ nguồn và tính chất từng ý</text>
+<path class="edge" d="M420,1039 V1097"/>
+<path d="M420,1097 L655,1140 L420,1183 L185,1140 Z" fill="#e7f2fe" stroke="#2476b9" stroke-width="2"/>
+<text x="420" y="1145" text-anchor="middle" style="font-size:17px">Đủ điều kiện hoàn tất Reduce?</text>
+<path class="edge" d="M420,1183 V1233"/>
+<text x="458" y="1210" text-anchor="middle" style="font-size:15px">Có</text>
+<path class="edge" d="M655,1140 H890"/>
+<rect x="900.0" y="1102" width="480" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="1140" y="1132" text-anchor="middle" style="font-size:18px">Lỗi / không hội tụ / hết lượt</text>
+<text x="1140" y="1157" text-anchor="middle" style="font-size:18px">Giữ nguồn; đánh dấu chưa hoàn tất</text>
+<path class="edge" d="M1140,1180 V1207 H820 V1218 H420"/>
+<text x="804" y="1127" text-anchor="middle" style="font-size:15px">Không</text>
+<rect x="95.0" y="1233" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="1263" text-anchor="middle" style="font-size:18px">Tổng quan và các mục trọng tâm linh hoạt</text>
+<text x="420" y="1288" text-anchor="middle" style="font-size:18px">Nội dung khác: Xem thêm; yêu cầu chưa rõ: nêu giới hạn</text>
+<path class="edge" d="M420,1311 V1369"/>
+<rect x="95.0" y="1369" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="1399" text-anchor="middle" style="font-size:18px">Đối chiếu tên giai đoạn, đợt và yêu cầu giảng viên</text>
+<text x="420" y="1424" text-anchor="middle" style="font-size:18px">Tìm bằng chứng trong VĂN BẢN PDF GỐC</text>
+<path class="edge" d="M420,1447 V1505"/>
+<rect x="95.0" y="1505" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="1535" text-anchor="middle" style="font-size:18px">LLM kết luận từng tiêu chí → kiểm chứng trích dẫn</text>
+<text x="420" y="1560" text-anchor="middle" style="font-size:18px">Thử sửa riêng tiêu chí lỗi có giới hạn</text>
+<path class="edge" d="M420,1583 V1641"/>
+<path d="M420,1641 L655,1684 L420,1727 L185,1684 Z" fill="#e7f2fe" stroke="#2476b9" stroke-width="2"/>
+<text x="420" y="1689" text-anchor="middle" style="font-size:17px">Bằng chứng hỗ trợ kết luận?</text>
+<path class="edge" d="M420,1727 V1777"/>
+<text x="458" y="1754" text-anchor="middle" style="font-size:15px">Có</text>
+<path class="edge" d="M655,1684 H890"/>
+<rect x="900.0" y="1646" width="480" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="1140" y="1676" text-anchor="middle" style="font-size:18px">Chưa đủ bằng chứng / lỗi xử lý</text>
+<text x="1140" y="1701" text-anchor="middle" style="font-size:18px">Không kết luận sinh viên chưa làm</text>
+<path class="edge" d="M1140,1724 V1751 H820 V1762 H420"/>
+<text x="804" y="1671" text-anchor="middle" style="font-size:15px">Không</text>
+<rect x="95.0" y="1777" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="1807" text-anchor="middle" style="font-size:18px">Lưu kết quả theo phiên bản bài nộp và độ bao phủ</text>
+<text x="420" y="1832" text-anchor="middle" style="font-size:18px">Chờ thử lại / hoàn tất / hoàn tất một phần</text>
+<path class="edge" d="M420,1855 V1913"/>
+<rect x="95.0" y="1913" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="1943" text-anchor="middle" style="font-size:18px">Hiển thị mục linh hoạt và đối chiếu riêng bên dưới</text>
+<text x="420" y="1968" text-anchor="middle" style="font-size:18px">Bấm trích dẫn → kiểm tra phiên, quyền, tệp</text>
+<path class="edge" d="M420,1991 V2049"/>
+<rect x="95.0" y="2049" width="650" height="78" rx="15" fill="white" stroke="#92b7da" stroke-width="2"/>
+<text x="420" y="2079" text-anchor="middle" style="font-size:18px">Popup mở đúng trang và tô vàng nếu khớp</text>
+<text x="420" y="2104" text-anchor="middle" style="font-size:18px">Không khớp: thông báo rõ, không đánh dấu sai</text>
+<path class="edge" d="M420,2127 V2150"/>
+<circle cx="420" cy="2165" r="14" fill="none" stroke="#123958" stroke-width="2"/>
+<circle cx="420" cy="2165" r="9" fill="#123958"/>
+<text x="700" y="2255" text-anchor="middle" style="font-size:15px">Trang có ảnh/scan chưa đọc luôn được ghi rõ; kiểm chứng cuối cùng do giảng viên thực hiện.</text>
+</svg>

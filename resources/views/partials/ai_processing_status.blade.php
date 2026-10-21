@@ -2,7 +2,7 @@
     $processingState = $aiData['_processing'] ?? [];
     $processingActive = in_array($processingState['status'] ?? '', ['queued','running','waiting']);
     $processingUrl = $citationAvailable ? route('baocao.ai.trang_thai', $pb->MaKhoi) : '';
-    $stepLabels = ['summary_part'=>'Đọc từng phần báo cáo','summary_merge'=>'Tổng hợp nội dung','review_part'=>'Tìm bằng chứng theo yêu cầu','review_decision'=>'Đối chiếu yêu cầu','citation_audit'=>'Kiểm chứng trích dẫn'];
+    $stepLabels = ['summary_part'=>'Đọc từng phần báo cáo','summary_merge'=>'Tổng hợp nội dung','review_part'=>'Tìm bằng chứng theo yêu cầu','review_repair'=>'Kiểm tra lại tiêu chí lỗi','review_decision'=>'Đối chiếu yêu cầu','citation_audit'=>'Kiểm chứng trích dẫn'];
 @endphp
 @if($processingUrl && $processingState)
 <div class="ai-processing-status" role="status" aria-live="polite" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
@@ -29,7 +29,7 @@
 </style>
 <script>
 (() => {
-    const stages = {summary_part:'Đọc từng phần báo cáo',summary_merge:'Tổng hợp nội dung',review_part:'Tìm bằng chứng theo yêu cầu',review_decision:'Đối chiếu yêu cầu',citation_audit:'Kiểm chứng trích dẫn'};
+    const stages = {summary_part:'Đọc từng phần báo cáo',summary_merge:'Tổng hợp nội dung',review_part:'Tìm bằng chứng theo yêu cầu',review_repair:'Kiểm tra lại tiêu chí lỗi',review_decision:'Đối chiếu yêu cầu',citation_audit:'Kiểm chứng trích dẫn'};
     const labels = {queued:'Đang chờ xử lý',running:'Đang phân tích',waiting:'Đang chờ thử tiếp',completed:'Đã hoàn tất',partial:'Hoàn tất một phần'};
     function updateButtons(root, active) {
         root.closest('.ai-summary')?.querySelectorAll('[data-ai-review-submit]').forEach(button => {button.disabled=active;});
@@ -64,6 +64,11 @@
                 if (Number(data.updated_at)>Number(banner.dataset.processingUpdated) && ['waiting','completed','partial'].includes(data.status)) banner.querySelector('[data-ai-refresh-result]').hidden=false;
                 banner.dataset.processingActive=active ? '1' : '0';
                 updateButtons(banner,active);
+                if (!active && Number(data.updated_at) > Number(banner.dataset.processingUpdated)) {
+                    banner.closest('.ai-summary-card, .ai-summary')?.querySelectorAll('[data-review-result="insufficient_evidence"]').forEach(label => {
+                        label.textContent = 'Đã xử lý · Cập nhật để xem kết quả';
+                    });
+                }
             });
             if (active) setTimeout(()=>poll(node),5000);
         } catch(error) {

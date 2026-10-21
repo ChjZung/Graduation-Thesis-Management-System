@@ -95,10 +95,39 @@ def sentence_passages(pages):
     return passages
 
 
+def section_passages(pages):
+    """Keep heading and local body together; headings alone are only pointers."""
+    records = []
+    heading = ''
+    for page in pages:
+        text = page.get('text', '')
+        if is_index_text(text):
+            continue
+        known = set(page.get('headings', []))
+        lines = text.splitlines(keepends=True)
+        start = 0
+        offset = 0
+        for line in lines:
+            value = line.strip()
+            is_heading = value in known or bool(SECTION.match(value)) or bool(re.match(r'^chương\s+(?:\d+|[ivxlcdm]+)\b', value, re.I))
+            if is_heading:
+                body = text[start:offset].strip()
+                if body:
+                    records.extend(dict(p, section=heading) for p in page_passages([{'page': page['page'], 'text': body}]))
+                heading = value
+                start = offset
+            offset += len(line)
+        body = text[start:].strip()
+        if body:
+            records.extend(dict(p, section=heading) for p in page_passages([{'page': page['page'], 'text': body}]))
+    return records
+
+
 def retrieve_candidates(criteria, pages):
     tables = table_passages(pages)
     passages = page_passages(pages)
     sentences = sentence_passages(pages)
+    sections = section_passages(pages)
     by_page = {int(p['page']): p.get('text', '') for p in pages}
     result = {}
     for criterion in criteria:
@@ -115,17 +144,32 @@ def retrieve_candidates(criteria, pages):
             terms = set(t for t in words if len(t) >= 2 and t not in stopwords)
             phrases = [compact(' '.join(words[i:i + 3])) for i in range(len(words) - 2)
                        if sum(w not in stopwords for w in words[i:i + 3]) >= 2]
-            search = sentences or passages
+            search = sections + sentences if sections else (sentences or passages)
             frequencies = {term: sum(compact(term) in compact(p.get('text', '')) for p in pages) for term in terms}
             ranked = []
             for passage in search:
                 text = compact(passage['quote'])
                 score = sum(math.log(1 + len(pages) / (1 + frequencies[term])) for term in terms if compact(term) in text)
                 score += sum(4 for phrase in phrases if phrase in text)
+                title = compact(passage.get('section', ''))
+                title_hits = sum(math.log(1 + len(pages) / (1 + frequencies[t])) for t in terms if compact(t) in title)
+                score += 6 * title_hits
+                score += sum(12 for phrase in phrases if phrase in title)
+                # Introduction/conclusion headings are weak evidence for detailed criteria.
+                if any(term in title for term in ('giớithiệuchương', 'kếtluậnchương', 'tómtắtchương')):
+                    score *= .2
+                # A chapter roadmap describes the report's layout, not its findings.
+                if re.search(r'chương\s+\d+\..{0,160}:\s*(?:trình bày|giới thiệu|tổng hợp)', passage['quote'], re.I):
+                    score *= .05
                 score += sum(100 for alias in aliases if re.search(r'(?<!\w)' + re.escape(alias) + r'(?!\w)', passage['quote'], re.I))
                 if score:
                     ranked.append((score, passage))
-            selected = [p for _, p in sorted(ranked, key=lambda item: (-item[0], len(item[1]['quote'])))[:4]]
+            selected = []
+            for _, passage in sorted(ranked, key=lambda item: (-item[0], len(item[1]['quote']))):
+                if not any(p['page'] == passage['page'] and compact(passage['quote']) in compact(p['quote']) for p in selected):
+                    selected.append(passage)
+                if len(selected) == 4:
+                    break
         evidence = []
         for passage in selected:
             quote = exact_quote(passage['quote'], by_page.get(passage['page'], ''))

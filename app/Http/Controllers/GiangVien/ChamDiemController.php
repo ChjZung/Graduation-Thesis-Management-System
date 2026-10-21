@@ -222,10 +222,14 @@ class ChamDiemController extends Controller
             $hoSo->save();
         }
 
-        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu) {
+        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu, $existingPhieu) {
             foreach ($request->diems as $key => $diemData) {
-                $maSV = is_numeric($key) ? ($diemData['MaSV'] ?? null) : $key;
-                if (!$maSV) continue;
+                // HTML field names use numeric student IDs as array keys, not row indexes.
+                $studentKey = (string) $key;
+                $maSV = in_array($studentKey, $validStudentIds, true)
+                    ? $studentKey
+                    : (string) ($diemData['MaSV'] ?? $studentKey);
+
 
                 // Chặn BOLA: Không cho chấm điểm sinh viên không thuộc nhóm bảo vệ này
                 if (!in_array($maSV, $validStudentIds)) {

@@ -10,7 +10,9 @@ class AiResultMerger
         if (!$sameSource) return $new;
         $oldAnalysis = $old['analysis'] ?? [];
         $newAnalysis = $new['analysis'] ?? [];
-        $keepSummary = $reviewOnly || ($oldAnalysis && (
+        $sameScope = ($old['summary_scope']['context_hash'] ?? '') === ($new['summary_scope']['context_hash'] ?? '');
+        $samePipeline = ($old['schema_version'] ?? 0) === ($new['schema_version'] ?? 0) && $sameScope;
+        $keepSummary = $reviewOnly || ($samePipeline && $oldAnalysis && (
             (($oldAnalysis['status'] ?? '') === 'completed' && ($newAnalysis['status'] ?? '') !== 'completed') ||
             (int) ($oldAnalysis['analyzed_chunks'] ?? 0) > (int) ($newAnalysis['analyzed_chunks'] ?? 0) ||
             (empty($newAnalysis['total_units']) && empty($newAnalysis['total_pages']))
@@ -19,7 +21,7 @@ class AiResultMerger
         $previous = $old['requirements_review'] ?? null;
         $review = $new['requirements_review'] ?? null;
         if (is_array($review)) {
-            if (is_array($previous) && !empty($previous['context_hash']) && $previous['context_hash'] === ($review['context_hash'] ?? null)) {
+            if (is_array($previous) && !empty($previous['context_hash']) && $previous['context_hash'] === ($review['context_hash'] ?? null) && ($previous['schema_version'] ?? 0) === ($review['schema_version'] ?? 0)) {
                 $prior = [];
                 foreach ($previous['items'] ?? [] as $item) $prior[($item['id'] ?? '').'|'.($item['requirement'] ?? '')] = $item;
                 $items = $review['items'] ?? [];

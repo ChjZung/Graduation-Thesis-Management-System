@@ -100,13 +100,4 @@ class DotNopSourceCodeRequirementTest extends TestCase
             'required, misleading hostname' => [true, ['LinkCode' => 'https://github.com.example.com/project'], false],
         ];
     }
-
-    public function test_template_rounds_leave_source_code_requirement_to_the_lecturer(): void
-    {
-        foreach (ThesisProgressService::GIAI_DOAN_KY_THUAT_MAU as $stage) {
-            foreach ($stage['dot_nops'] as $round) {
-                $this->assertFalse($round['source_code'], $round['ten']);
-            }
-        }
-    }
 }

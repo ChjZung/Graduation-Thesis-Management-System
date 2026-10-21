@@ -118,13 +118,16 @@ class RecoveryTests(unittest.TestCase):
             return run_map_reduce_pipeline('report.pdf',api_key='test')
 
     def payload(self):
-        return {'document_content':[{'content':'Báo cáo trình bày hiện trạng quản lý phân tán.',
+        return {'items':[{'topic':'Hiện trạng', 'kind':'background', 'content':'Báo cáo trình bày hiện trạng quản lý phân tán.',
                   'evidence':'The survey found fragmented spreadsheets and email communication in the current thesis management workflow.','source_pages':[9]}],
-                'completed_work':[],'difficulties':[],'next_steps':[]}
+                }
 
     def test_partial_document_cannot_claim_full_coverage_or_absent_content(self):
         def api(prompt,*args,**kwargs):
             if 'Nguồn từ 10 đến 10:' in prompt: raise TimeoutError('timed out')
+            if 'REDUCE LINH HOẠT' in prompt:
+                return {'overview_source_ids':['F1_1'], 'scope':{'mode':'document_fallback','note':'Theo tài liệu'},
+                        'summary_sections':[{'title':'Hiện trạng', 'source_ids':['F1_1']}], 'additional_sections':[]}, 'test'
             return self.payload(),'test'
         data=self.pipeline(api)['data']
         self.assertEqual(1,data['analysis']['analyzed_chunks'])
@@ -145,7 +148,11 @@ class RecoveryTests(unittest.TestCase):
     def test_merge_failure_preserves_content_from_successful_parts(self):
         def api(prompt,*args,**kwargs):
             if 'Đã xử lý' in prompt: raise TimeoutError('timed out')
-            return self.payload(),'test'
+            payload = self.payload()
+            if 'Nguồn từ 10 đến 10:' in prompt:
+                payload['items'] = [{'topic':'Tác nhân', 'kind':'requirement', 'content': 'Báo cáo xác định các tác nhân sử dụng.',
+                    'evidence': 'The actors are students, lecturers and academic staff.', 'source_pages': [10]}]
+            return payload, 'test'
         data=self.pipeline(api)['data']
         self.assertEqual(2,data['analysis']['analyzed_chunks'])
         self.assertFalse(data['analysis']['reduce_completed'])
