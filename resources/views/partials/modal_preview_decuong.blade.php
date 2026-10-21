@@ -45,7 +45,7 @@
                 <!-- PDF Preview Container (Mozilla PDF.js Canvas Renderer) -->
                 <div id="quickPreviewPdfContainer" class="w-100 h-100 d-none d-flex flex-column" style="position: absolute; top:0; left:0; right:0; bottom:0;">
                     <!-- PDF Toolbar -->
-                    <div class="bg-dark text-white px-3 py-2 border-bottom d-flex justify-content-between align-items-center flex-shrink-0" style="font-size: 13px; z-index: 10;">
+                    <div class="bg-dark text-white px-3 py-2 border-bottom d-flex flex-wrap gap-2 justify-content-between align-items-center flex-shrink-0" style="font-size: 13px; z-index: 10;">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-danger text-white"><i class="fa-solid fa-file-pdf me-2"></i> PDF</span>
                             <span class="text-white-50">|</span>
@@ -77,17 +77,17 @@
                             </div>
                             
                             <a href="#" id="quickPreviewPdfOpenDirect" target="_blank" class="btn btn-sm btn-outline-info py-1 px-3 rounded-pill d-inline-flex align-items-center" style="font-size: 12px;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab riêng
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="d-none d-sm-inline ms-2">Mở tab riêng</span>
                             </a>
                             <a href="#" id="quickPreviewPdfDownloadDirect" download class="btn btn-sm btn-warning text-dark fw-bold py-1 px-3 rounded-pill d-inline-flex align-items-center" style="font-size: 12px;">
-                                <i class="fa-solid fa-download me-2"></i> Tải PDF
+                                <i class="fa-solid fa-download"></i><span class="d-none d-sm-inline ms-2">Tải PDF</span>
                             </a>
                         </div>
                     </div>
 
                     <!-- PDF Canvas Scroll Area -->
                     <div id="pdfViewerWrapper" class="flex-grow-1 overflow-auto text-center p-3" style="background-color: #525659; min-height: 0;">
-                        <div id="pdfPagesContainer" class="d-flex flex-column align-items-center gap-3">
+                        <div id="pdfPagesContainer" class="d-flex flex-column align-items-center gap-3" style="width: max-content; min-width: 100%;">
                             <!-- Pages will be rendered here as HTML5 canvases -->
                         </div>
                         <!-- Fallback iframe container -->
@@ -111,7 +111,7 @@
                                 <i class="fa-solid fa-file-word fa-2x"></i>
                             </span>
                         </div>
-                        <h5 class="fw-bold text-dark mb-2">Tài Liệu Đề Cương</h5>
+                        <h5 class="fw-bold text-dark mb-2">Tài Liệu Đính Kèm</h5>
                         <p class="text-muted small mb-4" id="quickPreviewFallbackMsg">
                             Tệp tài liệu đề cương đã sẵn sàng. Bạn có thể mở trực tiếp trong tab mới hoặc tải về máy tính để xem đầy đủ bằng Microsoft Word.
                         </p>
@@ -295,9 +295,9 @@ function showPdfIframeFallback(url) {
  * @param {string} fileName   Tên file đề cương hiển thị
  * @param {string} topicTitle Tên đề tài khóa luận
  */
-function quickPreviewOutline(fileUrl, fileName, topicTitle) {
+function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
     if (!fileUrl) {
-        alert('Không tìm thấy đường dẫn tệp đề cương.');
+        alert('Không tìm thấy đường dẫn tệp tài liệu.');
         return;
     }
 
@@ -343,20 +343,21 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
     }
 
     const safeName = fileName || 'De_Cuong_Chi_Tiet';
+    const downloadUrl = options.downloadUrl || targetUrl;
 
     // Cập nhật các liên kết mở tab và tải về
     openTabBtn.href = targetUrl;
-    downloadBtn.href = targetUrl;
+    downloadBtn.href = downloadUrl;
     downloadBtn.setAttribute('download', safeName);
     fallbackOpenBtn.href = targetUrl;
-    fallbackDownloadBtn.href = targetUrl;
+    fallbackDownloadBtn.href = downloadUrl;
     fallbackDownloadBtn.setAttribute('download', safeName);
 
     const directOpenPdf = document.getElementById('quickPreviewPdfOpenDirect');
     const directDownloadPdf = document.getElementById('quickPreviewPdfDownloadDirect');
     if (directOpenPdf) directOpenPdf.href = targetUrl;
     if (directDownloadPdf) {
-        directDownloadPdf.href = targetUrl;
+        directDownloadPdf.href = downloadUrl;
         directDownloadPdf.setAttribute('download', safeName);
     }
 
@@ -376,9 +377,11 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
 
     // Nhận diện phần mở rộng file
     const cleanUrl = targetUrl.split('?')[0].toLowerCase();
-    const isPdf = cleanUrl.endsWith('.pdf');
-    const isDocx = cleanUrl.endsWith('.docx');
-    const isDoc = cleanUrl.endsWith('.doc');
+    // Protected report endpoints do not contain the original file extension.
+    const typeSource = /\.(pdf|docx?)$/i.test(safeName) ? safeName.toLowerCase() : cleanUrl;
+    const isPdf = typeSource.endsWith('.pdf');
+    const isDocx = typeSource.endsWith('.docx');
+    const isDoc = typeSource.endsWith('.doc');
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
@@ -432,7 +435,7 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle) {
             .then(function(result) {
                 loadingEl.classList.add('d-none');
                 docxContainer.classList.remove('d-none');
-                docxContent.innerHTML = result.value || '<div class="alert alert-info text-center">Tệp đề cương này không có nội dung văn bản.</div>';
+                docxContent.innerHTML = result.value || '<div class="alert alert-info text-center">Tệp tài liệu này không có nội dung văn bản.</div>';
             })
             .catch(function(err) {
                 console.warn('Lỗi đọc nhanh Word:', err);

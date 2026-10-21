@@ -284,7 +284,7 @@
             document.body.prepend(progressBar);
         }
 
-        document.querySelectorAll('a[href]:not([target="_blank"]):not([href^="#"]):not([href^="javascript"]):not([data-bs-toggle])').forEach(function (link) {
+        document.querySelectorAll('a[href]:not([download]):not([target="_blank"]):not([href^="#"]):not([href^="javascript"]):not([data-bs-toggle])').forEach(function (link) {
             link.addEventListener('click', function (e) {
                 if (e.ctrlKey || e.metaKey || e.shiftKey) return;
                 progressBar.style.opacity = '1';

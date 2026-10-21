@@ -46,7 +46,7 @@ class DeTaiController extends Controller
             return redirect()->back()->withErrors('Không tìm thấy thông tin Giảng viên liên kết với tài khoản này.');
         }
 
-        $query = DeTai::with(['giangVien', 'hocKy', 'dangKyDeTais.nhom.thanhViens.sinhVien', 'phanCongPhanBiens.giangVien'])->where('MaGV', $gv->MaGV);
+        $query = DeTai::with(['giangVien', 'hocKy', 'dangKyDeTais.nhom.thanhViens.sinhVien', 'phanCongPhanBiens.giangVien', 'chiTietDuyets'])->where('MaGV', $gv->MaGV);
 
         if ($request->filled('search')) {
             $s = trim($request->search);
@@ -311,7 +311,7 @@ class DeTaiController extends Controller
         $detai = DeTai::with([
             'hocKy',
             'giangVien.boMon',
-            'taiLieuNops' => fn($q) => $q->orderBy('LanNop', 'desc'),
+            'taiLieuNops' => fn($q) => $q->where('LoaiTaiLieu', 'Đề cương chi tiết')->orderBy('LanNop', 'desc'),
             'phanCongPhanBiens.giangVien',
             'dangKyDeTais.nhom.thanhViens.sinhVien',
             'dangKyDeTais.nhom.truongNhom'
@@ -334,7 +334,7 @@ class DeTaiController extends Controller
 
         // 3. Kiểm tra đề cương đã hoàn tất thẩm định và chốt công bố chưa
         // Chỉ khóa khi Trưởng bộ môn đã duyệt công bố chính thức hoặc đề tài đã hoàn thành
-        $isLocked = in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành']);
+        $isLocked = $detai->khoaNopDeCuong();
         $isNopLai = in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại']);
 
         return view('giangvien.detai.nop_decuong', compact('detai', 'gv', 'isLocked', 'isNopLai'));
@@ -356,7 +356,7 @@ class DeTaiController extends Controller
         }
 
         // 2. Ràng buộc: Khi đề cương đã được Trưởng bộ môn duyệt công bố chính thức hoặc hoàn thành thì khóa nộp
-        if (in_array($detai->TrangThai, ['Đã công bố', 'Hoàn thành'])) {
+        if ($detai->khoaNopDeCuong()) {
             return redirect()->back()->withErrors('Đề cương đã hoàn tất quy trình thẩm định và đã được Trưởng bộ môn phê duyệt công bố chính thức. Đề cương hiện đã bị khóa chỉnh sửa.');
         }
 

@@ -71,7 +71,7 @@ class ThesisProgressService
                     'mo_ta' => 'Nộp báo cáo thiết kế CSDL (ERD, từ điển dữ liệu) và cấu trúc kiến trúc phần mềm.',
                     'yeu_cau' => 'Có script tạo bảng hoặc Migration CSDL, có sơ đồ kiến trúc module.',
                     'dinh_dang' => 'pdf',
-                    'source_code' => true,
+                    'source_code' => false,
                 ]
             ]
         ],
@@ -84,17 +84,17 @@ class ThesisProgressService
             'dot_nops' => [
                 [
                     'ten' => 'Đợt 4.1: Báo cáo hoàn thành các chức năng cốt lõi (Module Core)',
-                    'mo_ta' => 'Nộp báo cáo tiến độ lập trình các chức năng chính kèm link Git repository.',
-                    'yeu_cau' => 'Cung cấp link Git repository (GitHub/GitLab), có hướng dẫn chạy thử.',
+                    'mo_ta' => 'Nộp báo cáo tiến độ lập trình các chức năng chính.',
+                    'yeu_cau' => 'Mô tả các chức năng đã hoàn thành và có hướng dẫn chạy thử.',
                     'dinh_dang' => 'pdf',
-                    'source_code' => true,
+                    'source_code' => false,
                 ],
                 [
                     'ten' => 'Đợt 4.2: Báo cáo tích hợp toàn diện & Hoàn thiện các module phụ trợ',
                     'mo_ta' => 'Nộp báo cáo tích hợp hệ thống, phân quyền người dùng và kiểm thử tích hợp.',
                     'yeu_cau' => 'Hệ thống vận hành trơn tru giữa Frontend và Backend.',
                     'dinh_dang' => 'pdf',
-                    'source_code' => true,
+                    'source_code' => false,
                 ]
             ]
         ],
@@ -108,9 +108,9 @@ class ThesisProgressService
                 [
                     'ten' => 'Đợt 5.1: Báo cáo kiểm thử phần mềm & Khắc phục lỗi',
                     'mo_ta' => 'Nộp Test Report chi tiết và kết quả khắc phục các lỗi phát hiện.',
-                    'yeu_cau' => 'Báo cáo tổng hợp số lượng ca kiểm thử đạt/không đạt và link mã nguồn cập nhật.',
+                    'yeu_cau' => 'Báo cáo tổng hợp số lượng ca kiểm thử đạt/không đạt và kết quả khắc phục lỗi.',
                     'dinh_dang' => 'pdf',
-                    'source_code' => true,
+                    'source_code' => false,
                 ]
             ]
         ],
@@ -124,9 +124,9 @@ class ThesisProgressService
                 [
                     'ten' => 'Đợt 6.1: Nộp toàn văn dự thảo Khóa luận & Demo sản phẩm',
                     'mo_ta' => 'Nộp bản toàn văn khóa luận hoàn chỉnh để GVHD xem xét và duyệt bảo vệ.',
-                    'yeu_cau' => 'Nộp file PDF toàn văn và link source code/demo sản phẩm hoạt động.',
+                    'yeu_cau' => 'Nộp file PDF toàn văn và tài liệu minh chứng sản phẩm hoạt động.',
                     'dinh_dang' => 'pdf',
-                    'source_code' => true,
+                    'source_code' => false,
                 ]
             ]
         ],
@@ -212,37 +212,30 @@ class ThesisProgressService
         // ── GĐ 3: Thực hiện đề cương ──
         $gd3Dat = false;
         $gd3Msg = 'Chưa nộp file đề cương chi tiết';
-        $hasDeCuongFile = !empty($deTai?->FileDeCuong);
-        $tailieuDeCuong = DB::table('tailieunop')
-            ->where('MaDeTai', $deTai?->MaDeTai)
-            ->where(function($q) {
-                $q->where('LoaiTaiLieu', 'like', '%decuong%')
-                  ->orWhere('TenTaiLieu', 'like', '%đề cương%')
-                  ->orWhere('TenTaiLieu', 'like', '%de cuong%');
-            })->exists();
+        $hasDeCuongFile = $deTai?->coTepDeCuong() ?? false;
 
-        if ($hasDeCuongFile || $tailieuDeCuong) {
+        if ($hasDeCuongFile) {
             $gd3Dat = true;
             $gd3Msg = 'Đã nộp hồ sơ đề cương chi tiết';
         }
         $dieuKien[3] = [
             'dat' => $gd3Dat,
             'mo_ta' => $gd3Msg,
-            'file' => $deTai?->FileDeCuong,
+            'file' => $hasDeCuongFile ? $deTai->FileDeCuong : null,
         ];
 
         // ── GĐ 4: Phê duyệt đề cương ──
         $gd4Dat = false;
         $gd4Msg = 'Chưa có kết quả phản biện phê duyệt đề cương';
-        $phanBien = PhanCongPhanBien::where('MaDeTai', $deTai?->MaDeTai)->first();
-        if ($phanBien && in_array($phanBien->KetQua, ['Đạt', 'dat', 'Thông qua'])) {
-            $gd4Dat = true;
-            $gd4Msg = "Đề cương được đánh giá Đạt bởi GV phản biện " . ($phanBien->giangVien?->HoTen ?? '');
-        } elseif ($phanBien) {
-            $gd4Msg = "Phản biện: " . ($phanBien->KetQua ?: 'Đang đánh giá') . " (" . ($phanBien->NhanXet ?: 'Chưa có nhận xét') . ")";
-        } elseif ($deTai && str_contains($deTai->TrangThai, 'Đã duyệt đề cương')) {
+        $phanBien = $hasDeCuongFile ? PhanCongPhanBien::where('MaDeTai', $deTai->MaDeTai)
+            ->where('VaiTro', 'Phản biện đề cương')->first() : null;
+        if ($deTai?->daDuyetDeCuong()) {
             $gd4Dat = true;
             $gd4Msg = 'Bộ môn đã phê duyệt đề cương';
+        } elseif ($phanBien && in_array($phanBien->KetQua, ['Đạt', 'dat', 'Thông qua'])) {
+            $gd4Msg = 'Phản biện đã đánh giá Đạt, chờ Trưởng bộ môn phê duyệt đề cương';
+        } elseif ($phanBien) {
+            $gd4Msg = "Phản biện: " . ($phanBien->KetQua ?: 'Đang đánh giá') . " (" . ($phanBien->NhanXet ?: 'Chưa có nhận xét') . ")";
         }
         $dieuKien[4] = [
             'dat' => $gd4Dat,
@@ -480,7 +473,8 @@ class ThesisProgressService
 
                 case 4: // Phê duyệt đề cương
                     $deadline = $planMilestones->get('PHE_DUYET_DE_CUONG')?->NgayKetThuc ?? 'Theo kế hoạch Khoa';
-                    $phanBien = $deTai ? \App\Models\PhanCongPhanBien::where('MaDeTai', $deTai->MaDeTai)->first() : null;
+                    $phanBien = $deTai?->coTepDeCuong() ? \App\Models\PhanCongPhanBien::where('MaDeTai', $deTai->MaDeTai)
+                        ->where('VaiTro', 'Phản biện đề cương')->first() : null;
                     if ($isCompleted) {
                         $percent = 100;
                         $statusCode = 'HOAN_THANH';
@@ -491,7 +485,8 @@ class ThesisProgressService
                     } elseif ($phanBien) {
                         $percent = 50;
                         $statusCode = 'CHO_XU_LY';
-                        $statusLabel = 'Cán bộ đang phản biện';
+                        $statusLabel = in_array($phanBien->KetQua, ['Đạt', 'dat', 'Thông qua'])
+                            ? 'Chờ Trưởng bộ môn phê duyệt' : 'Cán bộ đang phản biện';
                         $badgeClass = 'bg-warning text-dark';
                         $color = '#f59e0b';
                         $lastUpdated = $phanBien->updated_at;
@@ -820,7 +815,7 @@ class ThesisProgressService
             'NgayMoNop' => $data['NgayMoNop'] ?? null,
             'HanNop' => $data['HanNop'] ?? null,
             'DinhDangChoPhep' => $data['DinhDangChoPhep'] ?? 'pdf',
-            'YeuCauSourceCode' => isset($data['YeuCauSourceCode']) ? (bool)$data['YeuCauSourceCode'] : true,
+            'YeuCauSourceCode' => filter_var($data['YeuCauSourceCode'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'SoLanNopToiDa' => !empty($data['SoLanNopToiDa']) ? (int)$data['SoLanNopToiDa'] : null,
             'TrangThai' => $data['TrangThai'] ?? 'DANG_MO',
             'ThuTu' => $data['ThuTu'] ?? ($maxThuTu + 1),
@@ -980,59 +975,9 @@ class ThesisProgressService
                 $giaiDoan->save();
             }
 
-            // Tự động phân tích PDF bằng AI và lưu kết quả vào database
+            // Persist a database job with the submission; no API/network work in this transaction.
             if ($duongDanFile && file_exists(storage_path('app/public/' . $duongDanFile))) {
-                try {
-                    $aiService = app(AiSummaryService::class);
-                    $fullPdfPath = storage_path('app/public/' . $duongDanFile);
-                    $aiResult = $aiService->summarizePdf($fullPdfPath, $dotNop->ThuTu);
-                    if (!empty($aiResult['data'])) {
-                        $khoi->TomTatJson = $aiResult['data'];
-                        $khoi->TomTatAI = $aiResult['formatted']['overall_summary'] ?? ($aiResult['data']['overall_summary'] ?? '');
-                        
-                        // Nếu sinh viên để trống nội dung thủ công, tự động điền từ kết quả AI
-                        if (empty(trim((string)$khoi->NoiDungBaoCao))) {
-                            $khoi->NoiDungBaoCao = $khoi->TomTatAI;
-                        }
-                        if (empty(trim((string)$khoi->KetQuaDatDuoc)) && !empty($aiResult['formatted']['completed_work'])) {
-                            $khoi->KetQuaDatDuoc = $aiResult['formatted']['completed_work'];
-                        }
-                        if (empty(trim((string)$khoi->KhoKhan)) && !empty($aiResult['formatted']['difficulties'])) {
-                            $khoi->KhoKhan = $aiResult['formatted']['difficulties'];
-                        }
-                        if (empty(trim((string)$khoi->KeHoachTiepTheo)) && !empty($aiResult['formatted']['next_steps'])) {
-                            $khoi->KeHoachTiepTheo = $aiResult['formatted']['next_steps'];
-                        }
-                        if ($userCompletionPct === null) {
-                            $khoi->PhanTramHoanThanh = (int)($aiResult['completion_percentage'] ?? 60);
-                            $baoCaoCha->update(['PhanTramHoanThanh' => $khoi->PhanTramHoanThanh]);
-                        }
-                        $khoi->save();
-
-                        // Lưu bản ghi tóm tắt vào bảng tomtatbaocao
-                        \App\Models\TomTatBaoCao::updateOrCreate(
-                            ['MaKhoi' => $khoi->MaKhoi],
-                            [
-                                'MaTomTat' => \App\Helpers\IdGenerator::nextTomTat(),
-                                'MaBaoCao' => $khoi->MaBaoCao,
-                                'TenFile' => $tenFile,
-                                'DuongDanFile' => $duongDanFile,
-                                'SoTrang' => (int)($aiResult['total_pages'] ?? 1),
-                                'CongViecDaHoanThanh' => $khoi->KetQuaDatDuoc ?: $khoi->NoiDungBaoCao,
-                                'KhoKhan' => $khoi->KhoKhan,
-                                'KeHoachTuanToi' => $khoi->KeHoachTiepTheo,
-                                'NoiDungAI' => $khoi->TomTatAI,
-                                'TomTatJson' => $aiResult['data'],
-                                'TrangThai' => 'Đã tạo',
-                                'TrangThaiXuLy' => 'hoan_thanh',
-                                'ThoiGianXuLy' => $aiResult['processing_time'] ?? 0.1,
-                                'NgayTomTat' => now(),
-                            ]
-                        );
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning("AI Summarize error for Khoi {$maKhoi}: " . $e->getMessage());
-                }
+                app(AiReportProcessingService::class)->enqueue($khoi);
             }
 
             return $khoi;

@@ -51,6 +51,22 @@
         </div>
     </div>
 
+    <div class="card border mb-3">
+        <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.yeu_cau_ma_nguon', $dotNop->MaDotNop) }}" class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+            @csrf
+            @method('PATCH')
+            <div>
+                <input type="hidden" name="YeuCauSourceCode" value="0">
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" name="YeuCauSourceCode" value="1" id="requireSourceCode-{{ $dotNop->MaDotNop }}" @checked($dotNop->YeuCauSourceCode)>
+                    <label class="form-check-label fw-semibold" for="requireSourceCode-{{ $dotNop->MaDotNop }}">Yêu cầu link GitHub / GitLab / Bitbucket</label>
+                </div>
+                <div class="small text-muted">Chỉ áp dụng cho đợt nộp này. Không tích thì ô nhập link Git sẽ ẩn ở phía sinh viên.</div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Lưu yêu cầu</button>
+        </form>
+    </div>
+
     @if($phienBans->isEmpty())
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white" style="border: 1px solid #e2e8f0 !important;">
             <i class="fa-regular fa-folder-open fs-1 text-muted opacity-50 mb-3 d-block"></i>
@@ -134,27 +150,11 @@
 
                             {{-- File PDF & Link Git repository --}}
                             <div class="row g-2 mb-3">
-                                <div class="col-12 col-md-6">
-                                    <div class="p-2 rounded-3 border bg-light d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center gap-2 text-truncate me-2">
-                                            <i class="fa-solid fa-file-pdf text-danger fs-4"></i>
-                                            <div class="text-truncate">
-                                                <div class="fw-bold text-dark text-truncate small" title="{{ $pb->TenFile ?? 'Báo cáo PDF' }}">
-                                                    {{ $pb->TenFile ?? 'baocao.pdf' }}
-                                                </div>
-                                                <span class="text-muted small" style="font-size: 11px;">Tài liệu báo cáo</span>
-                                            </div>
-                                        </div>
-                                        @if($pb->DuongDanFile)
-                                            <a href="{{ asset('storage/' . $pb->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-eye me-2"></i>Xem PDF
-                                            </a>
-                                        @else
-                                            <span class="badge bg-secondary">Không có file</span>
-                                        @endif
-                                    </div>
+                                <div class="col-12 {{ ($dotNop->YeuCauSourceCode || $pb->LinkCode) ? 'col-md-6' : '' }}">
+                                    @include('partials.report_attachment', ['report' => $pb])
                                 </div>
 
+                                @if($dotNop->YeuCauSourceCode || $pb->LinkCode)
                                 <div class="col-12 col-md-6">
                                     <div class="p-2 rounded-3 border bg-light d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center gap-2 text-truncate me-2">
@@ -173,9 +173,10 @@
                                         @endif
                                     </div>
                                 </div>
+                                @endif
                             </div>
 
-                            {{-- KẾT QUẢ THẨM ĐỊNH AI 11 MỤC --}}
+                            {{-- KẾT QUẢ THẨM ĐỊNH AI 3 NHÓM --}}
                             @include('partials.ai_summary_11_sections', ['pb' => $pb])
 
                             {{-- Ghi chú bổ sung của sinh viên (nếu có nhập riêng) --}}

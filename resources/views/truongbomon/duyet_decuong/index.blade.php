@@ -176,7 +176,7 @@
                                         <div class="small text-muted">{{ $dt->giangVien->MaGV ?? '' }}</div>
                                     </td>
                                     <td class="text-center">
-                                        @if($dt->FileDeCuong)
+                                        @if($dt->coTepDeCuong())
                                             @php
                                                 $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
                                                 $fileName = basename($dt->FileDeCuong);
@@ -221,8 +221,12 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if($dt->TrangThai === 'Đã công bố')
-                                            <span class="badge bg-success rounded-pill px-3 py-1"><i class="fa-solid fa-bullhorn me-2"></i>Đã công bố</span>
+                                        @if(!$dt->coTepDeCuong())
+                                            <span class="badge bg-secondary rounded-pill px-3 py-1">Chưa có tệp đề cương</span>
+                                        @elseif($dt->daDuyetDeCuong())
+                                            <span class="badge bg-success rounded-pill px-3 py-1"><i class="fa-solid fa-check me-2"></i>Đã duyệt đề cương</span>
+                                        @elseif($dt->TrangThai === 'Đã công bố')
+                                            <span class="badge bg-info-subtle text-info rounded-pill px-3 py-1">Đã nộp đề cương, chưa duyệt</span>
                                         @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM' || $dt->TrangThai === 'Đã phản biện - Chờ TBM duyệt đề cương')
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-solid fa-circle-check me-2"></i>Chờ TBM duyệt
@@ -247,7 +251,7 @@
                                         <div class="d-flex justify-content-end align-items-center gap-1 flex-wrap">
                                             @php
                                                 $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
-                                                $canApproveDC = ($pb && $pb->KetQua === 'Đạt' && $dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua);
+                                                $canApproveDC = ($dt->coTepDeCuong() && $pb && $pb->KetQua === 'Đạt' && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua);
                                             @endphp
 
                                             @if($canApproveDC)
@@ -262,7 +266,7 @@
                                                 </span>
                                             @endif
 
-                                            @if($dt->TrangThai !== 'Đã công bố' && !$isDangYeuCauSua)
+                                            @if($dt->coTepDeCuong() && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua)
                                                 <!-- Nút Yêu cầu chỉnh sửa đề cương -->
                                                 <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1 d-inline-flex align-items-center"
                                                         data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}"

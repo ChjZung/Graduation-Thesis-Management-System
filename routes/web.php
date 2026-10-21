@@ -70,6 +70,11 @@ Route::prefix('api')->group(function () {
 // ==========================================
 Route::middleware(['auth'])->group(function () {
     Route::get('/lich-quy-trinh-matrix', [\App\Http\Controllers\CalendarController::class, 'scheduleMatrix'])->name('calendar.matrix');
+    Route::post('/bao-cao-ai/{id}/trich-dan', [\App\Http\Controllers\BaoCaoAiController::class, 'preview'])->middleware('throttle:30,1,pdf-citation')->name('baocao.ai.trich_dan');
+    Route::get('/bao-cao-ai/{id}/trang-thai', [\App\Http\Controllers\BaoCaoAiController::class, 'status'])->name('baocao.ai.trang_thai');
+    Route::get('/bao-cao-ai/{id}/pdf', [\App\Http\Controllers\BaoCaoAiController::class, 'pdf'])->name('baocao.ai.pdf');
+    Route::get('/bao-cao-ai/{id}/tai-xuong', [\App\Http\Controllers\BaoCaoAiController::class, 'download'])->name('baocao.ai.download');
+    Route::post('/bao-cao-ai/{id}/doi-chieu', [\App\Http\Controllers\BaoCaoAiController::class, 'review'])->middleware('throttle:3,1,ai-review')->name('baocao.ai.doi_chieu');
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'showProfile'])->name('profile.show');
     Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::get('/password/change', [\App\Http\Controllers\ProfileController::class, 'showChangePasswordForm'])->name('password.change');
@@ -83,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/files/hoso/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadHoSo'])->name('files.hoso.download');
     Route::get('/files/decuong/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadDeCuong'])->name('files.decuong.download');
     Route::get('/files/view', [\App\Http\Controllers\FileDownloadController::class, 'viewFile'])->name('files.view');
+    Route::post('/bao-cao-ai/{id}/phan-tich-lai', [\App\Http\Controllers\BaoCaoAiController::class, 'reanalyze'])->middleware('throttle:3,1,ai-reanalyze')->name('baocao.ai.phan_tich_lai');
 
     // Đánh dấu tất cả thông báo đã đọc (Dành cho tất cả vai trò)
     Route::post('/thongbao/mark-all-read', [\App\Http\Controllers\ThongBaoController::class, 'markAllReadGlobal'])->name('thongbao.markAllReadGlobal');
@@ -298,6 +304,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::delete('/tiendo/giai-doan/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'destroyGiaiDoan'])->name('giangvien.tiendo.giai_doan.destroy');
     Route::post('/tiendo/dot-nop', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'storeDotNop'])->name('giangvien.tiendo.dot_nop.store');
     Route::put('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'updateDotNop'])->name('giangvien.tiendo.dot_nop.update');
+    Route::patch('/tiendo/dot-nop/{id}/yeu-cau-ma-nguon', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'capNhatYeuCauMaNguon'])->name('giangvien.tiendo.dot_nop.yeu_cau_ma_nguon');
     Route::post('/tiendo/dot-nop/{id}/toggle', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'toggleDotNop'])->name('giangvien.tiendo.dot_nop.toggle');
     Route::get('/tiendo/dot-nop/{id}', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'showDotNop'])->name('giangvien.tiendo.dot_nop.show');
     Route::post('/tiendo/dot-nop/{id}/danh-gia', [\App\Http\Controllers\GiangVien\DuyetBaoCaoController::class, 'danhGiaPhienBan'])->name('giangvien.tiendo.dot_nop.danh_gia');

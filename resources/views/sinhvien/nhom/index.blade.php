@@ -546,10 +546,10 @@
                                                 <!-- Đề cương chi tiết -->
                                                 <div class="p-3 rounded-3 border border-slate-200 mb-3 bg-light">
                                                     <div class="fw-bold mb-2" style="color: #003366; font-size: 0.85rem;">
-                                                        <i class="fa-solid {{ $currentDeTai->FileDeCuong ? 'fa-file-circle-check text-primary' : 'fa-file-circle-question text-secondary' }} me-1"></i>
+                                                        <i class="fa-solid {{ $currentDeTai->coTepDeCuong() ? 'fa-file-circle-check text-primary' : 'fa-file-circle-question text-secondary' }} me-1"></i>
                                                         Đề Cương Chi Tiết:
                                                     </div>
-                                                    @if($currentDeTai->FileDeCuong)
+                                                    @if($currentDeTai->coTepDeCuong())
                                                         @php
                                                             $fileDcUrl = Str::startsWith($currentDeTai->FileDeCuong, ['http', 'storage/']) ? asset($currentDeTai->FileDeCuong) : asset('storage/' . $currentDeTai->FileDeCuong);
                                                             $fileName = basename($currentDeTai->FileDeCuong);
@@ -707,11 +707,11 @@
                                     <!-- Giai đoạn 4: Nộp đề cương / Báo cáo -->
                                     <div class="col-12 col-md">
                                         <div class="milestone-step-card">
-                                            <div class="milestone-icon-circle {{ ($currentDeTai && $currentDeTai->FileDeCuong) ? 'bg-primary text-white' : ($currentDeTai ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-light text-muted border') }}">
+                                            <div class="milestone-icon-circle {{ ($currentDeTai && $currentDeTai->coTepDeCuong()) ? 'bg-primary text-white' : ($currentDeTai ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-light text-muted border') }}">
                                                 <i class="fa-solid fa-file-signature"></i>
                                             </div>
                                             <div class="fw-bold mb-1" style="color: #003366; font-size: 0.85rem;">4. Nộp Báo Cáo</div>
-                                            @if($currentDeTai && $currentDeTai->FileDeCuong)
+                                            @if($currentDeTai && $currentDeTai->coTepDeCuong())
                                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1" style="font-size: 0.725rem;">
                                                     <i class="fa-solid fa-check me-2"></i>Có đề cương
                                                 </span>

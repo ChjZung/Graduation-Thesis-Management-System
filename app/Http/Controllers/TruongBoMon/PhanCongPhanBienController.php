@@ -90,7 +90,7 @@ class PhanCongPhanBienController extends Controller
         $statsPBMap = ChiTieuPhanBienService::getChiTieuStatsBatch($allGiangViens->pluck('MaGV')->toArray(), $selectedHocKy);
 
         // Chỉ hiển thị đề tài đủ điều kiện phản biện (đã có đề cương chi tiết, không bị từ chối / chưa duyệt tạo)
-        $query = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien'])
+        $query = DeTai::with(['giangVien.boMon', 'hocKy', 'nganh', 'phanCongPhanBiens.giangVien', 'chiTietDuyets'])
             ->where(function($q) use ($gvIds, $maBoMon) {
                 $q->whereIn('MaGV', $gvIds)
                   ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $maBoMon));
@@ -109,7 +109,8 @@ class PhanCongPhanBienController extends Controller
             $query->whereIn('TrangThai', ['Đang phản biện đề cương', 'Đã cập nhật đề cương - Chờ phản biện lại', 'Yêu cầu chỉnh sửa đề cương']);
         } elseif ($statusTab === 'da_phan_bien') {
             $query->where(function($q) {
-                $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố'])
+                $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])
+                  ->orWhere(fn($approved) => $approved->daDuyetDeCuong())
                   ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->whereNotNull('KetQua'));
             });
         } elseif ($statusTab === 'ALL') {
@@ -168,7 +169,8 @@ class PhanCongPhanBienController extends Controller
                 ->count(),
             'da_phan_bien'   => (clone $baseCountQuery)
                 ->where(function($q) {
-                    $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã công bố'])
+                    $q->whereIn('TrangThai', ['Đã phản biện - Chờ duyệt BM', 'Đã phản biện - Chờ TBM duyệt đề cương'])
+                      ->orWhere(fn($approved) => $approved->daDuyetDeCuong())
                       ->orWhereHas('phanCongPhanBiens', fn($pq) => $pq->where('VaiTro', 'Phản biện đề cương')->whereNotNull('KetQua'));
                 })->count(),
             'total'          => (clone $baseCountQuery)
@@ -201,7 +203,7 @@ class PhanCongPhanBienController extends Controller
         $this->assertDeTaiBelongsToBoMon($detai, $boMon);
 
         // 1. Chỉ phân công đề tài đủ điều kiện phản biện (phải có file đề cương)
-        if (!$detai->FileDeCuong) {
+        if (!$detai->coTepDeCuong()) {
             return redirect()->back()->withErrors('Đề tài chưa có file Đề cương chi tiết. Không thể phân công phản biện ở giai đoạn này!');
         }
 

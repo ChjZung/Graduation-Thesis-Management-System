@@ -76,20 +76,19 @@ class DuyetDeCuongController extends Controller
         $selectedHocKy = $request->input('MaHocKy', $currentHocKy?->MaHocKy ?? '');
 
         // Base query các đề tài có file đề cương hoặc bước phản biện / duyệt đề cương
-        $baseQuery = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy', 'phanCongPhanBiens.giangVien'])
+        $baseQuery = DeTai::with(['giangVien.boMon', 'nganh', 'hocKy', 'phanCongPhanBiens.giangVien', 'chiTietDuyets'])
             ->where(function($q) use ($gvIds, $maBoMon) {
                 $q->whereIn('MaGV', $gvIds)
                   ->orWhereHas('hocPhanRef', fn($hp) => $hp->where('MaBoMon', $maBoMon));
             })
             ->where(function($q) {
-                $q->whereNotNull('FileDeCuong')
+                $q->where(fn($file) => $file->whereNotNull('FileDeCuong')->where('FileDeCuong', '!=', ''))
                   ->orWhereIn('TrangThai', [
                       'Đã nộp đề cương - Chờ phân công PB',
                       'Đang phản biện đề cương',
                       'Đã cập nhật đề cương - Chờ phản biện lại',
                       'Đã phản biện - Chờ duyệt BM',
                       'Đã phản biện - Chờ TBM duyệt đề cương',
-                      'Đã công bố',
                       'Yêu cầu chỉnh sửa đề cương',
                       'Không đạt phản biện'
                   ]);
@@ -116,6 +115,9 @@ class DuyetDeCuongController extends Controller
 
         // Tab lọc
         $statusTab = $request->input('tab', 'cho_duyet');
+        // Không tính hồ sơ có đường dẫn cũ nhưng tệp đã bị thiếu sau khi clone/di chuyển.
+        $approvedIds = (clone $baseQuery)->withoutEagerLoads()->daDuyetDeCuong()
+            ->get(['MaDeTai', 'FileDeCuong'])->filter(fn($topic) => $topic->coTepDeCuong())->pluck('MaDeTai');
         $query = clone $baseQuery;
 
         if ($statusTab === 'cho_duyet') {
@@ -140,7 +142,7 @@ class DuyetDeCuongController extends Controller
         } elseif ($statusTab === 'yeu_cau_sua') {
             $query->whereIn('TrangThai', ['Yêu cầu chỉnh sửa đề cương']);
         } elseif ($statusTab === 'da_cong_bo') {
-            $query->where('TrangThai', 'Đã công bố');
+            $query->whereIn('MaDeTai', $approvedIds);
         } elseif ($statusTab === 'ALL') {
             // Hiển thị tất cả đề tài trong giai đoạn đề cương
         }
@@ -169,7 +171,7 @@ class DuyetDeCuongController extends Controller
 
             'yeu_cau_sua' => (clone $baseQuery)->whereIn('TrangThai', ['Yêu cầu chỉnh sửa đề cương'])->count(),
 
-            'da_cong_bo' => (clone $baseQuery)->where('TrangThai', 'Đã công bố')->count(),
+            'da_cong_bo' => $approvedIds->count(),
 
             'total' => (clone $baseQuery)->count(),
         ];
@@ -190,6 +192,13 @@ class DuyetDeCuongController extends Controller
         // Khóa duyệt nếu đề tài đang bị yêu cầu chỉnh sửa đề cương hoặc từ chối
         if (in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa', 'Không đạt phản biện', 'Từ chối'])) {
             return redirect()->back()->withErrors("Đề cương đang ở trạng thái '{$detai->TrangThai}'. Nút duyệt đã bị khóa, vui lòng chờ Giảng viên nộp lại bản đề cương hoàn thiện đạt yêu cầu trước khi phê duyệt.");
+        }
+
+        if (!$detai->coTepDeCuong()) {
+            return redirect()->back()->withErrors('Chưa có tệp đề cương hợp lệ. Giảng viên hướng dẫn cần nộp đề cương trước khi phê duyệt.');
+        }
+        if ($detai->khoaNopDeCuong()) {
+            return redirect()->back()->withErrors('Đề cương đã được phê duyệt hoặc đề tài đã hoàn thành.');
         }
 
         $phanBien = $detai->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');

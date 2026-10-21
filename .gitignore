@@ -40,3 +40,8 @@ quanly_doan.sql
 # Environment variants
 .env.*
 !.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

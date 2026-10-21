@@ -48,8 +48,9 @@
     </div>
 
     @php
-        $tomTatData = $khoi->tomTat?->TomTatJson ?? ($khoi->TomTatJson ?? null);
-        $hasAi = !empty($tomTatData) && !empty($tomTatData['data']);
+        $tomTatData = $khoi->TomTatJson ?? $khoi->tomTat?->TomTatJson;
+        if (is_string($tomTatData)) $tomTatData = json_decode($tomTatData, true);
+        $hasAi = is_array($tomTatData) && (!empty($tomTatData['_processing']) || !empty($tomTatData['overall_summary']) || !empty($tomTatData['data']['overall_summary']));
     @endphp
 
     <!-- KHUNG ĐỐI CHIẾU SONG SONG (2 CỘT): SINH VIÊN vs AI TRÍCH XUẤT -->
@@ -70,11 +71,7 @@
                         <div class="fw-bold text-dark fs-6">{{ $khoi->TieuDe }}</div>
 
                         <div class="d-flex flex-wrap gap-2 mt-2">
-                            @if($khoi->TenFile)
-                                <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                    <i class="fa-solid fa-file-pdf me-2"></i>{{ $khoi->TenFile }} (Xem PDF)
-                                </a>
-                            @endif
+                            @include('partials.report_attachment', ['report' => $khoi])
                             @if($khoi->LinkCode)
                                 <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3">
                                     <i class="fa-brands fa-github me-2"></i>Xem Source Code
@@ -132,7 +129,7 @@
                         <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Trích Xuất Đối Chiếu Từ AI Map-Reduce
                     </h6>
                     <span class="badge bg-primary-subtle text-primary border rounded-pill px-3 py-1" style="font-size: 11.5px;">
-                        Độ tin cậy: {{ $khoi->tomTat?->DoTinCayAI ?? 95 }}%
+                        Đối chiếu theo dẫn chứng tài liệu
                     </span>
                 </div>
                 <div class="card-body p-3">
@@ -141,7 +138,7 @@
                     @else
                         <div class="p-4 text-center text-muted">
                             <i class="fa-solid fa-wand-magic-sparkles fa-2x mb-2 text-secondary"></i>
-                            <p class="mb-0" style="font-size: 13px;">Chưa có dữ liệu trích xuất AI cho bản nộp này hoặc file PDF không chứa văn bản.</p>
+                            <p class="mb-0" style="font-size: 13px;">Chưa có dữ liệu trích xuất AI cho bản nộp này hoặc tệp chưa có văn bản đọc được.</p>
                         </div>
                     @endif
                 </div>

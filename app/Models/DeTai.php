@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class DeTai extends Model
 {
@@ -54,6 +55,57 @@ class DeTai extends Model
     }
 
     public $timestamps = true;
+
+    public function coTepDeCuong(): bool
+    {
+        // FileDeCuong là bản nộp hiện tại; tài liệu lịch sử/bản nháp không thay thế nó.
+        $path = ltrim(str_replace('\\', '/', trim((string) $this->FileDeCuong)), '/');
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        if ($path === '' || str_contains($path, '://') || in_array('..', explode('/', $path), true)) {
+            return false;
+        }
+
+        return Storage::disk('public')->exists($path);
+    }
+
+    public function daDuyetDeCuong(): bool
+    {
+        if (!$this->coTepDeCuong() || !in_array($this->TrangThai, ['Đã công bố', 'Hoàn thành', 'Đã duyệt đề cương'], true)) {
+            return false;
+        }
+
+        // Công bố đề xuất của Trưởng khoa chưa phải phê duyệt đề cương của Bộ môn.
+        return $this->chiTietDuyets->contains(function ($duyet) {
+            return $duyet->TrangThai === 'Đã công bố' && (
+                $duyet->HanhDong === 'Phê duyệt đề cương & Công bố đề tài'
+                || ($duyet->HanhDong === 'Phê duyệt & Công bố'
+                    && $duyet->LyDo === 'Trưởng bộ môn đã duyệt đề cương và công bố đề tài.')
+            );
+        });
+    }
+
+    public function khoaNopDeCuong(): bool
+    {
+        return $this->TrangThai === 'Hoàn thành' || $this->daDuyetDeCuong();
+    }
+
+    public function scopeDaDuyetDeCuong($query)
+    {
+        return $query->whereNotNull('FileDeCuong')->where('FileDeCuong', '!=', '')
+            ->whereIn('TrangThai', ['Đã công bố', 'Hoàn thành', 'Đã duyệt đề cương'])
+            ->whereHas('chiTietDuyets', function ($duyet) {
+                $duyet->where('TrangThai', 'Đã công bố')->where(function ($action) {
+                    $action->where('HanhDong', 'Phê duyệt đề cương & Công bố đề tài')
+                        ->orWhere(function ($legacy) {
+                            $legacy->where('HanhDong', 'Phê duyệt & Công bố')
+                                ->where('LyDo', 'Trưởng bộ môn đã duyệt đề cương và công bố đề tài.');
+                        });
+                });
+            });
+    }
 
     public function giangVien()
     {

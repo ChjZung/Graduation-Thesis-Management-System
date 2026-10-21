@@ -49,7 +49,7 @@
                     <i class="fa-solid fa-wand-magic-sparkles fs-6"></i>
                 </span>
                 <div>
-                    <h6 class="fw-bold text-dark mb-1">Trợ Lý AI HUIT — Phân Tích &amp; Tóm Tắt PDF Tự Động (Map-Reduce)</h6>
+                    <h6 class="fw-bold text-dark mb-1">Trợ Lý AI HUIT — Tóm Tắt Báo Cáo PDF/DOCX</h6>
                     <small class="text-muted" style="font-size: 12px;">Hỗ trợ đọc tài liệu từ ngắn đến hàng trăm trang, trích xuất chính xác công việc, khó khăn, kế hoạch kèm số trang dẫn chứng.</small>
                 </div>
             </div>
@@ -61,16 +61,16 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-8">
                     <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">
-                        Chọn tệp báo cáo PDF để AI phân tích:
+                        Chọn báo cáo PDF hoặc DOCX:
                     </label>
                     <div class="input-group shadow-xs rounded-3 overflow-hidden">
-                        <input type="file" id="aiPdfFile" class="form-control py-2 px-3" accept=".pdf">
+                        <input type="file" id="aiPdfFile" class="form-control py-2 px-3" accept=".pdf,.docx">
                         <button type="button" id="btnRunAi" class="btn btn-primary fw-bold px-4 d-inline-flex align-items-center transition-all hover-scale" onclick="runAiExtraction()">
                             <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Trích Xuất Bằng AI
                         </button>
                     </div>
                     <div class="form-text text-muted mt-1.5" style="font-size: 12px;">
-                        Tệp PDF báo cáo tuần, tài liệu thiết kế hoặc dự thảo tiến độ (tối đa 25MB).
+                        Tệp PDF hoặc DOCX báo cáo tuần, tài liệu thiết kế hoặc dự thảo tiến độ (tối đa 25MB).
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end">
@@ -85,8 +85,8 @@
                 <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem;" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <h6 class="fw-bold text-primary mb-1" id="aiLoadingTitle">Đang xử lý tài liệu PDF với AI Map-Reduce...</h6>
-                <p class="text-muted mb-0" id="aiLoadingDesc" style="font-size: 13px;">Trích xuất văn bản từng trang → Chạy Map chunking → Hợp nhất Reduce dữ liệu...</p>
+                <h6 class="fw-bold text-primary mb-1" id="aiLoadingTitle">Đang đọc và tóm tắt báo cáo…</h6>
+                <p class="text-muted mb-0" id="aiLoadingDesc" style="font-size: 13px;">Đang trích xuất công việc, khó khăn và kế hoạch từ nội dung báo cáo…</p>
             </div>
 
             <!-- AI Extracted Result Preview Card -->
@@ -97,7 +97,7 @@
                             <i class="fa-solid fa-check me-2"></i>Phân tích AI thành công
                         </span>
                         <span class="text-muted" style="font-size: 12.5px;">
-                            Số trang: <strong id="resTotalPages" class="text-dark">0</strong> trang | Thời gian: <strong id="resTime" class="text-dark">0</strong>s
+                            Số đơn vị nguồn: <strong id="resTotalPages" class="text-dark">0</strong> | Thời gian: <strong id="resTime" class="text-dark">0</strong>s
                         </span>
                     </div>
                     <button type="button" class="btn btn-sm btn-success rounded-pill px-3.5 py-2 fw-bold shadow-xs d-inline-flex align-items-center transition-all hover-scale" onclick="applyAiToForm()">
@@ -124,12 +124,13 @@
                     <div class="col-md-6">
                         <div class="p-3.5 bg-white rounded-3 border h-100 shadow-xs">
                             <h6 class="fw-bold text-warning-emphasis mb-2.5" style="font-size: 13px;">
-                                <i class="fa-solid fa-triangle-exclamation me-2"></i>Khó khăn &amp; Hướng giải quyết:
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>Khó khăn gặp phải:
                             </h6>
                             <div id="resDifficultiesList" class="small text-secondary" style="max-height: 200px; overflow-y: auto;"></div>
                         </div>
                     </div>
-                </div>
+                </div>                <div class="mt-3 p-3 bg-white rounded-3 border" id="resPlanGroup"><h6 class="fw-bold text-primary">Kế hoạch tiếp theo</h6><div id="resPlanList" class="small"></div></div>
+                <p id="resMissingGroups" class="small text-muted mt-3 mb-0"></p>
             </div>
         </div>
     </div>
@@ -221,11 +222,11 @@
                     <!-- File đính kèm & Git Link -->
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">
-                            Tệp đính kèm (PDF)
+                            Tệp đính kèm (PDF hoặc DOCX)
                         </label>
-                        <input type="file" name="FileBaoCao" id="formFileBaoCao" class="form-control py-2 px-3 rounded-3 transition-all" accept=".pdf">
+                        <input type="file" name="FileBaoCao" id="formFileBaoCao" class="form-control py-2 px-3 rounded-3 transition-all" accept=".pdf,.docx">
                         <div class="form-text text-muted mt-1.5" id="fileNotice" style="font-size: 12px;">
-                            Có thể sử dụng tệp PDF đã phân tích ở trên hoặc tải tệp mới.
+                            Có thể sử dụng tệp báo cáo đã phân tích ở trên hoặc tải tệp mới.
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -277,7 +278,7 @@ let currentAiResult = null;
 function runAiExtraction() {
     const fileInput = document.getElementById('aiPdfFile');
     if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Vui lòng chọn một tệp PDF trước khi bấm phân tích AI!');
+        alert('Vui lòng chọn một tệp PDF hoặc DOCX trước khi bấm phân tích AI!');
         return;
     }
 
@@ -309,7 +310,7 @@ function runAiExtraction() {
             currentAiResult = res;
             renderAiResult(res);
         } else {
-            alert('Lỗi phân tích AI: ' + (res.error || 'Không thể trích xuất nội dung từ PDF này.'));
+            alert('Lỗi phân tích AI: ' + (res.error || 'Không thể trích xuất nội dung từ báo cáo này.'));
         }
     })
     .catch(err => {
@@ -320,38 +321,25 @@ function runAiExtraction() {
 }
 
 function renderAiResult(res) {
-    const card = document.getElementById('aiResultCard');
-    card.classList.remove('d-none');
-
-    document.getElementById('resTotalPages').innerText = res.total_pages || 1;
-    document.getElementById('resTime').innerText = res.processing_time || 0;
-    document.getElementById('resOverallSummary').innerText = res.data.overall_summary || 'Đã phân tích xong báo cáo.';
-
-    // Completed List
-    const compBox = document.getElementById('resCompletedList');
-    compBox.innerHTML = '';
-    const completedItems = res.data.completed_work || [];
-    if (completedItems.length > 0) {
-        completedItems.forEach(item => {
-            const pages = item.source_pages ? ` <span class="badge bg-secondary-subtle text-secondary border">[Trang ${item.source_pages.join(', ')}]</span>` : '';
-            compBox.innerHTML += `<div class="mb-2 pb-1 border-bottom">• <strong>${item.content}</strong>${pages}<br><small class="text-muted"><em>"${item.evidence || ''}"</em></small></div>`;
-        });
-    } else {
-        compBox.innerHTML = '<span class="text-muted">Chưa phát hiện danh mục rõ ràng.</span>';
+    document.getElementById('aiResultCard').classList.remove('d-none');
+    document.getElementById('resTotalPages').textContent = res.data.analysis?.total_units ?? res.total_pages ?? 0;
+    document.getElementById('resTime').textContent = res.processing_time ?? 0;
+    document.getElementById('resOverallSummary').textContent = res.data.overall_summary || 'Chưa có nội dung tóm tắt.';
+    const missing = [];
+    for (const [key, id, label] of [['completed_work','resCompletedList','công việc đã thực hiện'],['difficulties','resDifficultiesList','khó khăn'],['next_steps','resPlanList','kế hoạch tiếp theo']]) {
+        const box = document.getElementById(id); box.replaceChildren();
+        const items = Array.isArray(res.data[key]) ? res.data[key] : [];
+        const group = id === 'resPlanList' ? box.parentElement : box.closest('.col-md-6');
+        group.hidden = items.length === 0;
+        if (!items.length) missing.push(label);
+        for (const item of items) {
+            const row = document.createElement('p'); row.className = 'mb-2';
+            row.textContent = '• ' + (item.content || '');
+            const quote = document.createElement('small'); quote.className = 'd-block text-muted';
+            quote.textContent = item.evidence || ''; row.appendChild(quote); box.appendChild(row);
+        }
     }
-
-    // Difficulties List
-    const diffBox = document.getElementById('resDifficultiesList');
-    diffBox.innerHTML = '';
-    const diffItems = res.data.difficulties || [];
-    if (diffItems.length > 0) {
-        diffItems.forEach(item => {
-            const pages = item.source_pages ? ` <span class="badge bg-secondary-subtle text-secondary border">[Trang ${item.source_pages.join(', ')}]</span>` : '';
-            diffBox.innerHTML += `<div class="mb-2 pb-1 border-bottom">• <strong>${item.content}</strong>${pages}</div>`;
-        });
-    } else {
-        diffBox.innerHTML = '<span class="text-muted">Không phát hiện khó khăn nổi bật.</span>';
-    }
+    document.getElementById('resMissingGroups').textContent = missing.length ? (res.data.analysis?.status === 'completed' ? 'Báo cáo chưa đề cập: ' : 'Chưa trích xuất được từ phần đã đọc: ') + missing.join(', ') + '.' : '';
 }
 
 function applyAiToForm() {
@@ -366,7 +354,7 @@ function applyAiToForm() {
         if (input) input.value = text;
         const editor = document.getElementById('editor_' + id);
         if (editor) {
-            editor.innerHTML = text.includes('<') ? text : '<p>' + text.replace(/\n/g, '<br>') + '</p>';
+            editor.textContent = text;
         }
     }
 
@@ -387,7 +375,7 @@ function applyAiToForm() {
     if (currentAiResult.temp_file_url) {
         document.getElementById('formExistingFileUrl').value = currentAiResult.temp_file_url;
         document.getElementById('formExistingFileName').value = currentAiResult.temp_file_name || 'BaoCao.pdf';
-        document.getElementById('fileNotice').innerHTML = `<span class="text-primary fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Đã gắn file PDF vừa phân tích: ${currentAiResult.temp_file_name}</span>`;
+        document.getElementById('fileNotice').textContent = 'Đã gắn tệp vừa phân tích: ' + (currentAiResult.temp_file_name || '');
     }
 
     // Save JSON & AI Summary

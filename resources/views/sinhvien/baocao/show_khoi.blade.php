@@ -55,11 +55,11 @@
             @if($khoi->NhanXetGV)
                 <div class="p-3.5 bg-white rounded-3 border mt-2 shadow-xs">
                     <strong class="text-dark d-block mb-1.5"><i class="fa-solid fa-comment-dots text-primary me-2"></i>Nhận xét từ Giảng viên hướng dẫn:</strong>
-                    <div class="mb-0 text-dark" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->NhanXetGV) !!}</div>[cite: 2]
+                    <div class="mb-0 text-dark" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->NhanXetGV) !!}</div>
                 </div>
             @else
                 <div class="text-secondary small mt-1 py-1">
-                    <i class="fa-solid fa-circle-info me-2 text-muted"></i>Báo cáo đang chờ Giảng viên hướng dẫn xem xét và đánh giá.[cite: 2]
+                    <i class="fa-solid fa-circle-info me-2 text-muted"></i>Báo cáo đang chờ Giảng viên hướng dẫn xem xét và đánh giá.
                 </div>
             @endif
         </div>
@@ -77,35 +77,35 @@
                 <div class="card-body p-4">
                     <div class="mb-4">
                         <h6 class="fw-bold text-primary mb-2.5" style="font-size: 13.5px;">
-                            <i class="fa-solid fa-circle-check me-2"></i>1. Kết quả đạt được &amp; Công việc đã làm:[cite: 2]
+                            <i class="fa-solid fa-circle-check me-2"></i>1. Kết quả đạt được &amp; Công việc đã làm:
                         </h6>
-                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KetQuaDatDuoc ?: ($khoi->NoiDungBaoCao ?: 'Chưa cập nhật')) !!}</div>[cite: 2]
+                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KetQuaDatDuoc ?: ($khoi->NoiDungBaoCao ?: 'Chưa cập nhật')) !!}</div>
                     </div>
 
                     @if($khoi->KhoKhan)
                     <div class="mb-4">
                         <h6 class="fw-bold text-warning-emphasis mb-2.5" style="font-size: 13.5px;">
-                            <i class="fa-solid fa-triangle-exclamation me-2"></i>2. Khó khăn &amp; Rào cản gặp phải:[cite: 2]
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>2. Khó khăn &amp; Rào cản gặp phải:
                         </h6>
-                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KhoKhan) !!}</div>[cite: 2]
+                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KhoKhan) !!}</div>
                     </div>
                     @endif
 
                     @if($khoi->HuongGiaiQuyet)
                     <div class="mb-4">
                         <h6 class="fw-bold text-info mb-2.5" style="font-size: 13.5px;">
-                            <i class="fa-solid fa-lightbulb me-2"></i>3. Hướng giải quyết đề xuất:[cite: 2]
+                            <i class="fa-solid fa-lightbulb me-2"></i>3. Hướng giải quyết đề xuất:
                         </h6>
-                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->HuongGiaiQuyet) !!}</div>[cite: 2]
+                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->HuongGiaiQuyet) !!}</div>
                     </div>
                     @endif
 
                     @if($khoi->KeHoachTiepTheo)
                     <div class="mb-2">
                         <h6 class="fw-bold text-primary mb-2.5" style="font-size: 13.5px;">
-                            <i class="fa-solid fa-calendar-check me-2"></i>4. Kế hoạch giai đoạn tiếp theo:[cite: 2]
+                            <i class="fa-solid fa-calendar-check me-2"></i>4. Kế hoạch giai đoạn tiếp theo:
                         </h6>
-                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KeHoachTiepTheo) !!}</div>[cite: 2]
+                        <div class="p-3.5 rounded-3 bg-light border text-dark transition-all hover-shadow-sm" style="font-size: 13.5px; line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($khoi->KeHoachTiepTheo) !!}</div>
                     </div>
                     @endif
                 </div>
@@ -123,27 +123,21 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="mb-3.5">
-                        <div class="text-muted small mb-2 fw-medium">Tài liệu báo cáo PDF:[cite: 2]</div>
+                        <div class="text-muted small mb-2 fw-medium">Tài liệu báo cáo:</div>
                         @if($khoi->DuongDanFile)
-                            <a href="{{ asset('storage/' . $khoi->DuongDanFile) }}" target="_blank" class="btn btn-outline-danger w-100 text-start rounded-3 p-3 transition-all hover-scale d-flex align-items-center">
-                                <i class="fa-solid fa-file-pdf me-3 fs-3 text-danger"></i>
-                                <div class="text-truncate">
-                                    <span class="fw-semibold d-block text-truncate" style="font-size: 13.5px;">{{ $khoi->TenFile ?: 'Tai_lieu_bao_cao.pdf' }}</span>[cite: 2]
-                                    <span class="text-muted small" style="font-size: 11px;">Mở tệp PDF trong tab mới</span>
-                                </div>
-                            </a>
+                            @include('partials.report_attachment', ['report' => $khoi])
                         @else
-                            <div class="p-3 rounded-3 bg-light text-muted fst-italic small text-center border">Không đính kèm file PDF.</div>[cite: 2]
+                            <div class="p-3 rounded-3 bg-light text-muted fst-italic small text-center border">Không có tệp đính kèm.</div>
                         @endif
                     </div>
 
                     @if($khoi->LinkCode)
                     <div>
-                        <div class="text-muted small mb-2 fw-medium">Mã nguồn (Source Code):[cite: 2]</div>
+                        <div class="text-muted small mb-2 fw-medium">Mã nguồn (Source Code):</div>
                         <a href="{{ $khoi->LinkCode }}" target="_blank" class="btn btn-outline-dark w-100 text-start rounded-3 p-3 transition-all hover-scale d-flex align-items-center">
                             <i class="fa-brands fa-github me-3 fs-3"></i>
                             <div class="text-truncate">
-                                <span class="fw-semibold d-block text-truncate" style="font-size: 13.5px;">{{ $khoi->LinkCode }}</span>[cite: 2]
+                                <span class="fw-semibold d-block text-truncate" style="font-size: 13.5px;">{{ $khoi->LinkCode }}</span>
                                 <span class="text-muted small" style="font-size: 11px;">Truy cập repository Git</span>
                             </div>
                         </a>
@@ -152,13 +146,13 @@
                 </div>
             </div>
 
-            <!-- Tóm tắt AI 11 Mục -->
+            <!-- Tóm tắt AI 3 Nhóm -->
             @php
                 $tomTatData = $khoi->tomTat?->TomTatJson ?? ($khoi->TomTatJson ?? null);
             @endphp
             @if($tomTatData)
                 <div class="transition-all hover-shadow rounded-4">
-                    @include('partials.ai_summary_11_sections', ['pb' => $khoi])[cite: 2]
+                    @include('partials.ai_summary_11_sections', ['pb' => $khoi])
                 </div>
             @endif
         </div>
