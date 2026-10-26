@@ -348,7 +348,7 @@
                                 @csrf
                                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                                 <button type="submit" id="btnPheDuyetKhoa" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve">
-                                    <i class="fa-solid fa-stamp w-4 h-4"></i> Phê Duyệt &amp; Công Bố Đề Tài
+                                    <i class="fa-solid fa-stamp w-4 h-4"></i> Phê Duyệt
                                 </button>
                             </form>
 
