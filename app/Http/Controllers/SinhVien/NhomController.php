@@ -207,7 +207,9 @@ class NhomController extends Controller
                 'truongNhom.taiKhoan',
                 'truongNhom.lop.nganh',
                 'hocPhan.boMon',
-                'hocKy.keHoachKhoaLuans.mocThoiGians'
+                'hocKy.keHoachKhoaLuans.mocThoiGians',
+                'hoSoBaoVe.hoiDong',
+                'hoSoBaoVe.baoCaoSauBaoVes.sinhVienNop'
             ]);
 
             // Nhóm đã khóa khi đề tài đang chờ duyệt hoặc đã được duyệt chính thức

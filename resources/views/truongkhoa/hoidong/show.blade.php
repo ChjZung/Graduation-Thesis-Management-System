@@ -564,6 +564,9 @@
                                                 <div class="fw-bold text-primary">{{ $deTai?->TenDeTai ?? 'Chưa có tên đề tài' }}</div>
                                                 <div class="d-flex flex-wrap align-items-center gap-1 mt-1 small text-muted">
                                                     <span class="badge bg-light text-dark border">Nhóm {{ $nhom?->MaNhom }}</span>
+                                                    <span class="badge bg-primary-subtle text-primary border" title="Ngành đào tạo">
+                                                        <i class="fa-solid fa-graduation-cap me-1"></i>{{ $hoSo->ten_nganh }}
+                                                    </span>
                                                     @if($deTai?->MaDeTai)
                                                         <span class="badge bg-secondary-subtle text-secondary border font-monospace">{{ $deTai->MaDeTai }}</span>
                                                     @endif

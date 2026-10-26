@@ -130,8 +130,11 @@ class HoiDongController extends Controller
         // 3. Danh sách Đề tài / Nhóm sinh viên đủ điều kiện tham gia bảo vệ
         // Bao gồm hồ sơ đã duyệt/đủ điều kiện và chưa gắn vào Hội đồng nào
         $danhSachHoSo = HoSoBaoVe::with([
-            'nhom.truongNhom',
-            'nhom.thanhVienNhoms.sinhVien.lop',
+            'nhom.truongNhom.nganh',
+            'nhom.truongNhom.lop.nganh',
+            'nhom.thanhVienNhoms.sinhVien.nganh',
+            'nhom.thanhVienNhoms.sinhVien.lop.nganh',
+            'nhom.deTai.nganh',
             'nhom.deTai.giangVien.boMon',
             'hoiDong',
         ])
@@ -145,6 +148,10 @@ class HoiDongController extends Controller
         // Gợi ý mã Hội đồng tiếp theo
         $nextMaHoiDong = IdGenerator::nextHoiDong();
 
+        // Thống kê phân công hội đồng trước khi thành lập
+        $thongKeTruocPhanCong = app(\App\Services\CouncilAssignmentService::class)
+            ->thongKeTruocPhanCong($hocKys->first()?->MaHocKy, $khoa->MaKhoa);
+
         return view('truongkhoa.hoidong.create', compact(
             'khoa',
             'hocKys',
@@ -152,8 +159,34 @@ class HoiDongController extends Controller
             'boMons',
             'giangViens',
             'danhSachHoSo',
-            'nextMaHoiDong'
+            'nextMaHoiDong',
+            'thongKeTruocPhanCong'
         ));
+    }
+
+    /**
+     * API Gợi ý phân công cân bằng thành viên Hội đồng
+     */
+    public function deXuatThanhVien(Request $request)
+    {
+        $request->validate([
+            'ThoiGianBatDau'  => 'required',
+            'ThoiGianKetThuc' => 'required',
+            'danh_sach_ho_so' => 'required|array|min:1',
+            'MaHocKy'         => 'nullable|string',
+        ]);
+
+        $khoa = $this->getKhoa();
+        $assignmentService = app(\App\Services\CouncilAssignmentService::class);
+        $result = $assignmentService->deXuatThanhVienHoiDong(
+            $request->ThoiGianBatDau,
+            $request->ThoiGianKetThuc,
+            $request->danh_sach_ho_so,
+            $request->MaHocKy,
+            $khoa->MaKhoa
+        );
+
+        return response()->json($result);
     }
 
     /**
@@ -372,8 +405,11 @@ class HoiDongController extends Controller
             'nganh',
             'hocKy',
             'thanhViens.giangVien.boMon.khoa',
-            'hoSoBaoVes.nhom.truongNhom',
-            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.lop',
+            'hoSoBaoVes.nhom.truongNhom.nganh',
+            'hoSoBaoVes.nhom.truongNhom.lop.nganh',
+            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.nganh',
+            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.lop.nganh',
+            'hoSoBaoVes.nhom.deTai.nganh',
             'hoSoBaoVes.nhom.deTai.giangVien.boMon',
             'hoSoBaoVes.phanCongPhanBien.giangVien.boMon',
             'hoSoBaoVes.tepHoSoBaoVes',
@@ -389,7 +425,14 @@ class HoiDongController extends Controller
         }
 
         // Nhóm đủ điều kiện chưa được phân công vào bất kỳ Hội đồng nào
-        $nhomDuDieuKien = HoSoBaoVe::with(['nhom.truongNhom', 'nhom.deTai.giangVien.boMon', 'nhom.thanhVienNhoms.sinhVien'])
+        $nhomDuDieuKien = HoSoBaoVe::with([
+            'nhom.truongNhom.nganh',
+            'nhom.truongNhom.lop.nganh',
+            'nhom.thanhVienNhoms.sinhVien.nganh',
+            'nhom.thanhVienNhoms.sinhVien.lop.nganh',
+            'nhom.deTai.nganh',
+            'nhom.deTai.giangVien.boMon',
+        ])
             ->whereNull('MaHoiDong')
             ->where(function($q) {
                 $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt'])

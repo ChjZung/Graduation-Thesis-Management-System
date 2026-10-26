@@ -87,7 +87,7 @@
 
             <!-- 3. THỰC HIỆN & KẾT QUẢ -->
             @php
-                $isSvBaoCao = request()->routeIs('sinhvien.baocao.*') || request()->routeIs('sinhvien.hoso.*') || request()->routeIs('sinhvien.ketqua.*');
+                $isSvBaoCao = request()->routeIs('sinhvien.baocao.*') || request()->routeIs('sinhvien.hoso.*') || request()->routeIs('sinhvien.ketqua.*') || request()->routeIs('sinhvien.hoidong.*');
             @endphp
             <div class="sidebar-menu-group">
                 <button class="menu-parent-btn {{ $isSvBaoCao ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-sv-baocao" aria-expanded="{{ $isSvBaoCao ? 'true' : 'false' }}">
@@ -103,6 +103,9 @@
                     </a>
                     <a href="{{ route('sinhvien.hoso.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.hoso.*') ? 'active-sub' : '' }}">
                         <span>Hồ sơ bảo vệ</span>
+                    </a>
+                    <a href="{{ route('sinhvien.hoidong.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.hoidong.*') ? 'active-sub' : '' }}">
+                        <span>Hội đồng bảo vệ</span>
                     </a>
                     <a href="{{ route('sinhvien.ketqua.index') }}" class="submenu-link {{ request()->routeIs('sinhvien.ketqua.index') ? 'active-sub' : '' }}">
                         <span>Kết quả khóa luận</span>

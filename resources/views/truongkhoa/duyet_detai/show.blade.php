@@ -148,7 +148,7 @@
                     </span>
                 </div>
                 <div class="card-body p-4">
-                    <h4 class="fw-bold text-dark mb-3">{{ $detai->TenDeTai }}</h4>
+                    <h4 class="fw-bold text-dark mb-3 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;" title="{{ $detai->TenDeTai }}">{{ $detai->TenDeTai }}</h4>
 
                     @if($detai->TenDeTaiTiengAnh)
                     <div class="text-secondary fst-italic mb-3">
@@ -157,23 +157,23 @@
                     @endif
 
                     <div class="row g-3 py-3 border-top border-bottom bg-light bg-opacity-50 rounded-3 px-2 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6 min-w-0">
                             <div class="text-muted small">Giảng viên đề xuất:</div>
-                            <div class="fw-bold text-dark fs-6 mt-1">
+                            <div class="fw-bold text-dark fs-6 mt-1 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;">
                                 {{ $detai->giangVien->HoTen ?? 'N/A' }} 
                                 <span class="badge-code ms-1">{{ $detai->MaGV }}</span>
                             </div>
-                            <div class="small text-muted mt-1">
+                            <div class="small text-muted mt-1 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;">
                                 <i class="fa-solid fa-building-columns me-2 text-secondary"></i> {{ $detai->giangVien->boMon->TenBoMon ?? 'Bộ môn' }}
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6 min-w-0">
                             <div class="text-muted small">Môn học / Học kỳ:</div>
-                            <div class="fw-bold text-dark mt-1">
+                            <div class="fw-bold text-dark mt-1 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;">
                                 {{ $detai->hocPhanRef->TenHocPhan ?? ($detai->HocPhan ?? 'Khóa luận tốt nghiệp') }}
                             </div>
-                            <div class="small text-muted mt-1">
+                            <div class="small text-muted mt-1 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;">
                                 <i class="fa-solid fa-calendar me-2 text-secondary"></i> {{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}
                                 &bull; Ngày đề xuất: <strong>{{ $detai->NgayDeXuat ? \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y') : ($detai->created_at ? $detai->created_at->format('d/m/Y') : '—') }}</strong>
                             </div>
@@ -181,16 +181,22 @@
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <span class="text-muted small d-block">Lĩnh vực nghiên cứu:</span>
-                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill mt-1 fw-medium">
-                                <i class="fa-solid fa-tag me-2 text-primary"></i> {{ $detai->LinhVuc ?? 'Công nghệ thông tin' }}
-                            </span>
+                        <div class="col-12 col-md-6 min-w-0">
+                            <span class="text-muted small d-block mb-1">Lĩnh vực nghiên cứu:</span>
+                            <div class="inline-flex items-start gap-2 max-w-full min-w-0 badge bg-light text-dark border px-3 py-2 rounded-pill text-wrap text-start d-inline-flex align-items-start" 
+                                 style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0; line-height: 1.4;"
+                                 title="{{ $detai->LinhVuc ?? 'Công nghệ thông tin' }}">
+                                <i class="fa-solid fa-tag text-primary shrink-0 flex-shrink-0 mt-1"></i>
+                                <span class="min-w-0 break-words" style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
+                                    {{ $detai->LinhVuc ?? 'Công nghệ thông tin' }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <span class="text-muted small d-block">Quy mô nhóm sinh viên:</span>
-                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill mt-1 fw-medium">
-                                <i class="fa-solid fa-users me-2 text-primary"></i> {{ $detai->SoLuongSinhVienToiDa ?? 3 }} Sinh viên / nhóm
+                        <div class="col-12 col-md-6 min-w-0">
+                            <span class="text-muted small d-block mb-1">Quy mô nhóm sinh viên:</span>
+                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-medium shrink-0 flex-shrink-0 text-nowrap d-inline-flex align-items-center gap-2" style="white-space: nowrap !important;">
+                                <i class="fa-solid fa-users text-primary shrink-0 flex-shrink-0"></i>
+                                <span>{{ $detai->SoLuongSinhVienToiDa ?? 3 }} Sinh viên / nhóm</span>
                             </span>
                         </div>
                     </div>
@@ -239,22 +245,25 @@
                         }
                     @endphp
                     <div class="row g-2 p-3 bg-light rounded-3 mb-3 border">
-                        <div class="col-md-4">
-                            <span class="text-muted small d-block">1. Trạng thái đề tài:</span>
-                            <span class="badge bg-success-subtle text-success border px-3 py-1 rounded-pill mt-1 fw-semibold">
-                                <i class="fa-solid fa-check me-2"></i> {{ $dtStatusLabel }}
+                        <div class="col-12 col-md-4 min-w-0">
+                            <span class="text-muted small d-block mb-1">1. Trạng thái đề tài:</span>
+                            <span class="badge bg-success-subtle text-success border px-3 py-1 rounded-pill mt-1 fw-semibold text-wrap text-start d-inline-flex align-items-center gap-2" style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; max-width: 100%;">
+                                <i class="fa-solid fa-check shrink-0 flex-shrink-0"></i>
+                                <span class="min-w-0 break-words">{{ $dtStatusLabel }}</span>
                             </span>
                         </div>
-                        <div class="col-md-4">
-                            <span class="text-muted small d-block">2. Trạng thái đề cương:</span>
-                            <span class="badge {{ $dcStatusLabel === 'Đã duyệt đề cương' ? 'bg-success text-white' : ($dcStatusLabel === 'Yêu cầu chỉnh sửa đề cương' ? 'bg-warning-subtle text-warning-emphasis border' : 'bg-primary-subtle text-primary border') }} px-3 py-1 rounded-pill mt-1 fw-semibold">
-                                <i class="fa-solid fa-file-lines me-2"></i> {{ $dcStatusLabel }}
+                        <div class="col-12 col-md-4 min-w-0">
+                            <span class="text-muted small d-block mb-1">2. Trạng thái đề cương:</span>
+                            <span class="badge {{ $dcStatusLabel === 'Đã duyệt đề cương' ? 'bg-success text-white' : ($dcStatusLabel === 'Yêu cầu chỉnh sửa đề cương' ? 'bg-warning-subtle text-warning-emphasis border' : 'bg-primary-subtle text-primary border') }} px-3 py-1 rounded-pill mt-1 fw-semibold text-wrap text-start d-inline-flex align-items-center gap-2" style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; max-width: 100%;">
+                                <i class="fa-solid fa-file-lines shrink-0 flex-shrink-0"></i>
+                                <span class="min-w-0 break-words">{{ $dcStatusLabel }}</span>
                             </span>
                         </div>
-                        <div class="col-md-4">
-                            <span class="text-muted small d-block">3. Phản biện đề cương:</span>
-                            <span class="badge {{ $pbStatusClass }} px-3 py-1 rounded-pill mt-1 fw-semibold">
-                                <i class="fa-solid fa-user-check me-2"></i> {{ $pbStatusLabel }}
+                        <div class="col-12 col-md-4 min-w-0">
+                            <span class="text-muted small d-block mb-1">3. Phản biện đề cương:</span>
+                            <span class="badge {{ $pbStatusClass }} px-3 py-1 rounded-pill mt-1 fw-semibold text-wrap text-start d-inline-flex align-items-center gap-2" style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; max-width: 100%;">
+                                <i class="fa-solid fa-user-check shrink-0 flex-shrink-0"></i>
+                                <span class="min-w-0 break-words">{{ $pbStatusLabel }}</span>
                             </span>
                         </div>
                     </div>
@@ -265,15 +274,15 @@
                             $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
                             $fileName = basename($detai->FileDeCuong);
                         @endphp
-                        <div class="alert alert-light border rounded-3 p-3 d-flex align-items-center justify-content-between mb-0 mt-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-file-pdf text-danger fs-3"></i>
-                                <div>
+                        <div class="alert alert-light border rounded-3 p-3 d-flex align-items-center justify-content-between mb-0 mt-3 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-file-pdf text-danger fs-3 shrink-0 flex-shrink-0"></i>
+                                <div class="min-w-0">
                                     <div class="fw-bold text-dark">File Đề Cương Chi Tiết Đính Kèm</div>
-                                    <div class="small text-muted">Tệp: {{ $fileName }}</div>
+                                    <div class="small text-muted text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">Tệp: {{ $fileName }}</div>
                                 </div>
                             </div>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 shrink-0 flex-shrink-0">
                                 <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs d-inline-flex align-items-center" 
                                         onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
                                     <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
@@ -296,17 +305,17 @@
                 </div>
                 <div class="card-body p-4">
                     <!-- Mô tả đề tài -->
-                    <div class="mb-4">
+                    <div class="mb-4 min-w-0">
                         <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">1. Mô Tả Đề Tài:</h6>
-                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="line-height: 1.6;">
+                        <div class="p-3 bg-light rounded-3 text-dark mt-2 text-break break-words" style="line-height: 1.6; overflow-wrap: anywhere; word-break: break-word;">
                             {!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa có thông tin mô tả chi tiết.' !!}
                         </div>
                     </div>
 
                     <!-- Yêu cầu đối với sinh viên -->
-                    <div class="mb-0">
+                    <div class="mb-0 min-w-0">
                         <h6 class="fw-bold text-secondary text-uppercase small" style="letter-spacing: 0.5px;">2. Yêu Cầu Đối Với Sinh Viên Thực Hiện:</h6>
-                        <div class="p-3 bg-light rounded-3 text-dark mt-2" style="line-height: 1.6;">
+                        <div class="p-3 bg-light rounded-3 text-dark mt-2 text-break break-words" style="line-height: 1.6; overflow-wrap: anywhere; word-break: break-word;">
                             {!! \App\Helpers\HtmlHelper::clean($detai->YeuCau) ?: 'Kiến thức chuyên ngành phù hợp, tinh thần tự giác, hoàn thành đúng tiến độ theo quy định của Khoa & Bộ môn.' !!}
                         </div>
                     </div>
@@ -333,25 +342,24 @@
                             <div>Đề tài đang ở trạng thái <strong>Chờ duyệt cấp Khoa</strong>. Vui lòng xem xét nội dung và chọn một trong các quyết định dưới đây:</div>
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-column gap-3 flex-col">
                             <!-- NÚT 1: PHÊ DUYỆT -->
-                            <form action="{{ route('truongkhoa.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
-                                  onsubmit="return confirm('Xác nhận PHÊ DUYỆT đề xuất đề tài \'{{ $detai->TenDeTai }}\' cấp Khoa?\nSau khi phê duyệt, đề tài sẽ được công bố chính thức để sinh viên đăng ký theo kế hoạch.');">
+                            <form id="formPheDuyetKhoa" action="{{ route('truongkhoa.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST" class="m-0 p-0 w-100" data-custom-confirm="true" data-title="{{ $detai->TenDeTai }}">
                                 @csrf
                                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
-                                <button type="submit" class="btn btn-success fw-bold py-2 rounded-pill shadow-xs w-100 d-flex align-items-center justify-content-center">
-                                    <i class="fa-solid fa-stamp me-2"></i> Phê Duyệt &amp; Công Bố Đề Tài
+                                <button type="submit" id="btnPheDuyetKhoa" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve">
+                                    <i class="fa-solid fa-stamp w-4 h-4"></i> Phê Duyệt &amp; Công Bố Đề Tài
                                 </button>
                             </form>
 
                             <!-- NÚT 2: YÊU CẦU CHỈNH SỬA -->
-                            <button type="button" class="btn btn-outline-warning text-dark fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTKYeuCauSua">
-                                <i class="fa-solid fa-pen-ruler me-2 text-warning"></i> Yêu Cầu Chỉnh Sửa
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-orange-400 text-orange-600 hover:bg-orange-50 btn-decision btn-decision-edit" data-bs-toggle="modal" data-bs-target="#modalTKYeuCauSua">
+                                <i class="fa-solid fa-pen-ruler w-4 h-4"></i> Yêu Cầu Chỉnh Sửa
                             </button>
 
                             <!-- NÚT 3: TỪ CHỐI -->
-                            <button type="button" class="btn btn-outline-danger fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTKTuChoi">
-                                <i class="fa-solid fa-ban me-2"></i> Từ Chối Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-red-400 text-red-600 hover:bg-red-50 btn-decision btn-decision-reject" data-bs-toggle="modal" data-bs-target="#modalTKTuChoi">
+                                <i class="fa-solid fa-ban w-4 h-4"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     @elseif($isKhoaApprovedFinal)
@@ -397,11 +405,11 @@
                         </div>
 
                         @if($detai->LyDoTuChoi)
-                        <div class="border rounded-3 p-3 mb-3 bg-white">
+                        <div class="border rounded-3 p-3 mb-3 bg-white max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                             <div class="small fw-bold text-danger mb-1">
                                 <i class="fa-solid fa-message me-2"></i> Lý do từ chối:
                             </div>
-                            <div class="small text-dark fst-italic text-break" style="word-break: break-word; overflow-wrap: anywhere;">
+                            <div class="small text-dark fst-italic text-break break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="word-break: break-word; overflow-wrap: anywhere; max-height: 6rem; overflow-y: auto;">
                                 {!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}
                             </div>
                         </div>
@@ -501,7 +509,7 @@
 <div class="modal fade" id="modalTKYeuCauSua" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 12px;">
-            <form action="{{ route('truongkhoa.duyet_detai.yeuCauChinhSua', $detai->MaDeTai) }}" method="POST">
+            <form id="formYeuCauSuaKhoa" action="{{ route('truongkhoa.duyet_detai.yeuCauChinhSua', $detai->MaDeTai) }}" method="POST" data-custom-confirm="true" data-title="{{ $detai->TenDeTai }}">
                 @csrf
                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                 <div class="modal-header">
@@ -526,7 +534,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-warning fw-bold d-inline-flex align-items-center">
+                    <button type="submit" id="btnYeuCauSuaKhoa" class="btn btn-warning fw-bold d-inline-flex align-items-center">
                         <i class="fa-solid fa-paper-plane me-2"></i> Gửi Yêu Cầu Chỉnh Sửa
                     </button>
                 </div>
@@ -539,7 +547,7 @@
 <div class="modal fade" id="modalTKTuChoi" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 12px;">
-            <form action="{{ route('truongkhoa.duyet_detai.tuChoi', $detai->MaDeTai) }}" method="POST">
+            <form id="formTuChoiKhoa" action="{{ route('truongkhoa.duyet_detai.tuChoi', $detai->MaDeTai) }}" method="POST" data-custom-confirm="true" data-title="{{ $detai->TenDeTai }}">
                 @csrf
                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                 <div class="modal-header">
@@ -564,7 +572,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-danger fw-bold d-inline-flex align-items-center">
+                    <button type="submit" id="btnTuChoiKhoa" class="btn btn-danger fw-bold d-inline-flex align-items-center">
                         <i class="fa-solid fa-ban me-2"></i> Xác Nhận Từ Chối
                     </button>
                 </div>
@@ -573,3 +581,98 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function getShortTitle(title, maxLen = 80) {
+        if (!title) return '';
+        const clean = title.trim();
+        return clean.length > maxLen ? clean.substring(0, maxLen) + '...' : clean;
+    }
+
+    // 1. Phê duyệt & Công bố form
+    const formDuyet = document.getElementById('formPheDuyetKhoa');
+    if (formDuyet) {
+        formDuyet.addEventListener('submit', function (e) {
+            const rawTitle = formDuyet.dataset.title || '';
+            const shortTitle = getShortTitle(rawTitle, 80);
+            const msg = `Xác nhận PHÊ DUYỆT đề xuất đề tài "${shortTitle}" cấp Khoa?\nSau khi phê duyệt, đề tài sẽ được công bố chính thức để sinh viên đăng ký theo kế hoạch.`;
+
+            if (!confirm(msg)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            const btn = document.getElementById('btnPheDuyetKhoa') || formDuyet.querySelector('button[type="submit"]');
+            if (btn) {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin w-4 h-4"></i> Đang phê duyệt...';
+            }
+        });
+    }
+
+    // 2. Yêu cầu chỉnh sửa modal form
+    const formYeuCauSua = document.getElementById('formYeuCauSuaKhoa');
+    if (formYeuCauSua) {
+        formYeuCauSua.addEventListener('submit', function (e) {
+            const rawTitle = formYeuCauSua.dataset.title || '';
+            const shortTitle = getShortTitle(rawTitle, 80);
+            const msg = `Xác nhận gửi YÊU CẦU CHỈNH SỬA cho đề tài "${shortTitle}"?`;
+
+            if (!confirm(msg)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            const btn = document.getElementById('btnYeuCauSuaKhoa') || formYeuCauSua.querySelector('button[type="submit"]');
+            if (btn) {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang gửi...';
+            }
+        });
+    }
+
+    // 3. Từ chối modal form
+    const formTuChoi = document.getElementById('formTuChoiKhoa');
+    if (formTuChoi) {
+        formTuChoi.addEventListener('submit', function (e) {
+            const rawTitle = formTuChoi.dataset.title || '';
+            const shortTitle = getShortTitle(rawTitle, 80);
+            const msg = `Bạn có chắc chắn muốn TỪ CHỐI đề tài "${shortTitle}" cấp Khoa?`;
+
+            if (!confirm(msg)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            const btn = document.getElementById('btnTuChoiKhoa') || formTuChoi.querySelector('button[type="submit"]');
+            if (btn) {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang từ chối...';
+            }
+        });
+    }
+
+    // Reset trạng thái nút khi phục hồi trang từ bfcache (nút Back)
+    window.addEventListener('pageshow', function (event) {
+        document.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            if (btn.dataset.originalHtml) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        });
+    });
+});
+</script>
+@endpush

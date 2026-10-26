@@ -34,21 +34,12 @@
             <form action="{{ route('sinhvien.baocao.update_khoi', $khoi->MaKhoi) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row g-3">
-                    <div class="col-md-8">
+                    <div class="col-12">
                         <label class="form-label fw-bold text-dark" style="font-size: 13px;">
                             Tiêu đề báo cáo nhỏ <span class="text-danger">*</span>
                         </label>
                         <input type="text" name="TieuDe" class="form-control" value="{{ old('TieuDe', $khoi->TieuDe) }}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark" style="font-size: 13px;">
-                            % Tiến độ hoàn thành:
-                        </label>
-                        <div class="input-group">
-                            <input type="number" name="PhanTramHoanThanh" class="form-control text-center fw-bold" 
-                                   min="0" max="100" value="{{ old('PhanTramHoanThanh', $khoi->PhanTramHoanThanh ?? 50) }}">
-                            <span class="input-group-text bg-light fw-bold">%</span>
-                        </div>
+                        <div class="form-text text-muted mt-1" style="font-size: 12px;">Tỷ lệ hoàn thành do hệ thống AI tự động phân tích và thẩm định theo nội dung báo cáo.</div>
                     </div>
 
                     <div class="col-12">

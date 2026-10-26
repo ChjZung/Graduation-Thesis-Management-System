@@ -34,6 +34,15 @@
         ['key' => 'difficulties', 'number' => 2, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties],
         ['key' => 'next_steps', 'number' => 3, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps],
     ];
+    $aiEvaluation = $aiData['completion_percentage'] ?? ($pb->PhanTramHoanThanh ?? null);
+    $aiBasis = $aiData['completion_basis'] ?? [];
+    $versionComparison = $aiData['version_comparison'] ?? null;
+    $hasVersionComparison = !empty($versionComparison['has_previous']);
+    $lanNop = $pb->LanNop ?? 1;
+    $isOverdue = false;
+    if ($reviewRound && $reviewRound->HanNop && $pb->NgayNop) {
+        $isOverdue = \Carbon\Carbon::parse($pb->NgayNop)->gt($reviewRound->HanNop);
+    }
     if ($flexibleSummary) {
         $sections = array_map(fn ($section) => array_merge($section, [
             'key' => $section['id'] ?? 'topic', 'icon' => 'fa-file-lines', 'tone' => 'primary',
@@ -213,9 +222,146 @@
             <button type="button" class="ai-button" data-ai-action="toggle" aria-expanded="true" aria-controls="{{ $uniqueId }}-body"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span class="ai-toggle-label">Thu gọn</span></button>
         </div>
     </header>
+
+    <!-- 4 Khối Thống Kê & Đánh Giá Tỷ Lệ Hoàn Thành AI -->
+    <div class="ai-stats">
+        <div class="ai-stat">
+            <i class="fa-solid fa-robot" aria-hidden="true"></i>
+            <div>
+                <span class="ai-stat-label">AI Ước Lượng Tiến Độ</span>
+                <span class="ai-stat-value">
+                    @if($aiEvaluation !== null)
+                        <span style="color: var(--ai-blue);">{{ $aiEvaluation }}%</span>
+                    @else
+                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.72rem;">Chưa đánh giá</span>
+                    @endif
+                </span>
+            </div>
+        </div>
+        <div class="ai-stat">
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+            <div>
+                <span class="ai-stat-label">Tiến Độ Tổng Thể Đề Tài</span>
+                <span class="ai-stat-value">
+                    {{ $pb->baoCaoTienDo?->PhanTramHoanThanh ?? ($aiEvaluation ?? 'Đang cập nhật') }}{{ is_numeric($pb->baoCaoTienDo?->PhanTramHoanThanh ?? $aiEvaluation) ? '%' : '' }}
+                </span>
+            </div>
+        </div>
+        <div class="ai-stat">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+            <div>
+                <span class="ai-stat-label">Trạng Thái Nộp Báo Cáo</span>
+                <span class="ai-stat-value" style="font-size: 13.5px;">
+                    @if($isOverdue)
+                        <span style="color: #dc3545;"><i class="fa-solid fa-triangle-exclamation me-1"></i>Nộp quá hạn</span>
+                    @else
+                        <span style="color: #198754;"><i class="fa-solid fa-circle-check me-1"></i>Đúng thời hạn</span>
+                    @endif
+                </span>
+            </div>
+        </div>
+        <div class="ai-stat">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <div>
+                <span class="ai-stat-label">Phiên Bản Báo Cáo</span>
+                <span class="ai-stat-value" style="font-size: 13.5px;">
+                    Lần {{ $lanNop }}
+                    @if($hasVersionComparison)
+                        <span class="badge bg-info-subtle text-info border font-monospace ms-1" style="font-size: 0.65rem;">+ So sánh Lần {{ $versionComparison['previous_version'] }}</span>
+                    @else
+                        <span class="badge bg-light text-secondary border font-monospace ms-1" style="font-size: 0.65rem;">Bản độc lập</span>
+                    @endif
+                </span>
+            </div>
+        </div>
+    </div>
+
     @include('partials.ai_processing_status')
     <p class="ai-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="ai-details ai-details-body ai-copy-content" id="{{ $uniqueId }}-body" tabindex="0" role="region" aria-label="Nội dung tóm tắt AI, có thể cuộn để xem đầy đủ">
+        
+        <!-- Đối chiếu phiên bản (Lần 1 vs Lần 2) nếu có phiên bản trước -->
+        @if($hasVersionComparison)
+        <section class="ai-section ai-section-wide mb-3" style="border-left: 4px solid var(--ai-blue); background: var(--ai-tint); padding: 14px 16px;" data-summary-version-comparison>
+            <div class="ai-section-head">
+                <h3 class="ai-section-title" style="color: var(--ai-navy);">
+                    <i class="fa-solid fa-code-compare me-1 text-primary"></i>Đối Chiếu Thay Đổi So Với Phiên Bản Lần {{ $versionComparison['previous_version'] }}
+                </h3>
+                @if(isset($versionComparison['completion_delta']))
+                    <span class="badge {{ $versionComparison['completion_delta'] >= 0 ? 'bg-success text-white' : 'bg-danger text-white' }} rounded-pill px-3 py-1 font-monospace">
+                        {{ $versionComparison['completion_delta'] >= 0 ? '+' : '' }}{{ $versionComparison['completion_delta'] }}% tiến độ
+                    </span>
+                @endif
+            </div>
+            <p class="text-dark mb-2" style="font-size: 13.5px; line-height: 1.6;">
+                {{ $versionComparison['comparative_summary'] ?? 'Đã so sánh đối chiếu với phiên bản trước liền kề.' }}
+            </p>
+
+            <div class="row g-2 mt-1">
+                @if(!empty($versionComparison['new_items']))
+                <div class="col-md-6">
+                    <div class="p-2 bg-white rounded border">
+                        <div class="fw-bold text-success small mb-1"><i class="fa-solid fa-plus-circle me-1"></i>Nội dung mới bổ sung ({{ count($versionComparison['new_items']) }} mục):</div>
+                        <ul class="mb-0 ps-3 small text-secondary" style="font-size: 12.5px;">
+                            @foreach($versionComparison['new_items'] as $newItem)
+                                <li>{{ $newItem }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                @endif
+
+                @if(!empty($versionComparison['modified_items']))
+                <div class="col-md-6">
+                    <div class="p-2 bg-white rounded border">
+                        <div class="fw-bold text-primary small mb-1"><i class="fa-solid fa-pen-nib me-1"></i>Nội dung hoàn thiện/sửa đổi ({{ count($versionComparison['modified_items']) }} mục):</div>
+                        <ul class="mb-0 ps-3 small text-secondary" style="font-size: 12.5px;">
+                            @foreach($versionComparison['modified_items'] as $modItem)
+                                <li>{{ is_array($modItem) ? ($modItem['hien_tai'] ?? '') : $modItem }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                @endif
+            </div>
+
+            @if(!empty($versionComparison['feedback_integration']))
+                <div class="mt-2 p-2 bg-white rounded border">
+                    <div class="fw-bold text-dark small mb-1"><i class="fa-solid fa-comment-dots me-1 text-info"></i>Tiếp thu góp ý của Giảng viên:</div>
+                    <ul class="mb-0 ps-3 small text-secondary" style="font-size: 12.5px;">
+                        @foreach($versionComparison['feedback_integration'] as $fbNote)
+                            <li>{{ $fbNote }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </section>
+        @endif
+
+        <!-- Chi tiết 4 Căn cứ đánh giá tỷ lệ AI nếu có -->
+        @if(!empty($aiBasis['tieu_chi']))
+        <details class="ai-review-disclosure mb-3" style="background: #f8fafc; border: 1px solid var(--ai-border); border-radius: 6px; padding: 10px 14px;">
+            <summary class="fw-semibold text-primary" style="cursor: pointer; font-size: 13px;">
+                <i class="fa-solid fa-scale-balanced me-1"></i> Căn cứ &amp; trọng số đánh giá tỷ lệ hoàn thành AI (4 tiêu chí khoa học)
+            </summary>
+            <div class="pt-2 mt-2 border-top">
+                <div class="small text-muted mb-2">Tỷ lệ hoàn thành do AI ước lượng dựa trên 4 nhóm căn cứ khoa học với trọng số cụ thể:</div>
+                <div class="row g-2">
+                    @foreach($aiBasis['tieu_chi'] as $tc)
+                    <div class="col-sm-6">
+                        <div class="p-2 bg-white rounded border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-dark" style="font-size: 12px;">{{ $tc['ten'] ?? '' }}</span>
+                                <span class="badge bg-primary-subtle text-primary border" style="font-size: 11px;">{{ $tc['diem'] ?? 0 }}/{{ $tc['trong_so'] ?? 0 }}đ</span>
+                            </div>
+                            <div class="small text-muted" style="font-size: 11.5px;">{{ $tc['dien_giai'] ?? '' }}</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </details>
+        @endif
         @if(!$analysisComplete && empty($aiData['_processing']))
             <p class="ai-review-note">{{ $analysis['note'] ?? 'Kết quả chưa xác nhận đã đọc đầy đủ tài liệu. Bạn có thể phân tích lại để cập nhật.' }} Các nhóm chưa có thông tin chưa đồng nghĩa tài liệu không đề cập.</p>
         @endif

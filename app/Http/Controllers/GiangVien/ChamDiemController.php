@@ -39,9 +39,10 @@ class ChamDiemController extends Controller
             ->get();
 
         $activeHoiDong = null;
+        $reqHd = $request->query('hd') ?? $request->query('MaHoiDong');
         if ($hoiDongs->isNotEmpty()) {
-            if ($request->filled('hd')) {
-                $activeHoiDong = $hoiDongs->firstWhere('MaHoiDong', $request->hd) ?? $hoiDongs->first();
+            if (!empty($reqHd)) {
+                $activeHoiDong = $hoiDongs->firstWhere('MaHoiDong', $reqHd) ?? $hoiDongs->first();
             } else {
                 $activeHoiDong = $hoiDongs->first();
             }
@@ -49,9 +50,10 @@ class ChamDiemController extends Controller
 
         // Lấy nhóm / hồ sơ bảo vệ đang chọn
         $activeHoSo = null;
+        $reqHoSo = $request->query('hoso') ?? $request->query('MaHoSo');
         if ($activeHoiDong && $activeHoiDong->hoSoBaoVes->isNotEmpty()) {
-            if ($request->filled('hoso')) {
-                $activeHoSo = $activeHoiDong->hoSoBaoVes->firstWhere('MaHoSo', $request->hoso) ?? $activeHoiDong->hoSoBaoVes->first();
+            if (!empty($reqHoSo)) {
+                $activeHoSo = $activeHoiDong->hoSoBaoVes->firstWhere('MaHoSo', $reqHoSo) ?? $activeHoiDong->hoSoBaoVes->first();
             } else {
                 $activeHoSo = $activeHoiDong->hoSoBaoVes->first();
             }
@@ -114,6 +116,7 @@ class ChamDiemController extends Controller
         $tvRecord = $activeHoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV);
         $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
         $isChuTich = in_array($vaiTroGV, ['Chủ tịch', 'Chủ tịch Hội đồng']);
+        $isThuKy = in_array($vaiTroGV, ['Thư ký', 'Ủy viên thư ký']);
         $gvhdHoTen = $activeDeTai?->giangVien?->HoTen ?? 'Chưa phân công';
 
         $rubric = ($loaiKhoaLuan === 'KLKS') ? $rubricKLKS : $rubricKLCN;
@@ -129,6 +132,7 @@ class ChamDiemController extends Controller
             'sinhViens',
             'vaiTroGV',
             'isChuTich',
+            'isThuKy',
             'gvhdHoTen',
             'customChucNang',
             'functionalRequirements',
@@ -191,14 +195,6 @@ class ChamDiemController extends Controller
 
         $isFinal = ($request->action_type === 'xac_nhan_hoan_thanh');
         $trangThaiPhieu = $isFinal ? 'Đã hoàn thành' : 'Lưu nháp';
-
-        // BẮT BUỘC: Nếu xác nhận & khóa phiếu, giảng viên phải hoàn tất ký tên điện tử trước
-        if ($isFinal) {
-            $currentChuKy = $request->chu_ky ?? $existingPhieu?->ChuKy ?? $giangVien->ChuKy;
-            if (empty($currentChuKy)) {
-                return redirect()->back()->with('error', 'Chưa thể xác nhận & khóa: Thầy/Cô chưa hoàn tất ký tên điện tử vào phiếu điểm. Vui lòng bấm nút "Ký Phiếu Điểm" để vẽ và xác nhận chữ ký trước!');
-            }
-        }
 
         // Lấy rubric tương ứng
         $customChucNang = $hoSo->TieuChiChucNang;
@@ -347,8 +343,8 @@ class ChamDiemController extends Controller
         }
 
         $msg = $isFinal
-            ? 'Đã Ký xác nhận & Khóa phiếu chấm điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
-            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Ký xác nhận.';
+            ? 'Đã Xác nhận & Khóa phiếu chấm điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
+            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận hoàn thành.';
 
         return redirect()->route('giangvien.chamdiem.index', [
             'hd'   => $request->MaHoiDong,
@@ -396,8 +392,8 @@ class ChamDiemController extends Controller
     }
 
     /**
-     * Chủ tịch Hội đồng cập nhật yêu cầu chức năng bài toán (3.5đ hoặc 4.0đ)
-     * Cập nhật đồng bộ cho tất cả phiếu chấm của các vai trò trong Hội đồng theo từng đề tài
+     * Thư ký Hội đồng cập nhật yêu cầu chức năng bài toán (Chuẩn Yêu cầu 3: Chuyển quyền từ Chủ tịch sang Thư ký)
+     * Thư ký chịu trách nhiệm chuẩn bị phiếu chấm dựa trên đề cương của GVHD
      */
     public function capNhatChucNang(Request $request)
     {
@@ -413,26 +409,131 @@ class ChamDiemController extends Controller
             abort(403, 'Không tìm thấy thông tin giảng viên.');
         }
 
-        // Kiểm tra quyền: Phải là Chủ tịch Hội đồng hoặc Trưởng khoa/Admin
+        // Kiểm tra quyền: Bắt buộc là Thư ký Hội đồng hoặc Trưởng khoa/Giáo vụ/Admin
         $tvRecord = ThanhVienHoiDong::where('MaHoiDong', $request->MaHoiDong)
             ->where('MaGV', $giangVien->MaGV)
             ->first();
 
-        $isChuTich = $tvRecord && in_array($tvRecord->VaiTro, ['Chủ tịch', 'Chủ tịch Hội đồng']);
-        $isTruongKhoa = $user->isTruongKhoa() || $user->isAdmin();
+        $isThuKy = $tvRecord && in_array($tvRecord->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+        $isGiaoVuOrTruongKhoa = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
 
-        if (!$isChuTich && !$isTruongKhoa) {
-            return redirect()->back()->with('error', 'Chỉ Chủ tịch Hội đồng mới có quyền cập nhật chi tiết yêu cầu chức năng cho đề tài này.');
+        if (!$isThuKy && !$isGiaoVuOrTruongKhoa) {
+            return redirect()->back()->with('error', 'Chức năng chuẩn bị phiếu chấm và yêu cầu tiêu chí chức năng thuộc thẩm quyền của Thư ký Hội đồng. Chủ tịch Hội đồng chỉ thực hiện điều hành buổi bảo vệ theo quy chế mới.');
         }
 
         $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
         $hoSo->TieuChiChucNang = $request->TieuChiChucNang;
+        $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
+        $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
+        $hoSo->NgayChuanBiPhieu = now();
         $hoSo->save();
 
         return redirect()->route('giangvien.chamdiem.index', [
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
-        ])->with('success', 'Đã cập nhật yêu cầu chức năng thành công cho đề tài! Toàn bộ phiếu chấm của các thành viên Hội đồng đã được cập nhật đồng bộ.');
+        ])->with('success', 'Thư ký Hội đồng đã cập nhật yêu cầu chức năng và tiêu chí phiếu chấm thành công! Toàn bộ phiếu chấm của các thành viên Hội đồng đã được đồng bộ.');
+    }
+
+    /**
+     * Thư ký xem đề cương chi tiết đã duyệt của đề tài (Yêu cầu 3.2 - Read-Only)
+     */
+    public function xemDeCuong(Request $request, $maHoSo)
+    {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(403, 'Không tìm thấy thông tin giảng viên.');
+        }
+
+        $hoSo = HoSoBaoVe::with([
+            'hoiDong.thanhViens.giangVien',
+            'nhom.truongNhom',
+            'nhom.thanhVienNhoms.sinhVien.lop',
+            'nhom.deTai.giangVien.boMon.khoa',
+            'nhom.deTai.hocPhanRef',
+            'nhom.deTai.nganh',
+            'nhom.dangKyDeTai',
+        ])->findOrFail($maHoSo);
+
+        // IDOR check: Giảng viên phải là thành viên Hội đồng hoặc cấp quản lý
+        $isMember = $hoSo->hoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV);
+        $isManager = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
+
+        if (!$isMember && !$isManager) {
+            abort(403, 'Bạn không thuộc Hội đồng chấm đề tài này và không có quyền xem đề cương.');
+        }
+
+        $nhom = $hoSo->nhom;
+        $deTai = $nhom?->deTai;
+        $isThuKy = $isMember && in_array($isMember->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'MaHoSo'           => $hoSo->MaHoSo,
+                    'TenDeTai'         => $deTai?->TenDeTai ?? 'Chưa cập nhật',
+                    'GVHD'             => $deTai?->giangVien?->HoTen ?? 'Chưa phân công',
+                    'BoMon'            => $deTai?->giangVien?->boMon?->TenBoMon ?? 'Khoa',
+                    'Nganh'            => $hoSo->ten_nganh,
+                    'MucTieu'          => $deTai?->MucTieu ?? 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt.',
+                    'PhamVi'           => $deTai?->PhamVi ?? 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.',
+                    'NoiDung'          => $deTai?->NoiDung ?? 'Khảo sát hiện trạng, phân tích yêu cầu, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.',
+                    'SanPham'          => $deTai?->SanPhamDuKien ?? 'Báo cáo toàn văn, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.',
+                    'FileDeCuong'      => $deTai?->FileDeCuong ? asset('storage/' . $deTai->FileDeCuong) : null,
+                    'TrangThaiChuanBi' => $hoSo->TrangThaiChuanBiPhieu ?? 'ChuaChuanBi',
+                    'NguoiChuanBi'     => $hoSo->nguoiChuanBi?->HoTen ?? $hoSo->NguoiChuanBiPhieu,
+                    'NgayChuanBi'      => $hoSo->NgayChuanBiPhieu ? Carbon::parse($hoSo->NgayChuanBiPhieu)->format('d/m/Y H:i') : null,
+                    'TieuChiChucNang'  => $hoSo->TieuChiChucNang,
+                    'isThuKy'          => $isThuKy,
+                ]
+            ]);
+        }
+
+        return redirect()->route('giangvien.chamdiem.index', [
+            'hd'   => $hoSo->MaHoiDong,
+            'hoso' => $hoSo->MaHoSo,
+        ]);
+    }
+
+    /**
+     * Thư ký Hội đồng khởi tạo phiếu chấm từ đề cương (Yêu cầu 3.3 - Idempotent)
+     */
+    public function chuanBiPhieu(Request $request)
+    {
+        $request->validate([
+            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
+            'MaHoSo'    => 'required|exists:HoSoBaoVe,MaHoSo',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) abort(403);
+
+        $tvRecord = ThanhVienHoiDong::where('MaHoiDong', $request->MaHoiDong)
+            ->where('MaGV', $giangVien->MaGV)
+            ->first();
+
+        $isThuKy = $tvRecord && in_array($tvRecord->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+        $isManager = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
+
+        if (!$isThuKy && !$isManager) {
+            return redirect()->back()->with('error', 'Chỉ Thư ký Hội đồng mới có quyền chuẩn bị phiếu chấm cho đề tài này.');
+        }
+
+        $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
+        $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
+        $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
+        $hoSo->NgayChuanBiPhieu = now();
+        if (empty($hoSo->TieuChiChucNang)) {
+            $hoSo->TieuChiChucNang = "1. Xây dựng và kiểm thử hoàn chỉnh các chức năng nghiệp vụ theo đề cương được duyệt.\n2. Thiết kế và tối ưu cơ sở dữ liệu, đảm bảo toàn vẹn và an toàn dữ liệu.\n3. Đóng gói sản phẩm, thực nghiệm và hoàn thiện báo cáo.";
+        }
+        $hoSo->save();
+
+        return redirect()->route('giangvien.chamdiem.index', [
+            'hd'   => $request->MaHoiDong,
+            'hoso' => $request->MaHoSo,
+        ])->with('success', 'Thư ký Hội đồng đã chuẩn bị thành công mẫu phiếu chấm điểm cho đề tài!');
     }
 
     /**

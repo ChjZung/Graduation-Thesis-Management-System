@@ -152,24 +152,14 @@
                 <input type="hidden" name="ExistingFileName" id="formExistingFileName" value="">
 
                 <div class="row g-4">
-                    <!-- Tiêu đề & % Hoàn thành -->
-                    <div class="col-md-8">
+                    <!-- Tiêu đề báo cáo -->
+                    <div class="col-12">
                         <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">
                             Tiêu đề báo cáo nhỏ <span class="text-danger">*</span>
                         </label>
                         <input type="text" name="TieuDe" id="formTieuDe" class="form-control py-2 px-3 rounded-3 transition-all" 
                                value="Báo cáo tiến độ đợt {{ $lanNop }} - Giai đoạn {{ $lan }}" required>
-                        <div class="form-text text-muted mt-1.5" style="font-size: 12px;">Tóm lược nội dung công việc báo cáo của tuần/đợt này.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">
-                            % Tiến độ giai đoạn đạt được:
-                        </label>
-                        <div class="input-group shadow-xs rounded-3 overflow-hidden">
-                            <input type="number" name="PhanTramHoanThanh" id="formPhanTram" class="form-control text-center fw-bold py-2" 
-                                   min="0" max="100" value="{{ min(100, $lanNop * 25) }}">
-                            <span class="input-group-text bg-light fw-bold px-3">%</span>
-                        </div>
+                        <div class="form-text text-muted mt-1.5" style="font-size: 12px;">Tóm lược nội dung công việc báo cáo của tuần/đợt này. (Tỷ lệ hoàn thành công việc sẽ do hệ thống AI tự động đánh giá khách quan dựa trên nội dung báo cáo nộp).</div>
                     </div>
 
                     <!-- Kết quả đạt được / Công việc hoàn thành -->

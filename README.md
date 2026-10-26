@@ -162,6 +162,12 @@ Mật khẩu mặc định cho toàn bộ các tài khoản thử nghiệm: **`H
 | **Sinh Viên (Trưởng nhóm)**| `2001210001` | Nguyễn Hoàng Long | Lớp 12DHCNTT01 | Trưởng nhóm N01 làm đề tài DT26 |
 | **Sinh Viên (Thành viên)** | `2001210002` | Trần Minh Quân | Lớp 12DHCNTT01 | Thành viên nhóm N01 |
 | **Sinh Viên (Thành viên)** | `2001210003` | Lê Phương Anh | Lớp 12DHCNTT01 | Thành viên nhóm N01 |
+| **Sinh Viên (CNPM mới)**  | `2001210076` | Nguyễn Đức Duy | Lớp 12DHKPM01 | Ngành Kỹ thuật Phần mềm (BM CNPM) |
+| **Sinh Viên (CNPM mới)**  | `2001210077` | Trần Thị Thu Trang | Lớp 12DHKPM01 | Ngành Kỹ thuật Phần mềm (BM CNPM) |
+| **Sinh Viên (CNPM mới)**  | `2001210078` | Phạm Minh Triết | Lớp 12DHKPM01 | Ngành Kỹ thuật Phần mềm (BM CNPM) |
+| **Sinh Viên (Test Luồng 1)**| `2001210080` | Lê Hoàng Nam | Lớp 12DHKPM01 | Trưởng nhóm mới (Chưa có nhóm) |
+| **Sinh Viên (Test Luồng 2)**| `2001210081` | Nguyễn Mai Phương | Lớp 12DHKPM01 | Thành viên mới (Chưa có nhóm) |
+| **Sinh Viên (Test Luồng 3)**| `2001210082` | Vũ Tiến Đạt | Lớp 12DHKPM01 | Thành viên mới (Chưa có nhóm) |
 
 ---
 
@@ -183,20 +189,121 @@ Hệ thống tích hợp thanh công cụ **Time Machine** cố định ở góc
 
 ## 🌟 CÁC TÍNH NĂNG NỔI BẬT ĐÃ HOÀN THIỆN
 
-1. **Trình Xem Nhanh Đề Cương Chi Tiết (PDF.js & Mammoth.js)**:
-   - Tích hợp bộ đọc **Mozilla PDF.js** độc lập, kết xuất trực tiếp tệp PDF thành các trang Canvas siêu nét bên trong popup modal, hoàn toàn không bị lỗi màn hình xám / gạch chéo đỏ của Chrome iframe.
-   - Hỗ trợ xem cả tệp Word `.docx` chuẩn A4 trực tiếp trên web bằng Mammoth.js.
-   - Bổ sung thanh công cụ điều hướng: Lật trang, Phóng to / Thu nhỏ, Căn vừa chiều ngang (`Fit width`), nút Mở tab riêng và Tải tệp về máy tính.
-2. **Nút "Đọc hết" Thông Báo Thông Minh**:
-   - Tích hợp nút **Đọc hết** ngay trong dropdown chuông thông báo trên Header của tất cả các vai trò.
-   - Khi bấm, huy hiệu số đỏ trên icon chuông biến mất tức thì trên giao diện và đồng bộ trạng thái đã đọc vào Session của server qua AJAX.
-3. **Phân Công Phản Biện Động Theo Chỉ Tiêu**:
-   - Trưởng bộ môn quản lý chỉ tiêu phản biện từng giảng viên (`chitieuphanbien`).
-   - Cảnh báo trực quan khi giảng viên đạt hoặc vượt ngưỡng số lượng đề tài phản biện.
-4. **Kiểm Soát Tạo Nhóm Chặt Chẽ**:
-   - Chỉ những sinh viên có trong danh sách đủ điều kiện mới được tạo nhóm.
-   - Chặn tuyệt đối việc tạo nhóm khác bộ môn hoặc khác học phần đào tạo.
-   - Tự động đóng cổng tạo nhóm và hiển thị thông báo trạng thái khi kế hoạch bước sang giai đoạn sau.
+1. **Tự Động Đánh Giá Tỷ Lệ Hoàn Thành Báo Cáo Bằng AI Map-Reduce**:
+   - Loại bỏ hoàn toàn trường nhập tỷ lệ % do Sinh viên tự gõ để đảm bảo khách quan.
+   - Engine AI phân tích văn bản theo 4 tiêu chí cốt lõi có trọng số (Mục tiêu 30%, Kết quả đạt được 30%, Nội dung chưa hoàn thành 20%, Kế hoạch tiếp theo 20%) và trọng số giai đoạn.
+   - Tự động lưu `% hoàn thành ước lượng bởi AI`, trích dẫn minh chứng và thời điểm đánh giá vào bảng `danh_gia_ai`.
+   - Giảng viên hướng dẫn có thể xem kết quả phân tích AI, sử dụng chức năng **"Phân tích lại AI"** và **"Đối chiếu mốc trước"** để so sánh sự tiến bộ qua từng đợt.
+2. **Khắc Phục Lỗi Lọc Ngành Khi Tạo Hội Đồng (Cascade Dropdown)**:
+   - Chuẩn hóa quan hệ phân cấp: Khoa ➔ Bộ môn ➔ Ngành ➔ Học phần ➔ Đề tài.
+   - AJAX Cascade tự động tải danh sách Đề tài theo chính xác mã Ngành (`maNganh`), không trộn lẫn các ngành khác trong cùng một bộ môn.
+   - Tích hợp gợi ý thành viên Hội đồng bằng AI: Tự động loại trừ GVHD và ngăn ngừa xung đột lịch thi.
+3. **Phân Quyền Lập Phiếu Chấm Cho Thư Ký Hội Đồng**:
+   - Chuyển giao hoàn toàn nghiệp vụ chuẩn bị phiếu chấm từ Chủ tịch sang Thư ký Hội đồng.
+   - Thư ký được xem đề cương chi tiết của nhóm ở chế độ **Read-only** chống chỉnh sửa ngoài ý muốn.
+   - Nút **"Chuẩn bị phiếu chấm"** tự động khởi tạo biểu mẫu theo quy định Khoa (có cơ chế chống tạo trùng lặp).
+   - Bảo mật đa tầng: Chủ tịch Hội đồng và các thành viên khác bị chặn quyền ở cả giao diện lẫn phía Server (HTTP 403 Forbidden).
+4. **Loại Bỏ Canvas Chữ Ký Điện Tử & Xuất PDF Sạch Chuẩn A4**:
+   - Gỡ bỏ toàn bộ vùng vẽ chữ ký cảm ứng/canvas gây lỗi hiển thị trên thiết bị di động và máy tính.
+   - Hỗ trợ xuất trực tiếp Phiếu chấm và Quyết định Hội đồng ra file PDF chuẩn in ấn A4 hành chính của nhà trường.
+5. **Trang Tra Cứu Hội Đồng Bảo Vệ Riêng Biệt**:
+   - **Giảng viên**: Trang *Hội đồng của tôi* (`/giangvien/hoi-dong`) với bộ lọc Học kỳ, Vai trò (Chủ tịch, Thư ký, Ủy viên) và Trạng thái.
+   - **Sinh viên**: Trang *Hội đồng bảo vệ* (`/sinhvien/hoi-dong`) hiển thị ngày giờ, phòng thi, danh sách thành viên và các quy định bảo vệ (bảo mật ngăn chặn IDOR).
+6. **Quy Trình Nộp Lại Báo Cáo Hoàn Thiện Sau Bảo Vệ**:
+   - Sinh viên nộp lại bản báo cáo PDF đã chỉnh sửa theo góp ý của Hội đồng kèm bảng giải trình và file minh chứng.
+   - Giảng viên hướng dẫn kiểm tra, nhận xét và phê duyệt đạt yêu cầu.
+   - Trưởng khoa ra quyết định công bố kết quả chính thức và chuyển lưu trữ.
+7. **Trình Xem Nhanh Đề Cương Chi Tiết (Mozilla PDF.js & Mammoth.js)**:
+   - Hiển thị trực tiếp tệp PDF thành các trang Canvas siêu nét bên trong popup modal, hoàn toàn không bị lỗi màn hình xám/CSP của iframe.
+   - Hỗ trợ đọc tệp Word `.docx` chuẩn A4 trực tiếp trên web bằng Mammoth.js.
+8. **Nút "Đọc hết" Thông Báo Thông Minh**:
+   - Tích hợp nút **Đọc hết** ngay trong dropdown chuông thông báo trên Header của tất cả 5 vai trò.
+9. **Phân Công Phản Biện Động Theo Chỉ Tiêu & Kiểm Soát Tạo Nhóm Chặt Chẽ**:
+   - Giám sát chỉ tiêu phản biện từng giảng viên (`chitieuphanbien`), cảnh báo trực quan khi vượt ngưỡng.
+   - Chặn tuyệt đối việc tạo nhóm khác bộ môn/học phần hoặc khi hết hạn kế hoạch.
+
+---
+
+## 🧪 HƯỚNG DẪN KIỂM THỬ CÁC LUỒNG HOẠT ĐỘNG TRÊN WEBSITE (E2E TESTING MANUAL)
+
+> 📘 **Tài liệu kiểm thử chi tiết đầy đủ**: Xem tại file [`HUONG_DAN_KIEM_THU_WEBSITE.md`](file:///D:/Code/KHOALUAN/Graduation-Thesis-Management-System/HUONG_DAN_KIEM_THU_WEBSITE.md).
+
+### 1. Chuẩn Bị Trước Khi Test
+- **Khởi động server**: `php artisan serve` ➔ Truy cập: `http://127.0.0.1:8000`
+- **Mật khẩu dùng chung cho mọi tài khoản**: **`Huit@2026`**
+- **Công cụ Time Machine**: Nút nổi hình chiếc đồng hồ ở góc dưới cùng bên phải màn hình cho phép giả lập mốc thời gian ảo mà không thay đổi giờ máy tính.
+
+---
+
+### 2. Kịch Bản Kiểm Thử Từng Luồng Nghiệp Vụ
+
+#### 🔹 Luồng 1: Đề xuất & Duyệt đề tài (3 Cấp)
+- **Mốc Time Machine**: `09/08/2026`
+- **Bước 1 (GV Đề xuất)**: Đăng nhập `GV00000023` ➔ Menu **Quản lý Đề tài** (`/giangvien/detai`) ➔ Nhấn **Thêm mới Đề tài** ➔ Nhập tên đề tài, chọn Học phần `HP_KLTN_CNPM`, Bộ môn `CNPM` ➔ Bấm **Gửi phê duyệt** (Trạng thái: *Chờ duyệt BM*).
+- **Bước 2 (TBM Duyệt)**: Đăng xuất, đăng nhập Trưởng BM CNPM `TBM_CNTT_CNPM_GV00000002` ➔ Menu **Phê duyệt Đề tài** (`/truongbomon/duyet-detai`) ➔ Bấm **Phê duyệt** (Trạng thái: *Bộ môn đã duyệt*).
+- **Bước 3 (Trưởng khoa Công bố)**: Đăng xuất, đăng nhập Trưởng Khoa `TK_CNTT_GV00000001` ➔ Menu **Duyệt Đề tài** (`/truongkhoa/duyet-detai`) ➔ Bấm **Phê duyệt & Công bố** (Trạng thái: *Đã công bố*).
+
+#### 🔹 Luồng 2: Thành lập Nhóm & Đăng ký Đề tài
+- **Mốc Time Machine**: `10/08/2026 10:00`
+- **Bước 1 (SV Tạo nhóm & Mời bạn)**: Đăng nhập SV Trưởng nhóm `2001210001` ➔ Menu **Nhóm của tôi** (`/sinhvien/nhom`) ➔ Tạo nhóm mới ➔ Tra cứu và gửi lời mời tới MSSV `2001210002` và `2001210003`.
+- **Bước 2 (SV Thành viên Xác nhận)**: Đăng nhập `2001210002` ➔ Vào **Nhóm của tôi** ➔ Bấm **Chấp nhận lời mời**.
+- **Bước 3 (Đăng ký Đề tài)**: Trưởng nhóm `2001210001` vào **Đăng ký Đề tài** (`/sinhvien/dangky`) ➔ Chọn đề tài vừa công bố ➔ Bấm **Đăng ký**.
+- **Bước 4 (GVHD Chấp thuận)**: Đăng nhập GVHD `GV00000023` ➔ Menu **Duyệt đăng ký đề tài** (`/giangvien/duyet-dangky-detai`) ➔ Nhấn **Đồng ý hướng dẫn**.
+
+#### 🔹 Luồng 3: Nộp Đề cương & Phân công Phản biện
+- **Mốc Time Machine**: `11/08/2026 09:30`
+- **Bước 1 (GVHD nộp Đề cương)**: Đăng nhập GVHD `GV00000023` ➔ Vào **Quản lý Đề tài** ➔ Bấm **Nộp Đề cương** ➔ Tải file PDF/Word `.docx` lên hệ thống.
+- **Bước 2 (TBM Phân công GVPB)**: Đăng nhập TBM `TBM_CNTT_CNPM_GV00000002` ➔ Menu **Phân công Phản biện** (`/truongbomon/phan-cong-phan-bien`) ➔ Chọn GV Phản biện `GV00000021` (ThS. Đặng Hải Giang) ➔ Bấm **Lưu phân công**.
+- **Bước 3 (GVPB Đánh giá qua PDF.js)**: Đăng nhập GVPB `GV00000021` ➔ Menu **Phản biện Đề cương** (`/giangvien/phan-bien-de-cuong`) ➔ Nhấn **Xem nhanh Đề cương** (modal PDF.js tích hợp) ➔ Nhập nhận xét, chọn **Đạt** ➔ Bấm **Lưu đánh giá**.
+
+#### 🔹 Luồng 4: Đặt Lịch Hẹn Hướng Dẫn
+- **Bước 1 (GV Tạo khung giờ)**: Đăng nhập `GV00000023` ➔ Tạo khung giờ gặp tại Văn phòng / Google Meet.
+- **Bước 2 (SV Đặt lịch)**: Đăng nhập SV `2001210001` ➔ Chọn khung giờ ➔ Nhập nội dung trao đổi ➔ Bấm **Đặt lịch**.
+- **Bước 3 (GV Xác nhận)**: GV nhận thông báo chuông và bấm **Xác nhận lịch hẹn**.
+
+#### 🔹 Luồng 5: Nộp Báo Cáo Tiến Độ & Tự Động Đánh Giá Bằng AI Map-Reduce
+- **Mốc Time Machine**: `20/09/2026` (Đợt 1) hoặc `15/10/2026` (Đợt 2)
+- **Bước 1 (SV Nộp báo cáo - Không nhập %)**: Đăng nhập SV `2001210001` ➔ Menu **Báo cáo Tiến độ** (`/sinhvien/baocao`) ➔ Bấm **Nộp báo cáo** ➔ **Kiểm tra**: Form hoàn toàn **KHÔNG CÓ** ô nhập % hoàn thành ➔ Nhập nội dung, đính kèm file báo cáo PDF (hoặc link GitHub) ➔ Bấm **Nộp Báo Cáo**.
+- **Bước 2 (Kiểm tra AI phân tích)**: Engine AI Map-Reduce tự động phân tích theo 4 tiêu chí cốt lõi có trọng số (Mục tiêu, Kết quả, Tồn đọng, Kế hoạch tiếp theo) ➔ Lưu `% hoàn thành AI` và trích dẫn vào CSDL.
+- **Bước 3 (GVHD Đối chiếu & Duyệt)**: Đăng nhập GVHD `GV00000023` ➔ Menu **Báo cáo Tiến độ** ➔ Xem kết quả phân tích AI ➔ Nhấn nút **"Đối chiếu mốc trước"** để so sánh tiến độ đợt 2 với đợt 1 (hoặc nút **"Phân tích lại AI"** nếu cập nhật tài liệu) ➔ Bấm **Xác nhận Đạt tiến độ**.
+
+#### 🔹 Luồng 6: Thành Lập Hội Đồng & Bộ Lọc Đề Tài Chuẩn Theo Ngành
+- **Mốc Time Machine**: `05/11/2026`
+- **Bước 1 (Trưởng khoa Lập Hội đồng)**: Đăng nhập Trưởng Khoa `TK_CNTT_GV00000001` ➔ Menu **Hội đồng Bảo vệ** (`/truongkhoa/hoidong`) ➔ Nhấn **Tạo Hội đồng mới** (`/truongkhoa/hoidong/create`).
+- **Bước 2 (Kiểm tra Cascade Dropdown Ngành)**: Chọn Khoa `CNTT` ➔ Chọn Bộ môn `CNPM` ➔ Chọn Ngành `Kỹ thuật phần mềm (7480103)` ➔ **Xác nhận**: Danh sách đề tài tải về qua AJAX chỉ hiển thị chính xác các đề tài thuộc đúng mã Ngành được chọn!
+- **Bước 3 (Gợi ý Thành viên AI & Công bố)**: Bấm **Gợi ý thành viên bằng AI** (hệ thống tự động loại trừ GVHD và kiểm tra tránh trùng lịch bảo vệ) ➔ Phân công Thư ký `GV00000021` ➔ Nhấn **Lưu** ➔ Nhấn **Công bố Hội đồng**.
+
+#### 🔹 Luồng 7: Thư Ký Chuẩn Bị Phiếu Chấm & Chặn Quyền Chủ Tịch
+- **Bước 1 (Thư ký xem Đề cương Read-Only)**: Đăng nhập Thư ký `GV00000021` ➔ Menu **Chấm điểm Hội đồng** (`/giangvien/chamdiem`) ➔ Nhấn **"Xem Đề cương"** (`/giangvien/chamdiem/de-cuong/{maHoSo}`) ➔ Xem toàn bộ thông tin đề tài dạng bản đọc an toàn, không có nút chỉnh sửa.
+- **Bước 2 (Thư ký Chuẩn bị Phiếu chấm)**: Nhấn **"Chuẩn bị phiếu chấm"** ➔ Hệ thống khởi tạo cấu trúc phiếu chấm theo 4 tiêu chí quy định (chống tạo trùng lặp khi reload).
+- **Bước 3 (Kiểm tra Bảo mật Chặn Chủ tịch)**: Đăng nhập tài khoản Chủ tịch Hội đồng ➔ Nút "Chuẩn bị phiếu chấm" bị ẩn hoàn toàn ➔ Nếu thử gửi request POST trực tiếp sẽ nhận mã lỗi **HTTP 403 Forbidden**.
+
+#### 🔹 Luồng 8: Chấm Điểm Hội Đồng, Loại Bỏ Canvas Chữ Ký & Xuất PDF
+- **Bước 1 (Nhập điểm 4 tiêu chí)**: Giảng viên thành viên Hội đồng `GV00000021` vào **Chấm điểm Hội đồng** ➔ Nhập điểm 4 tiêu chí cho từng sinh viên ➔ Nhập nhận xét.
+- **Bước 2 (Kiểm tra gỡ bỏ Canvas)**: Xác nhận không còn khu vực vẽ chữ ký canvas/cảm ứng trên màn hình.
+- **Bước 3 (Lưu & Xuất PDF)**: Nhấn **Lưu & Khóa phiếu điểm** ➔ Nhấn **"Xuất PDF Phiếu Chấm"** (`/giangvien/chamdiem/xuat-pdf?maHoSo=...`) ➔ File PDF tải về đầy đủ thông tin hội đồng, bảng điểm chi tiết, phần chân trang ghi rõ họ tên giảng viên chấm để in ký tay chuẩn hành chính.
+
+#### 🔹 Luồng 9: Tra Cứu Hội Đồng Riêng Biệt Cho Giảng Viên & Sinh Viên
+- **Kiểm tra Phía Giảng Viên**: Đăng nhập `GV00000021` ➔ Menu **Hội đồng của tôi** (`/giangvien/hoi-dong`) ➔ Lọc theo Học kỳ, Vai trò (Chủ tịch/Thư ký/Ủy viên) ➔ Xem chi tiết lịch thi, phòng thi và danh sách đề tài.
+- **Kiểm tra Phía Sinh Viên**: Đăng nhập SV `2001210001` ➔ Menu **Hội đồng bảo vệ** (`/sinhvien/hoi-dong`) ➔ Xem thẻ thông tin phòng thi, giờ thi, danh sách Hội đồng và các lưu ý chuẩn bị bảo vệ (Kiểm tra an toàn bảo mật IDOR: không hiển thị nhầm nhóm khác).
+
+#### 🔹 Luồng 10: Nộp Lại Báo Cáo Sau Bảo Vệ & Công Bố Lưu Trữ
+- **Mốc Time Machine**: `20/11/2026`
+- **Bước 1 (SV Trưởng nhóm nộp)**: Đăng nhập `2001210001` ➔ Vào **Kết quả** ➔ Bấm **Hoàn thiện Báo cáo sau bảo vệ** (`/sinhvien/ket-qua/hoan-thien-bao-cao`) ➔ Tải lên: File Báo cáo PDF hoàn chỉnh + Bảng giải trình chỉnh sửa + Minh chứng mã nguồn ➔ Bấm **Gửi Báo Cáo Hoàn Thiện**.
+- **Bước 2 (GVHD Đánh giá Đạt)**: Đăng nhập GVHD `GV00000023` ➔ Menu **Kiểm tra Báo cáo sau bảo vệ** (`/giangvien/kiem-tra-bao-cao-sau-bao-ve`) ➔ Xem file giải trình ➔ Chọn **Đạt yêu cầu** ➔ Bấm **Phê duyệt hoàn tất**.
+- **Bước 3 (Trưởng khoa Công bố Lưu trữ)**: Đăng nhập Trưởng Khoa `TK_CNTT_GV00000001` ➔ Menu **Kết quả Khóa luận** (`/truongkhoa/ket-qua`) ➔ Bấm **Công bố kết quả & Chuyển lưu trữ** ➔ Xuất bảng điểm tổng hợp ra Excel.
+
+---
+
+### 3. Kịch Bản Kiểm Thử Tự Động Hóa (Automated Script)
+
+Để kiểm tra toàn diện cả 14 tiêu chí kỹ thuật (CSDL, Controllers, Models, Engine AI, Policies và Routes) mà không cần thao tác tay:
+
+```powershell
+php scripts/verify_system.php
+```
+
+> **Kết quả kỳ vọng**: `14/14 TEST CASES PASS! HE THONG HOAT DONG CHUAN XAC.`
 
 ---
 

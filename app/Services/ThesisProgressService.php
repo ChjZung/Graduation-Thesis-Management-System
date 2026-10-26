@@ -755,7 +755,8 @@ class ThesisProgressService
                 }
             }
 
-            $userCompletionPct = !empty($data['PhanTramHoanThanh']) ? (int)$data['PhanTramHoanThanh'] : null;
+            // Tỷ lệ hoàn thành do AI tự động đánh giá sau khi tiếp nhận tệp báo cáo, không lấy từ sinh viên tự nhập
+            $aiCompletionPct = null;
 
             // Đảm bảo tồn tại bản ghi BaoCaoTienDo cha cho đợt nộp này (tương thích FK và các màn hình thống kê)
             $maBaoCao = 'BC_DOT_' . $dotNop->MaDotNop;
@@ -767,7 +768,7 @@ class ThesisProgressService
                     'MaDeTai' => $dotNop->MaDeTai,
                     'TrangThai' => 'Chờ duyệt',
                     'NgayNop' => now(),
-                    'PhanTramHoanThanh' => $userCompletionPct ?? 50,
+                    'PhanTramHoanThanh' => null,
                     'TenFile' => $tenFile,
                     'DuongDanFile' => $duongDanFile,
                 ]
@@ -778,7 +779,7 @@ class ThesisProgressService
                 'TieuDe' => $dotNop->TenDotNop,
                 'TrangThai' => 'Chờ duyệt',
                 'NgayNop' => now(),
-                'PhanTramHoanThanh' => $userCompletionPct ?? (int)$baoCaoCha->PhanTramHoanThanh,
+                'PhanTramHoanThanh' => $baoCaoCha->PhanTramHoanThanh, // Giữ tỷ lệ đã có hoặc null chờ AI
                 'TenFile' => $tenFile ?? $baoCaoCha->TenFile,
                 'DuongDanFile' => $duongDanFile ?? $baoCaoCha->DuongDanFile,
             ]);
@@ -801,7 +802,7 @@ class ThesisProgressService
                 'CongViecChuaHoanThanh' => $data['CongViecChuaHoanThanh'] ?? '',
                 'HuongGiaiQuyet' => $data['HuongGiaiQuyet'] ?? '',
                 'KeHoachTiepTheo' => $data['KeHoachTiepTheo'] ?? '',
-                'PhanTramHoanThanh' => $userCompletionPct ?? 50,
+                'PhanTramHoanThanh' => null,
                 'TenFile' => $tenFile,
                 'DuongDanFile' => $duongDanFile,
                 'LinkCode' => $data['LinkCode'] ?? null,

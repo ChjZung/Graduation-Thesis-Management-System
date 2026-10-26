@@ -219,7 +219,7 @@
                             @csrf
                             <input type="hidden" name="MaHoiDong" value="{{ $hd->MaHoiDong }}">
                             <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-xs">
-                                <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Kết Quả
+                                <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Kết Quả &amp; Chuyển Lưu Trữ
                             </button>
                         </form>
                         @endif

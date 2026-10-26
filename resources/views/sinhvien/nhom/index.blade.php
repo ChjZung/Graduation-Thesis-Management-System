@@ -749,6 +749,186 @@
                             </div>
                         </div>
 
+                        <!-- 🎓 KẾT QUẢ BẢO VỆ & HOÀN THIỆN BÁO CÁO SAU HỘI ĐỒNG (YÊU CẦU 5) -->
+                        @php
+                            $currentHoSo = $nhomCurrent->hoSoBaoVe;
+                            $hasDefenseInfo = $currentHoSo && ($currentHoSo->hoiDong || !empty($currentHoSo->YeuCauChinhSuaSauBaoVe) || in_array($currentHoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaNopChinhSua', 'DaHoanThanh', 'ChuaDat']));
+                            $latestBaoCaoSauBaoVe = $currentHoSo?->baoCaoSauBaoVes?->sortByDesc('LanChinhSua')?->first();
+                            $lichSuBaoCaoSauBaoVe = $currentHoSo?->baoCaoSauBaoVes?->sortByDesc('LanChinhSua') ?? collect();
+                            $hanNopSauBaoVe = $currentHoSo?->HanNopBaoCaoSauBaoVe ? \Carbon\Carbon::parse($currentHoSo->HanNopBaoCaoSauBaoVe) : null;
+                            $isQuaHanNopSauBaoVe = $hanNopSauBaoVe && $hanNopSauBaoVe->isPast();
+                            $isLeaderOfCurrentGroup = ($nhomCurrent->MaTruongNhom === $sinhVien->MaSV) || ($nhomCurrent->truongNhom?->MaSV === $sinhVien->MaSV);
+                            $trangThaiSuaBV = $currentHoSo?->TrangThaiChinhSuaSauBaoVe ?? 'ChoSinhVienNop';
+                        @endphp
+
+                        @if($hasDefenseInfo)
+                        <div class="card border border-slate-200 shadow-xs rounded-4 overflow-hidden mb-4 bg-white" style="border-left: 5px solid {{ $trangThaiSuaBV === 'DaHoanThanh' ? '#10B981' : ($isQuaHanNopSauBaoVe ? '#EF4444' : '#0072CE') }} !important;">
+                            <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h6 class="fw-bold mb-0" style="color: #003366; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-graduation-cap me-2 text-primary"></i>KẾT QUẢ BẢO VỆ &amp; BÁO CÁO HOÀN THIỆN SAU HỘI ĐỒNG
+                                </h6>
+                                <div>
+                                    @if($trangThaiSuaBV === 'DaHoanThanh')
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Báo Cáo Đã Đạt Chuẩn Lưu Trữ
+                                        </span>
+                                    @elseif($trangThaiSuaBV === 'DaNop')
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-hourglass-half me-1"></i> Đã Nộp — Chờ Giảng Viên Kiểm Tra
+                                        </span>
+                                    @elseif($trangThaiSuaBV === 'YeuCauSuaTiep')
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-rotate-right me-1"></i> Yêu Cầu Chỉnh Sửa Tiếp
+                                        </span>
+                                    @elseif(!empty($currentHoSo->YeuCauChinhSuaSauBaoVe))
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i> Chờ Nhóm Nộp Bản Chỉnh Sửa
+                                        </span>
+                                    @else
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-check me-1"></i> Đã Có Kết Quả Bảo Vệ
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="card-body p-4">
+                                <!-- 1. Thông tin kết quả bảo vệ & Hội đồng -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded-3 bg-light border border-slate-200 h-100">
+                                            <div class="text-muted small mb-1"><i class="fa-solid fa-landmark me-1 text-primary"></i>Hội Đồng Bảo Vệ:</div>
+                                            <div class="fw-bold text-dark">{{ $currentHoSo->hoiDong->TenHoiDong ?? 'Hội đồng Khoa CNTT' }}</div>
+                                            <div class="small text-muted mt-1">
+                                                <span>Phòng: <strong>{{ $currentHoSo->PhongBaoVe ?? ($currentHoSo->hoiDong->DiaDiem ?? 'Phòng bảo vệ Khoa') }}</strong></span>
+                                                @if($currentHoSo->ThoiGianBaoVe)
+                                                    <span class="mx-1">&bull;</span>
+                                                    <span>Ngày: <strong>{{ \Carbon\Carbon::parse($currentHoSo->ThoiGianBaoVe)->format('d/m/Y H:i') }}</strong></span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded-3 bg-light border border-slate-200 h-100">
+                                            <div class="text-muted small mb-1"><i class="fa-solid fa-clipboard-check me-1 text-success"></i>Kết Quả Bảo Vệ:</div>
+                                            <div class="fw-bold text-dark">
+                                                @if(in_array($currentHoSo->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh']))
+                                                    <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>ĐẠT BẢO VỆ KHÓA LUẬN</span>
+                                                @elseif($currentHoSo->TrangThaiKetQua === 'CoYeuCauChinhSua' || !empty($currentHoSo->YeuCauChinhSuaSauBaoVe))
+                                                    <span class="text-warning-emphasis"><i class="fa-solid fa-triangle-exclamation me-1"></i>ĐẠT CÓ ĐIỀU KIỆN (Yêu cầu chỉnh sửa hoàn thiện)</span>
+                                                @elseif($currentHoSo->TrangThaiKetQua === 'ChuaDat')
+                                                    <span class="text-danger"><i class="fa-solid fa-circle-xmark me-1"></i>KHÔNG ĐẠT</span>
+                                                @else
+                                                    <span class="text-secondary"><i class="fa-solid fa-clock me-1"></i>Đã hoàn thành phiên bảo vệ (Chờ công bố điểm chính thức)</span>
+                                                @endif
+                                            </div>
+                                            <div class="small text-muted mt-1">
+                                                Người kiểm tra hoàn thiện: <strong>{{ $currentHoSo->NguoiKiemTraChinhSua ?? ($nhomCurrent->deTai?->giangVien?->HoTen ?? 'GVHD') }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Nội dung Hội đồng yêu cầu chỉnh sửa & Thời hạn nộp lại -->
+                                @if(!empty($currentHoSo->YeuCauChinhSuaSauBaoVe))
+                                <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle mb-3">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                        <span class="fw-bold text-dark small text-uppercase">
+                                            <i class="fa-solid fa-clipboard-question text-warning me-1"></i>Nội Dung Hội Đồng Yêu Cầu Chỉnh Sửa, Bổ Sung:
+                                        </span>
+                                        @if($hanNopSauBaoVe)
+                                            <span class="badge {{ $isQuaHanNopSauBaoVe ? 'bg-danger' : 'bg-primary' }} rounded-pill px-3 py-1 font-monospace">
+                                                <i class="fa-regular fa-clock me-1"></i> Hạn chót: {{ $hanNopSauBaoVe->format('d/m/Y H:i') }}
+                                                {{ $isQuaHanNopSauBaoVe ? '(Hết hạn)' : '(' . $hanNopSauBaoVe->diffForHumans() . ')' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="bg-white p-3 rounded-3 border text-dark small" style="white-space: pre-line; line-height: 1.6;">
+                                        {{ $currentHoSo->YeuCauChinhSuaSauBaoVe }}
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- 3. Phiên bản báo cáo đã nộp gần nhất & Ý kiến phản hồi -->
+                                @if($latestBaoCaoSauBaoVe)
+                                <div class="p-3 rounded-3 bg-light border border-slate-200 mb-3">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="fw-bold small text-dark mb-1">
+                                                <i class="fa-solid fa-file-pdf text-danger me-1"></i>Phiên Bản Đã Nộp Gần Nhất (Lần {{ $latestBaoCaoSauBaoVe->LanChinhSua }}):
+                                            </div>
+                                            <div class="fw-semibold text-primary text-truncate">{{ $latestBaoCaoSauBaoVe->TenFile }}</div>
+                                            <div class="small text-muted mt-1">
+                                                Thời điểm nộp: <strong>{{ \Carbon\Carbon::parse($latestBaoCaoSauBaoVe->NgayNop)->format('d/m/Y H:i') }}</strong>
+                                                &bull; Người nộp: <strong>{{ $latestBaoCaoSauBaoVe->sinhVienNop->HoTen ?? $latestBaoCaoSauBaoVe->NguoiNop }}</strong>
+                                            </div>
+                                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-eye me-1"></i> Xem Báo Cáo PDF
+                                                </a>
+                                                @if($latestBaoCaoSauBaoVe->FileGiaiTrinh)
+                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->FileGiaiTrinh) }}" target="_blank" class="btn btn-xs btn-outline-info rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-file-lines me-1"></i> Bản Giải Trình
+                                                </a>
+                                                @endif
+                                                @if($latestBaoCaoSauBaoVe->FileMinhChung)
+                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->FileMinhChung) }}" target="_blank" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-paperclip me-1"></i> Minh Chứng
+                                                </a>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="fw-bold small text-dark mb-1">
+                                                <i class="fa-solid fa-comment-dots text-info me-1"></i>Ý Kiến Phản Hồi Của Người Kiểm Tra:
+                                            </div>
+                                            @if(!empty($latestBaoCaoSauBaoVe->NhanXetGV))
+                                                <div class="p-2 bg-white rounded-3 border text-dark small" style="white-space: pre-line; line-height: 1.5;">
+                                                    {{ $latestBaoCaoSauBaoVe->NhanXetGV }}
+                                                </div>
+                                                <div class="small text-muted mt-1" style="font-size: 0.725rem;">
+                                                    <i class="fa-regular fa-clock me-1"></i> {{ $latestBaoCaoSauBaoVe->NgayKiemTra ? \Carbon\Carbon::parse($latestBaoCaoSauBaoVe->NgayKiemTra)->format('d/m/Y H:i') : '' }} &bull; Đánh giá bởi: <strong>{{ $latestBaoCaoSauBaoVe->NguoiKiemTra }}</strong>
+                                                </div>
+                                            @else
+                                                <div class="p-2 bg-white rounded-3 border text-muted small fst-italic">
+                                                    Giảng viên đang tiếp nhận kiểm tra nội dung bản báo cáo chỉnh sửa.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- 4. Lịch sử các lần nộp lại & Nút thao tác nộp lại -->
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+                                    <div>
+                                        <span class="text-muted small">
+                                            <i class="fa-solid fa-clock-rotate-left me-1"></i> Lịch sử nộp lại: <strong>{{ $lichSuBaoCaoSauBaoVe->count() }} lần</strong>
+                                        </span>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a href="{{ route('sinhvien.ketqua.hoanthien') }}" class="btn btn-sm btn-outline-primary rounded-pill px-4 fw-semibold">
+                                            <i class="fa-solid fa-list-check me-1"></i> Chi Tiết &amp; Lịch Sử Nộp
+                                        </a>
+
+                                        @if($trangThaiSuaBV !== 'DaHoanThanh' && !$isQuaHanNopSauBaoVe && $isLeaderOfCurrentGroup)
+                                            <a href="{{ route('sinhvien.ketqua.hoanthien') }}" class="btn btn-sm btn-cyan rounded-pill px-4 fw-bold shadow-xs">
+                                                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Nộp Lại Báo Cáo Chỉnh Sửa
+                                            </a>
+                                        @elseif($trangThaiSuaBV === 'DaHoanThanh')
+                                            <button type="button" class="btn btn-sm btn-success rounded-pill px-4 fw-semibold" disabled>
+                                                <i class="fa-solid fa-check-double me-1"></i> Đã Hoàn Thành Toàn Bộ
+                                            </button>
+                                        @elseif($isQuaHanNopSauBaoVe)
+                                            <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" disabled title="Đã quá hạn nộp lại">
+                                                <i class="fa-solid fa-clock me-1"></i> Đã Hết Hạn Nộp Lại
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
                     @else
                         <!-- TRƯỜNG HỢP CHƯA THAM GIA NHÓM -->
                         <div class="text-center py-5 px-3">

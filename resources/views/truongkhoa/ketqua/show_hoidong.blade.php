@@ -23,7 +23,7 @@
                 @csrf
                 <input type="hidden" name="MaHoiDong" value="{{ $hoiDong->MaHoiDong }}">
                 <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-xs">
-                    <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Kết Quả Toàn Hội Đồng
+                    <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Kết Quả &amp; Chuyển Lưu Trữ
                 </button>
             </form>
             @else

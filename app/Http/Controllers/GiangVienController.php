@@ -128,6 +128,12 @@ class GiangVienController extends Controller
             }
         ])->orderBy('MaGV')->paginate(15, ['*'], 'page_gv')->withQueryString();
 
+        $councilAssignmentService = app(\App\Services\CouncilAssignmentService::class);
+        $giangviens->getCollection()->transform(function($gv) use ($councilAssignmentService, $scopedHocKy) {
+            $gv->hoidong_stats = $councilAssignmentService->thongKeGiangVienHoiDong($gv->MaGV, $scopedHocKy);
+            return $gv;
+        });
+
         $pageGvIds = $giangviens->pluck('MaGV')->toArray();
         $chiTieuStatsBatch = ChiTieuService::getChiTieuStatsBatch($pageGvIds, $scopedHocKy);
         foreach ($giangviens as $gv) {
@@ -423,6 +429,9 @@ class GiangVienController extends Controller
         // DÙNG CHUNG HÀM ĐẾM ChiTieuService (Chuẩn P1 / A3)
         $chiTieuStats = ChiTieuService::getChiTieuStats($id, $scopedHocKy);
 
+        // Thống kê hội đồng bảo vệ chi tiết (Chuẩn Yêu cầu 6.4: 1 hội đồng = 1 lượt)
+        $hoidongStats = app(\App\Services\CouncilAssignmentService::class)->thongKeGiangVienHoiDong($id, $scopedHocKy);
+
         $stats = [
             'total_detai'    => (int)$totalDeTai,
             'nhom_huong_dan' => $chiTieuStats['da_dung'],
@@ -431,10 +440,10 @@ class GiangVienController extends Controller
             'tinh_trang'     => $chiTieuStats['tinh_trang'],
             'is_full'        => $chiTieuStats['is_full'],
             'label'          => $chiTieuStats['label'],
-            'total_hoidong'  => (int)$totalHoiDong,
+            'total_hoidong'  => (int)$hoidongStats['tong_so_hoidong'],
         ];
 
-        return view('admin.giangvien.show', compact('giangvien', 'stats', 'scopedHocKy'));
+        return view('admin.giangvien.show', compact('giangvien', 'stats', 'scopedHocKy', 'hoidongStats'));
     }
 
     public function edit($id)

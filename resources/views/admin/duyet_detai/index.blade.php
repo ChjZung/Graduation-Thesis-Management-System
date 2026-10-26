@@ -1073,9 +1073,9 @@
                 </div>
 
                 @if($dt->LyDoTuChoi)
-                    <div class="mt-3 p-3 bg-danger-subtle rounded-3 border border-danger-subtle text-danger small">
+                    <div class="mt-3 p-3 bg-danger-subtle rounded-3 border border-danger-subtle text-danger small max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                         <strong class="d-block mb-1"><i class="fa-solid fa-circle-exclamation me-2"></i>Ý Kiến Phản Hồi / Lý Do Từ Chối:</strong>
-                        <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dt->LyDoTuChoi) !!}</div>
+                        <div class="mt-1 break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($dt->LyDoTuChoi) !!}</div>
                     </div>
                 @endif
             </div>

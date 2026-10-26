@@ -411,14 +411,26 @@
                 <span class="fw-bold text-dark">
                     <i class="fa-solid fa-list-check text-primary me-2"></i>Bảng Tiêu Chí Đánh Giá &amp; Điểm Chấm Cho Từng Sinh Viên (Thang 10.0)
                 </span>
-                <div class="d-flex align-items-center gap-2">
-                    @if($activeHoiDong && $activeHoSo && ($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin()))))
-                    <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1 d-inline-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.78rem; background: #fff8e6; border-color: #f59e0b;">
-                        <i class="fa-solid fa-pen-to-square text-warning-emphasis me-1"></i> Cài đặt chức năng theo yêu cầu bài toán (Chủ tịch)
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-3 py-1 d-inline-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalXemDeCuong" style="font-size: 0.78rem;">
+                        <i class="fa-solid fa-book-open me-1"></i> Xem Đề Cương Đã Duyệt
                     </button>
-                    @elseif(!empty($customChucNang))
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-check-double me-1"></i> Đã đồng bộ yêu cầu bài toán từ Chủ tịch HĐ
+                    @if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
+                    <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1 d-inline-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.78rem; background: #fff8e6; border-color: #f59e0b;">
+                        <i class="fa-solid fa-pen-to-square text-warning-emphasis me-1"></i> Chuẩn Bị Phiếu &amp; Tiêu Chí Chức Năng (Thư Ký)
+                    </button>
+                    @elseif($isChuTich)
+                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 rounded-pill" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-crown me-1 text-warning"></i> Chủ tịch HĐ: Điều hành buổi bảo vệ
+                    </span>
+                    @endif
+                    @if(($activeHoSo?->TrangThaiChuanBiPhieu ?? '') === 'DaChuanBi')
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill" style="font-size: 0.75rem;" title="Phiếu chấm đã được Thư ký chuẩn bị">
+                        <i class="fa-solid fa-check-double me-1"></i> Phiếu chấm: Đã chuẩn bị
+                    </span>
+                    @else
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1 rounded-pill" style="font-size: 0.75rem;" title="Chờ Thư ký hội đồng khởi tạo tiêu chí phiếu">
+                        <i class="fa-solid fa-clock me-1"></i> Chờ Thư ký chuẩn bị phiếu
                     </span>
                     @endif
                     @if(!$daKhoaPhieu)
@@ -822,27 +834,9 @@
                     @endif
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    {{-- BƯỚC 1: KÝ PHIẾU ĐIỂM (CHỮ KÝ ĐIỆN TỬ VẼ TRÊN HỆ THỐNG) --}}
-                    @if($daKyTen)
-                        <button type="button" class="btn btn-outline-success rounded-pill px-3 fw-bold d-inline-flex align-items-center shadow-xs" data-bs-toggle="modal" data-bs-target="#modalKyTen" id="btnKyTen">
-                            <i class="fa-solid fa-signature me-1"></i> Đã Ký Tên <span class="badge bg-success-subtle text-success border border-success ms-1" style="font-size: 0.65rem;">Ký lại</span>
-                        </button>
-                    @else
-                        <button type="button" class="btn btn-warning text-dark rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalKyTen" id="btnKyTen">
-                            <i class="fa-solid fa-pen-nib me-2"></i> Bước 1: Ký Phiếu Điểm
-                        </button>
-                    @endif
-
-                    {{-- BƯỚC 2: XÁC NHẬN & KHÓA PHIẾU CHẤM (CHỈ MỞ KHI ĐÃ KÝ TÊN) --}}
-                    @if($daKyTen)
-                        <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')" style="background: #0072ce; border-color: #0072ce;">
-                            <i class="fa-solid fa-lock me-2"></i> Bước 2: Xác Nhận &amp; Khóa Phiếu Chấm
-                        </button>
-                    @else
-                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center opacity-75" id="btnXacNhanKhoa" disabled title="Thầy/Cô vui lòng thực hiện Bước 1: Ký Phiếu Điểm trước khi Xác Nhận & Khóa">
-                            <i class="fa-solid fa-lock me-2"></i> Bước 2: Xác Nhận &amp; Khóa Phiếu <span class="badge bg-light text-dark ms-2" style="font-size: 0.65rem;">Cần ký trước</span>
-                        </button>
-                    @endif
+                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')" style="background: #0072ce; border-color: #0072ce;">
+                        <i class="fa-solid fa-lock me-2"></i> Xác Nhận &amp; Khóa Phiếu Chấm
+                    </button>
                 </div>
             @endif
         </div>
@@ -1061,15 +1055,9 @@
                                 Giám khảo chấm điểm
                             </div>
                             <div class="fst-italic text-muted" style="font-size: 10pt; margin-bottom: 4px;">
-                                (Ký và ghi rõ họ tên)
+                                (Ký và ghi rõ họ tên sau khi in)
                             </div>
-                            <div id="previewChuKyContainer" class="d-flex align-items-center justify-content-center" style="height: 60px; margin: 4px 0;">
-                                @if(!empty($chuKyHienTai))
-                                    <img src="{{ $chuKyHienTai }}" alt="Chữ ký" id="previewChuKyImg" style="max-height: 55px; max-width: 160px;">
-                                @else
-                                    <span class="text-muted small fst-italic border border-dashed rounded px-3 py-1" id="previewChuKyPlaceholder">[ Chưa ký tên ]</span>
-                                @endif
-                            </div>
+                            <div style="height: 60px; margin: 4px 0;"></div>
                             <div class="fw-bold" style="font-size: 11.5pt;">
                                 {{ $giangVien->HoTen }}
                             </div>
@@ -1102,15 +1090,9 @@
                         </button>
                     @endif
                     @if(!$daKhoaPhieu)
-                        @if($daKyTen)
-                            <button type="button" class="btn btn-sm btn-success" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
-                                <i class="fa-solid fa-lock me-1"></i> Xác nhận &amp; khóa phiếu
-                            </button>
-                        @else
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalKyTen">
-                                <i class="fa-solid fa-signature me-1"></i> Ký phiếu điểm
-                            </button>
-                        @endif
+                        <button type="button" class="btn btn-sm btn-success" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
+                            <i class="fa-solid fa-lock me-1"></i> Xác nhận &amp; khóa phiếu
+                        </button>
                     @endif
                 </div>
             </div>
@@ -1118,88 +1100,115 @@
     </div>
 </div>
 
-{{-- MODAL VẼ CHỮ KÝ ĐIỆN TỬ TRÊN HỆ THỐNG --}}
-<div class="modal fade" id="modalKyTen" tabindex="-1" aria-labelledby="modalKyTenLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header text-white py-3" style="background: linear-gradient(135deg, #00305a 0%, #0072ce 100%);">
+{{-- MODAL XEM ĐỀ CƯƠNG CHI TIẾT ĐÃ PHÊ DUYỆT (DÀNH CHO THƯ KÝ & THÀNH VIÊN HỘI ĐỒNG - YÊU CẦU 3.2) --}}
+<div class="modal fade" id="modalXemDeCuong" tabindex="-1" aria-labelledby="modalXemDeCuongLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white py-3">
                 <div class="d-flex align-items-center gap-2">
                     <span class="p-2 rounded-circle bg-white text-primary d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                        <i class="fa-solid fa-signature"></i>
+                        <i class="fa-solid fa-book-open"></i>
                     </span>
                     <div>
-                        <h6 class="modal-title fw-bold mb-0" id="modalKyTenLabel">
-                            Ký Tên Điện Tử Cho Phiếu Chấm Điểm
+                        <h6 class="modal-title fw-bold mb-0" id="modalXemDeCuongLabel">
+                            Hồ Sơ Đề Cương Khóa Luận Đã Được Phê Duyệt (Chế Độ Xem Chỉ Đọc)
                         </h6>
-                        <span class="text-white-50" style="font-size: 0.72rem;">Vẽ chữ ký tay trực tiếp của Giám khảo trên hệ thống</span>
+                        <span class="text-white-50" style="font-size: 0.72rem;">Căn cứ để Thư ký hội đồng thiết lập tiêu chí chấm điểm và các giám khảo đối chiếu đánh giá</span>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-light">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small fw-bold text-dark">
-                        <i class="fa-solid fa-pen-nib text-primary me-1"></i> Khung vẽ chữ ký:
-                    </span>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="small text-muted" style="font-size: 0.72rem;">Màu mực:</span>
-                        <button type="button" class="btn btn-sm p-1 rounded-circle border border-2 border-primary active-color-btn" id="btnColorBlue" onclick="setPenColor('#002d72')" style="width: 22px; height: 22px; background: #002d72;" title="Mực xanh đậm"></button>
-                        <button type="button" class="btn btn-sm p-1 rounded-circle border border-2 border-secondary" id="btnColorBlack" onclick="setPenColor('#000000')" style="width: 22px; height: 22px; background: #000000;" title="Mực đen"></button>
-                        <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0 ms-2" onclick="clearSignatureCanvas()" style="font-size: 0.75rem;">
-                            <i class="fa-solid fa-eraser me-1"></i> Xóa &amp; Vẽ lại
-                        </button>
+                <!-- Thông tin tổng quan đề tài -->
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-secondary-subtle text-secondary border font-monospace">Hồ sơ #{{ $activeHoSo->MaHoSo }}</span>
+                            <span class="badge bg-primary-subtle text-primary border ms-1"><i class="fa-solid fa-graduation-cap me-1"></i>{{ $activeHoSo->ten_nganh }}</span>
+                            <h5 class="fw-bold text-primary mt-2 mb-1">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</h5>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Đề cương đã duyệt</span>
+                    </div>
+                    <div class="row g-2 mt-2 pt-2 border-top small text-muted">
+                        <div class="col-md-4">
+                            <strong>Cán bộ hướng dẫn:</strong> <span class="text-dark">{{ $gvhdHoTen }}</span> ({{ $activeDeTai?->giangVien?->boMon?->TenBoMon ?? 'Bộ môn' }})
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Nhóm thực hiện:</strong> <span class="text-dark">Nhóm {{ $activeNhom?->MaNhom }} ({{ $sinhViens->count() }} SV)</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Trạng thái chuẩn bị phiếu:</strong> 
+                            @if(($activeHoSo->TrangThaiChuanBiPhieu ?? '') === 'DaChuanBi')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Đã chuẩn bị phiếu</span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Chưa chuẩn bị phiếu</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
-                {{-- Khung Canvas Vẽ Chữ Ký --}}
-                <div class="position-relative bg-white border rounded-3 shadow-inner overflow-hidden" style="height: 200px; cursor: crosshair;">
-                    <canvas id="canvasChuKy" width="530" height="200" style="width: 100%; height: 100%; touch-action: none;"></canvas>
-                    
-                    {{-- Đường Kẻ Mờ Dấu Mốc Ký Tên --}}
-                    <div class="position-absolute w-75 start-50 translate-middle-x text-center pointer-events-none" style="bottom: 35px; border-bottom: 1px dashed #c0d4ed; pointer-events: none;">
-                        <span class="text-muted fw-light fst-italic" style="font-size: 0.68rem; letter-spacing: 1px;">(Đường kẻ ký tên)</span>
-                    </div>
-
-                    {{-- Nhắc nhở khi chưa vẽ --}}
-                    <div id="hintChuaVe" class="position-absolute top-50 start-50 translate-middle text-center text-muted opacity-50 pointer-events-none" style="pointer-events: none;">
-                        <i class="fa-solid fa-arrow-pointer mb-1 d-block"></i>
-                        <span style="font-size: 0.8rem;">Dùng chuột hoặc ngón tay / bút cảm ứng vẽ chữ ký tại đây</span>
+                <!-- Danh sách sinh viên -->
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-2"><i class="fa-solid fa-users me-2 text-primary"></i>Sinh viên thực hiện đề tài</h6>
+                    <div class="row g-2">
+                        @foreach($sinhViens as $idx => $sv)
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded-2 bg-light">
+                                <div class="fw-bold text-dark">{{ $sv->HoTen }}</div>
+                                <div class="small text-muted font-monospace">{{ $sv->MaSV }} &bull; {{ $sv->lop?->TenLop ?? 'Lớp' }}</div>
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
 
-                {{-- Chữ ký cũ đã lưu nếu có --}}
-                @if(!empty($giangVien->ChuKy))
-                <div class="mt-2 p-2 bg-white rounded border d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <img src="{{ $giangVien->ChuKy }}" alt="Chữ ký đã lưu" style="max-height: 35px; max-width: 100px;" class="border rounded bg-light p-1">
-                        <span class="small text-muted" style="font-size: 0.75rem;">Bạn đã có chữ ký lưu trước đó</span>
+                <!-- Chi tiết nội dung đề cương -->
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3"><i class="fa-solid fa-file-lines me-2 text-primary"></i>Nội dung đề cương chi tiết</h6>
+                    <div class="space-y-3">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">1. Mục tiêu đề tài:</label>
+                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->MucTieu ?: 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.' }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">2. Phạm vi thực hiện:</label>
+                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->PhamVi ?: 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.' }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">3. Nội dung và phương pháp nghiên cứu:</label>
+                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->NoiDung ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.' }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">4. Sản phẩm dự kiến:</label>
+                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->SanPhamDuKien ?: 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.' }}</div>
+                        </div>
+                        @if(!empty($activeDeTai?->FileDeCuong))
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary mb-1">5. Tệp tài liệu đề cương gốc đã duyệt:</label>
+                            <div>
+                                <a href="{{ asset('storage/' . $activeDeTai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fa-solid fa-file-pdf text-danger me-1"></i> Xem Tệp Đề Cương PDF Gốc
+                                </a>
+                            </div>
+                        </div>
+                        @endif
                     </div>
-                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1" onclick="useSavedSignature('{{ $giangVien->ChuKy }}')" style="font-size: 0.72rem;">
-                        <i class="fa-solid fa-clock-rotate-left me-1"></i> Sử dụng chữ ký này
-                    </button>
-                </div>
-                @endif
-
-                {{-- Tùy chọn lưu mặc định --}}
-                <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" id="chkLuuChuKyMacDinh" checked>
-                    <label class="form-check-label small text-secondary" for="chkLuuChuKyMacDinh">
-                        Lưu chữ ký này làm chữ ký cá nhân mặc định trên hệ thống cho các lần sau
-                    </label>
                 </div>
             </div>
-            <div class="modal-footer bg-white border-top py-2">
-                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-sm btn-success rounded-pill px-4 fw-bold shadow-sm" id="btnXacNhanLuuChuKy" onclick="hoanTatKyTen()">
-                    <i class="fa-solid fa-check me-1"></i> Hoàn Tất &amp; Áp Dụng Chữ Ký
-                </button>
+            <div class="modal-footer bg-white border-top py-2 d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                @if($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin())))
+                    <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang">
+                        <i class="fa-solid fa-pen-ruler me-1"></i> Bắt Đầu Chuẩn Bị Phiếu Chấm Từ Đề Cương Này
+                    </button>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
-{{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO CHỦ TỊCH HỘI ĐỒNG) --}}
-@if($activeHoiDong && $activeHoSo && ($isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isAdmin()))))
+{{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO THƯ KÝ HỘI ĐỒNG - YÊU CẦU 3.1 & 3.3) --}}
+@if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
 <div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <form action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
@@ -1215,10 +1224,10 @@
                         </span>
                         <div>
                             <h6 class="modal-title fw-bold mb-0" id="modalCaiDatChucNangLabel">
-                                Cài Đặt Chức Năng Theo Yêu Cầu Bài Toán (Dành Cho Chủ Tịch Hội Đồng)
+                                Thiết Lập Tiêu Chí Phiếu Chấm &amp; Yêu Cầu Chức Năng (Dành Cho Thư Ký Hội Đồng)
                             </h6>
                             <span class="text-muted" style="font-size: 0.75rem;">
-                                Tùy chỉnh chi tiết các chức năng thực tế của đề tài - Đồng bộ cho tất cả Giám khảo trong Hội đồng
+                                Thư ký chuẩn bị mẫu phiếu chấm dựa trên Đề cương chi tiết đã được GVHD nộp &amp; phê duyệt
                             </span>
                         </div>
                     </div>
@@ -1548,12 +1557,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('inputActionType').value = actionType;
 
         if (actionType === 'xac_nhan_hoan_thanh') {
-            const inputChuKy = document.getElementById('inputChuKy');
-            if (!inputChuKy || !inputChuKy.value) {
-                alert('CHƯA THỂ XÁC NHẬN & KHÓA PHIẾU:\n\nThầy/Cô chưa hoàn tất ký tên điện tử vào phiếu chấm điểm.\n\nVui lòng bấm nút "Bước 1: Ký Phiếu Điểm" để vẽ và xác nhận chữ ký trước khi khóa phiếu!');
-                return;
-            }
-
             let hasZero = false;
             document.querySelectorAll('input[id^="inputTotalScore_"]').forEach(el => {
                 if (parseFloat(el.value) === 0) hasZero = true;
@@ -1572,7 +1575,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calculateScores();
 
     window.alertChuaCoChucNang = function() {
-        alert('CHƯA THỂ XUẤT / IN PHIẾU CHẤM ĐIỂM:\n\nĐề tài này chưa được thiết lập chi tiết mục 6 ("Cài đặt chức năng theo yêu cầu bài toán").\n\nQuy định của Khoa CNTT: Phiếu chấm điểm chỉ được phép xuất File Word hoặc in PDF sau khi Chủ tịch Hội đồng đã cấu hình đầy đủ các yêu cầu chức năng riêng cho đề tài này.\n\nVui lòng liên hệ Chủ tịch Hội đồng nhấn nút "Cài đặt chức năng" để cập nhật!');
+        alert('CHƯA THỂ XUẤT / IN PHIẾU CHẤM ĐIỂM:\n\nĐề tài này chưa được thiết lập chi tiết mục 6 ("Cài đặt chức năng theo yêu cầu bài toán").\n\nQuy định của Khoa: Phiếu chấm điểm chỉ được phép xuất File Word hoặc in PDF sau khi Thư ký Hội đồng đã cấu hình và chuẩn bị đầy đủ các yêu cầu chức năng riêng cho đề tài này.\n\nVui lòng liên hệ Thư ký Hội đồng nhấn nút "Cài đặt chức năng (Thư Ký)" để cập nhật!');
     };
 
     window.inPhieuTrucTiep = function() {
@@ -1585,214 +1588,6 @@ document.addEventListener('DOMContentLoaded', function() {
         @else
             alert('Chưa có thông tin hội đồng hoặc hồ sơ bảo vệ.');
         @endif
-    };
-
-    // ── XỬ LÝ CANVAS CHỮ KÝ ĐIỆN TỬ VẼ TRÊN HỆ THỐNG ──
-    const canvas = document.getElementById('canvasChuKy');
-    const hintChuaVe = document.getElementById('hintChuaVe');
-    let ctx = null;
-    let isDrawing = false;
-    let hasDrawn = false;
-    let penColor = '#002d72';
-
-    if (canvas) {
-        ctx = canvas.getContext('2d');
-        ctx.strokeStyle = penColor;
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            if (rect.width > 0 && canvas.width !== rect.width) {
-                const oldData = hasDrawn ? canvas.toDataURL() : null;
-                canvas.width = rect.width;
-                canvas.height = 200;
-                ctx.strokeStyle = penColor;
-                ctx.lineWidth = 2.5;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                if (oldData) {
-                    const img = new Image();
-                    img.onload = () => ctx.drawImage(img, 0, 0);
-                    img.src = oldData;
-                }
-            }
-        }
-
-        const modalKyTenEl = document.getElementById('modalKyTen');
-        if (modalKyTenEl) {
-            modalKyTenEl.addEventListener('shown.bs.modal', function () {
-                resizeCanvas();
-            });
-        }
-
-        function getCanvasPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            hasDrawn = true;
-            if (hintChuaVe) hintChuaVe.style.display = 'none';
-            const pos = getCanvasPos(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-            if (e.cancelable) e.preventDefault();
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            const pos = getCanvasPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-            if (e.cancelable) e.preventDefault();
-        }
-
-        function stopDrawing(e) {
-            if (isDrawing) {
-                isDrawing = false;
-                ctx.closePath();
-            }
-            if (e && e.cancelable) e.preventDefault();
-        }
-
-        // Mouse events
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-
-        // Touch events cho màn hình cảm ứng & iPad
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
-    }
-
-    window.setPenColor = function(color) {
-        penColor = color;
-        if (ctx) ctx.strokeStyle = color;
-        const btnBlue = document.getElementById('btnColorBlue');
-        const btnBlack = document.getElementById('btnColorBlack');
-        if (color === '#002d72') {
-            btnBlue?.classList.add('border-primary');
-            btnBlack?.classList.remove('border-primary');
-        } else {
-            btnBlack?.classList.add('border-primary');
-            btnBlue?.classList.remove('border-primary');
-        }
-    };
-
-    window.clearSignatureCanvas = function() {
-        if (!ctx || !canvas) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        hasDrawn = false;
-        if (hintChuaVe) hintChuaVe.style.display = 'block';
-    };
-
-    window.useSavedSignature = function(dataUrl) {
-        if (!ctx || !canvas) return;
-        const img = new Image();
-        img.onload = function() {
-            clearSignatureCanvas();
-            ctx.drawImage(img, 30, 20, 260, 140);
-            hasDrawn = true;
-            if (hintChuaVe) hintChuaVe.style.display = 'none';
-        };
-        img.src = dataUrl;
-    };
-
-    window.hoanTatKyTen = function() {
-        if (!hasDrawn) {
-            alert('Vui lòng dùng chuột hoặc bút cảm ứng vẽ chữ ký của Thầy/Cô vào khung trước khi hoàn tất!');
-            return;
-        }
-
-        const dataUrl = canvas.toDataURL('image/png');
-        const inputChuKy = document.getElementById('inputChuKy');
-        if (inputChuKy) inputChuKy.value = dataUrl;
-
-        const btnSave = document.getElementById('btnXacNhanLuuChuKy');
-        if (btnSave) {
-            btnSave.disabled = true;
-            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang lưu chữ ký...';
-        }
-
-        const chkLuuMacDinh = document.getElementById('chkLuuChuKyMacDinh');
-
-        fetch("{{ route('giangvien.chamdiem.kyTen') }}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                MaHoiDong: '{{ $activeHoiDong->MaHoiDong }}',
-                MaHoSo: '{{ $activeHoSo?->MaHoSo }}',
-                chu_ky: dataUrl,
-                luu_mac_dinh: chkLuuMacDinh ? chkLuuMacDinh.checked : true
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Đóng modal ký tên
-                const modalEl = document.getElementById('modalKyTen');
-                const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                if (modalInstance) modalInstance.hide();
-
-                // Cập nhật nút Ký Tên
-                const btnKyTen = document.getElementById('btnKyTen');
-                if (btnKyTen) {
-                    btnKyTen.className = 'btn btn-outline-success rounded-pill px-3 fw-bold d-inline-flex align-items-center shadow-xs';
-                    btnKyTen.innerHTML = '<i class="fa-solid fa-signature me-1"></i> Đã Ký Tên <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 0.65rem;">Ký lại</span>';
-                }
-
-                // MỞ KHÓA NÚT BƯỚC 2: XÁC NHẬN & KHÓA
-                const btnXacNhanKhoa = document.getElementById('btnXacNhanKhoa');
-                if (btnXacNhanKhoa) {
-                    btnXacNhanKhoa.disabled = false;
-                    btnXacNhanKhoa.className = 'btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-inline-flex align-items-center';
-                    btnXacNhanKhoa.style.background = '#0072ce';
-                    btnXacNhanKhoa.style.borderColor = '#0072ce';
-                    btnXacNhanKhoa.removeAttribute('title');
-                    btnXacNhanKhoa.setAttribute('onclick', "submitChamDiem('xac_nhan_hoan_thanh')");
-                    btnXacNhanKhoa.innerHTML = '<i class="fa-solid fa-lock me-2"></i> Bước 2: Xác Nhận &amp; Khóa Phiếu Chấm';
-                }
-
-                // Cập nhật chữ ký trong Modal Xem Trước
-                const previewChuKyContainer = document.getElementById('previewChuKyContainer');
-                if (previewChuKyContainer) {
-                    previewChuKyContainer.innerHTML = `<img src="${dataUrl}" alt="Chữ ký" style="max-height: 55px; max-width: 160px;">`;
-                }
-
-                alert('KÝ TÊN THÀNH CÔNG!\n\nChữ ký điện tử của Thầy/Cô đã được áp dụng vào phiếu chấm điểm.\n\nBây giờ Thầy/Cô có thể nhấn "Bước 2: Xác Nhận & Khóa Phiếu Chấm" để hoàn tất.');
-            } else {
-                alert('Có lỗi khi lưu chữ ký: ' + (data.message || 'Vui lòng thử lại.'));
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Không thể kết nối đến máy chủ để lưu chữ ký.');
-        })
-        .finally(() => {
-            if (btnSave) {
-                btnSave.disabled = false;
-                btnSave.innerHTML = '<i class="fa-solid fa-check me-1"></i> Hoàn Tất &amp; Áp Dụng Chữ Ký';
-            }
-        });
     };
 
     // ── XỬ LÝ SOẠN THẢO VÀ LIVE PREVIEW MODAL CÀI ĐẶT CHỨC NĂNG ──

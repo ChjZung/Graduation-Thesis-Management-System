@@ -57,7 +57,13 @@ class KetQuaController extends Controller
         $activeHocKy = HocKy::where('TrangThai', true)->first() ?? $hocKies->first();
 
         // 1. Dữ liệu Tab Tổng Hợp Theo Hội Đồng
-        $hoiDongsQuery = HoiDong::where('MaKhoa', $maKhoa)
+        $hoiDongsQuery = HoiDong::where(function ($q) use ($maKhoa) {
+                $q->where('MaKhoa', $maKhoa)
+                  ->orWhereNull('MaKhoa')
+                  ->orWhere('MaKhoa', '')
+                  ->orWhereHas('hoSoBaoVes.nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
+                  ->orWhereHas('thanhViens.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
+            })
             ->with([
                 'thanhViens.giangVien',
                 'hoSoBaoVes.nhom.deTai',

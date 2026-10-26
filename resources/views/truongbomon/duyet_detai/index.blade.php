@@ -589,11 +589,11 @@
                                 <span class="badge-code">{{ $dt->MaDeTai }}</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark">{{ $dt->TenDeTai }}</div>
+                                <div class="fw-bold text-dark text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;" title="{{ $dt->TenDeTai }}">{{ $dt->TenDeTai }}</div>
                                 <div class="d-flex align-items-center gap-2 mt-1">
                                     @if($dt->LinhVuc)
-                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-tag me-2 text-primary"></i>{{ $dt->LinhVuc }}
+                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 text-truncate truncate d-inline-block" style="font-size: 0.72rem; max-width: 250px;" title="{{ $dt->LinhVuc }}">
+                                            <i class="fa-solid fa-tag me-1 text-primary"></i>{{ $dt->LinhVuc }}
                                         </span>
                                     @endif
                                     <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 0.72rem;">

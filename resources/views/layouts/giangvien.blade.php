@@ -110,7 +110,7 @@
             <!-- 3. ĐÁNH GIÁ & TIẾN ĐỘ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*') || request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*');
+                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*') || request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*') || request()->routeIs('giangvien.hoidong.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isGvDanhGia ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-danhgia" aria-expanded="{{ $isGvDanhGia ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -120,6 +120,9 @@
                     <i class="fa-solid fa-chevron-down chevron-arrow"></i>
                 </button>
                 <div class="collapse submenu-collapse {{ $isGvDanhGia ? 'show' : '' }}" id="sub-gv-danhgia">
+                    <a href="{{ route('giangvien.hoidong.index') }}" class="submenu-link {{ request()->routeIs('giangvien.hoidong.*') ? 'active-sub' : '' }}">
+                        <span>Hội đồng của tôi</span>
+                    </a>
                     <a href="{{ route('giangvien.baocao.index') }}" class="submenu-link {{ request()->routeIs('giangvien.baocao.*') ? 'active-sub' : '' }}">
                         <span>Duyệt báo cáo tiến độ</span>
                     </a>

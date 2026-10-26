@@ -97,4 +97,22 @@ class KhoiBaoCaoTienDo extends Model
         }
         return null;
     }
+
+    public function getTyLeHoanThanhHienThi(): array
+    {
+        if ($this->PhanTramHoanThanh === null) {
+            return [
+                'value' => null,
+                'label' => 'Chưa đánh giá',
+                'badge' => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+                'is_evaluated' => false,
+            ];
+        }
+        return [
+            'value' => (int)$this->PhanTramHoanThanh,
+            'label' => $this->PhanTramHoanThanh . '%',
+            'badge' => $this->PhanTramHoanThanh >= 80 ? 'bg-success text-white' : ($this->PhanTramHoanThanh >= 50 ? 'bg-primary text-white' : 'bg-warning text-dark'),
+            'is_evaluated' => true,
+        ];
+    }
 }

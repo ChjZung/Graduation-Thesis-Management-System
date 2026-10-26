@@ -135,17 +135,37 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label small fw-bold text-dark">
-                                Tệp Báo Cáo Toàn Văn Đã Chỉnh Sửa (PDF Chuẩn) <span class="text-danger">*</span>
+                                1. Tệp Báo Cáo Toàn Văn Đã Chỉnh Sửa (PDF Chuẩn) <span class="text-danger">*</span>
                             </label>
                             <input type="file" name="FileBaoCaoChinhSua" class="form-control" accept=".pdf" required>
                             <div class="form-text small text-muted">
-                                Bắt buộc định dạng .PDF (tối đa 50MB). Bản báo cáo phải bao gồm đầy đủ trang bìa, chữ ký xác nhận của GVHD và chỉnh sửa đúng theo ý kiến Hội đồng.
+                                Bắt buộc định dạng .PDF (tối đa 50MB). Bản báo cáo hoàn thiện phải bao gồm đầy đủ trang bìa, chữ ký xác nhận của GVHD và chỉnh sửa đầy đủ theo ý kiến Hội đồng.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">
+                                2. Bản Giải Trình Tiếp Thu Ý Kiến Của Hội Đồng (PDF / Word)
+                            </label>
+                            <input type="file" name="FileGiaiTrinh" class="form-control" accept=".pdf,.doc,.docx">
+                            <div class="form-text small text-muted">
+                                Đính kèm bảng giải trình chi tiết từng ý kiến góp ý của Hội đồng và vị trí nội dung đã chỉnh sửa (.pdf, .doc, .docx - tối đa 50MB).
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">
+                                3. Tài Liệu Minh Chứng Kèm Theo (Nếu có)
+                            </label>
+                            <input type="file" name="FileMinhChung" class="form-control" accept=".zip,.rar,.pdf,.doc,.docx">
+                            <div class="form-text small text-muted">
+                                Ảnh chụp kết quả thực nghiệm, dữ liệu test, xác nhận cơ quan hoặc tệp nén đính kèm (.zip, .rar, .pdf - tối đa 50MB).
                             </div>
                         </div>
 
                         <div class="col-md-12">
                             <label class="form-label small fw-bold text-dark">
-                                Tóm Tắt Các Nội Dung Nhóm Đã Tiếp Thu &amp; Chỉnh Sửa <span class="text-danger">*</span>
+                                4. Tóm Tắt &amp; Ghi Chú Các Nội Dung Nhóm Đã Tiếp Thu &amp; Chỉnh Sửa <span class="text-danger">*</span>
                             </label>
                             <textarea name="TomTatChinhSua" rows="4" class="form-control" required
                                 placeholder="Ghi rõ: Nhóm đã tiếp thu góp ý của Hội đồng và sửa đổi tại các trang/mục nào... Ví dụ:
@@ -186,7 +206,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 80px;" class="text-center">Lần nộp</th>
-                                <th>Tệp báo cáo (PDF)</th>
+                                <th>Hồ sơ nộp (Báo cáo &amp; Đính kèm)</th>
                                 <th style="min-width: 250px;">Tóm tắt nội dung tiếp thu &amp; sửa đổi</th>
                                 <th style="width: 150px;">Thời gian nộp</th>
                                 <th class="text-center" style="width: 140px;">Trạng thái</th>
@@ -200,13 +220,37 @@
                                     <span class="badge bg-primary text-white rounded-pill px-3 py-1">Lần {{ $item->LanChinhSua }}</span>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold text-dark">{{ $item->TenFile }}</div>
+                                    <div class="fw-semibold text-dark">
+                                        <i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $item->TenFile }}
+                                    </div>
                                     <div class="text-muted small">
                                         {{ $item->DungLuong ? round($item->DungLuong / 1024 / 1024, 2) . ' MB' : '' }}
                                     </div>
                                     <a href="{{ asset('storage/' . $item->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
-                                        <i class="fa-solid fa-download me-1"></i> Tải xem PDF
+                                        <i class="fa-solid fa-download me-1"></i> Báo cáo PDF
                                     </a>
+
+                                    @if($item->FileGiaiTrinh)
+                                    <div class="mt-2 pt-1 border-top">
+                                        <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileGiaiTrinh }}">
+                                            <i class="fa-solid fa-file-lines text-info me-1"></i>{{ $item->TenFileGiaiTrinh ?? 'Bản giải trình' }}
+                                        </div>
+                                        <a href="{{ asset('storage/' . $item->FileGiaiTrinh) }}" target="_blank" class="btn btn-xs btn-outline-info rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-file-arrow-down me-1"></i> Giải trình
+                                        </a>
+                                    </div>
+                                    @endif
+
+                                    @if($item->FileMinhChung)
+                                    <div class="mt-2 pt-1 border-top">
+                                        <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileMinhChung }}">
+                                            <i class="fa-solid fa-paperclip text-success me-1"></i>{{ $item->TenFileMinhChung ?? 'Minh chứng' }}
+                                        </div>
+                                        <a href="{{ asset('storage/' . $item->FileMinhChung) }}" target="_blank" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-paperclip me-1"></i> Minh chứng
+                                        </a>
+                                    </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="text-secondary" style="white-space: pre-line; max-width: 320px;">{{ $item->TomTatChinhSua }}</div>

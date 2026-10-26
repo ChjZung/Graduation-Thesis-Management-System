@@ -269,15 +269,29 @@
         // Chống Double Submit trên tất cả các form POST
         document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(function (form) {
             form.addEventListener('submit', function (e) {
+                if (e.defaultPrevented || form.dataset.customConfirm === 'true') return;
                 const btn = form.querySelector('button[type="submit"]:not([disabled])');
                 if (btn) {
+                    if (!btn.dataset.originalHtml) {
+                        btn.dataset.originalHtml = btn.innerHTML;
+                    }
                     setTimeout(function () {
+                        if (e.defaultPrevented) return;
                         btn.disabled = true;
-                        if (!btn.dataset.originalHtml) {
-                            btn.dataset.originalHtml = btn.innerHTML;
-                        }
+                        btn.classList.add('opacity-60', 'cursor-not-allowed');
                         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Đang xử lý...';
                     }, 30);
+                }
+            });
+        });
+
+        // Reset trạng thái nút khi phục hồi trang từ bfcache (nút Back)
+        window.addEventListener('pageshow', function (event) {
+            document.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                if (btn.dataset.originalHtml) {
+                    btn.innerHTML = btn.dataset.originalHtml;
                 }
             });
         });

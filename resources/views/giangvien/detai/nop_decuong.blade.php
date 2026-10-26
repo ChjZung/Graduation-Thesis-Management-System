@@ -270,12 +270,12 @@
                 @endphp
 
                 @if($detai->LyDoTuChoi)
-                <div class="alert alert-warning border-warning-subtle p-3 rounded-3 mb-4">
+                <div class="alert alert-warning border-warning-subtle p-3 rounded-3 mb-4 max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                     <div class="fw-bold text-dark d-flex align-items-center gap-2 mb-1">
                         <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
                         Góp ý / Yêu cầu từ Trưởng Bộ Môn / Ban Chủ Nhiệm Khoa:
                     </div>
-                    <div class="text-dark small ps-4">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
+                    <div class="text-dark small ps-4 break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                 </div>
                 @endif
 

@@ -29,7 +29,7 @@ class DuyetBaoCaoController extends Controller
         $this->progressService = $progressService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $giangVien = GiangVien::getLoggedInGiangVien($user);
@@ -129,8 +129,17 @@ class DuyetBaoCaoController extends Controller
             }
         }
 
+        // Xác định nhóm đang được chọn (ưu tiên query param ?nhom=..., đảm bảo nhóm thuộc quyền của GV)
+        $selectedNhomQuery = $request->query('nhom');
+        $activeNhom = $nhoms->firstWhere('MaNhom', $selectedNhomQuery);
+        if (!$activeNhom) {
+            $activeNhom = $nhoms->first();
+        }
+        $activeNhomId = $activeNhom?->MaNhom;
+        $activeGd = $request->query('gd');
+
         return view('giangvien.baocao.index', compact(
-            'giangVien', 'nhoms', 'tongSoNhom', 'baocaoChoDuyet', 'baocaoDaDat', 'nhomCanNhacNho'
+            'giangVien', 'nhoms', 'tongSoNhom', 'baocaoChoDuyet', 'baocaoDaDat', 'nhomCanNhacNho', 'activeNhomId', 'activeGd'
         ));
     }
 
@@ -475,6 +484,39 @@ class DuyetBaoCaoController extends Controller
     // =========================================================================
 
     /**
+     * Xác định mã nhóm cần redirect về
+     */
+    protected function resolveNhomId(Request $request, ?DeTai $deTai = null): ?string
+    {
+        if ($request->filled('nhom')) {
+            return $request->input('nhom');
+        }
+        if ($deTai) {
+            return Nhom::where('MaDeTai', $deTai->MaDeTai)->first()?->MaNhom
+                ?? PhieuDangKy::where('MaDeTai', $deTai->MaDeTai)->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->first()?->MaNhom
+                ?? $deTai->nhoms()->first()?->MaNhom;
+        }
+        return null;
+    }
+
+    /**
+     * Helper redirect về trang tiến độ và giữ lại nhóm và giai đoạn đang chọn
+     */
+    protected function redirectBackToBaocao(Request $request, ?DeTai $deTai = null, ?int $thuTuGd = null)
+    {
+        $nhom = $this->resolveNhomId($request, $deTai);
+        $gd = $request->input('gd') ?: $thuTuGd;
+        $params = [];
+        if ($nhom) {
+            $params['nhom'] = $nhom;
+        }
+        if ($gd) {
+            $params['gd'] = $gd;
+        }
+        return redirect()->route('giangvien.baocao.index', $params);
+    }
+
+    /**
      * Tạo giai đoạn thực hiện mới cho đề tài
      */
     public function storeGiaiDoan(Request $request)
@@ -495,7 +537,7 @@ class DuyetBaoCaoController extends Controller
         $deTai = DeTai::where('MaDeTai', $request->MaDeTai)->where('MaGV', $giangVien->MaGV)->firstOrFail();
 
         $this->progressService->taoGiaiDoan($deTai, $request->all());
-        return redirect()->back()->with('success', "Đã thêm giai đoạn '{$request->TenGiaiDoan}' thành công!");
+        return $this->redirectBackToBaocao($request, $deTai)->with('success', "Đã thêm giai đoạn '{$request->TenGiaiDoan}' thành công!");
     }
 
     /**
@@ -524,7 +566,7 @@ class DuyetBaoCaoController extends Controller
         ]);
 
         $this->progressService->capNhatGiaiDoan($giaiDoan, $data);
-        return redirect()->back()->with('success', "Đã cập nhật giai đoạn '{$giaiDoan->TenGiaiDoan}' thành công!");
+        return $this->redirectBackToBaocao($request, $giaiDoan->deTai, $giaiDoan->ThuTu)->with('success', "Đã cập nhật giai đoạn '{$giaiDoan->TenGiaiDoan}' thành công!");
     }
 
     /**
@@ -539,11 +581,12 @@ class DuyetBaoCaoController extends Controller
         abort_unless($giangVien && $giaiDoan->deTai && $giaiDoan->deTai->MaGV === $giangVien->MaGV,
             403, 'Bạn không phải GVHD của đề tài này.');
 
+        $deTai = $giaiDoan->deTai;
         try {
             $this->progressService->xoaGiaiDoan($giaiDoan);
-            return redirect()->back()->with('success', "Đã xóa giai đoạn thành công!");
+            return $this->redirectBackToBaocao(request(), $deTai)->with('success', "Đã xóa giai đoạn thành công!");
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return $this->redirectBackToBaocao(request(), $deTai)->with('error', $e->getMessage());
         }
     }
 
@@ -575,7 +618,7 @@ class DuyetBaoCaoController extends Controller
         $dotNop = $this->progressService->taoDotNop($giaiDoan, array_merge($request->all(), [
             'YeuCauSourceCode' => $request->boolean('YeuCauSourceCode'),
         ]));
-        return redirect()->back()->with('success', "Đã tạo đợt nộp '{$dotNop->TenDotNop}' thành công!");
+        return $this->redirectBackToBaocao($request, $giaiDoan->deTai, $giaiDoan->ThuTu)->with('success', "Đã tạo đợt nộp '{$dotNop->TenDotNop}' thành công!");
     }
 
     /**
@@ -584,7 +627,7 @@ class DuyetBaoCaoController extends Controller
     public function updateDotNop(Request $request, $id)
     {
         $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
-        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        $dotNop = DotNopBaoCao::with(['deTai', 'giaiDoan'])->findOrFail($id);
         abort_unless($giangVien && $dotNop->deTai && $dotNop->deTai->MaGV === $giangVien->MaGV,
             403, 'Bạn không phải GVHD của đề tài này.');
 
@@ -605,20 +648,23 @@ class DuyetBaoCaoController extends Controller
         $data['YeuCauSourceCode'] = $request->boolean('YeuCauSourceCode');
         $dotNop->update($data);
 
-        return redirect()->back()->with('success', "Đã cập nhật đợt nộp '{$dotNop->TenDotNop}' thành công!");
+        return $this->redirectBackToBaocao($request, $dotNop->deTai, $dotNop->giaiDoan?->ThuTu)->with('success', "Đã cập nhật đợt nộp '{$dotNop->TenDotNop}' thành công!");
     }
 
     public function destroyDotNop($id)
     {
         $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
-        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        $dotNop = DotNopBaoCao::with(['deTai', 'giaiDoan'])->findOrFail($id);
         abort_unless($giangVien && $dotNop->deTai && $dotNop->deTai->MaGV === $giangVien->MaGV,
             403, 'Bạn không phải GVHD của đề tài này.');
+
+        $deTai = $dotNop->deTai;
+        $thuTu = $dotNop->giaiDoan?->ThuTu;
         try {
             $this->progressService->xoaDotNop($dotNop);
-            return redirect()->back()->with('success', 'Đã xóa đợt nộp báo cáo.');
+            return $this->redirectBackToBaocao(request(), $deTai, $thuTu)->with('success', 'Đã xóa đợt nộp báo cáo.');
         } catch (\DomainException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return $this->redirectBackToBaocao(request(), $deTai, $thuTu)->with('error', $e->getMessage());
         }
     }
 
@@ -627,14 +673,14 @@ class DuyetBaoCaoController extends Controller
         $request->validate(['YeuCauSourceCode' => 'required|boolean']);
 
         $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
-        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        $dotNop = DotNopBaoCao::with(['deTai', 'giaiDoan'])->findOrFail($id);
         if (!$giangVien || !$dotNop->deTai || $dotNop->deTai->MaGV !== $giangVien->MaGV) {
             abort(403, 'Bạn không phải GVHD của đề tài này.');
         }
 
         $dotNop->update(['YeuCauSourceCode' => $request->boolean('YeuCauSourceCode')]);
 
-        return redirect()->back()->with('success', $dotNop->YeuCauSourceCode
+        return $this->redirectBackToBaocao($request, $dotNop->deTai, $dotNop->giaiDoan?->ThuTu)->with('success', $dotNop->YeuCauSourceCode
             ? 'Đã bật yêu cầu nộp link GitHub / GitLab / Bitbucket cho đợt này.'
             : 'Đã tắt yêu cầu nộp link mã nguồn cho đợt này.');
     }
@@ -646,7 +692,7 @@ class DuyetBaoCaoController extends Controller
     {
         $user = Auth::user();
         $giangVien = GiangVien::getLoggedInGiangVien($user);
-        $dotNop = DotNopBaoCao::with('deTai')->findOrFail($id);
+        $dotNop = DotNopBaoCao::with(['deTai', 'giaiDoan'])->findOrFail($id);
 
         if ($dotNop->deTai->MaGV !== $giangVien->MaGV) {
             abort(403, 'Bạn không phải GVHD của đề tài này.');
@@ -656,7 +702,7 @@ class DuyetBaoCaoController extends Controller
         $dotNop->update(['TrangThai' => $newStatus]);
 
         $msg = ($newStatus === 'DANG_MO') ? 'Đã mở lại đợt nộp báo cáo.' : 'Đã đóng đợt nộp báo cáo.';
-        return redirect()->back()->with('success', $msg);
+        return $this->redirectBackToBaocao($request, $dotNop->deTai, $dotNop->giaiDoan?->ThuTu)->with('success', $msg);
     }
 
     /**
@@ -825,7 +871,7 @@ class DuyetBaoCaoController extends Controller
             );
         });
 
-        return redirect()->back()->with('success', "Đã xác nhận hoàn thành giai đoạn thực hiện cho nhóm '{$nhom->TenNhom}'! Cổng nộp hồ sơ bảo vệ đã được mở cho sinh viên.");
+        return redirect()->route('giangvien.baocao.index', ['nhom' => $nhom->MaNhom])->with('success', "Đã xác nhận hoàn thành giai đoạn thực hiện cho nhóm '{$nhom->TenNhom}'! Cổng nộp hồ sơ bảo vệ đã được mở cho sinh viên.");
     }
 
     /**
@@ -849,7 +895,7 @@ class DuyetBaoCaoController extends Controller
         // Không thu hồi nếu sinh viên đã nộp hồ sơ và đang chờ hoặc đã duyệt
         $hoSo = HoSoBaoVe::where('MaNhom', $nhom->MaNhom)->first();
         if ($hoSo && !in_array($hoSo->TrangThai, ['Chưa nộp', 'Yêu cầu chỉnh sửa'])) {
-            return redirect()->back()->with('error', "Không thể thu hồi do sinh viên đã nộp hồ sơ bảo vệ (trạng thái: {$hoSo->TrangThai}).");
+            return redirect()->route('giangvien.baocao.index', ['nhom' => $nhom->MaNhom])->with('error', "Không thể thu hồi do sinh viên đã nộp hồ sơ bảo vệ (trạng thái: {$hoSo->TrangThai}).");
         }
 
         if ($hoSo && $hoSo->TrangThai === 'Chưa nộp') {
@@ -888,6 +934,6 @@ class DuyetBaoCaoController extends Controller
             'LyDo' => $request->input('LyDo', 'GVHD thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ để nhóm hoàn thiện thêm nội dung đề tài.'),
         ]);
 
-        return redirect()->back()->with('success', "Đã thu hồi xác nhận giai đoạn nộp hồ sơ bảo vệ của nhóm '{$nhom->TenNhom}'. Nhóm đã quay lại Giai đoạn 5 (hoàn thiện tiến độ).");
+        return redirect()->route('giangvien.baocao.index', ['nhom' => $nhom->MaNhom])->with('success', "Đã thu hồi xác nhận giai đoạn nộp hồ sơ bảo vệ của nhóm '{$nhom->TenNhom}'. Nhóm đã quay lại Giai đoạn 5 (hoàn thiện tiến độ).");
     }
 }

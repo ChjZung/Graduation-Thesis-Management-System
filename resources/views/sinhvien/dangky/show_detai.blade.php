@@ -258,7 +258,7 @@
                             @if($myGroupRegThis->TrangThai === 'Từ chối')
                                 <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 rounded-3 small mb-0">
                                     <i class="fa-solid fa-circle-xmark fs-5"></i>
-                                    <div>Đơn đăng ký của nhóm đã bị từ chối: <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($myGroupRegThis->LyDoTuChoi ?? 'Đề tài không phù hợp.') !!}</div></div>
+                                    <div class="max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">Đơn đăng ký của nhóm đã bị từ chối: <div class="mt-1 break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($myGroupRegThis->LyDoTuChoi ?? 'Đề tài không phù hợp.') !!}</div></div>
                                 </div>
                             @elseif($myGroupRegThis->TrangThai === 'Đã duyệt')
                                 <div class="alert alert-success d-flex align-items-center gap-2 py-2 px-3 rounded-3 small mb-0">

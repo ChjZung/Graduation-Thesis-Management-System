@@ -227,12 +227,13 @@
                     <table class="table admin-table table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="ps-4 py-3" width="13%">MÃ GV</th>
-                                <th class="py-3" width="28%">HỌ TÊN, HỌC VỊ &amp; LIÊN HỆ</th>
-                                <th class="py-3" width="23%">BỘ MÔN CHUYÊN MÔN</th>
-                                <th class="py-3 text-center" width="16%">ĐỊNH MỨC HƯỚNG DẪN</th>
-                                <th class="py-3 text-center" width="12%">TRẠNG THÁI</th>
-                                <th class="pe-4 py-3 text-center" width="8%">THAO TÁC</th>
+                                <th class="ps-4 py-3" width="11%">MÃ GV</th>
+                                <th class="py-3" width="24%">HỌ TÊN, HỌC VỊ &amp; LIÊN HỆ</th>
+                                <th class="py-3" width="18%">BỘ MÔN CHUYÊN MÔN</th>
+                                <th class="py-3 text-center" width="15%">ĐỊNH MỨC HƯỚNG DẪN</th>
+                                <th class="py-3 text-center" width="16%">HỘI ĐỒNG BẢO VỆ</th>
+                                <th class="py-3 text-center" width="10%">TRẠNG THÁI</th>
+                                <th class="pe-4 py-3 text-center" width="6%">THAO TÁC</th>
                             </tr>
                         </thead>
                         <tbody class="border-top-0">
@@ -245,6 +246,13 @@
                                     'tinh_trang' => 'con_chi_tieu',
                                     'is_full'    => false,
                                     'label'      => '0/5',
+                                ];
+                                $hdStats = $gv->hoidong_stats ?? [
+                                    'tong_so_hoidong' => 0,
+                                    'da_hoan_thanh'   => 0,
+                                    'sap_dien_ra'     => 0,
+                                    'dang_dien_ra'    => 0,
+                                    'theo_vai_tro'    => ['Chủ tịch' => 0, 'Thư ký' => 0, 'Phản biện' => 0, 'Ủy viên' => 0]
                                 ];
                             @endphp
                             <tr>
@@ -279,6 +287,26 @@
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Còn {{ $ct['con_lai'] }} chỗ</span>
                                         @else
                                             <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">Chưa có nhóm</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="text-center py-3">
+                                    <div class="fw-bold {{ $hdStats['tong_so_hoidong'] > 0 ? 'text-primary' : 'text-muted' }}">
+                                        {{ $hdStats['tong_so_hoidong'] }} HĐ
+                                    </div>
+                                    <div class="small text-muted mt-1 d-flex flex-wrap justify-content-center gap-1">
+                                        @if($hdStats['tong_so_hoidong'] > 0)
+                                            @if($hdStats['da_hoan_thanh'] > 0)
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0" title="Đã hoàn thành">{{ $hdStats['da_hoan_thanh'] }} xong</span>
+                                            @endif
+                                            @if($hdStats['sap_dien_ra'] > 0)
+                                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0" title="Sắp diễn ra">{{ $hdStats['sap_dien_ra'] }} sắp tới</span>
+                                            @endif
+                                            @if($hdStats['dang_dien_ra'] > 0)
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0" title="Đang diễn ra">{{ $hdStats['dang_dien_ra'] }} đang chấm</span>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-0">Chưa tham gia</span>
                                         @endif
                                     </div>
                                 </td>

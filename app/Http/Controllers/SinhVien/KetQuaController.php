@@ -163,14 +163,20 @@ class KetQuaController extends Controller
     public function nopBaoCaoChinhSua(Request $request)
     {
         $request->validate([
-            'MaHoSo'               => 'required|string|exists:HoSoBaoVe,MaHoSo',
-            'FileBaoCaoChinhSua'   => 'required|file|mimes:pdf|max:51200',
-            'TomTatChinhSua'       => 'required|string|max:3000',
+            'MaHoSo'             => 'required|string|exists:hosobaove,MaHoSo',
+            'FileBaoCaoChinhSua' => 'required|file|mimes:pdf|max:51200',
+            'FileGiaiTrinh'      => 'nullable|file|mimes:pdf,doc,docx|max:51200',
+            'FileMinhChung'      => 'nullable|file|mimes:pdf,zip,rar,doc,docx|max:51200',
+            'TomTatChinhSua'     => 'required|string|max:3000',
         ], [
             'FileBaoCaoChinhSua.required' => 'Vui lòng đính kèm tệp Báo cáo khóa luận đã chỉnh sửa định dạng .PDF.',
             'FileBaoCaoChinhSua.mimes'    => 'Tệp báo cáo chỉnh sửa bắt buộc phải là định dạng chuẩn PDF.',
-            'FileBaoCaoChinhSua.max'      => 'Dung lượng tệp không được vượt quá 50MB.',
-            'TomTatChinhSua.required'     => 'Vui lòng nhập tóm tắt các nội dung nhóm đã tiếp thu và chỉnh sửa.',
+            'FileBaoCaoChinhSua.max'      => 'Dung lượng tệp báo cáo không được vượt quá 50MB.',
+            'FileGiaiTrinh.mimes'         => 'Bản giải trình tiếp thu ý kiến phải có định dạng .pdf, .doc hoặc .docx.',
+            'FileGiaiTrinh.max'           => 'Dung lượng bản giải trình không được vượt quá 50MB.',
+            'FileMinhChung.mimes'         => 'Tài liệu minh chứng phải có định dạng .pdf, .zip, .rar, .doc hoặc .docx.',
+            'FileMinhChung.max'           => 'Dung lượng tài liệu minh chứng không được vượt quá 50MB.',
+            'TomTatChinhSua.required'     => 'Vui lòng nhập tóm tắt/ghi chú các nội dung nhóm đã tiếp thu và chỉnh sửa.',
         ]);
 
         $user = Auth::user();
@@ -180,6 +186,7 @@ class KetQuaController extends Controller
         $hoSo = HoSoBaoVe::with(['nhom.truongNhom', 'nhom.deTai.giangVien', 'hoiDong'])->findOrFail($request->MaHoSo);
         $nhom = $hoSo->nhom;
 
+        // 1. Kiểm tra tư cách nhóm trưởng
         $thanhVienRecord = ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
             ->where('MaNhom', $nhom->MaNhom)
             ->where('TrangThai', 'da_tham_gia')
@@ -193,28 +200,76 @@ class KetQuaController extends Controller
             return redirect()->back()->with('error', 'Chỉ có Nhóm trưởng mới có quyền đại diện nhóm nộp lại báo cáo chỉnh sửa sau bảo vệ.');
         }
 
+        // 2. Kiểm tra điều kiện nộp lại theo Quy chế KLTN:
+        // - Đã có Hội đồng bảo vệ
+        if (!$hoSo->hoiDong) {
+            return redirect()->back()->with('error', 'Chức năng nộp lại báo cáo sau bảo vệ chỉ áp dụng sau khi nhóm đã có Hội đồng và hoàn thành bảo vệ.');
+        }
+
+        // - Đã có kết quả bảo vệ hoặc yêu cầu chỉnh sửa từ Hội đồng
+        if (empty($hoSo->YeuCauChinhSuaSauBaoVe) && !in_array($hoSo->TrangThaiKetQua, ['CoYeuCauChinhSua', 'DaNopChinhSua', 'ChuaDat'])) {
+            return redirect()->back()->with('error', 'Hội đồng không yêu cầu chỉnh sửa báo cáo hoặc đề tài chưa có kết quả bảo vệ.');
+        }
+
+        // - Còn trong thời hạn cho phép nộp lại nếu có quy định
+        if ($hoSo->HanNopBaoCaoSauBaoVe && now()->isAfter($hoSo->HanNopBaoCaoSauBaoVe)) {
+            return redirect()->back()->with('error', 'Đã quá thời hạn nộp lại báo cáo theo yêu cầu của Hội đồng (' . \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe)->format('d/m/Y H:i') . '). Vui lòng liên hệ Thư ký hội đồng hoặc Giáo vụ khoa để được hỗ trợ.');
+        }
+
+        // - Đúng trạng thái cho phép nộp lại (chưa được xác nhận Đạt hoàn thành)
+        if ($hoSo->TrangThaiChinhSuaSauBaoVe === 'DaHoanThanh') {
+            return redirect()->back()->with('error', 'Báo cáo sau bảo vệ của nhóm đã được xác nhận Đạt/Hoàn thành. Không thể nộp lại.');
+        }
+
         DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien) {
-            $file = $request->file('FileBaoCaoChinhSua');
-            $filePath = $file->store("hoso/{$hoSo->MaNhom}/bao_cao_sau_bao_ve", 'public');
-
             $lanChinhSuaHienTai = BaoCaoSauBaoVe::where('MaHoSo', $hoSo->MaHoSo)->count() + 1;
+            $subFolder = "hoso/{$hoSo->MaNhom}/bao_cao_sau_bao_ve/lan_{$lanChinhSuaHienTai}";
 
+            // 1. Tệp báo cáo chỉnh sửa (PDF bắt buộc)
+            $file = $request->file('FileBaoCaoChinhSua');
+            $filePath = $file->store($subFolder, 'public');
+
+            // 2. Bản giải trình tiếp thu ý kiến của Hội đồng (nếu có)
+            $fileGiaiTrinhPath = null;
+            $tenFileGiaiTrinh = null;
+            if ($request->hasFile('FileGiaiTrinh')) {
+                $fileGT = $request->file('FileGiaiTrinh');
+                $fileGiaiTrinhPath = $fileGT->store($subFolder, 'public');
+                $tenFileGiaiTrinh = $fileGT->getClientOriginalName();
+            }
+
+            // 3. Tài liệu minh chứng kèm theo (nếu có)
+            $fileMinhChungPath = null;
+            $tenFileMinhChung = null;
+            if ($request->hasFile('FileMinhChung')) {
+                $fileMC = $request->file('FileMinhChung');
+                $fileMinhChungPath = $fileMC->store($subFolder, 'public');
+                $tenFileMinhChung = $fileMC->getClientOriginalName();
+            }
+
+            // Lưu lịch sử các lần nộp lại, không ghi đè trực tiếp làm mất tệp cũ
             $baoCaoMoi = BaoCaoSauBaoVe::create([
-                'MaHoSo'         => $hoSo->MaHoSo,
-                'LanChinhSua'    => $lanChinhSuaHienTai,
-                'DuongDanFile'   => $filePath,
-                'TenFile'        => $file->getClientOriginalName(),
-                'DungLuong'      => $file->getSize(),
-                'TomTatChinhSua' => HtmlHelper::clean($request->TomTatChinhSua),
-                'NgayNop'        => now(),
-                'NguoiNop'       => $sinhVien->MaSV,
-                'TrangThai'      => 'Đã nộp',
+                'MaHoSo'           => $hoSo->MaHoSo,
+                'LanChinhSua'      => $lanChinhSuaHienTai,
+                'DuongDanFile'     => $filePath,
+                'TenFile'          => $file->getClientOriginalName(),
+                'DungLuong'        => $file->getSize(),
+                'TomTatChinhSua'   => HtmlHelper::clean($request->TomTatChinhSua),
+                'FileGiaiTrinh'    => $fileGiaiTrinhPath,
+                'TenFileGiaiTrinh' => $tenFileGiaiTrinh,
+                'FileMinhChung'    => $fileMinhChungPath,
+                'TenFileMinhChung' => $tenFileMinhChung,
+                'NgayNop'          => now(),
+                'NguoiNop'         => $sinhVien->MaSV,
+                'TrangThai'        => 'Đã nộp',
             ]);
 
-            // Cập nhật trạng thái của HoSoBaoVe
+            // Cập nhật trạng thái của HoSoBaoVe (Không làm thay đổi điểm số đã được hội đồng công bố)
             $hoSo->update([
                 'TrangThaiChinhSuaSauBaoVe' => 'DaNop',
                 'TrangThaiKetQua'           => 'DaNopChinhSua',
+                'FileBanChinhSua'           => $filePath,
+                'NgayNopBanChinhSua'        => now(),
             ]);
 
             // Gửi thông báo đến Người kiểm tra (GVHD hoặc Thành viên HĐ phụ trách)
@@ -223,7 +278,7 @@ class KetQuaController extends Controller
                 ThongBaoService::gui(
                     $nguoiKiemTra,
                     'Nhóm đã nộp lại báo cáo chỉnh sửa sau bảo vệ',
-                    "Nhóm trưởng {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp lại Báo cáo chỉnh sửa sau bảo vệ (Lần {$lanChinhSuaHienTai}). Kính mời Thầy/Cô kiểm tra và đánh giá.",
+                    "Nhóm trưởng {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp lại Báo cáo chỉnh sửa sau bảo vệ (Lần {$lanChinhSuaHienTai}) kèm theo bản giải trình. Kính mời Thầy/Cô kiểm tra và đánh giá.",
                     'Báo cáo sau bảo vệ'
                 );
             }
@@ -238,7 +293,7 @@ class KetQuaController extends Controller
         });
 
         return redirect()->route('sinhvien.ketqua.hoanthien')
-            ->with('success', 'Nộp tệp Báo cáo toàn văn đã chỉnh sửa sau bảo vệ thành công! Hồ sơ đã được chuyển đến Giảng viên phụ trách để kiểm tra và xác nhận.');
+            ->with('success', 'Nộp tệp Báo cáo toàn văn và hồ sơ chỉnh sửa sau bảo vệ thành công! Hồ sơ đã được chuyển đến Giảng viên phụ trách để kiểm tra và xác nhận.');
     }
 
     /**

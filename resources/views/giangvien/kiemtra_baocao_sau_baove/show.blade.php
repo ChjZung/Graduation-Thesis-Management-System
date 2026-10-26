@@ -109,14 +109,26 @@
                             <span class="fw-bold text-dark small"><i class="fa-solid fa-paperclip me-1 text-primary"></i> Tệp Báo Cáo Đính Kèm:</span>
                             <span class="text-muted small">{{ $latestBaoCao->DungLuong ? round($latestBaoCao->DungLuong / 1024 / 1024, 2) . ' MB' : '' }}</span>
                         </div>
-                        <div class="fw-bold text-primary mb-2">{{ $latestBaoCao->TenFile }}</div>
-                        <div class="d-flex gap-2">
+                        <div class="fw-bold text-primary mb-2">
+                            <i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $latestBaoCao->TenFile }}
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
                             <a href="{{ asset('storage/' . $latestBaoCao->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
-                                <i class="fa-solid fa-eye me-1"></i> Mở Xem Trực Tiếp PDF
+                                <i class="fa-solid fa-eye me-1"></i> Mở Xem Báo Cáo PDF
                             </a>
                             <a href="{{ asset('storage/' . $latestBaoCao->DuongDanFile) }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                <i class="fa-solid fa-download me-1"></i> Tải Về Máy
+                                <i class="fa-solid fa-download me-1"></i> Tải Báo Cáo
                             </a>
+                            @if($latestBaoCao->FileGiaiTrinh)
+                            <a href="{{ asset('storage/' . $latestBaoCao->FileGiaiTrinh) }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-semibold">
+                                <i class="fa-solid fa-file-lines me-1"></i> Xem Bản Giải Trình
+                            </a>
+                            @endif
+                            @if($latestBaoCao->FileMinhChung)
+                            <a href="{{ asset('storage/' . $latestBaoCao->FileMinhChung) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                                <i class="fa-solid fa-paperclip me-1"></i> Tải Minh Chứng
+                            </a>
+                            @endif
                         </div>
                         <div class="small text-muted mt-3">
                             <i class="fa-regular fa-clock me-1"></i> Nộp lúc: <strong>{{ \Carbon\Carbon::parse($latestBaoCao->NgayNop)->format('d/m/Y H:i') }}</strong> 
@@ -205,7 +217,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 80px;" class="text-center">Lần nộp</th>
-                                <th>Tệp PDF</th>
+                                <th>Tệp Báo Cáo &amp; Đính Kèm</th>
                                 <th style="min-width: 200px;">Nội dung tiếp thu</th>
                                 <th style="width: 140px;">Thời gian nộp</th>
                                 <th class="text-center" style="width: 130px;">Trạng thái</th>
@@ -219,10 +231,24 @@
                                     <span class="badge bg-primary text-white rounded-pill px-3 py-1">Lần {{ $b->LanChinhSua }}</span>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold text-dark">{{ $b->TenFile }}</div>
-                                    <a href="{{ asset('storage/' . $b->DuongDanFile) }}" target="_blank" class="small text-primary text-decoration-none">
-                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem tệp
+                                    <div class="fw-semibold text-dark"><i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $b->TenFile }}</div>
+                                    <a href="{{ asset('storage/' . $b->DuongDanFile) }}" target="_blank" class="small text-primary text-decoration-none d-inline-block mt-1">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem báo cáo PDF
                                     </a>
+                                    @if($b->FileGiaiTrinh)
+                                    <div class="mt-1">
+                                        <a href="{{ asset('storage/' . $b->FileGiaiTrinh) }}" target="_blank" class="small text-info text-decoration-none">
+                                            <i class="fa-solid fa-file-lines me-1"></i> Xem bản giải trình
+                                        </a>
+                                    </div>
+                                    @endif
+                                    @if($b->FileMinhChung)
+                                    <div class="mt-1">
+                                        <a href="{{ asset('storage/' . $b->FileMinhChung) }}" target="_blank" class="small text-success text-decoration-none">
+                                            <i class="fa-solid fa-paperclip me-1"></i> Tải minh chứng
+                                        </a>
+                                    </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="small text-secondary" style="white-space: pre-line; max-width: 300px;">{{ $b->TomTatChinhSua }}</div>

@@ -9,7 +9,7 @@
     <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4" style="border: 1px solid #e2e8f0 !important;">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                <a href="{{ route('giangvien.baocao.index', array_filter(['nhom' => $nhom?->MaNhom, 'gd' => $dotNop->giaiDoan?->ThuTu])) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
                     <i class="fa-solid fa-arrow-left me-2"></i>Về danh sách
                 </a>
                 <div>

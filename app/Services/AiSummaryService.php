@@ -26,7 +26,27 @@ class AiSummaryService
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
-            $report->update(['TomTatJson' => $result['data'], 'TomTatAI' => $result['data']['overall_summary'] ?? '']);
+
+            $completionPct = isset($merged['completion_percentage']) && $merged['completion_percentage'] !== null
+                ? (int)$merged['completion_percentage']
+                : null;
+            $completionBasis = $merged['completion_basis'] ?? null;
+
+            $reportData = [
+                'TomTatJson' => $result['data'],
+                'TomTatAI' => $result['data']['overall_summary'] ?? '',
+            ];
+            if ($completionPct !== null) {
+                $reportData['PhanTramHoanThanh'] = $completionPct;
+            }
+            $report->update($reportData);
+
+            // Cập nhật BaoCaoTienDo cha nếu có
+            if ($completionPct !== null && $report->MaBaoCao) {
+                \App\Models\BaoCaoTienDo::where('MaBaoCao', $report->MaBaoCao)
+                    ->update(['PhanTramHoanThanh' => $completionPct]);
+            }
+
             // A late worker from an older version cannot replace the latest legacy snapshot.
             $latest = \App\Models\KhoiBaoCaoTienDo::where('MaBaoCao',$report->MaBaoCao)->orderByDesc('LanNop')->orderByDesc('NgayNop')->value('MaKhoi');
             if ($latest !== $report->MaKhoi) return;
@@ -37,6 +57,10 @@ class AiSummaryService
             $summary->fill([
                 'MaKhoi' => $report->MaKhoi, 'TenFile' => $report->TenFile, 'DuongDanFile' => $report->DuongDanFile,
                 'SoTrang' => ($result['data']['document_type'] ?? 'pdf') === 'docx' ? 0 : (int) ($result['data']['analysis']['total_pages'] ?? $result['total_pages'] ?? 0),
+                'TyLeHoanThanhAI' => $completionPct,
+                'CanCuDanhGia' => $completionBasis,
+                'ThoiDiemDanhGia' => now(),
+                'TrangThaiDanhGia' => $completionPct !== null ? 'da_danh_gia' : 'chua_danh_gia',
                 'CongViecDaHoanThanh' => $result['formatted']['completed_work'] ?? '',
                 'KhoKhan' => $result['formatted']['difficulties'] ?? '', 'KeHoachTuanToi' => $result['formatted']['next_steps'] ?? '',
                 'NoiDungAI' => $result['data']['overall_summary'] ?? '', 'TomTatJson' => $result['data'],
@@ -91,6 +115,10 @@ class AiSummaryService
         }
         if (!empty($options['review_only'])) {
             $command[] = '--review-only';
+        }
+        if (!empty($options['previous_version'])) {
+            $command[] = '--previous-version';
+            $command[] = json_encode($options['previous_version'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         }
 
         $errorReason = '';

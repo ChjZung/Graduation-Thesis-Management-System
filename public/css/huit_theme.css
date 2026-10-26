@@ -2677,6 +2677,19 @@ table.table td:not(:last-child) a:not(.btn):not(.btn-action-circle) > i {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
 }
 
+.btn-outline-warning {
+    background: #ffffff !important;
+    border: 1px solid #fb923c !important;
+    border-color: #fb923c !important;
+    color: #ea580c !important;
+}
+.btn-outline-warning:hover, .btn-outline-warning:focus {
+    background: #fff7ed !important;
+    border-color: #ea580c !important;
+    color: #c2410c !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25) !important;
+}
+
 .btn-outline-success {
     background: #ffffff !important;
     border-color: #10b981 !important;
@@ -3721,6 +3734,247 @@ div[class*="modal-header"] {
     font-weight: 600 !important;
     border-radius: 4px !important;
 }
+
+/* Utilities for text overflow prevention and consistent layout */
+.break-words {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+.whitespace-pre-wrap {
+    white-space: pre-wrap !important;
+}
+.max-w-full {
+    max-width: 100% !important;
+}
+.max-h-24 {
+    max-height: 6rem !important;
+}
+.overflow-y-auto {
+    overflow-y: auto !important;
+}
+.min-w-0 {
+    min-width: 0 !important;
+}
+.line-clamp-2 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.border-orange-400 {
+    border-color: #fb923c !important;
+}
+.text-orange-600 {
+    color: #ea580c !important;
+}
+.hover\:bg-orange-50:hover {
+    background-color: #fff7ed !important;
+}
+.overflow-x-hidden {
+    overflow-x: hidden !important;
+}
+.truncate {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+.w-full {
+    width: 100% !important;
+}
+.w-4 {
+    width: 1rem !important; /* 16px */
+    min-width: 1rem !important;
+}
+.h-4 {
+    height: 1rem !important; /* 16px */
+    min-height: 1rem !important;
+}
+.w-9 {
+    width: 2.25rem !important; /* 36px */
+    min-width: 2.25rem !important;
+}
+.h-9 {
+    height: 2.25rem !important; /* 36px */
+    min-height: 2.25rem !important;
+}
+.h-11 {
+    height: 2.75rem !important; /* 44px */
+    min-height: 2.75rem !important;
+}
+.rounded-lg {
+    border-radius: 0.5rem !important; /* 8px */
+}
+.gap-3 {
+    gap: 0.75rem !important; /* 12px */
+}
+.flex-col {
+    flex-direction: column !important;
+}
+.ml-auto {
+    margin-left: auto !important;
+}
+.mt-auto {
+    margin-top: auto !important;
+}
+.text-sm {
+    font-size: 0.875rem !important;
+}
+.border-gray-200 {
+    border-color: #e5e7eb !important;
+}
+.text-gray-600 {
+    color: #4b5563 !important;
+}
+.hover\:bg-gray-50:hover {
+    background-color: #f9fafb !important;
+}
+.bg-green-600 {
+    background-color: #16a34a !important;
+}
+.border-green-600 {
+    border-color: #16a34a !important;
+}
+.hover\:bg-green-700:hover {
+    background-color: #15803d !important;
+}
+.border-red-400 {
+    border-color: #f87171 !important;
+}
+.text-red-600 {
+    color: #dc2626 !important;
+}
+.hover\:bg-red-50:hover {
+    background-color: #fef2f2 !important;
+}
+.hover\:text-red-600:hover {
+    color: #dc2626 !important;
+}
+.opacity-60 {
+    opacity: 0.6 !important;
+}
+.cursor-not-allowed {
+    cursor: not-allowed !important;
+}
+
+/* =======================================================
+   STANDARDIZED BUTTON CLASSES (TBM & CARD FOOTER)
+   ======================================================= */
+/* TBM Decision Buttons */
+.btn-decision {
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.btn-decision i {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.btn-decision-approve {
+    background-color: #16a34a !important;
+    border: 1px solid #16a34a !important;
+    color: #ffffff !important;
+}
+.btn-decision-approve:hover, .btn-decision-approve:focus {
+    background-color: #15803d !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+}
+
+.btn-decision-edit {
+    background-color: #ffffff !important;
+    border: 1px solid #fb923c !important;
+    color: #ea580c !important;
+}
+.btn-decision-edit:hover, .btn-decision-edit:focus {
+    background-color: #fff7ed !important;
+    border-color: #ea580c !important;
+    color: #c2410c !important;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15) !important;
+}
+
+.btn-decision-reject {
+    background-color: #ffffff !important;
+    border: 1px solid #f87171 !important;
+    color: #dc2626 !important;
+}
+.btn-decision-reject:hover, .btn-decision-reject:focus {
+    background-color: #fef2f2 !important;
+    border-color: #dc2626 !important;
+    color: #b91c1c !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
+}
+
+/* Card Icon Buttons (36x36px = w-9 h-9) */
+.btn-card-icon {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #ffffff !important;
+    color: #4b5563 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.btn-card-icon:hover {
+    background-color: #f9fafb !important;
+    color: #1f2937 !important;
+    border-color: #d1d5db !important;
+}
+.btn-card-icon-delete:hover {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    border-color: #fca5a5 !important;
+}
+
+/* Card Main Action Button (h-9, px-4, rounded-lg, text-sm) */
+.btn-card-main {
+    height: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    background-color: #0d6efd !important;
+    border: 1px solid #0d6efd !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out !important;
+    white-space: nowrap !important;
+}
+.btn-card-main:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25) !important;
+}
+
+
 
 
 

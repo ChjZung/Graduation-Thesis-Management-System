@@ -39,8 +39,30 @@ class AnalyzeReportVersion implements ShouldQueue
             $attempt = (int) ($state['attempts'] ?? 0)+1;
             $processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.']);
             $only = ($state['mode'] ?? '') === 'review';
+
+            // Đối chiếu phiên bản (Lần 1 vs Lần 2): Kiểm tra xem có phiên bản trước liền kề không
+            $prevData = null;
+            if ($report->LanNop > 1) {
+                $previousReport = KhoiBaoCaoTienDo::where('MaBaoCao', $report->MaBaoCao)
+                    ->where('LanNop', '<', $report->LanNop)
+                    ->orderByDesc('LanNop')
+                    ->first();
+                if ($previousReport && !empty($previousReport->TomTatJson)) {
+                    $prevData = [
+                        'lan_nop' => $previousReport->LanNop,
+                        'completion_percentage' => $previousReport->PhanTramHoanThanh,
+                        'nhan_xet_gv' => $previousReport->NhanXetGV,
+                        'overall_summary' => $previousReport->TomTatAI,
+                        'data' => $previousReport->TomTatJson['data'] ?? $previousReport->TomTatJson,
+                    ];
+                }
+            }
+
             $result = $ai->summarizePdf($processing->path($report),$report->dotNop?->giaiDoan?->ThuTu ?? 1,[
-                'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(), 'review_only'=>$only,'progress_path'=>$processing->progressPath($this->token),
+                'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
+                'review_only'=>$only,
+                'progress_path'=>$processing->progressPath($this->token),
+                'previous_version'=>$prevData,
             ]);
             $report->refresh()->load('dotNop.giaiDoan');
             if ($processing->fingerprint($report) !== $state['fingerprint']) {

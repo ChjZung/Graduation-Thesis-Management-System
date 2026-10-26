@@ -280,14 +280,8 @@
                     năm {{ isset($ngayCham) ? \Carbon\Carbon::parse($ngayCham)->format('Y') : now()->format('Y') }}
                 </div>
                 <div class="text-bold text-uppercase" style="font-size: 9.5pt;">Giám khảo chấm điểm</div>
-                <div class="text-italic" style="font-size: 8.5pt; margin-bottom: 4px;">(Ký và ghi rõ họ tên)</div>
-                @if(!empty($chuKy))
-                    <div style="height: 55px; margin: 2px 0;">
-                        <img src="{{ $chuKy }}" style="max-height: 50px; max-width: 150px;" alt="Chữ ký">
-                    </div>
-                @else
-                    <div style="height: 50px;"></div>
-                @endif
+                <div class="text-italic" style="font-size: 8.5pt; margin-bottom: 4px;">(Ký và ghi rõ họ tên sau khi in)</div>
+                <div style="height: 55px; margin: 2px 0;"></div>
                 <div class="text-bold" style="font-size: 10pt;">{{ $giangVien->HoTen ?? '' }}</div>
                 <div style="font-size: 8.5pt; color: #555;">{{ $vaiTroGV ?? 'Thành viên Hội đồng' }}</div>
             </td>

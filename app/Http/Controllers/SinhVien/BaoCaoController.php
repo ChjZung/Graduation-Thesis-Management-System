@@ -551,21 +551,21 @@ class BaoCaoController extends Controller
             'KhoKhan' => 'nullable|string',
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
-            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
             'FileBaoCao' => 'nullable|file|mimes:pdf,docx|max:25600',
             'LinkCode' => 'nullable|url',
         ], [
             'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
             'KetQuaDatDuoc.required' => 'Vui lòng đính kèm file báo cáo PDF hoặc nhập kết quả công việc.',
-            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF.',
-            'FileBaoCao.max' => 'Dung lượng file PDF tối đa là 25MB.',
+            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF hoặc DOCX.',
+            'FileBaoCao.max' => 'Dung lượng file đính kèm tối đa là 25MB.',
         ]);
 
         $cleanedKetQua = $request->filled('KetQuaDatDuoc') ? \App\Helpers\HtmlHelper::clean($request->KetQuaDatDuoc) : null;
         $cleanedKhoKhan = $request->filled('KhoKhan') ? \App\Helpers\HtmlHelper::clean($request->KhoKhan) : null;
         $cleanedHuongGiaiQuyet = $request->filled('HuongGiaiQuyet') ? \App\Helpers\HtmlHelper::clean($request->HuongGiaiQuyet) : null;
         $cleanedKeHoach = $request->filled('KeHoachTiepTheo') ? \App\Helpers\HtmlHelper::clean($request->KeHoachTiepTheo) : null;
-        $phanTram = (int)$request->input('PhanTramHoanThanh', 0);
+        // Tỷ lệ hoàn thành được AI tự động đánh giá khách quan dựa trên tệp báo cáo, không lấy từ SV
+        $phanTram = null;
 
         $baoCao = BaoCaoTienDo::firstOrCreate(
             ['MaDeTai' => $deTai->MaDeTai, 'LanBaoCao' => $lan],
@@ -574,7 +574,7 @@ class BaoCaoController extends Controller
                 'TieuDe' => self::MOCS[$lan]['ten'],
                 'TrangThai' => 'Chờ duyệt',
                 'NgayNop' => now()->toDateString(),
-                'PhanTramHoanThanh' => $phanTram,
+                'PhanTramHoanThanh' => null,
             ]
         );
 
@@ -692,14 +692,13 @@ class BaoCaoController extends Controller
             'KhoKhan' => 'nullable|string',
             'HuongGiaiQuyet' => 'nullable|string',
             'KeHoachTiepTheo' => 'nullable|string',
-            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
             'FileBaoCao' => 'nullable|file|mimes:pdf,docx|max:25600',
             'LinkCode' => 'nullable|url',
         ], [
             'TieuDe.required' => 'Vui lòng nhập tiêu đề báo cáo.',
             'KetQuaDatDuoc.required' => 'Vui lòng nhập kết quả đã thực hiện / đạt được.',
-            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF.',
-            'FileBaoCao.max' => 'Dung lượng file PDF tối đa là 25MB.',
+            'FileBaoCao.mimes' => 'Chỉ chấp nhận file đính kèm định dạng PDF hoặc DOCX.',
+            'FileBaoCao.max' => 'Dung lượng file đính kèm tối đa là 25MB.',
         ]);
 
         $cleanedKetQua = \App\Helpers\HtmlHelper::clean($request->KetQuaDatDuoc);
@@ -727,7 +726,7 @@ class BaoCaoController extends Controller
             'KhoKhan' => $cleanedKhoKhan,
             'HuongGiaiQuyet' => $cleanedHuongGiaiQuyet,
             'KeHoachTiepTheo' => $cleanedKeHoach,
-            'PhanTramHoanThanh' => (int)$request->input('PhanTramHoanThanh', $khoi->PhanTramHoanThanh),
+            'PhanTramHoanThanh' => $khoi->PhanTramHoanThanh, // Giữ tỷ lệ do AI thẩm định, không ghi đè từ request
             'TenFile' => $tenFile,
             'DuongDanFile' => $duongDanFile,
             'LinkCode' => $request->input('LinkCode', $khoi->LinkCode),
@@ -811,7 +810,15 @@ class BaoCaoController extends Controller
         $canSubmit = $dotNop->isMoNop() || ($latest && ($latest->TrangThai === 'Yêu cầu nộp lại' || $latest->TrangThai === 'Cần bổ sung'));
 
         if (!$canSubmit) {
-            return redirect()->back()->with('error', 'Đợt nộp này hiện đang đóng hoặc đã được xác nhận hoàn thành.');
+            $now = now();
+            if ($dotNop->NgayMoNop && $now->lt($dotNop->NgayMoNop)) {
+                $errorMsg = 'Đợt nộp này chưa mở. Thời gian mở nộp: ' . \Carbon\Carbon::parse($dotNop->NgayMoNop)->format('H:i · d/m/Y') . '.';
+            } elseif ($dotNop->HanNop && $now->gt($dotNop->HanNop)) {
+                $errorMsg = 'Đợt nộp này đã quá hạn nộp từ lúc ' . \Carbon\Carbon::parse($dotNop->HanNop)->format('H:i · d/m/Y') . '. Vui lòng liên hệ GVHD.';
+            } else {
+                $errorMsg = 'Đợt nộp này hiện đang đóng hoặc đã được xác nhận hoàn thành.';
+            }
+            return redirect()->back()->with('error', $errorMsg);
         }
 
         $rules = [

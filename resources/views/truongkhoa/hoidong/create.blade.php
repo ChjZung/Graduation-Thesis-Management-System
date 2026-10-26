@@ -228,10 +228,10 @@
                                 </div>
                             </div>
 
-                            <!-- Bộ lọc danh sách đề tài -->
+                            <!-- Bộ lọc danh sách đề tài chuẩn theo Ngành & Tiêu chí hội đồng -->
                             <div class="card border rounded-3 p-3 bg-light mb-3">
                                 <div class="row g-2 align-items-center">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                                             <input type="text" id="searchDeTai" class="form-control border-start-0"
@@ -239,6 +239,14 @@
                                         </div>
                                     </div>
                                     <div class="col-md-3">
+                                        <select id="filterNganhDeTai" class="form-select">
+                                            <option value="">— Tất cả Ngành đào tạo —</option>
+                                            @foreach($nganhs as $ng)
+                                            <option value="{{ $ng->MaNganh }}">{{ $ng->TenNganh }} ({{ $ng->MaNganh }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
                                         <select id="filterBoMonDeTai" class="form-select">
                                             <option value="">— Tất cả Bộ môn —</option>
                                             @foreach($boMons as $bm)
@@ -246,10 +254,10 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <select id="filterTrangThaiHoSo" class="form-select">
-                                            <option value="">— Tất cả trạng thái hồ sơ —</option>
-                                            <option value="du_dieu_kien" selected>Đủ điều kiện bảo vệ</option>
+                                            <option value="">— Tất cả trạng thái —</option>
+                                            <option value="du_dieu_kien" selected>Đủ ĐK bảo vệ</option>
                                             <option value="tat_ca">Tất cả đề tài</option>
                                         </select>
                                     </div>
@@ -285,6 +293,8 @@
                                             $isDaCoHoiDong = !empty($hs->MaHoiDong);
                                             $gvhd = $dt?->giangVien;
                                             $tenBM = $gvhd?->boMon?->TenBoMon ?? '';
+                                            $maNganhHs = $hs->ma_nganh ?? '';
+                                            $tenNganhHs = $hs->ten_nganh ?? 'Chưa xác định ngành';
                                             $svSearchText = $sinhViens->map(fn($tv) => ($tv->sinhVien?->MaSV ?? '') . ' ' . ($tv->sinhVien?->HoTen ?? ''))->join(' ');
                                         @endphp
                                         <tr class="row-detai {{ $isDaCoHoiDong ? 'bg-light opacity-75' : '' }}"
@@ -292,10 +302,12 @@
                                             data-madetai="{{ $dt?->MaDeTai }}"
                                             data-tendetai="{{ $dt?->TenDeTai }}"
                                             data-manhom="{{ $nhom?->MaNhom }}"
+                                            data-manganh="{{ $maNganhHs }}"
+                                            data-tennganh="{{ $tenNganhHs }}"
                                             data-gvhd="{{ $gvhd?->HoTen }}"
                                             data-bomon="{{ $tenBM }}"
                                             data-sosv="{{ $soSV }}"
-                                            data-search="{{ mb_strtolower(($dt?->MaDeTai ?? '') . ' ' . ($dt?->TenDeTai ?? '') . ' ' . ($nhom?->MaNhom ?? '') . ' ' . ($gvhd?->HoTen ?? '') . ' ' . $svSearchText) }}">
+                                            data-search="{{ mb_strtolower(($dt?->MaDeTai ?? '') . ' ' . ($dt?->TenDeTai ?? '') . ' ' . ($nhom?->MaNhom ?? '') . ' ' . ($gvhd?->HoTen ?? '') . ' ' . $maNganhHs . ' ' . $tenNganhHs . ' ' . $svSearchText) }}">
                                             <td class="text-center">
                                                 @if($isDaCoHoiDong)
                                                     <input type="checkbox" class="form-check-input" disabled title="Đã được phân vào Hội đồng khác">
@@ -311,6 +323,9 @@
                                                 <div class="fw-bold text-dark">{{ $dt?->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</div>
                                                 <div class="d-flex flex-wrap align-items-center gap-2 mt-1 small text-muted">
                                                     <span class="badge bg-secondary-subtle text-secondary border">Nhóm {{ $nhom?->MaNhom }}</span>
+                                                    <span class="badge bg-primary-subtle text-primary border" title="Ngành đào tạo của nhóm">
+                                                        <i class="fa-solid fa-graduation-cap me-1"></i>{{ $tenNganhHs }}
+                                                    </span>
                                                     <span>• {{ $soSV }} Sinh viên:</span>
                                                     @foreach($sinhViens as $tv)
                                                         <span class="text-dark fw-semibold">{{ $tv->sinhVien?->HoTen }} ({{ $tv->sinhVien?->MaSV }})</span>
@@ -369,9 +384,17 @@
                                         Không bắt buộc giảng viên cùng Bộ môn với đề tài. Danh sách lựa chọn mở rộng toàn Khoa.
                                     </div>
                                 </div>
-                                <button type="button" id="btnThemUyVien" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                    <i class="fa-solid fa-plus me-1"></i> Thêm Ủy Viên Khác
-                                </button>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalThongKePhanCong">
+                                        <i class="fa-solid fa-chart-pie me-1"></i> Thống Kê Giảng Viên
+                                    </button>
+                                    <button type="button" id="btnGoiYPhanCong" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold shadow-xs">
+                                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi Ý Phân Công Cân Bằng
+                                    </button>
+                                    <button type="button" id="btnThemUyVien" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        <i class="fa-solid fa-plus me-1"></i> Thêm Ủy Viên Khác
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Banner hướng dẫn & cảnh báo xung đột lợi ích -->
@@ -379,8 +402,13 @@
                                 <i class="fa-solid fa-circle-info fs-5 me-2"></i>
                                 <div>
                                     Cơ cấu bắt buộc tối thiểu: <strong>01 Chủ tịch</strong>, <strong>01 Ủy viên phản biện</strong>, <strong>01 Ủy viên thư ký</strong>.
-                                    Không phân công một giảng viên vào nhiều vị trí trong cùng một hội đồng.
+                                    Không phân công một giảng viên vào nhiều vị trí trong cùng một hội đồng. Giảng viên hướng dẫn không được tham gia hội đồng chấm nhóm mình.
                                 </div>
+                            </div>
+
+                            <div id="aiSuggestionBox" class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 d-none">
+                                <i class="fa-solid fa-circle-check me-2"></i>
+                                <span id="aiSuggestionText"></span>
                             </div>
 
                             <div id="conflictWarningBox" class="alert alert-warning py-2 px-3 small rounded-3 mb-3 border-0 d-none">
@@ -585,6 +613,142 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thống Kê Giảng Viên Trước Khi Phân Công (Yêu cầu 6.1) -->
+<div class="modal fade" id="modalThongKePhanCong" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-3">
+                <h6 class="modal-title fw-bold">
+                    <i class="fa-solid fa-chart-column me-2"></i>Thống Kê Tải Phân Công Hội Đồng Giảng Viên (Khoa {{ $khoa->TenKhoa ?? 'CNTT' }})
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- 4 KPI Thống kê nhanh -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="small text-muted fw-semibold">Tổng GV Đủ ĐK</div>
+                            <div class="fs-4 fw-bold text-primary">{{ $thongKeTruocPhanCong['tong_giang_vien_du_dieu_kien'] ?? 0 }}</div>
+                            <div class="small text-muted">đang công tác</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="small text-muted fw-semibold">Tổng Hội Đồng</div>
+                            <div class="fs-4 fw-bold text-dark">{{ $thongKeTruocPhanCong['tong_hoi_dong'] ?? 0 }}</div>
+                            <div class="small text-muted">trong học kỳ</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="small text-muted fw-semibold">Đã Tham Gia</div>
+                            <div class="fs-4 fw-bold text-success">{{ $thongKeTruocPhanCong['so_gv_da_phan_cong'] ?? 0 }}</div>
+                            <div class="small text-muted">/ {{ $thongKeTruocPhanCong['tong_giang_vien_du_dieu_kien'] ?? 0 }} GV</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="small text-muted fw-semibold">Mức Tải TB</div>
+                            <div class="fs-4 fw-bold text-warning-emphasis">{{ $thongKeTruocPhanCong['trung_binh_hoi_dong_moi_gv'] ?? 0 }}</div>
+                            <div class="small text-muted">HĐ / giảng viên</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thống kê theo chức danh -->
+                <div class="card border rounded-3 p-3 mb-4 bg-white">
+                    <h6 class="fw-bold text-dark mb-3 small text-uppercase">
+                        <i class="fa-solid fa-users-gear me-2 text-primary"></i>Phân Bổ Lượt Phân Công Theo Chức Danh
+                    </h6>
+                    <div class="row g-2 text-center">
+                        <div class="col-3">
+                            <div class="p-2 border rounded-2 bg-danger-subtle text-danger">
+                                <div class="fw-bold fs-5">{{ $thongKeTruocPhanCong['theo_chuc_danh']['ChuTich'] ?? 0 }}</div>
+                                <div class="small fw-semibold">Chủ tịch</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 border rounded-2 bg-info-subtle text-info">
+                                <div class="fw-bold fs-5">{{ $thongKeTruocPhanCong['theo_chuc_danh']['ThuKy'] ?? 0 }}</div>
+                                <div class="small fw-semibold">Thư ký</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 border rounded-2 bg-primary-subtle text-primary">
+                                <div class="fw-bold fs-5">{{ $thongKeTruocPhanCong['theo_chuc_danh']['PhanBien'] ?? 0 }}</div>
+                                <div class="small fw-semibold">Phản biện</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 border rounded-2 bg-secondary-subtle text-secondary">
+                                <div class="fw-bold fs-5">{{ $thongKeTruocPhanCong['theo_chuc_danh']['UyVien'] ?? 0 }}</div>
+                                <div class="small fw-semibold">Ủy viên</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách GV chưa có hội đồng (0 HĐ) -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-danger mb-0 small text-uppercase">
+                            <i class="fa-solid fa-user-xmark me-2"></i>Giảng Viên Chưa Tham Gia Hội Đồng Nào ({{ count($thongKeTruocPhanCong['danh_sach_0_hoi_dong'] ?? []) }} GV - Ưu tiên phân công)
+                        </h6>
+                    </div>
+                    <div class="table-responsive border rounded-3" style="max-height: 220px;">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã GV</th>
+                                    <th>Họ và tên</th>
+                                    <th>Học hàm/Học vị</th>
+                                    <th>Bộ môn</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($thongKeTruocPhanCong['danh_sach_0_hoi_dong'] ?? [] as $item)
+                                @php $gvItem = $item['giangVien']; @endphp
+                                <tr>
+                                    <td class="font-monospace text-primary fw-bold">{{ $gvItem->MaGV }}</td>
+                                    <td class="fw-semibold">{{ $gvItem->HoTen }}</td>
+                                    <td>{{ $gvItem->HocHam ?? ($gvItem->HocVi ?? 'Thạc sĩ') }}</td>
+                                    <td class="small text-muted">{{ $gvItem->boMon?->TenBoMon ?? 'Khoa' }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-success py-3">Tất cả giảng viên trong Khoa đều đã được phân công ít nhất 01 Hội đồng!</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Danh sách GV vượt mức trung bình -->
+                @if(!empty($thongKeTruocPhanCong['danh_sach_vuot_trung_binh']))
+                <div>
+                    <h6 class="fw-bold text-warning-emphasis mb-2 small text-uppercase">
+                        <i class="fa-solid fa-scale-unbalanced me-2"></i>Giảng Viên Tham Gia Nhiều Hơn Mức Trung Bình (&gt; {{ $thongKeTruocPhanCong['trung_binh_hoi_dong_moi_gv'] }} HĐ)
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach($thongKeTruocPhanCong['danh_sach_vuot_trung_binh'] as $item)
+                        @php $gvItem = $item['giangVien']; @endphp
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2">
+                            {{ $gvItem->HoTen }}: <strong>{{ $item['soHoiDong'] }} HĐ</strong> ({{ $gvItem->boMon?->TenBoMon ?? 'BM' }})
+                        </span>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
     </div>
 </div>
@@ -822,29 +986,43 @@
         updateDeTaiCount();
     });
 
-    // Tìm kiếm đề tài
+    // Tìm kiếm và lọc đề tài theo Ngành, Bộ môn, Trạng thái
     document.getElementById('searchDeTai')?.addEventListener('input', filterDeTaiTable);
+    document.getElementById('filterNganhDeTai')?.addEventListener('change', filterDeTaiTable);
     document.getElementById('filterBoMonDeTai')?.addEventListener('change', filterDeTaiTable);
     document.getElementById('filterTrangThaiHoSo')?.addEventListener('change', filterDeTaiTable);
 
+    // Đồng bộ Ngành từ Bước 1 sang bộ lọc Bước 2
+    document.getElementById('MaNganh')?.addEventListener('change', function() {
+        const val = this.value;
+        const fn = document.getElementById('filterNganhDeTai');
+        if (fn && val) {
+            fn.value = val;
+            filterDeTaiTable();
+        }
+    });
+
     function filterDeTaiTable() {
         const query = document.getElementById('searchDeTai')?.value?.toLowerCase().trim() || '';
+        const nganhFilter = document.getElementById('filterNganhDeTai')?.value || '';
         const bmFilter = document.getElementById('filterBoMonDeTai')?.value?.toLowerCase() || '';
         const statusFilter = document.getElementById('filterTrangThaiHoSo')?.value || '';
 
         document.querySelectorAll('#tbodyDeTai tr.row-detai').forEach(row => {
             const searchData = row.getAttribute('data-search') || '';
+            const rowNganh = row.getAttribute('data-manganh') || '';
             const rowBM = (row.getAttribute('data-bomon') || '').toLowerCase();
             const isLock = row.classList.contains('opacity-75');
 
             let matchQuery = !query || searchData.includes(query);
+            let matchNganh = !nganhFilter || rowNganh === nganhFilter;
             let matchBM = !bmFilter || rowBM.includes(bmFilter);
             let matchStatus = true;
             if (statusFilter === 'du_dieu_kien') {
                 matchStatus = !isLock;
             }
 
-            if (matchQuery && matchBM && matchStatus) {
+            if (matchQuery && matchNganh && matchBM && matchStatus) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -933,6 +1111,84 @@
             box.classList.add('d-none');
         }
     }
+
+    // Gợi ý phân công cân bằng thông minh (Thuật toán 6.2 & Xem trước 6.3)
+    document.getElementById('btnGoiYPhanCong')?.addEventListener('click', async function() {
+        const btn = this;
+        const checkedDeTais = Array.from(document.querySelectorAll('.check-item-detai:checked')).map(cb => cb.value);
+        if (checkedDeTais.length === 0) {
+            alert('Vui lòng chọn ít nhất 01 đề tài/nhóm ở Bước 2 trước khi yêu cầu thuật toán gợi ý phân công.');
+            jumpToStep(2);
+            return;
+        }
+
+        const batDau = document.getElementById('ThoiGianBatDau')?.value;
+        const ketThuc = document.getElementById('ThoiGianKetThuc')?.value;
+        const maHocKy = document.getElementById('MaHocKy')?.value;
+
+        if (!batDau || !ketThuc) {
+            alert('Vui lòng kiểm tra lại thời gian bảo vệ ở Bước 1.');
+            jumpToStep(1);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang phân tích...';
+
+        try {
+            const resp = await fetch('{{ route("truongkhoa.hoidong.deXuatThanhVien") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    ThoiGianBatDau: batDau,
+                    ThoiGianKetThuc: ketThuc,
+                    danh_sach_ho_so: checkedDeTais,
+                    MaHocKy: maHocKy
+                })
+            });
+
+            const data = await resp.json();
+            if (data.success && Array.isArray(data.thanh_viens)) {
+                let reasons = [];
+                data.thanh_viens.forEach(tv => {
+                    if (tv.VaiTro === 'Chủ tịch') {
+                        const sel = document.getElementById('selectChuTich');
+                        if (sel) sel.value = tv.MaGV;
+                        reasons.push(`• <strong>Chủ tịch:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
+                    } else if (tv.VaiTro === 'Thư ký') {
+                        const sel = document.getElementById('selectThuKy');
+                        if (sel) sel.value = tv.MaGV;
+                        reasons.push(`• <strong>Thư ký:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
+                    } else if (tv.VaiTro === 'Phản biện') {
+                        const sel = document.getElementById('selectPhanBien');
+                        if (sel) sel.value = tv.MaGV;
+                        reasons.push(`• <strong>Phản biện:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
+                    }
+                });
+
+                validateFacultySelection();
+                const aiBox = document.getElementById('aiSuggestionBox');
+                const aiText = document.getElementById('aiSuggestionText');
+                if (aiBox && aiText) {
+                    aiBox.classList.remove('d-none');
+                    aiText.innerHTML = `<strong><i class="fa-solid fa-check-double me-1"></i> ĐÃ TỰ ĐỘNG PHÂN CÔNG CÂN BẰNG TẢI THÀNH CÔNG:</strong><br>` +
+                        reasons.join('<br>') +
+                        `<br><span class="small text-muted mt-1 d-block"><i class="fa-solid fa-shield-halved me-1"></i> Đã loại trừ ${data.da_loai_gvhd} GVHD và ${data.da_loai_trung_lich} giảng viên trùng lịch cùng thời điểm.</span>`;
+                }
+            } else {
+                alert('Không thể tạo gợi ý phân công: ' + (data.message || 'Thiếu giảng viên thỏa mãn điều kiện.'));
+            }
+        } catch (e) {
+            alert('Lỗi khi kết nối đến dịch vụ phân công: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi Ý Phân Công Cân Bằng';
+        }
+    });
 
     // Xây dựng bảng preview ở Bước 4
     function buildPreviewStep4() {

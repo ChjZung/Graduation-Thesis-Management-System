@@ -100,6 +100,34 @@ class Nhom extends Model
         return $this->hasManyThrough(BaoCaoTienDo::class, PhieuDangKy::class, 'MaNhom', 'MaDeTai', 'MaNhom', 'MaDeTai');
     }
 
+    public function getNganhAttribute(): ?Nganh
+    {
+        if ($this->deTai?->nganh) {
+            return $this->deTai->nganh;
+        }
+        if ($this->truongNhom?->nganh) {
+            return $this->truongNhom->nganh;
+        }
+        $firstMember = $this->thanhViens?->firstWhere('TrangThai', 'da_tham_gia')?->sinhVien;
+        if ($firstMember?->nganh) {
+            return $firstMember->nganh;
+        }
+        if ($firstMember?->lop?->nganh) {
+            return $firstMember->lop->nganh;
+        }
+        return null;
+    }
+
+    public function getMaNganhAttribute(): ?string
+    {
+        return $this->nganh?->MaNganh ?? $this->deTai?->MaNganh ?? $this->truongNhom?->MaNganh ?? null;
+    }
+
+    public function getTenNganhAttribute(): string
+    {
+        return $this->nganh?->TenNganh ?? 'Chưa xác định ngành';
+    }
+
     public function lichGaps()
     {
         return $this->hasMany(LichGapHuongDan::class, 'MaNhom', 'MaNhom');

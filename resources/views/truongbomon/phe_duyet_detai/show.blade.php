@@ -148,7 +148,7 @@
                     </span>
                 </div>
                 <div class="card-body p-4">
-                    <h4 class="fw-bold text-dark mb-3">{{ $detai->TenDeTai }}</h4>
+                    <h4 class="fw-bold text-dark mb-3 text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;" title="{{ $detai->TenDeTai }}">{{ $detai->TenDeTai }}</h4>
 
                     <div class="row g-3 py-3 border-top border-bottom bg-light bg-opacity-50 rounded-3 px-2 mb-3">
                         <div class="col-md-6">
@@ -254,20 +254,20 @@
                             <div>Đề tài đang ở trạng thái <strong>Chờ duyệt</strong>. Vui lòng xem xét nội dung và chọn một trong các quyết định dưới đây:</div>
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-column gap-3 flex-col">
                             <!-- NÚT 1: PHÊ DUYỆT -->
-                            <button type="button" class="btn btn-success fw-bold py-2 rounded-pill shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
-                                <i class="fa-solid fa-circle-check me-2"></i> Phê Duyệt Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
+                                <i class="fa-solid fa-circle-check w-4 h-4"></i> Phê Duyệt Đề Tài
                             </button>
 
                             <!-- NÚT 2: YÊU CẦU CHỈNH SỬA -->
-                            <button type="button" class="btn btn-outline-info text-dark fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                                <i class="fa-solid fa-pen-ruler me-2 text-primary"></i> Yêu Cầu Chỉnh Sửa
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-orange-400 text-orange-600 hover:bg-orange-50 btn-decision btn-decision-edit" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-to-square w-4 h-4"></i> Yêu Cầu Chỉnh Sửa
                             </button>
 
                             <!-- NÚT 3: TỪ CHỐI -->
-                            <button type="button" class="btn btn-outline-danger fw-bold py-2 rounded-pill d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                                <i class="fa-solid fa-ban me-2"></i> Từ Chối Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-red-400 text-red-600 hover:bg-red-50 btn-decision btn-decision-reject" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-ban w-4 h-4"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     @else

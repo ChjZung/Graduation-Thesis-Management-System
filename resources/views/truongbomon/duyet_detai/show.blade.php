@@ -48,7 +48,7 @@
 
     <div class="row g-4">
         <!-- Main Info Column -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 min-w-0">
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                 <div class="card-header bg-white py-3">
                     <h6 class="fw-bold mb-0 text-dark">
@@ -57,50 +57,50 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
+                    <div class="mb-3 min-w-0">
                         <label class="form-label text-muted small fw-bold">Tên Đề Tài (Tiếng Việt):</label>
-                        <div class="fs-6 fw-bold text-dark">{{ $detai->TenDeTai }}</div>
+                        <div class="fs-6 fw-bold text-dark text-break break-words" style="word-break: break-word; overflow-wrap: anywhere;" title="{{ $detai->TenDeTai }}">{{ $detai->TenDeTai }}</div>
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label class="form-label text-muted small fw-bold">Chuyên ngành áp dụng:</label>
-                            <div><i class="fa-solid fa-graduation-cap text-muted me-2"></i>{{ $detai->nganh->TenNganh ?? 'Toàn ngành' }}</div>
+                            <div class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;"><i class="fa-solid fa-graduation-cap text-muted me-2"></i>{{ $detai->nganh->TenNganh ?? 'Toàn ngành' }}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label class="form-label text-muted small fw-bold">Học phần:</label>
-                            <div><i class="fa-solid fa-book-open text-muted me-2"></i>{{ $detai->HocPhan ?? 'Khóa luận tốt nghiệp' }}</div>
+                            <div class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;"><i class="fa-solid fa-book-open text-muted me-2"></i>{{ $detai->HocPhan ?? 'Khóa luận tốt nghiệp' }}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label class="form-label text-muted small fw-bold">Số lượng sinh viên tối đa:</label>
-                            <div><i class="fa-solid fa-users text-muted me-2"></i>{{ $detai->SoLuongSinhVienToiDa ?? 3 }} sinh viên / nhóm</div>
+                            <div class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;"><i class="fa-solid fa-users text-muted me-2"></i>{{ $detai->SoLuongSinhVienToiDa ?? 3 }} sinh viên / nhóm</div>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-6 min-w-0">
                             <label class="form-label text-muted small fw-bold">Lĩnh vực nghiên cứu:</label>
-                            <div><i class="fa-solid fa-tags text-muted me-2"></i>{{ $detai->LinhVuc ?? 'Chưa xác định' }}</div>
+                            <div class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;"><i class="fa-solid fa-tags text-muted me-2"></i>{{ $detai->LinhVuc ?? 'Chưa xác định' }}</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 min-w-0">
                             <label class="form-label text-muted small fw-bold">Ngày gửi đề xuất:</label>
-                            <div><i class="fa-regular fa-calendar-days text-muted me-2"></i>{{ $detai->NgayDeXuat ? \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y H:i') : ($detai->created_at ? $detai->created_at->format('d/m/Y H:i') : 'N/A') }}</div>
+                            <div class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;"><i class="fa-regular fa-calendar-days text-muted me-2"></i>{{ $detai->NgayDeXuat ? \Carbon\Carbon::parse($detai->NgayDeXuat)->format('d/m/Y H:i') : ($detai->created_at ? $detai->created_at->format('d/m/Y H:i') : 'N/A') }}</div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 min-w-0">
                         <label class="form-label text-muted small fw-bold">Mô tả tóm tắt nội dung chuyên môn:</label>
-                        <div class="p-3 bg-light rounded" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa có mô tả chi tiết' !!}</div>
+                        <div class="p-3 bg-light rounded text-break break-words" style="line-height: 1.6; overflow-wrap: anywhere; word-break: break-word;">{!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: 'Chưa có mô tả chi tiết' !!}</div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 min-w-0">
                         <label class="form-label text-muted small fw-bold">Yêu cầu cần đạt đối với sinh viên thực hiện:</label>
-                        <div class="p-3 bg-light rounded" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::clean($detai->YeuCau) ?: 'Chưa cập nhật yêu cầu' !!}</div>
+                        <div class="p-3 bg-light rounded text-break break-words" style="line-height: 1.6; overflow-wrap: anywhere; word-break: break-word;">{!! \App\Helpers\HtmlHelper::clean($detai->YeuCau) ?: 'Chưa cập nhật yêu cầu' !!}</div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 min-w-0">
                         <label class="form-label text-muted small fw-bold">File Đề Cương Chi Tiết Đính Kèm:</label>
-                        <div>
+                        <div class="min-w-0">
                             @if($detai->coTepDeCuong())
                                 @php
                                     $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
@@ -118,8 +118,8 @@
                                         <i class="fa-solid fa-download me-2"></i> Tải về máy
                                     </a>
                                 </div>
-                                <div class="small text-muted mt-2">
-                                    <i class="fa-solid fa-paperclip me-2 text-primary"></i> Tệp: <strong>{{ $fileName }}</strong>
+                                <div class="small text-muted mt-2 text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
+                                    <i class="fa-solid fa-paperclip me-2 text-primary"></i> Tệp: <strong class="text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">{{ $fileName }}</strong>
                                 </div>
                             @else
                                 <span class="badge bg-light text-muted border px-3 py-2 fw-normal">
@@ -131,9 +131,9 @@
 
                     <!-- Previous rejection reason / modification notes -->
                     @if($detai->LyDoTuChoi)
-                        <div class="alert alert-warning border-0 mt-3" style="border-left: 4px solid #ffc107 !important; border-radius: 8px;">
+                        <div class="alert alert-warning border-0 mt-3 max-w-full overflow-hidden text-break break-words" style="border-left: 4px solid #ffc107 !important; border-radius: 8px; overflow-wrap: anywhere; word-break: break-word;">
                             <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2 text-warning"></i> Ghi chú / Ý kiến phản hồi trước đó:</h6>
-                            <div class="mb-0 text-dark text-break" style="line-height: 1.5; word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
+                            <div class="mb-0 text-dark text-break break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         </div>
                     @endif
 
@@ -154,7 +154,7 @@
         </div>
 
         <!-- Sidebar Actions & Reviewer Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 min-w-0">
             <!-- Lecturer Proposer Info -->
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                 <div class="card-header bg-white py-3">
@@ -342,24 +342,24 @@
                             <i class="fa-solid fa-info-circle me-2"></i> Bộ môn đã phê duyệt và chuyển tiếp Khoa. Do Trưởng khoa chưa chốt duyệt, Trưởng bộ môn vẫn có thể cập nhật hoặc điều chỉnh lại quyết định.
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-column gap-3 flex-col">
                             <!-- Nút 1: Cập nhật duyệt -->
-                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
+                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST" class="m-0 p-0 w-100"
                                   onsubmit="return confirm('Xác nhận CẬP NHẬT PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn?');">
                                 @csrf
-                                <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-pill d-flex align-items-center justify-content-center">
-                                    <i class="fa-solid fa-rotate me-2"></i> Cập Nhật Phê Duyệt Cấp Bộ Môn
+                                <button type="submit" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve">
+                                    <i class="fa-solid fa-rotate w-4 h-4"></i> Cập Nhật Phê Duyệt Cấp Bộ Môn
                                 </button>
                             </form>
 
                             <!-- Nút 2: Yêu Cầu Chỉnh Sửa -->
-                            <button type="button" class="btn btn-outline-warning w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                                <i class="fa-solid fa-pen-to-square me-2"></i> Yêu Cầu Chỉnh Sửa
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-orange-400 text-orange-600 hover:bg-orange-50 btn-decision btn-decision-edit" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-to-square w-4 h-4"></i> Yêu Cầu Chỉnh Sửa
                             </button>
 
                             <!-- Nút 3: Từ Chối -->
-                            <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                                <i class="fa-solid fa-circle-xmark me-2"></i> Từ Chối Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-red-400 text-red-600 hover:bg-red-50 btn-decision btn-decision-reject" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark w-4 h-4"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     </div>
@@ -373,24 +373,24 @@
                         </h6>
                     </div>
                     <div class="card-body p-4">
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-column gap-3 flex-col">
                             <!-- Nút 1: Phê Duyệt Đề Xuất (Chuyển tiếp Khoa) -->
-                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
+                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST" class="m-0 p-0 w-100"
                                   onsubmit="return confirm('Bạn có chắc chắn muốn PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn và chuyển tiếp lên Trưởng khoa?');">
                                 @csrf
-                                <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-pill d-flex align-items-center justify-content-center">
-                                    <i class="fa-solid fa-check me-2"></i> Phê Duyệt Đề Xuất
+                                <button type="submit" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve">
+                                    <i class="fa-solid fa-check w-4 h-4"></i> Phê Duyệt Đề Xuất
                                 </button>
                             </form>
 
                             <!-- Nút 2: Yêu Cầu Chỉnh Sửa -->
-                            <button type="button" class="btn btn-outline-warning w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
-                                <i class="fa-solid fa-pen-to-square me-2"></i> Yêu Cầu Chỉnh Sửa
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-orange-400 text-orange-600 hover:bg-orange-50 btn-decision btn-decision-edit" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
+                                <i class="fa-solid fa-pen-to-square w-4 h-4"></i> Yêu Cầu Chỉnh Sửa
                             </button>
 
                             <!-- Nút 3: Từ Chối -->
-                            <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                                <i class="fa-solid fa-circle-xmark me-2"></i> Từ Chối Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-red-400 text-red-600 hover:bg-red-50 btn-decision btn-decision-reject" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark w-4 h-4"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     </div>
@@ -403,9 +403,9 @@
                         <h6 class="fw-bold mb-0 text-dark">Kết Quả: Đã Từ Chối Đề Tài</h6>
                     </div>
                     <div class="card-body p-4">
-                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-0">
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-0 max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                             <strong>Lý do từ chối:</strong>
-                            <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi ?: 'Không đạt yêu cầu chuyên môn') !!}</div>
+                            <div class="mt-1 break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi ?: 'Không đạt yêu cầu chuyên môn') !!}</div>
                         </div>
                     </div>
                 </div>
@@ -421,16 +421,16 @@
                         <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
                             <i class="fa-solid fa-clock me-2"></i> Đề tài đang ở trạng thái <strong>{{ $detai->TrangThai }}</strong>. Đang chờ Giảng viên cập nhật và nộp lại bản điều chỉnh.
                         </div>
-                        <div class="d-grid gap-2">
-                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST"
+                        <div class="d-flex flex-column gap-3 flex-col">
+                            <form action="{{ route('truongbomon.duyet_detai.duyet', $detai->MaDeTai) }}" method="POST" class="m-0 p-0 w-100"
                                   onsubmit="return confirm('Xác nhận PHÊ DUYỆT ĐỀ XUẤT đề tài này ở cấp Bộ môn và chuyển tiếp lên Trưởng khoa?');">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-success w-100 py-2 fw-bold rounded-pill d-flex align-items-center justify-content-center">
-                                    <i class="fa-solid fa-check me-2"></i> Phê Duyệt Lại Đề Xuất
+                                <button type="submit" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-green-600 border-green-600 text-white hover:bg-green-700 btn-decision btn-decision-approve">
+                                    <i class="fa-solid fa-check w-4 h-4"></i> Phê Duyệt Lại Đề Xuất
                                 </button>
                             </form>
-                            <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
-                                <i class="fa-solid fa-circle-xmark me-2"></i> Từ Chối Đề Tài
+                            <button type="button" class="w-full h-11 rounded-lg border font-semibold text-sm inline-flex items-center justify-center gap-2 transition bg-white border-red-400 text-red-600 hover:bg-red-50 btn-decision btn-decision-reject" data-bs-toggle="modal" data-bs-target="#modalTuChoi">
+                                <i class="fa-solid fa-circle-xmark w-4 h-4"></i> Từ Chối Đề Tài
                             </button>
                         </div>
                     </div>

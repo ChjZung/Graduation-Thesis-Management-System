@@ -26,6 +26,10 @@ class TomTatBaoCao extends Model
         'KeHoachTuanToi',
         'NoiDungAI',
         'TomTatJson',
+        'TyLeHoanThanhAI',
+        'CanCuDanhGia',
+        'ThoiDiemDanhGia',
+        'TrangThaiDanhGia',
         'TrangThai',
         'TrangThaiXuLy',
         'ThoiGianXuLy',
@@ -39,9 +43,12 @@ class TomTatBaoCao extends Model
     {
         return [
             'NgayTomTat' => 'date',
+            'ThoiDiemDanhGia' => 'datetime',
+            'CanCuDanhGia' => 'array',
             'TomTatJson' => 'array',
             'ThoiGianXuLy' => 'float',
             'SoTrang' => 'integer',
+            'TyLeHoanThanhAI' => 'integer',
         ];
     }
 

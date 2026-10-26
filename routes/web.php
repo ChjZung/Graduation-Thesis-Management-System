@@ -316,11 +316,17 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::post('/chamdiem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store'])->name('giangvien.chamdiem.store');
     Route::post('/chamdiem/yeu-cau-mo-khoa', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'yeuCauMoKhoa'])->name('giangvien.chamdiem.yeuCauMoKhoa');
     Route::post('/chamdiem/cap-nhat-chuc-nang', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'capNhatChucNang'])->name('giangvien.chamdiem.capNhatChucNang');
+    Route::get('/chamdiem/de-cuong/{maHoSo}', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xemDeCuong'])->name('giangvien.chamdiem.deCuong');
+    Route::post('/chamdiem/chuan-bi-phieu', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'chuanBiPhieu'])->name('giangvien.chamdiem.chuanBiPhieu');
     Route::get('/chamdiem/xuat-pdf', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatPdf'])->name('giangvien.chamdiem.xuatPdf');
     Route::get('/chamdiem/xuat-word', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatWord'])->name('giangvien.chamdiem.xuatWord');
     Route::post('/chamdiem/ky-ten', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'kyTen'])->name('giangvien.chamdiem.kyTen');
     Route::get('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index']);
     Route::post('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store']);
+
+    // ── GĐ6.1: Hội Đồng Của Tôi (Giảng viên tham gia) ──
+    Route::get('/hoi-dong', [\App\Http\Controllers\GiangVien\HoiDongController::class, 'index'])->name('giangvien.hoidong.index');
+    Route::get('/hoi-dong/{id}', [\App\Http\Controllers\GiangVien\HoiDongController::class, 'show'])->name('giangvien.hoidong.show');
 
     // Phê duyệt đăng ký đề tài của Sinh viên / Nhóm
     Route::get('/duyet-dangky-detai', [\App\Http\Controllers\GiangVien\DuyetDeTaiController::class, 'index'])->name('giangvien.duyet_dangky.index');
@@ -418,6 +424,9 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('/ket-qua/nop-bao-cao-chinh-sua', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopBaoCaoChinhSua'])->name('sinhvien.ketqua.nopBaoCaoChinhSua');
     Route::post('/ket-qua/nop-hoan-chinh', [\App\Http\Controllers\SinhVien\KetQuaController::class, 'nopKetQuaHoanChinh'])->name('sinhvien.ketqua.nopKetQuaHoanChinh');
 
+    // ── GĐ6.2: Hội Đồng Bảo Vệ Của Tôi (Sinh viên) ──
+    Route::get('/hoi-dong', [\App\Http\Controllers\SinhVien\HoiDongController::class, 'index'])->name('sinhvien.hoidong.index');
+
     // Lịch Hẹn Hướng Dẫn (Sinh viên)
     Route::post('/lich-hen/{id}/dat-lich', [\App\Http\Controllers\LichHenHuongDanController::class, 'datLich'])->name('sinhvien.lichhen.dat');
     Route::post('/lich-hen/{dangKyId}/huy-lich', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyLichSinhVien'])->name('sinhvien.lichhen.huy');
@@ -514,6 +523,7 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     // Hội đồng bảo vệ (Trưởng khoa thành lập, phân công, công bố & văn bản PDF)
     Route::get('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'index'])->name('truongkhoa.hoidong.index');
     Route::get('/hoi-dong/create', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'create'])->name('truongkhoa.hoidong.create');
+    Route::post('/hoi-dong/de-xuat-thanh-vien', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'deXuatThanhVien'])->name('truongkhoa.hoidong.deXuatThanhVien');
     Route::post('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'store'])->name('truongkhoa.hoidong.store');
     Route::get('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'show'])->name('truongkhoa.hoidong.show');
     Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewPdf'])->name('truongkhoa.hoidong.previewPdf');

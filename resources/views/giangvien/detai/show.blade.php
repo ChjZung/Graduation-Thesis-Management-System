@@ -133,17 +133,17 @@
                 </div>
                 <div class="card-body p-4">
                     <!-- Tên đề tài lớn, rõ ràng -->
-                    <h4 class="fw-bold text-dark mb-3" style="line-height: 1.45;">{{ $detai->TenDeTai }}</h4>
+                    <h4 class="fw-bold text-dark mb-3 text-break break-words" style="line-height: 1.45; word-break: break-word; overflow-wrap: anywhere;" title="{{ $detai->TenDeTai }}">{{ $detai->TenDeTai }}</h4>
 
                     <!-- Badges học phần, học kỳ, lĩnh vực, quy mô -->
-                    <div class="d-flex flex-wrap gap-2 align-items-center mb-4 pb-3 border-bottom">
-                        <span class="badge bg-primary-subtle text-primary border px-3 py-2 small fw-semibold">
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-4 pb-3 border-bottom min-w-0">
+                        <span class="badge bg-primary-subtle text-primary border px-3 py-2 small fw-semibold text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                             <i class="fa-solid fa-book-open me-2"></i>{{ $detai->HocPhan ?? 'Khóa luận tốt nghiệp' }}
                         </span>
                         <span class="badge bg-light text-dark border px-3 py-2 small fw-medium">
                             <i class="fa-regular fa-calendar-days text-primary me-2"></i>{{ $detai->hocKy->TenHocKy ?? $detai->MaHocKy }}
                         </span>
-                        <span class="badge bg-light text-secondary border px-3 py-2 small fw-medium">
+                        <span class="badge bg-light text-secondary border px-3 py-2 small fw-medium text-break break-words text-wrap" style="overflow-wrap: anywhere; word-break: break-word; white-space: normal; max-width: 100%;">
                             <i class="fa-solid fa-layer-group text-primary me-2"></i>{{ $detai->LinhVuc ?? 'CNTT' }}
                         </span>
                         <span class="badge bg-light text-secondary border px-3 py-2 small fw-medium">
@@ -152,22 +152,22 @@
                     </div>
 
                     <!-- VÙNG MÔ TẢ ĐỀ TÀI (Đã tăng padding thành p-4) -->
-                    <div class="mb-4">
+                    <div class="mb-4 min-w-0">
                         <div class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">
                             <i class="fa-solid fa-align-left text-primary me-2"></i> Mô Tả Chi Tiết Đề Tài:
                         </div>
-                        <div class="p-4 bg-light rounded-3 border text-dark rich-content-display" style="line-height: 1.7; font-size: 14px;">
+                        <div class="p-4 bg-light rounded-3 border text-dark rich-content-display text-break break-words" style="line-height: 1.7; font-size: 14px; overflow-wrap: anywhere; word-break: break-word;">
                             {!! \App\Helpers\HtmlHelper::clean($detai->MoTa) ?: '<em class="text-muted">Chưa cập nhật nội dung mô tả đề tài.</em>' !!}
                         </div>
                     </div>
 
                     <!-- VÙNG YÊU CẦU ĐỐI VỚI SINH VIÊN (Đã tăng padding thành p-4) -->
                     @if($detai->YeuCau)
-                    <div class="mb-2">
+                    <div class="mb-2 min-w-0">
                         <div class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">
                             <i class="fa-solid fa-list-check text-primary me-2"></i> Yêu Cầu Năng Lực Đối Với Sinh Viên:
                         </div>
-                        <div class="p-4 bg-light rounded-3 border text-dark rich-content-display" style="line-height: 1.7; font-size: 14px;">
+                        <div class="p-4 bg-light rounded-3 border text-dark rich-content-display text-break break-words" style="line-height: 1.7; font-size: 14px; overflow-wrap: anywhere; word-break: break-word;">
                             {!! \App\Helpers\HtmlHelper::clean($detai->YeuCau) !!}
                         </div>
                     </div>
@@ -348,10 +348,10 @@
                         </span>
                     </div>
 
-                    @if(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương']) && $detai->LyDoTuChoi)
-                        <div class="alert alert-warning border-0 p-3 rounded-3 mb-3 small bg-warning-subtle text-warning-emphasis">
-                            <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Ý kiến góp ý:</strong>
-                            <div class="fw-medium text-break" style="word-break: break-word; overflow-wrap: anywhere;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
+                    @if(in_array($detai->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối']) && $detai->LyDoTuChoi)
+                        <div class="alert alert-warning border-0 p-3 rounded-3 mb-3 small bg-warning-subtle text-warning-emphasis max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
+                            <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Ý kiến góp ý / Phản hồi:</strong>
+                            <div class="fw-medium text-break break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="word-break: break-word; overflow-wrap: anywhere; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($detai->LyDoTuChoi) !!}</div>
                         </div>
                     @endif
 

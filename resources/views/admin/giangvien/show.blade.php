@@ -81,8 +81,12 @@
                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-muted small fw-medium">Hội Đồng Bảo Vệ</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">{{ $stats['total_hoidong'] }}</div>
-                        <div class="small text-muted mt-1">Thành viên HĐ</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ $hoidongStats['tong_so_hoidong'] ?? $stats['total_hoidong'] }} <span class="fs-6 fw-normal text-muted">hội đồng</span></div>
+                        <div class="small text-muted mt-1">
+                            <span class="text-success fw-semibold">{{ $hoidongStats['da_hoan_thanh'] ?? 0 }} xong</span> &bull; 
+                            <span class="text-info fw-semibold">{{ $hoidongStats['sap_dien_ra'] ?? 0 }} sắp tới</span> &bull; 
+                            <span class="text-warning-emphasis fw-semibold">{{ $hoidongStats['dang_dien_ra'] ?? 0 }} đang chấm</span>
+                        </div>
                     </div>
                     <div class="kpi-icon-circle bg-warning-subtle text-warning">
                         <i class="fa-solid fa-landmark"></i>
@@ -199,22 +203,46 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Hội đồng tham gia -->
+                <!-- Tab 2: Hội đồng tham gia (Chuẩn Yêu cầu 6.4) -->
                 <div class="tab-pane fade" id="committees-pane" role="tabpanel">
+                    @if(isset($hoidongStats['theo_vai_tro']))
+                    <div class="card border-0 shadow-sm rounded-3 mb-3 p-3 bg-white">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <span class="small fw-bold text-dark text-uppercase"><i class="fa-solid fa-layer-group text-primary me-2"></i>Phân bổ theo vai trò:</span>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">Chủ tịch: {{ $hoidongStats['theo_vai_tro']['Chủ tịch'] ?? 0 }}</span>
+                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1">Thư ký: {{ $hoidongStats['theo_vai_tro']['Thư ký'] ?? 0 }}</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">Phản biện: {{ $hoidongStats['theo_vai_tro']['Phản biện'] ?? 0 }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1">Ủy viên: {{ $hoidongStats['theo_vai_tro']['Ủy viên'] ?? 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th class="ps-4 py-3" width="16%">MÃ HĐ</th>
+                                        <th class="ps-4 py-3" width="14%">MÃ HĐ</th>
                                         <th class="py-3">TÊN HỘI ĐỒNG</th>
-                                        <th class="py-3" width="20%">VAI TRÒ TRONG HĐ</th>
-                                        <th class="py-3 text-center" width="16%">HỌC KỲ</th>
-                                        <th class="pe-4 py-3 text-center" width="14%">THAO TÁC</th>
+                                        <th class="py-3" width="18%">VAI TRÒ TRONG HĐ</th>
+                                        <th class="py-3 text-center" width="14%">TRẠNG THÁI</th>
+                                        <th class="py-3 text-center" width="14%">HỌC KỲ</th>
+                                        <th class="pe-4 py-3 text-center" width="10%">THAO TÁC</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($giangvien->thanhVienHoiDongs as $tv)
+                                        @php
+                                            $hd = $tv->hoiDong;
+                                            $tt = trim($hd?->TrangThai ?? '');
+                                            $badgeStatus = ($tt === 'Đã kết thúc' || ($hd?->ThoiGianKetThuc && $hd->ThoiGianKetThuc->isPast())) 
+                                                ? 'bg-success-subtle text-success border border-success-subtle' 
+                                                : (($tt === 'Đang diễn ra' || $tt === 'Đang hoạt động') ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-info-subtle text-info border border-info-subtle');
+                                            $labelStatus = ($tt === 'Đã kết thúc' || ($hd?->ThoiGianKetThuc && $hd->ThoiGianKetThuc->isPast()))
+                                                ? 'Đã hoàn thành'
+                                                : (($tt === 'Đang diễn ra' || $tt === 'Đang hoạt động') ? 'Đang diễn ra' : 'Sắp diễn ra');
+                                        @endphp
                                         <tr>
                                             <td class="ps-4">
                                                 <span class="badge-code">{{ $tv->MaHoiDong }}</span>
@@ -228,6 +256,11 @@
                                                     {{ $tv->VaiTro ?? 'Ủy viên' }}
                                                 </span>
                                             </td>
+                                            <td class="text-center">
+                                                <span class="badge {{ $badgeStatus }} rounded-pill px-2 py-1 small">
+                                                    {{ $labelStatus }}
+                                                </span>
+                                            </td>
                                             <td class="text-center small">
                                                 {{ $tv->hoiDong->hocKy->TenHocKy ?? '' }}
                                             </td>
@@ -239,7 +272,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">
+                                            <td colspan="6" class="text-center py-4 text-muted">
                                                 <i class="fa-solid fa-folder-open mb-2" style="font-size: 1.5rem;"></i>
                                                 <div>Chưa có hội đồng nào phân công giảng viên này.</div>
                                             </td>

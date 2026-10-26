@@ -44,6 +44,10 @@ class HoSoBaoVe extends Model
         'MaDeTai',
         'LoaiKhoaLuan',
         'TieuChiChucNang',
+        'TrangThaiChuanBiPhieu',
+        'NguoiChuanBiPhieu',
+        'NgayChuanBiPhieu',
+        'NoiDungDeCuongJson',
         'TrangThaiKetQua',
         'YeuCauChinhSuaSauBaoVe',
         'HanNopBaoCaoSauBaoVe',
@@ -65,6 +69,8 @@ class HoSoBaoVe extends Model
             'NgayNopGanNhat'               => 'datetime',
             'HanNopBaoCaoSauBaoVe'         => 'datetime',
             'NgayXacNhanHoanThanhSauBaoVe' => 'datetime',
+            'NgayChuanBiPhieu'             => 'datetime',
+            'NoiDungDeCuongJson'           => 'array',
             'LienKetKhac'                  => 'array',
             'ThanhPhanCanSua'              => 'array',
         ];
@@ -168,6 +174,42 @@ class HoSoBaoVe extends Model
     public function baoCaoSauBaoVeMoiNhat()
     {
         return $this->hasOne(BaoCaoSauBaoVe::class, 'MaHoSo', 'MaHoSo')->latestOfMany('id');
+    }
+
+    public function nguoiChuanBi()
+    {
+        return $this->belongsTo(GiangVien::class, 'NguoiChuanBiPhieu', 'MaGV');
+    }
+
+    public function getNganhAttribute(): ?Nganh
+    {
+        if ($this->nhom?->deTai?->nganh) {
+            return $this->nhom->deTai->nganh;
+        }
+        if ($this->deTai?->nganh) {
+            return $this->deTai->nganh;
+        }
+        if ($this->nhom?->truongNhom?->nganh) {
+            return $this->nhom->truongNhom->nganh;
+        }
+        $firstMember = $this->nhom?->thanhVienNhoms?->firstWhere('TrangThai', 'da_tham_gia')?->sinhVien;
+        if ($firstMember?->nganh) {
+            return $firstMember->nganh;
+        }
+        if ($firstMember?->lop?->nganh) {
+            return $firstMember->lop->nganh;
+        }
+        return null;
+    }
+
+    public function getMaNganhAttribute(): ?string
+    {
+        return $this->nganh?->MaNganh ?? $this->nhom?->deTai?->MaNganh ?? $this->nhom?->truongNhom?->MaNganh ?? null;
+    }
+
+    public function getTenNganhAttribute(): string
+    {
+        return $this->nganh?->TenNganh ?? 'Chưa xác định ngành';
     }
 
     public function xacDinhLoaiKhoaLuan(): ?string

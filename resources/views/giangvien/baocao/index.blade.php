@@ -300,7 +300,7 @@
                         });
                         $searchData = mb_strtolower($nhom->MaNhom . ' ' . $nhom->TenNhom . ' ' . ($nhom->deTai->TenDeTai ?? '') . ' ' . ($nhom->truongNhom->HoTen ?? ''));
                     @endphp
-                    <div class="group-item-card {{ $loop->first ? 'active' : '' }}"
+                    <div class="group-item-card {{ ($nhom->MaNhom === ($activeNhomId ?? null) || (!isset($activeNhomId) && $loop->first)) ? 'active' : '' }}"
                          data-group-id="{{ $nhom->MaNhom }}"
                          data-search="{{ $searchData }}"
                          onclick="selectGroup('{{ $nhom->MaNhom }}')">
@@ -355,8 +355,9 @@
                     || ($deTai && \App\Models\BaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->where('LanBaoCao', 5)->where('TrangThai', 'Đạt')->exists());
             @endphp
 
-            <div class="card-dashboard mb-0 h-100 group-detail-panel {{ $loop->first ? '' : 'd-none' }}" 
-                 id="panel-group-{{ $nhom->MaNhom }}">
+            <div class="card-dashboard mb-0 h-100 group-detail-panel {{ ($nhom->MaNhom === ($activeNhomId ?? null) || (!isset($activeNhomId) && $loop->first)) ? '' : 'd-none' }}" 
+                 id="panel-group-{{ $nhom->MaNhom }}"
+                 data-group-id="{{ $nhom->MaNhom }}">
                 
                 {{-- Header nhóm bên phải --}}
                 <div class="bg-white border-bottom p-4">
@@ -384,6 +385,7 @@
                                     </span>
                                     <form method="POST" action="{{ route('giangvien.tiendo.nhom.thu_hoi_bao_ve', $nhom->MaNhom) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ của nhóm {{ $nhom->TenNhom }} không?');">
                                         @csrf
+                                        <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" title="Thu hồi xác nhận nếu cần nhóm bổ sung/chỉnh sửa tiến độ">
                                             <i class="fa-solid fa-rotate-left me-1"></i> Thu hồi
                                         </button>
@@ -397,7 +399,7 @@
                                 @endif
 
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center" 
-                                        onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}')">
+                                        onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}', '{{ $nhom->MaNhom }}')">
                                     <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn
                                 </button>
                             @endif
@@ -428,7 +430,7 @@
                             @if($deTai)
                                 <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
                                     <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold d-inline-flex align-items-center"
-                                            onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}')">
+                                            onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}', '{{ $nhom->MaNhom }}')">
                                         <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn Tùy Chỉnh
                                     </button>
                                 </div>
@@ -583,6 +585,8 @@
                                         <div class="d-flex align-items-center flex-wrap gap-2 ms-auto" onclick="event.stopPropagation()">
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                                     data-edit-stage data-stage-id="{{ $gd->MaGiaiDoan }}"
+                                                    data-nhom="{{ $nhom->MaNhom }}"
+                                                    data-thutu="{{ $gd->ThuTu }}"
                                                     data-stage="{{ json_encode($editStageData, JSON_UNESCAPED_UNICODE) }}"
                                                     data-update-url="{{ route('giangvien.tiendo.giai_doan.update', $gd->MaGiaiDoan) }}"
                                                     onclick="openEditGiaiDoanModal(this)">
@@ -592,6 +596,8 @@
                                                   class="m-0" onsubmit="return confirm('Xóa giai đoạn này? Các đợt nộp chưa có bài trong giai đoạn cũng sẽ bị xóa. Thao tác không thể hoàn tác.');">
                                                 @csrf
                                                 @method('DELETE')
+                                                <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
+                                                <input type="hidden" name="gd" value="{{ $gd->ThuTu }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                                         @disabled($hasStageSubmissions)
                                                         title="{{ $hasStageSubmissions ? 'Không thể xóa vì giai đoạn đã có bài nộp của sinh viên' : 'Xóa giai đoạn và các đợt nộp chưa có bài' }}">
@@ -601,7 +607,8 @@
                                             <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1 d-inline-flex align-items-center" 
                                                     style="font-size: 11px;"
                                                     title="Tạo đợt nộp báo cáo trong giai đoạn này"
-                                                    data-stage-name="{{ $gd->TenGiaiDoan }}" onclick="openAddDotNopModal({{ $gd->MaGiaiDoan }}, this.dataset.stageName)">
+                                                    data-stage-name="{{ $gd->TenGiaiDoan }}" 
+                                                    onclick="openAddDotNopModal({{ $gd->MaGiaiDoan }}, this.dataset.stageName, '{{ $nhom->MaNhom }}', {{ $gd->ThuTu }})">
                                                 <i class="fa-solid fa-plus me-1"></i>Thêm Đợt Nộp
                                             </button>
                                             <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 10.5px;">
@@ -611,9 +618,13 @@
                                         </div>
                                     </div>
 
+                                    @php
+                                        $isExpanded = ($activeGd && $activeGd == $gd->ThuTu) || (!$activeGd && ($isCurrent ?? false));
+                                    @endphp
                                     <div id="collapseStageGV_{{ $nhom->MaNhom }}_{{ $gd->ThuTu }}" 
-                                         class="collapse stage-accordion-collapse-gv-{{ $nhom->MaNhom }} {{ $isCurrent ? 'show' : '' }}" 
-                                         data-bs-parent="#stageAccordionGV_{{ $nhom->MaNhom }}">
+                                         class="collapse stage-accordion-collapse-gv-{{ $nhom->MaNhom }} {{ $isExpanded ? 'show' : '' }}" 
+                                         data-bs-parent="#stageAccordionGV_{{ $nhom->MaNhom }}"
+                                         data-stage-thutu="{{ $gd->ThuTu }}">
                                         <div class="p-3 bg-white border-top">
                                             @if($gd->MoTa)
                                                 <p class="text-muted small mb-2" style="font-size: 12px;">{{ $gd->MoTa }}</p>
@@ -665,6 +676,8 @@
                                                             <div class="d-flex align-items-center flex-wrap gap-2">
                                                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                                                         data-edit-round data-round-id="{{ $dot->MaDotNop }}"
+                                                                        data-nhom="{{ $nhom->MaNhom }}"
+                                                                        data-thutu="{{ $gd->ThuTu }}"
                                                                         data-round="{{ json_encode($editRoundData, JSON_UNESCAPED_UNICODE) }}"
                                                                         data-stage-name="{{ $gd->TenGiaiDoan }}"
                                                                         data-update-url="{{ route('giangvien.tiendo.dot_nop.update', $dot->MaDotNop) }}"
@@ -675,6 +688,8 @@
                                                                       class="m-0" onsubmit="return confirm('Xóa đợt nộp này? Thao tác không thể hoàn tác.');">
                                                                     @csrf
                                                                     @method('DELETE')
+                                                                    <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
+                                                                    <input type="hidden" name="gd" value="{{ $gd->ThuTu }}">
                                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                                                             @disabled($countVersions > 0)
                                                                             title="{{ $countVersions > 0 ? 'Không thể xóa đợt đã có bài nộp của sinh viên' : 'Xóa đợt nộp này' }}">
@@ -717,6 +732,7 @@
                         <div class="modal-content border-0 shadow-lg rounded-4">
                             <form method="POST" action="{{ route('giangvien.tiendo.nhom.cho_phep_bao_ve', $nhom->MaNhom) }}">
                                 @csrf
+                                <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
                                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
@@ -771,6 +787,7 @@
         <div class="modal-content border-0 shadow rounded-4">
             <form method="POST" action="{{ route('giangvien.tiendo.giai_doan.store') }}">
                 @csrf
+                <input type="hidden" name="nhom" id="inputAddGiaiDoanNhom">
                 <input type="hidden" name="MaDeTai" id="inputAddGiaiDoanMaDeTai">
 
                 <div class="modal-header border-bottom px-4 py-3">
@@ -829,6 +846,8 @@
             <form method="POST" id="formEditGiaiDoan" class="d-flex flex-column overflow-hidden" style="max-height: 100%;">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="nhom" id="inputEditGiaiDoanNhom">
+                <input type="hidden" name="gd" id="inputEditGiaiDoanThuTu">
                 <input type="hidden" name="_stage_id" id="inputEditGiaiDoanId">
 
                 <div class="modal-header border-bottom px-4 py-3">
@@ -899,6 +918,8 @@
         <div class="modal-content border-0 shadow rounded-4">
             <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.store') }}">
                 @csrf
+                <input type="hidden" name="nhom" id="inputAddDotNopNhom">
+                <input type="hidden" name="gd" id="inputAddDotNopThuTu">
                 <input type="hidden" name="MaGiaiDoan" id="inputAddDotNopMaGiaiDoan">
 
                 <div class="modal-header border-bottom px-4 py-3">
@@ -922,11 +943,13 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label fw-bold small text-dark">Ngày mở nộp</label>
-                            <input type="datetime-local" name="NgayMoNop" class="form-control form-control-sm">
+                            <input type="datetime-local" name="NgayMoNop" id="inputAddDotNopNgayMoNop" class="form-control form-control-sm">
+                            <div class="form-text small" style="font-size: 11px;">Mặc định mở ngay thời điểm tạo.</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small text-dark">Hạn nộp (Deadline)</label>
-                            <input type="datetime-local" name="HanNop" class="form-control form-control-sm">
+                            <input type="datetime-local" name="HanNop" id="inputAddDotNopHanNop" class="form-control form-control-sm">
+                            <div class="form-text small" style="font-size: 11px;">Hạn chót nhận bài của sinh viên.</div>
                         </div>
                     </div>
 
@@ -960,6 +983,8 @@
             <form method="POST" id="formEditDotNop" class="d-flex flex-column overflow-hidden" style="max-height:100%;">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="nhom" id="inputEditDotNopNhom">
+                <input type="hidden" name="gd" id="inputEditDotNopThuTu">
                 <input type="hidden" name="_round_id" id="inputEditDotNopId">
 
                 <div class="modal-header border-bottom px-4 py-3">
@@ -1033,45 +1058,141 @@
 
 @push('scripts')
 <script>
-window.selectGroup = function(groupId) {
-    document.querySelectorAll('.group-item-card').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.group-detail-panel').forEach(p => p.classList.add('d-none'));
+window.selectGroup = function(groupId, updateUrl = true) {
+    if (!groupId) return;
 
-    const selectedCard = document.querySelector(`.group-item-card[data-group-id="${groupId}"]`);
-    const selectedPanel = document.getElementById(`panel-group-${groupId}`);
-
-    if (selectedCard) selectedCard.classList.add('active');
-    if (selectedPanel) selectedPanel.classList.remove('d-none');
-};
-
-window.openEditGiaiDoanModal = function(button, restoredValues = null) {
-    const form = document.getElementById('formEditGiaiDoan');
-    const values = restoredValues || JSON.parse(button.dataset.stage);
-    form.reset();
-    form.action = button.dataset.updateUrl;
-    document.getElementById('inputEditGiaiDoanId').value = button.dataset.stageId;
-    ['TenGiaiDoan', 'MoTa', 'NoiDungCongViec', 'KetQuaDauRa', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'].forEach(name => {
-        form.elements.namedItem(name).value = values[name] ?? '';
-    });
-    document.getElementById('editStageErrors').classList.toggle('d-none', !restoredValues);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditGiaiDoan')).show();
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    @if($errors->updateStage->any())
-        const stageId = @json((string) old('_stage_id'));
-        const button = Array.from(document.querySelectorAll('[data-edit-stage]')).find(el => el.dataset.stageId === stageId);
-        if (button) {
-            const panel = button.closest('[id^="panel-group-"]');
-            if (panel) selectGroup(panel.id.replace('panel-group-', ''));
-            openEditGiaiDoanModal(button, @json(old()));
+    // 1. Cập nhật trạng thái active của danh sách card bên trái
+    const cards = document.querySelectorAll('.group-item-card');
+    let selectedCard = null;
+    cards.forEach(c => {
+        if (c.getAttribute('data-group-id') === groupId) {
+            c.classList.add('active');
+            selectedCard = c;
+        } else {
+            c.classList.remove('active');
         }
-    @endif
+    });
+
+    // 2. Cập nhật hiển thị panel chi tiết bên phải
+    const panels = document.querySelectorAll('.group-detail-panel');
+    let selectedPanel = null;
+    panels.forEach(p => {
+        if (p.getAttribute('data-group-id') === groupId || p.id === `panel-group-${groupId}`) {
+            p.classList.remove('d-none');
+            selectedPanel = p;
+        } else {
+            p.classList.add('d-none');
+        }
+    });
+
+    if (!selectedCard && !selectedPanel) {
+        return;
+    }
+
+    // 3. Đồng bộ input hidden 'nhom' cho các modal tương tác
+    const addGdNhom = document.getElementById('inputAddGiaiDoanNhom');
+    if (addGdNhom) addGdNhom.value = groupId;
+    const editGdNhom = document.getElementById('inputEditGiaiDoanNhom');
+    if (editGdNhom) editGdNhom.value = groupId;
+    const addDotNhom = document.getElementById('inputAddDotNopNhom');
+    if (addDotNhom) addDotNhom.value = groupId;
+    const editDotNhom = document.getElementById('inputEditDotNopNhom');
+    if (editDotNhom) editDotNhom.value = groupId;
+
+    // 4. Lưu nhóm đang chọn vào localStorage để dự phòng
+    try {
+        localStorage.setItem('gv_baocao_selected_nhom', groupId);
+    } catch (e) {}
+
+    // 5. Cập nhật query param trên thanh URL mà không reload trang
+    if (updateUrl) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('nhom', groupId);
+        window.history.replaceState({ nhom: groupId }, '', url.toString());
+    }
+
+    // 6. Tự động cuộn card vào tầm nhìn nếu đang bị che khuất
+    if (selectedCard) {
+        selectedCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    // 7. Khôi phục giai đoạn mở rộng cho nhóm này
+    restoreStageForGroup(groupId);
+};
+
+// Khôi phục giai đoạn mở rộng (accordion) cho từng nhóm
+window.restoreStageForGroup = function(groupId) {
+    if (!groupId) return;
+    const url = new URL(window.location.href);
+    let stageThuTu = url.searchParams.get('gd');
+
+    if (!stageThuTu) {
+        try {
+            stageThuTu = localStorage.getItem('gv_open_stage_' + groupId);
+        } catch (e) {}
+    }
+
+    if (stageThuTu) {
+        const targetCollapse = document.getElementById(`collapseStageGV_${groupId}_${stageThuTu}`);
+        if (targetCollapse && !targetCollapse.classList.contains('show')) {
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(targetCollapse, { toggle: false });
+            bsCollapse.show();
+        }
+    }
+};
+
+// Lắng nghe sự kiện mở/đóng Accordion giai đoạn để lưu URL và localStorage
+document.addEventListener('shown.bs.collapse', function(event) {
+    const el = event.target;
+    if (el && el.id && el.id.startsWith('collapseStageGV_')) {
+        const parts = el.id.split('_');
+        if (parts.length >= 3) {
+            const maNhom = parts[1];
+            const thuTu = parts[2];
+            try {
+                localStorage.setItem('gv_open_stage_' + maNhom, thuTu);
+            } catch (e) {}
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('nhom') === maNhom) {
+                url.searchParams.set('gd', thuTu);
+                window.history.replaceState({ ...window.history.state, gd: thuTu }, '', url.toString());
+            }
+        }
+    }
 });
 
-window.openAddGiaiDoanModal = function(maDeTai) {
+document.addEventListener('hidden.bs.collapse', function(event) {
+    const el = event.target;
+    if (el && el.id && el.id.startsWith('collapseStageGV_')) {
+        const parts = el.id.split('_');
+        if (parts.length >= 3) {
+            const maNhom = parts[1];
+            const thuTu = parts[2];
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('nhom') === maNhom && url.searchParams.get('gd') === thuTu) {
+                url.searchParams.delete('gd');
+                window.history.replaceState({ ...window.history.state }, '', url.toString());
+            }
+        }
+    }
+});
+
+// Hỗ trợ nút Back / Forward trên trình duyệt
+window.addEventListener('popstate', function(e) {
+    const url = new URL(window.location.href);
+    const nhomFromUrl = url.searchParams.get('nhom');
+    if (nhomFromUrl) {
+        selectGroup(nhomFromUrl, false);
+    }
+});
+
+// Modal Thêm Giai Đoạn
+window.openAddGiaiDoanModal = function(maDeTai, maNhom = null) {
     const input = document.getElementById('inputAddGiaiDoanMaDeTai');
     if (input) input.value = maDeTai;
+    const inputNhom = document.getElementById('inputAddGiaiDoanNhom');
+    if (inputNhom && maNhom) inputNhom.value = maNhom;
+
     const modalEl = document.getElementById('modalAddGiaiDoan');
     if (modalEl) {
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -1079,38 +1200,48 @@ window.openAddGiaiDoanModal = function(maDeTai) {
     }
 };
 
-window.openEditDotNopModal = function(button, restoredValues = null) {
-    const form = document.getElementById('formEditDotNop');
-    const values = restoredValues || JSON.parse(button.dataset.round);
+// Modal Sửa Giai Đoạn
+window.openEditGiaiDoanModal = function(button, restoredValues = null) {
+    const form = document.getElementById('formEditGiaiDoan');
+    const values = restoredValues || JSON.parse(button.dataset.stage);
     form.reset();
     form.action = button.dataset.updateUrl;
-    document.getElementById('inputEditDotNopId').value = button.dataset.roundId;
-    document.getElementById('labelEditDotNopTenGiaiDoan').textContent = button.dataset.stageName;
-    ['TenDotNop', 'NoiDungYeuCau', 'NgayMoNop', 'HanNop', 'TrangThai', 'SoLanNopToiDa'].forEach(name => {
-        form.elements.namedItem(name).value = values[name] ?? '';
-    });
-    document.getElementById('switchEditYeuCauCode').checked = [true, 1, '1'].includes(values.YeuCauSourceCode);
-    document.getElementById('editRoundErrors').classList.toggle('d-none', !restoredValues);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditDotNop')).show();
-};
-document.addEventListener('DOMContentLoaded', function() {
-    @if($errors->updateRound->any())
-        const roundId = @json((string) old('_round_id'));
-        const button = Array.from(document.querySelectorAll('[data-edit-round]')).find(el => el.dataset.roundId === roundId);
-        if (button) {
-            const panel = button.closest('[id^="panel-group-"]');
-            if (panel) selectGroup(panel.id.replace('panel-group-', ''));
-            openEditDotNopModal(button, @json(old()));
+    document.getElementById('inputEditGiaiDoanId').value = button.dataset.stageId;
+    if (button.dataset.nhom) {
+        document.getElementById('inputEditGiaiDoanNhom').value = button.dataset.nhom;
+    }
+    if (button.dataset.thutu) {
+        document.getElementById('inputEditGiaiDoanThuTu').value = button.dataset.thutu;
+    }
+    ['TenGiaiDoan', 'MoTa', 'NoiDungCongViec', 'KetQuaDauRa', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'].forEach(name => {
+        if (form.elements.namedItem(name)) {
+            form.elements.namedItem(name).value = values[name] ?? '';
         }
-    @endif
-});
+    });
+    document.getElementById('editStageErrors').classList.toggle('d-none', !restoredValues);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditGiaiDoan')).show();
+};
 
-window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan) {
+// Modal Thêm Đợt Nộp
+window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan, maNhom = null, thuTu = null) {
     document.querySelector('#modalAddDotNop form')?.reset();
     const input = document.getElementById('inputAddDotNopMaGiaiDoan');
     const label = document.getElementById('labelAddDotNopTenGiaiDoan');
+    const inputNhom = document.getElementById('inputAddDotNopNhom');
+    const inputThuTu = document.getElementById('inputAddDotNopThuTu');
+
     if (input) input.value = maGiaiDoan;
     if (label) label.textContent = tenGiaiDoan;
+    if (inputNhom && maNhom) inputNhom.value = maNhom;
+    if (inputThuTu && thuTu) inputThuTu.value = thuTu;
+
+    // Tự động điền Ngày mở nộp = thời điểm hiện tại để mở nộp ngay
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const inputMo = document.getElementById('inputAddDotNopNgayMoNop');
+    if (inputMo) inputMo.value = nowStr;
+
     const modalEl = document.getElementById('modalAddDotNop');
     if (modalEl) {
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -1118,7 +1249,31 @@ window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan) {
     }
 };
 
-// Tìm kiếm nhanh nhóm
+// Modal Sửa Đợt Nộp
+window.openEditDotNopModal = function(button, restoredValues = null) {
+    const form = document.getElementById('formEditDotNop');
+    const values = restoredValues || JSON.parse(button.dataset.round);
+    form.reset();
+    form.action = button.dataset.updateUrl;
+    document.getElementById('inputEditDotNopId').value = button.dataset.roundId;
+    if (button.dataset.nhom) {
+        document.getElementById('inputEditDotNopNhom').value = button.dataset.nhom;
+    }
+    if (button.dataset.thutu) {
+        document.getElementById('inputEditDotNopThuTu').value = button.dataset.thutu;
+    }
+    document.getElementById('labelEditDotNopTenGiaiDoan').textContent = button.dataset.stageName;
+    ['TenDotNop', 'NoiDungYeuCau', 'NgayMoNop', 'HanNop', 'TrangThai', 'SoLanNopToiDa'].forEach(name => {
+        if (form.elements.namedItem(name)) {
+            form.elements.namedItem(name).value = values[name] ?? '';
+        }
+    });
+    document.getElementById('switchEditYeuCauCode').checked = [true, 1, '1'].includes(values.YeuCauSourceCode);
+    document.getElementById('editRoundErrors').classList.toggle('d-none', !restoredValues);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditDotNop')).show();
+};
+
+// Tìm kiếm nhanh nhóm (chỉ ẩn hiện card danh sách, không thay đổi panel đang hiển thị)
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchGroupInput');
     if (searchInput) {
@@ -1155,6 +1310,55 @@ window.toggleAllStagesGV = function(maNhom, expand) {
         }
     });
 };
+
+// Khởi tạo trang khi tải xong
+document.addEventListener('DOMContentLoaded', function() {
+    const url = new URL(window.location.href);
+    let targetNhom = url.searchParams.get('nhom');
+
+    if (!targetNhom) {
+        // Dự phòng localStorage nếu URL không có query param nhom
+        try {
+            const storedNhom = localStorage.getItem('gv_baocao_selected_nhom');
+            if (storedNhom && document.querySelector(`.group-item-card[data-group-id="${storedNhom}"]`)) {
+                targetNhom = storedNhom;
+            }
+        } catch (e) {}
+    }
+
+    if (!targetNhom) {
+        // Fallback: Tìm card active từ Blade render phía server
+        const activeCard = document.querySelector('.group-item-card.active');
+        if (activeCard) {
+            targetNhom = activeCard.getAttribute('data-group-id');
+        }
+    }
+
+    if (targetNhom) {
+        selectGroup(targetNhom, true);
+    }
+
+    // Hiển thị lại modal nếu có validation errors trả về từ server
+    @if($errors->updateStage->any())
+        const stageId = @json((string) old('_stage_id'));
+        const stageBtn = Array.from(document.querySelectorAll('[data-edit-stage]')).find(el => el.dataset.stageId === stageId);
+        if (stageBtn) {
+            const panel = stageBtn.closest('[id^="panel-group-"]');
+            if (panel) selectGroup(panel.id.replace('panel-group-', ''), true);
+            openEditGiaiDoanModal(stageBtn, @json(old()));
+        }
+    @endif
+
+    @if($errors->updateRound->any())
+        const roundId = @json((string) old('_round_id'));
+        const roundBtn = Array.from(document.querySelectorAll('[data-edit-round]')).find(el => el.dataset.roundId === roundId);
+        if (roundBtn) {
+            const panel = roundBtn.closest('[id^="panel-group-"]');
+            if (panel) selectGroup(panel.id.replace('panel-group-', ''), true);
+            openEditDotNopModal(roundBtn, @json(old()));
+        }
+    @endif
+});
 </script>
 @endpush
 

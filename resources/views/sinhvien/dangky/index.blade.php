@@ -365,9 +365,9 @@
             @if($isRejected)
                 <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 py-3 px-3 mb-4" style="font-size: 0.875rem;">
                     <i class="fa-solid fa-triangle-exclamation fs-5 flex-shrink-0"></i>
-                    <div>
+                    <div class="max-w-full overflow-hidden text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">
                         <strong>Lý do từ chối:</strong>
-                        <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dangKyCurrent->LyDoTuChoi ?? 'Đề tài không phù hợp hoặc đã đủ chỉ tiêu. Vui lòng chọn đăng ký đề tài khác trong danh sách bên dưới.') !!}</div>
+                        <div class="mt-1 break-words whitespace-pre-wrap max-h-24 overflow-y-auto" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto;">{!! \App\Helpers\HtmlHelper::clean($dangKyCurrent->LyDoTuChoi ?? 'Đề tài không phù hợp hoặc đã đủ chỉ tiêu. Vui lòng chọn đăng ký đề tài khác trong danh sách bên dưới.') !!}</div>
                     </div>
                 </div>
             @endif

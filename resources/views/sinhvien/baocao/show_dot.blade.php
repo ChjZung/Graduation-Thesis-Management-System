@@ -231,12 +231,36 @@
                     <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">Giảng viên hướng dẫn đã đánh giá Đạt cho phiên bản v{{ $latestPhienBan->LanNop }}. Bạn không cần nộp thêm cho đợt này.</p>
                 </div>
             @elseif(!$canSubmit)
+                @php
+                    $isNotYetOpen = $dotNop->NgayMoNop && now()->lt($dotNop->NgayMoNop);
+                    $isPastDeadline = $dotNop->HanNop && now()->gt($dotNop->HanNop);
+                @endphp
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all" style="border: 1px solid #e2e8f0 !important;">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary bg-opacity-10 text-secondary p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                        <i class="fa-solid fa-lock fa-2x"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Đợt Nộp Đang Đóng</h5>
-                    <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">Thời hạn nộp bài đã kết thúc hoặc đợt nộp đã được Giảng viên hướng dẫn tạm khóa.</p>
+                    @if($isNotYetOpen)
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
+                            <i class="fa-regular fa-clock fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Chưa Đến Thời Gian Mở Nộp</h5>
+                        <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">
+                            Đợt nộp này sẽ chính thức mở vào lúc: <strong>{{ \Carbon\Carbon::parse($dotNop->NgayMoNop)->format('H:i · d/m/Y') }}</strong>.<br>
+                            Vui lòng quay lại sau thời gian trên để tải lên báo cáo tiến độ.
+                        </p>
+                    @elseif($isPastDeadline)
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 text-danger p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
+                            <i class="fa-solid fa-calendar-xmark fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Đã Quá Hạn Nộp Báo Cáo</h5>
+                        <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">
+                            Thời hạn nộp bài đã kết thúc vào lúc: <strong>{{ \Carbon\Carbon::parse($dotNop->HanNop)->format('H:i · d/m/Y') }}</strong>.<br>
+                            Nếu nhóm có lý do chính đáng cần bổ sung, vui lòng liên hệ trực tiếp Giảng viên hướng dẫn để được gia hạn.
+                        </p>
+                    @else
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary bg-opacity-10 text-secondary p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
+                            <i class="fa-solid fa-lock fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Đợt Nộp Đang Tạm Khóa</h5>
+                        <p class="text-muted small mb-0 px-2" style="line-height: 1.6;">Đợt nộp hiện đang được Giảng viên hướng dẫn tạm đóng hoặc đã hoàn thành.</p>
+                    @endif
                 </div>
             @else
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-4 sticky-under-header transition-all" style="border: 1px solid #e2e8f0 !important;">
@@ -310,16 +334,15 @@
                             ])
                         </div>
 
-                        {{-- Tỷ lệ tự đánh giá (%) --}}
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-dark">
-                                Tỷ lệ hoàn thành tự đánh giá (%) <span class="text-muted fw-normal">(tùy chọn)</span>
-                            </label>
-                            <div class="input-group input-group-sm shadow-sm rounded-3 overflow-hidden">
-                                <input type="number" name="PhanTramHoanThanh" class="form-control form-control-sm py-2 px-3" min="0" max="100" placeholder="Để trống nếu chưa xác định tỷ lệ tiến độ" value="{{ old('PhanTramHoanThanh') }}">
-                                <span class="input-group-text bg-light px-3 fw-bold">%</span>
+                        {{-- Thông báo: Tỷ lệ hoàn thành được AI tự động đánh giá khách quan --}}
+                        <div class="mb-4 p-3 bg-light rounded-3 border">
+                            <div class="d-flex align-items-center gap-2 text-primary fw-bold small mb-1">
+                                <i class="fa-solid fa-calculator"></i>
+                                <span>Tỷ Lệ Hoàn Thành Được AI Tự Động Đánh Giá:</span>
                             </div>
-                            <div class="form-text small mt-1" style="font-size: 11px;">Nếu để trống, Trợ lý AI sẽ tự động ước tính dựa trên khối lượng công việc và số trang báo cáo.</div>
+                            <p class="text-muted mb-0" style="font-size: 11.5px; line-height: 1.5;">
+                                Hệ thống sẽ tự động phân tích mức độ hoàn thành công việc dựa trên nhiệm vụ được giao, kết quả đạt được và bằng chứng trong báo cáo. Tỷ lệ hoàn thành sẽ hiển thị sau khi AI thẩm định xong.
+                            </p>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center transition-all hover-scale">

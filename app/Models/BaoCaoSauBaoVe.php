@@ -18,6 +18,10 @@ class BaoCaoSauBaoVe extends Model
         'TenFile',
         'DungLuong',
         'TomTatChinhSua',
+        'FileGiaiTrinh',
+        'TenFileGiaiTrinh',
+        'FileMinhChung',
+        'TenFileMinhChung',
         'NgayNop',
         'NguoiNop',
         'TrangThai', // 'Đã nộp', 'Đạt', 'Yêu cầu sửa tiếp'

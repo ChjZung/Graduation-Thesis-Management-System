@@ -20,6 +20,10 @@
         flex-direction: column;
         justify-content: space-between;
         height: 100%;
+        min-width: 0;
+        overflow: hidden;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .topic-card:hover {
@@ -38,6 +42,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 1.4;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .filter-section {
@@ -188,9 +194,9 @@
         $canEdit = in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh']) && !$hasGroupAssigned && $dt->TrangThai !== 'Từ chối';
     @endphp
 
-    <div class="col-12 col-md-6 col-xl-4">
-        <div class="topic-card p-4">
-            <div>
+    <div class="col-12 col-md-6 col-xl-4 min-w-0 d-flex flex-column">
+        <div class="topic-card p-4 min-w-0 overflow-hidden d-flex flex-column h-100 flex-grow-1">
+            <div class="min-w-0 w-100 mb-auto">
                 <!-- Top Card: Mã đề tài & Trạng thái -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <span class="badge bg-light text-dark fw-bold border px-3 py-1 font-monospace">
@@ -226,7 +232,7 @@
                 </div>
 
                 <!-- Tên Đề Tài -->
-                <h6 class="topic-title mb-2" title="{{ $dt->TenDeTai }}">
+                <h6 class="topic-title mb-2 break-words line-clamp-2" title="{{ $dt->TenDeTai }}" style="overflow-wrap: anywhere; word-break: break-word;">
                     {{ $dt->TenDeTai }}
                 </h6>
 
@@ -239,15 +245,17 @@
                 @endif
 
                 <!-- Meta Badges (Học phần, lĩnh vực, đề cương) -->
-                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 small">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3 min-w-0 w-100 overflow-hidden">
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 small text-truncate truncate d-inline-block max-w-full" style="max-width: 100%;" title="{{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}">
                         {{ $dt->HocPhan ?? 'Khóa luận tốt nghiệp' }}
                     </span>
-                    <span class="badge bg-light text-secondary border px-2 py-1 small">
+                    <span class="badge bg-light text-secondary border px-2 py-1 small text-truncate truncate d-inline-block max-w-full" style="max-width: 100%;" title="{{ $dt->hocKy->TenHocKy ?? $dt->MaHocKy }}">
                         <i class="fa-regular fa-calendar-days me-2"></i>{{ $dt->hocKy->TenHocKy ?? $dt->MaHocKy }}
                     </span>
                     @if($dt->LinhVuc)
-                        <span class="badge bg-light text-secondary border px-2 py-1 small">{{ $dt->LinhVuc }}</span>
+                        <span class="badge bg-light text-secondary border px-2 py-1 small text-truncate truncate d-inline-block max-w-full" style="max-width: 100%;" title="{{ $dt->LinhVuc }}">
+                            {{ $dt->LinhVuc }}
+                        </span>
                     @endif
 
                     @if($dt->coTepDeCuong())
@@ -255,29 +263,29 @@
                             $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
                             $pbDt = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
                         @endphp
-                        <button type="button" class="badge bg-success-subtle text-success border text-decoration-none btn px-2 py-1 small d-inline-flex align-items-center" 
+                        <button type="button" class="badge bg-success-subtle text-success border text-decoration-none btn px-2 py-1 small d-inline-flex align-items-center text-truncate truncate" style="max-width: 100%;" 
                                 onclick="quickPreviewOutline('{{ $filePath }}', '{{ basename($dt->FileDeCuong) }}', '{{ addslashes($dt->TenDeTai) }}')"
-                                title="Xem nhanh đề cương chi tiết">
+                                title="Xem nhanh đề cương chi tiết: {{ basename($dt->FileDeCuong) }}">
                             <i class="fa-solid fa-paperclip me-2"></i>Đề cương
                         </button>
                         @if(!$pbDt)
-                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small" title="Đề cương đã nộp, chưa phân công phản biện">
+                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small text-truncate truncate d-inline-block" style="max-width: 100%;" title="Đề cương đã nộp, chưa phân công phản biện">
                                 <i class="fa-solid fa-clock me-2"></i>Chưa phản biện
                             </span>
                         @elseif(empty($pbDt->KetQua) || $pbDt->TrangThai === 'Đang phản biện')
-                            <span class="badge bg-info-subtle text-info border px-2 py-1 small" title="Đang thẩm định phản biện">
+                            <span class="badge bg-info-subtle text-info border px-2 py-1 small text-truncate truncate d-inline-block" style="max-width: 100%;" title="Đang thẩm định phản biện">
                                 <i class="fa-solid fa-clock me-2"></i>Chưa phản biện
                             </span>
                         @elseif($pbDt->KetQua === 'Đạt')
-                            <span class="badge bg-success-subtle text-success border px-2 py-1 small">
+                            <span class="badge bg-success-subtle text-success border px-2 py-1 small text-truncate truncate d-inline-block" style="max-width: 100%;">
                                 <i class="fa-solid fa-check me-2"></i>PB Đạt
                             </span>
                         @elseif($pbDt->KetQua === 'Yêu cầu chỉnh sửa')
-                            <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1 small">
+                            <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1 small text-truncate truncate d-inline-block" style="max-width: 100%;">
                                 <i class="fa-solid fa-wrench me-2"></i>PB yêu cầu sửa
                             </span>
                         @elseif($pbDt->KetQua === 'Không đạt')
-                            <span class="badge bg-danger-subtle text-danger border px-2 py-1 small">
+                            <span class="badge bg-danger-subtle text-danger border px-2 py-1 small text-truncate truncate d-inline-block" style="max-width: 100%;">
                                 <i class="fa-solid fa-xmark me-2"></i>PB Không đạt
                             </span>
                         @endif
@@ -286,9 +294,9 @@
 
                 <!-- Ý kiến phản hồi / Lý do từ chối (nếu có) -->
                 @if(in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu điều chỉnh', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối']) && $dt->LyDoTuChoi)
-                    <div class="small text-danger mb-3 p-2 bg-danger-subtle rounded-2 border border-danger-subtle">
+                    <div class="small text-danger mb-3 p-2 bg-danger-subtle rounded-2 border border-danger-subtle max-w-full overflow-hidden break-words text-break" style="overflow-wrap: anywhere; word-break: break-word;">
                         <strong><i class="fa-solid fa-circle-exclamation me-2"></i>Phản hồi:</strong>
-                        <div class="mt-1">{!! \App\Helpers\HtmlHelper::clean($dt->LyDoTuChoi) !!}</div>
+                        <div class="mt-1 break-words whitespace-pre-wrap max-h-24 overflow-y-auto overflow-x-hidden" style="overflow-wrap: anywhere; word-break: break-word; max-height: 6rem; overflow-y: auto; overflow-x: hidden;">{!! \App\Helpers\HtmlHelper::clean($dt->LyDoTuChoi) !!}</div>
                     </div>
                 @endif
 
@@ -309,53 +317,60 @@
             </div>
 
             <!-- Footer Card: Các nút Thao tác -->
-            <div class="pt-3 border-top d-flex justify-content-between align-items-center gap-1 flex-wrap">
-                <div class="d-flex gap-1">
+            <div class="d-flex align-items-center gap-2 mt-auto pt-3 border-top w-100 flex-wrap flex items-center">
+                <div class="d-flex align-items-center gap-2">
                     <!-- Xem Chi Tiết -->
-                    <a href="{{ route('giangvien.detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-light border text-primary rounded-circle" title="Xem chi tiết" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                    <a href="{{ route('giangvien.detai.show', $dt->MaDeTai) }}" 
+                       class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 btn-card-icon" 
+                       title="Xem chi tiết đề tài">
                         <i class="fa-solid fa-eye"></i>
                     </a>
 
                     <!-- Sửa Đề Tài -->
                     @if(!$isDaCongBo && !$hasGroupAssigned && $dt->TrangThai !== 'Từ chối')
-                    <a href="{{ route('giangvien.detai.edit', $dt->MaDeTai) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Chỉnh sửa đề tài" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                    <a href="{{ route('giangvien.detai.edit', $dt->MaDeTai) }}" 
+                       class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 btn-card-icon" 
+                       title="Chỉnh sửa đề tài">
                         <i class="fa-solid fa-pen"></i>
                     </a>
                     @endif
 
                     <!-- Xóa Đề Tài -->
                     @if(!$hasGroupAssigned && !in_array($dt->TrangThai, ['Đã duyệt', 'Trưởng khoa đã duyệt', 'Đã công bố', 'Từ chối']))
-                    <form action="{{ route('giangvien.detai.destroy', $dt->MaDeTai) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này?');">
+                    <form action="{{ route('giangvien.detai.destroy', $dt->MaDeTai) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này?');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-light border text-danger rounded-circle" title="Xóa đề tài" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                        <button type="submit" 
+                                class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 btn-card-icon btn-card-icon-delete" 
+                                title="Xóa đề tài">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>
                     @endif
                 </div>
 
-                <div class="d-flex gap-1 align-items-center">
+                <div class="d-flex align-items-center gap-2 ml-auto ms-auto">
                     <!-- Nút Nộp Đề Cương -->
                     @if($canNopDeCuong)
                         <a href="{{ route('giangvien.detai.nop_decuong.show', $dt->MaDeTai) }}" 
-                           class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold small shadow-xs">
-                            <i class="fa-solid fa-file-arrow-up me-2"></i>{{ $isNopLai ? 'Nộp lại ĐC' : 'Nộp ĐC' }}
+                           class="h-9 rounded-lg px-4 text-sm font-semibold btn-card-main ml-auto ms-auto d-inline-flex align-items-center justify-center gap-1 shadow-xs"
+                           title="{{ $isNopLai ? 'Nộp lại đề cương' : 'Nộp đề cương chi tiết' }}">
+                            <i class="fa-solid fa-file-arrow-up me-1"></i>{{ $isNopLai ? 'Nộp lại ĐC' : 'Nộp ĐC' }}
                         </a>
                     @elseif($isLocked)
-                        <span class="badge bg-light text-muted border py-2 px-2 rounded-2 small" title="Chức năng nộp đề cương đã khóa">
-                            <i class="fa-solid fa-circle-check text-success me-2"></i>{{ $dt->TrangThai === 'Hoàn thành' ? 'Đề tài đã hoàn thành' : 'Đã duyệt ĐC' }}
+                        <span class="badge bg-light text-muted border h-9 rounded-lg px-3 text-xs d-inline-flex align-items-center ml-auto ms-auto" title="Chức năng nộp đề cương đã khóa">
+                            <i class="fa-solid fa-circle-check text-success me-1"></i>{{ $dt->TrangThai === 'Hoàn thành' ? 'Đã hoàn thành' : 'Đã duyệt ĐC' }}
                         </span>
                     @elseif(in_array($dt->TrangThai, ['Đã công bố', 'Trưởng khoa đã duyệt', 'Đã duyệt']) && !$hasGroupAssigned)
-                        <span class="badge bg-warning-subtle text-warning-emphasis border py-2 px-2 rounded-2 small">
-                            <i class="fa-solid fa-users-viewfinder me-2"></i>Chờ SV
+                        <span class="badge bg-warning-subtle text-warning-emphasis border h-9 rounded-lg px-3 text-xs d-inline-flex align-items-center ml-auto ms-auto">
+                            <i class="fa-solid fa-users-viewfinder me-1"></i>Chờ SV
                         </span>
                     @endif
 
                     <!-- Gán Nhóm -->
                     @if($dt->TrangThai === 'Đã công bố' && !$hasGroupAssigned)
-                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-medium small d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}">
-                            <i class="fa-solid fa-user-check me-2"></i>Gán Nhóm
+                        <button type="button" class="h-9 rounded-lg px-3 text-sm font-semibold border border-success text-success bg-white hover:bg-success hover:text-white transition d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalGanNhom{{ $dt->MaDeTai }}">
+                            <i class="fa-solid fa-user-check me-1"></i>Gán Nhóm
                         </button>
                     @endif
                 </div>
