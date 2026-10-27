@@ -3974,6 +3974,16 @@ div[class*="modal-header"] {
     box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25) !important;
 }
 
+/* ============================================================
+   CHUẨN HÓA KHOẢNG CÁCH CHO CÁC NHÓM TÌM KIẾM & BỘ LỌC
+   ============================================================ */
+.input-group.gap-2 > .btn,
+.input-group.gap-2 > button,
+.input-group.gap-2 > .form-control {
+    margin-left: 0 !important;
+}
+
+
 
 
 

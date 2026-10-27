@@ -90,9 +90,9 @@
                 </div>
 
                 <div class="col-md-4">
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="search" class="form-control" placeholder="Tìm tên đề tài, mã ĐT, GV..." value="{{ request('search') }}">
-                        <button class="btn btn-outline-primary" type="submit">
+                    <div class="d-flex gap-2">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Tìm tên đề tài, mã ĐT, GV..." value="{{ request('search') }}">
+                        <button class="btn btn-sm btn-outline-primary flex-shrink-0" type="submit" title="Tìm kiếm">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>

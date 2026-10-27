@@ -276,9 +276,9 @@
                     <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem; text-transform: uppercase;">
                         📅 Nhập thời gian tùy chọn:
                     </label>
-                    <div class="input-group input-group-sm mb-2">
+                    <div class="d-flex gap-2 mb-2">
                         <input type="datetime-local" name="mock_time" class="form-control form-control-sm" required value="{{ $currentSystemTime->format('Y-m-d\TH:i') }}">
-                        <button type="submit" class="btn btn-primary btn-sm">Tua giờ</button>
+                        <button type="submit" class="btn btn-primary btn-sm flex-shrink-0">Tua giờ</button>
                     </div>
                 </form>
 

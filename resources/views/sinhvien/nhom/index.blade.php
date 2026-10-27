@@ -1055,9 +1055,9 @@
                                     @endif
 
                                     <div id="stepSearchArea">
-                                        <div class="input-group">
+                                        <div class="d-flex gap-2">
                                             <input type="text" id="inputMSSVSearch" class="form-control py-2 px-3" placeholder="Nhập chính xác MSSV cùng ngành (ví dụ: 2001210060)..." style="font-size: 0.875rem;">
-                                            <button class="btn btn-cyan px-4 fw-bold d-inline-flex align-items-center" type="button" id="btnDoSearch">
+                                            <button class="btn btn-cyan px-4 fw-bold d-inline-flex align-items-center flex-shrink-0" type="button" id="btnDoSearch">
                                                 <i class="fa-solid fa-magnifying-glass me-2"></i>Tra Cứu
                                             </button>
                                         </div>
