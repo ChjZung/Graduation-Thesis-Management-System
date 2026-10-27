@@ -72,21 +72,56 @@
    const parsed=new DOMParser().parseFromString(await response.text(),'text/html');
    const replacement=[...parsed.querySelectorAll('.ai-teacher-report')].find(c=>c.dataset.reportKey===e.key);if(!replacement)throw Error('missing-card');
    replacement.querySelectorAll('script').forEach(s=>s.remove());
-   const existing=cards(e).find(c=>!c.closest('dialog'));if(!existing)return;
-   const fresh=document.importNode(replacement,true);existing.replaceWith(fresh);initialized.add(fresh);restoreTabs(fresh);render(e);
-  })().catch(()=>{for(const c of cards(e)){const b=c.querySelector('[data-ai-refresh-result]');if(b){b.hidden=false;b.textContent='Xem kết quả mới';}}}).finally(()=>e.refreshing=null);
+   const targets=cards(e);if(!targets.length)return false;
+   const pagePosition={x:window.scrollX,y:window.scrollY};
+   for(const existing of targets){
+    const expanded=!!existing.closest('dialog');
+    const oldBody=existing.querySelector('.ai-details');
+    const position={top:oldBody?.scrollTop||0,left:oldBody?.scrollLeft||0};
+    const selection=[...existing.querySelectorAll('[role="tab"].active')].map(t=>({attribute:t.hasAttribute('data-ai-result-tab')?'data-ai-result-tab':t.hasAttribute('data-ai-work-tab')?'data-ai-work-tab':'data-ai-requirement-tab',value:t.dataset.aiResultTab||t.dataset.aiWorkTab||t.dataset.aiRequirementTab}));
+    const detailKey=d=>d.dataset.documentNode ? 'node:'+d.dataset.documentNode :
+      'detail:'+(d.querySelector('summary')?.textContent||'')+'|'+(d.parentElement.querySelector('h4,h3')?.textContent||'')+'|'+
+      [...d.querySelectorAll('[data-citation-quote]')].map(b=>b.dataset.citationPage+':'+b.dataset.citationQuote).join('|');
+    const opened=new Set([...existing.querySelectorAll('details[open]')].map(detailKey));
+    const fresh=document.importNode(replacement,true);
+    fresh.querySelectorAll('details').forEach(d=>{d.open=opened.has(detailKey(d));});
+    if(expanded){
+     fresh.classList.add('ai-summary-expanded');
+     const ids=new Map();[fresh,...fresh.querySelectorAll('[id]')].forEach(n=>{if(n.id){ids.set(n.id,n.id+'-expanded');n.id+='-expanded';}});
+     [fresh,...fresh.querySelectorAll('[aria-controls],[aria-labelledby],[data-bs-target]')].forEach(n=>{
+      for(const attr of ['aria-controls','aria-labelledby','data-bs-target']){
+       const value=n.getAttribute(attr);if(!value)continue;
+       n.setAttribute(attr,value.split(' ').map(id=>{const hash=id.startsWith('#');return (hash?'#':'')+(ids.get(hash?id.slice(1):id)||(hash?id.slice(1):id));}).join(' '));
+      }
+     });
+     fresh.querySelector('.ai-title').textContent='Tóm tắt báo cáo AI — Xem lớn';
+     fresh.querySelector('[data-ai-action="open-large"]')?.remove();fresh.querySelector('[data-ai-action="toggle"]')?.remove();
+     const close=existing.querySelector('[data-ai-action="close-large"]');if(close)fresh.querySelector('.ai-actions').appendChild(close.cloneNode(true));
+    }
+    const body=fresh.querySelector('.ai-details');if(body&&oldBody)body.hidden=oldBody.hidden;
+    existing.replaceWith(fresh);if(expanded)fresh.closest('dialog').setAttribute('aria-labelledby',fresh.querySelector('.ai-title').id);initialized.add(fresh);
+    for(const chosen of selection){const tab=fresh.querySelector('['+chosen.attribute+'="'+chosen.value+'"]');if(tab&&window.bootstrap?.Tab)bootstrap.Tab.getOrCreateInstance(tab).show();}
+    if(!selection.length)restoreTabs(fresh);
+    requestAnimationFrame(()=>{if(body){body.scrollTop=position.top;body.scrollLeft=position.left;}window.scrollTo({left:pagePosition.x,top:pagePosition.y,behavior:'instant'});});
+   }
+   render(e);return true;
+  })().catch(()=>{for(const c of cards(e)){const b=c.querySelector('[data-ai-refresh-result]');if(b){b.hidden=false;b.textContent='Xem kết quả mới';}}return false;}).finally(()=>e.refreshing=null);
   return e.refreshing;
  }
  async function poll(e){if(e.polling||e.denied)return;e.polling=true;
   try{const response=await fetch(e.url,{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin'});
    if(response.redirected||[401,403,404].includes(response.status)){e.denied=true;e.state={status:'partial'};render(e);return;}
    if(!response.ok)throw Error('status');const data=await response.json();accept(e,data);
-   if(!active(data.status)){clearTimeout(e.timer);if(data.status==='completed'&&!e.loaded){e.loaded=true;await refresh(e);}}else schedule(e,5000);
+   const changed=data.result_revision&&data.result_revision!==e.lastRevision;
+   if(changed || (!active(data.status)&&data.status==='completed'&&!e.loaded)){
+    if(await refresh(e)){e.lastRevision=data.result_revision;if(!active(data.status))e.loaded=true;}
+   }
+   if(!active(data.status))clearTimeout(e.timer);else schedule(e,5000);
   }catch{e.network=true;render(e);schedule(e,15000);}finally{e.polling=false;}
  }
  function scan(){document.querySelectorAll('.ai-teacher-report').forEach(card=>{if(!initialized.has(card)){initialized.add(card);restoreTabs(card);}const b=card.querySelector('[data-ai-processing-url]');if(!b)return;
    let e=jobs.get(b.dataset.aiProcessingUrl);
-   if(!e){e={url:b.dataset.aiProcessingUrl,key:card.dataset.reportKey,anchor:Date.now(),state:{status:b.dataset.processingStatus||'idle',summary_status:b.dataset.summaryStatus||null,review_status:b.dataset.reviewStatus||null,review_has_results:b.dataset.reviewHasResults==='1',queued_at:Number(b.dataset.processingStarted)||null},loaded:true};jobs.set(e.url,e);
+   if(!e){e={url:b.dataset.aiProcessingUrl,key:card.dataset.reportKey,lastRevision:b.dataset.resultRevision||null,anchor:Date.now(),state:{status:b.dataset.processingStatus||'idle',summary_status:b.dataset.summaryStatus||null,review_status:b.dataset.reviewStatus||null,review_has_results:b.dataset.reviewHasResults==='1',queued_at:Number(b.dataset.processingStarted)||null},loaded:true};jobs.set(e.url,e);
     if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);if(!current){let dismissed=false;try{dismissed=sessionStorage.getItem('huit-ai-dismissed:'+e.url+':'+e.state.queued_at)==='1';}catch{}if(!dismissed)open(e);}}}
    render(e);
   });}
@@ -102,15 +137,21 @@
  // Reserve the current panel height during tab layout so scroll containers cannot
  // clamp to zero when Bootstrap briefly hides the old pane before showing the new.
  document.addEventListener('show.bs.tab',event=>{
-  const tab=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab]'),card=tab?.closest('.ai-teacher-report');if(!card)return;
-  const container=tab.closest('.ai-details'),content=tab.dataset.aiRequirementTab ? tab.closest('[data-teacher-requirements-summary]').querySelector('[data-ai-requirement-content]') : card.querySelector('.tab-content');
+  const tab=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab], [data-ai-work-tab]'),card=tab?.closest('.ai-teacher-report');if(!card)return;
+  const container=tab.closest('.ai-details'),content=tab.dataset.aiWorkTab ? tab.closest('[data-ai-work-summary]').querySelector('[data-ai-work-content]') : tab.dataset.aiRequirementTab ? tab.closest('[data-teacher-requirements-summary]').querySelector('[data-ai-requirement-content]') : card.querySelector('.tab-content');
   if(!container||!content)return;
+  if(tab.dataset.aiWorkTab||tab.dataset.aiRequirementTab){
+   const siblings=[...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')];
+   const previous=event.relatedTarget;
+   const direction=previous&&siblings.indexOf(tab)<siblings.indexOf(previous)?-1:1;
+   content.style.setProperty('--ai-subtab-enter',(direction*14)+'px');
+  }
   const snapshot={container,content,top:container.scrollTop,left:container.scrollLeft,x:window.scrollX,y:window.scrollY};
   const contentTop=content.getBoundingClientRect().top-container.getBoundingClientRect().top+container.scrollTop;
   content.style.minHeight=Math.max(0,container.scrollTop+container.clientHeight-contentTop)+'px';tabScroll.set(card,snapshot);
  });
  document.addEventListener('shown.bs.tab',event=>{
-  const t=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab]'),c=t?.closest('.ai-teacher-report');if(!c)return;
+  const t=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab], [data-ai-work-tab]'),c=t?.closest('.ai-teacher-report');if(!c)return;
   if(t.dataset.aiResultTab)try{sessionStorage.setItem(storageKey(c),t.dataset.aiResultTab);}catch{}
   revealTab(t);
   const s=tabScroll.get(c);if(!s)return;tabScroll.delete(c);

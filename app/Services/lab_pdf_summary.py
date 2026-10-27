@@ -13,6 +13,7 @@ LIB=Path(__file__).resolve().parent/'pdf_lab'
 sys.path.insert(0,str(LIB))
 from core import segment_pdf,prepare_ai_inputs,Settings,PackagingSettings,SegmentationError
 from ai_runtime import ApiError,GeminiClient,RunSettings
+from ai_runtime.content_review import safe_review_content
 from ai_runtime.summarizer import fingerprint
 from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
@@ -128,7 +129,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             'start_page':min(b['start_page'] for b in batches),'end_page':max(b['end_page'] for b in batches),
             'summary':' '.join(p['text'] for p in c.get('paragraphs',[])),
             'items':[item(p['text'],p['evidence_ids']) for p in c.get('paragraphs',[])],
-            'status':'completed' if rid in summaries and (reader or {}).get('status')=='complete' else 'partial','sections':[]})
+            'status':'completed' if c.get('paragraphs') and c.get('coverage')=='selected_text_complete' else 'partial','sections':[]})
     completed=[item(p['text'],p['item_ids'],'reported_work') for p in ((base or {}).get('final_result') or {}).get('completed_work',[])]
     teacher=[]
     matches={i['requirement_id']:i for i in (links or {}).get('links',[])}
@@ -144,7 +145,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             report_explanation=match.get('explanation',''),report_matches=report_items))
     direct=(links or {}).get('_verified_report')
     if direct is not None:teacher=(links or {}).get('teacher_requirements',[])
-    full=(links or {}).get('status')=='complete' and (base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
+    full=(base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
     visual=[p['page'] for p in result['document']['pages'] if p.get('image_count') or p.get('visual_regions')]
     source_coverage={'selected_text_coverage':plan['metrics'].get('selected_text_coverage'), 'excluded_sections':plan.get('excluded_sections',[])}
     counts={'total_chunks':len(plan['batches']),'analyzed_chunks':len((base or {}).get('map_results',{}))}
@@ -158,7 +159,8 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'errors':errors,'completed_calls':(base or {}).get('generation_attempts',0)+(reader or {}).get('generation_attempts',0)+(links or {}).get('generation_attempts',0),'requirements_link_version':LINK_VERSION,
         'note':'Đã xử lý đủ các gói text của phương án. Câu trích đã khớp nguồn; chưa kiểm chứng ngữ nghĩa toàn diện, chưa đọc hình/sơ đồ hoặc các mục loại khỏi Map.' if full else 'Bản đọc đang xử lý; chưa dùng phần chưa đọc để kết luận báo cáo thiếu nội dung.',
         'generated_at':datetime.now(timezone.utc).isoformat(),'source_labels':{str(p['page']):f"Trang {p['page']}" for p in result['document']['pages']}}
-    data={'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
+    content_review=safe_review_content(result,base)
+    data={'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
         'source_identity':identity,'_source_hash':identity['source_hash'],'analysis_status':analysis['status'],'analysis':analysis,
         'overview_summary':'\n\n'.join(p['content'] for p in overview),'overall_summary':'\n\n'.join(p['content'] for p in overview),
         'document_content':overview,'chapters':chapters,'completed_work':completed,'processing_errors':errors,
@@ -166,7 +168,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'document_outline':[{'id':s['section_id'],'title':s['section_title'],'start_page':s['start_page']} for s in result['sections']],
         'teacher_requirements':teacher,'requirements_links_status':(links or {}).get('status','pending'),'requirements_document':requirements,
         'teacher_requirements_status':(reader or {}).get('requirements_status','pending'),
-        'requirements_review':{'status':'not_configured','mode':'source_links_only','items':[],'note':'Liên kết đoạn liên quan để giảng viên đối chiếu, không tự chấm đạt/không đạt.'},
+        'requirements_review':{'status':'pending' if requirements.get('sources') else 'not_configured','mode':'source_links_only','items':[],'note':'Liên kết đoạn liên quan để giảng viên đối chiếu, không tự chấm đạt/không đạt.'},
         'summary_scope':{'context_hash':hashlib.sha256(json.dumps(context or {},ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
         'validation':{'semantic_audit':False,'quote_matching':True,'quality_rules':'targeted_heuristics'},
         'analysis_metadata':{'pages_total':result['document']['page_count'],'chunks_total':counts['total_chunks'],'chunks_succeeded':counts['analyzed_chunks'],'chunks_failed':counts['total_chunks']-counts['analyzed_chunks']}}
@@ -232,8 +234,28 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         if os.environ.get('AI_PROGRESS_FILE'):
             try:atomic_json(os.environ['AI_PROGRESS_FILE'],progress)
             except OSError:pass  # A browser reading the progress file must not stop the analysis.
+    published_digest=None
+    def publish_partial():
+        nonlocal published_digest
+        destination=os.environ.get('AI_PARTIAL_RESULT_FILE')
+        current_base=summary_state.get('report') or base
+        if not destination or not current_base:return
+        current_reader=reader_state.get('report') or reader or {}
+        partial=reader_state.get('partial_chapters',[])
+        if len(partial)>len(current_reader.get('chapter_summaries',[])):
+            current_reader=dict(current_reader,status='running',chapter_summaries=partial)
+        current_links=links_state.get('report') or links
+        try:
+            value=convert_result(source,plan,current_base,current_reader,requirements,identity,model,time.monotonic()-started,[],context,current_links)
+            data=value['data']
+            visible=[data.get(k) for k in ('document_content','chapters','completed_work','teacher_requirements','content_review')]
+            digest=fingerprint(visible)
+            if digest==published_digest:return
+            atomic_json(destination,value);published_digest=digest
+            print('AI_PARTIAL_READY',flush=True)
+        except (OSError,ValueError,KeyError,TypeError,ApiError):pass # Optional publication cannot fail analysis.
     def phase(label):
-        checkpoint();report_progress(stage=label)
+        checkpoint();report_progress(stage=label);publish_partial()
     def update(values):
         checkpoint();report_progress(**{k:v for k,v in values.items() if k in ('stage','map_done','map_total','chapter_done','chapter_total')})
     error_list=[]
@@ -248,21 +270,24 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
             base=run_summary_with_provenance(source,plan,provider,summary_state,settings,on_progress=phase,on_update=update)
             used=summary_state.get('generation_attempts',0)-before
         else:used=0
-        checkpoint()
+        checkpoint();publish_partial()
         if base.get('status')=='complete' and (not reader or reader.get('status')!='complete'):
             if settings.max_generation_calls<=used:raise ApiError('Tiếp tục bước tạo bản đọc ở lượt nền tiếp theo.','worker_budget')
             before=reader_state.get('generation_attempts',0)
             reader=run_reader(source,plan,base,reader_requirements,provider,reader_state,
                 RunSettings(settings.input_budget,settings.max_output_tokens,settings.max_generation_calls-used),on_progress=phase)
             used+=reader_state.get('generation_attempts',0)-before
+        publish_partial()
         if reader and reader.get('status')=='complete':
             if settings.max_generation_calls<=used and reader.get('teacher_requirements'):raise ApiError('Tiếp tục nối yêu cầu ở lượt nền sau.','worker_budget')
             if direct_review:
                 if used>=settings.max_generation_calls:raise ApiError('Tiếp tục đối chiếu ở lượt nền sau.','worker_budget')
                 from verified_requirement_review import run_direct_review
+                def review_snapshot(value):
+                    links_state['report']=value;publish_partial()
                 links,review_errors=run_direct_review(path,context,requirements,identity,model,
                     RunSettings(link_settings.input_budget,link_settings.max_output_tokens,settings.max_generation_calls-used),
-                    cache_dir,provider,atomic_json,load_state,phase,run_id)
+                    cache_dir,provider,atomic_json,load_state,phase,run_id,on_snapshot=review_snapshot)
                 links_state['report']=links
                 for error in review_errors:
                     error_list.append(processing_error(ApiError(error.get('message','Chưa hoàn tất đối chiếu.'),error.get('code','review_incomplete')),'requirements_review'))

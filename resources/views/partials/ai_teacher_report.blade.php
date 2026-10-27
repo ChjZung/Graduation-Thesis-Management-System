@@ -24,6 +24,9 @@
     @include('partials.ai_processing_status')
     <p class="ai-feedback" role="status" aria-live="polite"></p>
     <div class="ai-details ai-details-body ai-copy-content" id="{{ $uniqueId }}-body" tabindex="0" role="region" aria-label="Nội dung tóm tắt AI, có thể cuộn để xem đầy đủ">
+        @if(in_array($aiData['_processing']['status']??'', ['queued','running','waiting']))
+            <p class="ai-empty" data-incremental-results>Đang cập nhật kết quả từng phần. Nội dung đã có dẫn chứng được hiển thị trước; các mục còn lại vẫn đang xử lý.</p>
+        @endif
         <dl class="ai-report-context">
             <div><dt>Đề tài</dt><dd>{{ $reportTopic->TenDeTai ?? 'Chưa có thông tin đề tài' }}</dd></div>
             <div><dt>Sinh viên / Nhóm</dt><dd>{{ $nhom->TenNhom ?? $nhom->MaNhom ?? 'Chưa có thông tin nhóm' }}</dd></div>
@@ -43,7 +46,7 @@
         @if($sourceChanged)<p class="alert alert-warning">Tệp báo cáo đã thay đổi. Chọn Phân tích lại để đọc đúng tệp hiện tại.</p>@endif
         @if($showingSavedSummary)<p class="ai-empty" data-showing-saved-summary>Đây là bản đã lưu; kết quả mới sẽ được cập nhật sau khi phân tích xong.</p>@endif
         <nav class="ai-report-tabs nav nav-tabs" role="tablist" aria-label="Kết quả AI dành cho giảng viên">
-            @foreach(['chapters'=>'Tóm tắt theo chương','work'=>'Công việc đã hoàn thành','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
+            @foreach(['chapters'=>'Tóm tắt theo chương','work'=>'Công việc trong báo cáo','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
                 <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $uniqueId }}-tab-{{ $tabKey }}" data-bs-toggle="tab" data-bs-target="#{{ $uniqueId }}-pane-{{ $tabKey }}" type="button" role="tab" aria-controls="{{ $uniqueId }}-pane-{{ $tabKey }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" data-ai-result-tab="{{ $tabKey }}">{{ $tabLabel }}</button>
             @endforeach
         </nav>
@@ -59,8 +62,7 @@
                 </section>
             </div>
             <div class="tab-pane fade" id="{{ $uniqueId }}-pane-work" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-work" tabindex="0" data-ai-pane="work">
-                <p class="ai-muted">Các công việc tác giả báo cáo đã thực hiện, có câu trích khớp nguồn; chưa xác minh việc triển khai độc lập.</p>
-                @if($completedWork)@include('partials.ai_summary_section',['section'=>['key'=>'completed_work','title'=>'Công việc đã hoàn thành','icon'=>'fa-circle-check','tone'=>'success','items'=>$completedWork]])@else<div class="card"><div class="card-body">Không tìm thấy công việc đã hoàn thành có đủ bằng chứng trong báo cáo.</div></div>@endif
+                @include('partials.ai_work_content')
             </div>
             <div class="tab-pane fade" id="{{ $uniqueId }}-pane-requirements" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-requirements" tabindex="0" data-ai-pane="requirements">
                 @if(($analysis['engine'] ?? '')==='pdf_lab')@include('partials.ai_lab_requirements')@elseif($reviewRound)@include('partials.ai_requirement_review')@else<p class="ai-empty">Giảng viên chưa thiết lập yêu cầu phân tích cho đợt nộp này.</p>@endif

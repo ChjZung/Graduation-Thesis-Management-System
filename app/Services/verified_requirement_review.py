@@ -8,7 +8,7 @@ from ai_runtime.requirement_review.parsing import parse_requirements,sha
 from ai_runtime.requirement_review.source_index import build_source_index,VERSION as INDEX_VERSION
 from ai_runtime.summarizer import RunSettings,fingerprint
 
-VERSION='verified-requirement-adapter-1.0'
+VERSION='verified-requirement-adapter-1.1'
 MISSING='Hệ thống chưa tìm được dẫn chứng phù hợp; giảng viên vui lòng đối chiếu báo cáo gốc.'
 
 
@@ -33,24 +33,33 @@ def render_teacher_items(report):
         points=[]
         for check in item['checks']:
             refs=[]
-            if check['status']=='SUPPORTED':
+            if check['status'] in ('SUPPORTED','PARTIAL'):
                 for eid in check['evidence_ids']:
                     e=accepted.get(eid)
                     if not e:continue
                     for page in sorted({r['page_number'] for r in e['char_ranges']}):
                         refs.append({'source_id':e['source_id'],'page':page,'end_page':page,'quote':e['quote'],
                             'start':e['char_start'],'end':e['char_end'],'char_ranges':[r for r in e['char_ranges'] if r['page_number']==page],
-                            'quote_verified':True,'semantic_support':'SUPPORTS','document_sha256':e['document_sha256']})
+                            'quote_verified':True,'semantic_support':e.get('semantic_support','SUPPORTS'),'document_sha256':e['document_sha256']})
             relation='related_text' if refs else ('pending' if check['status'] in ('NOT_PROCESSED','PENDING_VERIFICATION','PROCESSING_ERROR') else 'not_found')
             points.append({'title':check['description'],'relation':relation,'explanation':check.get('finding') if refs else MISSING,
-                'source_references':refs,'check_status':check['status']})
+                'source_references':refs,'check_status':check['status'],
+                'manual_references':[{'source_id':e['source_id'],'page':e['page_number'],'end_page':e['page_number'],'quote':e['quote'],'start':e['char_start'],'end':e['char_end'],'quote_verified':True,'semantic_support':'NEEDS_VISUAL_REVIEW','document_sha256':e['document_sha256']} for e in check.get('manual_evidence',[])]})
+        explanation=item['short_answer']
+        spec_checks=[c for c in item['checks'] if c.get('coverage_family')=='usecase' and c['status'] in ('SUPPORTED','PARTIAL')]
+        if spec_checks:
+            pages=sorted({r['page'] for p in points for r in p['source_references']})
+            location=(f" (trang PDF {pages[0]}–{pages[-1]})" if pages else '')
+            explanation=f"Tìm được dẫn chứng bằng văn bản cho {len(spec_checks)} mục đặc tả Use Case{location}."
+            if any(c['status']=='PARTIAL' for c in spec_checks):explanation+=' Một số dẫn chứng chỉ hỗ trợ một phần nội dung, chưa xác nhận đáp ứng toàn bộ yêu cầu.'
+            if any(c['status']=='NEEDS_VISUAL_REVIEW' for c in item['checks']):explanation+=' Sơ đồ cần giảng viên xem trực tiếp.'
         items.append({'requirement_id':item['item_id'],'text':item['original_label'],'evidence_quote':item['original_label'],
             'report_relation':'related_text' if any(p['source_references'] for p in points) else ('pending' if any(p['relation']=='pending' for p in points) else 'not_found'),
-            'report_explanation':item['short_answer'],'report_points':points,'report_matches':[]})
+            'report_explanation':explanation,'report_points':points,'report_matches':[]})
     return items
 
 
-def run_direct_review(path,context,document,identity,model,settings,cache_dir,provider,atomic_json,load_state,on_progress,run_id):
+def run_direct_review(path,context,document,identity,model,settings,cache_dir,provider,atomic_json,load_state,on_progress,run_id,on_snapshot=None):
     requirements=requirement_set(context,document)
     if not requirements['items']:
         return {'status':'complete','teacher_requirements':[],'not_configured':True,'generation_attempts':0},[]
@@ -73,7 +82,12 @@ def run_direct_review(path,context,document,identity,model,settings,cache_dir,pr
             if attempts<2:
                 counts[tid]=attempts+1;state['errors'].pop(tid,None);state.get('tasks',{}).pop(tid,None);state.pop('last_error',None)
     def checkpoint(label):
-        state['_worker_run']=run_id;atomic_json(state_path,state);on_progress(label)
+        state['_worker_run']=run_id;atomic_json(state_path,state)
+        if on_snapshot:
+            partial=make_report(state,index,requirements)
+            on_snapshot({'status':'complete' if partial['processing']['status']=='COMPLETED' else 'partial',
+                '_verified_report':partial,'teacher_requirements':render_teacher_items(partial),'generation_attempts':state.get('generation_calls',0)})
+        on_progress(label)
     run_review(index,requirements,provider,state,settings,on_progress=checkpoint,retry_failed=retry_failed,busy_retry_delays=())
     atomic_json(state_path,state);report=make_report(state,index,requirements)
     if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=digest:raise ValueError('Source changed during review')

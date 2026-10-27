@@ -66,6 +66,16 @@ class AnalyzeReportVersion implements ShouldQueue
                 'progress_path'=>$processing->progressPath($this->token),
                 'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,
+                'stage'=>$report->dotNop?->giaiDoan?->ThuTu ?? 1,
+                'on_partial_result'=>function (array $partial) use ($processing,$ai,$state,$only) {
+                    $current=KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->find($this->reportId);
+                    if (empty($partial['data']['_source_hash']) ||
+                        ($partial['data']['document_version_id']??null)!==$this->reportId) return;
+                    if (!$current || ($processing->payload($current)['_processing']['token']??'')!==$this->token ||
+                        $processing->fingerprint($current)!==$state['fingerprint'] ||
+                        !$processing->sourceMatches($current,$partial['data'])) return;
+                    $ai->saveVersionSummary($current,$partial,['review_only'=>$only,'token'=>$this->token]);
+                },
             ]);
             $report->refresh()->load('dotNop.giaiDoan');
             if ($processing->fingerprint($report) !== $state['fingerprint']) {

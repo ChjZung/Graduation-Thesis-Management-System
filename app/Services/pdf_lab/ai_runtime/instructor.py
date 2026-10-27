@@ -244,6 +244,8 @@ TITLE: '''+requirements['title']+'\nPERIOD: '+requirements['period']+'\nSOURCE:\
                 'selected_batches':covered,'missing_batches':missing,'coverage':'not_selected' if not covered else 'partial' if missing else 'selected_text_complete',
                 'visual_content_unread':any(i.get('section_visual_content_unread') for i in all_items.values() if i['root_id']==rid),
                 'note':'Phần này chưa được chọn xử lý.' if not covered else 'Chưa có đủ ý có trích dẫn khớp; không kết luận tác giả chưa thực hiện.' if not paragraphs else ''})
+            state['partial_chapters']=copy.deepcopy(chapters)
+            if on_progress:on_progress('Đã lưu bản đọc: '+batches[0]['chapter_title'])
         entries=[p for c in chapters for p in c['paragraphs']]
         active=[c for c in chapters if c['paragraphs']]
         overview=copy.deepcopy(active[0]['paragraphs']) if len(active)==1 else summarize(entries,'Tổng quan phần báo cáo đã đọc') if entries else []

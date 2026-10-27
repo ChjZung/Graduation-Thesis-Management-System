@@ -32,6 +32,51 @@ class AiLabAdapterTest extends TestCase
             && !str_contains(json_encode($p->command),'fixture-private-key') && ($p->environment['GEMINI_API_KEY'] ?? '')==='fixture-private-key');
         $this->assertArrayNotHasKey('completion_percentage',$result['data']);
     }
+    public function test_pdf_resubmission_does_not_pass_large_unsupported_previous_payload_to_python(): void
+    {
+        config(['ai_processing.pdf_engine'=>'pdf_lab','services.gemini.api_key'=>'fixture-private-key']);
+        Process::fake(fn()=>Process::result(output:json_encode($this->labPayload(),JSON_UNESCAPED_UNICODE)));
+        $previous=['data'=>['completed_work'=>[['content'=>str_repeat('Prior report ',40000)]]]];
+        $result=app(AiSummaryService::class)->summarizePdf('fixture.pdf',1,['previous_version'=>$previous]);
+        $this->assertSame('pdf_lab',$result['data']['analysis']['engine']);
+        Process::assertRan(fn($p)=>is_array($p->command) && !in_array('--previous-version',$p->command)
+            && strlen(json_encode($p->command))<10000 && !str_contains(json_encode($p->command),'Prior report '));
+    }
+
+    public function test_partial_callback_and_final_file_transport_keep_json_out_of_stdout(): void
+    {
+        config(['ai_processing.pdf_engine'=>'pdf_lab']);
+        $progress=storage_path('app/private/ai_progress/stream-test-'.bin2hex(random_bytes(8)).'.json');
+        if (!is_dir(dirname($progress))) mkdir(dirname($progress),0775,true);
+        $payload=$this->labPayload();$received=[];
+        $pending=\Mockery::mock(\Illuminate\Process\PendingProcess::class);
+        $pending->shouldReceive('env')->once()->andReturnSelf();
+        $pending->shouldReceive('run')->once()->andReturnUsing(function($command,$output)use($progress,$payload){
+            $this->assertContains('--output',$command);
+            file_put_contents($progress.'.partial.json',json_encode($payload,JSON_UNESCAPED_UNICODE));
+            $output('out','AI_PARTIAL_READY');
+            $output('out','AI_PARTIAL_READY'); // Duplicate signals must not republish the same result.
+            file_put_contents($progress.'.result.json',json_encode($payload,JSON_UNESCAPED_UNICODE));
+            return new \Illuminate\Process\FakeProcessResult(output:"AI_PARTIAL_READY\n");
+        });
+        Process::shouldReceive('timeout')->with(360)->once()->andReturn($pending);
+        try {
+            $result=app(AiSummaryService::class)->summarizePdf('fixture.pdf',1,['progress_path'=>$progress,'on_partial_result'=>function($value)use(&$received){$received[]=$value;}]);
+            $this->assertCount(1,$received);
+            $this->assertSame($result['data']['chapters'],$received[0]['data']['chapters']);
+            $this->assertFileDoesNotExist($progress.'.result.json');
+        } finally { @unlink($progress.'.partial.json');@unlink($progress.'.result.json'); }
+    }
+
+    public function test_visible_revision_changes_for_new_chapters_but_not_worker_counters(): void
+    {
+        $service=app(AiReportProcessingService::class);$data=$this->labPayload()['data'];
+        $before=$service->resultRevision($data);$data['_processing']=['attempts'=>10,'updated_at'=>time()];
+        $this->assertSame($before,$service->resultRevision($data));
+        $data['chapters'][]=['id'=>'C2','items'=>[['content'=>'New cited chapter']]];
+        $this->assertNotSame($before,$service->resultRevision($data));
+    }
+
     public function test_docx_still_uses_its_existing_document_pipeline(): void
     {
         Process::fake(fn()=>Process::result(output:json_encode($this->labPayload())));
@@ -149,5 +194,27 @@ class AiLabAdapterTest extends TestCase
             $this->assertStringNotContainsString('Công việc chưa hoàn thành',$html);
         }
     }
+    public function test_pending_review_keeps_original_brief_visible_without_claiming_missing_evidence(): void
+    {
+        config(['ai_processing.lab.review_engine'=>'verified_v2']);
+        $processing=\Mockery::mock(AiReportProcessingService::class)->makePartial();
+        $processing->shouldReceive('sourceMatches')->andReturn(true);
+        $this->app->instance(AiReportProcessingService::class,$processing);
+        $data=$this->labPayload()['data'];
+        $data['teacher_requirements']=[];
+        $data['requirements_review']=['mode'=>'source_links_only','status'=>'pending','items'=>[]];
+        $data['_processing']=['status'=>'running','updated_at'=>1];
+        $report=new KhoiBaoCaoTienDo;$report->MaKhoi='PENDING_REVIEW';$report->DuongDanFile='fixture.pdf';
+        $report->TomTatJson=$data;$report->setRelation('dotNop',null);
+        foreach([true,false] as $teacher){
+            $html=view('partials.ai_summary_11_sections',['pb'=>$report,'teacherReportUi'=>$teacher])->render();
+            $this->assertStringContainsString('data-requirements-pending',$html);
+            $this->assertStringContainsString('Bổ sung sơ đồ hoạt động.',$html);
+            $this->assertMatchesRegularExpression('/<details class="ai-review-disclosure"\s+open[^>]*><summary>Xem mô tả yêu cầu gốc/s',$html);
+            $this->assertStringNotContainsString('Yêu cầu này chưa được AI phân tích.',$html);
+            $this->assertStringNotContainsString('Hệ thống chưa tìm được dẫn chứng phù hợp cho phần này.',$html);
+        }
+    }
+
 }
 

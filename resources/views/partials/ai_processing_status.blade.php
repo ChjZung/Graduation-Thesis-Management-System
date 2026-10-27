@@ -7,7 +7,7 @@
 @endphp
 @if($teacherReportUi ?? false)
     @if($processingUrl)
-    <div class="ai-processing-status" role="status" aria-live="polite" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+    <div class="ai-processing-status" role="status" aria-live="polite" data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
         <strong data-processing-title>{{ $processingActive ? 'Đang phân tích báo cáo' : (($processingState['status'] ?? '') === 'completed' ? 'Đã có kết quả phân tích' : 'Trạng thái phân tích') }}</strong>
         <p data-processing-message>{{ $processingActive ? 'Bạn có thể tiếp tục sử dụng trang trong khi chờ.' : 'Kết quả đã lưu được hiển thị bên dưới.' }}</p>
         <div class="ai-result-status-lines">
@@ -15,18 +15,18 @@
             <p data-processing-review-result><strong>Đối chiếu yêu cầu:</strong> {{ ($aiData['requirements_review']['status']??'')==='completed' ? 'Đã có kết quả — giảng viên cần kiểm tra lại.' : (($aiData['requirements_review']['status']??'')==='partial' ? ($processingActive ? 'Đang đối chiếu yêu cầu.' : ($reviewHasResults ? 'Có kết quả tham khảo — giảng viên vui lòng kiểm tra dẫn chứng.' : 'Chưa có kết quả để đối chiếu.')) : 'Chưa có kết quả hoàn tất.') }}</p>
         </div>
         <p data-processing-step></p>
-        <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút.</small>
+        <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
         <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem tiến độ</button>
         <button type="button" class="ai-button" data-ai-refresh-result hidden>Xem kết quả mới</button>
     </div>
     @endif
 @else
 @if($processingUrl && $processingState)
-<div class="ai-processing-status" role="status" aria-live="polite" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+<div class="ai-processing-status" role="status" aria-live="polite" data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
     <strong data-processing-title>{{ ['queued'=>'Đang chờ xử lý','running'=>'Đang phân tích','waiting'=>'Đang chờ thử tiếp','completed'=>'Đã hoàn tất','partial'=>'Hoàn tất một phần'][$processingState['status'] ?? ''] ?? 'Trạng thái AI' }}</strong>
     <p data-processing-message>{{ $processingState['message'] ?? '' }}</p>
     <p data-processing-step></p>
-        <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút.</small>
+        <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
     <p data-processing-retry>@if(!empty($processingState['next_retry_at']))Thử tiếp sau: {{ date('H:i:s d/m/Y', $processingState['next_retry_at']) }} (giờ máy chủ).@endif</p>
     <ul data-processing-errors>
         @foreach(collect($processingState['errors'] ?? [])->unique(fn ($e) => ($e['stage'] ?? '').'|'.($e['code'] ?? '')) as $error)

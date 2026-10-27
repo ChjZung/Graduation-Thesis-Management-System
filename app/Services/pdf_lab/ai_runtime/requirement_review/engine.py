@@ -8,7 +8,7 @@ from . import VERSION
 from .source_index import VERSION as INDEX_VERSION
 from .prompts import PROMPT_VERSION,PLAN_PROMPT,MATCH_PROMPT,VERIFY_PROMPT
 from .schemas import plan_schema,match_schema,verify_schema
-from .validation import validate_plan,validate_matches,validate_verifications,source_guard,GUARD_VERSION
+from .validation import validate_quote,validate_plan,validate_matches,validate_verifications,source_guard,GUARD_VERSION
 from .retrieval import SourceSearch,VERSION as RETRIEVAL_VERSION
 from .coverage import apply_coverage,VERSION as COVERAGE_VERSION
 from ..provider import ApiError
@@ -22,6 +22,26 @@ BUSY_RETRY_DELAYS=(5,10)
 
 def analysis_identity(index,requirements,model,settings):
     return fingerprint([VERSION,INDEX_VERSION,PROMPT_VERSION,GUARD_VERSION,index['document'],requirements['id'],requirements['version'],requirements['sha256'],model,settings.input_budget,settings.max_output_tokens])
+
+
+def diagram_locations(index,check,item):
+    from .source_index import normalized
+    request=normalized(check.get('description','')+' '+check.get('requirement_excerpt',''))
+    families=[terms for terms in [('use case','usecase'),('tuan tu','sequence'),('lop','class'),('erd','thuc the')] if any(t in request for t in terms)]
+    if not families:return []
+    hits=[]
+    for sid,source in index['sources'].items():
+        if source['source_type']!='figure_caption':continue
+        label=normalized(source['raw_text'])
+        if not all(any(t in label for t in terms) for terms in families):continue
+        score=int('he thong' in label)+int('tong quat' in label)
+        if any(t in request for t in ['tong quat','tong the']) and 'nghiep vu' in label:score-=2
+        try:
+            ev=validate_quote({'source_id':sid,'quote':source['raw_text'],'occurrence':1},index,[sid],check['check_id'],max_chars=600)
+            hits.append((score,ev))
+        except ApiError:continue
+    hits.sort(key=lambda h:(-h[0],h[1]['page_number']))
+    return [dict(e,semantic_support='NEEDS_VISUAL_REVIEW') for _,e in hits[:1]]
 
 
 def make_report(state,index,requirements):
@@ -50,7 +70,7 @@ def make_report(state,index,requirements):
                     if verdict=='SUPPORTS' and not verification['overclaim_detected'] and selected:
                         row.update(status='SUPPORTED',finding=match['finding'],reason=reason)
                     elif verdict=='PARTIAL' and selected and verification['safe_rewrite']:
-                        row.update(status='NO_VERIFIED_EVIDENCE',reason='Nguồn chỉ hỗ trợ một phần, chưa đủ chắc chắn để hiển thị kết luận. '+reason)
+                        row.update(status='PARTIAL',finding=verification['safe_rewrite'],reason='Dẫn chứng chỉ hỗ trợ một phần yêu cầu. '+reason)
                     else:row.update(status='NEEDS_VISUAL_REVIEW' if verdict=='NEEDS_VISUAL_REVIEW' else 'NO_VERIFIED_EVIDENCE',reason=reason)
                     row['missing_elements']=verification['missing_elements'];row['semantic_verification']=verification
                     for e in match['evidence']:
@@ -60,6 +80,8 @@ def make_report(state,index,requirements):
                     processed+=1
                 elif match['status']=='CANDIDATE' and match['evidence']:
                     row.update(status='PENDING_VERIFICATION',reason='Đã tìm được nguồn ứng viên; chưa hoàn tất kiểm chứng, chưa có kết luận đối chiếu.')
+            if row['status']=='NEEDS_VISUAL_REVIEW':
+                row['manual_evidence']=diagram_locations(index,check,item)
             checks.append(row)
         positive=[c for c in checks if c['status'] in ('SUPPORTED','PARTIAL')]
         missing=[c for c in checks if c['status'] not in ('SUPPORTED',)]
@@ -236,9 +258,9 @@ def run_review(index,requirements,provider,state=None,settings=None,on_progress=
         pending=[]
         for c in checks:
             cid=c['check_id'];ids=state['retrieval'][cid]['used_candidate_ids']
-            if cid in state['matches']:continue
-            if c.get('coverage_family')=='diagram':
+            if c.get('coverage_family')=='diagram' or c['kind'] in ('diagram','class_diagram','sequence_diagram'):
                 state['matches'][cid]={'check_id':cid,'status':'NEEDS_VISUAL_REVIEW','finding':'','evidence':[],'citation_errors':[]};continue
+            if cid in state['matches']:continue
             if not ids:state['matches'][cid]={'check_id':cid,'status':'NOT_FOUND','finding':'','evidence':[],'citation_errors':[]}
             else:pending.append(dict(c,candidate_ids=ids))
         # Recover useful work already saved before a previous interruption first.

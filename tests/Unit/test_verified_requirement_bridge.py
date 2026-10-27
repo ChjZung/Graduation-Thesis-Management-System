@@ -44,18 +44,88 @@ def test_new_review_runs_after_summary_and_resumes_without_api(tmp_path):
     assert again['data']['requirements_review']['status']=='completed' and p.calls==before
     assert 'fake-key' not in json.dumps(data)
 
-def test_partial_support_not_exposed_as_accepted_reference(tmp_path):
+def test_verified_partial_support_keeps_sources_and_safe_rewrite(tmp_path):
     p=VerifiedProvider(partial=True)
     out=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,context={'submission_requirements':'1. Describe students and teachers.'},options={'review_engine':'verified_v2','max_generation_calls':100},provider_factory=lambda:p)
     assert out['data']['requirements_review']['status']=='completed'
-    assert all(not q['source_references'] for i in out['data']['teacher_requirements'] for q in i['report_points'])
+    points=[q for i in out['data']['teacher_requirements'] for q in i['report_points']]
+    assert any(q['check_status']=='PARTIAL' and q['explanation']=='Nguồn chỉ hỗ trợ một phần.' for q in points)
+    refs=[r for q in points for r in q['source_references']]
+    assert refs and all(r['semantic_support']=='PARTIAL' and r['quote_verified'] for r in refs)
 
 def test_verified_review_finishes_across_small_background_passes(tmp_path):
     provider=VerifiedProvider();options={'review_engine':'verified_v2','max_generation_calls':1}
     context={'submission_requirements':'1. Describe students and teachers.'}
     for attempt in range(40):
         result=bridge.run_pipeline(PDF,'fake',provider.model,tmp_path,context=context,options=options,provider_factory=lambda:provider)
-        if result['data']['analysis']['status']=='completed':break
+        if result['data']['analysis']['status']=='completed' and result['data']['requirements_review']['status']=='completed':break
     assert result['data']['analysis']['status']=='completed'
     assert result['data']['requirements_review']['status']=='completed'
     assert attempt>0
+
+
+def test_broad_vietnamese_usecase_requirement_covers_each_document_section():
+    from ai_runtime.requirement_review.coverage import apply_coverage
+    names=['Lập kế hoạch','Sinh viên đủ điều kiện','Quản lý đề tài','Đăng ký đề tài','Theo dõi tiến độ','Hồ sơ bảo vệ','Tổ chức bảo vệ','Lưu trữ kết quả']
+    index={'canonical':{'text':'x'*900,'lines':[]},'sections':[{'title':f'3.3.2.{n+1} Đặc tả Use Case {name}','level':4,'char_start':n*100,'path':[]} for n,name in enumerate(names)]}
+    for wording in ['Sơ đồ Use-Case tổng quát và đặc tả các ca sử dụng chính.','Trình bày đặc tả các Use Case chính.']:
+        item={'item_id':'R2','original_text':wording,'checks':[{'kind':'diagram','description':'Sơ đồ tổng quát'}]}
+        expanded=apply_coverage([item],index)[0]
+        specs=[c for c in expanded['checks'] if c.get('coverage_family')=='usecase']
+        assert len(specs)==8
+        assert {c['coverage_target']['name'] for c in specs}==set(names)
+        assert all(c['requirement_text']==wording for c in specs)
+        assert any(c['kind']=='diagram' for c in expanded['checks'])
+
+
+def test_named_or_implementation_request_does_not_expand_to_all_usecases():
+    from ai_runtime.requirement_review.coverage import apply_coverage
+    index={'canonical':{'text':'x'*200,'lines':[]},'sections':[{'title':'3.3.2.1 Đặc tả Use Case đăng ký đề tài','level':4,'char_start':0,'path':[]}]}
+    for wording in ['Đặc tả Use Case đăng ký đề tài.','Đã lập trình đặc tả các ca sử dụng chính.']:
+        item={'item_id':'R','original_text':wording,'checks':[]}
+        assert apply_coverage([item],index)[0]['checks']==[]
+
+
+def test_mixed_diagram_requirement_does_not_reject_textual_usecase_evidence():
+    from ai_runtime.requirement_review.validation import source_guard
+    check={'kind':'content','coverage_family':'usecase','coverage_target':{'name':'Đăng ký đề tài'},'requirement_text':'Sơ đồ Use-Case tổng quát và đặc tả các ca sử dụng chính.','requirement_excerpt':'đặc tả các ca sử dụng chính','description':'Đặc tả và quy tắc nghiệp vụ: Đăng ký đề tài'}
+    evidence={'source_type':'table_cell','quote':'Sinh viên chọn đề tài, hệ thống kiểm tra điều kiện và lưu phiếu đăng ký.','row_label':'Luồng chính','section_title':'Đặc tả Use Case đăng ký đề tài','section_path':['Phân tích hệ thống','Đặc tả Use Case đăng ký đề tài']}
+    assert source_guard(check,{'evidence':[evidence]}) is None
+    check['kind']='diagram'
+    assert source_guard(check,{'evidence':[evidence]})[0]=='NEEDS_VISUAL_REVIEW'
+
+
+def test_manual_caption_location_is_exact_but_never_proof_of_diagram_content():
+    from ai_runtime.requirement_review.engine import diagram_locations
+    text='Hình 3.10 Sơ đồ Use-Case hệ thống'
+    doc={'document_id':'D','version_id':'V','sha256':'hash','total_pages':1}
+    source={'source_id':'S','source_type':'figure_caption','raw_text':text,'document_id':'D','document_version_id':'V','document_sha256':'hash','page_number':1,'page_index':0,'segments':[{'raw_start':0,'raw_end':len(text),'char_start':0,'char_end':len(text),'page_number':1,'line_id':'L'}],'retrieval_context':'Sơ đồ hệ thống','expanded_context':text}
+    index={'document':doc,'canonical':{'text':text,'pages':[{'start':0,'end':len(text)}]},'sections':[],'sources':{'S':source}}
+    check={'check_id':'C','kind':'diagram','description':'Sơ đồ Use-Case tổng quát','requirement_excerpt':'Sơ đồ Use-Case tổng quát'}
+    refs=diagram_locations(index,check,{})
+    assert len(refs)==1 and refs[0]['page_number']==1 and refs[0]['quote']==text
+    assert refs[0]['semantic_support']=='NEEDS_VISUAL_REVIEW'
+    check['description']='Sơ đồ tuần tự';check['requirement_excerpt']='Sơ đồ tuần tự'
+    assert diagram_locations(index,check,{})==[]
+
+
+def test_incremental_publication_exposes_valid_chapters_before_review_finishes(tmp_path,monkeypatch):
+    import copy
+    saved=[];write=bridge.atomic_json;path=tmp_path/'partial.json'
+    def capture(destination,value):
+        write(destination,value)
+        if str(destination)==str(path):saved.append(copy.deepcopy(value))
+    monkeypatch.setattr(bridge,'atomic_json',capture)
+    monkeypatch.setenv('AI_PARTIAL_RESULT_FILE',str(path))
+    provider=VerifiedProvider();context={'submission_requirements':'1. Describe students and teachers.'}
+    options={'review_engine':'verified_v2','max_generation_calls':100}
+    final=bridge.run_pipeline(PDF,'fake',provider.model,tmp_path/'streamed',context=context,options=options,provider_factory=lambda:provider)
+    ready=[d['data'] for d in saved if any(c['items'] for c in d['data']['chapters']) and d['data']['requirements_review']['status']!='completed']
+    assert ready, 'A cited chapter must be published before review completes'
+    assert all(r['quote_verified'] for d in ready for c in d['chapters'] for i in c['items'] for r in i['source_references'])
+    assert any(d['analysis']['status']=='completed' and d['requirements_review']['status']=='pending' for d in ready)
+    calls=provider.calls
+    monkeypatch.delenv('AI_PARTIAL_RESULT_FILE')
+    other=VerifiedProvider()
+    baseline=bridge.run_pipeline(PDF,'fake',other.model,tmp_path/'baseline',context=context,options=options,provider_factory=lambda:other)
+    assert baseline['data']['overview_summary']==final['data']['overview_summary'] and other.calls==calls

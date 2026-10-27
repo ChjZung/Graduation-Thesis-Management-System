@@ -4,7 +4,7 @@ import re
 from collections import Counter
 from .source_index import normalized
 
-VERSION='source-retrieval-quality-2.4'
+VERSION='requirement-retrieval-2.5'
 
 STOP=set('va la cua cac nhung mot cho voi trong theo co de khi nay bao cao he thong noi dung yeu cau trinh bay mo ta'.split())
 FACETS=[('bai toan',['bai toan','boi canh','hien trang','dat van de','ly do chon','su can thiet','mo dau']),('muc tieu',['muc tieu de tai','muc tieu nghien cuu']),('pham vi',['pham vi','gioi han de tai']),('nhu cau',['nhu cau','yeu cau nguoi dung','doi voi']),('kho khan',['kho khan','han che','bat cap','danh gia hien trang']),('giai quyet',['giai phap','giai quyet','de xuat'])]

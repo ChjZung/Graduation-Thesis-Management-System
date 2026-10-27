@@ -151,7 +151,7 @@ def source_guard(check,matching):
     if any(re.search(r'(?:với mục đích|bao gồm|như sau|giúp|để|và|bằng|của|là)\s*[:;,]?$',e['quote'].strip(),re.I) for e in evidence):
         return 'DOES_NOT_SUPPORT','Câu trích bị cắt trước phần nội dung giải thích; chưa đủ ý để hỗ trợ nhận định.'
     requested=normalized(check.get('requirement_excerpt','')+' '+check.get('description',''))
-    diagram=check['kind'] in ('diagram','class_diagram','sequence_diagram') or 'so do' in requested or 'erd' in requested
+    diagram=check['kind'] in ('diagram','class_diagram','sequence_diagram') or (check.get('coverage_family') not in ('usecase','business') and ('so do' in requested or 'erd' in requested))
     if diagram and check['kind']!='existence':
         return 'NEEDS_VISUAL_REVIEW','Nội dung sơ đồ chưa được đọc; nhắc tên, chú thích hoặc đặc tả bằng chữ không xác minh được sơ đồ theo yêu cầu.'
     if check['kind']=='data_model' and re.search(r'cac bang co khoa chinh|lien ket voi nhau bang khoa|phan tach thanh cac bang|^lien ket thong qua khoa chinh va khoa ngoai$|^moi quan he giua cac bang$',n):

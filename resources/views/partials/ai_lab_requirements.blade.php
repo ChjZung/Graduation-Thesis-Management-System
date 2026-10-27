@@ -1,4 +1,5 @@
-@if(($aiData['requirements_review']['mode']??'')==='verified_v2')
+@if(($aiData['requirements_review']['mode']??'')==='verified_v2' ||
+    (($aiData['requirements_review']['status']??'')==='pending' && config('ai_processing.lab.review_engine')==='verified_v2'))
 @include('partials.ai_verified_requirements')
 @else
 @if($teacherReportUi ?? false)

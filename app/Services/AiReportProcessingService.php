@@ -143,12 +143,20 @@ class AiReportProcessingService
             'summary_status'=>$data['analysis']['status'] ?? null,
             'review_status'=>$data['requirements_review']['status'] ?? null,
             'review_has_results'=>(int)($data['requirements_review']['processing']['completed_checks'] ?? 0)>0,
+            'result_revision'=>$this->resultRevision($data),
             'server_time'=>time(),
             'worker_running' => $workerRunning,
             'progress'=>$progress,
             'summary_coverage'=>['done'=>$data['analysis']['analyzed_chunks'] ?? 0,'total'=>$data['analysis']['total_chunks'] ?? 0],
             'review_coverage'=>$data['requirements_review']['coverage'] ?? [],
         ];
+    }
+
+    public function resultRevision(array $data): ?string
+    {
+        $visible=array_intersect_key($data,array_flip(['overview_summary','document_content','chapters','completed_work','teacher_requirements','content_review']));
+        if (!$visible) return null;
+        return hash('sha256',json_encode($visible,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR));
     }
 
     public function retryState(array $data, bool $reviewOnly, int $attempt): array

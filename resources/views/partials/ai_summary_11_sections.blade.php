@@ -644,7 +644,7 @@
         closeButton.autofocus = true;
         closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Đóng</span>';
         panel.querySelector('.ai-actions').appendChild(closeButton);
-        panel.querySelectorAll('[data-ai-result-tab], [data-ai-requirement-tab]').forEach(tab => {
+        panel.querySelectorAll('[data-bs-toggle="tab"][aria-controls]').forEach(tab => {
             const oldId=tab.getAttribute('aria-controls'), pane=panel.querySelector('#'+CSS.escape(oldId));
             tab.id+='-expanded';
             if(pane){pane.id=oldId+'-expanded';pane.setAttribute('aria-labelledby',tab.id);tab.setAttribute('aria-controls',pane.id);tab.setAttribute('data-bs-target','#'+pane.id);}

@@ -3,7 +3,7 @@ import re
 from difflib import SequenceMatcher
 from .source_index import normalized,section_at
 
-VERSION='document-coverage-1.2'
+VERSION='document-coverage-1.3'
 
 
 def fold(text):return normalized(text).replace(' ','')
@@ -65,7 +65,7 @@ def is_named_request(text):
     match=re.search(r'use[- ]?case\s+([^:.,;\n]+)',text,re.I)
     if not match:return False
     rest=fold(match.group(1))
-    return bool(rest) and not any(rest.startswith(x) for x in ['va','cac','cuahethong','hethong','nhung'])
+    return bool(rest) and not any(rest.startswith(x) for x in ['va','cac','cuahethong','hethong','nhung','tongquat','tongthe'])
 
 
 def apply_coverage(items,index):
@@ -75,7 +75,7 @@ def apply_coverage(items,index):
         implementation=bool(re.search(r'cai dat|lap trinh|da trien khai|da xay dung',normalized(item['original_text'])))
         wants_roles=any(x in text for x in ['cacnhomnguoidung','nhomnguoidung','doituongsudung','cacvaitro'])
         wants_business=any(x in text for x in ['nghiepvuchinh','cacquytrinh','cacluongchinh'])
-        wants_specs=any(x in text for x in ['phantichchucnang','dactausecase','dactacacchucnang']) and not is_named_request(item['original_text'])
+        wants_specs=(any(x in text for x in ['dactacaccasudung','dactacasudung','cacdactausecase','dactacacusecase']) or (any(x in text for x in ['phantichchucnang','dactausecase','dactacacchucnang']) and not is_named_request(item['original_text']))) and not implementation
         wants_design=any(x in text for x in ['cacsodothietke','sodothietkehethong','sodohethong'])
         def add(description,kind,target,family):
             checks.append({'item_id':item['item_id'],'requirement_text':item['original_text'],'requirement_excerpt':item['original_text'],
@@ -87,6 +87,10 @@ def apply_coverage(items,index):
             for entry in catalog['workflows'] or catalog['usecases']:add('Nghiệp vụ: '+entry['name'],'content',entry,'business')
         if wants_specs:
             for entry in catalog['usecases']:add('Đặc tả và quy tắc nghiệp vụ: '+entry['name'],'content',entry,'usecase')
+            excerpt=re.search(r'đặc\s+tả[^.;\n]*',item['original_text'],re.I)
+            if excerpt:
+                for c in checks:
+                    if c.get('coverage_family')=='usecase':c['requirement_excerpt']=excerpt.group(0)
         if wants_design:
             for entry in catalog['design_figures']:add(entry['title'],'diagram',entry,'diagram')
         # Use structured expansion only when all triggered broad categories have
@@ -96,6 +100,8 @@ def apply_coverage(items,index):
             # Original model criteria remain authoritative; inventory adds coverage,
             # never replaces needs, problems, solutions or proof-of-implementation.
             original=[dict(c) for c in item.get('checks',[]) if not c.get('coverage_family')]
+            if wants_specs:
+                original=[c for c in original if not (c.get('kind')=='content' and any(v in fold(c.get('description','')+' '+c.get('requirement_excerpt','')) for v in ['dactacaccasudung','dactausecase','dactacacusecase']))]
             role_check=next((c for c in checks if c.get('coverage_family')=='roles'),None)
             broad_actors=[c for c in original if c.get('kind')=='actors'] if not implementation else []
             if role_check and broad_actors:

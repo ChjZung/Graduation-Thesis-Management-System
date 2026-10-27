@@ -150,13 +150,21 @@ class AiSummaryService
         if (!empty($options['review_only'])) {
             $command[] = '--review-only';
         }
-        if (!empty($options['previous_version'])) {
+        // Previous-version comparison belongs to the legacy pipeline only.
+        // PDF Lab does not accept this flag; passing the entire prior JSON also
+        // exceeds Windows command/environment limits before Python can start.
+        if (!$labPdf && !empty($options['previous_version'])) {
             $command[] = '--previous-version';
             $command[] = json_encode($options['previous_version'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         }
 
+        $resultFile=$labPdf && !empty($options['progress_path']) ? $options['progress_path'].'.result.json' : null;
+        $partialFile=$resultFile ? $options['progress_path'].'.partial.json' : null;
+        if ($resultFile) { $command[]='--output'; $command[]=$resultFile; if (is_file($resultFile)) @unlink($resultFile); }
         $errorReason = '';
         $processFailure = null;
+        $parsedResult = null;
+        $lastPartialHash = null;
 
         try {
             // Đảm bảo các biến môi trường thiết yếu của Windows (SystemRoot, PATH) được truyền cho tiến trình con
@@ -176,17 +184,29 @@ class AiSummaryService
                 'AI_LITE_SAFE_RPM' => (string) config('ai_processing.lite_rpm',12),
                 'AI_SAFE_TPM' => (string) config('ai_processing.tpm',200000),
                 'AI_PROGRESS_FILE' => $options['progress_path'] ?? '',
+                'AI_PARTIAL_RESULT_FILE' => is_callable($options['on_partial_result']??null) ? ($partialFile??'') : '',
                 'AI_EXACT_TOKEN_COUNT' => config('ai_processing.count_tokens', true) ? '1' : '0',
                 'AI_MAX_REQUEST_TOKENS' => (string) config('ai_processing.max_request_tokens', 12000),
 
             ]);
 
             // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
-            $result = Process::timeout(360)->env($processEnv)->run($command);
+            $result = Process::timeout(360)->env($processEnv)->run($command, function ($type,$buffer) use ($partialFile,$options,&$lastPartialHash) {
+                if (!$partialFile || !is_callable($options['on_partial_result']??null) || !is_file($partialFile)) return;
+                $bytes=@file_get_contents($partialFile);
+                if ($bytes===false) return;
+                $digest=hash('sha256',$bytes);
+                if ($digest===$lastPartialHash) return;
+                $snapshot=json_decode($bytes,true);
+                if (!is_array($snapshot) || empty($snapshot['success']) || !is_array($snapshot['data']??null)) return;
+                try { ($options['on_partial_result'])($this->formatSummarizeResult($snapshot,$options['stage']??1)); $lastPartialHash=$digest; }
+                catch (\Throwable $e) { Log::warning('AI partial publication deferred.', ['type'=>get_class($e)]); }
+            });
 
             if ($result->successful()) {
-                $output = trim($result->output());
+                $output = $resultFile && is_file($resultFile) ? file_get_contents($resultFile) : preg_replace('/^AI_PARTIAL_READY\r?\n/m','',trim($result->output()));
                 $data = json_decode($output, true);
+                $parsedResult=$data;
                 if (is_array($data) && !empty($data['success'])) {
                     return $this->formatSummarizeResult($data, $stage);
                 }
@@ -205,10 +225,12 @@ class AiSummaryService
             $processFailure = ['stage'=>'process','code'=>'service_unavailable',
                 'message'=>'Chưa hoàn tất tiến trình phân tích. Các bước đã lưu được giữ để thử tiếp.'];
             Log::error('AiSummaryService: Python process exception.', ['type'=>get_class($e)]);
+        } finally {
+            if ($resultFile && is_file($resultFile)) @unlink($resultFile);
         }
 
         $fallback = $this->fallbackSummarize($pdfPath, $stage, $options['review_context'] ?? []);
-        $parsed = isset($result) && is_object($result) ? json_decode($result->output(),true) : [];
+        $parsed = $parsedResult ?? (isset($result) && is_object($result) ? json_decode($result->output(),true) : []);
         $failure = $processFailure ?? $parsed['processing_error'] ?? ['stage'=>'process','code'=>'service_unavailable',
             'message'=>'Tiến trình chưa trả kết quả hợp lệ. Các bước đã lưu được giữ để thử tiếp.'];
         $fallback['data']['processing_errors'] = [$failure];
@@ -328,7 +350,7 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                'chapters', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
+                '_source_hash', 'chapters', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],

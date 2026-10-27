@@ -57,6 +57,13 @@ class AiResultMerger
         foreach (['teacher_requirements','requirements_document','teacher_requirements_status'] as $field) {
             if (array_key_exists($field,$new)) $merged[$field]=$new[$field];
         }
+        // The local content audit is independent of an incomplete LLM generation.
+        $audit=$new['content_review'] ?? null;
+        if (is_array($audit) && ($audit['status'] ?? '')==='completed' &&
+            ($audit['source_hash'] ?? '')===($new['_source_hash'] ?? null) &&
+            (empty($old['content_review']['coverage']['map_scope_complete']) || !empty($audit['coverage']['map_scope_complete']))) {
+            $merged['content_review']=$audit;
+        }
         if (isset($new['_source_hash'])) $merged['_source_hash'] = $new['_source_hash'];
         return $merged;
     }
