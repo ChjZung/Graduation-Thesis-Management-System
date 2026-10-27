@@ -16,9 +16,11 @@ use App\Models\HoSoBaoVe;
 use App\Models\LichSuChuyenGiaiDoan;
 use App\Services\ThesisProgressService;
 use App\Services\AiSummaryService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DuyetBaoCaoController extends Controller
 {
@@ -412,8 +414,7 @@ class DuyetBaoCaoController extends Controller
             return $request->input('nhom');
         }
         if ($deTai) {
-            return Nhom::where('MaDeTai', $deTai->MaDeTai)->first()?->MaNhom
-                ?? PhieuDangKy::where('MaDeTai', $deTai->MaDeTai)->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->first()?->MaNhom
+            return PhieuDangKy::where('MaDeTai', $deTai->MaDeTai)->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->first()?->MaNhom
                 ?? $deTai->nhoms()->first()?->MaNhom;
         }
         return null;
@@ -461,16 +462,58 @@ class DuyetBaoCaoController extends Controller
     }
 
     /**
+     * Ràng buộc ngày mở nộp và hạn nộp của đợt phải nằm trong khoảng thời gian của giai đoạn (nếu giai đoạn đã ấn định).
+     */
+    protected function validateDotNopDatesAgainstStage($validator, ?GiaiDoanThucHien $giaiDoan, ?string $ngayMoNop, ?string $hanNop): void
+    {
+        if (!$giaiDoan) {
+            return;
+        }
+
+        $startStr = $giaiDoan->NgayBatDau ? Carbon::parse($giaiDoan->NgayBatDau)->format('d/m/Y') : null;
+        $endStr = $giaiDoan->NgayKetThuc ? Carbon::parse($giaiDoan->NgayKetThuc)->format('d/m/Y') : null;
+
+        if ($giaiDoan->NgayBatDau) {
+            $stageStart = Carbon::parse($giaiDoan->NgayBatDau)->startOfDay();
+
+            if ($ngayMoNop && Carbon::parse($ngayMoNop)->lt($stageStart)) {
+                $validator->errors()->add('NgayMoNop', "Ngày mở nộp không thể trước ngày bắt đầu của giai đoạn ({$startStr}).");
+            }
+            if ($hanNop && Carbon::parse($hanNop)->lt($stageStart)) {
+                $validator->errors()->add('HanNop', "Hạn nộp không thể trước ngày bắt đầu của giai đoạn ({$startStr}).");
+            }
+        }
+
+        if ($giaiDoan->NgayKetThuc) {
+            $stageEnd = Carbon::parse($giaiDoan->NgayKetThuc)->endOfDay();
+
+            if (!$hanNop) {
+                $validator->errors()->add('HanNop', "Giai đoạn này đã ấn định thời hạn kết thúc ({$endStr}), vui lòng nhập hạn nộp cho đợt báo cáo.");
+            } elseif (Carbon::parse($hanNop)->gt($stageEnd)) {
+                $validator->errors()->add('HanNop', "Hạn nộp không thể vượt quá ngày kết thúc của giai đoạn ({$endStr}).");
+            }
+
+            if ($ngayMoNop && Carbon::parse($ngayMoNop)->gt($stageEnd)) {
+                $validator->errors()->add('NgayMoNop', "Ngày mở nộp không thể sau ngày kết thúc của giai đoạn ({$endStr}).");
+            }
+        }
+
+        if ($ngayMoNop && $hanNop && Carbon::parse($hanNop)->lt(Carbon::parse($ngayMoNop))) {
+            $validator->errors()->add('HanNop', "Hạn nộp phải bằng hoặc sau ngày mở nộp.");
+        }
+    }
+
+    /**
      * Cập nhật giai đoạn
      */
     public function updateGiaiDoan(Request $request, $id)
     {
         $giangVien = GiangVien::getLoggedInGiangVien(Auth::user());
-        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($id);
+        $giaiDoan = GiaiDoanThucHien::with(['deTai', 'dotNops'])->findOrFail($id);
         abort_unless($giangVien && $giaiDoan->deTai && $giaiDoan->deTai->MaGV === $giangVien->MaGV,
             403, 'Bạn không phải GVHD của đề tài này.');
 
-        $data = $request->validateWithBag('updateStage', [
+        $validator = Validator::make($request->all(), [
             'TenGiaiDoan' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
             'NoiDungCongViec' => 'nullable|string',
@@ -485,7 +528,39 @@ class DuyetBaoCaoController extends Controller
             'TenGiaiDoan.required' => 'Vui lòng nhập tên giai đoạn.',
         ]);
 
-        $this->progressService->capNhatGiaiDoan($giaiDoan, $data);
+        $validator->after(function ($validator) use ($request, $giaiDoan) {
+            if ($request->filled('NgayBatDau')) {
+                $newStart = Carbon::parse($request->NgayBatDau)->startOfDay();
+                $violated = $giaiDoan->dotNops->first(function ($dot) use ($newStart) {
+                    return ($dot->NgayMoNop && Carbon::parse($dot->NgayMoNop)->lt($newStart))
+                        || ($dot->HanNop && Carbon::parse($dot->HanNop)->lt($newStart));
+                });
+                if ($violated) {
+                    $startStr = Carbon::parse($request->NgayBatDau)->format('d/m/Y');
+                    $validator->errors()->add('NgayBatDau', "Không thể đổi ngày bắt đầu thành {$startStr} vì đợt nộp '{$violated->TenDotNop}' có thời gian nộp trước ngày này.");
+                }
+            }
+
+            if ($request->filled('NgayKetThuc')) {
+                $newEnd = Carbon::parse($request->NgayKetThuc)->endOfDay();
+                $violated = $giaiDoan->dotNops->first(function ($dot) use ($newEnd) {
+                    return ($dot->HanNop && Carbon::parse($dot->HanNop)->gt($newEnd))
+                        || ($dot->NgayMoNop && Carbon::parse($dot->NgayMoNop)->gt($newEnd));
+                });
+                if ($violated) {
+                    $endStr = Carbon::parse($request->NgayKetThuc)->format('d/m/Y');
+                    $validator->errors()->add('NgayKetThuc', "Không thể đổi ngày kết thúc thành {$endStr} vì đợt nộp '{$violated->TenDotNop}' có thời gian nộp sau ngày này.");
+                }
+            }
+        });
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator, 'updateStage')
+                ->withInput();
+        }
+
+        $this->progressService->capNhatGiaiDoan($giaiDoan, $validator->validated());
         return $this->redirectBackToBaocao($request, $giaiDoan->deTai, $giaiDoan->ThuTu)->with('success', "Đã cập nhật giai đoạn '{$giaiDoan->TenGiaiDoan}' thành công!");
     }
 
@@ -515,7 +590,15 @@ class DuyetBaoCaoController extends Controller
      */
     public function storeDotNop(Request $request)
     {
-        $request->validate([
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($request->input('MaGiaiDoan'));
+
+        if (!$giangVien || !$giaiDoan->deTai || $giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
+            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        }
+
+        $validator = Validator::make($request->all(), [
             'MaGiaiDoan' => 'required|integer|exists:giaidoanthuchien,MaGiaiDoan',
             'TenDotNop' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
@@ -525,17 +608,31 @@ class DuyetBaoCaoController extends Controller
             'DinhDangChoPhep' => 'nullable|string',
             'YeuCauSourceCode' => 'nullable|boolean',
             'SoLanNopToiDa' => 'nullable|integer|min:1',
+        ], [
+            'TenDotNop.required' => 'Vui lòng nhập tên đợt nộp.',
         ]);
 
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        $giaiDoan = GiaiDoanThucHien::with('deTai')->findOrFail($request->MaGiaiDoan);
+        $validator->after(function ($validator) use ($request, $giaiDoan) {
+            $this->validateDotNopDatesAgainstStage(
+                $validator,
+                $giaiDoan,
+                $request->input('NgayMoNop'),
+                $request->input('HanNop')
+            );
+        });
 
-        if ($giaiDoan->deTai->MaGV !== $giangVien->MaGV) {
-            abort(403, 'Bạn không phải GVHD của đề tài này.');
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator, 'addRound')
+                ->withInput();
         }
 
-        $dotNop = $this->progressService->taoDotNop($giaiDoan, array_merge($request->all(), [
+        $data = $validator->validated();
+        if (empty($data['NgayMoNop']) && $giaiDoan->NgayBatDau) {
+            $data['NgayMoNop'] = Carbon::parse($giaiDoan->NgayBatDau)->format('Y-m-d 08:00:00');
+        }
+
+        $dotNop = $this->progressService->taoDotNop($giaiDoan, array_merge($data, [
             'YeuCauSourceCode' => $request->boolean('YeuCauSourceCode'),
         ]));
         return $this->redirectBackToBaocao($request, $giaiDoan->deTai, $giaiDoan->ThuTu)->with('success', "Đã tạo đợt nộp '{$dotNop->TenDotNop}' thành công!");
@@ -551,20 +648,36 @@ class DuyetBaoCaoController extends Controller
         abort_unless($giangVien && $dotNop->deTai && $dotNop->deTai->MaGV === $giangVien->MaGV,
             403, 'Bạn không phải GVHD của đề tài này.');
 
-        $data = $request->validateWithBag('updateRound', [
+        $validator = Validator::make($request->all(), [
             'TenDotNop' => 'required|string|max:255',
             'MoTa' => 'nullable|string',
             'NoiDungYeuCau' => 'nullable|string',
             'NgayMoNop' => 'nullable|date',
-            'HanNop' => $request->filled('NgayMoNop') ? 'nullable|date|after_or_equal:NgayMoNop' : 'nullable|date',
+            'HanNop' => 'nullable|date',
             'DinhDangChoPhep' => 'nullable|string',
             'YeuCauSourceCode' => 'nullable|boolean',
             'SoLanNopToiDa' => 'nullable|integer|min:1',
             'TrangThai' => 'required|in:DANG_MO,TAM_DONG,DA_DONG,HOAN_THANH',
         ], [
             'TenDotNop.required' => 'Vui lòng nhập tên đợt nộp.',
-            'HanNop.after_or_equal' => 'Hạn nộp phải bằng hoặc sau ngày mở nộp.',
         ]);
+
+        $validator->after(function ($validator) use ($request, $dotNop) {
+            $this->validateDotNopDatesAgainstStage(
+                $validator,
+                $dotNop->giaiDoan,
+                $request->input('NgayMoNop'),
+                $request->input('HanNop')
+            );
+        });
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator, 'updateRound')
+                ->withInput();
+        }
+
+        $data = $validator->validated();
         $data['YeuCauSourceCode'] = $request->boolean('YeuCauSourceCode');
         $dotNop->update($data);
 

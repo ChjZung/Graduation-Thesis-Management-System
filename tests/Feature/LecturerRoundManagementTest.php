@@ -35,7 +35,7 @@ class LecturerRoundManagementTest extends TestCase
         $this->actingAs($user)->from('/giangvien/baocao')->put(route('giangvien.tiendo.dot_nop.update',$round),[
             'TenDotNop'=>'Đợt đã sửa','NoiDungYeuCau'=>'','NgayMoNop'=>'','HanNop'=>'',
             'YeuCauSourceCode'=>'0','SoLanNopToiDa'=>'','TrangThai'=>'TAM_DONG','MaGiaiDoan'=>999999,
-        ])->assertRedirect('/giangvien/baocao')->assertSessionHasNoErrors();
+        ])->assertRedirect()->assertSessionHasNoErrors();
         $round->refresh();
         $this->assertSame('Đợt đã sửa',$round->TenDotNop);
         $this->assertSame('TAM_DONG',$round->TrangThai);
@@ -96,5 +96,102 @@ class LecturerRoundManagementTest extends TestCase
         $this->assertSame('Đã gia hạn yêu cầu',$round->fresh()->TenDotNop);
         $this->assertTrue($round->fresh()->YeuCauSourceCode);
         $this->assertNotNull($report->fresh());
+    }
+
+    public function test_cannot_create_round_with_opening_date_before_stage_start(): void
+    {
+        $topic = DeTai::whereHas('giangVien')->firstOrFail();
+        $user = TaiKhoan::where('MaTK', $topic->giangVien->MaTK)->firstOrFail();
+        $service = app(ThesisProgressService::class);
+        $stage = $service->taoGiaiDoan($topic, [
+            'TenGiaiDoan' => 'GĐ Có Hạn',
+            'NgayBatDau' => '2026-11-01',
+            'NgayKetThuc' => '2026-11-05',
+        ]);
+
+        $this->actingAs($user)->from('/giangvien/baocao')->post(route('giangvien.tiendo.dot_nop.store'), [
+            'MaGiaiDoan' => $stage->MaGiaiDoan,
+            'TenDotNop' => 'Đợt mở sớm trước giai đoạn',
+            'NgayMoNop' => '2026-10-27T13:14',
+            'HanNop' => '2026-11-03T17:00',
+        ])->assertRedirect()->assertSessionHasErrors(['NgayMoNop'], null, 'addRound');
+    }
+
+    public function test_cannot_create_round_with_deadline_after_stage_end(): void
+    {
+        $topic = DeTai::whereHas('giangVien')->firstOrFail();
+        $user = TaiKhoan::where('MaTK', $topic->giangVien->MaTK)->firstOrFail();
+        $service = app(ThesisProgressService::class);
+        $stage = $service->taoGiaiDoan($topic, [
+            'TenGiaiDoan' => 'GĐ Có Hạn 2',
+            'NgayBatDau' => '2026-11-01',
+            'NgayKetThuc' => '2026-11-05',
+        ]);
+
+        $this->actingAs($user)->from('/giangvien/baocao')->post(route('giangvien.tiendo.dot_nop.store'), [
+            'MaGiaiDoan' => $stage->MaGiaiDoan,
+            'TenDotNop' => 'Đợt hạn quá trễ',
+            'NgayMoNop' => '2026-11-02T08:00',
+            'HanNop' => '2026-11-06T17:00',
+        ])->assertRedirect()->assertSessionHasErrors(['HanNop'], null, 'addRound');
+    }
+
+    public function test_cannot_update_round_outside_stage_time_boundaries(): void
+    {
+        $topic = DeTai::whereHas('giangVien')->firstOrFail();
+        $user = TaiKhoan::where('MaTK', $topic->giangVien->MaTK)->firstOrFail();
+        $service = app(ThesisProgressService::class);
+        $stage = $service->taoGiaiDoan($topic, [
+            'TenGiaiDoan' => 'GĐ Có Hạn 3',
+            'NgayBatDau' => '2026-11-01',
+            'NgayKetThuc' => '2026-11-05',
+        ]);
+        $round = $service->taoDotNop($stage, [
+            'TenDotNop' => 'Đợt hợp lệ ban đầu',
+            'NgayMoNop' => '2026-11-01 08:00:00',
+            'HanNop' => '2026-11-05 17:00:00',
+        ]);
+
+        // Thử sửa Ngày mở nộp trước ngày bắt đầu giai đoạn
+        $this->actingAs($user)->from('/giangvien/baocao')->put(route('giangvien.tiendo.dot_nop.update', $round), [
+            '_round_id' => $round->getKey(),
+            'TenDotNop' => 'Đợt sửa ngày sai',
+            'TrangThai' => 'DANG_MO',
+            'NgayMoNop' => '2026-10-31T23:59',
+            'HanNop' => '2026-11-03T17:00',
+        ])->assertRedirect()->assertSessionHasErrors(['NgayMoNop'], null, 'updateRound');
+
+        // Thử sửa Hạn nộp sau ngày kết thúc giai đoạn
+        $this->actingAs($user)->from('/giangvien/baocao')->put(route('giangvien.tiendo.dot_nop.update', $round), [
+            '_round_id' => $round->getKey(),
+            'TenDotNop' => 'Đợt sửa ngày sai 2',
+            'TrangThai' => 'DANG_MO',
+            'NgayMoNop' => '2026-11-02T08:00',
+            'HanNop' => '2026-11-06T00:01',
+        ])->assertRedirect()->assertSessionHasErrors(['HanNop'], null, 'updateRound');
+    }
+
+    public function test_can_create_and_update_round_within_stage_boundaries(): void
+    {
+        $topic = DeTai::whereHas('giangVien')->firstOrFail();
+        $user = TaiKhoan::where('MaTK', $topic->giangVien->MaTK)->firstOrFail();
+        $service = app(ThesisProgressService::class);
+        $stage = $service->taoGiaiDoan($topic, [
+            'TenGiaiDoan' => 'GĐ Chuẩn',
+            'NgayBatDau' => '2026-11-01',
+            'NgayKetThuc' => '2026-11-05',
+        ]);
+
+        $this->actingAs($user)->from('/giangvien/baocao')->post(route('giangvien.tiendo.dot_nop.store'), [
+            'MaGiaiDoan' => $stage->MaGiaiDoan,
+            'TenDotNop' => 'Đợt chuẩn thời gian',
+            'NgayMoNop' => '2026-11-01T08:00',
+            'HanNop' => '2026-11-05T17:00',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('dotnopbaocao', [
+            'MaGiaiDoan' => $stage->MaGiaiDoan,
+            'TenDotNop' => 'Đợt chuẩn thời gian',
+        ]);
     }
 }

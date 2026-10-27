@@ -608,7 +608,11 @@
                                                     style="font-size: 11px;"
                                                     title="Tạo đợt nộp báo cáo trong giai đoạn này"
                                                     data-stage-name="{{ $gd->TenGiaiDoan }}" 
-                                                    onclick="openAddDotNopModal({{ $gd->MaGiaiDoan }}, this.dataset.stageName, '{{ $nhom->MaNhom }}', {{ $gd->ThuTu }})">
+                                                    data-stage-start="{{ $gd->NgayBatDau ? \Carbon\Carbon::parse($gd->NgayBatDau)->format('Y-m-d') : '' }}"
+                                                    data-stage-end="{{ $gd->NgayKetThuc ? \Carbon\Carbon::parse($gd->NgayKetThuc)->format('Y-m-d') : '' }}"
+                                                    data-stage-start-vn="{{ $gd->NgayBatDau ? \Carbon\Carbon::parse($gd->NgayBatDau)->format('d/m/Y') : '' }}"
+                                                    data-stage-end-vn="{{ $gd->NgayKetThuc ? \Carbon\Carbon::parse($gd->NgayKetThuc)->format('d/m/Y') : '' }}"
+                                                    onclick="openAddDotNopModal({{ $gd->MaGiaiDoan }}, this.dataset.stageName, '{{ $nhom->MaNhom }}', {{ $gd->ThuTu }}, this.dataset.stageStart, this.dataset.stageEnd, this.dataset.stageStartVn, this.dataset.stageEndVn)">
                                                 <i class="fa-solid fa-plus me-1"></i>Thêm Đợt Nộp
                                             </button>
                                             <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 10.5px;">
@@ -680,6 +684,10 @@
                                                                         data-thutu="{{ $gd->ThuTu }}"
                                                                         data-round="{{ json_encode($editRoundData, JSON_UNESCAPED_UNICODE) }}"
                                                                         data-stage-name="{{ $gd->TenGiaiDoan }}"
+                                                                        data-stage-start="{{ $gd->NgayBatDau ? \Carbon\Carbon::parse($gd->NgayBatDau)->format('Y-m-d') : '' }}"
+                                                                        data-stage-end="{{ $gd->NgayKetThuc ? \Carbon\Carbon::parse($gd->NgayKetThuc)->format('Y-m-d') : '' }}"
+                                                                        data-stage-start-vn="{{ $gd->NgayBatDau ? \Carbon\Carbon::parse($gd->NgayBatDau)->format('d/m/Y') : '' }}"
+                                                                        data-stage-end-vn="{{ $gd->NgayKetThuc ? \Carbon\Carbon::parse($gd->NgayKetThuc)->format('d/m/Y') : '' }}"
                                                                         data-update-url="{{ route('giangvien.tiendo.dot_nop.update', $dot->MaDotNop) }}"
                                                                         onclick="openEditDotNopModal(this)">
                                                                     <i class="fa-solid fa-pen-to-square me-1"></i>Sửa đợt
@@ -916,7 +924,7 @@
 <div class="modal fade" id="modalAddDotNop" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
-            <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.store') }}">
+            <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.store') }}" id="formAddDotNop" onsubmit="return validateRoundFormDates(this);">
                 @csrf
                 <input type="hidden" name="nhom" id="inputAddDotNopNhom">
                 <input type="hidden" name="gd" id="inputAddDotNopThuTu">
@@ -930,9 +938,24 @@
                 </div>
 
                 <div class="modal-body px-4 py-3">
+                    <div id="addRoundErrors" class="alert alert-danger small {{ $errors->addRound->any() ? '' : 'd-none' }}">
+                        @foreach($errors->addRound->all() as $message)<div>{{ $message }}</div>@endforeach
+                    </div>
+
                     <div class="alert alert-light border small mb-3">
-                        <span class="text-muted">Thuộc giai đoạn:</span>
-                        <strong class="text-dark d-block" id="labelAddDotNopTenGiaiDoan">---</strong>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <span class="text-muted">Thuộc giai đoạn:</span>
+                                <strong class="text-dark d-block" id="labelAddDotNopTenGiaiDoan">---</strong>
+                            </div>
+                            <div class="text-end" id="boxAddDotNopThoiGianGiaiDoan">
+                                <span class="text-muted d-block" style="font-size: 11px;">Thời hạn giai đoạn:</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="labelAddDotNopThoiGianGiaiDoan">Chưa ấn định</span>
+                            </div>
+                        </div>
+                        <div id="hintAddDotNopThoiGian" class="text-muted fst-italic mt-1" style="font-size: 11px;">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>Đợt nộp phải có thời gian mở nộp và hạn nộp nằm trong khung thời gian của giai đoạn.
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -944,12 +967,12 @@
                         <div class="col-6">
                             <label class="form-label fw-bold small text-dark">Ngày mở nộp</label>
                             <input type="datetime-local" name="NgayMoNop" id="inputAddDotNopNgayMoNop" class="form-control form-control-sm">
-                            <div class="form-text small" style="font-size: 11px;">Mặc định mở ngay thời điểm tạo.</div>
+                            <div class="form-text small" style="font-size: 11px;" id="helpAddDotNopNgayMo">Mặc định mở theo thời gian giai đoạn.</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small text-dark">Hạn nộp (Deadline)</label>
                             <input type="datetime-local" name="HanNop" id="inputAddDotNopHanNop" class="form-control form-control-sm">
-                            <div class="form-text small" style="font-size: 11px;">Hạn chót nhận bài của sinh viên.</div>
+                            <div class="form-text small" style="font-size: 11px;" id="helpAddDotNopHanNop">Không vượt quá ngày kết thúc giai đoạn.</div>
                         </div>
                     </div>
 
@@ -980,7 +1003,7 @@
 <div class="modal fade" id="modalEditDotNop" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow rounded-4">
-            <form method="POST" id="formEditDotNop" class="d-flex flex-column overflow-hidden" style="max-height:100%;">
+            <form method="POST" id="formEditDotNop" class="d-flex flex-column overflow-hidden" style="max-height:100%;" onsubmit="return validateRoundFormDates(this);">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="nhom" id="inputEditDotNopNhom">
@@ -999,8 +1022,19 @@
                         @foreach($errors->updateRound->all() as $message)<div>{{ $message }}</div>@endforeach
                     </div>
                     <div class="alert alert-light border small mb-3">
-                        <span class="text-muted">Thuộc giai đoạn:</span>
-                        <strong class="text-dark d-block" id="labelEditDotNopTenGiaiDoan">---</strong>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <span class="text-muted">Thuộc giai đoạn:</span>
+                                <strong class="text-dark d-block" id="labelEditDotNopTenGiaiDoan">---</strong>
+                            </div>
+                            <div class="text-end" id="boxEditDotNopThoiGianGiaiDoan">
+                                <span class="text-muted d-block" style="font-size: 11px;">Thời hạn giai đoạn:</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="labelEditDotNopThoiGianGiaiDoan">Chưa ấn định</span>
+                            </div>
+                        </div>
+                        <div id="hintEditDotNopThoiGian" class="text-muted fst-italic mt-1" style="font-size: 11px;">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>Đợt nộp phải có thời gian mở nộp và hạn nộp nằm trong khung thời gian của giai đoạn.
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -1011,11 +1045,13 @@
                     <div class="row g-2 mb-3">
                         <div class="col-sm-6">
                             <label class="form-label fw-bold small text-dark">Ngày mở nộp</label>
-                            <input type="datetime-local" name="NgayMoNop" class="form-control form-control-sm">
+                            <input type="datetime-local" name="NgayMoNop" id="inputEditDotNopNgayMoNop" class="form-control form-control-sm">
+                            <div class="form-text small" style="font-size: 11px;" id="helpEditDotNopNgayMo">Không trước ngày bắt đầu giai đoạn.</div>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-bold small text-dark">Hạn nộp (Deadline)</label>
-                            <input type="datetime-local" name="HanNop" class="form-control form-control-sm">
+                            <input type="datetime-local" name="HanNop" id="inputEditDotNopHanNop" class="form-control form-control-sm">
+                            <div class="form-text small" style="font-size: 11px;" id="helpEditDotNopHanNop">Không sau ngày kết thúc giai đoạn.</div>
                         </div>
                     </div>
 
@@ -1222,25 +1258,145 @@ window.openEditGiaiDoanModal = function(button, restoredValues = null) {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditGiaiDoan')).show();
 };
 
+// Validation thời gian đợt nộp theo giai đoạn (Client-side)
+window.validateRoundFormDates = function(form) {
+    const stageStart = form.dataset.stageStart || '';
+    const stageEnd = form.dataset.stageEnd || '';
+    const stageStartVn = form.dataset.stageStartVn || '';
+    const stageEndVn = form.dataset.stageEndVn || '';
+    const inputMo = form.querySelector('[name="NgayMoNop"]');
+    const inputHan = form.querySelector('[name="HanNop"]');
+
+    const moVal = inputMo ? inputMo.value : '';
+    const hanVal = inputHan ? inputHan.value : '';
+
+    if (stageStart) {
+        const startBound = `${stageStart}T00:00`;
+        if (moVal && moVal < startBound) {
+            alert(`Ngày mở nộp không thể trước ngày bắt đầu của giai đoạn (${stageStartVn})!`);
+            inputMo.focus();
+            return false;
+        }
+        if (hanVal && hanVal < startBound) {
+            alert(`Hạn nộp không thể trước ngày bắt đầu của giai đoạn (${stageStartVn})!`);
+            inputHan.focus();
+            return false;
+        }
+    }
+
+    if (stageEnd) {
+        const endBound = `${stageEnd}T23:59`;
+        if (moVal && moVal > endBound) {
+            alert(`Ngày mở nộp không thể sau ngày kết thúc của giai đoạn (${stageEndVn})!`);
+            inputMo.focus();
+            return false;
+        }
+        if (!hanVal) {
+            alert(`Giai đoạn này đã ấn định ngày kết thúc (${stageEndVn}), vui lòng nhập hạn nộp cho đợt báo cáo!`);
+            inputHan.focus();
+            return false;
+        }
+        if (hanVal > endBound) {
+            alert(`Hạn nộp không thể vượt quá ngày kết thúc của giai đoạn (${stageEndVn})!`);
+            inputHan.focus();
+            return false;
+        }
+    }
+
+    if (moVal && hanVal && hanVal < moVal) {
+        alert('Hạn nộp phải bằng hoặc sau ngày mở nộp!');
+        inputHan.focus();
+        return false;
+    }
+
+    return true;
+};
+
 // Modal Thêm Đợt Nộp
-window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan, maNhom = null, thuTu = null) {
-    document.querySelector('#modalAddDotNop form')?.reset();
+window.openAddDotNopModal = function(maGiaiDoan, tenGiaiDoan, maNhom = null, thuTu = null, stageStart = '', stageEnd = '', stageStartVn = '', stageEndVn = '') {
+    const form = document.getElementById('formAddDotNop') || document.querySelector('#modalAddDotNop form');
+    form?.reset();
     const input = document.getElementById('inputAddDotNopMaGiaiDoan');
     const label = document.getElementById('labelAddDotNopTenGiaiDoan');
     const inputNhom = document.getElementById('inputAddDotNopNhom');
     const inputThuTu = document.getElementById('inputAddDotNopThuTu');
+    const labelTime = document.getElementById('labelAddDotNopThoiGianGiaiDoan');
 
     if (input) input.value = maGiaiDoan;
     if (label) label.textContent = tenGiaiDoan;
     if (inputNhom && maNhom) inputNhom.value = maNhom;
     if (inputThuTu && thuTu) inputThuTu.value = thuTu;
 
-    // Tự động điền Ngày mở nộp = thời điểm hiện tại để mở nộp ngay
+    // Hiển thị khung thời gian giai đoạn
+    let timeText = 'Chưa ấn định';
+    if (stageStartVn && stageEndVn) {
+        timeText = `${stageStartVn} - ${stageEndVn}`;
+    } else if (stageStartVn) {
+        timeText = `Từ ${stageStartVn}`;
+    } else if (stageEndVn) {
+        timeText = `Đến ${stageEndVn}`;
+    }
+    if (labelTime) {
+        labelTime.textContent = timeText;
+        labelTime.className = (stageStartVn || stageEndVn)
+            ? 'badge bg-primary-subtle text-primary border border-primary-subtle'
+            : 'badge bg-secondary-subtle text-secondary border border-secondary-subtle';
+    }
+
+    const inputMo = document.getElementById('inputAddDotNopNgayMoNop');
+    const inputHan = document.getElementById('inputAddDotNopHanNop');
+
+    // Thiết lập giới hạn min, max cho input datetime
+    const minBound = stageStart ? `${stageStart}T00:00` : '';
+    const maxBound = stageEnd ? `${stageEnd}T23:59` : '';
+
+    if (inputMo) {
+        inputMo.min = minBound;
+        inputMo.max = maxBound;
+    }
+    if (inputHan) {
+        inputHan.min = minBound;
+        inputHan.max = maxBound;
+    }
+
+    // Tự động điền ngày mở nộp hợp lệ
     const now = new Date();
     const pad = (n) => String(n).padStart(2, '0');
     const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const inputMo = document.getElementById('inputAddDotNopNgayMoNop');
-    if (inputMo) inputMo.value = nowStr;
+
+    if (inputMo) {
+        if (stageStart && nowStr < `${stageStart}T00:00`) {
+            inputMo.value = `${stageStart}T08:00`;
+        } else if (stageEnd && nowStr > `${stageEnd}T23:59`) {
+            inputMo.value = `${stageStart || stageEnd}T08:00`;
+        } else {
+            inputMo.value = nowStr;
+        }
+    }
+
+    // Gợi ý hạn nộp mặc định là cuối giai đoạn nếu có
+    if (inputHan && stageEnd) {
+        inputHan.value = `${stageEnd}T23:59`;
+    }
+
+    if (inputMo && inputHan) {
+        inputMo.onchange = function() {
+            if (inputMo.value) {
+                inputHan.min = (minBound && minBound > inputMo.value) ? minBound : inputMo.value;
+            } else {
+                inputHan.min = minBound;
+            }
+        };
+    }
+
+    if (form) {
+        form.dataset.stageStart = stageStart;
+        form.dataset.stageEnd = stageEnd;
+        form.dataset.stageStartVn = stageStartVn;
+        form.dataset.stageEndVn = stageEndVn;
+    }
+
+    document.getElementById('addRoundErrors')?.classList.add('d-none');
 
     const modalEl = document.getElementById('modalAddDotNop');
     if (modalEl) {
@@ -1263,11 +1419,66 @@ window.openEditDotNopModal = function(button, restoredValues = null) {
         document.getElementById('inputEditDotNopThuTu').value = button.dataset.thutu;
     }
     document.getElementById('labelEditDotNopTenGiaiDoan').textContent = button.dataset.stageName;
+
+    const stageStart = button.dataset.stageStart || '';
+    const stageEnd = button.dataset.stageEnd || '';
+    const stageStartVn = button.dataset.stageStartVn || '';
+    const stageEndVn = button.dataset.stageEndVn || '';
+
+    // Hiển thị khung thời gian giai đoạn
+    let timeText = 'Chưa ấn định';
+    if (stageStartVn && stageEndVn) {
+        timeText = `${stageStartVn} - ${stageEndVn}`;
+    } else if (stageStartVn) {
+        timeText = `Từ ${stageStartVn}`;
+    } else if (stageEndVn) {
+        timeText = `Đến ${stageEndVn}`;
+    }
+    const labelTime = document.getElementById('labelEditDotNopThoiGianGiaiDoan');
+    if (labelTime) {
+        labelTime.textContent = timeText;
+        labelTime.className = (stageStartVn || stageEndVn)
+            ? 'badge bg-primary-subtle text-primary border border-primary-subtle'
+            : 'badge bg-secondary-subtle text-secondary border border-secondary-subtle';
+    }
+
+    const inputMo = document.getElementById('inputEditDotNopNgayMoNop');
+    const inputHan = document.getElementById('inputEditDotNopHanNop');
+
+    // Thiết lập giới hạn min, max cho input datetime
+    const minBound = stageStart ? `${stageStart}T00:00` : '';
+    const maxBound = stageEnd ? `${stageEnd}T23:59` : '';
+
+    if (inputMo) {
+        inputMo.min = minBound;
+        inputMo.max = maxBound;
+    }
+    if (inputHan) {
+        inputHan.min = minBound;
+        inputHan.max = maxBound;
+    }
+
     ['TenDotNop', 'NoiDungYeuCau', 'NgayMoNop', 'HanNop', 'TrangThai', 'SoLanNopToiDa'].forEach(name => {
         if (form.elements.namedItem(name)) {
             form.elements.namedItem(name).value = values[name] ?? '';
         }
     });
+
+    if (inputMo && inputHan) {
+        inputMo.onchange = function() {
+            if (inputMo.value) {
+                inputHan.min = (minBound && minBound > inputMo.value) ? minBound : inputMo.value;
+            } else {
+                inputHan.min = minBound;
+            }
+        };
+    }
+
+    form.dataset.stageStart = stageStart;
+    form.dataset.stageEnd = stageEnd;
+    form.dataset.stageStartVn = stageStartVn;
+    form.dataset.stageEndVn = stageEndVn;
+
     document.getElementById('switchEditYeuCauCode').checked = [true, 1, '1'].includes(values.YeuCauSourceCode);
     document.getElementById('editRoundErrors').classList.toggle('d-none', !restoredValues);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditDotNop')).show();
@@ -1356,6 +1567,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const panel = roundBtn.closest('[id^="panel-group-"]');
             if (panel) selectGroup(panel.id.replace('panel-group-', ''), true);
             openEditDotNopModal(roundBtn, @json(old()));
+        }
+    @endif
+
+    @if($errors->addRound->any())
+        const addStageId = @json((string) old('MaGiaiDoan'));
+        const addBtn = Array.from(document.querySelectorAll('[onclick*="openAddDotNopModal"]')).find(el => el.getAttribute('onclick')?.includes(addStageId));
+        if (addBtn) {
+            const panel = addBtn.closest('[id^="panel-group-"]');
+            if (panel) selectGroup(panel.id.replace('panel-group-', ''), true);
+            addBtn.click();
+            const addForm = document.querySelector('#modalAddDotNop form');
+            if (addForm) {
+                const oldVals = @json(old());
+                ['TenDotNop', 'NoiDungYeuCau', 'NgayMoNop', 'HanNop', 'SoLanNopToiDa'].forEach(name => {
+                    const el = addForm.elements.namedItem(name);
+                    if (el && oldVals[name] !== undefined) {
+                        el.value = oldVals[name];
+                    }
+                });
+                document.getElementById('addRoundErrors')?.classList.remove('d-none');
+            }
         }
     @endif
 });

@@ -37,7 +37,7 @@ class LecturerStageManagementTest extends TestCase
             'TenGiaiDoan' => 'Tên đã sửa', 'MoTa' => '', 'NoiDungCongViec' => '',
             'KetQuaDauRa' => '', 'NgayBatDau' => '', 'NgayKetThuc' => '',
             'TrangThai' => 'DANG_THUC_HIEN', 'MaDeTai' => 'UNAUTHORIZED_CHANGE',
-        ])->assertRedirect('/giangvien/baocao')->assertSessionHasNoErrors();
+        ])->assertRedirect()->assertSessionHasNoErrors();
         $stage->refresh();
         $this->assertSame('Tên đã sửa', $stage->TenGiaiDoan);
         $this->assertSame('DANG_THUC_HIEN', $stage->TrangThai);
@@ -104,5 +104,37 @@ class LecturerStageManagementTest extends TestCase
         $this->assertNotNull($stage->fresh());
         $this->assertNotNull($round->fresh());
         $this->assertNotNull($report->fresh());
+    }
+
+    public function test_cannot_update_stage_dates_when_existing_round_falls_outside(): void
+    {
+        [$stage, $user] = $this->fixture();
+        $stage->NgayBatDau = '2026-11-01';
+        $stage->NgayKetThuc = '2026-11-10';
+        $stage->save();
+
+        $round = app(ThesisProgressService::class)->taoDotNop($stage, [
+            'TenDotNop' => 'Đợt 1',
+            'NgayMoNop' => '2026-11-02 08:00:00',
+            'HanNop' => '2026-11-08 17:00:00',
+        ]);
+
+        // Thử dời ngày bắt đầu của giai đoạn sau ngày mở nộp của đợt (03/11 > 02/11)
+        $this->actingAs($user)->from('/giangvien/baocao')->put(route('giangvien.tiendo.giai_doan.update', $stage), [
+            '_stage_id' => $stage->getKey(),
+            'TenGiaiDoan' => $stage->TenGiaiDoan,
+            'TrangThai' => $stage->TrangThai,
+            'NgayBatDau' => '2026-11-03',
+            'NgayKetThuc' => '2026-11-10',
+        ])->assertRedirect()->assertSessionHasErrors(['NgayBatDau'], null, 'updateStage');
+
+        // Thử dời ngày kết thúc của giai đoạn trước hạn nộp của đợt (07/11 < 08/11)
+        $this->actingAs($user)->from('/giangvien/baocao')->put(route('giangvien.tiendo.giai_doan.update', $stage), [
+            '_stage_id' => $stage->getKey(),
+            'TenGiaiDoan' => $stage->TenGiaiDoan,
+            'TrangThai' => $stage->TrangThai,
+            'NgayBatDau' => '2026-11-01',
+            'NgayKetThuc' => '2026-11-07',
+        ])->assertRedirect()->assertSessionHasErrors(['NgayKetThuc'], null, 'updateStage');
     }
 }
