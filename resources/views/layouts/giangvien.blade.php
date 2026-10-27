@@ -101,7 +101,7 @@
                     <a href="{{ route('giangvien.phanbien.index') }}" class="submenu-link {{ request()->routeIs('giangvien.phanbien.*') ? 'active-sub' : '' }}">
                         <span>Phản biện đề cương</span>
                         @if($countDeCuongCanPB > 0)
-                            <span class="badge bg-warning text-dark rounded-pill" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countDeCuongCanPB }}</span>
+                            <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 11px !important; padding: 2px 6px !important;">{{ $countDeCuongCanPB }}</span>
                         @endif
                     </a>
                 </div>
