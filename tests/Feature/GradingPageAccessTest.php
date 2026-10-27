@@ -29,7 +29,9 @@ class GradingPageAccessTest extends TestCase
     {
         $gv=GiangVien::findOrFail('GV00000023');
         $user=TaiKhoan::where('MaTK',$gv->MaTK)->firstOrFail();
-        $this->actingAs($user)->get(route('giangvien.chamdiem.index'))->assertOk();
+        $this->actingAs($user)->get(route('giangvien.chamdiem.index'))
+            ->assertRedirect(route('giangvien.hoidong.index', ['tab' => 'chamdiem']));
+        $this->get(route('giangvien.hoidong.index', ['tab' => 'chamdiem']))->assertOk();
     }
 
     public function test_privileged_lecturer_without_council_does_not_render_null_dossier_modal(): void
@@ -38,16 +40,20 @@ class GradingPageAccessTest extends TestCase
         $user=TaiKhoan::where('MaTK',$gv->MaTK)->firstOrFail();
         $user->MaVaiTro=VaiTro::where('TenVaiTro','Trưởng khoa')->firstOrFail()->MaVaiTro;$user->save();
         ThanhVienHoiDong::where('MaGV',$gv->MaGV)->delete();
-        $this->actingAs($user)->get(route('giangvien.chamdiem.index'))->assertOk()
+        $this->actingAs($user)->get(route('giangvien.hoidong.index', ['tab' => 'chamdiem']))->assertOk()
             ->assertDontSee('id="modalCaiDatChucNang"',false);
     }
 
     public function test_chair_can_save_functional_requirements_and_reload_grading_page(): void
     {
         $dossier=\App\Models\HoSoBaoVe::whereNotNull('MaHoiDong')->firstOrFail();
-        $chair=ThanhVienHoiDong::where('MaHoiDong',$dossier->MaHoiDong)
-            ->whereIn('VaiTro',['Chủ tịch','Chủ tịch Hội đồng'])->firstOrFail();
-        $gv=GiangVien::findOrFail($chair->MaGV);
+        $secretary=ThanhVienHoiDong::where('MaHoiDong',$dossier->MaHoiDong)
+            ->whereIn('VaiTro',['Thư ký','Ủy viên thư ký'])->first();
+        if (!$secretary) {
+            $secretary=ThanhVienHoiDong::where('MaHoiDong',$dossier->MaHoiDong)->firstOrFail();
+            $secretary->update(['VaiTro'=>'Thư ký']);
+        }
+        $gv=GiangVien::findOrFail($secretary->MaGV);
         $user=TaiKhoan::where('MaTK',$gv->MaTK)->firstOrFail();
         $requirements="+ Chức năng 01: Quản lý đề tài và xét duyệt đề cương\n  * Yêu cầu 1: Giảng viên đề xuất đề tài.";
         $this->actingAs($user)->post(route('giangvien.chamdiem.capNhatChucNang'),[
@@ -55,7 +61,7 @@ class GradingPageAccessTest extends TestCase
             'TieuChiChucNang'=>$requirements,
         ])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame($requirements,$dossier->fresh()->TieuChiChucNang);
-        $this->get(route('giangvien.chamdiem.index',['hd'=>$dossier->MaHoiDong,'hoso'=>$dossier->MaHoSo]))
+        $this->get(route('giangvien.hoidong.index',['hd'=>$dossier->MaHoiDong,'hoso'=>$dossier->MaHoSo,'tab'=>'chamdiem']))
             ->assertOk()->assertSee('Giảng viên đề xuất đề tài.');
     }
 }

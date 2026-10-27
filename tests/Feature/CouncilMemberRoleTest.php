@@ -23,7 +23,17 @@ class CouncilMemberRoleTest extends TestCase
         $source=HoSoBaoVe::with('deTai')->whereHas('deTai')->firstOrFail();
         $report=$source->replicate(['id']);
         $report->MaHoSo='TEST_ROLE_'.bin2hex(random_bytes(4));
-        $report->MaHoiDong=null;$report->save();
+        $report->MaHoiDong=null;
+        $report->XacNhanGVHD='Đã duyệt';
+        $report->TrangThai='Đã phê duyệt';
+        $report->save();
+        \App\Models\TepHoSoBaoVe::create([
+            'MaTep'        => 'TEP_' . bin2hex(random_bytes(4)),
+            'MaHoSo'       => $report->MaHoSo,
+            'TenTep'       => 'Báo cáo toàn văn.pdf',
+            'LoaiTep'      => 'Khóa luận toàn văn',
+            'DuongDanFile' => 'hoso/test.pdf',
+        ]);
         $lecturers=GiangVien::where('MaGV','!=',$source->deTai->MaGV)->limit(5)->pluck('MaGV');
         $this->assertCount(5,$lecturers);
         $roles=['Chủ tịch','Ủy viên phản biện','Ủy viên thư ký','Ủy viên 1','Ủy viên'];

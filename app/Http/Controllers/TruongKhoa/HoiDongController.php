@@ -111,24 +111,27 @@ class HoiDongController extends Controller
 
         // 1. Học kỳ & Ngành
         $hocKys = HocKy::orderBy('created_at', 'desc')->get();
+        $hocKyHienTai = HocKy::getHocKyHienTai();
+        $selectedMaHocKy = old('MaHocKy', $hocKyHienTai?->MaHocKy ?? $hocKys->first()?->MaHocKy);
+
         $nganhs = Nganh::where('MaKhoa', $khoa->MaKhoa)->get();
         if ($nganhs->isEmpty()) {
             $nganhs = Nganh::all();
         }
         $boMons = BoMon::where('MaKhoa', $khoa->MaKhoa)->get();
 
-        // 2. Toàn bộ Giảng viên thuộc Khoa (Không giới hạn bộ môn)
-        $giangViens = GiangVien::with('boMon')
-            ->whereHas('boMon', fn($bm) => $bm->where('MaKhoa', $khoa->MaKhoa))
-            ->orderBy('HoTen')
-            ->get();
+        // 2. Toàn bộ Giảng viên thuộc Khoa (Nhóm theo Bộ môn và sắp xếp theo Học vị -> Tên tiếng Việt)
+        $groupedGiangViens = GiangVien::getGroupedByBoMonForSelect($khoa->MaKhoa);
+        $giangViens = $groupedGiangViens->flatten(1);
 
-        if ($giangViens->isEmpty()) {
-            $giangViens = GiangVien::with('boMon')->orderBy('HoTen')->get();
-        }
+        // Thống kê số hội đồng của giảng viên cho toàn bộ các học kỳ (phục vụ đổi học kỳ tức thì trên JS)
+        $assignmentService = app(\App\Services\CouncilAssignmentService::class);
+        $allSemestersFacultyStats = $assignmentService->getAllSemestersFacultyCouncilStats();
+        $currentSemesterFacultyStats = $allSemestersFacultyStats[$selectedMaHocKy]['faculties'] ?? [];
+        $currentTenHocKy = $allSemestersFacultyStats[$selectedMaHocKy]['tenHocKy'] ?? ($hocKyHienTai?->TenDayDu ?? 'Học kỳ');
 
         // 3. Danh sách Đề tài / Nhóm sinh viên đủ điều kiện tham gia bảo vệ
-        // Bao gồm hồ sơ đã duyệt/đủ điều kiện và chưa gắn vào Hội đồng nào
+        // Chỉ cho phép chọn nhóm vừa "Đã duyệt bảo vệ" vừa có báo cáo toàn văn hợp lệ
         $danhSachHoSo = HoSoBaoVe::with([
             'nhom.truongNhom.nganh',
             'nhom.truongNhom.lop.nganh',
@@ -137,56 +140,58 @@ class HoiDongController extends Controller
             'nhom.deTai.nganh',
             'nhom.deTai.giangVien.boMon',
             'hoiDong',
+            'tepHoSoBaoVes',
+            'phienBans',
         ])
         ->whereHas('nhom.deTai')
-        ->where(function($q) {
-            $q->whereIn('TrangThai', ['Đủ điều kiện bảo vệ', 'Đã phê duyệt', 'Đã nộp'])
-              ->orWhere('XacNhanGVHD', 'Đã duyệt');
-        })
-        ->get();
+        ->duDieuKienVaoHoiDong()
+        ->get()
+        ->filter(fn($hs) => $hs->hasBaoCaoToanVan());
 
         // Gợi ý mã Hội đồng tiếp theo
         $nextMaHoiDong = IdGenerator::nextHoiDong();
 
         // Thống kê phân công hội đồng trước khi thành lập
-        $thongKeTruocPhanCong = app(\App\Services\CouncilAssignmentService::class)
-            ->thongKeTruocPhanCong($hocKys->first()?->MaHocKy, $khoa->MaKhoa);
+        $thongKeTruocPhanCong = $assignmentService->thongKeTruocPhanCong($selectedMaHocKy, $khoa->MaKhoa);
+
+        // 4. Lịch bảo vệ của các Hội đồng đang hoạt động (phục vụ kiểm tra trùng lịch bảo vệ của giảng viên)
+        $existingCouncils = HoiDong::with(['thanhViens.giangVien'])
+            ->where('TrangThai', '!=', 'Đã hủy')
+            ->whereNotNull('ThoiGianBatDau')
+            ->whereNotNull('ThoiGianKetThuc')
+            ->get()
+            ->map(function($hd) {
+                return [
+                    'MaHoiDong'       => $hd->MaHoiDong,
+                    'TenHoiDong'      => $hd->TenHoiDong,
+                    'ThoiGianBatDau'  => $hd->ThoiGianBatDau ? Carbon::parse($hd->ThoiGianBatDau)->toISOString() : null,
+                    'ThoiGianKetThuc' => $hd->ThoiGianKetThuc ? Carbon::parse($hd->ThoiGianKetThuc)->toISOString() : null,
+                    'DiaDiem'         => $hd->DiaDiem,
+                    'thanh_viens'     => $hd->thanhViens->map(fn($tv) => [
+                        'MaGV'   => $tv->MaGV,
+                        'VaiTro' => $tv->VaiTro,
+                        'HoTen'  => $tv->giangVien?->HoTen ?? $tv->MaGV,
+                    ])->values()->toArray(),
+                ];
+            });
 
         return view('truongkhoa.hoidong.create', compact(
             'khoa',
             'hocKys',
+            'hocKyHienTai',
+            'selectedMaHocKy',
+            'currentTenHocKy',
+            'currentSemesterFacultyStats',
+            'allSemestersFacultyStats',
             'nganhs',
             'boMons',
             'giangViens',
+            'groupedGiangViens',
             'danhSachHoSo',
             'nextMaHoiDong',
-            'thongKeTruocPhanCong'
+            'thongKeTruocPhanCong',
+            'existingCouncils'
         ));
-    }
-
-    /**
-     * API Gợi ý phân công cân bằng thành viên Hội đồng
-     */
-    public function deXuatThanhVien(Request $request)
-    {
-        $request->validate([
-            'ThoiGianBatDau'  => 'required',
-            'ThoiGianKetThuc' => 'required',
-            'danh_sach_ho_so' => 'required|array|min:1',
-            'MaHocKy'         => 'nullable|string',
-        ]);
-
-        $khoa = $this->getKhoa();
-        $assignmentService = app(\App\Services\CouncilAssignmentService::class);
-        $result = $assignmentService->deXuatThanhVienHoiDong(
-            $request->ThoiGianBatDau,
-            $request->ThoiGianKetThuc,
-            $request->danh_sach_ho_so,
-            $request->MaHocKy,
-            $khoa->MaKhoa
-        );
-
-        return response()->json($result);
     }
 
     /**
@@ -228,9 +233,9 @@ class HoiDongController extends Controller
             'danh_sach_ho_so' => 'required|array|min:1',
             'danh_sach_ho_so.*' => 'required|exists:HoSoBaoVe,MaHoSo',
 
-            // Bước 3: Thành viên hội đồng (tối thiểu 3 giảng viên)
-            'thanh_viens'     => 'required|array|min:3',
-            'thanh_viens.*.MaGV'   => 'required|exists:GiangVien,MaGV',
+            // Bước 3: Thành viên hội đồng (tối thiểu 3 giảng viên, mỗi giảng viên duy nhất 1 chức vụ)
+            'thanh_viens'          => 'required|array|min:3',
+            'thanh_viens.*.MaGV'   => 'required|exists:GiangVien,MaGV|distinct',
             'thanh_viens.*.VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
         ], [
             'TenHoiDong.required'         => 'Vui lòng nhập tên Hội đồng bảo vệ.',
@@ -248,8 +253,23 @@ class HoiDongController extends Controller
             'thanh_viens.*.VaiTro.in'     => 'Vai trò thành viên hội đồng không hợp lệ. Vui lòng chọn đúng chức danh.',
             'thanh_viens.*.VaiTro.required' => 'Vui lòng chọn vai trò cho thành viên hội đồng.',
             'thanh_viens.*.MaGV.required' => 'Vui lòng chọn giảng viên cho mỗi chức danh.',
-
+            'thanh_viens.*.MaGV.distinct' => 'Mỗi giảng viên chỉ được giữ một chức vụ trong cùng một hội đồng bảo vệ.',
         ]);
+
+        // Kiểm tra điều kiện hồ sơ đưa vào Hội đồng: Phải đã được duyệt bảo vệ VÀ có báo cáo toàn văn
+        foreach ($request->danh_sach_ho_so as $maHoSo) {
+            $hs = HoSoBaoVe::with(['tepHoSoBaoVes', 'phienBans'])->where('MaHoSo', $maHoSo)->first();
+            if (!$hs || !$hs->hasBaoCaoToanVan()) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['danh_sach_ho_so' => "Hồ sơ '{$maHoSo}' chưa có báo cáo toàn văn hợp lệ. Không thể đưa vào Hội đồng bảo vệ."]);
+            }
+            if ($hs->XacNhanGVHD !== 'Đã duyệt' && !in_array($hs->TrangThai, ['Đủ điều kiện bảo vệ', 'Đã phê duyệt', 'Đã nộp', 'Đã phân công'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['danh_sach_ho_so' => "Hồ sơ '{$maHoSo}' chưa được Giảng viên hướng dẫn duyệt bảo vệ. Không thể đưa vào Hội đồng."]);
+            }
+        }
 
         // Kiểm tra cơ cấu thành viên bắt buộc
         $vaiTros = array_map(function($tv) {
@@ -270,10 +290,27 @@ class HoiDongController extends Controller
             return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Phản biện (hoặc Ủy viên phản biện).']);
         }
 
-        // Kiểm tra không phân công trùng lặp 1 giảng viên vào nhiều vị trí trong cùng Hội đồng
+        // Kiểm tra không phân công trùng lặp 1 giảng viên vào nhiều vị trí trong cùng Hội đồng (Báo lỗi chi tiết từng người và vai trò)
         $maGVs = array_column($request->thanh_viens, 'MaGV');
-        if (count($maGVs) !== count(array_unique($maGVs))) {
-            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Không được phân công cùng một Giảng viên vào nhiều chức danh trong cùng một Hội đồng.']);
+        $gvCounts = array_count_values(array_filter($maGVs));
+        $duplicates = array_keys(array_filter($gvCounts, fn($count) => $count > 1));
+
+        if (!empty($duplicates)) {
+            $conflictDetails = [];
+            foreach ($duplicates as $dupMa) {
+                $gv = GiangVien::find($dupMa);
+                $tenGV = $gv ? ($gv->danh_xung_option ?? $gv->HoTen) : $dupMa;
+                $roles = collect($request->thanh_viens)
+                    ->where('MaGV', $dupMa)
+                    ->pluck('VaiTro')
+                    ->map(fn($v) => trim($v))
+                    ->unique()
+                    ->join(' và ');
+                $conflictDetails[] = "{$tenGV} bị phân công trùng lặp ở các chức danh: {$roles}";
+            }
+            return redirect()->back()->withInput()->withErrors([
+                'thanh_viens' => 'Không được phân công cùng một Giảng viên vào nhiều chức danh trong cùng một Hội đồng. Phát hiện vi phạm: ' . implode('; ', $conflictDetails) . '.'
+            ]);
         }
 
         // Kiểm tra quy định: GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn
@@ -292,6 +329,40 @@ class HoiDongController extends Controller
         if (!empty($gvhdXungDot)) {
             return redirect()->back()->withInput()->withErrors([
                 'thanh_viens' => 'Theo quy chế đào tạo, Giảng viên hướng dẫn KHÔNG ĐƯỢC tham gia Hội đồng chấm nhóm do mình hướng dẫn. Phát hiện vi phạm: ' . implode('; ', $gvhdXungDot) . '.'
+            ]);
+        }
+
+        // Kiểm tra trùng lịch bảo vệ: Một giảng viên có thể tham gia nhiều hội đồng nhưng KHÔNG ĐƯỢC trùng lịch
+        $start = Carbon::parse($request->ThoiGianBatDau);
+        $end = Carbon::parse($request->ThoiGianKetThuc);
+
+        $conflictingCouncils = HoiDong::with(['thanhViens.giangVien'])
+            ->where('TrangThai', '!=', 'Đã hủy')
+            ->where(function($q) use ($start, $end) {
+                $q->where('ThoiGianBatDau', '<', $end)
+                  ->where('ThoiGianKetThuc', '>', $start);
+            })
+            ->get();
+
+        $scheduleConflicts = [];
+        foreach ($conflictingCouncils as $cHd) {
+            $cHdMembers = $cHd->thanhViens->keyBy('MaGV');
+            foreach ($request->thanh_viens as $tv) {
+                $magv = $tv['MaGV'] ?? null;
+                if ($magv && $cHdMembers->has($magv)) {
+                    $gv = GiangVien::find($magv);
+                    $tenGV = $gv ? ($gv->danh_xung_option ?? $gv->HoTen) : $magv;
+                    $otherRole = $cHdMembers->get($magv)->VaiTro ?? 'Thành viên';
+                    $thisRole = $tv['VaiTro'] ?? 'Thành viên';
+                    $timeStr = Carbon::parse($cHd->ThoiGianBatDau)->format('H:i d/m/Y') . ' đến ' . Carbon::parse($cHd->ThoiGianKetThuc)->format('H:i d/m/Y');
+                    $scheduleConflicts[] = "Giảng viên {$tenGV} (vai trò: {$thisRole}) đã có lịch tham gia '{$cHd->TenHoiDong}' với vai trò {$otherRole} (từ {$timeStr} tại {$cHd->DiaDiem})";
+                }
+            }
+        }
+
+        if (!empty($scheduleConflicts)) {
+            return redirect()->back()->withInput()->withErrors([
+                'thanh_viens' => 'Theo quy chế đào tạo, một giảng viên có thể tham gia nhiều hội đồng nhưng KHÔNG ĐƯỢC TRÙNG LỊCH BẢO VỆ. Phát hiện vi phạm: ' . implode('; ', $scheduleConflicts) . '.'
             ]);
         }
 
@@ -450,7 +521,34 @@ class HoiDongController extends Controller
         // Danh sách MaGV đang là thành viên Hội đồng (nhóm do các GV này hướng dẫn không được gán vào HĐ)
         $councilMemberMaGVs = $hoiDong->thanhViens->pluck('MaGV')->toArray();
 
-        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa', 'assignedGvhdMaGVs', 'councilMemberMaGVs'));
+        // Lịch bảo vệ giao thoa của các Hội đồng khác (phục vụ cảnh báo trùng lịch khi thêm TV)
+        $conflictingScheduleMap = [];
+        if ($hoiDong->ThoiGianBatDau && $hoiDong->ThoiGianKetThuc) {
+            $start = Carbon::parse($hoiDong->ThoiGianBatDau);
+            $end = Carbon::parse($hoiDong->ThoiGianKetThuc);
+            $otherOverlappingCouncils = HoiDong::with(['thanhViens'])
+                ->where('MaHoiDong', '!=', $hoiDong->MaHoiDong)
+                ->where('TrangThai', '!=', 'Đã hủy')
+                ->where(function($q) use ($start, $end) {
+                    $q->where('ThoiGianBatDau', '<', $end)
+                      ->where('ThoiGianKetThuc', '>', $start);
+                })
+                ->get();
+
+            foreach ($otherOverlappingCouncils as $oHd) {
+                $timeStr = Carbon::parse($oHd->ThoiGianBatDau)->format('H:i d/m') . ' - ' . Carbon::parse($oHd->ThoiGianKetThuc)->format('H:i');
+                foreach ($oHd->thanhViens as $tv) {
+                    $conflictingScheduleMap[$tv->MaGV] = "Trùng lịch: {$oHd->TenHoiDong} ({$timeStr})";
+                }
+            }
+        }
+
+        // Thống kê số hội đồng của giảng viên trong học kỳ của hội đồng này (loại trừ chính hội đồng đang xem)
+        $assignmentService = app(\App\Services\CouncilAssignmentService::class);
+        $facultyCouncilStats = $assignmentService->getFacultyCouncilStatsBySemester($hoiDong->MaHocKy ?? '', $hoiDong->MaHoiDong);
+        $tenHocKyHoiDong = $hoiDong->hocKy?->TenDayDu ?? ($hoiDong->MaHocKy ?? 'học kỳ');
+
+        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa', 'assignedGvhdMaGVs', 'councilMemberMaGVs', 'conflictingScheduleMap', 'facultyCouncilStats', 'tenHocKyHoiDong'));
     }
 
     /**
@@ -561,20 +659,6 @@ class HoiDongController extends Controller
     }
 
     /**
-     * Thu hồi công bố Hội đồng để điều chỉnh
-     */
-    public function thuHoiCongBo($id)
-    {
-        $hoiDong = HoiDong::findOrFail($id);
-
-        $hoiDong->update([
-            'TrangThaiCongBo' => 'Đã thu hồi',
-        ]);
-
-        return redirect()->back()->with('warning', "Đã thu hồi công bố Hội đồng {$hoiDong->TenHoiDong}. Hội đồng hiện ở trạng thái nội bộ để Trưởng khoa điều chỉnh.");
-    }
-
-    /**
      * Cập nhật thông tin Quyết định thành lập Hội đồng
      */
     public function updateQuyetDinh(Request $request, $id)
@@ -625,10 +709,24 @@ class HoiDongController extends Controller
         ]);
 
         $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($id);
-        $hoSo = HoSoBaoVe::with(['nhom.deTai.giangVien'])->where('MaNhom', $request->MaNhom)->first();
+
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            return redirect()->back()->with('error', 'Hội đồng này đã được công bố chính thức. Không thể thêm nhóm mới sau khi đã ban hành quyết định! Vui lòng thu hồi công bố nếu cần điều chỉnh.');
+        }
+
+        $hoSo = HoSoBaoVe::with(['nhom.deTai.giangVien', 'tepHoSoBaoVes', 'phienBans'])->where('MaNhom', $request->MaNhom)->first();
 
         if (!$hoSo) {
             return redirect()->back()->with('error', 'Nhóm này chưa nộp hồ sơ bảo vệ.');
+        }
+
+        // Kiểm tra báo cáo toàn văn và phê duyệt GVHD
+        if (!$hoSo->hasBaoCaoToanVan()) {
+            return redirect()->back()->with('error', "Không thể phân công nhóm {$hoSo->MaNhom} vào Hội đồng! Nhóm chưa nộp báo cáo toàn văn hợp lệ.");
+        }
+
+        if ($hoSo->XacNhanGVHD !== 'Đã duyệt' && !in_array($hoSo->TrangThai, ['Đã phê duyệt', 'Đủ điều kiện bảo vệ', 'Đã phân công'])) {
+            return redirect()->back()->with('error', "Không thể phân công nhóm {$hoSo->MaNhom} vào Hội đồng! Hồ sơ chưa được Giảng viên hướng dẫn duyệt bảo vệ.");
         }
 
         // 1. Kiểm tra nhóm đã thuộc Hội đồng khác chưa
@@ -698,16 +796,16 @@ class HoiDongController extends Controller
      */
     public function huyPhanCongNhom($id, $maHoSo)
     {
+        $hoiDong = HoiDong::findOrFail($id);
+        if ($hoiDong->TrangThaiCongBo === 'Đã công bố') {
+            return redirect()->back()->with('error', 'Hội đồng này đã được công bố chính thức. Không thể hủy phân công hoặc xóa nhóm sinh viên sau khi đã công bố quyết định! Vui lòng thu hồi công bố nếu cần điều chỉnh.');
+        }
+
         $hoSo = HoSoBaoVe::where('MaHoiDong', $id)->where('MaHoSo', $maHoSo)->firstOrFail();
         $hoSo->update([
             'MaHoiDong' => null,
             'TrangThai' => 'Đủ điều kiện bảo vệ',
         ]);
-
-        $hoiDong = HoiDong::find($id);
-        if ($hoiDong && $hoiDong->TrangThaiCongBo === 'Đã công bố') {
-            HoiDongPdfService::savePdfToStorage($hoiDong);
-        }
 
         return redirect()->back()->with('success', 'Đã hủy phân công nhóm khỏi hội đồng!');
     }
@@ -724,9 +822,11 @@ class HoiDongController extends Controller
 
         $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($id);
 
-        $exists = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $request->MaGV)->exists();
+        $exists = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $request->MaGV)->first();
         if ($exists) {
-            return redirect()->back()->with('error', 'Giảng viên này đã có trong Hội đồng.');
+            $gv = GiangVien::find($request->MaGV);
+            $tenGV = $gv ? ($gv->danh_xung_option ?? $gv->HoTen) : $request->MaGV;
+            return redirect()->back()->with('error', "Giảng viên {$tenGV} đã giữ chức vụ '{$exists->VaiTro}' trong Hội đồng này. Mỗi người chỉ giữ một chức vụ trong một Hội đồng.");
         }
 
         // Kiểm tra giảng viên có đang là GVHD của bất kỳ nhóm nào đã gán vào Hội đồng này không
@@ -738,8 +838,34 @@ class HoiDongController extends Controller
         }
         if (!empty($gvhdConflicts)) {
             $gv = GiangVien::find($request->MaGV);
-            $tenGV = $gv ? $gv->HoTen : $request->MaGV;
+            $tenGV = $gv ? ($gv->danh_xung_option ?? $gv->HoTen) : $request->MaGV;
             return redirect()->back()->with('error', "Không thể thêm Giảng viên {$tenGV} vào Hội đồng vì Giảng viên đang là Cán bộ hướng dẫn của: " . implode(', ', $gvhdConflicts) . ". Theo quy định đào tạo, GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn.");
+        }
+
+        // Kiểm tra trùng lịch bảo vệ: Một giảng viên có thể tham gia nhiều hội đồng nhưng không được trùng lịch
+        if ($hoiDong->ThoiGianBatDau && $hoiDong->ThoiGianKetThuc) {
+            $start = Carbon::parse($hoiDong->ThoiGianBatDau);
+            $end = Carbon::parse($hoiDong->ThoiGianKetThuc);
+
+            $conflictingCouncil = HoiDong::with(['thanhViens'])
+                ->where('MaHoiDong', '!=', $id)
+                ->where('TrangThai', '!=', 'Đã hủy')
+                ->where(function($q) use ($start, $end) {
+                    $q->where('ThoiGianBatDau', '<', $end)
+                      ->where('ThoiGianKetThuc', '>', $start);
+                })
+                ->whereHas('thanhViens', function($q) use ($request) {
+                    $q->where('MaGV', $request->MaGV);
+                })
+                ->first();
+
+            if ($conflictingCouncil) {
+                $gv = GiangVien::find($request->MaGV);
+                $tenGV = $gv ? ($gv->danh_xung_option ?? $gv->HoTen) : $request->MaGV;
+                $otherRole = $conflictingCouncil->thanhViens->firstWhere('MaGV', $request->MaGV)?->VaiTro ?? 'Thành viên';
+                $timeStr = Carbon::parse($conflictingCouncil->ThoiGianBatDau)->format('H:i d/m/Y') . ' đến ' . Carbon::parse($conflictingCouncil->ThoiGianKetThuc)->format('H:i d/m/Y');
+                return redirect()->back()->with('error', "Giảng viên {$tenGV} đã có lịch tham gia '{$conflictingCouncil->TenHoiDong}' với vai trò {$otherRole} (từ {$timeStr} tại {$conflictingCouncil->DiaDiem}). Không thể phân công do trùng lịch bảo vệ.");
+            }
         }
 
         $vaiTro = $request->VaiTro;

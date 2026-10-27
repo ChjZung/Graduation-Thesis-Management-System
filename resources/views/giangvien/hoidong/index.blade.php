@@ -15,9 +15,9 @@
             </div>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('giangvien.chamdiem.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-xs">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-xs" onclick="switchHoiDongTab('chamdiem')">
                 <i class="fa-solid fa-calculator me-1"></i> Vào Phòng Chấm Điểm
-            </a>
+            </button>
         </div>
     </div>
 
@@ -104,7 +104,40 @@
         </div>
     </div>
 
-    <!-- Bộ Lọc Đa Tiêu Chí -->
+    <!-- Tabs Navigation (Đồng bộ tuyệt đối cấu trúc với Quản Lý Giảng Viên /admin/giangvien) -->
+    <ul class="nav nav-tabs nav-tabs-huit mb-4 border-bottom" id="hoiDongUnifiedTabs" role="tablist" style="border-bottom: 2px solid #cbd5e1 !important;">
+        <!-- Tab 1 -->
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $activeTab !== 'chamdiem' ? 'active fw-bold' : 'text-secondary' }}" 
+               id="tab-btn-danhsach" data-bs-toggle="tab" href="#pane-danhsach" role="tab" aria-controls="pane-danhsach" 
+               aria-selected="{{ $activeTab !== 'chamdiem' ? 'true' : 'false' }}"
+               style="font-size: 0.95rem; padding: 10px 22px; {{ $activeTab !== 'chamdiem' ? 'color: #1e3a8a !important; border-bottom: 2px solid #1e3a8a; margin-bottom: -2px;' : '' }}">
+                <i class="fa-solid fa-list-check me-2"></i>Danh Sách Hội Đồng Được Phân Công ({{ $counts['tong_cong'] }})
+            </a>
+        </li>
+
+        <!-- Tab 2 -->
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $activeTab === 'chamdiem' ? 'active fw-bold' : 'text-secondary' }}" 
+               id="tab-btn-chamdiem" data-bs-toggle="tab" href="#pane-chamdiem" role="tab" aria-controls="pane-chamdiem" 
+               aria-selected="{{ $activeTab === 'chamdiem' ? 'true' : 'false' }}"
+               style="font-size: 0.95rem; padding: 10px 22px; {{ $activeTab === 'chamdiem' ? 'color: #1e3a8a !important; border-bottom: 2px solid #1e3a8a; margin-bottom: -2px;' : '' }}">
+                <i class="fa-solid fa-clipboard-check me-2"></i>Chấm Điểm Hội Đồng
+                @if(($choChamDiemCount ?? 0) > 0)
+                    <span class="badge bg-danger rounded-pill ms-2" id="badgeChoChamDiem">{{ $choChamDiemCount }}</span>
+                @endif
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="hoiDongUnifiedContent">
+        <!-- ══════════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 1: DANH SÁCH HỘI ĐỒNG ĐƯỢC PHÂN CÔNG                              -->
+        <!-- ══════════════════════════════════════════════════════════════════════ -->
+        <div class="tab-pane fade {{ $activeTab !== 'chamdiem' ? 'show active' : '' }}" id="pane-danhsach" role="tabpanel" aria-labelledby="tab-btn-danhsach">
+
+            <!-- Bộ Lọc Đa Tiêu Chí -->
     <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
         <div class="card-body p-3">
             <form action="{{ route('giangvien.hoidong.index') }}" method="GET">
@@ -279,7 +312,7 @@
                                             <a href="{{ route('giangvien.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 fw-semibold">
                                                 <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                             </a>
-                                            <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hd->MaHoiDong]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
+                                            <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $hd->MaHoiDong]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
                                                 <i class="fa-solid fa-calculator me-1"></i> Chấm điểm
                                             </a>
                                         </div>
@@ -295,5 +328,67 @@
             @endif
         </div>
     </div>
+        </div><!-- /#pane-danhsach -->
+
+        <!-- ══════════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 2: CHẤM ĐIỂM HỘI ĐỒNG                                             -->
+        <!-- ══════════════════════════════════════════════════════════════════════ -->
+        <div class="tab-pane fade {{ $activeTab === 'chamdiem' ? 'show active' : '' }}" id="pane-chamdiem" role="tabpanel" aria-labelledby="tab-btn-chamdiem">
+            @include('giangvien.hoidong._cham-diem')
+        </div><!-- /#pane-chamdiem -->
+    </div><!-- /#hoiDongUnifiedContent -->
 </div>
+
+@push('scripts')
+<script>
+function switchHoiDongTab(tabName) {
+    const tabBtnId = tabName === 'chamdiem' ? 'tab-btn-chamdiem' : 'tab-btn-danhsach';
+    const tabEl = document.getElementById(tabBtnId);
+    if (tabEl) {
+        const tab = bootstrap.Tab.getOrCreateInstance(tabEl);
+        tab.show();
+        window.scrollTo({ top: tabEl.offsetTop - 80, behavior: 'smooth' });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const tabLinks = document.querySelectorAll('#hoiDongUnifiedTabs a[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+        link.addEventListener('shown.bs.tab', function(e) {
+            const targetId = e.target.getAttribute('href');
+            const tabKey = (targetId === '#pane-chamdiem') ? 'chamdiem' : 'danhsach';
+
+            tabLinks.forEach(l => {
+                l.classList.remove('active', 'fw-bold');
+                l.classList.add('text-secondary');
+                l.style.color = '';
+                l.style.borderBottom = '';
+                l.style.marginBottom = '';
+            });
+            e.target.classList.add('active', 'fw-bold');
+            e.target.classList.remove('text-secondary');
+            e.target.style.color = '#1e3a8a';
+            e.target.style.borderBottom = '2px solid #1e3a8a';
+            e.target.style.marginBottom = '-2px';
+
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('tab') !== tabKey) {
+                url.searchParams.set('tab', tabKey);
+                window.history.replaceState({}, '', url.toString());
+            }
+        });
+    });
+
+    window.addEventListener('popstate', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabKey = urlParams.get('tab');
+        if (tabKey === 'chamdiem') {
+            switchHoiDongTab('chamdiem');
+        } else {
+            switchHoiDongTab('danhsach');
+        }
+    });
+});
+</script>
+@endpush
 @endsection

@@ -21,6 +21,7 @@ class GradingDraftSaveTest extends TestCase
         $user=TaiKhoan::where('MaTK',$gv->MaTK)->firstOrFail();
         // Keep this fixture unsigned, even when the lecturer has a saved signature.
         $gv->update(['ChuKy'=>null]);
+        PhieuChamDiem::where('MaHoiDong',$dossier->MaHoiDong)->where('MaGV',$gv->MaGV)->delete();
         return [$dossier,$gv,$user];
     }
 
@@ -43,6 +44,8 @@ class GradingDraftSaveTest extends TestCase
             $this->assertNull($record->ChuKy);
         }
         $this->get(route('giangvien.chamdiem.index',['hd'=>$dossier->MaHoiDong,'hoso'=>$dossier->MaHoSo]))
+            ->assertRedirect(route('giangvien.hoidong.index',['hd'=>$dossier->MaHoiDong,'hoso'=>$dossier->MaHoSo,'tab'=>'chamdiem']));
+        $this->get(route('giangvien.hoidong.index',['hd'=>$dossier->MaHoiDong,'hoso'=>$dossier->MaHoSo,'tab'=>'chamdiem']))
             ->assertOk()->assertSee('DỮ LIỆU KIỂM THỬ');
     }
 

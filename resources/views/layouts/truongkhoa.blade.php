@@ -131,16 +131,16 @@
             </div>
 
             <!-- Topbar / Breadcrumb Bar -->
-            <div class="admin-top-bar">
-                <div class="admin-breadcrumb">
-                    <i class="fa-solid fa-angle-right me-2" style="color: #64748b; font-size: 0.75rem;"></i>
-                    <a href="{{ route('truongkhoa.dashboard') }}">Trang chủ</a>
-                    <span class="separator">&gt;</span>
-                    <span>Khóa luận tốt nghiệp</span>
-                    <span class="separator">&gt;</span>
-                    <span class="current-page">@yield('page_title', 'Trưởng Khoa')</span>
+            <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
+                <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
+                    <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 0.75rem;"></i>
+                    <a href="{{ route('truongkhoa.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
+                    <span class="separator flex-shrink-0">&gt;</span>
+                    <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>
+                    <span class="separator flex-shrink-0">&gt;</span>
+                    <span class="current-page text-truncate min-w-0" title="@yield('page_title', 'Trưởng Khoa')">@yield('page_title', 'Trưởng Khoa')</span>
                 </div>
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3 flex-shrink-0 position-relative">
                     @php
                         $tkGv = \App\Models\GiangVien::getLoggedInGiangVien();
                         $tkName = $tkGv->HoTen ?? (Auth::user()->TenDangNhap ?? 'Trưởng Khoa');
@@ -150,15 +150,16 @@
                     @include('partials.header_notifications')
 
                     <!-- User Profile Pill -->
-                    <div class="dropdown">
-                        <a class="admin-user-pill dropdown-toggle text-decoration-none"
+                    <div class="dropdown flex-shrink-0">
+                        <a class="admin-user-pill dropdown-toggle text-decoration-none d-inline-flex align-items-center flex-shrink-0"
                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           id="tkUserDropdown">
+                           id="tkUserDropdown"
+                           title="{{ $tkName }}">
                             <img src="https://ui-avatars.com/api/?name={{ urlencode($tkName) }}&background=0072CE&color=FFFFFF&bold=true&size=64"
-                                 alt="Avatar">
-                            <span>{{ $tkName }}</span>
+                                 alt="Avatar" class="flex-shrink-0">
+                            <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ $tkName }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end border" style="border-radius: 8px; min-width: 220px;" aria-labelledby="tkUserDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end border shadow-lg" style="border-radius: 8px; min-width: 220px;" aria-labelledby="tkUserDropdown">
                             <li>
                                 <div class="px-3 py-2 mb-1 border-bottom">
                                     <div style="font-size: 13px; font-weight: 600; color: #64748b;">Xin chào!</div>

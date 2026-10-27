@@ -19,9 +19,6 @@
                             <h4 class="fw-bold mb-0 text-white">
                                 <i class="fa-solid fa-landmark me-2"></i>Lập Hội Đồng Bảo Vệ &amp; Tạo Quyết Định Công Bố
                             </h4>
-                            <div class="text-white-50 small mt-1">
-                                Quy trình 4 bước: Khai báo thông tin → Chọn đề tài/nhóm SV → Phân công giảng viên → Kiểm tra &amp; Ban hành
-                            </div>
                         </div>
                         <a href="{{ route('truongkhoa.hoidong.index') }}" class="btn btn-outline-light rounded-pill px-3 btn-sm">
                             <i class="fa-solid fa-arrow-left me-1"></i> Danh sách Hội đồng
@@ -110,10 +107,10 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-dark small">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
-                                    <select name="MaHocKy" id="MaHocKy" class="form-select" required>
+                                    <select name="MaHocKy" id="MaHocKy" class="form-select" required onchange="onSemesterChange(this.value)">
                                         @foreach($hocKys as $hk)
-                                        <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }} data-namhoc="{{ $hk->NamHoc }}">
-                                            {{ $hk->TenHocKy }} (Năm học {{ $hk->NamHoc }})
+                                        <option value="{{ $hk->MaHocKy }}" {{ $selectedMaHocKy == $hk->MaHocKy ? 'selected' : '' }} data-namhoc="{{ $hk->NamHoc }}" data-tendaydu="{{ $hk->TenDayDu }}">
+                                            {{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★ (Hiện tại)' : '' }}
                                         </option>
                                         @endforeach
                                     </select>
@@ -306,6 +303,7 @@
                                             data-tennganh="{{ $tenNganhHs }}"
                                             data-gvhd="{{ $gvhd?->HoTen }}"
                                             data-bomon="{{ $tenBM }}"
+                                            data-mabomon="{{ $gvhd?->MaBoMon ?? '' }}"
                                             data-sosv="{{ $soSV }}"
                                             data-search="{{ mb_strtolower(($dt?->MaDeTai ?? '') . ' ' . ($dt?->TenDeTai ?? '') . ' ' . ($nhom?->MaNhom ?? '') . ' ' . ($gvhd?->HoTen ?? '') . ' ' . $maNganhHs . ' ' . $tenNganhHs . ' ' . $svSearchText) }}">
                                             <td class="text-center">
@@ -388,9 +386,6 @@
                                     <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalThongKePhanCong">
                                         <i class="fa-solid fa-chart-pie me-1"></i> Thống Kê Giảng Viên
                                     </button>
-                                    <button type="button" id="btnGoiYPhanCong" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold shadow-xs">
-                                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi Ý Phân Công Cân Bằng
-                                    </button>
                                     <button type="button" id="btnThemUyVien" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                         <i class="fa-solid fa-plus me-1"></i> Thêm Ủy Viên Khác
                                     </button>
@@ -406,9 +401,14 @@
                                 </div>
                             </div>
 
-                            <div id="aiSuggestionBox" class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 d-none">
-                                <i class="fa-solid fa-circle-check me-2"></i>
-                                <span id="aiSuggestionText"></span>
+                            <div id="duplicateFacultyWarningBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 d-none">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span id="duplicateFacultyWarningText"></span>
+                            </div>
+
+                            <div id="scheduleConflictWarningBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 d-none">
+                                <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                                <span id="scheduleConflictWarningText"></span>
                             </div>
 
                             <div id="conflictWarningBox" class="alert alert-warning py-2 px-3 small rounded-3 mb-3 border-0 d-none">
@@ -429,14 +429,16 @@
                                                 <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1">Bắt buộc</span>
                                             </div>
                                             <input type="hidden" name="thanh_viens[0][VaiTro]" value="Chủ tịch">
-                                            <select name="thanh_viens[0][MaGV]" id="selectChuTich" class="form-select select-faculty" required onchange="validateFacultySelection()">
-                                                <option value="">— Chọn Giảng viên giữ chức Chủ tịch Hội đồng —</option>
-                                                @foreach($giangViens as $gv)
-                                                <option value="{{ $gv->MaGV }}" data-hoten="{{ $gv->HoTen }}" data-bomon="{{ $gv->boMon?->TenBoMon ?? 'Khoa' }}" data-hocham="{{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }}">
-                                                    {{ $gv->HoTen }} — {{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }} ({{ $gv->boMon?->TenBoMon ?? 'Khoa' }})
-                                                </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="mb-1">
+                                                <select name="thanh_viens[0][MaGV]" id="selectChuTich" class="form-select select-faculty" required onchange="validateFacultySelection()">
+                                                    <option value="">— Chọn Giảng viên giữ chức Chủ tịch Hội đồng —</option>
+                                                    @include('partials.select_giang_vien_options', ['groupedGiangViens' => $groupedGiangViens, 'selectedValue' => old('thanh_viens.0.MaGV')])
+                                                </select>
+                                            </div>
+                                            <div class="form-text small text-muted mt-1">
+                                                <i class="fa-solid fa-circle-info text-primary me-1"></i>Số hội đồng đã tham gia trong <span class="fw-semibold text-primary span-ten-hoc-ky">{{ $currentTenHocKy }}</span>
+                                            </div>
+                                            <div id="workloadDetail_selectChuTich" class="faculty-workload-hint small mt-1 d-none"></div>
                                         </div>
                                     </div>
 
@@ -450,14 +452,16 @@
                                                 <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">Bắt buộc</span>
                                             </div>
                                             <input type="hidden" name="thanh_viens[1][VaiTro]" value="Ủy viên phản biện">
-                                            <select name="thanh_viens[1][MaGV]" id="selectPhanBien" class="form-select select-faculty" required onchange="validateFacultySelection()">
-                                                <option value="">— Chọn Giảng viên Phản biện —</option>
-                                                @foreach($giangViens as $gv)
-                                                <option value="{{ $gv->MaGV }}" data-hoten="{{ $gv->HoTen }}" data-bomon="{{ $gv->boMon?->TenBoMon ?? 'Khoa' }}" data-hocham="{{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }}">
-                                                    {{ $gv->HoTen }} — {{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }} ({{ $gv->boMon?->TenBoMon ?? 'Khoa' }})
-                                                </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="mb-1">
+                                                <select name="thanh_viens[1][MaGV]" id="selectPhanBien" class="form-select select-faculty" required onchange="validateFacultySelection()">
+                                                    <option value="">— Chọn Giảng viên Phản biện —</option>
+                                                    @include('partials.select_giang_vien_options', ['groupedGiangViens' => $groupedGiangViens, 'selectedValue' => old('thanh_viens.1.MaGV')])
+                                                </select>
+                                            </div>
+                                            <div class="form-text small text-muted mt-1">
+                                                <i class="fa-solid fa-circle-info text-primary me-1"></i>Số hội đồng đã tham gia trong <span class="fw-semibold text-primary span-ten-hoc-ky">{{ $currentTenHocKy }}</span>
+                                            </div>
+                                            <div id="workloadDetail_selectPhanBien" class="faculty-workload-hint small mt-1 d-none"></div>
                                         </div>
                                     </div>
 
@@ -471,14 +475,16 @@
                                                 <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">Bắt buộc</span>
                                             </div>
                                             <input type="hidden" name="thanh_viens[2][VaiTro]" value="Ủy viên thư ký">
-                                            <select name="thanh_viens[2][MaGV]" id="selectThuKy" class="form-select select-faculty" required onchange="validateFacultySelection()">
-                                                <option value="">— Chọn Giảng viên Thư ký —</option>
-                                                @foreach($giangViens as $gv)
-                                                <option value="{{ $gv->MaGV }}" data-hoten="{{ $gv->HoTen }}" data-bomon="{{ $gv->boMon?->TenBoMon ?? 'Khoa' }}" data-hocham="{{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }}">
-                                                    {{ $gv->HoTen }} — {{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }} ({{ $gv->boMon?->TenBoMon ?? 'Khoa' }})
-                                                </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="mb-1">
+                                                <select name="thanh_viens[2][MaGV]" id="selectThuKy" class="form-select select-faculty" required onchange="validateFacultySelection()">
+                                                    <option value="">— Chọn Giảng viên Thư ký —</option>
+                                                    @include('partials.select_giang_vien_options', ['groupedGiangViens' => $groupedGiangViens, 'selectedValue' => old('thanh_viens.2.MaGV')])
+                                                </select>
+                                            </div>
+                                            <div class="form-text small text-muted mt-1">
+                                                <i class="fa-solid fa-circle-info text-primary me-1"></i>Số hội đồng đã tham gia trong <span class="fw-semibold text-primary span-ten-hoc-ky">{{ $currentTenHocKy }}</span>
+                                            </div>
+                                            <div id="workloadDetail_selectThuKy" class="faculty-workload-hint small mt-1 d-none"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -486,6 +492,12 @@
 
                             <!-- Danh sách Ủy viên bổ sung (nếu có) -->
                             <div id="containerUyVienThem"></div>
+
+                            <!-- Template options giảng viên phục vụ JS thêm ủy viên -->
+                            <template id="templateGiangVienOptions">
+                                <option value="">— Chọn Giảng viên —</option>
+                                @include('partials.select_giang_vien_options', ['groupedGiangViens' => $groupedGiangViens])
+                            </template>
 
                             <div class="d-flex justify-content-between align-items-center mt-4">
                                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="prevStep(3)">
@@ -597,12 +609,14 @@
                                 </div>
                             </div>
 
+                            <div id="previewConflictWarningBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 d-none"></div>
+
                             <div class="d-flex justify-content-between align-items-center mt-4">
                                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="prevStep(4)">
                                     <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Bước 3
                                 </button>
                                 <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-xs">
+                                    <button type="submit" id="btnSubmitWizard" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-xs">
                                         <i class="fa-solid fa-stamp me-2"></i> Ký Duyệt &amp; Ban Hành Quyết Định
                                     </button>
                                 </div>
@@ -861,8 +875,9 @@
             }
         }
 
-        // Nếu chuyển sang bước 4: chuẩn bị nội dung Preview
-        if (step === 4) {
+        if (step === 3) {
+            validateFacultySelection();
+        } else if (step === 4) {
             buildPreviewStep4();
         }
 
@@ -909,38 +924,10 @@
                 return false;
             }
 
-            // Kiểm tra trùng nhau
-            const allSelected = [];
-            document.querySelectorAll('.select-faculty').forEach(sel => {
-                if (sel.value) allSelected.push(sel.value);
-            });
-
-            const unique = new Set(allSelected);
-            if (unique.size !== allSelected.length) {
-                alert('Không được phân công cùng một Giảng viên vào nhiều vị trí trong cùng một Hội đồng.');
+            const isValid = validateFacultySelection();
+            if (!isValid) {
+                alert('Có vi phạm trong việc phân công thành viên (trùng lặp giảng viên hoặc GVHD chấm nhóm do mình hướng dẫn). Vui lòng kiểm tra các cảnh báo đỏ trên màn hình trước khi tiếp tục.');
                 return false;
-            }
-
-            // Kiểm tra quy định: GVHD không được tham gia Hội đồng chấm nhóm do mình hướng dẫn
-            const selectedDeTaiGVHDs = [];
-            document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
-                const row = cb.closest('tr');
-                if (row) {
-                    const gvhd = row.getAttribute('data-gvhd');
-                    const tendt = row.getAttribute('data-tendetai');
-                    if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
-                }
-            });
-
-            for (const sel of document.querySelectorAll('.select-faculty')) {
-                if (!sel.value) continue;
-                const opt = sel.options[sel.selectedIndex];
-                const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
-                const conflict = selectedDeTaiGVHDs.find(item => item.gvhd === tenGV);
-                if (conflict) {
-                    alert(`QUY ĐỊNH BẮT BUỘC:\n\nGiảng viên hướng dẫn KHÔNG ĐƯỢC tham gia Hội đồng chấm nhóm do mình hướng dẫn!\n\nPhát hiện: Giảng viên ${opt?.getAttribute('data-hoten')} đang là GVHD của đề tài: "${conflict.tendt}".\n\nVui lòng thay đổi thành viên này trước khi tiếp tục.`);
-                    return false;
-                }
             }
 
             return true;
@@ -1030,11 +1017,113 @@
         });
     }
 
+    // Dữ liệu số lượng và vai trò HĐ của giảng viên theo từng học kỳ (toàn bộ học kỳ trong hệ thống)
+    const allSemestersFacultyStats = @json($allSemestersFacultyStats ?? []);
+    let currentMaHocKy = @json($selectedMaHocKy);
+
+    function getCurrentTenHocKy() {
+        return allSemestersFacultyStats[currentMaHocKy]?.tenHocKy || 'học kỳ này';
+    }
+
+    function getCurrentStatsMap() {
+        return allSemestersFacultyStats[currentMaHocKy]?.faculties || {};
+    }
+
+    // Khi người dùng thay đổi Học kỳ ở Bước 1
+    function onSemesterChange(newMaHocKy) {
+        if (!newMaHocKy) return;
+        currentMaHocKy = newMaHocKy;
+        const semesterData = allSemestersFacultyStats[newMaHocKy] || {};
+        const tenHocKy = semesterData.tenHocKy || newMaHocKy;
+        const facultyStatsMap = semesterData.faculties || {};
+
+        // 1. Cập nhật nhãn tên học kỳ trong mọi span chú thích
+        document.querySelectorAll('.span-ten-hoc-ky').forEach(span => {
+            span.textContent = tenHocKy;
+        });
+
+        // 2. Cập nhật nhãn và data-* của tất cả các option trong mọi select giảng viên và cả trong template
+        const updateOptionsInContainer = (container) => {
+            container.querySelectorAll('option').forEach(opt => {
+                const val = opt.value?.trim();
+                if (!val) return;
+                const baseText = opt.getAttribute('data-raw-text') || opt.textContent.split(' — [')[0].trim();
+                opt.setAttribute('data-raw-text', baseText);
+
+                const stat = facultyStatsMap[val];
+                const soHd = stat ? stat.total : 0;
+                const tooltip = stat ? stat.tooltip : `Chưa tham gia hội đồng nào trong ${tenHocKy}`;
+                const roleText = stat ? (stat.roleText || '') : '';
+
+                opt.setAttribute('data-so-hoidong', soHd);
+                opt.setAttribute('data-tooltip', tooltip);
+                opt.setAttribute('data-role-text', roleText);
+                opt.title = tooltip;
+            });
+        };
+
+        document.querySelectorAll('.select-faculty').forEach(sel => updateOptionsInContainer(sel));
+        const tpl = document.getElementById('templateGiangVienOptions');
+        if (tpl && tpl.content) {
+            updateOptionsInContainer(tpl.content);
+        }
+
+        // 3. Re-sync text hiển thị và validate
+        syncFacultySelectionState();
+        updateAllWorkloadHints();
+    }
+
+    // Hiển thị badge tóm tắt số lượng & vai trò HĐ dưới select
+    function updateWorkloadHint(sel) {
+        if (!sel) return;
+        const hintEl = document.getElementById('workloadDetail_' + sel.id) || sel.closest('.p-3, .dong-uy-vien-them')?.querySelector('.faculty-workload-hint');
+        if (!hintEl) return;
+
+        const val = sel.value?.trim();
+        if (!val) {
+            hintEl.classList.add('d-none');
+            hintEl.innerHTML = '';
+            return;
+        }
+
+        const opt = sel.options[sel.selectedIndex];
+        const soHd = parseInt(opt?.getAttribute('data-so-hoidong') || '0', 10);
+        const tooltip = opt?.getAttribute('data-tooltip') || '';
+
+        let badgeClass = 'bg-light text-muted border';
+        let iconClass = 'fa-circle-check text-muted';
+        if (soHd === 0) {
+            badgeClass = 'bg-success-subtle text-success border border-success-subtle';
+            iconClass = 'fa-circle-check text-success';
+        } else if (soHd <= 2) {
+            badgeClass = 'bg-info-subtle text-info border border-info-subtle';
+            iconClass = 'fa-chart-pie text-info';
+        } else {
+            badgeClass = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
+            iconClass = 'fa-triangle-exclamation text-warning';
+        }
+
+        hintEl.innerHTML = `
+            <div class="p-1 px-2 rounded-2 ${badgeClass} d-inline-flex align-items-center gap-1 shadow-2xs" style="font-size: 0.75rem;">
+                <i class="fa-solid ${iconClass}"></i>
+                <span>${tooltip}</span>
+            </div>
+        `;
+        hintEl.classList.remove('d-none');
+    }
+
+    function updateAllWorkloadHints() {
+        document.querySelectorAll('.select-faculty').forEach(sel => {
+            updateWorkloadHint(sel);
+        });
+    }
+
     // Thêm Ủy viên bổ sung ở Bước 3
     document.getElementById('btnThemUyVien')?.addEventListener('click', function() {
         soUyVienThem++;
-        const index = 2 + soUyVienThem; // 0, 1, 2 là Chủ tịch, Phản biện, Thư ký
+        const index = 2 + soUyVienThem; // 0, 1, 2 là Chủ tịch, Phản biện, Thư ký; từ 3 trở đi là Ủy viên thêm
         const container = document.getElementById('containerUyVienThem');
+        const template = document.getElementById('templateGiangVienOptions');
 
         const div = document.createElement('div');
         div.className = 'card border rounded-3 p-3 mb-2 bg-white dong-uy-vien-them';
@@ -1047,17 +1136,14 @@
                     <input type="text" class="form-control form-control-sm fw-semibold" value="Ủy viên ${soUyVienThem}" readonly aria-label="Chức danh ủy viên bổ sung">
                 </div>
                 <div class="col-md-8">
-                    <label class="form-label small fw-bold text-secondary mb-1">Giảng viên thành viên:</label>
+                    <label class="form-label small fw-semibold text-secondary mb-1">Giảng viên thành viên: <span class="text-danger">*</span></label>
                     <select name="thanh_viens[${index}][MaGV]" class="form-select form-select-sm select-faculty" required onchange="validateFacultySelection()">
-                        <option value="">— Chọn Giảng viên —</option>
-                        @foreach($giangViens as $gv)
-                        <option value="{{ $gv->MaGV }}" data-hoten="{{ $gv->HoTen }}" data-bomon="{{ $gv->boMon?->TenBoMon ?? 'Khoa' }}" data-hocham="{{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }}">
-                            {{ $gv->HoTen }} — {{ $gv->HocHam ?? ($gv->HocVi ?? 'Thạc sĩ') }} ({{ $gv->boMon?->TenBoMon ?? 'Khoa' }})
-                        </option>
-                        @endforeach
+                        ${template ? template.innerHTML : '<option value="">— Chọn Giảng viên —</option>'}
                     </select>
+                    <div class="faculty-workload-hint small mt-1 d-none"></div>
                 </div>
-                <div class="col-md-1 text-center pt-md-3">
+                <div class="col-md-1 text-center">
+                    <label class="form-label small d-none d-md-block mb-1">&nbsp;</label>
                     <button type="button" class="btn btn-outline-danger btn-sm rounded-circle" onclick="xoaDongUyVien('${div.id}')" title="Xóa ủy viên này">
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -1065,6 +1151,7 @@
             </div>
         `;
         container.appendChild(div);
+        validateFacultySelection();
     });
 
     function xoaDongUyVien(id) {
@@ -1072,121 +1159,260 @@
         validateFacultySelection();
     }
 
-    // Kiểm tra xung đột lợi ích: Giảng viên được chọn có phải là GVHD của đề tài đã chọn?
-    function validateFacultySelection() {
-        const selectedGVs = [];
-        document.querySelectorAll('.select-faculty').forEach(sel => {
-            if (sel.value) selectedGVs.push(sel.value);
+    // Lấy tên vai trò hiển thị cho từng select
+    function getSelectRoleName(sel) {
+        if (!sel) return 'Ủy viên';
+        if (sel.id === 'selectChuTich') return 'Chủ tịch';
+        if (sel.id === 'selectPhanBien') return 'Ủy viên phản biện';
+        if (sel.id === 'selectThuKy') return 'Ủy viên thư ký';
+        const row = sel.closest('.dong-uy-vien-them');
+        if (row) {
+            const txt = row.querySelector('input[type="text"]')?.value?.trim();
+            if (txt) return txt;
+        }
+        return 'Ủy viên';
+    }
+
+    // Danh sách lịch bảo vệ của các Hội đồng đang hoạt động
+    const existingCouncilSchedules = @json($existingCouncils ?? []);
+
+    // Tra cứu danh sách giảng viên trùng lịch bảo vệ theo khoảng thời gian [startTime, endTime]
+    function getScheduleConflictsForTime(startTimeStr, endTimeStr) {
+        if (!startTimeStr || !endTimeStr) return new Map();
+        const startTime = new Date(startTimeStr).getTime();
+        const endTime = new Date(endTimeStr).getTime();
+        if (isNaN(startTime) || isNaN(endTime) || endTime <= startTime) return new Map();
+
+        const conflictMap = new Map();
+        existingCouncilSchedules.forEach(council => {
+            if (!council.ThoiGianBatDau || !council.ThoiGianKetThuc) return;
+            const cStart = new Date(council.ThoiGianBatDau).getTime();
+            const cEnd = new Date(council.ThoiGianKetThuc).getTime();
+            if (isNaN(cStart) || isNaN(cEnd)) return;
+
+            // Giao thoa thời gian bảo vệ: cStart < endTime && cEnd > startTime
+            if (cStart < endTime && cEnd > startTime) {
+                const sDate = new Date(council.ThoiGianBatDau);
+                const eDate = new Date(council.ThoiGianKetThuc);
+                const sStr = sDate.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) + ' ' + sDate.toLocaleDateString('vi-VN');
+                const eStr = eDate.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) + ' ' + eDate.toLocaleDateString('vi-VN');
+                const timeStr = `${sStr} - ${eStr}`;
+
+                (council.thanh_viens || []).forEach(tv => {
+                    if (tv.MaGV && !conflictMap.has(tv.MaGV)) {
+                        conflictMap.set(tv.MaGV, {
+                            councilName: council.TenHoiDong,
+                            role: tv.VaiTro,
+                            timeStr: timeStr,
+                            location: council.DiaDiem || '—'
+                        });
+                    }
+                });
+            }
+        });
+        return conflictMap;
+    }
+
+    // Lắng nghe thay đổi thời gian bảo vệ ở Bước 1 để cập nhật ngay cảnh báo lịch ở Bước 3 & Bước 4
+    document.getElementById('ThoiGianBatDau')?.addEventListener('change', function() {
+        validateFacultySelection();
+    });
+    document.getElementById('ThoiGianKetThuc')?.addEventListener('change', function() {
+        validateFacultySelection();
+    });
+
+    // Đồng bộ trạng thái vô hiệu hóa option đã chọn và cảnh báo trùng lặp / trùng lịch
+    function syncFacultySelectionState() {
+        const selects = Array.from(document.querySelectorAll('.select-faculty'));
+        // Map: MaGV -> Array<{ select, roleName, rawText }>
+        const chosenMap = new Map();
+
+        selects.forEach(sel => {
+            const val = sel.value?.trim();
+            if (val) {
+                const opt = sel.options[sel.selectedIndex];
+                const rawText = opt?.getAttribute('data-raw-text') || opt?.getAttribute('data-hoten') || opt?.text || val;
+                const role = getSelectRoleName(sel);
+                if (!chosenMap.has(val)) {
+                    chosenMap.set(val, []);
+                }
+                chosenMap.get(val).push({
+                    select: sel,
+                    roleName: role,
+                    rawText: rawText
+                });
+            }
         });
 
-        // Lấy danh sách GVHD của các đề tài đã chọn ở bước 2
+        // 1. Lấy danh sách giảng viên trùng lịch với các hội đồng khác trong cùng khung giờ
+        const batDau = document.getElementById('ThoiGianBatDau')?.value;
+        const ketThuc = document.getElementById('ThoiGianKetThuc')?.value;
+        const scheduleConflictMap = getScheduleConflictsForTime(batDau, ketThuc);
+
+        const selectedScheduleConflicts = [];
+        const scheduleConflictSelects = new Set();
+
+        // 2. Cập nhật disable & label cho từng option trong mọi select
+        selects.forEach(sel => {
+            const currentVal = sel.value?.trim();
+            Array.from(sel.options).forEach(opt => {
+                const optVal = opt.value?.trim();
+                if (!optVal) return; // Bỏ qua option placeholder
+
+                if (!opt.hasAttribute('data-raw-text')) {
+                    const fullText = opt.textContent.trim();
+                    const cleanBase = fullText.split(' — [')[0].trim();
+                    opt.setAttribute('data-raw-text', cleanBase);
+                }
+                const baseText = opt.getAttribute('data-raw-text');
+                const soHd = opt.getAttribute('data-so-hoidong') || '0';
+                const countTag = `[${soHd} HĐ]`;
+
+                // Option đang được chọn ở CHÍNH select này: tuyệt đối KHÔNG disabled để form submit đầy đủ
+                if (optVal === currentVal) {
+                    opt.disabled = false;
+                    opt.textContent = `${baseText} — ${countTag}`;
+                    if (scheduleConflictMap.has(optVal)) {
+                        const sched = scheduleConflictMap.get(optVal);
+                        const role = getSelectRoleName(sel);
+                        selectedScheduleConflicts.push(`Giảng viên <strong>${baseText}</strong> (${role}) đã có lịch tham gia <strong>${sched.councilName}</strong> (${sched.timeStr} tại ${sched.location}).`);
+                        scheduleConflictSelects.add(sel);
+                    }
+                    return;
+                }
+
+                // Nếu giảng viên này đang được chọn ở select KHÁC trong cùng HĐ này
+                const chosenList = chosenMap.get(optVal) || [];
+                const chosenElsewhere = chosenList.find(item => item.select !== sel);
+
+                if (chosenElsewhere) {
+                    opt.disabled = true;
+                    opt.textContent = `${baseText} — ${countTag} (Đã chọn làm ${chosenElsewhere.roleName})`;
+                } else if (scheduleConflictMap.has(optVal)) {
+                    const sched = scheduleConflictMap.get(optVal);
+                    opt.disabled = true;
+                    opt.textContent = `${baseText} — ${countTag} (Trùng lịch: ${sched.councilName})`;
+                } else {
+                    opt.disabled = false;
+                    opt.textContent = `${baseText} — ${countTag}`;
+                }
+            });
+        });
+
+        // 3. Cập nhật vùng hint hiển thị tải công việc bên dưới từng ô select
+        updateAllWorkloadHints();
+
+        // 3. Kiểm tra nếu có trường hợp bị trùng lặp trong cùng HĐ
+        const duplicateMessages = [];
+        const duplicateSelects = new Set();
+
+        chosenMap.forEach((list, magv) => {
+            if (list.length > 1) {
+                const name = list[0].rawText;
+                const roles = list.map(item => item.roleName).join(' và ');
+                duplicateMessages.push(`Giảng viên <strong>${name}</strong> đang được chọn ở cả <strong>${roles}</strong>.`);
+                list.forEach(item => duplicateSelects.add(item.select));
+            }
+        });
+
+        // Cập nhật viền đỏ trực quan
+        selects.forEach(sel => {
+            if (duplicateSelects.has(sel) || scheduleConflictSelects.has(sel)) {
+                sel.classList.add('is-invalid', 'border-danger');
+            } else {
+                sel.classList.remove('is-invalid', 'border-danger');
+            }
+        });
+
+        // Hiển thị banner cảnh báo trùng lặp trong cùng HĐ ở Bước 3
+        const dupBox = document.getElementById('duplicateFacultyWarningBox');
+        const dupText = document.getElementById('duplicateFacultyWarningText');
+        if (dupBox && dupText) {
+            if (duplicateMessages.length > 0) {
+                dupText.innerHTML = '<strong>PHÁT HIỆN TRÙNG LẶP THÀNH VIÊN:</strong> ' + duplicateMessages.join('<br>') + '<br><span class="fw-semibold">Mỗi giảng viên chỉ được giữ một chức vụ trong cùng một hội đồng. Vui lòng chọn giảng viên khác.</span>';
+                dupBox.classList.remove('d-none');
+            } else {
+                dupBox.classList.add('d-none');
+                dupText.innerHTML = '';
+            }
+        }
+
+        // Hiển thị banner cảnh báo trùng lịch bảo vệ với HĐ khác ở Bước 3
+        const schedBox = document.getElementById('scheduleConflictWarningBox');
+        const schedText = document.getElementById('scheduleConflictWarningText');
+        if (schedBox && schedText) {
+            if (selectedScheduleConflicts.length > 0) {
+                schedText.innerHTML = '<strong>PHÁT HIỆN TRÙNG LỊCH BẢO VỆ:</strong> ' + selectedScheduleConflicts.join('<br>') + '<br><span class="fw-semibold">Một giảng viên có thể tham gia nhiều hội đồng nhưng KHÔNG ĐƯỢC trùng thời gian bảo vệ. Vui lòng chọn giảng viên khác.</span>';
+                schedBox.classList.remove('d-none');
+            } else {
+                schedBox.classList.add('d-none');
+                schedText.innerHTML = '';
+            }
+        }
+
+        return duplicateMessages.length > 0 || selectedScheduleConflicts.length > 0;
+    }
+
+    // Kiểm tra toàn diện thành viên: trùng lặp & trùng lịch & xung đột GVHD với các đề tài đã chọn
+    function validateFacultySelection() {
+        // 1. Đồng bộ trạng thái disable và kiểm tra trùng lặp & trùng lịch
+        const hasConflictOrDuplicate = syncFacultySelectionState();
+
+        // 2. Lấy danh sách GVHD của các đề tài đã chọn ở bước 2
         const selectedDeTaiGVHDs = [];
         document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
             const row = cb.closest('tr');
             if (row) {
                 const gvhd = row.getAttribute('data-gvhd');
                 const tendt = row.getAttribute('data-tendetai');
-                if (gvhd) selectedDeTaiGVHDs.push({ gvhd, tendt });
+                if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
             }
         });
 
-        let conflicts = [];
+        // 3. Kiểm tra vi phạm quy chế đào tạo: GVHD chấm nhóm do mình hướng dẫn
+        let gvhdConflicts = [];
         document.querySelectorAll('.select-faculty').forEach(sel => {
             if (!sel.value) return;
             const opt = sel.options[sel.selectedIndex];
-            const tenGV = opt?.getAttribute('data-hoten') || '';
-            const match = selectedDeTaiGVHDs.find(item => item.gvhd && tenGV && item.gvhd.toLowerCase() === tenGV.toLowerCase());
+            const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
+            const role = getSelectRoleName(sel);
+            const match = selectedDeTaiGVHDs.find(item => item.gvhd && tenGV && item.gvhd === tenGV);
             if (match) {
-                conflicts.push(`Giảng viên <strong>${tenGV}</strong> đang là GVHD của đề tài: <em>"${match.tendt}"</em>.`);
+                gvhdConflicts.push(`Giảng viên <strong>${opt?.getAttribute('data-hoten') || opt?.text}</strong> (${role}) đang là GVHD của đề tài: <em>"${match.tendt}"</em>.`);
+                sel.classList.add('is-invalid', 'border-warning');
             }
         });
 
         const box = document.getElementById('conflictWarningBox');
         const text = document.getElementById('conflictWarningText');
-        if (conflicts.length > 0) {
-            box.className = 'alert alert-danger d-flex align-items-center mb-4';
-            box.classList.remove('d-none');
-            text.innerHTML = '<strong class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> VI PHẠM QUY ĐỊNH ĐÀO TẠO:</strong> ' + conflicts.join(' ') + ' <br><span class="fw-semibold text-danger">Theo quy định, Giảng viên hướng dẫn không được tham gia Hội đồng chấm nhóm do mình hướng dẫn. Vui lòng chọn Giảng viên khác.</span>';
-        } else {
-            box.classList.add('d-none');
+        if (box && text) {
+            if (gvhdConflicts.length > 0) {
+                box.className = 'alert alert-danger d-flex align-items-center mb-3';
+                box.classList.remove('d-none');
+                text.innerHTML = '<strong class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> VI PHẠM QUY ĐỊNH ĐÀO TẠO:</strong> ' + gvhdConflicts.join(' ') + ' <br><span class="fw-semibold text-danger">Theo quy định, Giảng viên hướng dẫn không được tham gia Hội đồng chấm nhóm do mình hướng dẫn. Vui lòng chọn Giảng viên khác.</span>';
+            } else {
+                box.classList.add('d-none');
+                text.innerHTML = '';
+            }
         }
+
+        return !hasConflictOrDuplicate && gvhdConflicts.length === 0;
     }
 
-    // Gợi ý phân công cân bằng thông minh (Thuật toán 6.2 & Xem trước 6.3)
-    document.getElementById('btnGoiYPhanCong')?.addEventListener('click', async function() {
-        const btn = this;
-        const checkedDeTais = Array.from(document.querySelectorAll('.check-item-detai:checked')).map(cb => cb.value);
-        if (checkedDeTais.length === 0) {
-            alert('Vui lòng chọn ít nhất 01 đề tài/nhóm ở Bước 2 trước khi yêu cầu thuật toán gợi ý phân công.');
-            jumpToStep(2);
-            return;
+    // Lắng nghe sự kiện change trên bất kỳ select giảng viên nào
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('select-faculty')) {
+            validateFacultySelection();
         }
+    });
 
-        const batDau = document.getElementById('ThoiGianBatDau')?.value;
-        const ketThuc = document.getElementById('ThoiGianKetThuc')?.value;
-        const maHocKy = document.getElementById('MaHocKy')?.value;
-
-        if (!batDau || !ketThuc) {
-            alert('Vui lòng kiểm tra lại thời gian bảo vệ ở Bước 1.');
-            jumpToStep(1);
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang phân tích...';
-
-        try {
-            const resp = await fetch('{{ route("truongkhoa.hoidong.deXuatThanhVien") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    ThoiGianBatDau: batDau,
-                    ThoiGianKetThuc: ketThuc,
-                    danh_sach_ho_so: checkedDeTais,
-                    MaHocKy: maHocKy
-                })
-            });
-
-            const data = await resp.json();
-            if (data.success && Array.isArray(data.thanh_viens)) {
-                let reasons = [];
-                data.thanh_viens.forEach(tv => {
-                    if (tv.VaiTro === 'Chủ tịch') {
-                        const sel = document.getElementById('selectChuTich');
-                        if (sel) sel.value = tv.MaGV;
-                        reasons.push(`• <strong>Chủ tịch:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
-                    } else if (tv.VaiTro === 'Thư ký') {
-                        const sel = document.getElementById('selectThuKy');
-                        if (sel) sel.value = tv.MaGV;
-                        reasons.push(`• <strong>Thư ký:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
-                    } else if (tv.VaiTro === 'Phản biện') {
-                        const sel = document.getElementById('selectPhanBien');
-                        if (sel) sel.value = tv.MaGV;
-                        reasons.push(`• <strong>Phản biện:</strong> ${tv.HoTen} (${tv.HocVi} - ${tv.TenBoMon}) — <em>${tv.LyDo}</em>`);
-                    }
-                });
-
-                validateFacultySelection();
-                const aiBox = document.getElementById('aiSuggestionBox');
-                const aiText = document.getElementById('aiSuggestionText');
-                if (aiBox && aiText) {
-                    aiBox.classList.remove('d-none');
-                    aiText.innerHTML = `<strong><i class="fa-solid fa-check-double me-1"></i> ĐÃ TỰ ĐỘNG PHÂN CÔNG CÂN BẰNG TẢI THÀNH CÔNG:</strong><br>` +
-                        reasons.join('<br>') +
-                        `<br><span class="small text-muted mt-1 d-block"><i class="fa-solid fa-shield-halved me-1"></i> Đã loại trừ ${data.da_loai_gvhd} GVHD và ${data.da_loai_trung_lich} giảng viên trùng lịch cùng thời điểm.</span>`;
-                }
-            } else {
-                alert('Không thể tạo gợi ý phân công: ' + (data.message || 'Thiếu giảng viên thỏa mãn điều kiện.'));
-            }
-        } catch (e) {
-            alert('Lỗi khi kết nối đến dịch vụ phân công: ' + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi Ý Phân Công Cân Bằng';
+    // Chặn gửi form nếu còn vi phạm
+    document.getElementById('formTaoHoiDong')?.addEventListener('submit', function(e) {
+        if (!validateFacultySelection()) {
+            e.preventDefault();
+            alert('Không thể hoàn tất tạo hội đồng: Vui lòng giải quyết các lỗi phân công thành viên (trùng lặp người hoặc GVHD chấm nhóm mình hướng dẫn).');
+            setStep(3);
+            return false;
         }
     });
 
@@ -1231,9 +1457,10 @@
             if (sel && sel.value) {
                 const opt = sel.options[sel.selectedIndex];
                 const tr = document.createElement('tr');
+                const displayName = opt.getAttribute('data-raw-text') || opt.getAttribute('data-hoten') || opt.text;
                 tr.innerHTML = `
                     <td class="text-center">${sttTV++}</td>
-                    <td class="fw-semibold">${opt.getAttribute('data-hoten') || opt.text}</td>
+                    <td class="fw-semibold">${displayName}</td>
                     <td>${opt.getAttribute('data-bomon') || 'Khoa'}</td>
                     <td class="text-secondary fw-bold">${roleInput?.value || 'Ủy viên'}</td>
                 `;
@@ -1268,6 +1495,9 @@
                 tbodyDT.appendChild(tr);
             }
         });
+
+        // 5. Kiểm tra trùng lặp & xung đột tại Bước 4
+        checkPreviewConflicts();
     }
 
     function addPreviewFacultyRow(tbody, stt, selectId, defaultRole, badgeClass) {
@@ -1275,36 +1505,148 @@
         if (sel && sel.value) {
             const opt = sel.options[sel.selectedIndex];
             const tr = document.createElement('tr');
+            const displayName = opt.getAttribute('data-raw-text') || opt.getAttribute('data-hoten') || opt.text;
             tr.innerHTML = `
                 <td class="text-center">${stt}</td>
-                <td class="fw-semibold">${opt.getAttribute('data-hoten') || opt.text}</td>
+                <td class="fw-semibold">${displayName}</td>
                 <td>${opt.getAttribute('data-bomon') || 'Khoa'}</td>
                 <td class="${badgeClass}">${defaultRole}</td>
             `;
             tbody.appendChild(tr);
         }
     }
+
+    // Kiểm tra và chặn nút lưu ở Bước 4 nếu có vi phạm
+    function checkPreviewConflicts() {
+        const previewErrors = [];
+        const memberMap = new Map();
+
+        document.querySelectorAll('.select-faculty').forEach(sel => {
+            const val = sel.value?.trim();
+            if (!val) return;
+            const opt = sel.options[sel.selectedIndex];
+            const name = opt?.getAttribute('data-raw-text') || opt?.getAttribute('data-hoten') || val;
+            const role = getSelectRoleName(sel);
+
+            if (!memberMap.has(val)) {
+                memberMap.set(val, { name, roles: [role] });
+            } else {
+                memberMap.get(val).roles.push(role);
+            }
+        });
+
+        memberMap.forEach((info) => {
+            if (info.roles.length > 1) {
+                previewErrors.push(`Giảng viên <strong>${info.name}</strong> bị phân công trùng lặp ở các chức danh: <strong>${info.roles.join(', ')}</strong>.`);
+            }
+        });
+
+        const selectedDeTaiGVHDs = [];
+        document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
+            const row = cb.closest('tr');
+            if (row) {
+                const gvhd = row.getAttribute('data-gvhd');
+                const tendt = row.getAttribute('data-tendetai');
+                if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
+            }
+        });
+
+        document.querySelectorAll('.select-faculty').forEach(sel => {
+            if (!sel.value) return;
+            const opt = sel.options[sel.selectedIndex];
+            const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
+            const role = getSelectRoleName(sel);
+            const match = selectedDeTaiGVHDs.find(item => item.gvhd && tenGV && item.gvhd === tenGV);
+            if (match) {
+                previewErrors.push(`Giảng viên <strong>${opt?.getAttribute('data-hoten') || opt?.text}</strong> (${role}) đang là GVHD của đề tài: <em>"${match.tendt}"</em>.`);
+            }
+        });
+
+        // 3. Kiểm tra trùng lịch bảo vệ với các Hội đồng khác
+        const batDau = document.getElementById('ThoiGianBatDau')?.value;
+        const ketThuc = document.getElementById('ThoiGianKetThuc')?.value;
+        const scheduleConflictMap = getScheduleConflictsForTime(batDau, ketThuc);
+
+        document.querySelectorAll('.select-faculty').forEach(sel => {
+            const val = sel.value?.trim();
+            if (!val) return;
+            const opt = sel.options[sel.selectedIndex];
+            const name = opt?.getAttribute('data-raw-text') || opt?.getAttribute('data-hoten') || val;
+            const role = getSelectRoleName(sel);
+            if (scheduleConflictMap.has(val)) {
+                const sched = scheduleConflictMap.get(val);
+                previewErrors.push(`Giảng viên <strong>${name}</strong> (${role}) đã có lịch tham gia <strong>${sched.councilName}</strong> (${sched.timeStr} tại ${sched.location}).`);
+            }
+        });
+
+        const conflictBox = document.getElementById('previewConflictWarningBox');
+        const submitBtn = document.getElementById('btnSubmitWizard');
+
+        if (previewErrors.length > 0) {
+            if (conflictBox) {
+                conflictBox.innerHTML = `
+                    <div class="d-flex align-items-start">
+                        <i class="fa-solid fa-circle-exclamation fs-5 me-2 mt-1 text-danger"></i>
+                        <div>
+                            <strong class="text-danger">KHÔNG THỂ KÝ DUYỆT / BAN HÀNH QUYẾT ĐỊNH:</strong>
+                            <ul class="mb-1 mt-1 ps-3">
+                                ${previewErrors.map(err => `<li>${err}</li>`).join('')}
+                            </ul>
+                            <div class="small text-danger fw-semibold">Vui lòng bấm nút "Quay lại Bước 3" để điều chỉnh lại phân công thành viên hội đồng.</div>
+                        </div>
+                    </div>
+                `;
+                conflictBox.classList.remove('d-none');
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('disabled', 'opacity-50');
+                submitBtn.title = 'Vui lòng xử lý vi phạm phân công thành viên trước khi ký duyệt';
+            }
+        } else {
+            if (conflictBox) {
+                conflictBox.classList.add('d-none');
+                conflictBox.innerHTML = '';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('disabled', 'opacity-50');
+                submitBtn.removeAttribute('title');
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        // 1. Phục hồi các lựa chọn thành viên từ old input hoặc hội đồng hiện tại
         const oldMembers = @json(old('thanh_viens', []));
         for (const [index, member] of Object.entries(oldMembers || {})) {
             if (!member || typeof member !== 'object') continue;
-            let select;
-            if (Number(index) >= 3) {
-                document.getElementById('btnThemUyVien').click();
-                select = document.querySelector('#containerUyVienThem .dong-uy-vien-them:last-child select');
+            const maGV = member.MaGV || '';
+            const idxNum = Number(index);
+
+            if (idxNum >= 3) {
+                document.getElementById('btnThemUyVien')?.click();
+                const lastRow = document.querySelector('#containerUyVienThem .dong-uy-vien-them:last-child');
+                const sel = lastRow?.querySelector('.select-faculty');
+                if (sel && maGV) sel.value = maGV;
             } else {
-                select = document.getElementsByName(`thanh_viens[${index}][MaGV]`)[0];
+                const sel = document.getElementsByName(`thanh_viens[${index}][MaGV]`)[0];
+                if (sel && maGV) sel.value = maGV;
             }
-            if (select) select.value = member.MaGV || '';
         }
+
+        // 2. Phục hồi danh sách đề tài đã chọn
         const oldDossiers = @json(old('danh_sach_ho_so', []));
-        if (Array.isArray(oldDossiers)) {
+        if (Array.isArray(oldDossiers) && oldDossiers.length > 0) {
             document.querySelectorAll('.check-item-detai').forEach(input => {
                 input.checked = oldDossiers.includes(input.value);
             });
+            updateDeTaiCount();
         }
+
         validateFacultySelection();
-        @if(collect($errors->keys())->contains(fn($key) => str_starts_with($key, 'thanh_viens')))
+
+        @if(isset($errors) && $errors->any() && collect($errors->keys())->contains(fn($key) => str_starts_with($key, 'thanh_viens')))
             setStep(3);
         @endif
     });

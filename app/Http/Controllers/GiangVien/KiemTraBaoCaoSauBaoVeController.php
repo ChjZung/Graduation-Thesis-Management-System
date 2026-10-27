@@ -32,7 +32,11 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
             'baoCaoSauBaoVes.sinhVienNop',
             'baoCaoSauBaoVeMoiNhat',
         ])
-        ->whereNotNull('YeuCauChinhSuaSauBaoVe')
+        ->where(function ($q) {
+            $q->whereNotNull('YeuCauChinhSuaSauBaoVe')
+              ->orWhereNotNull('TrangThaiChinhSuaSauBaoVe')
+              ->orWhereHas('baoCaoSauBaoVes');
+        })
         ->where(function ($q) use ($gv) {
             $q->where('NguoiKiemTraChinhSua', $gv->MaGV)
               ->orWhere('NguoiKiemTraChinhSua', 'like', "%{$gv->HoTen}%")
@@ -61,7 +65,11 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
         $hoSos = $query->orderBy('updated_at', 'desc')->paginate(12)->withQueryString();
 
         // Thống kê
-        $base = HoSoBaoVe::whereNotNull('YeuCauChinhSuaSauBaoVe')
+        $base = HoSoBaoVe::where(function ($q) {
+                $q->whereNotNull('YeuCauChinhSuaSauBaoVe')
+                  ->orWhereNotNull('TrangThaiChinhSuaSauBaoVe')
+                  ->orWhereHas('baoCaoSauBaoVes');
+            })
             ->where(function ($q) use ($gv) {
                 $q->where('NguoiKiemTraChinhSua', $gv->MaGV)
                   ->orWhere('NguoiKiemTraChinhSua', 'like', "%{$gv->HoTen}%")

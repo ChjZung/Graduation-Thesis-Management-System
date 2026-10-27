@@ -68,7 +68,7 @@
             </span>
         </div>
         <div class="card-body p-4">
-            <div class="p-3 rounded-3 bg-light border text-dark mb-3" style="white-space: pre-line; line-height: 1.6;">{{ $hoSo->YeuCauChinhSuaSauBaoVe }}</div>
+            <div class="p-3 rounded-3 bg-light border text-dark mb-3" style="white-space: pre-line; line-height: 1.6;">{{ $hoSo->YeuCauChinhSuaSauBaoVe ?: 'Nhóm sinh viên thực hiện rà soát, chỉnh sửa và hoàn thiện toàn văn báo cáo theo ý kiến góp ý của Hội đồng bảo vệ khóa luận tốt nghiệp.' }}</div>
 
             <div class="row g-2 small text-muted">
                 <div class="col-md-6">

@@ -122,6 +122,102 @@ class CouncilAssignmentService
     }
 
     /**
+     * Thống kê số lượng và vai trò Hội đồng của từng giảng viên trong một Học kỳ cụ thể.
+     * Quy tắc:
+     * - Chỉ đếm các hội đồng thuộc MaHocKy đã chỉ định (không cộng dồn kỳ cũ).
+     * - Mỗi hội đồng chỉ tính 1 lần / giảng viên (COUNT DISTINCT HoiDong.MaHoiDong).
+     * - Loại bỏ hội đồng đã hủy (TrangThai = 'Đã hủy').
+     * - Loại trừ hội đồng đang sửa/xét ($excludeHoiDongId).
+     * - Tối ưu: Chỉ dùng đúng 2 truy vấn gom nhóm GROUP BY, không N+1.
+     */
+    public function getFacultyCouncilStatsBySemester(string $maHocKy, ?string $excludeHoiDongId = null): array
+    {
+        $hocKy = HocKy::find($maHocKy);
+        $tenHocKy = $hocKy ? $hocKy->TenDayDu : $maHocKy;
+
+        // Query 1: Tổng số hội đồng distinct theo từng MaGV
+        $counts = ThanhVienHoiDong::query()
+            ->join('HoiDong', 'ThanhVienHoiDong.MaHoiDong', '=', 'HoiDong.MaHoiDong')
+            ->where('HoiDong.MaHocKy', $maHocKy)
+            ->where('HoiDong.TrangThai', '!=', 'Đã hủy')
+            ->when($excludeHoiDongId, fn($q) => $q->where('HoiDong.MaHoiDong', '!=', $excludeHoiDongId))
+            ->select('ThanhVienHoiDong.MaGV', DB::raw('COUNT(DISTINCT HoiDong.MaHoiDong) as so_hoi_dong'))
+            ->groupBy('ThanhVienHoiDong.MaGV')
+            ->pluck('so_hoi_dong', 'MaGV')
+            ->toArray();
+
+        // Query 2: Gom nhóm số lần theo vai trò của từng MaGV
+        $roleRows = ThanhVienHoiDong::query()
+            ->join('HoiDong', 'ThanhVienHoiDong.MaHoiDong', '=', 'HoiDong.MaHoiDong')
+            ->where('HoiDong.MaHocKy', $maHocKy)
+            ->where('HoiDong.TrangThai', '!=', 'Đã hủy')
+            ->when($excludeHoiDongId, fn($q) => $q->where('HoiDong.MaHoiDong', '!=', $excludeHoiDongId))
+            ->select('ThanhVienHoiDong.MaGV', 'ThanhVienHoiDong.VaiTro', DB::raw('COUNT(DISTINCT HoiDong.MaHoiDong) as so_lan'))
+            ->groupBy('ThanhVienHoiDong.MaGV', 'ThanhVienHoiDong.VaiTro')
+            ->get();
+
+        $rolesByFaculty = [];
+        foreach ($roleRows as $row) {
+            $rolesByFaculty[$row->MaGV][$row->VaiTro] = (int)$row->so_lan;
+        }
+
+        // Lấy toàn bộ MaGV đang công tác để đảm bảo mọi GV đều có key
+        $allMaGVs = GiangVien::pluck('MaGV');
+        $result = [];
+
+        foreach ($allMaGVs as $maGV) {
+            $total = (int)($counts[$maGV] ?? 0);
+            $facultyRoles = $rolesByFaculty[$maGV] ?? [];
+
+            // Chuẩn hóa tên vai trò cho hiển thị ngắn gọn
+            $roleParts = [];
+            foreach ($facultyRoles as $vt => $sl) {
+                $shortRole = match($vt) {
+                    'Chủ tịch' => 'Chủ tịch',
+                    'Ủy viên phản biện', 'Phản biện' => 'Phản biện',
+                    'Ủy viên thư ký', 'Thư ký' => 'Thư ký',
+                    default => 'Ủy viên',
+                };
+                $roleParts[] = "{$sl} {$shortRole}";
+            }
+            $roleText = !empty($roleParts) ? implode(', ', $roleParts) : '';
+
+            $tooltip = $total > 0
+                ? "Đã tham gia {$total} hội đồng trong {$tenHocKy}" . ($roleText ? " ({$roleText})" : '')
+                : "Chưa tham gia hội đồng nào trong {$tenHocKy}";
+
+            $result[$maGV] = [
+                'total'    => $total,
+                'roles'    => $facultyRoles,
+                'roleText' => $roleText,
+                'tooltip'  => $tooltip,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Thống kê số lượng hội đồng của từng giảng viên theo TẤT CẢ các học kỳ trong hệ thống.
+     * Trả về mảng map [MaHocKy => ['tenHocKy' => ..., 'faculties' => [...]]]
+     * phục vụ chuyển đổi học kỳ linh hoạt ở frontend JS.
+     */
+    public function getAllSemestersFacultyCouncilStats(?string $excludeHoiDongId = null): array
+    {
+        $hocKys = HocKy::all();
+        $allStats = [];
+
+        foreach ($hocKys as $hk) {
+            $allStats[$hk->MaHocKy] = [
+                'tenHocKy'  => $hk->TenDayDu,
+                'faculties' => $this->getFacultyCouncilStatsBySemester($hk->MaHocKy, $excludeHoiDongId),
+            ];
+        }
+
+        return $allStats;
+    }
+
+    /**
      * Thống kê chi tiết hội đồng cho 1 giảng viên cụ thể
      * Quy tắc đếm: 1 hội đồng = 1 lượt
      */
@@ -181,172 +277,6 @@ class CouncilAssignmentService
             'dang_dien_ra'    => $dangDienRa,
             'theo_vai_tro'    => $theoVaiTro,
             'danh_sach'       => $records,
-        ];
-    }
-
-    /**
-     * Thuật toán phân công thông minh gợi ý thành viên Hội đồng
-     * - Loại trừ GVHD của các đề tài đã chọn
-     * - Loại trừ giảng viên bị trùng lịch bảo vệ cùng thời điểm
-     * - Ưu tiên giảng viên có chuyên môn cùng bộ môn/ngành
-     * - Cân bằng tải công việc: ưu tiên giảng viên có số lần tham gia ít hơn
-     * - Phân bổ đúng vai trò: Chủ tịch (PGS/TS), Thư ký (cẩn trọng), Phản biện (chuyên môn sâu)
-     */
-    public function deXuatThanhVienHoiDong(
-        $thoiGianBatDau,
-        $thoiGianKetThuc,
-        array $maHoSos,
-        ?string $maHocKy = null,
-        ?string $maKhoa = null
-    ): array {
-        $startTime = Carbon::parse($thoiGianBatDau);
-        $endTime = Carbon::parse($thoiGianKetThuc);
-
-        // 1. Xác định GVHD của các đề tài đã chọn (Bắt buộc LOẠI TRỪ)
-        $hoSos = HoSoBaoVe::with(['nhom.deTai.giangVien', 'nhom.truongNhom', 'nhom.thanhVienNhoms.sinhVien.lop'])
-            ->whereIn('MaHoSo', $maHoSos)
-            ->get();
-
-        $gvhdMaGVs = [];
-        $topicBoMons = [];
-        foreach ($hoSos as $hs) {
-            $gvhd = $hs->nhom?->deTai?->giangVien;
-            if ($gvhd) {
-                $gvhdMaGVs[] = $gvhd->MaGV;
-                if ($gvhd->MaBoMon) {
-                    $topicBoMons[] = $gvhd->MaBoMon;
-                }
-            }
-        }
-        $gvhdMaGVs = array_unique($gvhdMaGVs);
-        $topicBoMons = array_unique($topicBoMons);
-
-        // 2. Xác định giảng viên bị TRÙNG LỊCH BẢO VỆ
-        // Hội đồng khác đang diễn ra giao thoa thời gian với [startTime, endTime]
-        $conflictingCouncils = HoiDong::where(function($q) use ($startTime, $endTime) {
-            $q->whereBetween('ThoiGianBatDau', [$startTime, $endTime])
-              ->orWhereBetween('ThoiGianKetThuc', [$startTime, $endTime])
-              ->orWhere(function($sub) use ($startTime, $endTime) {
-                  $sub->where('ThoiGianBatDau', '<=', $startTime)
-                      ->where('ThoiGianKetThuc', '>=', $endTime);
-              });
-        })->pluck('MaHoiDong');
-
-        $conflictingLecturerMaGVs = ThanhVienHoiDong::whereIn('MaHoiDong', $conflictingCouncils)
-            ->pluck('MaGV')
-            ->unique()
-            ->toArray();
-
-        // 3. Lấy ứng viên giảng viên thuộc Khoa
-        $gvQuery = GiangVien::with(['boMon.khoa', 'thanhVienHoiDongs.hoiDong'])
-            ->where(function($q) {
-                $q->whereNull('TrangThai')
-                  ->orWhere('TrangThai', 'Đang công tác')
-                  ->orWhere('TrangThai', 'Hoạt động');
-            });
-
-        if ($maKhoa) {
-            $gvQuery->whereHas('boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
-        }
-
-        $allCandidates = $gvQuery->get();
-
-        // Lọc bỏ GVHD và GV bị trùng lịch
-        $eligiblePool = $allCandidates->reject(function($gv) use ($gvhdMaGVs, $conflictingLecturerMaGVs) {
-            return in_array($gv->MaGV, $gvhdMaGVs) || in_array($gv->MaGV, $conflictingLecturerMaGVs);
-        });
-
-        // Tính điểm ưu tiên và số hội đồng đã tham gia
-        $scoredPool = $eligiblePool->map(function($gv) use ($topicBoMons, $maHocKy) {
-            $soHoiDong = $gv->thanhVienHoiDongs
-                ->filter(fn($tv) => !$maHocKy || ($tv->hoiDong?->MaHocKy === $maHocKy))
-                ->unique('MaHoiDong')
-                ->count();
-
-            $hocVi = mb_strtolower($gv->HocVi ?? '');
-            $hocHam = mb_strtolower($gv->HocHam ?? '');
-            $isTienSiOrHigher = str_contains($hocVi, 'tiến sĩ') || str_contains($hocVi, 'ts') || str_contains($hocHam, 'pgs') || str_contains($hocHam, 'gs');
-            $isSameBoMon = in_array($gv->MaBoMon, $topicBoMons);
-
-            return [
-                'giangVien'         => $gv,
-                'soHoiDong'         => $soHoiDong,
-                'isTienSiOrHigher'  => $isTienSiOrHigher,
-                'isSameBoMon'       => $isSameBoMon,
-            ];
-        });
-
-        $assigned = [];
-        $warnings = [];
-
-        // 4. Chọn CHỦ TỊCH HỘI ĐỒNG:
-        // Ưu tiên: Tiến sĩ / PGS / GS + cùng chuyên môn hoặc thuộc khoa + số hội đồng ít hơn
-        $chuTichCandidates = $scoredPool->filter(fn($item) => $item['isTienSiOrHigher'])
-            ->sortBy(fn($item) => ($item['isSameBoMon'] ? 0 : 10) + $item['soHoiDong']);
-
-        $chosenChuTich = $chuTichCandidates->first();
-        if (!$chosenChuTich) {
-            // Dự phòng: Chọn người có số hội đồng ít nhất
-            $chosenChuTich = $scoredPool->sortBy(fn($item) => $item['soHoiDong'])->first();
-            $warnings[] = "Khoa tạm thời hết ứng viên có học vị Tiến sĩ khả dụng; hệ thống đề xuất Thạc sĩ có tải công tác thấp nhất làm Chủ tịch.";
-        }
-
-        if ($chosenChuTich) {
-            $assigned[] = [
-                'VaiTro'     => 'Chủ tịch',
-                'MaGV'       => $chosenChuTich['giangVien']->MaGV,
-                'HoTen'      => $chosenChuTich['giangVien']->HoTen,
-                'HocVi'      => $chosenChuTich['giangVien']->HocHam ?? ($chosenChuTich['giangVien']->HocVi ?? 'Giảng viên'),
-                'TenBoMon'   => $chosenChuTich['giangVien']->boMon?->TenBoMon ?? 'Bộ môn',
-                'SoHoiDong'  => $chosenChuTich['soHoiDong'],
-                'LyDo'       => "Học hàm/học vị cao (" . ($chosenChuTich['giangVien']->HocVi ?? 'TS') . "), tải hiện tại: {$chosenChuTich['soHoiDong']} HĐ.",
-            ];
-            $scoredPool = $scoredPool->reject(fn($item) => $item['giangVien']->MaGV === $chosenChuTich['giangVien']->MaGV);
-        }
-
-        // 5. Chọn THƯ KÝ HỘI ĐỒNG:
-        // Trách nhiệm: lập phiếu chấm từ đề cương, ghi chép biên bản.
-        // Ưu tiên: Giảng viên có số hội đồng ít nhất trong nhóm khả dụng.
-        $thuKyCandidates = $scoredPool->sortBy(fn($item) => ($item['isSameBoMon'] ? 0 : 5) + $item['soHoiDong']);
-        $chosenThuKy = $thuKyCandidates->first();
-
-        if ($chosenThuKy) {
-            $assigned[] = [
-                'VaiTro'     => 'Thư ký',
-                'MaGV'       => $chosenThuKy['giangVien']->MaGV,
-                'HoTen'      => $chosenThuKy['giangVien']->HoTen,
-                'HocVi'      => $chosenThuKy['giangVien']->HocHam ?? ($chosenThuKy['giangVien']->HocVi ?? 'Giảng viên'),
-                'TenBoMon'   => $chosenThuKy['giangVien']->boMon?->TenBoMon ?? 'Bộ môn',
-                'SoHoiDong'  => $chosenThuKy['soHoiDong'],
-                'LyDo'       => "Phụ trách chuẩn bị phiếu chấm & biên bản theo quy trình mới, tải hiện tại: {$chosenThuKy['soHoiDong']} HĐ.",
-            ];
-            $scoredPool = $scoredPool->reject(fn($item) => $item['giangVien']->MaGV === $chosenThuKy['giangVien']->MaGV);
-        }
-
-        // 6. Chọn PHẢN BIỆN HỘI ĐỒNG:
-        // Ưu tiên: Cùng bộ môn / chuyên môn sâu với đề tài + tải thấp
-        $phanBienCandidates = $scoredPool->sortBy(fn($item) => ($item['isSameBoMon'] ? 0 : 20) + $item['soHoiDong']);
-        $chosenPhanBien = $phanBienCandidates->first();
-
-        if ($chosenPhanBien) {
-            $assigned[] = [
-                'VaiTro'     => 'Phản biện',
-                'MaGV'       => $chosenPhanBien['giangVien']->MaGV,
-                'HoTen'      => $chosenPhanBien['giangVien']->HoTen,
-                'HocVi'      => $chosenPhanBien['giangVien']->HocHam ?? ($chosenPhanBien['giangVien']->HocVi ?? 'Giảng viên'),
-                'TenBoMon'   => $chosenPhanBien['giangVien']->boMon?->TenBoMon ?? 'Bộ môn',
-                'SoHoiDong'  => $chosenPhanBien['soHoiDong'],
-                'LyDo'       => "Chuyên môn phù hợp (" . ($chosenPhanBien['giangVien']->boMon?->TenBoMon ?? 'Khoa') . "), tải hiện tại: {$chosenPhanBien['soHoiDong']} HĐ.",
-            ];
-            $scoredPool = $scoredPool->reject(fn($item) => $item['giangVien']->MaGV === $chosenPhanBien['giangVien']->MaGV);
-        }
-
-        return [
-            'success'      => count($assigned) >= 3,
-            'thanh_viens'  => $assigned,
-            'canh_bao'     => $warnings,
-            'da_loai_gvhd' => count($gvhdMaGVs),
-            'da_loai_trung_lich' => count($conflictingLecturerMaGVs),
         ];
     }
 }

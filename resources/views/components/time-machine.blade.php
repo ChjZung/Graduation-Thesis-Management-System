@@ -7,7 +7,7 @@
 @endphp
 
 <!-- TIME MACHINE FLOATING WIDGET (TEST CONTROLLER) -->
-<div id="time-machine-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<div id="time-machine-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: var(--z-time-machine, 1020); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
     <!-- Nút Trigger Thu Gọn -->
     <div class="d-flex align-items-center gap-2 p-2 rounded-pill shadow-lg border {{ $isMocked ? 'bg-warning bg-opacity-25 border-warning' : 'bg-white border-primary' }}" style="backdrop-filter: blur(8px);">
         <button type="button" class="btn btn-sm {{ $isMocked ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-primary' }} rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="collapse" data-bs-target="#timeMachinePanel" aria-expanded="false">

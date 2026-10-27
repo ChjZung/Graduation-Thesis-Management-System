@@ -177,6 +177,16 @@ class XacNhanBaoVeController extends Controller
 
         $isApprove = ($request->HanhDong === 'dong_y');
 
+        // BẮT BUỘC: Kiểm tra hồ sơ có báo cáo toàn văn hay chưa khi duyệt bảo vệ
+        if ($isApprove && !$hoSo->hasBaoCaoToanVan()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Nhóm chưa nộp báo cáo toàn văn, không thể duyệt bảo vệ.'
+                ], 422);
+            }
+            return back()->with('error', 'Nhóm chưa nộp báo cáo toàn văn, không thể duyệt bảo vệ.');
+        }
+
         if (!$isApprove && empty(trim($request->NhanXet ?? ''))) {
             return back()->with('error', 'Vui lòng nhập lý do cụ thể khi không đồng ý cho nhóm tham gia bảo vệ.');
         }

@@ -45,19 +45,12 @@
                 <i class="fa-solid fa-download me-2"></i> Tải PDF
             </a>
 
-            <!-- Nút Công bố hoặc Thu hồi -->
+            <!-- Nút Công bố -->
             @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
                 <form action="{{ route('truongkhoa.hoidong.congBo', $hoiDong->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận công bố chính thức Hội đồng này? Văn bản PDF sẽ được ban hành và thông báo gửi đến Giáo vụ, Giảng viên và Sinh viên.');">
                     @csrf
                     <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs fw-bold d-inline-flex align-items-center">
                         <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Chính Thức
-                    </button>
-                </form>
-            @else
-                <form action="{{ route('truongkhoa.hoidong.thuHoiCongBo', $hoiDong->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận thu hồi công bố Hội đồng này để điều chỉnh dữ liệu?');">
-                    @csrf
-                    <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 shadow-xs fw-semibold d-inline-flex align-items-center text-dark">
-                        <i class="fa-solid fa-arrow-rotate-left me-2"></i> Thu Hồi Công Bố
                     </button>
                 </form>
             @endif
@@ -108,13 +101,6 @@
                             @csrf
                             <button type="submit" class="btn btn-success rounded-pill px-3 py-2 fw-bold shadow-sm d-inline-flex align-items-center">
                                 <i class="fa-solid fa-bullhorn me-2"></i> CÔNG BỐ DANH SÁCH &amp; QUYẾT ĐỊNH
-                            </button>
-                        </form>
-                    @else
-                        <form action="{{ route('truongkhoa.hoidong.thuHoiCongBo', $hoiDong->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận thu hồi công bố Hội đồng này để điều chỉnh dữ liệu thành viên hoặc nhóm đề tài?');">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-warning text-dark rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center">
-                                <i class="fa-solid fa-arrow-rotate-left me-2"></i> Thu Hồi Công Bố Để Sửa
                             </button>
                         </form>
                     @endif
@@ -462,7 +448,7 @@
                 });
             @endphp
 
-            @if($nhomChuaPhanCong->isNotEmpty())
+            @if($hoiDong->TrangThaiCongBo !== 'Đã công bố' && $nhomChuaPhanCong->isNotEmpty())
             <div class="card border-0 shadow-sm rounded-3 mb-4" style="background: #f8fafc; border: 1px dashed #cbd5e1 !important;">
                 <div class="card-header bg-white border-bottom py-2 text-primary fw-bold">
                     <i class="fa-solid fa-plus me-2 text-primary"></i> Gắn Thêm Đề Tài / Nhóm Sinh Viên Vào Hội Đồng Này
@@ -512,7 +498,14 @@
             <!-- Card: Các đề tài đang trong Hội đồng (Phụ lục 2) -->
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Đề Tài &amp; Sinh Viên Thuộc Hội Đồng ({{ $hoiDong->hoSoBaoVes->count() }} nhóm)</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-dark"><i class="fa-regular fa-folder-open me-2 text-primary"></i> Đề Tài &amp; Sinh Viên Thuộc Hội Đồng ({{ $hoiDong->hoSoBaoVes->count() }} nhóm)</span>
+                        @if($hoiDong->TrangThaiCongBo === 'Đã công bố')
+                            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.72rem;">
+                                <i class="fa-solid fa-lock me-1"></i>Đã công bố - Danh sách cố định
+                            </span>
+                        @endif
+                    </div>
                     <span class="small text-muted">
                         <i class="fa-solid fa-circle-info text-primary me-1"></i> Tên đề tài &amp; Cán bộ hướng dẫn gộp chung ô theo từng nhóm
                     </span>
@@ -529,7 +522,9 @@
                                     <th class="py-3">TÊN ĐỀ TÀI KHÓA LUẬN</th>
                                     <th class="py-3" style="width: 175px;">CÁN BỘ HƯỚNG DẪN</th>
                                     <th class="py-3 text-center" style="width: 85px;">TURNITIN</th>
-                                    <th class="pe-3 py-3 text-center" style="width: 65px;">TÁC VỤ</th>
+                                    @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
+                                        <th class="pe-3 py-3 text-center" style="width: 65px;">TÁC VỤ</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
@@ -588,6 +583,7 @@
                                                 </div>
                                                 @endif
                                             </td>
+                                            @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
                                             <td rowspan="{{ $soSV }}" class="pe-3 text-center py-3 bg-white" style="vertical-align: middle;">
                                                 <form action="{{ route('truongkhoa.hoidong.huyPhanCongNhom', [$hoiDong->MaHoiDong, $hoSo->MaHoSo]) }}" method="POST">
                                                     @csrf
@@ -596,6 +592,7 @@
                                                     </button>
                                                 </form>
                                             </td>
+                                            @endif
                                         @endif
                                     </tr>
                                     @endforeach
@@ -616,6 +613,7 @@
                                             <div class="fw-semibold text-dark">{{ $deTai?->giangVien?->HoTen ?? 'Chưa phân công' }}</div>
                                         </td>
                                         <td class="text-center py-3 bg-white">—</td>
+                                        @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
                                         <td class="pe-3 text-center py-3 bg-white">
                                             <form action="{{ route('truongkhoa.hoidong.huyPhanCongNhom', [$hoiDong->MaHoiDong, $hoSo->MaHoSo]) }}" method="POST">
                                                 @csrf
@@ -624,11 +622,12 @@
                                                 </button>
                                             </form>
                                         </td>
+                                        @endif
                                     </tr>
                                 @endif
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-5 text-muted">
+                                    <td colspan="{{ $hoiDong->TrangThaiCongBo === 'Đã công bố' ? 7 : 8 }}" class="text-center py-5 text-muted">
                                         <i class="fa-solid fa-folder-open fa-2x mb-2 d-block opacity-50 me-2"></i>
                                         Chưa có nhóm sinh viên nào được phân công vào Hội đồng này.
                                     </td>
@@ -665,16 +664,27 @@
                                 @if(!in_array($gv->MaGV, $existingMaGVs))
                                     @php
                                         $isGVHDOfCouncil = in_array($gv->MaGV, $assignedGvhdMaGVs ?? []);
+                                        $isScheduleConflict = isset($conflictingScheduleMap[$gv->MaGV]);
+                                        $stat = $facultyCouncilStats[$gv->MaGV] ?? null;
+                                        $soHd = $stat ? (int)$stat['total'] : 0;
+                                        $tooltip = $stat['tooltip'] ?? "Chưa tham gia hội đồng nào trong {$tenHocKyHoiDong}";
                                     @endphp
-                                    <option value="{{ $gv->MaGV }}" {{ $isGVHDOfCouncil ? 'disabled' : '' }}>
-                                        {{ $gv->HoTen }} — {{ $gv->HocHam ?? ($gv->HocVi ?? 'ThS') }} ({{ $gv->boMon?->TenBoMon ?? 'Khoa' }})
+                                    <option value="{{ $gv->MaGV }}" 
+                                            title="{{ $tooltip }}"
+                                            {{ ($isGVHDOfCouncil || $isScheduleConflict) ? 'disabled' : '' }}>
+                                        {{ $gv->danh_xung_option ?? ($gv->HoTen . ' (' . $gv->MaGV . ')') }} — [{{ $soHd }} HĐ]
                                         @if($isGVHDOfCouncil)
                                             — [Đang là GVHD nhóm trong HĐ - Không được chọn]
+                                        @elseif($isScheduleConflict)
+                                            — [{{ $conflictingScheduleMap[$gv->MaGV] }} - Không được chọn]
                                         @endif
                                     </option>
                                 @endif
                             @endforeach
                         </select>
+                        <div class="form-text small text-muted mt-1">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>Số hội đồng đã tham gia trong <span class="fw-semibold text-primary">{{ $tenHocKyHoiDong }}</span> (không tính hội đồng này).
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Vai trò trong Hội đồng: <span class="text-danger">*</span></label>

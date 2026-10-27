@@ -102,6 +102,10 @@ class HoSoBaoVeController extends Controller
             return redirect()->back()->with('warning', 'Đã từ chối hồ sơ bảo vệ (không đủ điều kiện)!');
         }
 
+        if (!$hoSo->hasBaoCaoToanVan()) {
+            return redirect()->back()->with('error', 'Nhóm chưa nộp báo cáo toàn văn, không thể duyệt bảo vệ.');
+        }
+
         $hoSo->update([
             'TrangThai'   => 'Đủ điều kiện bảo vệ',
             'NgayXacNhan' => now()->toDateString(),
@@ -127,6 +131,10 @@ class HoSoBaoVeController extends Controller
 
         $hoSo = HoSoBaoVe::findOrFail($id);
 
+        if (!$hoSo->hasBaoCaoToanVan()) {
+            return redirect()->back()->with('error', 'Nhóm chưa có báo cáo toàn văn, không thể phân công vào Hội đồng bảo vệ.');
+        }
+
         $updateData = [
             'MaHoiDong' => $request->MaHoiDong,
             'TrangThai' => 'Đã phân công',
@@ -149,6 +157,7 @@ class HoSoBaoVeController extends Controller
     public function luuTru($id)
     {
         $hoSo = HoSoBaoVe::findOrFail($id);
+
         $hoSo->update([
             'TrangThai' => 'Đã lưu trữ',
         ]);

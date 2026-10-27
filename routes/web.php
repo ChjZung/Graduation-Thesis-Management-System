@@ -523,13 +523,11 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     // Hội đồng bảo vệ (Trưởng khoa thành lập, phân công, công bố & văn bản PDF)
     Route::get('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'index'])->name('truongkhoa.hoidong.index');
     Route::get('/hoi-dong/create', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'create'])->name('truongkhoa.hoidong.create');
-    Route::post('/hoi-dong/de-xuat-thanh-vien', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'deXuatThanhVien'])->name('truongkhoa.hoidong.deXuatThanhVien');
     Route::post('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'store'])->name('truongkhoa.hoidong.store');
     Route::get('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'show'])->name('truongkhoa.hoidong.show');
     Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewPdf'])->name('truongkhoa.hoidong.previewPdf');
     Route::get('/hoi-dong/{id}/download-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'downloadPdf'])->name('truongkhoa.hoidong.downloadPdf');
     Route::post('/hoi-dong/{id}/cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'congBo'])->name('truongkhoa.hoidong.congBo');
-    Route::post('/hoi-dong/{id}/thu-hoi-cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'thuHoiCongBo'])->name('truongkhoa.hoidong.thuHoiCongBo');
     Route::post('/hoi-dong/{id}/update-quyet-dinh', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateQuyetDinh'])->name('truongkhoa.hoidong.updateQuyetDinh');
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateTrangThai'])->name('truongkhoa.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'phanCongNhom'])->name('truongkhoa.hoidong.phanCongNhom');

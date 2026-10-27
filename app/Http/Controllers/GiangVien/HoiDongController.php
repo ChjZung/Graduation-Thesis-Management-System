@@ -7,6 +7,7 @@ use App\Models\GiangVien;
 use App\Models\HoiDong;
 use App\Models\HocKy;
 use App\Models\HoSoBaoVe;
+use App\Http\Controllers\GiangVien\ChamDiemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -111,7 +112,26 @@ class HoiDongController extends Controller
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
-        return view('giangvien.hoidong.index', compact('gv', 'hoiDongs', 'counts', 'hocKies'));
+        $gradingData = ChamDiemController::prepareGradingData($gv, $request);
+        $activeTab = $request->query('tab');
+        if (empty($activeTab)) {
+            if ($request->filled('hoso') || $request->filled('MaHoSo')) {
+                $activeTab = 'chamdiem';
+            } else {
+                $activeTab = 'danhsach';
+            }
+        }
+        if (!in_array($activeTab, ['danhsach', 'chamdiem'])) {
+            $activeTab = 'danhsach';
+        }
+
+        return view('giangvien.hoidong.index', array_merge([
+            'gv'        => $gv,
+            'hoiDongs'  => $hoiDongs,
+            'counts'    => $counts,
+            'hocKies'   => $hocKies,
+            'activeTab' => $activeTab,
+        ], $gradingData));
     }
 
     /**

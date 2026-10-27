@@ -157,7 +157,9 @@
                                                     <i class="fa-solid fa-file-pdf me-1"></i> Báo cáo toàn văn
                                                 </button>
                                             @else
-                                                <span class="text-muted small"><i class="fa-solid fa-file-pdf me-1"></i> Chưa có báo cáo</span>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill small d-inline-flex align-items-center gap-1" style="width: fit-content;">
+                                                    <i class="fa-solid fa-triangle-exclamation text-warning"></i> Chưa có báo cáo
+                                                </span>
                                             @endif
 
                                             <!-- Source code -->

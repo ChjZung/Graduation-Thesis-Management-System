@@ -103,4 +103,12 @@ class HoiDong extends Model
     {
         return $this->hasMany(PhieuChamDiem::class, 'MaHoiDong', 'MaHoiDong');
     }
+
+    /**
+     * Danh sách thành viên sắp xếp theo thứ tự cố định: Chủ tịch -> Phản biện -> Thư ký -> Ủy viên
+     */
+    public function getSortedThanhViensAttribute()
+    {
+        return $this->thanhViens->sortBy('role_priority')->values();
+    }
 }

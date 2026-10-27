@@ -578,13 +578,31 @@
                         </p>
 
                         <!-- NÚT 1: PHÊ DUYỆT ĐỦ ĐIỀU KIỆN BẢO VỆ -->
-                        <button type="button" class="btn btn-success w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
-                            <i class="fa-solid fa-circle-check fs-5 me-2"></i>
-                            <div class="text-start">
-                                <div class="fw-bold" style="font-size: 14.5px;">Phê Duyệt Đủ Điều Kiện</div>
-                                <div style="font-size: 11.5px; opacity: 0.9;">Xác nhận cho nhóm ra bảo vệ trước Hội đồng</div>
+                        @if($hoSo->hasBaoCaoToanVan())
+                            <button type="button" class="btn btn-success w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPheDuyet">
+                                <i class="fa-solid fa-circle-check fs-5 me-2"></i>
+                                <div class="text-start">
+                                    <div class="fw-bold" style="font-size: 14.5px;">Phê Duyệt Đủ Điều Kiện</div>
+                                    <div style="font-size: 11.5px; opacity: 0.9;">Xác nhận cho nhóm ra bảo vệ trước Hội đồng</div>
+                                </div>
+                            </button>
+                        @else
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary w-100 py-3 rounded-pill d-flex align-items-center justify-content-center opacity-75 shadow-none" disabled title="Nhóm chưa nộp báo cáo toàn văn, không thể phê duyệt">
+                                    <i class="fa-solid fa-ban fs-5 me-2 text-warning"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold" style="font-size: 14.5px;">Phê Duyệt Đủ Điều Kiện (Bị khóa)</div>
+                                        <div style="font-size: 11.5px; opacity: 0.9;">Chưa nộp báo cáo toàn văn hợp lệ</div>
+                                    </div>
+                                </button>
+                                <div class="alert alert-warning border-warning bg-warning-subtle p-2.5 rounded-3 mt-2 mb-0 small text-warning-emphasis d-flex align-items-start gap-2">
+                                    <i class="fa-solid fa-triangle-exclamation fs-6 mt-0.5 text-warning flex-shrink-0"></i>
+                                    <div>
+                                        <strong>Không thể duyệt bảo vệ:</strong> Nhóm sinh viên chưa nộp tệp Báo cáo khóa luận toàn văn (hoặc tệp chưa được lưu trữ hợp lệ). Thầy/Cô vui lòng dùng nút <strong>"Yêu Cầu Chỉnh Sửa / Bổ Sung"</strong> bên dưới để yêu cầu nhóm nộp báo cáo.
+                                    </div>
+                                </div>
                             </div>
-                        </button>
+                        @endif
 
                         <!-- NÚT 2: YÊU CẦU CHỈNH SỬA / BỔ SUNG -->
                         <button type="button" class="btn btn-warning w-100 py-3 rounded-pill mb-3 d-flex align-items-center justify-content-center text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua">
@@ -647,17 +665,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="alert alert-success bg-success-subtle border-success-subtle mb-3 small">
-                        <strong>Lưu ý:</strong> Khi Thầy/Cô phê duyệt, hệ thống sẽ xác nhận nhóm sinh viên đạt yêu cầu chuyên môn, hoàn thành báo cáo và sản phẩm, chính thức đủ điều kiện để Giáo vụ Khoa bố trí Hội đồng và xếp lịch bảo vệ.
-                    </div>
+                    @if(!$hoSo->hasBaoCaoToanVan())
+                        <div class="alert alert-danger bg-danger-subtle border-danger-subtle mb-3 small text-danger-emphasis">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i>
+                            <strong>Cảnh báo:</strong> Nhóm chưa nộp Báo cáo khóa luận toàn văn. Thao tác phê duyệt đã bị khóa để đảm bảo đúng quy định.
+                        </div>
+                    @else
+                        <div class="alert alert-success bg-success-subtle border-success-subtle mb-3 small">
+                            <strong>Lưu ý:</strong> Khi Thầy/Cô phê duyệt, hệ thống sẽ xác nhận nhóm sinh viên đạt yêu cầu chuyên môn, hoàn thành báo cáo và sản phẩm, chính thức đủ điều kiện để Giáo vụ Khoa bố trí Hội đồng và xếp lịch bảo vệ.
+                        </div>
+                    @endif
                     <div class="mb-3">
                         <label class="form-label fw-bold text-dark small">Nhận xét &amp; Lời dặn dò của GVHD (Nếu có):</label>
-                        <textarea name="NhanXet" class="form-control" rows="3" placeholder="Ví dụ: Báo cáo hoàn thiện tốt, mã nguồn rõ ràng, sản phẩm hoạt động ổn định. Đồng ý cho nhóm tham gia bảo vệ trước Hội đồng.">{{ old('NhanXet', 'Báo cáo và sản phẩm đạt yêu cầu. Đồng ý cho nhóm tham gia bảo vệ khóa luận trước Hội đồng.') }}</textarea>
+                        <textarea name="NhanXet" class="form-control" rows="3" placeholder="Ví dụ: Báo cáo hoàn thiện tốt, mã nguồn rõ ràng, sản phẩm hoạt động ổn định. Đồng ý cho nhóm tham gia bảo vệ trước Hội đồng." {{ !$hoSo->hasBaoCaoToanVan() ? 'disabled' : '' }}>{{ old('NhanXet', 'Báo cáo và sản phẩm đạt yêu cầu. Đồng ý cho nhóm tham gia bảo vệ khóa luận trước Hội đồng.') }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-top py-3">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                    <button type="submit" class="btn btn-success rounded-pill px-4" {{ !$hoSo->hasBaoCaoToanVan() ? 'disabled' : '' }}>
                         <i class="fa-solid fa-check me-2"></i>Đồng Ý Phê Duyệt
                     </button>
                 </div>
@@ -688,7 +713,7 @@
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <div class="form-check p-2 bg-light rounded border ps-4">
-                                    <input class="form-check-input" type="checkbox" name="ThanhPhanCanSua[]" value="bao_cao" id="chk_bao_cao">
+                                    <input class="form-check-input" type="checkbox" name="ThanhPhanCanSua[]" value="bao_cao" id="chk_bao_cao" {{ !$hoSo->hasBaoCaoToanVan() ? 'checked' : '' }}>
                                     <label class="form-check-label text-dark small fw-semibold" for="chk_bao_cao">
                                         <i class="fa-solid fa-file-pdf text-danger me-1"></i> Báo cáo khóa luận toàn văn (PDF)
                                     </label>

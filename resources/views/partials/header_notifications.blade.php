@@ -149,14 +149,14 @@
     /* Menu Dropdown Thông Báo */
     .noti-dropdown-menu {
         width: 390px;
-        max-width: 92vw;
+        max-width: calc(100vw - 2rem);
         border-radius: 14px;
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
         padding: 0;
         overflow: hidden;
-        z-index: 1060;
-        background: #ffffff;
+        z-index: var(--z-dropdown, 1060) !important;
+        background: #ffffff !important;
     }
     .noti-dropdown-header {
         padding: 12px 16px 8px 16px;

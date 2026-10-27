@@ -159,6 +159,8 @@
         position: relative;
         clear: both;
         margin-bottom: 1.5rem !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
     }
     .rich-text-editor-container .rte-wrapper {
         border: 1px solid #cbd5e1 !important;

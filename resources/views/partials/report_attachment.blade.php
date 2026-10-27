@@ -3,7 +3,7 @@
     $fileName = $report->TenFile ?: ('Bao_cao.' . ($extension ?: 'pdf'));
     $isWord = in_array($extension, ['docx', 'doc']);
 @endphp
-<div class="report-attachment p-3 rounded-3 border bg-light d-flex flex-wrap align-items-center justify-content-between gap-3 w-100">
+<div class="report-attachment p-3 rounded-3 border bg-light d-flex flex-wrap align-items-center justify-content-between gap-3 w-100 min-w-0 max-w-full overflow-hidden">
     <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0; flex-basis: 180px;">
         <i class="fa-solid {{ $isWord ? 'fa-file-word text-primary' : 'fa-file-pdf text-danger' }} fs-3 flex-shrink-0" aria-hidden="true"></i>
         <div class="text-truncate">

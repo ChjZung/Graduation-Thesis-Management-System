@@ -20,14 +20,11 @@ class ChamDiemController extends Controller
 {
     public function __construct(private GradeCalculationService $gradeService) {}
 
-    public function index(Request $request)
+    /**
+     * Chuẩn bị dữ liệu phục vụ Tab Chấm Điểm Hội Đồng
+     */
+    public static function prepareGradingData($giangVien, Request $request): array
     {
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        if (!$giangVien) {
-            abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
-        }
-
         // Lấy tất cả Hội đồng mà giảng viên này tham gia
         $hoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
             ->with([
@@ -123,32 +120,59 @@ class ChamDiemController extends Controller
         $tenBieuMau = ($loaiKhoaLuan === 'KLKS') ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
         $functionalRequirements = PhieuChamDiem::parseFunctionalRequirements($customChucNang, $loaiKhoaLuan);
 
-        return view('giangvien.chamdiem.index', compact(
-            'giangVien',
-            'hoiDongs',
-            'activeHoiDong',
-            'activeHoSo',
-            'activeDeTai',
-            'sinhViens',
-            'vaiTroGV',
-            'isChuTich',
-            'isThuKy',
-            'gvhdHoTen',
-            'customChucNang',
-            'functionalRequirements',
-            'rubric',
-            'tenBieuMau',
-            'loaiKhoaLuan',
-            'canhBaoChuaXacDinhLoai',
-            'diemDaCham',
-            'daKhoaPhieu',
-            'daKyTen',
-            'chuKyHienTai',
-            'ngayKy',
-            'phieuCu',
-            'rubricKLCN',
-            'rubricKLKS'
-        ));
+        // Đếm số lượng nhóm/hồ sơ bảo vệ đang chờ giảng viên này chấm điểm (chưa hoàn thành)
+        $choChamDiemCount = 0;
+        foreach ($hoiDongs as $hdItem) {
+            foreach ($hdItem->hoSoBaoVes as $hsItem) {
+                $daHoanThanh = PhieuChamDiem::where('MaHoiDong', $hdItem->MaHoiDong)
+                    ->where('MaHoSo', $hsItem->MaHoSo)
+                    ->where('MaGV', $giangVien->MaGV)
+                    ->where('TrangThai', 'Đã hoàn thành')
+                    ->exists();
+                if (!$daHoanThanh) {
+                    $choChamDiemCount++;
+                }
+            }
+        }
+
+        return [
+            'giangVien'                => $giangVien,
+            'gradingHoiDongs'          => $hoiDongs,
+            'activeHoiDong'            => $activeHoiDong,
+            'activeHoSo'               => $activeHoSo,
+            'activeDeTai'              => $activeDeTai,
+            'sinhViens'                => $sinhViens,
+            'vaiTroGV'                 => $vaiTroGV,
+            'isChuTich'                => $isChuTich,
+            'isThuKy'                  => $isThuKy,
+            'gvhdHoTen'                => $gvhdHoTen,
+            'customChucNang'           => $customChucNang,
+            'functionalRequirements'   => $functionalRequirements,
+            'rubric'                   => $rubric,
+            'tenBieuMau'               => $tenBieuMau,
+            'loaiKhoaLuan'             => $loaiKhoaLuan,
+            'canhBaoChuaXacDinhLoai'   => $canhBaoChuaXacDinhLoai,
+            'diemDaCham'               => $diemDaCham,
+            'daKhoaPhieu'              => $daKhoaPhieu,
+            'daKyTen'                  => $daKyTen,
+            'chuKyHienTai'             => $chuKyHienTai,
+            'ngayKy'                   => $ngayKy,
+            'phieuCu'                  => $phieuCu,
+            'rubricKLCN'               => $rubricKLCN,
+            'rubricKLKS'               => $rubricKLKS,
+            'choChamDiemCount'         => $choChamDiemCount,
+        ];
+    }
+
+    /**
+     * Chuyển hướng 302 từ URL chấm điểm cũ sang Tab Chấm điểm tại /giangvien/hoi-dong?tab=chamdiem
+     */
+    public function index(Request $request)
+    {
+        $query = $request->query();
+        $query['tab'] = 'chamdiem';
+
+        return redirect()->route('giangvien.hoidong.index', $query, 302);
     }
 
     public function store(Request $request)
@@ -346,7 +370,8 @@ class ChamDiemController extends Controller
             ? 'Đã Xác nhận & Khóa phiếu chấm điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
             : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận hoàn thành.';
 
-        return redirect()->route('giangvien.chamdiem.index', [
+        return redirect()->route('giangvien.hoidong.index', [
+            'tab'  => 'chamdiem',
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
             'loai' => $request->LoaiKhoaLuan,
@@ -428,7 +453,8 @@ class ChamDiemController extends Controller
         $hoSo->NgayChuanBiPhieu = now();
         $hoSo->save();
 
-        return redirect()->route('giangvien.chamdiem.index', [
+        return redirect()->route('giangvien.hoidong.index', [
+            'tab'  => 'chamdiem',
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
         ])->with('success', 'Thư ký Hội đồng đã cập nhật yêu cầu chức năng và tiêu chí phiếu chấm thành công! Toàn bộ phiếu chấm của các thành viên Hội đồng đã được đồng bộ.');
@@ -490,7 +516,8 @@ class ChamDiemController extends Controller
             ]);
         }
 
-        return redirect()->route('giangvien.chamdiem.index', [
+        return redirect()->route('giangvien.hoidong.index', [
+            'tab'  => 'chamdiem',
             'hd'   => $hoSo->MaHoiDong,
             'hoso' => $hoSo->MaHoSo,
         ]);
@@ -530,7 +557,8 @@ class ChamDiemController extends Controller
         }
         $hoSo->save();
 
-        return redirect()->route('giangvien.chamdiem.index', [
+        return redirect()->route('giangvien.hoidong.index', [
+            'tab'  => 'chamdiem',
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
         ])->with('success', 'Thư ký Hội đồng đã chuẩn bị thành công mẫu phiếu chấm điểm cho đề tài!');

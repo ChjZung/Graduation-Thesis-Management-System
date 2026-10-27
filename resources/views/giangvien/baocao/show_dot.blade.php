@@ -3,50 +3,60 @@
 @section('page_title', 'Chi Tiết Đợt Nộp & Đánh Giá Phiên Bản — ' . $dotNop->TenDotNop)
 
 @section('content')
-<div class="container-fluid px-0">
+<div class="container-fluid px-0 min-w-0 max-w-full overflow-x-hidden">
 
     @include('partials.report_milestone_progress')
 
     {{-- HEADER ĐIỀU HƯỚNG & THÔNG TIN ĐỢT NỘP --}}
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4" style="border: 1px solid #e2e8f0 !important;">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('giangvien.baocao.index', array_filter(['nhom' => $nhom?->MaNhom, 'gd' => $dotNop->giaiDoan?->ThuTu])) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4 min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 min-w-0 max-w-full">
+            <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+                <a href="{{ route('giangvien.baocao.index', array_filter(['nhom' => $nhom?->MaNhom, 'gd' => $dotNop->giaiDoan?->ThuTu])) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-inline-flex align-items-center flex-shrink-0 text-nowrap">
                     <i class="fa-solid fa-arrow-left me-2"></i>Về danh sách
                 </a>
-                <div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold">
+                <div class="min-w-0 flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap min-w-0 max-w-full">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold text-truncate d-inline-block max-w-full flex-shrink-0" style="max-width: 250px;" title="{{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}">
                             {{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}
                         </span>
-                        <h5 class="fw-bold text-dark mb-0">
+                        <h5 class="fw-bold text-dark mb-0 min-w-0 max-w-full text-break break-words line-clamp-2" style="overflow-wrap: anywhere; word-break: break-word;" title="{{ $dotNop->TenDotNop }}">
                             {{ $dotNop->TenDotNop }}
                         </h5>
                         @if($dotNop->TrangThai === 'HOAN_THANH')
-                            <span class="badge bg-success rounded-pill px-3 py-1">Đã hoàn thành</span>
+                            <span class="badge bg-success rounded-pill px-3 py-1 flex-shrink-0 text-nowrap">Đã hoàn thành</span>
                         @elseif($dotNop->TrangThai === 'DANG_MO')
-                            <span class="badge bg-info text-dark rounded-pill px-3 py-1">Đang mở nộp</span>
+                            <span class="badge bg-info text-dark rounded-pill px-3 py-1 flex-shrink-0 text-nowrap">Đang mở nộp</span>
                         @else
-                            <span class="badge bg-secondary rounded-pill px-3 py-1">{{ $dotNop->TrangThai }}</span>
+                            <span class="badge bg-secondary rounded-pill px-3 py-1 flex-shrink-0 text-nowrap">{{ $dotNop->TrangThai }}</span>
                         @endif
                     </div>
-                    <div class="text-muted small mt-1">
+                    <div class="text-muted small mt-1 min-w-0 max-w-full text-break break-words">
                         <i class="fa-solid fa-folder-open me-2 text-primary"></i>Đề tài: <strong>{{ isset($deTai) ? $deTai->TenDeTai : ($dotNop->deTai->TenDeTai ?? 'Khóa luận tốt nghiệp') }}</strong> • 
                         <i class="fa-solid fa-users me-2 text-primary"></i>Nhóm: <strong>{{ isset($nhom) ? ($nhom->TenNhom ?: $nhom->MaNhom) : 'Chưa rõ nhóm' }}</strong>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
                 <span class="text-muted small">
                     <i class="fa-regular fa-clock me-2"></i>Hạn nộp: 
-                    <strong>{{ $dotNop->HanNop ? \Carbon\Carbon::parse($dotNop->HanNop)->format('H:i d/m/Y') : 'Không giới hạn' }}</strong>
+                    @if(!$dotNop->HanNop)
+                        <strong class="text-secondary">Không giới hạn</strong>
+                    @else
+                        @php
+                            $isOverdue = now()->gt($dotNop->HanNop);
+                            $isUrgent = !$isOverdue && now()->diffInDays($dotNop->HanNop, false) <= 2;
+                        @endphp
+                        <strong class="{{ $isOverdue ? 'text-danger fw-bold' : ($isUrgent ? 'text-warning-emphasis fw-bold' : 'text-dark') }}">
+                            {{ \Carbon\Carbon::parse($dotNop->HanNop)->format('H:i d/m/Y') }}
+                        </strong>
+                    @endif
                 </span>
                 <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.toggle', $dotNop->MaDotNop) }}">
                     @csrf
                     <input type="hidden" name="nhom" value="{{ $nhom->MaNhom ?? '' }}">
                     <input type="hidden" name="gd" value="{{ $dotNop->giaiDoan?->ThuTu ?? '' }}">
-                    <button type="submit" class="btn btn-sm {{ $dotNop->TrangThai === 'DANG_MO' ? 'btn-outline-danger' : 'btn-outline-success' }} rounded-pill px-3">
+                    <button type="submit" class="btn btn-sm {{ $dotNop->TrangThai === 'DANG_MO' ? 'btn-outline-danger' : 'btn-outline-success' }} rounded-pill px-3 text-nowrap">
                         <i class="fa-solid {{ $dotNop->TrangThai === 'DANG_MO' ? 'fa-lock' : 'fa-lock-open' }} me-1"></i>
                         {{ $dotNop->TrangThai === 'DANG_MO' ? 'Đóng đợt nộp' : 'Mở lại đợt nộp' }}
                     </button>
@@ -55,50 +65,50 @@
         </div>
     </div>
 
-    <div class="card border mb-3">
-        <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.yeu_cau_ma_nguon', $dotNop->MaDotNop) }}" class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="card border mb-3 min-w-0 max-w-full overflow-hidden">
+        <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.yeu_cau_ma_nguon', $dotNop->MaDotNop) }}" class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3 min-w-0 max-w-full">
             @csrf
             @method('PATCH')
-            <div>
+            <div class="min-w-0">
                 <input type="hidden" name="YeuCauSourceCode" value="0">
                 <div class="form-check mb-1">
                     <input class="form-check-input" type="checkbox" name="YeuCauSourceCode" value="1" id="requireSourceCode-{{ $dotNop->MaDotNop }}" @checked($dotNop->YeuCauSourceCode)>
                     <label class="form-check-label fw-semibold" for="requireSourceCode-{{ $dotNop->MaDotNop }}">Yêu cầu link GitHub / GitLab / Bitbucket</label>
                 </div>
-                <div class="small text-muted">Chỉ áp dụng cho đợt nộp này. Không tích thì ô nhập link Git sẽ ẩn ở phía sinh viên.</div>
+                <div class="small text-muted text-break break-words">Chỉ áp dụng cho đợt nộp này. Không tích thì ô nhập link Git sẽ ẩn ở phía sinh viên.</div>
             </div>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Lưu yêu cầu</button>
+            <button type="submit" class="btn btn-sm btn-primary flex-shrink-0 text-nowrap"><i class="fa-solid fa-floppy-disk me-1"></i>Lưu yêu cầu</button>
         </form>
     </div>
 
     @if($phienBans->isEmpty())
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white" style="border: 1px solid #e2e8f0 !important;">
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
             <i class="fa-regular fa-folder-open fs-1 text-muted opacity-50 mb-3 d-block"></i>
             <h5 class="fw-bold text-dark mb-1">Chưa có bài nộp nào từ sinh viên</h5>
-            <p class="text-muted small mb-0">Khi nhóm sinh viên nộp báo cáo cho đợt này, các phiên bản nộp sẽ hiển thị chi tiết tại đây kèm kết quả phân tích AI.</p>
+            <p class="text-muted small mb-0 text-break break-words">Khi nhóm sinh viên nộp báo cáo cho đợt này, các phiên bản nộp sẽ hiển thị chi tiết tại đây kèm kết quả phân tích AI.</p>
         </div>
     @else
 
     {{-- BỐ CỤC 2 CỘT: XEM PHIÊN BẢN (TRÁI) & FORM NHẬN XÉT ĐÁNH GIÁ (PHẢI) --}}
-    <div class="row g-4 align-items-start">
+    <div class="row g-4 align-items-start min-w-0 max-w-full">
         
         {{-- CỘT TRÁI: DANH SÁCH & NỘI DUNG CÁC PHIÊN BẢN (VERSIONS) --}}
-        <div class="col-12 col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 bg-white" style="border: 1px solid #e2e8f0 !important;">
+        <div class="col-12 col-lg-7 min-w-0 max-w-full">
+            <div class="card border-0 shadow-sm rounded-4 bg-white min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
                 
                 {{-- Thanh Tab chọn phiên bản --}}
-                <div class="card-header bg-white border-bottom p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-bold text-dark small text-uppercase">
-                            <i class="fa-solid fa-code-branch text-primary me-2"></i>Lịch Sử Các Phiên Bản Nộp ({{ $phienBans->count() }} phiên bản)
+                <div class="card-header bg-white border-bottom p-3 min-w-0 max-w-full overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap min-w-0">
+                        <span class="fw-bold text-dark small text-uppercase min-w-0 text-truncate">
+                            <i class="fa-solid fa-code-branch text-primary me-2 flex-shrink-0"></i>Lịch Sử Các Phiên Bản Nộp ({{ $phienBans->count() }} phiên bản)
                         </span>
-                        <span class="text-muted small" style="font-size: 11px;">Mỗi lần nộp lại được bảo toàn nguyên vẹn</span>
+                        <span class="text-muted small flex-shrink-0 text-nowrap" style="font-size: 11px;">Mỗi lần nộp lại được bảo toàn nguyên vẹn</span>
                     </div>
 
-                    <ul class="nav nav-pills gap-2" id="pills-tab" role="tablist">
+                    <ul class="nav nav-pills gap-2 flex-nowrap overflow-x-auto pb-1 max-w-full" id="pills-tab" role="tablist">
                         @foreach($phienBans as $index => $pb)
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-1 px-3 small fw-bold" 
+                            <li class="nav-item flex-shrink-0" role="presentation">
+                                <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-1 px-3 small fw-bold text-nowrap" 
                                         id="pills-v{{ $pb->LanNop }}-tab" 
                                         data-bs-toggle="pill" 
                                         data-bs-target="#pills-v{{ $pb->LanNop }}" 
@@ -118,7 +128,7 @@
                 </div>
 
                 {{-- Nội dung từng phiên bản --}}
-                <div class="card-body p-4 tab-content" id="pills-tabContent">
+                <div class="card-body p-4 tab-content min-w-0 max-w-full overflow-hidden" id="pills-tabContent">
                     @foreach($phienBans as $index => $pb)
                         @php
                             $aiJson = $pb->TomTatJson ?? [];
@@ -133,15 +143,15 @@
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="pills-v{{ $pb->LanNop }}" role="tabpanel">
                             
                             {{-- Thông tin tóm tắt phiên bản --}}
-                            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
-                                <div>
-                                    <div class="fw-bold text-dark fs-6">{{ $pb->TieuDe }}</div>
-                                    <div class="text-muted small mt-1">
+                            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom gap-2 flex-wrap min-w-0">
+                                <div class="min-w-0 flex-grow-1">
+                                    <div class="fw-bold text-dark fs-6 text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">{{ $pb->TieuDe }}</div>
+                                    <div class="text-muted small mt-1 min-w-0 text-break break-words">
                                         <i class="fa-regular fa-clock me-2"></i>Thời gian nộp: <strong>{{ \Carbon\Carbon::parse($pb->NgayNop)->format('H:i d/m/Y') }}</strong> •
                                         Tự đánh giá: <strong class="text-primary">{{ $pb->PhanTramHoanThanh }}%</strong>
                                     </div>
                                 </div>
-                                <div>
+                                <div class="flex-shrink-0 text-nowrap">
                                     @if($pb->TrangThai === 'Đạt')
                                         <span class="badge bg-success rounded-pill px-3 py-2 fw-bold">✓ Đã duyệt Đạt</span>
                                     @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
@@ -220,12 +230,12 @@
         </div>
 
         {{-- CỘT PHẢI: KHUNG ĐÁNH GIÁ CHUYÊN MÔN CỦA GIẢNG VIÊN --}}
-        <div class="col-12 col-lg-5">
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 sticky-under-header" style="border: 1px solid #e2e8f0 !important;">
-                <h6 class="fw-bold text-dark mb-1">
-                    <i class="fa-solid fa-pen-clip text-primary me-2"></i>Đánh Giá &amp; Nhận Xét Chuyên Môn
+        <div class="col-12 col-lg-5 min-w-0 max-w-full">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 transition-all min-w-0 max-w-full" style="border: 1px solid #e2e8f0 !important; height: auto !important; max-height: none !important; overflow: visible !important;">
+                <h6 class="fw-bold text-dark mb-1 min-w-0 text-truncate" title="Đánh Giá & Nhận Xét Chuyên Môn">
+                    <i class="fa-solid fa-pen-clip text-primary me-2 flex-shrink-0"></i>Đánh Giá &amp; Nhận Xét Chuyên Môn
                 </h6>
-                <span class="text-muted small mb-3 d-block">
+                <span class="text-muted small mb-3 d-block text-break break-words">
                     Đánh giá cho phiên bản nộp mới nhất: <strong>v{{ $latestPhienBan->LanNop ?? 1 }}</strong>
                 </span>
 

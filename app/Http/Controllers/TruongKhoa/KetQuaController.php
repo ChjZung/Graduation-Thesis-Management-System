@@ -77,11 +77,12 @@ class KetQuaController extends Controller
         }
 
         if ($request->filled('search_hd')) {
-            $s = trim($request->search_hd);
-            $hoiDongsQuery->where(function ($q) use ($s) {
-                $q->where('TenHoiDong', 'like', "%{$s}%")
-                  ->orWhere('DiaDiem', 'like', "%{$s}%")
-                  ->orWhere('MaHoiDong', 'like', "%{$s}%");
+            $s = mb_substr(trim($request->search_hd), 0, 100);
+            $escaped = addcslashes($s, '%_\\');
+            $hoiDongsQuery->where(function ($q) use ($escaped) {
+                $q->where('TenHoiDong', 'like', "%{$escaped}%")
+                  ->orWhere('DiaDiem', 'like', "%{$escaped}%")
+                  ->orWhere('MaHoiDong', 'like', "%{$escaped}%");
             });
         }
 
@@ -130,11 +131,12 @@ class KetQuaController extends Controller
         }
 
         if ($request->filled('search')) {
-            $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
-                $q->where('MaSV', 'LIKE', "%{$s}%")
-                  ->orWhereHas('sinhVien', fn($sv) => $sv->where('HoTen', 'LIKE', "%{$s}%"))
-                  ->orWhereHas('hoSoBaoVe.deTai', fn($dt) => $dt->where('TenDeTai', 'LIKE', "%{$s}%"));
+            $s = mb_substr(trim($request->search), 0, 100);
+            $escaped = addcslashes($s, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('MaSV', 'LIKE', "%{$escaped}%")
+                  ->orWhereHas('sinhVien', fn($sv) => $sv->where('HoTen', 'LIKE', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVe.deTai', fn($dt) => $dt->where('TenDeTai', 'LIKE', "%{$escaped}%"));
             });
         }
 
@@ -158,6 +160,29 @@ class KetQuaController extends Controller
             'trung_binh'   => (clone $baseQuery)->whereBetween('DiemTongKet', [5.0, 6.99])->count(),
             'khong_dat'    => (clone $baseQuery)->where('DiemTongKet', '<', 5.0)->count(),
         ];
+
+        // Phản hồi AJAX linh hoạt (không tải lại cả trang khi gõ/lọc)
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            if ($viewMode === 'hoidong') {
+                $html = view('truongkhoa.ketqua.partials._hoidong_list', compact('hoiDongs', 'tienDoHoiDongs'))->render();
+                return response()->json([
+                    'success' => true,
+                    'viewMode' => 'hoidong',
+                    'html' => $html,
+                    'total' => $hoiDongs->count(),
+                    'stats' => $stats,
+                ]);
+            }
+
+            $html = view('truongkhoa.ketqua.partials._toankhoa_table', compact('ketQuas'))->render();
+            return response()->json([
+                'success' => true,
+                'viewMode' => 'toankhoa',
+                'html' => $html,
+                'total' => $ketQuas->total(),
+                'stats' => $stats,
+            ]);
+        }
 
         return view('truongkhoa.ketqua.index', compact(
             'khoa',
