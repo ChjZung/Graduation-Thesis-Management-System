@@ -1,0 +1,165 @@
+{
+  "date": "2026-10-24",
+  "python_unit_tests": {
+    "passed": 136
+  },
+  "php_selected_tests": {
+    "passed": 55,
+    "assertions": 213,
+    "database_strategy": "transactions with rollback"
+  },
+  "synthetic_structure": [
+    {
+      "kind": "synthetic",
+      "pages": 3,
+      "chapters_detected": 1,
+      "sections_detected": 1,
+      "expected_chapters": 1,
+      "expected_sections": 1,
+      "chunks": 1,
+      "max_estimated_tokens": 327,
+      "duration_seconds": 0.094,
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    },
+    {
+      "kind": "synthetic",
+      "pages": 20,
+      "chapters_detected": 2,
+      "sections_detected": 10,
+      "expected_chapters": 2,
+      "expected_sections": 10,
+      "chunks": 10,
+      "max_estimated_tokens": 875,
+      "duration_seconds": 0.219,
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    },
+    {
+      "kind": "synthetic",
+      "pages": 80,
+      "chapters_detected": 8,
+      "sections_detected": 40,
+      "expected_chapters": 8,
+      "expected_sections": 40,
+      "chunks": 40,
+      "max_estimated_tokens": 875,
+      "duration_seconds": 0.828,
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    },
+    {
+      "kind": "synthetic",
+      "pages": 160,
+      "chapters_detected": 16,
+      "sections_detected": 80,
+      "expected_chapters": 16,
+      "expected_sections": 80,
+      "chunks": 80,
+      "max_estimated_tokens": 878,
+      "duration_seconds": 1.297,
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    }
+  ],
+  "real_pdf_structure": [
+    {
+      "kind": "real_local_pdf_offline_only",
+      "pages": 62,
+      "chapter_numbers": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "sections_detected": 101,
+      "chunks": 54,
+      "max_estimated_tokens": 2479,
+      "manual_check": "Visual inspection of chapter/section pages in the 62-page PDF; not an exhaustive labelled benchmark.",
+      "known_structure_limit": "PDF contains a duplicated 2.3 prefix; ambiguous headings are not silently renumbered.",
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    },
+    {
+      "kind": "real_local_pdf_offline_only",
+      "pages": 72,
+      "chapter_numbers": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "sections_detected": 64,
+      "chunks": 54,
+      "max_estimated_tokens": 2491,
+      "manual_check": "Visual inspection of chapter/section pages in the 62-page PDF; not an exhaustive labelled benchmark.",
+      "known_structure_limit": null,
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    }
+  ],
+  "gemini_smoke": {
+    "real_api": true,
+    "synthetic_pdf": true,
+    "database_queue_fired": true,
+    "schema": 6,
+    "processing_status": "completed",
+    "analysis_status": "completed",
+    "map_done": 1,
+    "map_total": 1,
+    "chapters": 1,
+    "completed_work": 1,
+    "repeated_analysis_reused": true,
+    "repeated_result_identical": true,
+    "repeated_analysis_no_job": true,
+    "provider_tokens": {
+      "prompt_tokens": 4147,
+      "output_tokens": 680,
+      "total_tokens": 4827,
+      "responses": 6
+    },
+    "errors": [],
+    "duration_seconds": 52.33
+  },
+  "citations": {
+    "synthetic_real_api_citations_checked": 9,
+    "matched_all": true,
+    "actual_pdf_preview_matched": true,
+    "focus_y": 0.1770597277475615
+  },
+  "ui": [
+    {
+      "width": 1440,
+      "chaptersCollapsed": true,
+      "nestedSections": true,
+      "nestedCitation": true,
+      "weightedProgress": true,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "chaptersCollapsed": true,
+      "nestedSections": true,
+      "nestedCitation": true,
+      "weightedProgress": true,
+      "overflow": false
+    }
+  ],
+  "quality_metrics": {
+    "status": "not_evaluated",
+    "precision": null,
+    "recall": null,
+    "f1": null,
+    "reason": "No labelled semantic corpus; synthetic and smoke checks do not establish model accuracy."
+  },
+  "live_test_budget_note": "Three bounded smoke runs of the same synthetic 3-page PDF during implementation: 6 + 3 + 6 generation responses. No large-document Gemini benchmark."
+}

@@ -5,6 +5,8 @@
 @section('content')
 <div class="container-fluid px-2 px-md-4 py-3">
 
+    @include('partials.report_milestone_progress')
+
     {{-- HEADER ĐIỀU HƯỚNG & THÔNG TIN ĐỢT NỘP --}}
     <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 transition-all hover-shadow" style="border: 1px solid #e2e8f0 !important;">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">

@@ -12,7 +12,13 @@ class AiResultMerger
         $newAnalysis = $new['analysis'] ?? [];
         $sameScope = ($old['summary_scope']['context_hash'] ?? '') === ($new['summary_scope']['context_hash'] ?? '');
         $samePipeline = ($old['schema_version'] ?? 0) === ($new['schema_version'] ?? 0) && $sameScope;
-        $keepSummary = $reviewOnly || ($samePipeline && $oldAnalysis && (
+        if (($old['schema_version'] ?? 0) === 6 && ($new['schema_version'] ?? 0) === 6) {
+            $samePipeline = ($oldAnalysis['token_settings'] ?? []) === ($newAnalysis['token_settings'] ?? []);
+        }
+        $noNewContent = ($newAnalysis['source'] ?? '') === 'system_fallback' ||
+            ((array_key_exists('total_units', $newAnalysis) || array_key_exists('total_pages', $newAnalysis))
+                && empty($newAnalysis['total_units']) && empty($newAnalysis['total_pages']));
+        $keepSummary = $reviewOnly || ($oldAnalysis && $noNewContent) || ($samePipeline && $oldAnalysis && (
             (($oldAnalysis['status'] ?? '') === 'completed' && ($newAnalysis['status'] ?? '') !== 'completed') ||
             (int) ($oldAnalysis['analyzed_chunks'] ?? 0) > (int) ($newAnalysis['analyzed_chunks'] ?? 0) ||
             (empty($newAnalysis['total_units']) && empty($newAnalysis['total_pages']))
@@ -46,6 +52,10 @@ class AiResultMerger
             $merged['requirements_review'] = $review;
         } elseif ($previous) {
             $merged['requirements_review'] = $previous;
+        }
+        // Keep the new brief summary even when a stronger prior document result is retained.
+        foreach (['teacher_requirements','requirements_document','teacher_requirements_status'] as $field) {
+            if (array_key_exists($field,$new)) $merged[$field]=$new[$field];
         }
         if (isset($new['_source_hash'])) $merged['_source_hash'] = $new['_source_hash'];
         return $merged;

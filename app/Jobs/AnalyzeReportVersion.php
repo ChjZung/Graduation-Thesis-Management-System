@@ -33,12 +33,14 @@ class AnalyzeReportVersion implements ShouldQueue
             if (($state['token'] ?? '') !== $this->token || !in_array($state['status'] ?? '',['queued','running','waiting'])) return;
             if (($state['next_retry_at'] ?? 0) > time()) { $this->release($state['next_retry_at']-time()); return; }
             if ($processing->fingerprint($report) !== $state['fingerprint']) {
-                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'File hoặc yêu cầu đã thay đổi. Hãy chọn Phân tích lại để xử lý theo nội dung mới.']);
+                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi. Hãy chọn Phân tích lại để xử lý theo đầu vào mới.']);
                 return;
             }
             $attempt = (int) ($state['attempts'] ?? 0)+1;
             $processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.']);
             $only = ($state['mode'] ?? '') === 'review';
+            // The Lab reader reuses Map when the brief changes, then refreshes its cited requirements.
+            if (config('ai_processing.pdf_engine') === 'pdf_lab' && strtolower(pathinfo($processing->path($report), PATHINFO_EXTENSION)) === 'pdf') $only = false;
 
             // Đối chiếu phiên bản (Lần 1 vs Lần 2): Kiểm tra xem có phiên bản trước liền kề không
             $prevData = null;
@@ -62,15 +64,22 @@ class AnalyzeReportVersion implements ShouldQueue
                 'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
                 'review_only'=>$only,
                 'progress_path'=>$processing->progressPath($this->token),
+                'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,
             ]);
             $report->refresh()->load('dotNop.giaiDoan');
             if ($processing->fingerprint($report) !== $state['fingerprint']) {
-                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'File hoặc yêu cầu đã thay đổi trong lúc phân tích. Kết quả trước đó được giữ; hãy phân tích lại theo nội dung mới.']);
+                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi trong lúc phân tích. Kết quả trước đó được giữ; hãy phân tích lại theo đầu vào mới.']);
                 return;
             }
             $data = $result['data'] ?? [];
             $data['_source_hash'] = hash_file('sha256',$processing->path($report));
+            $reviewStatus = $data['requirements_review']['status'] ?? 'not_configured';
+            if (!empty($data['analysis']['text_complete']) &&
+                (($data['analysis']['engine'] ?? '') === 'pdf_lab' ? !empty($data['analysis']['quality_checks_completed']) : !empty($data['analysis']['completion_audit_completed']))
+                && in_array($reviewStatus, ['completed', 'not_configured'])) {
+                $data['_canonical_fingerprint'] = $state['fingerprint'];
+            }
             $result['data'] = $data;
             $ai->saveVersionSummary($report,$result,['review_only'=>$only,'token'=>$this->token]);
             // Schedule from this attempt's errors, even if a stronger previous result was retained.

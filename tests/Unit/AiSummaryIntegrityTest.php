@@ -29,9 +29,9 @@ class AiSummaryIntegrityTest extends TestCase
     {
         $method = new \ReflectionMethod(AiSummaryService::class, 'fallbackSummarize');
         $result = $method->invoke(new AiSummaryService, 'fixture.pdf', 100, ['submission_requirements'=>'Khảo sát']);
-        $this->assertSame(5, $result['data']['schema_version']);
-        $this->assertSame([], $result['data']['summary_sections']);
-        $this->assertSame('document_fallback', $result['data']['summary_scope']['mode']);
+        $this->assertSame(6, $result['data']['schema_version']);
+        $this->assertSame([], $result['data']['chapters']);
+        $this->assertArrayNotHasKey('difficulties', $result['data']);
         $this->assertSame(0, $result['data']['analysis']['total_pages']);
         $this->assertFalse($result['data']['analysis']['text_complete']);
     }

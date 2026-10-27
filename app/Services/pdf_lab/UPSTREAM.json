@@ -1,0 +1,27 @@
+{
+  "origin": "PDF Segmentation Lab",
+  "reader": "instructor-reader-1.2",
+  "files": {
+    "core/ai_packaging.py": "429281d9a6bf040e1a17c20079ac39b95d3dfb72e1a690c661c56c2624c7ef08",
+    "core/heading_detector.py": "cf8a6e3b0a5a42bc36b5c6f79dfaa83aa9ccf85ae9cc614dbe4fad81376e327e",
+    "core/pdf_extractor.py": "239843b18db4b372fdcc2ef81d9999902cd5a907a66e6c6251ca1298a5ee083d",
+    "core/schemas.py": "540ac95bf5db60c8fa9e049a6ee0d59400ef7b2bc45177018941723fd3ed839c",
+    "core/section_analysis.py": "32433a78e511923d791e0b66d19decdbfb4344014538ef04f39f9fc42fca22f9",
+    "core/section_tree.py": "4756a578c8310a8d59f15bbe13419c13372006fddf6fd8a30748e8f30a9b265b",
+    "core/segmentation_pipeline.py": "b90223db6628877cad214cbcd5990c3afe0d4946741fb3ae500246391e19d5c7",
+    "core/token_chunker.py": "453ce242f067c789e78c3f3e740ae9573d5d29921d48c04e86f639c8520a5618",
+    "core/validators.py": "3ce3761322123cc3febb399175f77bbc828412fde34f7d6a9b6809df2f6e7ec9",
+    "core/__init__.py": "0d2992bdd947f49b421527a7370b4d6cc144956ada13b808cefbc92564a83d38",
+    "ai_runtime/checkpoints.py": "be909621f8d38762ccfbf642bc27e477379b7c77a466df578ee699ee39a68409",
+    "ai_runtime/claim_guards.py": "f169d3085df9d47fdc14ff0ccb3a6f4363bc635c5dfa9a200a813a71ea275598",
+    "ai_runtime/instructor.py": "555ffa8e03118cc7b63182bb30ed377eae5cbbc4390cb6b247d4a9100a2e98db",
+    "ai_runtime/model_transfer.py": "5c2c8675d80af0b54a23eb1629662a80786cfae25252060f8a2af847d91c9ac8",
+    "ai_runtime/provider.py": "3b39a0fcffab4acd9757aada545b73e3cb1c17bb45234c06bdef93702440cafc",
+    "ai_runtime/reader_quality.py": "d2c5d8060a28419f5ffcad1c94e6967e6a0a29ac49b91538f96df591dc8881e1",
+    "ai_runtime/summarizer.py": "b928e5b153c4aacc8102ba690b58bf6851b589bb7730b0e45d4c8db09fa931af",
+    "ai_runtime/__init__.py": "8e766d4c79d8c7465dfa8cf5726f2f289535dea52150c37a79e2d80c5a035167",
+    "ai_runtime/requirement_links.py": "9dae18f59c2c10976639d63fbf980132f93337174e9728bb64dc1be129a8fb76"
+  },
+  "summary": "gemini-summary-1.3",
+  "requirement_links": "requirement-links-1.3"
+}

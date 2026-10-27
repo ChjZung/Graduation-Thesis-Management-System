@@ -10,11 +10,33 @@ from ai_flexible_summary import ground_facts, resolve_sections, reduce_facts, ru
 from ai_processing import configure_session
 from ai_requirement_review import context_hash
 from pdf_document_analysis import exact_quote
+from ai_summary_hierarchy import structured_chunks
 
 
 class FlexibleSummaryTests(unittest.TestCase):
     def tearDown(self):
         configure_session()
+
+    def test_quote_spanning_pdf_lines_matches_raw_spans_without_prompt_page_labels(self):
+        text=('Nhóm khảo sát quy trình hiện tại và ghi nhận dữ liệu được lưu\n'
+              'trong nhiều bảng tính riêng lẻ, gây khó khăn khi tổng hợp báo cáo.')
+        chunks,_=structured_chunks([{'page':9,'text':text,'headings':[]}])
+        self.assertGreater(chunks[0]['text'].count('[Trang 9]'),1)
+        payload={'items':[{'topic':'Hiện trạng','kind':'background','content':'Dữ liệu quản lý bị phân tán.',
+            'evidence':text.replace('\n',' '),'source_pages':[9]}]}
+        facts=ground_facts(payload,chunks[0],{9:text},1)
+        self.assertTrue(facts[0]['verified'])
+        self.assertEqual(text,facts[0]['evidence'])
+        self.assertEqual([9],facts[0]['source_pages'])
+
+    def test_raw_span_matching_still_rejects_quote_outside_chunk_on_same_page(self):
+        visible='Nhóm đã khảo sát hiện trạng quản lý và ghi nhận các nhu cầu.'
+        outside='Hệ thống đã hoàn thành kiểm thử tải với một nghìn người dùng.'
+        chunk={'start_page':9,'end_page':9,'text':'[Trang 9] '+visible,
+               'source_spans':[{'page':9,'text':visible}]}
+        payload={'items':[{'topic':'Kiểm thử','kind':'reported_result','content':outside,
+            'evidence':outside,'source_pages':[9]}]}
+        with self.assertRaises(ValueError): ground_facts(payload,chunk,{9:visible+'\n'+outside},1)
 
     def fixture(self):
         texts = [

@@ -729,8 +729,15 @@ class ThesisProgressService
         $uploadedFile = null
     ): KhoiBaoCaoTienDo {
         return DB::transaction(function () use ($dotNop, $sinhVien, $data, $uploadedFile) {
+            $dotNop = DotNopBaoCao::whereKey($dotNop->getKey())->lockForUpdate()->firstOrFail();
+            $membership = \App\Models\ThanhVienNhom::where('MaSV', $sinhVien->MaSV)
+                ->where('TrangThai', 'da_tham_gia')->whereHas('nhom.phieuDangKys', fn ($q) =>
+                    $q->where('MaDeTai', $dotNop->MaDeTai)->whereIn('TrangThai', ['Đã duyệt', 'da_duyet']))->firstOrFail();
+            $submissionIdentity = ['group_id'=>$membership->MaNhom, 'semester_id'=>$membership->nhom->MaHocKy ?? $dotNop->deTai?->MaHocKy,
+                'topic_id'=>$dotNop->MaDeTai, 'stage_id'=>$dotNop->MaGiaiDoan, 'round_id'=>$dotNop->MaDotNop];
             // Xác định số lần nộp hiện tại (Version)
-            $latestVersion = KhoiBaoCaoTienDo::where('MaDotNop', $dotNop->MaDotNop)->max('LanNop') ?? 0;
+            $ownedVersions = app(ReportMilestoneProgressService::class)->versionsForRound($dotNop, $membership->nhom);
+            $latestVersion = $ownedVersions->max('LanNop') ?? 0;
             $newVersion = $latestVersion + 1;
 
             // Kiểm tra số lần nộp tối đa nếu có cấu hình
@@ -742,13 +749,13 @@ class ThesisProgressService
             $tenFile = null;
             $duongDanFile = null;
             if ($uploadedFile) {
-                $fileName = 'baocao_dot' . $dotNop->MaDotNop . '_v' . $newVersion . '_' . time() . '.' . $uploadedFile->getClientOriginalExtension();
+                $fileName = 'baocao_dot' . $dotNop->MaDotNop . '_v' . $newVersion . '_' . bin2hex(random_bytes(8)) . '.' . $uploadedFile->getClientOriginalExtension();
                 $path = $uploadedFile->storeAs('baocao', $fileName, 'public');
                 $tenFile = $uploadedFile->getClientOriginalName();
                 $duongDanFile = $path;
             } elseif ($latestVersion > 0) {
                 // Kế thừa file từ phiên bản trước nếu không upload file mới
-                $prev = KhoiBaoCaoTienDo::where('MaDotNop', $dotNop->MaDotNop)->where('LanNop', $latestVersion)->first();
+                $prev = $ownedVersions->firstWhere('LanNop', $latestVersion);
                 if ($prev) {
                     $tenFile = $prev->TenFile;
                     $duongDanFile = $prev->DuongDanFile;
@@ -789,6 +796,7 @@ class ThesisProgressService
 
             $khoi = KhoiBaoCaoTienDo::create([
                 'MaKhoi' => $maKhoi,
+                'TomTatJson' => ['_submission_identity'=>$submissionIdentity],
                 'MaBaoCao' => $maBaoCao,
                 'MaDotNop' => $dotNop->MaDotNop,
                 'MaGiaiDoan' => $dotNop->MaGiaiDoan,

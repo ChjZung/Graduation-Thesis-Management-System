@@ -118,6 +118,7 @@ class BaoCaoAiController extends Controller
         $report = $this->authorizedReport($id);
         $this->pdfPath($report);
         $state = $processing->enqueue($report);
+        if (request()->expectsJson()) return response()->json(['state'=>$processing->status($report->fresh()),'reused'=>(bool)($state['reused'] ?? false)])->header('Cache-Control','private, no-store');
         return back()->with('success',$state['message']);
     }
 }

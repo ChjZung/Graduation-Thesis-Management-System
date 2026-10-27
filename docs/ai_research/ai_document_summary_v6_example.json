@@ -1,0 +1,602 @@
+{
+  "schema_version": 6,
+  "document_id": "SYNTHETIC_REPORT",
+  "document_version_id": "SYNTHETIC_V1",
+  "document_type": "pdf",
+  "overview_summary": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại. Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch. Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+  "overall_summary": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại. Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch. Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+  "document_content": [
+    {
+      "topic": "Survey findings",
+      "kind": "reported_work",
+      "content": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại.",
+      "evidence": "The team interviewed three lecturers and documented the current registration workflow.",
+      "source_pages": [
+        1,
+        2,
+        3
+      ],
+      "source_ids": [
+        "F1_1"
+      ],
+      "source_chunk_ids": [
+        1
+      ],
+      "verified": true,
+      "section_id": "S2",
+      "source_section_ids": [
+        "S2"
+      ],
+      "relevance_verified": true,
+      "completion_verified": true,
+      "source_locations": [
+        {
+          "id": 1,
+          "label": "Trang 1",
+          "kind": "pdf"
+        },
+        {
+          "id": 2,
+          "label": "Trang 2",
+          "kind": "pdf"
+        },
+        {
+          "id": 3,
+          "label": "Trang 3",
+          "kind": "pdf"
+        }
+      ]
+    },
+    {
+      "topic": "Survey findings",
+      "kind": "proposal",
+      "content": "Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch.",
+      "evidence": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+      "source_pages": [
+        1,
+        2,
+        3
+      ],
+      "source_ids": [
+        "F1_2"
+      ],
+      "source_chunk_ids": [
+        1
+      ],
+      "verified": true,
+      "section_id": "S2",
+      "source_section_ids": [
+        "S2"
+      ],
+      "relevance_verified": true,
+      "completion_verified": false,
+      "source_locations": [
+        {
+          "id": 1,
+          "label": "Trang 1",
+          "kind": "pdf"
+        },
+        {
+          "id": 2,
+          "label": "Trang 2",
+          "kind": "pdf"
+        },
+        {
+          "id": 3,
+          "label": "Trang 3",
+          "kind": "pdf"
+        }
+      ]
+    },
+    {
+      "topic": "Survey findings",
+      "kind": "background",
+      "content": "Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+      "evidence": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+      "source_pages": [
+        1,
+        2,
+        3
+      ],
+      "source_ids": [
+        "F1_3"
+      ],
+      "source_chunk_ids": [
+        1
+      ],
+      "verified": true,
+      "section_id": "S2",
+      "source_section_ids": [
+        "S2"
+      ],
+      "relevance_verified": true,
+      "completion_verified": false,
+      "source_locations": [
+        {
+          "id": 1,
+          "label": "Trang 1",
+          "kind": "pdf"
+        },
+        {
+          "id": 2,
+          "label": "Trang 2",
+          "kind": "pdf"
+        },
+        {
+          "id": 3,
+          "label": "Trang 3",
+          "kind": "pdf"
+        }
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "id": "S1",
+      "number": "1",
+      "title": "RESEARCH AND SURVEY",
+      "level": 1,
+      "kind": "chapter",
+      "parent_id": null,
+      "order_index": 0,
+      "start_page": 1,
+      "end_page": 3,
+      "summary": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại. Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch. Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+      "items": [
+        {
+          "topic": "Survey findings",
+          "kind": "reported_work",
+          "content": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại.",
+          "evidence": "The team interviewed three lecturers and documented the current registration workflow.",
+          "source_pages": [
+            1,
+            2,
+            3
+          ],
+          "source_ids": [
+            "F1_1"
+          ],
+          "source_chunk_ids": [
+            1
+          ],
+          "verified": true,
+          "section_id": "S2",
+          "source_section_ids": [
+            "S2"
+          ],
+          "relevance_verified": true,
+          "completion_verified": true,
+          "source_locations": [
+            {
+              "id": 1,
+              "label": "Trang 1",
+              "kind": "pdf"
+            },
+            {
+              "id": 2,
+              "label": "Trang 2",
+              "kind": "pdf"
+            },
+            {
+              "id": 3,
+              "label": "Trang 3",
+              "kind": "pdf"
+            }
+          ]
+        },
+        {
+          "topic": "Survey findings",
+          "kind": "proposal",
+          "content": "Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch.",
+          "evidence": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+          "source_pages": [
+            1,
+            2,
+            3
+          ],
+          "source_ids": [
+            "F1_2"
+          ],
+          "source_chunk_ids": [
+            1
+          ],
+          "verified": true,
+          "section_id": "S2",
+          "source_section_ids": [
+            "S2"
+          ],
+          "relevance_verified": true,
+          "completion_verified": false,
+          "source_locations": [
+            {
+              "id": 1,
+              "label": "Trang 1",
+              "kind": "pdf"
+            },
+            {
+              "id": 2,
+              "label": "Trang 2",
+              "kind": "pdf"
+            },
+            {
+              "id": 3,
+              "label": "Trang 3",
+              "kind": "pdf"
+            }
+          ]
+        },
+        {
+          "topic": "Survey findings",
+          "kind": "background",
+          "content": "Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+          "evidence": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+          "source_pages": [
+            1,
+            2,
+            3
+          ],
+          "source_ids": [
+            "F1_3"
+          ],
+          "source_chunk_ids": [
+            1
+          ],
+          "verified": true,
+          "section_id": "S2",
+          "source_section_ids": [
+            "S2"
+          ],
+          "relevance_verified": true,
+          "completion_verified": false,
+          "source_locations": [
+            {
+              "id": 1,
+              "label": "Trang 1",
+              "kind": "pdf"
+            },
+            {
+              "id": 2,
+              "label": "Trang 2",
+              "kind": "pdf"
+            },
+            {
+              "id": 3,
+              "label": "Trang 3",
+              "kind": "pdf"
+            }
+          ]
+        }
+      ],
+      "status": "completed",
+      "sections": [
+        {
+          "id": "S2",
+          "number": "1.1",
+          "title": "Survey findings",
+          "level": 2,
+          "kind": "section",
+          "parent_id": "S1",
+          "order_index": 1,
+          "start_page": 1,
+          "end_page": 3,
+          "summary": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại. Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch. Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+          "items": [
+            {
+              "topic": "Survey findings",
+              "kind": "reported_work",
+              "content": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại.",
+              "evidence": "The team interviewed three lecturers and documented the current registration workflow.",
+              "source_pages": [
+                1,
+                2,
+                3
+              ],
+              "source_ids": [
+                "F1_1"
+              ],
+              "source_chunk_ids": [
+                1
+              ],
+              "verified": true,
+              "section_id": "S2",
+              "source_section_ids": [
+                "S2"
+              ],
+              "relevance_verified": true,
+              "completion_verified": true,
+              "source_locations": [
+                {
+                  "id": 1,
+                  "label": "Trang 1",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 2,
+                  "label": "Trang 2",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 3,
+                  "label": "Trang 3",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Survey findings",
+              "kind": "proposal",
+              "content": "Nhóm đã đề xuất mô hình Transformer để phân loại văn bản tiếng Việt; việc triển khai đã được lên kế hoạch.",
+              "evidence": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+              "source_pages": [
+                1,
+                2,
+                3
+              ],
+              "source_ids": [
+                "F1_2"
+              ],
+              "source_chunk_ids": [
+                1
+              ],
+              "verified": true,
+              "section_id": "S2",
+              "source_section_ids": [
+                "S2"
+              ],
+              "relevance_verified": true,
+              "completion_verified": false,
+              "source_locations": [
+                {
+                  "id": 1,
+                  "label": "Trang 1",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 2,
+                  "label": "Trang 2",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 3,
+                  "label": "Trang 3",
+                  "kind": "pdf"
+                }
+              ]
+            },
+            {
+              "topic": "Survey findings",
+              "kind": "background",
+              "content": "Các báo cáo hiện tại được lưu trữ trong các bảng tính riêng biệt và rất khó đối chiếu.",
+              "evidence": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+              "source_pages": [
+                1,
+                2,
+                3
+              ],
+              "source_ids": [
+                "F1_3"
+              ],
+              "source_chunk_ids": [
+                1
+              ],
+              "verified": true,
+              "section_id": "S2",
+              "source_section_ids": [
+                "S2"
+              ],
+              "relevance_verified": true,
+              "completion_verified": false,
+              "source_locations": [
+                {
+                  "id": 1,
+                  "label": "Trang 1",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 2,
+                  "label": "Trang 2",
+                  "kind": "pdf"
+                },
+                {
+                  "id": 3,
+                  "label": "Trang 3",
+                  "kind": "pdf"
+                }
+              ]
+            }
+          ],
+          "status": "completed",
+          "sections": []
+        }
+      ]
+    }
+  ],
+  "completed_work": [
+    {
+      "topic": "Survey findings",
+      "kind": "reported_work",
+      "content": "Nhóm đã phỏng vấn ba giảng viên và ghi lại quy trình đăng ký hiện tại.",
+      "evidence": "The team interviewed three lecturers and documented the current registration workflow.",
+      "source_pages": [
+        1,
+        2,
+        3
+      ],
+      "source_ids": [
+        "F1_1"
+      ],
+      "source_chunk_ids": [
+        1
+      ],
+      "verified": true,
+      "section_id": "S2",
+      "source_section_ids": [
+        "S2"
+      ],
+      "relevance_verified": true,
+      "completion_verified": true,
+      "source_locations": [
+        {
+          "id": 1,
+          "label": "Trang 1",
+          "kind": "pdf"
+        },
+        {
+          "id": 2,
+          "label": "Trang 2",
+          "kind": "pdf"
+        },
+        {
+          "id": 3,
+          "label": "Trang 3",
+          "kind": "pdf"
+        }
+      ],
+      "source_sections": [
+        "S2"
+      ]
+    }
+  ],
+  "citations": [
+    {
+      "page": 1,
+      "snippet": "The team interviewed three lecturers and documented the current registration workflow.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 2,
+      "snippet": "The team interviewed three lecturers and documented the current registration workflow.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 3,
+      "snippet": "The team interviewed three lecturers and documented the current registration workflow.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 1,
+      "snippet": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 2,
+      "snippet": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 3,
+      "snippet": "The team proposed a Transformer model for Vietnamese text classification; implementation is\nplanned.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 1,
+      "snippet": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 2,
+      "snippet": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+      "topic": "Survey findings",
+      "verified": true
+    },
+    {
+      "page": 3,
+      "snippet": "Existing reports are stored in separate spreadsheets and are difficult to reconcile.",
+      "topic": "Survey findings",
+      "verified": true
+    }
+  ],
+  "analysis_status": "completed",
+  "analysis_metadata": {
+    "pages_total": 3,
+    "pages_analyzed": 3,
+    "sections_detected": 2,
+    "chunks_total": 1,
+    "chunks_succeeded": 1,
+    "chunks_failed": 0,
+    "structure_fallback": false
+  },
+  "analysis": {
+    "version": 6,
+    "source": "gemini_map_reduce",
+    "method": "section_hierarchical_map_reduce",
+    "model": "gemini-3.5-flash-lite",
+    "models_used": [
+      "gemini-3.5-flash-lite"
+    ],
+    "generated_at": "2026-10-24T03:46:50.307924+00:00",
+    "processing_time_seconds": 51.235,
+    "status": "completed",
+    "total_pages": 3,
+    "total_units": 3,
+    "text_pages": 3,
+    "total_chunks": 1,
+    "analyzed_chunks": 1,
+    "failed_chunks": 0,
+    "text_complete": true,
+    "reduce_completed": true,
+    "completion_audit_completed": true,
+    "visual_unread_pages": [],
+    "scan_unread_pages": [],
+    "ocr_pages": [],
+    "ocr_available": false,
+    "sections_detected": 2,
+    "structure_fallback": false,
+    "matched_citations": 9,
+    "token_count_method": "conservative_utf8_estimate",
+    "token_settings": {
+      "target_tokens": 2500,
+      "overlap_tokens": 200,
+      "prompt_reserve_tokens": 1500,
+      "max_input_tokens": 12000
+    },
+    "source_coverage": {
+      "uncovered_characters": 0,
+      "duplicate_owned_characters": 0,
+      "source_offsets_verified": true
+    },
+    "note": "Đã tóm tắt các phần văn bản theo chương/mục và kiểm chứng nguồn.",
+    "errors": [],
+    "source_labels": {
+      "1": "Trang 1",
+      "2": "Trang 2",
+      "3": "Trang 3"
+    },
+    "reduce_calls": 3,
+    "reduce_levels": 1,
+    "hierarchy": [
+      "chunk",
+      "section",
+      "chapter",
+      "document"
+    ],
+    "canonical_reused": false,
+    "reused_calls": 0,
+    "completed_calls": 6,
+    "provider_token_usage_this_pass": {
+      "prompt_tokens": 4147,
+      "output_tokens": 680,
+      "total_tokens": 4827,
+      "responses": 6
+    }
+  },
+  "validation": {
+    "excluded_claims": [],
+    "semantic_audit": true
+  },
+  "source_identity": {
+    "source_hash": "b216666cfdab8d2a2610be724fca785154414adc87890c158b7eb8ef3e6b382b",
+    "group_id": "TEST_GROUP",
+    "topic_id": "TEST_TOPIC",
+    "semester_id": "TEST_SEMESTER",
+    "stage_id": "TEST_STAGE",
+    "round_id": "TEST_ROUND"
+  }
+}

@@ -16,6 +16,14 @@ def estimated_tokens(text):
     return max(1, (len(text.encode('utf-8')) + 2) // 3)
 
 
+def chunk_source_text(chunk):
+    """Page labels are prompt metadata, never part of the author's quotation."""
+    spans = chunk.get('source_spans')
+    if isinstance(spans, list) and spans:
+        return '\n'.join(span['text'] for span in spans)
+    return chunk['text']
+
+
 def structured_chunks(pages, chunk_size=12000, chunk_overlap=350, max_tokens=6000):
     started = time.monotonic()
     limit = max(256, int(chunk_size))
@@ -106,7 +114,7 @@ def ground_map(value, chunk, pages, chunk_id):
     for key in GROUPS:
         for index, item in enumerate(value.get(key, []), 1):
             quote = item['evidence'].strip()
-            if len(compact(quote)) < 12 or not exact_quote(quote, chunk['text']):
+            if len(compact(quote)) < 12 or not exact_quote(quote, chunk_source_text(chunk)):
                 raise ValueError('map_quote_outside_chunk')
             source_pages = [n for n in item['source_pages'] if isinstance(n, int) and not isinstance(n, bool)
                             and n in allowed and exact_quote(quote, pages.get(n, ''))]

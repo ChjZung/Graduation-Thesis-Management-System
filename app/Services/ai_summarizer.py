@@ -12,7 +12,8 @@ Core Principles:
 - STRUCTURE-AWARE CHUNKING: Preserve chapters, sections, and subsections with page provenance.
 - ROBUST GEMINI CALLS: Header-based authentication (x-goog-api-key), exponential backoff,
   handling of HTTP 400/401/403/404/429/500/503 and automatic model fallbacks.
-- CONTENT OVERVIEW plus three progress groups, with exact source citations.
+- V6 document overview, chapter/section tree and verified completed work.
+  Legacy helpers below remain for reading historical results and regression tests.
 """
 
 import sys
@@ -66,7 +67,7 @@ def extract_pdf_pages(pdf_path):
             for block in iter(lambda: source.read(1024 * 1024), b''):
                 digest.update(block)
         identity = digest.hexdigest() + Path(pdf_path).suffix.lower()
-        target = folder / ('extracted-v4-' + identity + '.json')
+        target = folder / ('extracted-layout-v6b-' + identity + '.json')
         try:
             if time.time() - target.stat().st_mtime < 3 * 86400:
                 saved = json.loads(target.read_text(encoding='utf-8'))
@@ -114,58 +115,8 @@ def _extract_pdf_pages(pdf_path):
     if not fitz:
         raise RuntimeError("Thư viện PyMuPDF (pymupdf/fitz) chưa được cài đặt trong môi trường Python.")
 
-    doc = fitz.open(pdf_path)
-    total_pages = len(doc)
-    pages = []
-    total_chars = 0
-    total_words = 0
-    valid_pages = 0
-
-    heading_regex = re.compile(
-        r'^(chương\s+\d+|chương\s+[ivxlcdm]+|phần\s+\d+|mục\s+\d+|'
-        r'\d+\.\d+(\.\d+)*\s+[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]|'
-        r'[ivxlcdm]+\.\s+[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ])',
-        re.IGNORECASE
-    )
-
-    for page_num in range(total_pages):
-        page = doc[page_num]
-        raw_text = page.get_text("text").strip()
-        # Clean control characters except newlines/tabs
-        cleaned_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', raw_text)
-        char_cnt = len(cleaned_text)
-        words = len(cleaned_text.split()) if char_cnt > 0 else 0
-
-        headings = []
-        for line in cleaned_text.split('\n'):
-            line_str = line.strip()
-            if heading_regex.match(line_str) and len(line_str) <= 120:
-                headings.append(line_str)
-
-        if char_cnt > 30:
-            valid_pages += 1
-            total_chars += char_cnt
-            total_words += words
-
-        pages.append({
-            "page": page_num + 1,
-            "source_kind": "pdf", "source_label": f"Trang {page_num + 1}",
-            "text": cleaned_text,
-            "char_count": char_cnt,
-            "word_count": words,
-            "headings": headings,
-            "visual_unread": bool(page.get_images()),
-        })
-
-    doc.close()
-    extraction_time = round(time.time() - t0, 3)
-
-    return pages, total_pages, {
-        "total_chars": total_chars,
-        "total_words": total_words,
-        "valid_pages": valid_pages,
-        "extraction_time": extraction_time
-    }
+    from pdf_layout_extraction import extract_layout
+    return extract_layout(pdf_path, fitz)
 
 
 def build_structured_chunks(pages, chunk_size=3500, chunk_overlap=350):
@@ -954,11 +905,11 @@ def run_legacy_map_reduce_pipeline(pdf_path, api_key=None, model="gemini-3.5-fla
 
 
 def run_map_reduce_pipeline(pdf_path, api_key=None, model="gemini-3.5-flash-lite", stage=1,
-                            chunk_size=12000, chunk_overlap=350, method="map_reduce", review_context=None):
-    from ai_flexible_summary import run_pipeline
+                            chunk_size=12000, chunk_overlap=350, method="map_reduce", review_context=None, settings=None, identity=None):
+    from ai_document_summary import run_pipeline
     return run_pipeline(pdf_path, api_key, model, review_context,
                         extract_pdf_pages, build_structured_chunks, call_gemini_api,
-                        heuristic=method == "heuristic_nlp", chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+                        heuristic=method == "heuristic_nlp", chunk_size=chunk_size, chunk_overlap=chunk_overlap, settings=settings, identity=identity)
 
 
 # ==============================================================================
@@ -1077,8 +1028,8 @@ def main():
     parser.add_argument("--api-key", default=os.environ.get("GEMINI_API_KEY"), help="Google Gemini API Key")
     parser.add_argument("--model", default="gemini-3.5-flash-lite", help="Mã model Gemini API (mặc định: gemini-3.5-flash-lite)")
     parser.add_argument("--stage", type=int, default=1, help="Số thứ tự giai đoạn để tương thích; không quyết định nội dung tóm tắt")
-    parser.add_argument("--chunk-size", type=int, default=12000, help="Kích thước chunk theo số ký tự")
-    parser.add_argument("--chunk-overlap", type=int, default=350, help="Độ chồng lặp giữa các chunk")
+    parser.add_argument("--chunk-size", type=int, default=12000, help="Tương thích cũ; V6 dùng --target-tokens")
+    parser.add_argument("--chunk-overlap", type=int, default=350, help="Tương thích cũ; V6 dùng --overlap-tokens")
     parser.add_argument("--method", default="map_reduce", choices=["map_reduce", "heuristic_nlp"], help="Phương pháp xử lý")
     parser.add_argument("--output", default=None, help="Đường dẫn file JSON xuất ra (tùy chọn)")
     parser.add_argument("--review-context", default=None, help="Ngữ cảnh yêu cầu của giảng viên dạng JSON")
@@ -1086,10 +1037,20 @@ def main():
     parser.add_argument("--previous-version", default=None, help="Dữ liệu JSON của phiên bản nộp trước liền kề để so sánh")
 
     parser.add_argument('--cache-dir', default=None, help='Private directory for successful analysis checkpoints')
+    parser.add_argument('--target-tokens', type=int, default=2500)
+    parser.add_argument('--overlap-tokens', type=int, default=200)
+    parser.add_argument('--prompt-reserve-tokens', type=int, default=1500)
+    parser.add_argument('--max-input-tokens', type=int, default=12000)
+    parser.add_argument('--document-identity', default=None, help='Version/group/topic/semester binding as JSON')
+    parser.add_argument('--pipeline-version', default='section-v6.1')
     args = parser.parse_args()
-    session = configure_session(args.cache_dir, budget=260, namespace=__import__('hashlib').sha256(open(args.pdf,'rb').read()).hexdigest()+'-v5')
 
     try:
+        digest = __import__('hashlib').sha256()
+        with open(args.pdf, 'rb') as source:
+            for block in iter(lambda: source.read(1024 * 1024), b''):
+                digest.update(block)
+        session = configure_session(args.cache_dir, budget=260, namespace=digest.hexdigest()+'-'+args.pipeline_version, immutable=True)
         context = json.loads(args.review_context) if args.review_context else None
         if context is not None and not isinstance(context, dict):
             raise ValueError("Ngữ cảnh đối chiếu phải là JSON object.")
@@ -1100,7 +1061,11 @@ def main():
             stage=args.stage,
             chunk_size=args.chunk_size,
             chunk_overlap=args.chunk_overlap,
-            method=args.method, review_context=context
+            method=args.method, review_context=context,
+            settings={'target_tokens': args.target_tokens, 'overlap_tokens': args.overlap_tokens,
+                      'prompt_reserve_tokens': args.prompt_reserve_tokens, 'max_input_tokens': args.max_input_tokens,
+                      'pipeline_version': args.pipeline_version},
+            identity=json.loads(args.document_identity) if args.document_identity else None
         )
         if args.review_context:
             from ai_requirement_review import review_requirements
@@ -1117,6 +1082,7 @@ def main():
         if isinstance(result.get('data'), dict) and isinstance(result['data'].get('analysis'), dict):
             result['data']['analysis']['reused_calls'] = session.cache_hits
             result['data']['analysis']['completed_calls'] = session.completed_calls
+            result['data']['analysis']['provider_token_usage_this_pass'] = session.token_usage
             if session.checkpoint_failed:
                 result['data']['analysis']['checkpoint_warning'] = 'Không lưu được bộ nhớ đệm riêng; lượt sau có thể phải đọc lại các phần đã xử lý.'
         if isinstance(result.get('data'),dict):
@@ -1146,6 +1112,12 @@ def main():
         else:
             print(json_str)
     except Exception as e:
+        extraction_error = isinstance(e, (FileNotFoundError,)) or any(code in str(e) for code in (
+            'pdf_size_limit', 'invalid_pdf_signature', 'pdf_password_required', 'pdf_page_limit_or_corrupt',
+            'Failed to open', 'broken document'))
+        if extraction_error:
+            from ai_processing import ProcessingError
+            e = ProcessingError('extraction_failed')
         err_res = {
             "success": False,
             "error": error_detail(e)["message"],

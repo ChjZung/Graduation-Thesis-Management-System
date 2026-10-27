@@ -714,6 +714,13 @@ class BaoCaoController extends Controller
         $tenFile = $khoi->TenFile;
         $duongDanFile = $khoi->DuongDanFile;
         if ($request->hasFile('FileBaoCao')) {
+            $previousData = app(\App\Services\AiReportProcessingService::class)->payload($khoi);
+            if (!empty($previousData['schema_version']) && empty($previousData['_source_hash']) && $duongDanFile) {
+                try {
+                    $previousData['_source_hash'] = hash_file('sha256', app(\App\Services\AiReportProcessingService::class)->path($khoi));
+                    $khoi->TomTatJson = $previousData;
+                } catch (\Throwable) { /* Missing old source remains explicitly unavailable. */ }
+            }
             $file = $request->file('FileBaoCao');
             $tenFile = $file->getClientOriginalName();
             $duongDanFile = $file->store("baocao/{$nhom->MaNhom}/moc{$khoi->LanBaoCao}", 'public');
@@ -739,6 +746,10 @@ class BaoCaoController extends Controller
             'PhanTramHoanThanh' => max((int)$khoi->baoCaoTienDo->PhanTramHoanThanh, (int)$khoi->PhanTramHoanThanh),
             'NgayNop' => now()->toDateString(),
         ]);
+
+        if ($request->hasFile('FileBaoCao')) {
+            app(\App\Services\AiReportProcessingService::class)->enqueue($khoi);
+        }
 
         return redirect()->route('sinhvien.baocao.show_khoi', $id)->with('success', 'Đã cập nhật và nộp lại báo cáo thành công!');
     }
@@ -806,7 +817,7 @@ class BaoCaoController extends Controller
         }
 
         // Kiểm tra quyền hạn nộp: Phải đang mở hoặc được yêu cầu nộp lại
-        $latest = $dotNop->phienBanMoiNhat;
+        $latest = app(\App\Services\ReportMilestoneProgressService::class)->versionsForRound($dotNop, $nhom)->first();
         $canSubmit = $dotNop->isMoNop() || ($latest && ($latest->TrangThai === 'Yêu cầu nộp lại' || $latest->TrangThai === 'Cần bổ sung'));
 
         if (!$canSubmit) {
@@ -878,12 +889,13 @@ class BaoCaoController extends Controller
             abort(403, 'Đợt nộp báo cáo này không thuộc đề tài của nhóm bạn.');
         }
 
-        $phienBans = $dotNop->khoiBaoCaos;
+        $phienBans = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->versionsForRound($dotNop, $nhom) : $dotNop->khoiBaoCaos;
         $latestPhienBan = $phienBans->first();
         $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
 
+        $reportMilestoneProgress = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom, $dotNop->deTai) : null;
         return view('sinhvien.baocao.show_dot', compact(
-            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader'
+            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader', 'reportMilestoneProgress'
         ));
     }
 }

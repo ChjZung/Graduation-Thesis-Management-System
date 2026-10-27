@@ -13,6 +13,46 @@ import threading
 import time
 
 
+def install_json_first(target, payload, validator=None):
+    """Portable atomic first-writer publication (NTFS and POSIX, no hard links)."""
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lock = Path(str(target) + '.write-lock')
+    temporary, owned = None, False
+    deadline = time.monotonic() + 3
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=target.parent, delete=False) as stream:
+            temporary = stream.name
+            json.dump(payload, stream, ensure_ascii=False)
+        while not owned:
+            try:
+                lock.mkdir()
+                owned = True
+            except FileExistsError:
+                try:
+                    if time.time() - lock.stat().st_mtime > 120:
+                        lock.rmdir()  # This exact empty lock directory only.
+                        continue
+                except FileNotFoundError:
+                    continue
+                if time.monotonic() >= deadline:
+                    raise OSError('checkpoint_writer_busy')
+                time.sleep(.01)
+        if target.exists():
+            winner = json.loads(target.read_text(encoding='utf-8'))
+            if validator: validator(winner)
+            return winner
+        os.replace(temporary, target)
+        return payload
+    finally:
+        if owned:
+            try: lock.rmdir()
+            except OSError: pass
+        if temporary and os.path.exists(temporary):
+            try: os.unlink(temporary)
+            except OSError: pass
+
+
 class ProcessingError(RuntimeError):
     def __init__(self, code, **details):
         self.code = code
@@ -53,16 +93,21 @@ def error_detail(error, stage='ai'):
 
 
 class CallSession:
-    def __init__(self, cache_dir=None, budget=None, namespace=""):
+    def __init__(self, cache_dir=None, budget=None, namespace="", immutable=False):
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.deadline = time.monotonic() + budget if budget else None
         self.slots = threading.BoundedSemaphore(2)
         self.lock = threading.Lock()
+        self.progress_lock = threading.Lock()
+        self.progress_fields = {}
         self.cache_hits = 0
         self.checkpoint_failed = False
         self.errors = []
         self.namespace = namespace
+        self.immutable = immutable
         self.completed_calls = 0
+        self.models_used = set()
+        self.token_usage = {'prompt_tokens': 0, 'output_tokens': 0, 'total_tokens': 0, 'responses': 0}
         self.local = threading.local()
         self.progress_path = os.environ.get('AI_PROGRESS_FILE')
         self.limiter = None
@@ -73,16 +118,20 @@ class CallSession:
 
     def progress(self, **values):
         if not self.progress_path: return
-        temporary = None
-        try:
-            target=Path(self.progress_path); target.parent.mkdir(parents=True,exist_ok=True)
-            values.update(stage=getattr(self.local,'stage','ai'),completed_calls=self.completed_calls,reused_calls=self.cache_hits)
-            with tempfile.NamedTemporaryFile(mode='w',encoding='utf-8',dir=target.parent,delete=False) as f:
-                temporary=f.name; json.dump(values,f,ensure_ascii=False)
-            os.replace(temporary,target)
-        except OSError: pass
-        finally:
-            if temporary and os.path.exists(temporary): os.unlink(temporary)
+        with self.progress_lock:
+            temporary = None
+            try:
+                target=Path(self.progress_path); target.parent.mkdir(parents=True,exist_ok=True)
+                values.setdefault('stage',getattr(self.local,'stage','ai'))
+                self.progress_fields.update(values,completed_calls=self.completed_calls,reused_calls=self.cache_hits,updated_at=time.time())
+                with tempfile.NamedTemporaryFile(mode='w',encoding='utf-8',dir=target.parent,delete=False) as f:
+                    temporary=f.name; json.dump(self.progress_fields,f,ensure_ascii=False)
+                os.replace(temporary,target)
+            except OSError: pass
+            finally:
+                if temporary and os.path.exists(temporary):
+                    try: os.unlink(temporary)
+                    except OSError: pass
 
     def before_http(self, model, tokens, deadline=None):
         if not self.limiter: return
@@ -101,6 +150,14 @@ class CallSession:
     def defer(self, model, detail):
         if self.limiter: self.limiter.defer(model,detail)
 
+    def record_usage(self, usage):
+        if not isinstance(usage, dict): return
+        fields = {'promptTokenCount':'prompt_tokens', 'candidatesTokenCount':'output_tokens', 'totalTokenCount':'total_tokens'}
+        with self.lock:
+            for source, target in fields.items():
+                if type(usage.get(source)) is int: self.token_usage[target] += max(0, usage[source])
+            self.token_usage['responses'] += 1
+
 
     def remaining(self, timeout):
         left = min(timeout, self.deadline-time.monotonic()) if self.deadline else timeout
@@ -112,22 +169,25 @@ class CallSession:
         self.local.stage = stage
         self.progress(waiting_seconds=0)
         identity = json.dumps(['document-ai-v1', self.namespace, model, prompt,
-                               hashlib.sha256(str(api_key).encode()).hexdigest()], ensure_ascii=False)
+                               'verified-immutable' if self.immutable else hashlib.sha256(str(api_key).encode()).hexdigest()], ensure_ascii=False)
         key = hashlib.sha256(identity.encode()).hexdigest()
         target = self.cache_dir / (key+'.json') if self.cache_dir else None
         if target:
             try:
-                if time.time()-target.stat().st_mtime < 3*86400:
+                if self.immutable or time.time()-target.stat().st_mtime < 3*86400:
                     saved = json.loads(target.read_text(encoding='utf-8'))
                     value, used = saved['response'], saved['model']
                     if validator:
                         validator(value)
                     with self.lock:
                         self.cache_hits += 1
+                        self.models_used.add(used)
                     self.progress(waiting_seconds=0)
                     return value, used
             except (OSError, ValueError, KeyError, TypeError):
-                pass
+                if self.immutable:
+                    try: target.unlink(missing_ok=True)
+                    except OSError: pass
         for attempt in range(2):
             try:
                 if not self.slots.acquire(timeout=self.remaining(timeout)):
@@ -145,7 +205,13 @@ class CallSession:
                         with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=target.parent, delete=False) as file:
                             temporary = file.name
                             json.dump({'response': value, 'model': used}, file, ensure_ascii=False)
-                        os.replace(temporary, target)
+                        if self.immutable:
+                            # Atomic first writer wins, including concurrent identical requests.
+                            winner = install_json_first(target, {'response':value, 'model':used},
+                                lambda saved: validator(saved['response']) if validator else None)
+                            value, used = winner['response'], winner['model']
+                        else:
+                            os.replace(temporary, target)
                     except OSError:
                         # Checkpoint failure must not discard an otherwise valid result.
                         self.checkpoint_failed = True
@@ -155,7 +221,9 @@ class CallSession:
                                 os.unlink(temporary)
                             except OSError:
                                 pass
-                self.completed_calls += 1
+                with self.lock:
+                    self.completed_calls += 1
+                    self.models_used.add(used)
                 self.progress(waiting_seconds=0)
                 return value, used
             except Exception as error:
@@ -174,9 +242,9 @@ def current_session():
     return _session
 
 
-def configure_session(cache_dir=None, budget=None, namespace=""):
+def configure_session(cache_dir=None, budget=None, namespace="", immutable=False):
     global _session
-    _session = CallSession(cache_dir, budget, namespace)
+    _session = CallSession(cache_dir, budget, namespace, immutable=immutable)
     return _session
 
 

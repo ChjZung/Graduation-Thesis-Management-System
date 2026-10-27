@@ -17,6 +17,32 @@ from ai_summarizer import call_gemini_api
 class QueueLimitTests(unittest.TestCase):
     def tearDown(self): configure_session()
 
+    def test_model_token_preflight_is_cached_and_provider_usage_is_recorded(self):
+        class Response:
+            def __init__(self, body):
+                self.status_code=200; self.headers={}; self.text=json.dumps(body); self.body=body
+            def json(self): return self.body
+        counted=Response({'totalTokens':30})
+        generated=Response({'candidates':[{'content':{'parts':[{'text':'{"ok":true}'}]}}],
+                            'usageMetadata':{'promptTokenCount':30,'candidatesTokenCount':4,'totalTokenCount':34}})
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+            session=configure_session(folder)
+            with patch.dict(os.environ,{'AI_EXACT_TOKEN_COUNT':'1','AI_MAX_REQUEST_TOKENS':'12000'}), \
+                 patch('ai_summarizer.requests.post',side_effect=[counted,generated,generated]) as post:
+                self.assertEqual({'ok':True},call_gemini_api('same prompt','SECRET')[0])
+                self.assertEqual({'ok':True},call_gemini_api('same prompt','SECRET')[0])
+            self.assertEqual(3,post.call_count)
+            self.assertTrue(post.call_args_list[0].args[0].endswith(':countTokens'))
+            self.assertEqual(60,session.token_usage['prompt_tokens'])
+
+    def test_token_preflight_rejects_large_input_before_generation(self):
+        response=type('Response',(),{'status_code':200,'headers':{},'json':lambda _: {'totalTokens':12001}})()
+        with patch.dict(os.environ,{'AI_EXACT_TOKEN_COUNT':'1','AI_MAX_REQUEST_TOKENS':'12000'}), \
+             patch('ai_summarizer.requests.post',return_value=response) as post:
+            with self.assertRaises(ProcessingError) as caught: call_gemini_api('prompt','SECRET')
+        self.assertEqual('input_too_large',caught.exception.code)
+        self.assertEqual(1,post.call_count)
+
     def test_workers_share_atomic_project_model_reservations(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
             a=ProjectRateLimiter(Path(folder)/'limits.sqlite','project',rpm=4)

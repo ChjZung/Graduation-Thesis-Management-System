@@ -116,21 +116,15 @@ class RealThesisRegressionTest(unittest.TestCase):
         with patch('ai_summarizer.call_gemini_api', side_effect=RuntimeError('API unavailable')):
             result = run_map_reduce_pipeline(str(self.path), api_key='test')
         data = result['data']
-        self.assertIsNone(data['completion_percentage'])
+        self.assertEqual(6, data['schema_version'])
+        self.assertNotIn('completion_percentage', data)
         self.assertEqual(72, data['analysis']['total_pages'])
-        self.assertEqual('fallback_extracts', data['analysis']['source'])
-        self.assertEqual(5, len(data['document_outline']))
         self.assertFalse(data['analysis']['text_complete'])
         self.assertEqual([], data['completed_work'])
-        self.assertEqual([], data['next_steps'])
-        self.assertEqual('document_fallback', data['summary_scope']['mode'])
-        self.assertTrue(data['summary_sections'])
-        pages, _, _ = extract_pdf_pages(str(self.path))
-        by_page = {p['page']: p['text'] for p in pages}
-        for section in data['summary_sections'] + data['additional_sections']:
-            for item in section['items']:
-                self.assertEqual('other', item['kind'])
-                self.assertIsNotNone(exact_quote(item['evidence'], by_page[item['source_pages'][0]]))
+        self.assertEqual([], data['document_content'])
+        self.assertNotIn('next_steps', data)
+        self.assertTrue(data['chapters'])
+        self.assertTrue(data['analysis']['source_coverage']['source_offsets_verified'])
         self.assertTrue(data['analysis']['visual_unread_pages'])
 
 

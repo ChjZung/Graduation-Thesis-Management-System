@@ -4,10 +4,56 @@ import email.utils
 import json
 import math
 import time
+import hashlib
+import os
 import urllib.error
 import urllib.request
 
 from ai_processing import ProcessingError, current_session
+
+
+def count_prompt_tokens(prompt, api_key, model, requests_module, timeout):
+    """Model-specific preflight, cached privately; no generated text or credentials persisted."""
+    session = current_session()
+    identity = hashlib.sha256((model + '|' + hashlib.sha256(api_key.encode()).hexdigest() + '|' + prompt).encode()).hexdigest()
+    target = session.cache_dir / ('tokens-v6-' + identity + '.json') if session.cache_dir else None
+    if target:
+        try:
+            if time.time() - target.stat().st_mtime < 3 * 86400:
+                count = json.loads(target.read_text())['totalTokens']
+                if type(count) is int and count >= 0: return count
+        except (OSError, ValueError, KeyError): pass
+    url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':countTokens'
+    payload = {'contents':[{'parts':[{'text':prompt}]}]}
+    headers = {'Content-Type':'application/json', 'x-goog-api-key':api_key}
+    session.before_http(model, 0, time.monotonic() + timeout)
+    try:
+        if requests_module:
+            response = requests_module.post(url, json=payload, headers=headers, timeout=max(1, timeout))
+            status, body, response_headers = response.status_code, response.json(), getattr(response, 'headers', {})
+        else:
+            request = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers)
+            try:
+                with urllib.request.urlopen(request, timeout=max(1, timeout)) as response:
+                    status, body, response_headers = response.status, json.loads(response.read()), response.headers
+            except urllib.error.HTTPError as error:
+                status, body, response_headers = error.code, json.loads(error.read()), error.headers
+    except Exception as error:
+        raise ProcessingError('timeout' if 'timeout' in type(error).__name__.lower() else 'connection_error', model=model) from None
+    if status == 429:
+        detail = quota_detail(body, response_headers, model)
+        session.defer(model, detail)
+        raise ProcessingError('rate_limit', **detail)
+    if status in (401, 403): raise ProcessingError('authentication', model=model)
+    if status != 200: raise ProcessingError('model_unavailable' if status == 404 else 'service_unavailable', model=model)
+    count = body.get('totalTokens')
+    if type(count) is not int or count < 0: raise ProcessingError('invalid_response', model=model)
+    if target:
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps({'totalTokens':count}), encoding='utf-8')
+        except OSError: session.checkpoint_failed = True
+    return count
 
 
 def quota_detail(body, headers, model):
@@ -46,7 +92,19 @@ def generate(prompt, api_key, model, timeout, requests_module, clean_json):
     session = current_session()
     last = None
     for chosen in candidates:
-        session.before_http(chosen,len(prompt),deadline)
+        tokens = math.ceil(len(prompt.encode('utf-8')) / 3)
+        if os.environ.get('AI_EXACT_TOKEN_COUNT') == '1':
+            try:
+                tokens = count_prompt_tokens(prompt, api_key, chosen, requests_module,
+                    min(10, max(1, deadline - time.monotonic()), session.remaining(timeout)))
+            except ProcessingError as error:
+                if error.code == 'model_unavailable':
+                    last = error
+                    continue
+                raise
+        if tokens > int(os.environ.get('AI_MAX_REQUEST_TOKENS', '32000')):
+            raise ProcessingError('input_too_large', model=chosen)
+        session.before_http(chosen,tokens + 8192,deadline)
         remaining = min(deadline-time.monotonic(),session.remaining(timeout))
         if remaining < 1: raise ProcessingError('timeout', model=chosen)
         generation = {'maxOutputTokens':8192,'responseMimeType':'application/json'}
@@ -73,6 +131,7 @@ def generate(prompt, api_key, model, timeout, requests_module, clean_json):
         try: body=json.loads(text)
         except ValueError: body={}
         if status == 200:
+            session.record_usage(body.get('usageMetadata'))
             candidate=(body.get('candidates') or [{}])[0]
             parts=candidate.get('content',{}).get('parts',[])
             raw=''.join(part.get('text','') for part in parts if not part.get('thought'))

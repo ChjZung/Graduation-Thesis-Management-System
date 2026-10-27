@@ -31,7 +31,7 @@ Model chính hiện tại là `gemini-3.5-flash-lite`. Khi chọn Flash-Lite, pi
 | `GEMINI_LITE_SAFE_RPM` | 12 | Ngưỡng gọi/phút cho Flash-Lite |
 | `GEMINI_SAFE_TPM` | 200000 | Ngân sách ước lượng input token/phút |
 
-Điều chỉnh thấp hơn hạn mức thực tế đang hiển thị trong AI Studio. TPM được ước lượng thận trọng từ số ký tự, không phải bộ đếm token chính xác của Google. Việc gọi API bằng ứng dụng khác ngoài project này không nằm trong bộ điều tiết cục bộ.
+Điều chỉnh thấp hơn hạn mức thực tế đang hiển thị trong AI Studio. V6 chia tài liệu bằng ước lượng UTF-8 có nhãn rõ, sau đó mặc định gọi `countTokens` của đúng model trước khi gửi toàn bộ prompt; cache số đếm và dự trữ thêm ngân sách output khi điều tiết TPM. `usageMetadata` ghi số token thực tế của các phản hồi trong lượt. Việc gọi API bằng ứng dụng khác ngoài project này không nằm trong bộ điều tiết cục bộ.
 
 Các tiến trình Python trên cùng máy dùng SQLite riêng `storage/app/private/ai_limits.sqlite` để đặt chỗ nguyên tử theo project/model và chia sẻ thời gian cooldown. Nếu chạy nhiều máy chủ, cần thay bộ điều tiết cục bộ bằng kho điều phối chung (ví dụ Redis). Không đặt mã quota theo từng key để cố tách quota của cùng Google project.
 
@@ -41,9 +41,21 @@ Hạn mức ngày sử dụng mốc nửa đêm Pacific khi Python có dữ li�
 
 ## Tiếp tục và giữ kết quả
 
-Pipeline tóm tắt hiện tại dùng [V5 linh hoạt theo yêu cầu giảng viên](ai_research/AI_FLEXIBLE_SUMMARY_V5.md). Khi yêu cầu thay đổi, Map độc lập ngữ cảnh được tái sử dụng; Reduce tổ chức lại trọng tâm và phần đối chiếu chạy lại. “Đối chiếu lại” cũng cập nhật trọng tâm nếu JSON V5 đang theo ngữ cảnh cũ.
+### Khi đã bấm chạy nhưng chưa có bản tóm tắt
 
-- Checkpoint của phản hồi thành công nằm trong `storage/app/private/ai_cache`, có thời hạn 3 ngày; gắn với hash nội dung file, phiên bản pipeline, prompt, model và hash tài khoản. Thay nội dung file/đề bài/model không dùng nhầm checkpoint. Đề bài đối chiếu nằm trong prompt; thay đề bài có thể vẫn tái sử dụng phần tóm tắt không phụ thuộc đề bài.
+Khung trạng thái hiển thị bước hiện tại, số phần đã đọc/tổng số phần, số lượt API thành công và số bước dùng lại từ cache. Ví dụ `Đã đọc 8/30 phần` là tiến độ đọc tài liệu, không phải tỷ lệ hoàn thành khóa luận. Lượt API và số phần tài liệu là hai số khác nhau vì còn bước tổng hợp và đối chiếu.
+
+Nếu Python vượt thời gian của một lượt nền, mã lỗi là `timeout`: hệ thống chờ rồi tự tiếp tục bằng checkpoint, không coi là lỗi đọc PDF và không yêu cầu nộp lại. Cảnh báo `extraction_failed` chỉ dùng khi bộ trích xuất thực sự trả lỗi tương ứng. Khi worker đang chờ hoặc kết thúc một phần, tiến độ trước đó vẫn có thể xem được.
+
+Khi kiểm chứng câu trích, dùng văn bản trong `source_spans` của chunk để so khớp; nhãn `[Trang N]` chèn vào prompt không phải văn bản của tác giả. Câu nhiều dòng vẫn phải khớp văn bản PDF gốc ở đúng trang và nằm trong phạm vi chunk; không được tìm rộng ra toàn trang để bỏ qua phạm vi đã đọc.
+
+Với tài liệu dài, hoàn tất Map–Reduce và đối chiếu có thể cần nhiều lượt nền. Giữ cửa sổ `CHAY_AI.bat` hoạt động. Chọn **Cập nhật kết quả mới** để xem bản đã lưu; nút này không gọi lại API. Khi đang đọc lượt đầu, giao diện chưa hiển thị các nhóm rỗng như một kết quả phân tích.
+
+Pipeline hiện tại dùng [V6 theo chương/mục và kết quả cố định](ai_research/AI_DOCUMENT_SUMMARY_V6.md). Bản V5 vẫn có nhánh đọc tương thích. Tóm tắt cấu trúc độc lập với yêu cầu đợt; khi yêu cầu đổi, có thể giữ nguyên bản tóm tắt cùng PDF và chạy lại phần đối chiếu. JSON V5 đổi ngữ cảnh vẫn được đưa qua luồng nâng cấp phù hợp.
+
+- Checkpoint thành công V6 nằm trong `storage/app/private/ai_cache`, giữ cố định theo hash nội dung, phiên bản pipeline, prompt và model; không hết hạn sau 3 ngày. Snapshot `canonical-summary-*.json` chỉ được tạo sau khi kiểm chứng văn bản và tổng hợp hoàn tất. Cache trích xuất/số đếm token và cache lịch sử vẫn có TTL riêng. Đề bài đối chiếu nằm trong prompt; thay đề bài không dùng nhầm đối chiếu cũ.
+- Khi cùng phiên bản có `_canonical_fingerprint` khớp, nút Phân tích lại trả kết quả đã lưu, không tạo job và không gọi Gemini. Bản chưa hoàn tất tiếp tục checkpoint, không đóng băng kết quả rỗng/lỗi. Thay đổi thuật toán có ý nghĩa phải cập nhật `pipeline_version` trong `config/ai_processing.php` để không dùng nhầm snapshot cũ.
+- Trước khi thay bản phân tích đã lưu, giữ lịch sử riêng trong `storage/app/private/ai_history`. Không xóa cache hoặc lịch sử như một cách xử lý quota.
 - `_processing` trong JSON của từng khối chứa token thế hệ xử lý, trạng thái, số lượt, nguyên nhân và lịch thử tiếp; không thay trạng thái duyệt bài của giảng viên.
 - File hoặc đề bài đổi trong lúc chạy thì không ghi kết quả cũ vào lượt mới.
 - Kết quả thiếu hơn không thay phần tóm tắt hoàn chỉnh hơn. Đối chiếu giữ bằng chứng đã kiểm chứng khi cùng file/cùng đề bài, không trộn bằng chứng từ đề bài cũ.

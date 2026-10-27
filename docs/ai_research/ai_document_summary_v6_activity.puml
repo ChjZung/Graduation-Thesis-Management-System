@@ -1,0 +1,83 @@
+@startuml
+title Tóm tắt báo cáo theo cấu trúc V6 và tiến độ nghiệp vụ
+start
+partition Laravel {
+  :Nhận bài nộp hoặc yêu cầu phân tích;
+  :Kiểm tra quyền hiện có, định danh phiên bản và fingerprint;
+  if (Đã có kết quả cố định đúng đầu vào?) then (Có)
+    :Dùng nguyên kết quả đã kiểm chứng;
+    :Tính tiến độ mốc báo cáo từ xác nhận GVHD;
+    :Hiển thị kết quả đã lưu và trích dẫn;
+    stop
+  else (Chưa)
+    :Lưu bài nộp và database job;
+    :Trả giao diện trạng thái chờ;
+  endif
+}
+partition "Queue worker" {
+  :Nhận job ai-reports;
+  :Khóa phiên bản, kiểm tra token và fingerprint;
+  if (Job còn đúng đầu vào?) then (Đúng)
+  else (Đã đổi)
+    :Giữ kết quả cũ, thông báo đầu vào đã đổi;
+    stop
+  endif
+}
+partition Python {
+  :Đọc hash PDF và cấu hình;
+  if (Có snapshot văn bản đã kiểm chứng?) then (Có)
+    :Gắn lại đúng document/version/group;
+  else (Chưa)
+    :Kiểm tra PDF, trích text/trang/bbox/font/outline;
+    if (Đọc được tệp?) then (Có)
+    else (Lỗi tệp)
+      :Trả lỗi trích xuất an toàn;
+      partition Laravel {
+        :Lưu trạng thái partial và nguyên nhân, giữ bài nộp;
+      }
+      stop
+    endif
+    :Ghi giới hạn ảnh/scan/OCR;
+    :Nhận diện cây chương, mục và nội dung trực tiếp;
+    :Chia mục dài theo token, kiểm tra coverage;
+    while (Còn chunk cần Map?) is (Có)
+      if (Các bước của chunk đã có checkpoint hợp lệ?) then (Có)
+        :Dùng nguyên kết quả đã kiểm chứng;
+      else (Chưa)
+        partition Gemini {
+          :countTokens, điều tiết quota;
+          :Map lấy ý, câu nguồn và trang;
+          :Kiểm chứng ngữ nghĩa độc lập;
+        }
+      endif
+      :Kiểm tra JSON, câu nguồn và phạm vi chunk;
+      :Giữ ý có căn cứ; lưu lý do loại và lỗi;
+    endwhile (Hết)
+    :Gemini Reduce hoặc checkpoint hợp lệ - chunk thành mục, mục con thành cha;
+    :Reduce chương rồi tổng quan tài liệu;
+    :Chỉ chọn ý đã kiểm chứng, giữ provenance;
+    :Kiểm tra căn cứ hoàn thành và mâu thuẫn giữa các mục;
+    :Giữ completed_work đủ nguồn;
+    if (Hoàn tất phần văn bản và kiểm chứng?) then (Có)
+      :Lưu snapshot cố định, bản hợp lệ đầu tiên thắng;
+    else (Chưa)
+      :Trạng thái partial, không kết luận thiếu nội dung;
+    endif
+  endif
+  :Đối chiếu yêu cầu giảng viên riêng trên nguồn gốc nếu có;
+  :Trả JSON V6 và trạng thái từng bước;
+}
+partition Laravel {
+  :Kiểm tra lại fingerprint và generation token;
+  :Giữ lịch sử, lưu đúng phiên bản;
+  if (Có lỗi tạm thời còn lượt thử?) then (Có)
+    :Giữ checkpoint, hẹn queue thử tiếp;
+  else (Không)
+    :Hoàn tất hoặc giữ bản partial có giải thích;
+  endif
+  :Đọc cấu hình N giai đoạn và Mi đợt mỗi giai đoạn;
+  :Tính tổng 100/(N x Mi) của các đợt được GVHD xác nhận đạt;
+  :Hiển thị tiến độ riêng, tổng quan, cây mục và bằng chứng;
+}
+stop
+@enduml

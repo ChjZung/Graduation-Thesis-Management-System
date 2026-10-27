@@ -61,41 +61,15 @@ class DuyetBaoCaoController extends Controller
         foreach ($nhoms as $nhom) {
             \App\Http\Controllers\Admin\TheoDoiDoAnController::processNhomStageData($nhom);
 
-            // Cập nhật lại progress_percent và status_code dựa trên các đợt nộp thực tế của GVHD nếu có
-            $deTai = $nhom->deTai;
-            $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
-            $totalDots = 0;
-            $completedDots = 0;
-            $hasOverdue = false;
-            $hasPending = false;
-            $now = \Carbon\Carbon::now();
-
-            foreach ($giaiDoans as $gd) {
-                foreach ($gd->dotNops as $dot) {
-                    $totalDots++;
-                    $latestVersion = $dot->phienBanMoiNhat;
-                    if ($latestVersion && $latestVersion->TrangThai === 'Đạt') {
-                        $completedDots++;
-                    } elseif ($dot->HanNop && \Carbon\Carbon::parse($dot->HanNop)->lt($now) && (!$latestVersion || $latestVersion->TrangThai !== 'Đạt')) {
-                        $hasOverdue = true;
-                    }
-                    if ($latestVersion && in_array($latestVersion->TrangThai, ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp'])) {
-                        $hasPending = true;
-                    }
-                }
-            }
-
-            if ($totalDots > 0) {
-                $nhom->progress_percent = (int) round(($completedDots / $totalDots) * 100);
-                if ($hasOverdue) {
-                    $nhom->status_code = 'QUA_HAN';
-                } elseif ($hasPending) {
-                    $nhom->status_code = 'CHO_XU_LY';
-                } elseif ($completedDots === $totalDots) {
-                    $nhom->status_code = 'HOAN_THANH';
-                } else {
-                    $nhom->status_code = 'DANG_THUC_HIEN';
-                }
+            $milestones = app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom);
+            $nhom->report_milestone_progress = $milestones;
+            if ($milestones['stage_count'] > 0) {
+                $nhom->progress_percent = $milestones['percentage'];
+                $rounds = collect($milestones['stages'])->flatMap(fn ($stage) => $stage['rounds']);
+                $hasOverdue = $rounds->contains(fn ($round) => !empty($round['overdue']));
+                $hasPending = $rounds->contains(fn ($round) => in_array($round['status'], ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp']));
+                $nhom->status_code = $hasOverdue ? 'QUA_HAN' : ($hasPending ? 'CHO_XU_LY' :
+                    ($milestones['percentage'] >= 99.999999 ? 'HOAN_THANH' : 'DANG_THUC_HIEN'));
             }
         }
 
@@ -106,22 +80,13 @@ class DuyetBaoCaoController extends Controller
         $nhomCanNhacNho = 0;
 
         foreach ($nhoms as $nhom) {
-            $deTai = $nhom->deTai;
-            $giaiDoans = $deTai ? $deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get() : collect();
-            $needsReminder = ($nhom->status_code === 'QUA_HAN' || $nhom->status_code === 'SAP_DEN_HAN');
-
-            foreach ($giaiDoans as $gd) {
-                foreach ($gd->dotNops as $dot) {
-                    $latest = $dot->phienBanMoiNhat;
-                    if ($latest) {
-                        if (in_array($latest->TrangThai, ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp'])) {
-                            $baocaoChoDuyet++;
-                        } elseif ($latest->TrangThai === 'Đạt') {
-                            $baocaoDaDat++;
-                        } elseif ($latest->TrangThai === 'Yêu cầu nộp lại') {
-                            $needsReminder = true;
-                        }
-                    }
+            $milestones = $nhom->report_milestone_progress;
+            $needsReminder = in_array($nhom->status_code, ['QUA_HAN', 'SAP_DEN_HAN']);
+            foreach ($milestones['stages'] as $stage) {
+                foreach ($stage['rounds'] as $round) {
+                    if (in_array($round['status'], ['Chờ duyệt', 'Chờ GVHD duyệt', 'Đã nộp'])) $baocaoChoDuyet++;
+                    elseif ($round['completed']) $baocaoDaDat++;
+                    elseif ($round['status'] === 'Yêu cầu nộp lại') $needsReminder = true;
                 }
             }
             if ($needsReminder) {
@@ -345,42 +310,13 @@ class DuyetBaoCaoController extends Controller
      */
     private function ensureAiSummaryForKhoi(KhoiBaoCaoTienDo $khoi, BaoCaoTienDo $baoCao): void
     {
-        if (!empty($khoi->TomTatJson)) {
-            return;
-        }
-
-        $pdfPath = null;
-        if (!empty($khoi->DuongDanFile)) {
-            $candidate1 = storage_path('app/public/' . $khoi->DuongDanFile);
-            $candidate2 = public_path('storage/' . $khoi->DuongDanFile);
-            if (file_exists($candidate1)) {
-                $pdfPath = $candidate1;
-            } elseif (file_exists($candidate2)) {
-                $pdfPath = $candidate2;
-            }
-        }
-
-        $aiRes = null;
-        if ($pdfPath) {
-            try {
-                $aiService = app(\App\Services\AiSummaryService::class);
-                $aiRes = $aiService->summarizePdf($pdfPath, $khoi->giaiDoan?->ThuTu ?? $khoi->LanBaoCao ?? 1,
-                    $khoi->dotNop ? ['review_context' => $khoi->dotNop->nguCanhDoiChieuAi()] : []);
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Auto AI summarize for Lecturer view failed: " . $e->getMessage());
-            }
-        }
-
-        if (empty($aiRes['success']) || empty($aiRes['data'])) {
-            // Do not fabricate completed work or cite an imaginary page when PDF analysis fails.
-            return;
-        }
-
-        try {
-            app(\App\Services\AiSummaryService::class)->saveVersionSummary($khoi, $aiRes);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Save auto AI summary failed: " . $e->getMessage());
-        }
+        $processing = app(\App\Services\AiReportProcessingService::class);
+        $data = $processing->payload($khoi);
+        if (!empty($data['schema_version']) && $processing->sourceMatches($khoi, $data)) return;
+        if (!empty($data['_processing'])) return; // Explicit retry preserves the existing cooldown.
+        if (!$khoi->DuongDanFile) return;
+        try { $processing->enqueue($khoi); $khoi->refresh(); }
+        catch (\Throwable) { \Illuminate\Support\Facades\Log::warning('Unable to enqueue report summary.'); }
     }
 
     public function storeNhanXetKhoi(Request $request, $id)
@@ -429,25 +365,9 @@ class DuyetBaoCaoController extends Controller
      */
     private function ensureAiSummaryForBaoCao(BaoCaoTienDo $baoCao): void
     {
-        if ($baoCao->tomTatBaoCao) return;
-
-        if (!$baoCao->DuongDanFile || !is_file(storage_path('app/public/' . $baoCao->DuongDanFile))) return;
-        try {
-            $aiRes = app(\App\Services\AiSummaryService::class)->summarizePdf(storage_path('app/public/' . $baoCao->DuongDanFile), $baoCao->LanBaoCao ?? 1);
-            if (empty($aiRes['data'])) return;
-            $summary = \App\Models\TomTatBaoCao::firstOrNew(['MaBaoCao' => $baoCao->MaBaoCao]);
-            if (!$summary->exists) $summary->MaTomTat = \App\Helpers\IdGenerator::nextTomTat();
-            $summary->fill([
-                'TenFile' => $baoCao->TenFile, 'DuongDanFile' => $baoCao->DuongDanFile,
-                'SoTrang' => ($aiRes['data']['document_type'] ?? 'pdf') === 'docx' ? 0 : (int) ($aiRes['total_pages'] ?? 0),
-                'CongViecDaHoanThanh' => $aiRes['formatted']['completed_work'] ?? '',
-                'KhoKhan' => $aiRes['formatted']['difficulties'] ?? '', 'KeHoachTuanToi' => $aiRes['formatted']['next_steps'] ?? '',
-                'NoiDungAI' => $aiRes['data']['overall_summary'] ?? '', 'TomTatJson' => $aiRes['data'],
-                'TrangThai' => 'Đã tạo', 'TrangThaiXuLy' => 'hoan_thanh', 'NgayTomTat' => now(),
-            ])->save();
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('ensureAiSummaryForBaoCao failed: ' . $e->getMessage());
-        }
+        // Legacy snapshots remain readable. API calls must run on a version in the queue.
+        $latest = $baoCao->khoiBaoCaos()->orderByDesc('LanNop')->first();
+        if ($latest) $this->ensureAiSummaryForKhoi($latest, $baoCao);
     }
 
     public function xacNhanGiaiDoan(Request $request, $maBaoCao)
@@ -733,11 +653,12 @@ class DuyetBaoCaoController extends Controller
 
         $nhom = $phieuDangKy?->nhom;
         $deTai = $dotNop->deTai;
-        $phienBans = $dotNop->khoiBaoCaos;
+        $phienBans = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->versionsForRound($dotNop, $nhom) : $dotNop->khoiBaoCaos;
         $latestPhienBan = $phienBans->first();
 
+        $reportMilestoneProgress = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom, $dotNop->deTai) : null;
         return view('giangvien.baocao.show_dot', compact(
-            'giangVien', 'dotNop', 'nhom', 'deTai', 'phienBans', 'latestPhienBan'
+            'giangVien', 'dotNop', 'nhom', 'deTai', 'phienBans', 'latestPhienBan', 'reportMilestoneProgress'
         ));
     }
 

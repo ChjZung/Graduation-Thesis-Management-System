@@ -9,7 +9,7 @@ import re
 import time
 from ai_processing import recovered_call, error_detail, current_session
 from ai_requirement_review import context_hash
-from ai_summary_hierarchy import estimated_tokens
+from ai_summary_hierarchy import estimated_tokens, chunk_source_text
 from pdf_document_analysis import compact, exact_quote, document_structure
 from pdf_evidence_retrieval import is_index_text
 
@@ -37,7 +37,7 @@ def ground_facts(value, chunk, pages, number):
         if not isinstance(item.get('source_pages'), list):
             raise ValueError('invalid_fact_pages')
         quote = item['evidence'].strip()
-        if len(compact(quote)) < 12 or not exact_quote(quote, chunk['text']):
+        if len(compact(quote)) < 12 or not exact_quote(quote, chunk_source_text(chunk)):
             raise ValueError('fact_outside_chunk')
         numbers = [n for n in item['source_pages'] if type(n) is int and n in allowed
                    and exact_quote(quote, pages.get(n, ''))]
@@ -195,12 +195,13 @@ DỮ LIỆU: {json.dumps(inputs, ensure_ascii=False)}'''
 
 def local_facts(chunk, pages, number):
     """Extract, do not infer an author's progress, when the API is unavailable."""
+    raw = chunk_source_text(chunk)
     for page in chunk.get('pages', range(chunk['start_page'], chunk['end_page'] + 1)):
         text = pages.get(page, '')
         if not text.strip() or is_index_text(text):
             continue
-        for sentence in re.split(r'(?<=[.!?])\s+', text):
-            if 60 <= len(sentence.strip()) <= 1200 and exact_quote(sentence.strip(), chunk['text']):
+        for sentence in re.split(r'(?<=[.!?])\s+', raw):
+            if 40 <= len(sentence.strip()) <= 1200 and exact_quote(sentence.strip(), text):
                 value = {'items': [{'topic': chunk.get('section') or 'Nội dung trích xuất',
                     'kind': 'other', 'content': ' '.join(sentence.split()), 'evidence': sentence.strip(), 'source_pages': [page]}]}
                 return ground_facts(value, chunk, pages, number)
@@ -216,6 +217,7 @@ def run_pipeline(path, api_key, model, context, extract, build_chunks, api, heur
         return {'success': False, 'error': 'Chưa đọc được văn bản; tài liệu có thể cần OCR.',
                 'processing_error': error_detail(ValueError('no_text'), 'extraction'), 'total_pages': total, 'data': None}
     chunks, chunk_time = build_chunks(pages, chunk_size, chunk_overlap)
+    current_session().progress(stage='summary_part',map_done=0,map_total=len(chunks))
     by_page = {int(p['page']): p['text'] for p in pages}
     mapped, errors = {}, []
     actual_model = model
@@ -246,6 +248,7 @@ Nguồn từ {chunk['start_page']} đến {chunk['end_page']}:
                 index = tasks[task]
                 try:
                     mapped[index], actual_model = task.result()
+                    current_session().progress(stage='summary_part',map_done=len(mapped),map_total=len(chunks))
                 except Exception as error:
                     errors.append(dict(error_detail(error, 'summary_part'), chunk_id=index + 1))
     facts = deduplicate([fact for index in sorted(mapped) for fact in mapped[index]])

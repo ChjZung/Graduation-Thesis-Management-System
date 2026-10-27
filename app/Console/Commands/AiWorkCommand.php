@@ -11,6 +11,8 @@ class AiWorkCommand extends Command
 
     public function handle(): int
     {
+        // This process waits between jobs; only each child analysis has a deadline.
+        if (function_exists('set_time_limit')) set_time_limit(0);
         $folder=storage_path('app/private');
         if (!is_dir($folder)) mkdir($folder,0775,true);
         $lock=fopen($folder.'/ai-worker.lock','c');

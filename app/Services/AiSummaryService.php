@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Process\Exceptions\ProcessTimedOutException;
 
 class AiSummaryService
 {
@@ -22,7 +23,24 @@ class AiSummaryService
             $report = \App\Models\KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
             $old = app(AiReportProcessingService::class)->payload($report);
             if (isset($options['token']) && ($old['_processing']['token'] ?? '') !== $options['token']) return;
+            // Retain an immutable private snapshot before replacing a saved AI generation.
+            if (!empty($old['schema_version']) && (!empty($old['document_content']) || !empty($old['chapters']))) {
+                $snapshot = $old;
+                unset($snapshot['_analysis_history'], $snapshot['_processing']);
+                $encoded = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+                $snapshotId = hash('sha256', $report->MaKhoi.'|'.$encoded);
+                if (!Storage::disk('local')->exists('ai_history/'.$snapshotId.'.json')) {
+                    Storage::disk('local')->put('ai_history/'.$snapshotId.'.json', $encoded);
+                }
+                $history = $old['_analysis_history'] ?? [];
+                $history[$snapshotId] = ['id'=>$snapshotId, 'schema_version'=>$old['schema_version'],
+                    'source_hash'=>$old['_source_hash'] ?? $old['source_identity']['source_hash'] ?? null];
+                $old['_analysis_history'] = $history;
+            }
             $merged = (new AiResultMerger)->merge($old,$result['data'],!empty($options['review_only']));
+            foreach (['_submission_identity', '_analysis_history'] as $field) {
+                if (isset($old[$field])) $merged[$field] = $old[$field];
+            }
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
@@ -73,16 +91,17 @@ class AiSummaryService
     /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
      * Sử dụng Python PyMuPDF + Google Gemini API (xác thực qua header x-goog-api-key).
-     * Hỗ trợ cấu hình tham số thực nghiệm: chunk_size, chunk_overlap, method, model.
+     * V6 dùng ngân sách token trong ai_processing.summary; tham số ký tự giữ tương thích cũ.
      */
     public function summarizePdf(string $pdfPath, int $stage = 1, array $options = []): array
     {
-        if (function_exists('set_time_limit')) {
+        if (PHP_SAPI !== 'cli' && function_exists('set_time_limit')) {
             set_time_limit(420);
         }
         $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
         $model = config('services.gemini.model', 'gemini-3.5-flash-lite');
-        $scriptPath = base_path('app/Services/ai_summarizer.py');
+        $labPdf = strtolower(pathinfo($pdfPath, PATHINFO_EXTENSION)) === 'pdf' && config('ai_processing.pdf_engine') === 'pdf_lab';
+        $scriptPath = base_path($labPdf ? 'app/Services/lab_pdf_summary.py' : 'app/Services/ai_summarizer.py');
 
         $chunkSize = $options['chunk_size'] ?? self::CHUNK_SIZE;
         $chunkOverlap = $options['chunk_overlap'] ?? self::CHUNK_OVERLAP;
@@ -107,7 +126,22 @@ class AiSummaryService
             $model,
             '--cache-dir',
             storage_path('app/private/ai_cache'),
+            '--pipeline-version',
+            config('ai_processing.pipeline_version', 'section-v6.1'),
         ];
+
+        foreach (config('ai_processing.summary', []) as $name => $value) {
+            $command[] = '--'.str_replace('_', '-', $name);
+            $command[] = (string) $value;
+        }
+        if ($labPdf) {
+            $command[] = '--lab-settings';
+            $command[] = json_encode(config('ai_processing.lab'), JSON_THROW_ON_ERROR);
+        }
+        if (!empty($options['document_identity'])) {
+            $command[] = '--document-identity';
+            $command[] = json_encode($options['document_identity'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        }
 
         if (!empty($options['review_context'])) {
             $command[] = '--review-context';
@@ -122,6 +156,7 @@ class AiSummaryService
         }
 
         $errorReason = '';
+        $processFailure = null;
 
         try {
             // Đảm bảo các biến môi trường thiết yếu của Windows (SystemRoot, PATH) được truyền cho tiến trình con
@@ -141,6 +176,8 @@ class AiSummaryService
                 'AI_LITE_SAFE_RPM' => (string) config('ai_processing.lite_rpm',12),
                 'AI_SAFE_TPM' => (string) config('ai_processing.tpm',200000),
                 'AI_PROGRESS_FILE' => $options['progress_path'] ?? '',
+                'AI_EXACT_TOKEN_COUNT' => config('ai_processing.count_tokens', true) ? '1' : '0',
+                'AI_MAX_REQUEST_TOKENS' => (string) config('ai_processing.max_request_tokens', 12000),
 
             ]);
 
@@ -159,15 +196,29 @@ class AiSummaryService
                 $errorReason = 'Lỗi thực thi tiến trình Python: ' . trim($result->errorOutput());
                 Log::warning('AiSummaryService: Python process failed.', ['exit_code'=>$result->exitCode()]);
             }
+        } catch (ProcessTimedOutException $e) {
+            $processFailure = ['stage'=>'process','code'=>'timeout',
+                'message'=>'Lượt xử lý nền đã quá thời gian. Các bước thành công trong bộ nhớ đệm được giữ; hệ thống sẽ tự tiếp tục.'];
+            Log::warning('AiSummaryService: Python process timed out; checkpoints retained.');
         } catch (\Throwable $e) {
             $errorReason = 'Ngoại lệ khi gọi script Python: ' . $e->getMessage();
+            $processFailure = ['stage'=>'process','code'=>'service_unavailable',
+                'message'=>'Chưa hoàn tất tiến trình phân tích. Các bước đã lưu được giữ để thử tiếp.'];
             Log::error('AiSummaryService: Python process exception.', ['type'=>get_class($e)]);
         }
 
         $fallback = $this->fallbackSummarize($pdfPath, $stage, $options['review_context'] ?? []);
         $parsed = isset($result) && is_object($result) ? json_decode($result->output(),true) : [];
-        $failure = $parsed['processing_error'] ?? ['stage'=>'process','code'=>'extraction_failed','message'=>'Không đọc được tài liệu hoặc chưa chạy được tiến trình phân tích.'];
+        $failure = $processFailure ?? $parsed['processing_error'] ?? ['stage'=>'process','code'=>'service_unavailable',
+            'message'=>'Tiến trình chưa trả kết quả hợp lệ. Các bước đã lưu được giữ để thử tiếp.'];
         $fallback['data']['processing_errors'] = [$failure];
+        if (!empty($options['progress_path']) && is_file($options['progress_path'])) {
+            $progress = json_decode(file_get_contents($options['progress_path']), true) ?: [];
+            $fallback['data']['analysis']['analyzed_chunks'] = max(0, (int) ($progress['map_done'] ?? 0));
+            $fallback['data']['analysis']['total_chunks'] = max(0, (int) ($progress['map_total'] ?? 0));
+            $fallback['data']['analysis']['completed_calls'] = max(0, (int) ($progress['completed_calls'] ?? 0));
+            $fallback['data']['analysis']['reused_calls'] = max(0, (int) ($progress['reused_calls'] ?? 0));
+        }
         return $fallback;
     }
 
@@ -195,6 +246,7 @@ class AiSummaryService
         $completionPct = isset($data['completion_percentage']) && $data['completion_percentage'] !== null 
             ? (int)$data['completion_percentage'] 
             : null;
+        if ((int) ($data['schema_version'] ?? 0) >= 6) $completionPct = null;
 
         // Chuẩn hóa text cho 1-click Autofill
         $formattedCompleted = [];
@@ -274,6 +326,14 @@ class AiSummaryService
             'overall_summary', 'document_content', 'summary_sections', 'additional_sections', 'summary_scope', 'completed_work', 'difficulties', 'next_steps', 'analysis',
             'citations', 'document_outline', 'requirements_review', 'schema_version', 'document_type', 'completion_percentage', 'completion_basis', 'processing_errors',
         ]));
+        if ((int) ($data['schema_version'] ?? 0) >= 6) {
+            foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
+                'chapters', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
+                if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
+            }
+            unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],
+                $sectionsData['completion_basis']);
+        }
 
         $stdReport = $raw['standard_report'] ?? ((int) ($data['schema_version'] ?? 0) >= 5 ? [
             'tom_tat' => $overallSummary,
@@ -290,6 +350,9 @@ class AiSummaryService
             'canh_bao'             => is_array($canhBao) ? $canhBao : [],
             'nguon_tham_chieu'     => array_map(fn($c) => 'Trang ' . ($c['page'] ?? 1), $citations) ?: ['Trang 1'],
         ]);
+        if ((int) ($data['schema_version'] ?? 0) >= 6) {
+            $stdReport = ['tom_tat'=>$overallSummary, 'chapters'=>$data['chapters'] ?? [], 'completed_work'=>$completedWork];
+        }
 
         $metrics = $raw['metrics'] ?? [
             'total_pages' => $totalPages,
@@ -352,12 +415,10 @@ class AiSummaryService
             'total_pages' => 0,
             'processing_time' => 0,
             'data' => [
-                'schema_version' => 5,
+                'schema_version' => 6,
                 'document_type' => $documentType,
-                'document_content' => [], 'summary_sections' => [], 'additional_sections' => [],
-                'summary_scope' => ['mode'=>'document_fallback', 'context_hash'=>$contextHash,
-                    'note'=>'Chưa xác định được nội dung trọng tâm; không dùng trạng thái lỗi để kết luận sinh viên thiếu yêu cầu.'],
-                'analysis' => ['version'=>5, 'source'=>'system_fallback', 'status'=>'partial',
+                'document_content' => [], 'chapters' => [], 'analysis_status'=>'partial',
+                'analysis' => ['version'=>6, 'source'=>'system_fallback', 'status'=>'partial',
                     'total_pages'=>0, 'total_units'=>0, 'analyzed_chunks'=>0, 'total_chunks'=>0,
                     'text_complete'=>false, 'reduce_completed'=>false, 'note'=>$explanation],
                 'completed_work' => [],

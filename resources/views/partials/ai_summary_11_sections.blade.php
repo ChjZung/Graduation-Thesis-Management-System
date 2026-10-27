@@ -1,10 +1,15 @@
 {{-- Tóm tắt AI dùng chung cho Sinh viên và Giảng viên, theo giao diện HUIT admin. --}}
 @php
+    $teacherReportUi = $teacherReportUi ?? request()->routeIs('giangvien.*', 'sinhvien.*');
     $aiJson = $pb->TomTatJson ?? ($pb->tomTat->TomTatJson ?? []);
     if (is_string($aiJson)) {
         $aiJson = json_decode($aiJson, true) ?? [];
     }
     $aiData = isset($aiJson['data']) && is_array($aiJson['data']) ? $aiJson['data'] : $aiJson;
+    $sourceChanged = $pb instanceof \App\Models\KhoiBaoCaoTienDo
+        && !app(\App\Services\AiReportProcessingService::class)->sourceMatches($pb, $aiData);
+    if ($sourceChanged) $aiData = ['_processing'=>$aiData['_processing'] ?? []];
+    $structuralSummary = (int) ($aiData['schema_version'] ?? 0) >= 6 && is_array($aiData['chapters'] ?? null);
     $overallSummary = $aiData['overall_summary'] ?? $aiData['tom_tat'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
     $documentContent = $aiData['document_content'] ?? [];
     $completedWork = $aiData['completed_work'] ?? $aiData['cong_viec_hoan_thanh'] ?? [];
@@ -26,6 +31,9 @@
     $documentType = strtolower(pathinfo($pb->DuongDanFile ?? '', PATHINFO_EXTENSION)) === 'docx' ? 'docx' : ($aiData['document_type'] ?? 'pdf');
     $sourceLabels = $analysis['source_labels'] ?? [];
     $analysisComplete = ($analysis['status'] ?? '') === 'completed';
+    $showingSavedSummary = $analysisComplete && in_array($aiData['_processing']['status'] ?? '', ['queued','running','waiting']);
+    $pendingFirstSummary = empty($aiData['schema_version']) && empty($documentContent) && empty($aiData['overall_summary'])
+        && empty($pb->TomTatAI) && in_array($aiData['_processing']['status'] ?? '', ['queued','running','waiting']);
     if (!$analysisComplete && !$documentContent && isset($analysis['analyzed_chunks'], $analysis['total_chunks']) && $analysis['analyzed_chunks'] < $analysis['total_chunks']) {
         $overallSummary = 'Bản tóm tắt chưa hoàn tất. Các thông tin đã trích xuất được giữ bên dưới; chưa thể kết luận những nội dung còn lại không có trong báo cáo.';
     }
@@ -51,10 +59,19 @@
             'key' => $section['id'] ?? 'additional', 'icon' => 'fa-file-lines', 'tone' => 'primary',
         ]), $additionalSections);
     }
+    if ($pendingFirstSummary) {
+        $overallSummary = '';
+        $sections = [];
+    }
+    if ($structuralSummary) {
+        $sections = [['key'=>'completed_work', 'number'=>3, 'title'=>'Công việc đã hoàn thành',
+            'icon'=>'fa-circle-check', 'tone'=>'success', 'items'=>$completedWork]];
+    }
+    if ($sourceChanged) { $overallSummary = ''; $sections = []; }
     $missingGroups = [];
     foreach ($sections as &$summarySection) {
         $summarySection['items'] = array_values(array_filter((array) $summarySection['items'], fn ($item) => trim(is_array($item) ? (string) ($item['content'] ?? '') : (string) $item) !== ''));
-        if (!$flexibleSummary && !$summarySection['items']) $missingGroups[] = mb_strtolower($summarySection['title']);
+        if (!$flexibleSummary && !$structuralSummary && !$summarySection['items']) $missingGroups[] = mb_strtolower($summarySection['title']);
     }
     unset($summarySection);
 
@@ -204,6 +221,9 @@
 @include('partials.ai_review_styles')
 @endonce
 
+@if($teacherReportUi)
+@include('partials.ai_teacher_report')
+@else
 <section class="ai-summary ai-summary-card" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
     <header class="ai-header">
         <div class="ai-heading">
@@ -211,6 +231,17 @@
             <div>
                 <h2 class="ai-title" id="{{ $uniqueId }}-title">Tóm tắt báo cáo AI</h2>
                 <div class="ai-file"><i class="fa-regular fa-file-pdf" aria-hidden="true"></i><span>{{ $pb->TenFile ?? 'Báo cáo tiến độ' }}</span></div>
+                @if($structuralSummary)
+                    <div class="ai-file" data-summary-metadata>
+                        Phiên bản {{ $pb->LanNop ?? 1 }} · {{ $analysis['total_units'] ?? 0 }} {{ $documentType === 'docx' ? 'vị trí' : 'trang' }} · {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? count($aiData['chapters'] ?? []) : ($analysis['sections_detected'] ?? 0) }} {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'chương/phần' : 'chương/mục' }} · {{ $showingSavedSummary ? 'Đang hiển thị bản đã lưu' : ($analysisComplete ? 'Hoàn tất' : 'Chưa đọc đầy đủ') }}
+                        @if(isset($analysis['processing_time_seconds'])) · {{ $showingSavedSummary ? 'Lượt xử lý bản đã lưu' : (($analysis['engine'] ?? '') === 'pdf_lab' ? 'Lượt xử lý gần nhất' : 'Xử lý') }} {{ number_format((float) $analysis['processing_time_seconds'], 1) }} giây @endif
+                    </div>
+                @endif
+                @if($showingSavedSummary)
+                    <div class="ai-file" data-showing-saved-summary>Đây là bản đã lưu trước lần phân tích này. Tiến độ bản mới hiển thị bên dưới.</div>
+                @elseif(!empty($aiData['_canonical_fingerprint']))
+                    <div class="ai-file">{{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'Đã lưu bản tóm tắt có câu trích khớp nguồn.' : 'Đã lưu kết quả kiểm chứng.' }} Khi tệp và yêu cầu không đổi, hệ thống dùng lại bản này.</div>
+                @endif
             </div>
         </div>
         <div class="ai-actions">
@@ -279,7 +310,13 @@
     @include('partials.ai_processing_status')
     <p class="ai-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="ai-details ai-details-body ai-copy-content" id="{{ $uniqueId }}-body" tabindex="0" role="region" aria-label="Nội dung tóm tắt AI, có thể cuộn để xem đầy đủ">
-        
+        @if($sourceChanged)
+            <p class="ai-review-note" data-summary-source-changed>Tệp đính kèm đã thay đổi. Bản tóm tắt cũ được giữ trong lịch sử; chọn Phân tích lại để đọc đúng tệp hiện tại.</p>
+        @endif
+        @if($structuralSummary && !empty($analysis['structure_fallback']))
+            <p class="ai-review-note">Chưa nhận diện chắc chắn cấu trúc chương/mục. Nội dung được đọc theo thứ tự trang và đoạn, không tự đặt số mục.</p>
+        @endif
+
         <!-- Đối chiếu phiên bản (Lần 1 vs Lần 2) nếu có phiên bản trước -->
         @if($hasVersionComparison)
         <section class="ai-section ai-section-wide mb-3" style="border-left: 4px solid var(--ai-blue); background: var(--ai-tint); padding: 14px 16px;" data-summary-version-comparison>
@@ -366,7 +403,8 @@
             <p class="ai-review-note">{{ $analysis['note'] ?? 'Kết quả chưa xác nhận đã đọc đầy đủ tài liệu. Bạn có thể phân tích lại để cập nhật.' }} Các nhóm chưa có thông tin chưa đồng nghĩa tài liệu không đề cập.</p>
         @endif
         @if(isset($analysis['total_chunks']) && $analysis['total_chunks'] > 0)
-            <p class="ai-empty" data-analysis-coverage>Văn bản: {{ $analysis['analyzed_chunks'] ?? 0 }}/{{ $analysis['total_chunks'] }} phần đã xử lý. {{ !empty($analysis['text_complete']) ? 'Đã đọc đủ các phần văn bản.' : 'Chưa hoàn tất phân tích văn bản; chưa dùng để kết luận báo cáo thiếu nội dung.' }}</p>
+            @if(($analysis['engine'] ?? '') === 'pdf_lab')<p class="ai-muted" data-lab-limitations>Chỉ gồm các gói text trong phương án. Hình/sơ đồ và các mục loại khỏi Map chưa được AI đọc. Câu trích khớp nguồn chưa chứng minh mọi diễn giải đúng hoặc hệ thống đã triển khai thực tế.</p>@endif
+            <p class="ai-empty" data-analysis-coverage>@if($showingSavedSummary)Bản đã lưu · @endif Văn bản: {{ $analysis['analyzed_chunks'] ?? 0 }}/{{ $analysis['total_chunks'] }} phần đã xử lý. {{ !empty($analysis['text_complete']) ? (($analysis['engine'] ?? '') === 'pdf_lab' ? 'Đã xử lý đủ các gói text trong phương án.' : 'Đã đọc đủ các phần văn bản.') : 'Chưa hoàn tất phân tích văn bản; chưa dùng để kết luận báo cáo thiếu nội dung.' }}</p>
         @endif
         @foreach(collect(empty($aiData['_processing']) ? ($analysis['errors'] ?? []) : [])->unique('code') as $processingError)
             <p class="ai-review-note">{{ $processingError['message'] ?? 'Một phần xử lý AI chưa hoàn tất.' }}</p>
@@ -387,14 +425,18 @@
         <div class="ai-grid">
             @if(trim((string) $overallSummary) !== '')
                 <section class="ai-section ai-section-wide ai-section-overview" data-summary-overview>
-                    <div class="ai-section-head"><h3 class="ai-section-title">{{ $flexibleSummary ? 'Tổng quan tài liệu' : 'Tóm tắt chung' }}</h3></div>
+                    <div class="ai-section-head"><h3 class="ai-section-title">{{ ($flexibleSummary || $structuralSummary) ? 'Tổng quan tài liệu' : 'Tóm tắt chung' }}</h3></div>
+                    @if(($analysis['engine'] ?? '') !== 'pdf_lab' || !$documentContent)
                     <p class="ai-text-summary">{{ $overallSummary }}</p>
+                    @endif
                     @if($documentContent)
                         <ul class="ai-list" style="margin-top:12px" data-document-content>
                             @foreach($documentContent as $contentItem)
                                 <li class="ai-list-item"><div class="ai-item-content">
                                     <div>{{ $contentItem['content'] ?? '' }}</div>
-                                    @if(!empty($contentItem['evidence']))
+                                    @if(!empty($contentItem['source_references']))
+                                        @include('partials.ai_lab_sources', ['references'=>$contentItem['source_references'], 'referenceContext'=>$contentItem['content'] ?? 'Tổng quan báo cáo'])
+                                    @elseif(!empty($contentItem['evidence']))
                                         <q class="ai-evidence">{{ \Illuminate\Support\Str::limit($contentItem['evidence'], 260) }}</q>
                                         <div class="ai-source">@foreach(($contentItem['source_pages'] ?? []) as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $contentItem['evidence'], 'citationProminent' => false, 'citationContext' => $contentItem['content'] ?? 'Nội dung báo cáo']) @endforeach</div>
                                     @endif
@@ -404,11 +446,25 @@
                     @endif
                 </section>
             @endif
+            @if($structuralSummary)
+                <section class="ai-section ai-section-wide" data-structural-summary>
+                    <div class="ai-section-head"><h3 class="ai-section-title">{{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'Bản đọc theo chương dành cho giảng viên' : 'Tóm tắt theo chương và mục' }}</h3></div>
+                    @foreach($aiData['chapters'] as $chapter)
+                        @include('partials.ai_document_node', ['node'=>$chapter])
+                    @endforeach
+                </section>
+            @endif
             @foreach($sections as $section)
                 @if(!empty($section['items']))
                     @include('partials.ai_summary_section')
                 @endif
             @endforeach
+            @if($structuralSummary && !$completedWork)
+                <section class="ai-section ai-section-wide" data-completed-work-empty>
+                    <h3 class="ai-section-title">Công việc đã hoàn thành</h3>
+                    <p class="ai-empty">Chưa xác minh được công việc hoàn thành đủ căn cứ từ phần tài liệu đã xử lý. Đây không phải kết luận sinh viên chưa thực hiện.</p>
+                </section>
+            @endif
         </div>
         @if($flexibleSummary && !$sections)
             <p class="ai-empty">Chưa có mục trọng tâm được trích xuất. Đây chưa phải kết luận tài liệu thiếu yêu cầu; hãy xem độ bao phủ và phần đối chiếu bên dưới.</p>
@@ -429,13 +485,17 @@
         @if($missingGroups)
             <p class="ai-empty" data-summary-missing>{{ $analysisComplete ? 'Báo cáo chưa đề cập: ' : 'Chưa trích xuất được từ phần văn bản đã đọc: ' }}{{ implode(', ', $missingGroups) }}.</p>
         @endif
-        @if($reviewRound)
+        @if(($analysis['engine'] ?? '') === 'pdf_lab')
+            @include('partials.ai_lab_requirements')
+        @elseif($reviewRound)
             <details class="ai-review-disclosure"><summary>Đối chiếu yêu cầu của giảng viên · Xem thêm</summary>
                 @include('partials.ai_requirement_review')
             </details>
         @endif
     </div>
 </section>
+
+@endif
 
 @once
 <script>
@@ -584,6 +644,11 @@
         closeButton.autofocus = true;
         closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Đóng</span>';
         panel.querySelector('.ai-actions').appendChild(closeButton);
+        panel.querySelectorAll('[data-ai-result-tab], [data-ai-requirement-tab]').forEach(tab => {
+            const oldId=tab.getAttribute('aria-controls'), pane=panel.querySelector('#'+CSS.escape(oldId));
+            tab.id+='-expanded';
+            if(pane){pane.id=oldId+'-expanded';pane.setAttribute('aria-labelledby',tab.id);tab.setAttribute('aria-controls',pane.id);tab.setAttribute('data-bs-target','#'+pane.id);}
+        });
         dialog.appendChild(panel);
         document.body.appendChild(dialog);
         const previousOverflow = document.body.style.overflow;
@@ -601,6 +666,7 @@
         document.body.style.overflow = 'hidden';
         body.scrollTop = 0;
         body.scrollLeft = 0;
+        document.dispatchEvent(new CustomEvent('huit-ai-card-mounted'));
     }
     async function copyText(text) {
         if (window.isSecureContext && navigator.clipboard?.writeText) {

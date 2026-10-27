@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -12,8 +13,44 @@ from ai_requirement_review import review_requirements
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_immutable_steps_survive_ttl_and_adopt_one_concurrent_result(self):
+        import concurrent.futures
+        import threading
+        import time
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+            barrier = threading.Barrier(2)
+            def api(*args, **kwargs):
+                value = threading.get_ident()
+                barrier.wait(timeout=5)
+                return {'winner':value}, 'test'
+            def run(_):
+                return CallSession(folder,namespace='immutable-v6',immutable=True).call(api,'same input','key')[0]
+            with concurrent.futures.ThreadPoolExecutor(2) as pool:
+                first, second = list(pool.map(run, range(2)))
+            self.assertEqual(first,second)
+            for path in Path(folder).glob('*.json'):
+                os.utime(path,(time.time()-10*86400,time.time()-10*86400))
+            def never(*args,**kwargs): raise AssertionError('Should reuse validated immutable step')
+            reused=CallSession(folder,namespace='immutable-v6',immutable=True).call(never,'same input','new key')[0]
+            self.assertEqual(first,reused)
+
     def tearDown(self):
         configure_session()
+
+    def test_progress_preserves_document_counts_across_api_updates(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+            target=Path(folder)/'progress.json'
+            with patch.dict(os.environ,{'AI_PROGRESS_FILE':str(target)}):
+                session=CallSession()
+                session.progress(stage='summary_part',map_done=0,map_total=30)
+                session.call(lambda *a,**k: ({'items':[]},'test'),'prompt','SECRET',stage='summary_part')
+                session.progress(stage='summary_part',map_done=1)
+            progress=json.loads(target.read_text(encoding='utf-8'))
+            self.assertEqual(1,progress['map_done'])
+            self.assertEqual(30,progress['map_total'])
+            self.assertEqual(1,progress['completed_calls'])
+            self.assertGreater(progress['updated_at'],0)
+            self.assertNotIn('SECRET',target.read_text())
 
     def test_valid_success_is_reused_but_failed_parts_are_retried(self):
         calls=[]
@@ -115,7 +152,9 @@ class RecoveryTests(unittest.TestCase):
         meta={'valid_pages':2,'total_chars':sum(map(len,texts)),'total_words':20,'extraction_time':0}
         chunks=[{'start_page':i+9,'end_page':i+9,'text':text} for i,text in enumerate(texts)]
         with patch('ai_summarizer.extract_pdf_pages',return_value=(pages,2,meta)), patch('ai_summarizer.build_structured_chunks',return_value=(chunks,0)), patch('ai_summarizer.call_gemini_api',side_effect=api):
-            return run_map_reduce_pipeline('report.pdf',api_key='test')
+            from ai_flexible_summary import run_pipeline
+            from ai_summarizer import extract_pdf_pages, build_structured_chunks
+            return run_pipeline('report.pdf','test','test',{},extract_pdf_pages,build_structured_chunks,api)
 
     def payload(self):
         return {'items':[{'topic':'Hiện trạng', 'kind':'background', 'content':'Báo cáo trình bày hiện trạng quản lý phân tán.',

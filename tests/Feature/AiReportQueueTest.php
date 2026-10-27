@@ -8,6 +8,7 @@ use App\Services\AiReportProcessingService;
 use App\Services\AiSummaryService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
 use Mockery;
 use Tests\TestCase;
 
@@ -15,6 +16,71 @@ use Tests\TestCase;
 class AiReportQueueTest extends TestCase
 {
     use DatabaseTransactions;
+
+    public function test_repeated_analysis_of_same_verified_version_does_not_enqueue_or_change_result(): void
+    {
+        $report=$this->report();
+        $processing=app(AiReportProcessingService::class);
+        $hash=$processing->fingerprint($report);
+        $payload=['schema_version'=>6,'_canonical_fingerprint'=>$hash,
+            '_source_hash'=>hash_file('sha256',$processing->path($report)),
+            'overview_summary'=>'Canonical verified overview','chapters'=>[['id'=>'S1']],
+            'completed_work'=>[],'analysis'=>['status'=>'completed','text_complete'=>true],
+            '_processing'=>['status'=>'completed','token'=>'canonical-test','fingerprint'=>$hash]];
+        $report->update(['TomTatJson'=>$payload]);
+        $before=DB::table('jobs')->where('queue','ai-reports')->count();
+        $state=$processing->enqueue($report);
+        $again=$processing->enqueue($report, true);
+        $this->assertTrue($state['reused']);
+        $this->assertTrue($again['reused']);
+        $this->assertSame($before,DB::table('jobs')->where('queue','ai-reports')->count());
+        $this->assertSame($payload,$report->fresh()->TomTatJson);
+        $report->dotNop->update(['NoiDungYeuCau'=>'Changed criteria creates a new review input']);
+        $this->assertArrayNotHasKey('reused',$processing->enqueue($report->fresh()));
+    }
+
+    public function test_python_timeout_retries_from_checkpoints_instead_of_failing_extraction(): void
+    {
+        $report=$this->report();
+        $originalFile=$report->DuongDanFile;
+        $processing=app(AiReportProcessingService::class);
+        $state=$processing->enqueue($report);
+        $path=$processing->progressPath($state['token']);
+        if (!is_dir(dirname($path))) mkdir(dirname($path),0775,true);
+        file_put_contents($path,json_encode(['stage'=>'summary_part','map_done'=>8,'map_total'=>30,
+            'completed_calls'=>8,'reused_calls'=>0]));
+        try {
+            $process=new \Symfony\Component\Process\Process(['python','fixture.py']);
+            $process->setTimeout(360);
+            $exception=new \Illuminate\Process\Exceptions\ProcessTimedOutException(
+                new \Symfony\Component\Process\Exception\ProcessTimedOutException($process,
+                    \Symfony\Component\Process\Exception\ProcessTimedOutException::TYPE_GENERAL),
+                Process::result());
+            Process::fake(fn () => throw $exception);
+            $job=new AnalyzeReportVersion($report->MaKhoi,$state['token']);
+            $job->withFakeQueueInteractions();
+            $job->handle($processing,app(AiSummaryService::class));
+            $job->assertReleased();
+            $fresh=$report->fresh();
+            $this->assertSame('waiting',$fresh->TomTatJson['_processing']['status']);
+            $this->assertSame('timeout',$fresh->TomTatJson['_processing']['errors'][0]['code']);
+            $this->assertSame(8,$fresh->TomTatJson['analysis']['analyzed_chunks']);
+            $this->assertSame(30,$fresh->TomTatJson['analysis']['total_chunks']);
+            $this->assertSame($originalFile,$fresh->DuongDanFile);
+            $this->assertSame($report->TrangThai,$fresh->TrangThai);
+            $status=$processing->status($fresh);
+            $this->assertSame(8,$status['progress']['completed_calls']);
+            $this->assertSame(30,$status['progress']['map_total']);
+        } finally { if (is_file($path)) unlink($path); }
+    }
+
+    public function test_process_exit_without_structured_extraction_error_is_retryable(): void
+    {
+        Process::fake(fn () => Process::result(errorOutput:'Temporary process failure',exitCode:1));
+        $result=app(AiSummaryService::class)->summarizePdf('fixture.pdf');
+        $this->assertSame('service_unavailable',$result['data']['processing_errors'][0]['code']);
+        $this->assertSame('waiting',app(AiReportProcessingService::class)->retryState($result['data'],false,1)['status']);
+    }
 
     public function test_review_with_changed_brief_reorganizes_flexible_summary(): void
     {

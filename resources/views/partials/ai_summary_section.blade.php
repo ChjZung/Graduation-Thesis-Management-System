@@ -17,8 +17,12 @@
                                 <li class="ai-list-item"><i class="fa-solid {{ $section['icon'] }}" aria-hidden="true"></i><div class="ai-item-content">
                                     @if($kindLabel)<small class="ai-muted" data-fact-kind="{{ $item['kind'] }}">{{ $kindLabel }}</small>@endif
                                     <div>{{ $itemContent }}</div>
+                                    @if(is_array($item) && !empty($item['source_references']))
+                                        @include('partials.ai_lab_sources', ['references'=>$item['source_references'], 'referenceContext'=>$itemContent])
+                                    @else
                                     @if($itemEvidence)<q class="ai-evidence">{{ \Illuminate\Support\Str::limit($itemEvidence, 260) }}</q>@endif
                                     @if($itemPages && $itemEvidence)<div class="ai-source">@foreach($itemPages as $sourcePage) @include('partials.ai_citation_button', ['citationPage' => $sourcePage, 'citationQuote' => $itemEvidence, 'citationProminent' => false, 'citationContext' => $itemContent]) @endforeach</div>@endif
+                                    @endif
                                 </div></li>
                             @endforeach
                         </ul>

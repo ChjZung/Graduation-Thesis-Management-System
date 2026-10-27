@@ -8,7 +8,13 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'app/Services'))
 from report_document import extract_docx_units, preview_docx
-from ai_summarizer import extract_pdf_pages, run_map_reduce_pipeline
+from ai_summarizer import extract_pdf_pages, build_structured_chunks
+from ai_flexible_summary import run_pipeline as legacy_pipeline
+
+
+def run_map_reduce_pipeline(path, api_key):
+    from ai_summarizer import call_gemini_api
+    return legacy_pipeline(path, api_key, 'test', {}, extract_pdf_pages, build_structured_chunks, call_gemini_api)
 
 
 def docx_fixture(path, body):
