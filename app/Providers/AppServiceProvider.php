@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->extend(\Illuminate\Foundation\Console\ServeCommand::class,
+            fn ($command, $app) => $app->make(\App\Console\Commands\ServeWithAiWorkerCommand::class));
     }
 
     /**

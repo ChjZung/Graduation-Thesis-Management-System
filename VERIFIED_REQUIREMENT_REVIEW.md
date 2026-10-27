@@ -13,3 +13,13 @@ UI giảng viên và sinh viên: mô tả gốc ở đầu; Có dẫn chứng / 
 Worker: php artisan ai:work. Sau khi thay mã/cấu hình, dùng php artisan config:clear, php artisan view:clear, php artisan queue:restart rồi bảo đảm có ai:work đang chạy. Lệnh này dùng khóa file để tránh nhiều worker trên cùng máy. Cần trình quản lý dịch vụ cho tự khởi động sau khi reboot nếu triển khai lên máy chủ.
 
 Kiểm tra tích hợp: 23 Python tests (bridge cũ + đối chiếu mới), 8 Laravel adapter/view tests (52 assertions), 17 queue/endpoint tests (68 assertions) qua; không gọi Gemini. Có thể kiểm tra cấu hình/worker mà không in key bằng php scripts/check_verified_review_runtime.php. Chưa thực hiện lượt Gemini mới trong project hay đo độ chính xác trên bộ nhãn chuẩn. Việc kiểm tra giao diện trong phiên tài khoản cần một phiên đăng nhập hợp lệ.
+
+## Khởi động môi trường phát triển
+
+Chạy `php artisan serve`: ứng dụng tự bật `php artisan ai:work` bằng cùng PHP CLI và thư mục project, xác nhận khóa worker trước khi mở web. Worker đã chạy sẽ được dùng lại; khóa OS trong ai:work tiếp tục ngăn worker trùng. Không cần chạy thêm terminal worker.
+
+Khi serve kết thúc bình thường hoặc xử lý tín hiệu dừng, worker do nó tạo được dừng theo. Worker có sẵn từ terminal khác không bị dừng. Tắt cả terminal/máy đột ngột có thể ngắt lượt đang xử lý; lần mở sau vẫn cần quy tắc phục hồi hàng đợi/checkpoint hiện có. Giữ cửa sổ serve hoạt động trong lúc phân tích.
+
+Dùng `php artisan serve --without-ai-worker` khi đã có trình quản lý worker riêng. Cơ chế này dành cho máy phát triển; triển khai Apache/Nginx vẫn cần dịch vụ worker được quản lý riêng. Không tự khởi động worker trong từng HTTP request. Không tự giám sát/khởi động lại worker khi nó chết giữa phiên serve; có thể khởi động riêng bằng `php artisan ai:work`.
+
+Kiểm tra thay đổi: test lifecycle worker (bật, dùng lại, dọn tiến trình, lỗi khởi động, tùy chọn tắt) không gọi LLM; kiểm tra thật serve ở cổng phụ với worker có sẵn, dừng cổng phụ và xác nhận worker có sẵn vẫn hoạt động.
