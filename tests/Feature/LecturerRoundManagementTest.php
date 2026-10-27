@@ -194,4 +194,20 @@ class LecturerRoundManagementTest extends TestCase
             'TenDotNop' => 'Đợt chuẩn thời gian',
         ]);
     }
+
+    public function test_toggle_dot_nop_status_success_and_no_missing_column_error(): void
+    {
+        [$round, $user] = $this->fixture();
+        $this->assertSame('DANG_MO', $round->TrangThai);
+
+        // Đóng đợt nộp
+        $this->actingAs($user)->post(route('giangvien.tiendo.dot_nop.toggle', $round))
+            ->assertRedirect()->assertSessionHas('success');
+        $this->assertSame('DA_DONG', $round->fresh()->TrangThai);
+
+        // Mở lại đợt nộp
+        $this->actingAs($user)->post(route('giangvien.tiendo.dot_nop.toggle', $round))
+            ->assertRedirect()->assertSessionHas('success');
+        $this->assertSame('DANG_MO', $round->fresh()->TrangThai);
+    }
 }

@@ -415,6 +415,7 @@ class DuyetBaoCaoController extends Controller
         }
         if ($deTai) {
             return PhieuDangKy::where('MaDeTai', $deTai->MaDeTai)->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->first()?->MaNhom
+                ?? PhieuDangKy::where('MaDeTai', $deTai->MaDeTai)->first()?->MaNhom
                 ?? $deTai->nhoms()->first()?->MaNhom;
         }
         return null;
@@ -735,6 +736,12 @@ class DuyetBaoCaoController extends Controller
         $dotNop->update(['TrangThai' => $newStatus]);
 
         $msg = ($newStatus === 'DANG_MO') ? 'Đã mở lại đợt nộp báo cáo.' : 'Đã đóng đợt nộp báo cáo.';
+
+        // Nếu thao tác trực tiếp tại màn hình chi tiết đợt nộp, ở lại màn hình đó
+        if ($request->headers->get('referer') && str_contains($request->headers->get('referer'), "/tiendo/dot-nop/{$id}")) {
+            return redirect()->back()->with('success', $msg);
+        }
+
         return $this->redirectBackToBaocao($request, $dotNop->deTai, $dotNop->giaiDoan?->ThuTu)->with('success', $msg);
     }
 

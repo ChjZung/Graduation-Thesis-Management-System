@@ -44,6 +44,8 @@
                 </span>
                 <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.toggle', $dotNop->MaDotNop) }}">
                     @csrf
+                    <input type="hidden" name="nhom" value="{{ $nhom->MaNhom ?? '' }}">
+                    <input type="hidden" name="gd" value="{{ $dotNop->giaiDoan?->ThuTu ?? '' }}">
                     <button type="submit" class="btn btn-sm {{ $dotNop->TrangThai === 'DANG_MO' ? 'btn-outline-danger' : 'btn-outline-success' }} rounded-pill px-3">
                         <i class="fa-solid {{ $dotNop->TrangThai === 'DANG_MO' ? 'fa-lock' : 'fa-lock-open' }} me-1"></i>
                         {{ $dotNop->TrangThai === 'DANG_MO' ? 'Đóng đợt nộp' : 'Mở lại đợt nộp' }}
