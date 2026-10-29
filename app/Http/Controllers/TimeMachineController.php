@@ -37,6 +37,8 @@ class TimeMachineController extends Controller
                 session(['mock_system_time' => $str]);
             }
 
+            \Illuminate\Support\Facades\Cache::flush();
+
             return redirect()->back()->with('success', "⏰ Đã tua thời gian hệ thống sang: " . $parsed->format('d/m/Y H:i:s'));
         } catch (\Exception $e) {
             return redirect()->back()->withErrors('Định dạng thời gian không hợp lệ: ' . $e->getMessage());
@@ -56,6 +58,8 @@ class TimeMachineController extends Controller
         if ($request->hasSession()) {
             session()->forget('mock_system_time');
         }
+
+        \Illuminate\Support\Facades\Cache::flush();
 
         Carbon::setTestNow(null);
 

@@ -115,7 +115,7 @@
                         @csrf
                         <input type="hidden" name="mock_time" value="2026-08-12 09:00:00">
                         <button type="submit" class="btn btn-outline-warning text-dark btn-sm w-100 text-start py-1 px-2 rounded-2 d-flex justify-content-between align-items-center">
-                            <span><strong class="text-warning text-dark">12/08</strong> 09:00 | 🔄 Mở ĐK Bổ Sung</span>
+                            <span><strong class="text-warning text-dark">12/08</strong> 09:00 | <i class="fa-solid fa-rotate me-1"></i> Mở ĐK Bổ Sung</span>
                             <span class="badge bg-warning text-dark">08:00 - 16:00</span>
                         </button>
                     </form>

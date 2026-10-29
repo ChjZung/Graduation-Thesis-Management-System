@@ -108,18 +108,19 @@
                     <ul class="nav nav-pills gap-2 flex-nowrap overflow-x-auto pb-1 max-w-full" id="pills-tab" role="tablist">
                         @foreach($phienBans as $index => $pb)
                             <li class="nav-item flex-shrink-0" role="presentation">
-                                <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-1 px-3 small fw-bold text-nowrap" 
+                                <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-2 px-3.5 small fw-bold text-nowrap pill-check-btn d-inline-flex align-items-center" 
                                         id="pills-v{{ $pb->LanNop }}-tab" 
                                         data-bs-toggle="pill" 
                                         data-bs-target="#pills-v{{ $pb->LanNop }}" 
-                                        type="button" role="tab">
-                                    Phiên bản v{{ $pb->LanNop }}
+                                        type="button" role="tab"
+                                        style="gap: 6px;">
+                                    <span>Phiên bản v{{ $pb->LanNop }}</span>
                                     @if($pb->TrangThai === 'Đạt')
-                                        <i class="fa-solid fa-check text-success ms-1"></i>
+                                        <i class="fa-solid fa-check icon-check text-success"></i>
                                     @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
-                                        <i class="fa-solid fa-rotate-left text-warning ms-1"></i>
+                                        <i class="fa-solid fa-rotate-left icon-check text-warning"></i>
                                     @else
-                                        <i class="fa-solid fa-hourglass-half ms-1"></i>
+                                        <i class="fa-solid fa-hourglass-half icon-check"></i>
                                     @endif
                                 </button>
                             </li>
@@ -153,11 +154,20 @@
                                 </div>
                                 <div class="flex-shrink-0 text-nowrap">
                                     @if($pb->TrangThai === 'Đạt')
-                                        <span class="badge bg-success rounded-pill px-3 py-2 fw-bold">✓ Đã duyệt Đạt</span>
+                                        <span class="badge bg-success rounded-pill px-3 py-2 fw-bold badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                            <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Đã duyệt Đạt</span>
+                                        </span>
                                     @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
-                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">Yêu cầu nộp lại</span>
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                            <i class="fa-solid fa-rotate-left icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Yêu cầu nộp lại</span>
+                                        </span>
                                     @else
-                                        <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold">Chờ nhận xét</span>
+                                        <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                            <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Chờ nhận xét</span>
+                                        </span>
                                     @endif
                                 </div>
                             </div>

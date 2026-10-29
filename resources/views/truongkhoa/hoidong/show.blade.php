@@ -120,7 +120,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2 mt-auto">
-                    <span class="fs-5 fw-bold text-dark lh-1">{{ $hoiDong->TrangThai }}</span>
+                    <span class="fs-5 fw-bold text-dark lh-1">{{ $hoiDong->ten_trang_thai_thoi_gian }}</span>
                 </div>
             </div>
         </div>

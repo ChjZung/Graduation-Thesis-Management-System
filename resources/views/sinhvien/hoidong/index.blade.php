@@ -64,17 +64,17 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                     <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-monospace">Mã HĐ: {{ $hoiDong->MaHoiDong }}</span>
                     <div>
-                        @if($hoiDong->TrangThai === 'Đã kết thúc' || $hoiDong->TrangThai === 'Đã hoàn thành')
+                        @if($hoiDong->trang_thai_thoi_gian === 'DaKetThuc')
                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                                <i class="fa-solid fa-check me-1"></i> Đã Hoàn Thành Phiên Bảo Vệ
+                                <i class="fa-solid fa-check me-1"></i> Đã Kết Thúc
                             </span>
-                        @elseif($hoiDong->TrangThai === 'Đang diễn ra')
+                        @elseif($hoiDong->trang_thai_thoi_gian === 'DangDienRa')
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-bold">
-                                <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang Diễn Ra Hôm Nay
+                                <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang Diễn Ra
                             </span>
                         @else
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-bold">
-                                <i class="fa-regular fa-calendar-check me-1"></i> Lịch Bảo Vệ Đã Được Công Bố
+                                <i class="fa-regular fa-clock me-1"></i> Sắp Diễn Ra
                             </span>
                         @endif
                     </div>
@@ -234,7 +234,7 @@
                 @if(!empty($hoSo->YeuCauChinhSuaSauBaoVe))
                     <div class="p-3 bg-light rounded-3 border mb-3">
                         <div class="small fw-bold text-uppercase text-secondary mb-1">Nội dung Hội đồng yêu cầu nhóm chỉnh sửa:</div>
-                        <div class="text-dark small" style="white-space: pre-line; line-height: 1.6;">{{ $hoSo->YeuCauChinhSuaSauBaoVe }}</div>
+                        <div class="text-dark small" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::renderRichText($hoSo->YeuCauChinhSuaSauBaoVe) !!}</div>
                         @if($hoSo->HanNopBaoCaoSauBaoVe)
                             <div class="mt-2 pt-2 border-top small text-muted">
                                 Thời hạn hoàn thành: <strong class="text-primary">{{ \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe)->format('d/m/Y H:i') }}</strong>

@@ -35,6 +35,45 @@ class PhieuChamDiem extends Model
         'NgayKy',
     ];
 
+    /**
+     * Cấu hình trần điểm tập trung cho phần chức năng theo bài toán:
+     * - KLCN (Cử nhân): 3.50đ (Cộng 0.5đ chức năng cơ bản = 4.00đ cho TC7)
+     * - KLKS (Kỹ sư): 4.00đ (Toàn bộ phần chức năng ứng dụng TC7)
+     */
+    public const MAX_DIEM_CHUC_NANG = [
+        'KLCN' => 3.50,
+        'KLKS' => 4.00,
+    ];
+
+    /**
+     * Lấy trần điểm tối đa cho phần yêu cầu chức năng bài toán theo loại khóa luận
+     */
+    public static function getMaxDiemChucNang(string $loaiKhoaLuan = 'KLCN'): float
+    {
+        return self::MAX_DIEM_CHUC_NANG[$loaiKhoaLuan] ?? 3.50;
+    }
+
+    /**
+     * Tự động chia đều điểm trần cho các yêu cầu chức năng, phần dư phân bổ theo từng cent (0.01đ)
+     * vào các yêu cầu đầu tiên để tổng chính xác tuyệt đối bằng điểm trần.
+     */
+    public static function distributeScores(float $target, int $count): array
+    {
+        if ($count <= 0) {
+            return [];
+        }
+        $targetCents = (int) round($target * 100);
+        $baseCents = intdiv($targetCents, $count);
+        $remainder = $targetCents % $count;
+
+        $scores = [];
+        for ($i = 0; $i < $count; $i++) {
+            $cents = $baseCents + ($i < $remainder ? 1 : 0);
+            $scores[] = round($cents / 100, 2);
+        }
+        return $scores;
+    }
+
     public $timestamps = true;
 
     protected function casts(): array
@@ -326,50 +365,142 @@ class PhieuChamDiem extends Model
     }
 
     /**
-     * Phân tích danh sách các yêu cầu chức năng từ văn bản do Chủ tịch nhập hoặc từ rubric chuẩn
+     * Phân tích danh sách các yêu cầu chức năng từ văn bản do Thư ký nhập hoặc từ rubric chuẩn,
+     * tự động chia đều điểm trần theo quy định đào tạo (KLCN <= 3.50đ, KLKS <= 4.00đ).
+     * Hỗ trợ nhận diện thông minh:
+     * - Dòng không thụt lề = Nhóm chức năng (hoặc bắt đầu bằng Chức năng, CN, số La Mã, 1., I.)
+     * - Dòng có thụt lề (Tab hoặc 2+ space) = Yêu cầu con (hoặc bắt đầu bằng -, *, •, a), 1.1)
+     * - Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu (không báo lỗi).
      */
     public static function parseFunctionalRequirements(?string $customText, string $loaiKhoaLuan = 'KLCN'): array
     {
         $requirements = [];
         $isKLKS = ($loaiKhoaLuan === 'KLKS');
+        $targetScore = self::getMaxDiemChucNang($loaiKhoaLuan);
 
         if (!empty(trim($customText ?? ''))) {
             $lines = explode("\n", trim($customText));
-            $currentGroup = $isKLKS ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán';
-            $reqIndex = 1;
+            $groups = [];
+            $currentGroupKey = null;
 
-            foreach ($lines as $line) {
-                $trimmed = trim($line);
-                if (empty($trimmed)) continue;
+            foreach ($lines as $rawLine) {
+                $trimmed = trim($rawLine);
+                if ($trimmed === '') continue;
 
-                // Kiểm tra dòng tiêu đề nhóm chức năng
-                if (preg_match('/^(Chức năng\s*\d+|Cài đặt chức năng|\+?\s*Chức năng|\-?\s*Cài đặt|\-?\s*Xây dựng)/iu', $trimmed)) {
-                    $currentGroup = ltrim($trimmed, '+-* ');
-                    continue;
+                // Kiểm tra thụt lề
+                $isIndented = (bool) preg_match('/^(\t|\s{2,})/', $rawLine);
+                $isExplicitGroup = (bool) preg_match('/^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/iu', $trimmed);
+                $isExplicitSub = (bool) preg_match('/^([\*\-\•\+]|[a-z]\)|\d+\.\d+)/iu', $trimmed);
+
+                $isGroup = false;
+                if ($isExplicitSub) {
+                    $isGroup = false;
+                } elseif ($isExplicitGroup) {
+                    $isGroup = true;
+                } elseif ($isIndented) {
+                    $isGroup = false;
+                } else {
+                    // Dòng không thụt lề và không có ký hiệu con -> Là nhóm
+                    $isGroup = true;
                 }
 
-                // Dòng yêu cầu (bắt đầu bằng *, -, + hoặc có chữ 'Yêu cầu')
-                $reqLabel = ltrim($trimmed, '+-* ');
-                $requirements[] = [
-                    'id'    => 'tc7_yc_' . $reqIndex,
-                    'group' => $currentGroup,
-                    'label' => $reqLabel,
-                    'max'   => 0.5,
-                ];
-                $reqIndex++;
+                if ($isGroup) {
+                    $cleanName = trim(preg_replace('/^[\+\-\*\•\#\s]+/', '', $trimmed));
+                    $groups[] = [
+                        'name'  => $cleanName,
+                        'items' => [],
+                    ];
+                    $currentGroupKey = array_key_last($groups);
+                } else {
+                    $cleanItem = trim(preg_replace('/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/iu', '', $trimmed));
+                    $cleanItem = trim(preg_replace('/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/iu', '', $cleanItem));
+
+                    if ($cleanItem !== '') {
+                        if ($currentGroupKey === null) {
+                            $defaultName = $isKLKS ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán';
+                            $groups[] = [
+                                'name'  => $defaultName,
+                                'items' => [],
+                            ];
+                            $currentGroupKey = array_key_last($groups);
+                        }
+                        $groups[$currentGroupKey]['items'][] = $cleanItem;
+                    }
+                }
             }
 
-            // Đảm bảo luôn có mục chức năng cơ bản nếu chưa được định nghĩa
-            $hasCoBan = collect($requirements)->contains(function($r) {
-                return $r['id'] === 'tc7_co_ban' || stripos($r['label'], 'cơ bản') !== false;
-            });
-            if (!$hasCoBan) {
-                array_unshift($requirements, [
-                    'id'    => 'tc7_co_ban',
-                    'group' => 'Chức năng cơ bản',
-                    'label' => 'Đăng nhập, đăng xuất, phân quyền, backup & restore,...',
-                    'max'   => 0.5,
-                ]);
+            // Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu
+            $parsedItems = [];
+            foreach ($groups as $g) {
+                $grpName = $g['name'];
+                if (empty($g['items'])) {
+                    $parsedItems[] = [
+                        'group'     => $isKLKS ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
+                        'label'     => $grpName,
+                        'is_co_ban' => (stripos($grpName, 'cơ bản') !== false),
+                    ];
+                } else {
+                    foreach ($g['items'] as $label) {
+                        $isCoBan = (stripos($grpName, 'cơ bản') !== false || (stripos($label, 'cơ bản') !== false && stripos($label, 'đăng nhập') !== false));
+                        $parsedItems[] = [
+                            'group'     => $grpName,
+                            'label'     => $label,
+                            'is_co_ban' => $isCoBan,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($parsedItems)) {
+                if ($isKLKS) {
+                    // KLKS: Tổng toàn bộ yêu cầu = 4.00đ
+                    $scores = self::distributeScores($targetScore, count($parsedItems));
+                    $reqIndex = 1;
+                    foreach ($parsedItems as $idx => $item) {
+                        $requirements[] = [
+                            'id'        => 'tc7_yc_' . $reqIndex,
+                            'group'     => $item['group'],
+                            'label'     => $item['label'],
+                            'max'       => $scores[$idx] ?? 0.50,
+                            'is_co_ban' => $item['is_co_ban'],
+                        ];
+                        $reqIndex++;
+                    }
+                } else {
+                    // KLCN: Yêu cầu bài toán = 3.50đ, Chức năng cơ bản = 0.50đ (Tổng TC7 = 4.00đ)
+                    $coBanItem = null;
+                    $problemItems = [];
+
+                    foreach ($parsedItems as $item) {
+                        if ($item['is_co_ban'] && !$coBanItem) {
+                            $coBanItem = $item;
+                        } else {
+                            $problemItems[] = $item;
+                        }
+                    }
+
+                    // Đảm bảo luôn có 1 mục chức năng cơ bản chuẩn 0.50đ
+                    $requirements[] = [
+                        'id'        => 'tc7_co_ban',
+                        'group'     => 'Chức năng cơ bản',
+                        'label'     => $coBanItem ? $coBanItem['label'] : 'Đăng nhập, đăng xuất, phân quyền, backup & restore,...',
+                        'max'       => 0.50,
+                        'is_co_ban' => true,
+                    ];
+
+                    $scores = self::distributeScores($targetScore, count($problemItems));
+                    $reqIndex = 1;
+                    foreach ($problemItems as $idx => $item) {
+                        $requirements[] = [
+                            'id'        => 'tc7_yc_' . $reqIndex,
+                            'group'     => $item['group'],
+                            'label'     => $item['label'],
+                            'max'       => $scores[$idx] ?? 0.50,
+                            'is_co_ban' => false,
+                        ];
+                        $reqIndex++;
+                    }
+                }
             }
         }
 
@@ -377,25 +508,25 @@ class PhieuChamDiem extends Model
         if (empty($requirements)) {
             if ($isKLKS) {
                 $requirements = [
-                    ['id' => 'tc7_co_ban',  'group' => 'Chức năng cơ bản', 'label' => 'Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền', 'max' => 0.5],
-                    ['id' => 'tc7_web_1',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 1', 'max' => 0.5],
-                    ['id' => 'tc7_web_2',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 2', 'max' => 0.5],
-                    ['id' => 'tc7_web_3',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 3', 'max' => 0.5],
-                    ['id' => 'tc7_mob_1',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 1', 'max' => 0.5],
-                    ['id' => 'tc7_mob_2',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 2', 'max' => 0.5],
-                    ['id' => 'tc7_mob_3',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 3', 'max' => 0.5],
-                    ['id' => 'tc7_mob_4',   'group' => 'Nền tảng Mobile',    'label' => 'Đồng bộ dữ liệu đa nền tảng', 'max' => 0.5],
+                    ['id' => 'tc7_co_ban',  'group' => 'Chức năng cơ bản', 'label' => 'Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền', 'max' => 0.5, 'is_co_ban' => true],
+                    ['id' => 'tc7_web_1',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 1', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_web_2',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 2', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_web_3',   'group' => 'Nền tảng Web',       'label' => 'Chức năng nghiệp vụ Web 3', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_mob_1',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 1', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_mob_2',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 2', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_mob_3',   'group' => 'Nền tảng Mobile',    'label' => 'Chức năng nghiệp vụ Mobile 3', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_mob_4',   'group' => 'Nền tảng Mobile',    'label' => 'Đồng bộ dữ liệu đa nền tảng', 'max' => 0.5, 'is_co_ban' => false],
                 ];
             } else {
                 $requirements = [
-                    ['id' => 'tc7_co_ban', 'group' => 'Chức năng cơ bản', 'label' => 'Đăng nhập, đăng xuất, backup & restore,...', 'max' => 0.5],
-                    ['id' => 'tc7_yc_1',   'group' => 'Chức năng 01',       'label' => 'Yêu cầu 1: Tiếp nhận và xử lý nghiệp vụ chính', 'max' => 0.5],
-                    ['id' => 'tc7_yc_2',   'group' => 'Chức năng 01',       'label' => 'Yêu cầu 2: Kiểm tra dữ liệu và tích hợp hệ thống', 'max' => 0.5],
-                    ['id' => 'tc7_yc_3',   'group' => 'Chức năng 02',       'label' => 'Yêu cầu 1: Quản lý danh mục và nghiệp vụ phụ trợ', 'max' => 0.5],
-                    ['id' => 'tc7_yc_4',   'group' => 'Chức năng 02',       'label' => 'Yêu cầu 2: Báo cáo thống kê và xuất dữ liệu', 'max' => 0.5],
-                    ['id' => 'tc7_yc_5',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 1: Phân quyền và quản lý tài khoản người dùng', 'max' => 0.5],
-                    ['id' => 'tc7_yc_6',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 2: Thông báo và nhật ký thao tác hệ thống', 'max' => 0.5],
-                    ['id' => 'tc7_yc_7',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 3: Tối ưu hiệu năng và bảo mật ứng dụng', 'max' => 0.5],
+                    ['id' => 'tc7_co_ban', 'group' => 'Chức năng cơ bản', 'label' => 'Đăng nhập, đăng xuất, backup & restore,...', 'max' => 0.5, 'is_co_ban' => true],
+                    ['id' => 'tc7_yc_1',   'group' => 'Chức năng 01',       'label' => 'Yêu cầu 1: Tiếp nhận và xử lý nghiệp vụ chính', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_2',   'group' => 'Chức năng 01',       'label' => 'Yêu cầu 2: Kiểm tra dữ liệu và tích hợp hệ thống', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_3',   'group' => 'Chức năng 02',       'label' => 'Yêu cầu 1: Quản lý danh mục và nghiệp vụ phụ trợ', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_4',   'group' => 'Chức năng 02',       'label' => 'Yêu cầu 2: Báo cáo thống kê và xuất dữ liệu', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_5',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 1: Phân quyền và quản lý tài khoản người dùng', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_6',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 2: Thông báo và nhật ký thao tác hệ thống', 'max' => 0.5, 'is_co_ban' => false],
+                    ['id' => 'tc7_yc_7',   'group' => 'Chức năng 03',       'label' => 'Yêu cầu 3: Tối ưu hiệu năng và bảo mật ứng dụng', 'max' => 0.5, 'is_co_ban' => false],
                 ];
             }
         }

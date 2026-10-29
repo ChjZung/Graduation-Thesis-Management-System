@@ -87,6 +87,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/files/baocao/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCao'])->name('files.baocao.download');
     Route::get('/files/hoso/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadHoSo'])->name('files.hoso.download');
     Route::get('/files/decuong/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadDeCuong'])->name('files.decuong.download');
+    Route::get('/files/bao-cao-sau-bao-ve/{id}/pdf', [\App\Http\Controllers\FileDownloadController::class, 'viewBaoCaoSauBaoVe'])->name('baocao_sau_baove.pdf');
+    Route::get('/files/bao-cao-sau-bao-ve/{id}/download', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCaoSauBaoVe'])->name('baocao_sau_baove.download');
     Route::get('/files/view', [\App\Http\Controllers\FileDownloadController::class, 'viewFile'])->name('files.view');
     Route::post('/bao-cao-ai/{id}/phan-tich-lai', [\App\Http\Controllers\BaoCaoAiController::class, 'reanalyze'])->middleware('throttle:3,1,ai-reanalyze')->name('baocao.ai.phan_tich_lai');
 
@@ -546,6 +548,26 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::post('/ket-qua/yeu-cau-chinh-sua', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'yeuCauChinhSua'])->name('truongkhoa.ketqua.yeucauchinhsua');
     Route::post('/ket-qua/mo-khoa-phieu', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'moKhoaPhieu'])->name('truongkhoa.ketqua.mokhoaphieu');
     Route::get('/ket-qua/export', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'exportExcel'])->name('truongkhoa.ketqua.export');
+
+    // Công bố & Thu hồi 3 mức (Đề tài, Hội đồng, Toàn đợt)
+    Route::post('/ket-qua/cong-bo-de-tai', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'congBoDeTai'])->name('truongkhoa.ketqua.congbo_detai');
+    Route::post('/ket-qua/thu-hoi-de-tai', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'thuHoiDeTai'])->name('truongkhoa.ketqua.thuhoi_detai');
+    Route::post('/ket-qua/cong-bo-hoi-dong', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'congBoHoiDong'])->name('truongkhoa.ketqua.congbo_hoidong');
+    Route::post('/ket-qua/thu-hoi-hoi-dong', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'thuHoiHoiDong'])->name('truongkhoa.ketqua.thuhoi_hoidong');
+    Route::post('/ket-qua/cong-bo-toan-dot', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'congBoToanDot'])->name('truongkhoa.ketqua.congbo_toandot');
+    Route::post('/ket-qua/thu-hoi-toan-dot', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'thuHoiToanDot'])->name('truongkhoa.ketqua.thuhoi_toandot');
+
+    // Kiểm tra điều kiện AJAX cho modal xác nhận
+    Route::get('/ket-qua/kiem-tra-dieu-kien', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'kiemTraDieuKienAjax'])->name('truongkhoa.ketqua.kiemtra_dieukien');
+
+    // Bảng 3: Chi tiết điểm rubric đề tài (AJAX / Modal)
+    Route::get('/ket-qua/chi-tiet-rubric/{maHoSo}', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'chiTietRubricAjax'])->name('truongkhoa.ketqua.chitiet_rubric');
+
+    // Xem lịch sử Audit Log công bố / thu hồi
+    Route::get('/ket-qua/lich-su', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'lichSuCongBoAjax'])->name('truongkhoa.ketqua.lichsu');
+
+    // In / Báo cáo tổng hợp PDF
+    Route::get('/ket-qua/in-bao-cao', [\App\Http\Controllers\TruongKhoa\KetQuaController::class, 'inBaoCaoTongHop'])->name('truongkhoa.ketqua.in_baocao');
 
     // Thống kê Đề tài Khóa luận (Chuyển tab trong Duyệt đề tài)
     Route::get('/thongke/detai', fn() => redirect()->route('truongkhoa.duyet_detai.index', ['view' => 'thongke']))->name('truongkhoa.thongke.detai');

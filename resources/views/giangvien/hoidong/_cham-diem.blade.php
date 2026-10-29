@@ -114,16 +114,70 @@
 </style>
 @endpush
 
-@php $councilsList = $gradingHoiDongs ?? $hoiDongs; @endphp
-@if($councilsList->isEmpty())
-    <div class="card border-0 shadow-sm rounded-3">
-        <div class="card-body text-center py-5">
+@php 
+    $councilsList = $gradingHoiDongs ?? collect(); 
+    $allCouncils = $allHoiDongs ?? $hoiDongs ?? collect();
+@endphp
+
+@if($allCouncils->isEmpty())
+    <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white my-3">
+        <div class="py-5">
             <i class="fa-solid fa-inbox fa-3x text-muted mb-3 opacity-50"></i>
-            <h5 class="fw-bold text-secondary">Bạn chưa được phân công vào Hội đồng bảo vệ nào</h5>
+            <h5 class="fw-bold text-secondary">Thầy/Cô Chưa Được Phân Công Vào Hội Đồng Bảo Vệ Nào</h5>
             <p class="text-muted small mb-0">Khi Trưởng khoa thành lập Hội đồng và thêm Thầy/Cô vào danh sách thành viên, các ca bảo vệ sẽ hiển thị tại đây.</p>
         </div>
     </div>
-    @else
+@elseif($councilsList->isEmpty())
+    {{-- Trường hợp có hội đồng nhưng chưa đến thời gian chấm điểm (Yêu cầu B) --}}
+    <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white my-3">
+        <div class="py-5">
+            <div class="mb-3">
+                <span class="p-3 bg-warning-subtle text-warning-emphasis rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+                    <i class="fa-regular fa-clock fa-2x"></i>
+                </span>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">Hiện Chưa Có Hội Đồng Nào Đến Thời Gian Chấm Điểm</h5>
+            <p class="text-muted small mx-auto mb-4" style="max-width: 540px;">
+                Theo quy chế đào tạo, cổng chấm điểm chỉ mở khi phiên bảo vệ chính thức bắt đầu (trạng thái <strong>Đang diễn ra</strong>) hoặc sau khi kết thúc trong hạn chấm quy định.
+            </p>
+
+            @if(!empty($sapDienRaGanNhat))
+                <div class="card border border-warning-subtle bg-warning bg-opacity-10 rounded-3 p-3 mx-auto mb-4 text-start shadow-xs" style="max-width: 580px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="fs-3 text-warning">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">
+                                Hội đồng gần nhất: {{ $sapDienRaGanNhat->TenHoiDong }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                <i class="fa-regular fa-clock text-primary me-1"></i>
+                                Thời gian mở chấm: 
+                                <strong class="text-primary">{{ $sapDienRaGanNhat->thoi_diem_bat_dau?->format('H:i \n\g\à\y d/m/Y') }}</strong>
+                                @if($sapDienRaGanNhat->dem_nguoc_bat_dau)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill ms-2">
+                                        {{ $sapDienRaGanNhat->dem_nguoc_bat_dau }}
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="small text-muted mt-1">
+                                <i class="fa-solid fa-location-dot text-danger me-1"></i>
+                                Địa điểm: <strong>{{ $sapDienRaGanNhat->DiaDiem ?? 'Phòng Hội đồng' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <div>
+                <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-xs" onclick="switchHoiDongTab('danhsach')">
+                    <i class="fa-solid fa-arrow-left me-2"></i> Quay Lại Danh Sách Hội Đồng
+                </button>
+            </div>
+        </div>
+    </div>
+@else
 
     @php
         $activeNhom = $activeHoSo?->nhom;
@@ -139,6 +193,9 @@
         $rubric = $isKLKS ? $rubricKLKS : $rubricKLCN;
         $tenBieuMau = $isKLKS ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
         $coThongTinChucNang = !empty(trim($activeHoSo?->TieuChiChucNang ?? ''));
+        $reasonCantGrade = '';
+        $canGradeCurrent = $activeHoiDong ? $activeHoiDong->canGrade($giangVien, $activeHoSo, $reasonCantGrade) : false;
+        $isReadOnly = $daKhoaPhieu || !$canGradeCurrent;
     @endphp
 
     <!-- Header Section -->
@@ -263,6 +320,16 @@
         <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalYeuCauMoKhoa">
             <i class="fa-solid fa-unlock-keyhole me-2"></i> Yêu Cầu Mở Khóa Chỉnh Sửa
         </button>
+    </div>
+    @endif
+
+    @if(!$canGradeCurrent && !$daKhoaPhieu)
+    <div class="alert alert-warning border-warning rounded-3 shadow-sm py-3 px-4 mb-3 d-flex align-items-center gap-3">
+        <i class="fa-solid fa-lock fs-3 text-warning-emphasis flex-shrink-0"></i>
+        <div>
+            <strong class="d-block text-warning-emphasis">Chế độ xem — Chưa thể nhập hoặc lưu điểm</strong>
+            <span class="small text-secondary">{{ $reasonCantGrade }}</span>
+        </div>
     </div>
     @endif
 
@@ -427,7 +494,7 @@
                         <i class="fa-solid fa-clock me-1"></i> Chờ Thư ký chuẩn bị phiếu
                     </span>
                     @endif
-                    @if(!$daKhoaPhieu)
+                    @if(!$isReadOnly)
                     <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center" onclick="datDiemVeKhong()" style="font-size: 0.75rem;">
                         <i class="fa-solid fa-rotate-left me-1"></i> Đặt về 0
                     </button>
@@ -492,7 +559,7 @@
                                                 <span class="fw-semibold text-primary small">
                                                     <i class="fa-solid fa-sliders text-primary me-1"></i> 2. Chức năng theo yêu cầu bài toán:
                                                 </span>
-                                                <span class="badge bg-primary text-white" style="font-size: 0.65rem;">{{ $loaiKhoaLuan === 'KLKS' ? '3.50đ (0.50đ/YC)' : '3.50đ (0.50đ/YC)' }}</span>
+                                                <span class="badge bg-primary text-white" style="font-size: 0.65rem;">{{ $loaiKhoaLuan === 'KLKS' ? 'Tối đa 4.00đ' : 'Tối đa 3.50đ' }}</span>
                                             </div>
 
                                             @if(!empty($functionalRequirements))
@@ -512,7 +579,7 @@
                                                             <div class="ps-2 py-0.5 d-flex align-items-baseline gap-1" style="font-size: 0.75rem; line-height: 1.4;">
                                                                 <span class="badge bg-primary text-white font-monospace" style="font-size: 0.62rem; min-width: 32px;">YC{{ $ycCounter++ }}</span>
                                                                 <span class="text-dark">{{ $r['label'] }}</span>
-                                                                <span class="text-muted ms-auto text-nowrap" style="font-size: 0.65rem;">(0.50đ)</span>
+                                                                <span class="text-muted ms-auto text-nowrap font-monospace" style="font-size: 0.65rem;">({{ number_format((float)($r['max'] ?? 0.5), 2) }}đ)</span>
                                                             </div>
                                                             @endif
                                                             @endforeach
@@ -527,9 +594,9 @@
                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="font-size: 0.68rem;">
                                                 <i class="fa-solid fa-lock me-1"></i> Cấu hình riêng cho Đề tài: {{ Str::limit($activeDeTai->TenDeTai ?? '', 45) }}
                                             </span>
-                                            @if($isChuTich)
+                                            @if($isThuKy || $isChuTich || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin())))
                                             <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold text-primary" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.72rem;">
-                                                <i class="fa-solid fa-pen-to-square me-1"></i> Sửa chức năng
+                                                <i class="fa-solid fa-pen-to-square me-1"></i> Thiết lập tiêu chí (Thư ký)
                                             </button>
                                             @endif
                                         </div>
@@ -603,7 +670,7 @@
                                                    class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} mx-auto" 
                                                    style="max-width: 85px; font-size: 0.95rem; border-color: #0072ce;" 
                                                    value="{{ number_format((float)$oldScore, 2) }}" 
-                                                   {{ $daKhoaPhieu ? 'readonly' : '' }}
+                                                   {{ $isReadOnly ? 'readonly' : '' }}
                                                    required>
                                         </div>
 
@@ -631,7 +698,7 @@
                                                        data-req-max="{{ $req['max'] }}" 
                                                        class="form-control form-control-sm text-center fw-bold text-dark sub-req-score sub-req-sv-{{ $sv->MaSV }} p-0" 
                                                        style="font-size: 0.75rem;" 
-                                                       {{ $daKhoaPhieu ? 'readonly' : '' }}>
+                                                       {{ $isReadOnly ? 'readonly' : '' }}>
                                             </div>
                                             @endforeach
                                         </div>
@@ -647,7 +714,7 @@
                                                class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} mx-auto" 
                                                style="max-width: 85px;" 
                                                value="{{ number_format((float)$oldScore, 2) }}" 
-                                               {{ $daKhoaPhieu ? 'readonly' : '' }}
+                                               {{ $isReadOnly ? 'readonly' : '' }}
                                                required>
                                     @endif
                                 </td>
@@ -705,7 +772,7 @@
                                 <span><i class="fa-solid fa-user me-2 text-primary"></i> Nhận xét cho SV{{ $idx + 1 }}: <strong>{{ $sv->HoTen }}</strong> ({{ $sv->MaSoSinhVien ?? $sv->MaSV }})</span>
                             </label>
                             <textarea name="diems[{{ $sv->MaSV }}][NhanXet]" rows="3" class="form-control" style="font-size: 0.88rem;"
-                                {{ $daKhoaPhieu ? 'readonly' : '' }}
+                                {{ $isReadOnly ? 'readonly' : '' }}
                                 placeholder="Nhập nhận xét về mức độ đóng góp, tính chủ động, khả năng trả lời phản biện của sinh viên...">{{ $daChamSV?->NhanXet ?? '' }}</textarea>
                         </div>
                         @endforeach
@@ -791,16 +858,26 @@
                         <a href="{{ route('giangvien.chamdiem.xuatPdf', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" target="_blank" class="btn btn-outline-danger rounded-pill px-4 d-inline-flex align-items-center fw-bold shadow-sm">
                             <i class="fa-solid fa-file-pdf me-2 text-danger"></i> Xuất / In Phiếu PDF
                         </a>
-                    @else
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center fw-semibold text-muted" onclick="alertChuaCoChucNang()">
-                            <i class="fa-solid fa-file-word me-2"></i> Xuất File Word (.docx) <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Chưa có mục 6</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center fw-semibold text-muted" onclick="alertChuaCoChucNang()">
-                            <i class="fa-solid fa-file-pdf me-2"></i> Xuất PDF <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Chưa có mục 6</span>
-                        </button>
                     @endif
                     <button type="button" class="btn btn-outline-warning rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalYeuCauMoKhoa">
                         <i class="fa-solid fa-key me-2"></i> Yêu Cầu Mở Khóa
+                    </button>
+                </div>
+            @elseif(!$canGradeCurrent)
+                <div class="d-flex align-items-center text-warning-emphasis fw-bold">
+                    <i class="fa-solid fa-lock me-2"></i> Chế độ xem: Chưa đến thời gian hoặc không được phép chấm điểm
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalXemTruoc">
+                        <i class="fa-solid fa-eye me-2"></i> Xem Trước Phiếu Chấm
+                    </button>
+                    @if($coThongTinChucNang)
+                        <a href="{{ route('giangvien.chamdiem.xuatPdf', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" target="_blank" class="btn btn-outline-danger rounded-pill px-4 d-inline-flex align-items-center fw-bold shadow-sm">
+                            <i class="fa-solid fa-file-pdf me-2 text-danger"></i> In Phiếu PDF
+                        </a>
+                    @endif
+                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="switchHoiDongTab('danhsach')">
+                        <i class="fa-solid fa-list-check me-1"></i> Về Danh Sách Hội Đồng
                     </button>
                 </div>
             @else
@@ -1095,41 +1172,41 @@
 
 {{-- MODAL XEM ĐỀ CƯƠNG CHI TIẾT ĐÃ PHÊ DUYỆT (DÀNH CHO THƯ KÝ & THÀNH VIÊN HỘI ĐỒNG - YÊU CẦU 3.2) --}}
 <div class="modal fade" id="modalXemDeCuong" tabindex="-1" aria-labelledby="modalXemDeCuongLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-primary text-white py-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="p-2 rounded-circle bg-white text-primary d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: min(900px, 95vw); width: 100%; margin: 1.75rem auto;">
+        <div class="modal-content border-0 shadow-lg rounded-3" style="max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+            <div class="modal-header bg-primary text-white py-3 flex-shrink-0" style="min-width: 0;">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0; flex: 1 1 auto; overflow: hidden;">
+                    <span class="p-2 rounded-circle bg-white text-primary d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
                         <i class="fa-solid fa-book-open"></i>
                     </span>
-                    <div>
-                        <h6 class="modal-title fw-bold mb-0" id="modalXemDeCuongLabel">
+                    <div style="min-width: 0;">
+                        <h6 class="modal-title fw-bold mb-0 text-white" id="modalXemDeCuongLabel" style="overflow-wrap: anywhere; word-break: break-word;">
                             Hồ Sơ Đề Cương Khóa Luận Đã Được Phê Duyệt (Chế Độ Xem Chỉ Đọc)
                         </h6>
-                        <span class="text-white-50" style="font-size: 0.72rem;">Căn cứ để Thư ký hội đồng thiết lập tiêu chí chấm điểm và các giám khảo đối chiếu đánh giá</span>
+                        <span class="text-white-50 d-block" style="font-size: 0.72rem; overflow-wrap: anywhere; word-break: break-word;">Căn cứ để Thư ký hội đồng thiết lập tiêu chí chấm điểm và các giám khảo đối chiếu đánh giá</span>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white flex-shrink-0 ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4 bg-light">
+            <div class="modal-body p-4 bg-light" style="overflow-x: hidden; overflow-y: auto; max-height: calc(90vh - 130px); min-width: 0;">
                 <!-- Thông tin tổng quan đề tài -->
-                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3" style="min-width: 0;">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="flex-wrap: wrap; gap: 8px; min-width: 0;">
+                        <div class="d-flex flex-wrap align-items-center" style="flex-wrap: wrap; gap: 8px; min-width: 0;">
                             <span class="badge bg-secondary-subtle text-secondary border font-monospace">Hồ sơ #{{ $activeHoSo->MaHoSo }}</span>
-                            <span class="badge bg-primary-subtle text-primary border ms-1"><i class="fa-solid fa-graduation-cap me-1"></i>{{ $activeHoSo->ten_nganh }}</span>
-                            <h5 class="fw-bold text-primary mt-2 mb-1">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</h5>
+                            <span class="badge bg-primary-subtle text-primary border"><i class="fa-solid fa-graduation-cap me-1"></i>{{ $activeHoSo->ten_nganh }}</span>
                         </div>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Đề cương đã duyệt</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 flex-shrink-0">Đề cương đã duyệt</span>
                     </div>
-                    <div class="row g-2 mt-2 pt-2 border-top small text-muted">
-                        <div class="col-md-4">
-                            <strong>Cán bộ hướng dẫn:</strong> <span class="text-dark">{{ $gvhdHoTen }}</span> ({{ $activeDeTai?->giangVien?->boMon?->TenBoMon ?? 'Bộ môn' }})
+                    <h5 class="fw-bold text-primary mt-2 mb-1" style="overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</h5>
+                    <div class="mt-2 pt-2 border-top small text-muted" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; min-width: 0;">
+                        <div style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
+                            <strong>Cán bộ hướng dẫn:</strong> <span class="text-dark" style="overflow-wrap: anywhere; word-break: break-word;">{{ $gvhdHoTen }}</span> ({{ $activeDeTai?->giangVien?->boMon?->TenBoMon ?? 'Bộ môn' }})
                         </div>
-                        <div class="col-md-4">
-                            <strong>Nhóm thực hiện:</strong> <span class="text-dark">Nhóm {{ $activeNhom?->MaNhom }} ({{ $sinhViens->count() }} SV)</span>
+                        <div style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
+                            <strong>Nhóm thực hiện:</strong> <span class="text-dark" style="overflow-wrap: anywhere; word-break: break-word;">Nhóm {{ $activeNhom?->MaNhom }} ({{ $sinhViens->count() }} SV)</span>
                         </div>
-                        <div class="col-md-4">
+                        <div style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
                             <strong>Trạng thái chuẩn bị phiếu:</strong> 
                             @if(($activeHoSo->TrangThaiChuanBiPhieu ?? '') === 'DaChuanBi')
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">Đã chuẩn bị phiếu</span>
@@ -1141,42 +1218,40 @@
                 </div>
 
                 <!-- Danh sách sinh viên -->
-                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3" style="min-width: 0;">
                     <h6 class="fw-bold text-dark small text-uppercase mb-2"><i class="fa-solid fa-users me-2 text-primary"></i>Sinh viên thực hiện đề tài</h6>
-                    <div class="row g-2">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; min-width: 0;">
                         @foreach($sinhViens as $idx => $sv)
-                        <div class="col-md-4">
-                            <div class="p-2 border rounded-2 bg-light">
-                                <div class="fw-bold text-dark">{{ $sv->HoTen }}</div>
-                                <div class="small text-muted font-monospace">{{ $sv->MaSV }} &bull; {{ $sv->lop?->TenLop ?? 'Lớp' }}</div>
-                            </div>
+                        <div class="p-2 border rounded-2 bg-light" style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
+                            <div class="fw-bold text-dark" style="overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $sv->HoTen }}</div>
+                            <div class="small text-muted font-monospace" style="overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $sv->MaSV }} &bull; {{ $sv->lop?->TenLop ?? 'Lớp' }}</div>
                         </div>
                         @endforeach
                     </div>
                 </div>
 
                 <!-- Chi tiết nội dung đề cương -->
-                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3">
+                <div class="card border-0 rounded-3 shadow-xs p-3 bg-white mb-3" style="min-width: 0;">
                     <h6 class="fw-bold text-dark small text-uppercase mb-3"><i class="fa-solid fa-file-lines me-2 text-primary"></i>Nội dung đề cương chi tiết</h6>
-                    <div class="space-y-3">
-                        <div class="mb-3">
+                    <div class="space-y-3" style="min-width: 0;">
+                        <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">1. Mục tiêu đề tài:</label>
-                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->MucTieu ?: 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->MucTieu ?: 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.' }}</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">2. Phạm vi thực hiện:</label>
-                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->PhamVi ?: 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->PhamVi ?: 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.' }}</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">3. Nội dung và phương pháp nghiên cứu:</label>
-                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->NoiDung ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->NoiDung ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.' }}</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">4. Sản phẩm dự kiến:</label>
-                            <div class="p-2 bg-light rounded border small text-dark">{{ $activeDeTai?->SanPhamDuKien ?: 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->SanPhamDuKien ?: 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.' }}</div>
                         </div>
                         @if(!empty($activeDeTai?->FileDeCuong))
-                        <div class="mb-2">
+                        <div class="mb-2" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">5. Tệp tài liệu đề cương gốc đã duyệt:</label>
                             <div>
                                 <a href="{{ asset('storage/' . $activeDeTai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
@@ -1188,7 +1263,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-white border-top py-2 d-flex justify-content-between align-items-center">
+            <div class="modal-footer bg-white border-top py-2 d-flex justify-content-between align-items-center flex-shrink-0" style="min-width: 0;">
                 <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
                 @if($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin())))
                     <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang">
@@ -1202,147 +1277,133 @@
 
 {{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO THƯ KÝ HỘI ĐỒNG - YÊU CẦU 3.1 & 3.3) --}}
 @if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
-<div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true">
+<div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <form action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
+        <form id="formCaiDatChucNang" action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
             @csrf
             <input type="hidden" name="MaHoiDong" value="{{ $activeHoiDong->MaHoiDong }}">
             <input type="hidden" name="MaHoSo" value="{{ $activeHoSo->MaHoSo }}">
+            <input type="hidden" id="inputLoaiKhoaLuan" name="LoaiKhoaLuan" value="{{ $loaiKhoaLuan }}">
+
+            {{-- Kho dữ liệu đề cương ẩn để nạp nhanh --}}
+            <div id="outlineDataStore" class="d-none"
+                 data-noi-dung="{{ e($activeDeTai->NoiDung ?? '') }}"
+                 data-yeu-cau="{{ e($activeDeTai->YeuCau ?? '') }}"
+                 data-muc-tieu="{{ e($activeDeTai->MucTieu ?? '') }}"
+                 data-json-decuong="{{ e(json_encode($activeHoSo->NoiDungDeCuongJson ?? [])) }}"></div>
 
             <div class="modal-content border-0 shadow-lg rounded-3">
+                {{-- Modal Header: Tiêu đề trang trọng, không có phụ đề --}}
                 <div class="modal-header bg-warning-subtle text-dark border-bottom py-3">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="p-2 rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <span class="p-2 rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
                             <i class="fa-solid fa-pen-ruler"></i>
                         </span>
-                        <div>
-                            <h6 class="modal-title fw-bold mb-0" id="modalCaiDatChucNangLabel">
-                                Thiết Lập Tiêu Chí Phiếu Chấm &amp; Yêu Cầu Chức Năng (Dành Cho Thư Ký Hội Đồng)
-                            </h6>
-                            <span class="text-muted" style="font-size: 0.75rem;">
-                                Thư ký chuẩn bị mẫu phiếu chấm dựa trên Đề cương chi tiết đã được GVHD nộp &amp; phê duyệt
-                            </span>
-                        </div>
+                        <h6 class="modal-title fw-bold mb-0 text-dark" id="modalCaiDatChucNangLabel">
+                            Thiết Lập Tiêu Chí Phiếu Chấm &amp; Yêu Cầu Chức Năng (Dành Cho Thư Ký Hội Đồng)
+                        </h6>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4 bg-white">
-                    {{-- Banner thông báo phạm vi lưu chỉ riêng cho nhóm đề tài này --}}
+
+                <div class="modal-body p-3 p-md-4 bg-white">
+                    {{-- Banner thông báo phạm vi lưu chỉ riêng cho nhóm đề tài này (Không có phụ đề thừa) --}}
                     <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3 border-0 bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div>
                             <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                            <strong>Phạm vi áp dụng:</strong> Cấu hình này <strong>chỉ lưu và áp dụng riêng cho Nhóm đề tài này</strong> (Mã hồ sơ: <strong>#{{ $activeHoSo->MaHoSo }}</strong>), hoàn toàn không ảnh hưởng đến các đề tài hay nhóm khác trong Hội đồng.
+                            <strong>Phạm vi áp dụng:</strong> Cấu hình này <strong>chỉ lưu và áp dụng riêng cho Nhóm đề tài này</strong> (Mã hồ sơ: <strong>#{{ $activeHoSo->MaHoSo }}</strong>).
                         </div>
-                        <span class="badge bg-warning text-dark border border-warning px-2 py-1">
-                            {{ $loaiKhoaLuan === 'KLKS' ? 'Hệ Kỹ Sư (4.0đ)' : 'Hệ Cử Nhân (3.5đ)' }}
+                        <span class="badge bg-warning text-dark border border-warning px-3 py-1 fw-bold fs-7">
+                            {{ $loaiKhoaLuan === 'KLKS' ? 'Hệ Kỹ Sư (Trần: 4.00đ)' : 'Hệ Cử Nhân (Trần: 3.50đ)' }}
                         </span>
                     </div>
 
+                    {{-- Thông tin đề tài --}}
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-dark mb-1">Đề tài đang chấm điểm:</label>
-                        <div class="p-2 bg-light rounded border small fw-semibold text-primary">
-                            <i class="fa-solid fa-book-bookmark me-2"></i>{{ $activeDeTai->TenDeTai ?? '' }}
+                        <div class="p-2 bg-light rounded border small fw-semibold text-primary d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <i class="fa-solid fa-book-bookmark me-2"></i>{{ $activeDeTai->TenDeTai ?? '' }}
+                            </div>
+                            <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.7rem;">
+                                {{ $activeHoSo->ten_nganh }}
+                            </span>
                         </div>
                     </div>
 
-                    <div class="row g-3">
-                        {{-- Cột Trái: Trình Soạn Thảo & Thanh Công Cụ Định Dạng --}}
-                        <div class="col-lg-7">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label small fw-bold text-dark mb-0">
-                                    <i class="fa-solid fa-keyboard me-1 text-secondary"></i> Soạn thảo nội dung chức năng &amp; yêu cầu:
-                                </label>
-                                <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">0.50đ / mỗi yêu cầu</span>
-                            </div>
+                    {{-- Hàng 3 nút cùng kích thước & kiểu dáng --}}
+                    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="importFromDeCuong()" style="height: 34px;">
+                            <i class="fa-solid fa-file-import me-1"></i> Nhập từ đề cương
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLCN')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLKS' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLKS' ? 'Đề tài này thuộc hệ Kỹ sư, không áp dụng Mẫu Cử nhân' : 'Áp dụng mẫu chuẩn Cử nhân (3.5đ)' }}">
+                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Cử nhân
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLKS')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLCN' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLCN' ? 'Đề tài này thuộc hệ Cử nhân, không áp dụng Mẫu Kỹ sư' : 'Áp dụng mẫu chuẩn Kỹ sư (4.0đ)' }}">
+                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Kỹ sư
+                        </button>
+                    </div>
 
-                            {{-- Thanh công cụ định dạng nhanh --}}
-                            <div class="p-2 bg-light rounded-top border border-bottom-0 d-flex flex-wrap gap-1 align-items-center">
-                                <button type="button" class="btn btn-xs btn-outline-primary fw-semibold rounded px-2 py-1" onclick="insertToolbarText('+ Chức năng: ')" style="font-size: 0.72rem;" title="Thêm nhóm chức năng cấp 1">
-                                    <i class="fa-solid fa-folder-plus me-1"></i> + Nhóm Chức Năng
-                                </button>
-                                <button type="button" class="btn btn-xs btn-outline-success fw-semibold rounded px-2 py-1" onclick="insertToolbarText('  * Yêu cầu: ')" style="font-size: 0.72rem;" title="Thêm yêu cầu chức năng con có ô chấm điểm (0.50đ)">
-                                    <i class="fa-solid fa-circle-plus me-1"></i> + Yêu Cầu Con (0.5đ)
-                                </button>
-                                <button type="button" class="btn btn-xs btn-outline-secondary fw-semibold rounded px-2 py-1" onclick="insertToolbarText('- Xây dựng các chức năng cơ bản của ứng dụng: Đăng nhập, đăng xuất, phân quyền, backup & restore\n')" style="font-size: 0.72rem;" title="Thêm chức năng cơ bản">
-                                    <i class="fa-solid fa-shield me-1"></i> + Chức Năng Cơ Bản
-                                </button>
-                                <div class="ms-auto d-flex gap-1">
-                                    <button type="button" class="btn btn-xs btn-outline-info text-dark fw-semibold rounded px-2 py-1" onclick="loadSampleTemplate('KLCN')" style="font-size: 0.72rem;">
-                                        Mẫu Cử Nhân (3.5đ)
-                                    </button>
-                                    <button type="button" class="btn btn-xs btn-outline-info text-dark fw-semibold rounded px-2 py-1" onclick="loadSampleTemplate('KLKS')" style="font-size: 0.72rem;">
-                                        Mẫu Kỹ Sư (4.0đ)
-                                    </button>
-                                    <button type="button" class="btn btn-xs btn-outline-danger fw-semibold rounded px-2 py-1" onclick="clearTextarea()" style="font-size: 0.72rem;">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
+                    <div class="row g-3">
+                        {{-- Cột Trái: Textarea duy nhất --}}
+                        <div class="col-lg-7 col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div>
+                                    <label for="textareaChucNang" class="form-label small fw-bold text-dark mb-0">
+                                        Soạn thảo nội dung chức năng &amp; yêu cầu:
+                                    </label>
+                                    <a href="javascript:void(0)" class="text-danger small ms-2 text-decoration-none fw-semibold" onclick="clearCriteria()">
+                                        Xóa hết
+                                    </a>
                                 </div>
+                                <span class="text-muted small" style="font-size: 0.72rem;">
+                                    <kbd>Tab</kbd> để thụt dòng làm yêu cầu con &bull; <kbd>Shift+Tab</kbd> bỏ thụt
+                                </span>
                             </div>
 
                             @php
-                                $defaultPlaceholder = ($loaiKhoaLuan === 'KLKS')
-                                    ? "- Xây dựng các chức năng cơ bản của ứng dụng:\n  + Đăng nhập, đăng xuất, đổi mật khẩu,\n  + Phân quyền ứng dụng (...)\n- Cài đặt chức năng nghiệp vụ trên nền tảng Web:\n  + Chức năng 1...\n  + Chức năng 2...\n- Cài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  + Chức năng 1...\n  + Chức năng 2..."
-                                    : "  + Chức năng 01: Quản lý và xử lý đơn hàng tự động\n    * Yêu cầu 1: Tiếp nhận và phân loại đơn hàng theo trạng thái\n    * Yêu cầu 2: Tích hợp cổng thanh toán trực tuyến\n  + Chức năng 02: Quản lý danh mục sản phẩm và kho hàng\n    * Yêu cầu 1: Cập nhật tồn kho theo thời gian thực\n    * Yêu cầu 2: Báo cáo thống kê doanh thu và hàng tồn kho\n  + Chức năng 03: Phân hệ người dùng và thông báo đẩy\n    * Yêu cầu 1: Đăng nhập đa kênh và xác thực OTP\n    * Yêu cầu 2: Gửi thông báo đơn hàng qua Email/Zalo";
+                                $defaultPlaceholder = "Chức năng 1: Quản lý đơn hàng\n  Tiếp nhận đơn hàng\n  Thanh toán trực tuyến\nChức năng 2: Quản lý sản phẩm\n  Cập nhật tồn kho";
                             @endphp
-                            <textarea id="textareaChucNang" 
-                                      name="TieuChiChucNang" 
-                                      rows="12" 
-                                      class="form-control rounded-bottom font-monospace border" 
-                                      style="font-size: 0.83rem; line-height: 1.6; border-top-left-radius: 0; border-top-right-radius: 0;" 
+                            <textarea id="textareaChucNang"
+                                      name="TieuChiChucNang"
+                                      rows="12"
+                                      class="form-control font-monospace border rounded-3 p-3"
+                                      style="min-height: 280px; font-size: 0.85rem; line-height: 1.6;"
                                       placeholder="{{ $defaultPlaceholder }}">{{ $customChucNang ?? '' }}</textarea>
 
-                            {{-- Hướng dẫn cú pháp định dạng --}}
-                            <div class="mt-2 p-2 bg-light rounded border text-muted" style="font-size: 0.72rem; line-height: 1.5;">
-                                <div class="fw-bold text-dark mb-1">
-                                    <i class="fa-solid fa-circle-question text-info me-1"></i> Quy ước định dạng chuẩn tự động tách ô chấm điểm:
-                                </div>
-                                <div>&bull; Bắt đầu bằng <code>+</code> hoặc <code>-</code> (hoặc chữ <code>Chức năng</code>) để đặt tên <strong>Nhóm chức năng lớn</strong>.</div>
-                                <div>&bull; Bắt đầu bằng <code>*</code> hoặc <code>-</code> (hoặc chữ <code>Yêu cầu</code>) để tạo <strong>Từng ô chấm điểm riêng biệt (0.50đ)</strong> cho Giám khảo chấm.</div>
-                                <div>&bull; Để trống ô này nếu muốn sử dụng danh sách 7 yêu cầu chức năng chuẩn mặc định của Khoa CNTT.</div>
-                            </div>
+                            <div id="textareaInlineAlert" class="small text-danger mt-1 d-none"></div>
                         </div>
 
-                        {{-- Cột Phải: Live Preview trực tiếp cấu trúc phân bổ điểm & khung chấm --}}
-                        <div class="col-lg-5">
+                        {{-- Cột Phải: Khung Xem Trước tối giản --}}
+                        <div class="col-lg-5 col-12">
                             <div class="card h-100 border rounded-3 bg-light-subtle shadow-sm">
-                                <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center">
+                                <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-1">
                                     <span class="fw-bold text-dark small">
                                         <i class="fa-solid fa-eye text-primary me-1"></i> Xem Trước Cấu Trúc Khung Chấm
                                     </span>
-                                    <span id="badgeTargetScore" class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.7rem;">
-                                        Mục tiêu: {{ $loaiKhoaLuan === 'KLKS' ? '4.00' : '3.50' }}đ
+                                    <span id="previewSummaryText" class="small fw-semibold text-primary" style="font-size: 0.75rem;">
+                                        0 yêu cầu &bull; mỗi yêu cầu &asymp; 0.00 đ &bull; tổng 0.00 / {{ $loaiKhoaLuan === 'KLKS' ? '4.00' : '3.50' }}đ
                                     </span>
                                 </div>
-                                <div class="card-body p-3" style="max-height: 380px; overflow-y: auto;">
-                                    {{-- Thống kê nhanh số lượng yêu cầu và điểm tương ứng --}}
-                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded border">
-                                        <div>
-                                            <div class="text-muted" style="font-size: 0.68rem;">SỐ YÊU CẦU ĐÃ TẠO:</div>
-                                            <div class="fw-bold text-primary fs-6" id="previewReqCount">0 mục</div>
-                                        </div>
-                                        <div class="text-end">
-                                            <div class="text-muted" style="font-size: 0.68rem;">TỔNG ĐIỂM DỰ KIẾN:</div>
-                                            <div class="fw-bold text-success fs-6" id="previewTotalScore">0.00 đ</div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Danh sách yêu cầu phân tích theo nhóm --}}
-                                    <div id="previewParsedList" class="space-y-2">
-                                        {{-- Sẽ được JavaScript render theo thời gian thực --}}
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-white py-2 border-top text-muted small" style="font-size: 0.72rem;">
-                                    <i class="fa-solid fa-info-circle me-1 text-primary"></i> Mỗi dòng yêu cầu tương ứng 1 ô chấm điểm (thang 0.5đ) hiển thị trên phiếu chấm của các Giám khảo.
+                                <div class="card-body p-3 bg-white" style="min-height: 280px; max-height: 420px; overflow-y: auto;" id="previewParsedContainer">
+                                    {{-- Render danh sách nhóm và yêu cầu --}}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm">
-                        <i class="fa-solid fa-floppy-disk me-2"></i> Lưu &amp; Cập Nhật Cho Đề Tài Này
-                    </button>
+
+                {{-- Modal Footer --}}
+                <div class="modal-footer bg-light py-2 d-flex justify-content-between align-items-center">
+                    <div class="small text-muted" id="footerDraftNotice" style="font-size: 0.75rem;">
+                        Sẵn sàng lưu.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" id="btnSubmitChucNang" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu &amp; Cập Nhật
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
@@ -1583,112 +1644,332 @@ document.addEventListener('DOMContentLoaded', function() {
         @endif
     };
 
-    // ── XỬ LÝ SOẠN THẢO VÀ LIVE PREVIEW MODAL CÀI ĐẶT CHỨC NĂNG ──
+    // ── XỬ LÝ SOẠN THẢO VÀ LIVE PREVIEW MODAL CÀI ĐẶT CHỨC NĂNG (DÀNH CHO THƯ KÝ) ──
+    const modalEl = document.getElementById('modalCaiDatChucNang');
     const textareaChucNang = document.getElementById('textareaChucNang');
-    const previewReqCount = document.getElementById('previewReqCount');
-    const previewTotalScore = document.getElementById('previewTotalScore');
-    const previewParsedList = document.getElementById('previewParsedList');
+    const previewSummaryText = document.getElementById('previewSummaryText');
+    const previewParsedContainer = document.getElementById('previewParsedContainer');
+    const btnSubmitChucNang = document.getElementById('btnSubmitChucNang');
+    const textareaInlineAlert = document.getElementById('textareaInlineAlert');
+    const footerDraftNotice = document.getElementById('footerDraftNotice');
 
-    window.insertToolbarText = function(text) {
-        if (!textareaChucNang) return;
-        const start = textareaChucNang.selectionStart;
-        const end = textareaChucNang.selectionEnd;
-        const currentVal = textareaChucNang.value;
-        const before = currentVal.substring(0, start);
-        const after = currentVal.substring(end, currentVal.length);
-        
-        // Thêm dòng mới nếu chưa xuống dòng
-        let prefix = (before.length > 0 && !before.endsWith('\n')) ? '\n' : '';
-        textareaChucNang.value = before + prefix + text + after;
-        textareaChucNang.focus();
-        textareaChucNang.selectionStart = textareaChucNang.selectionEnd = start + prefix.length + text.length;
-        updateLivePreview();
-    };
+    const activeLoaiKhoaLuan = '{{ $loaiKhoaLuan ?? "KLCN" }}';
+    const targetScoreCap = (activeLoaiKhoaLuan === 'KLKS') ? 4.00 : 3.50;
+    const activeHoSoMa = '{{ $activeHoSo->MaHoSo ?? "" }}';
+    const draftStorageKey = 'kltn_chucnang_draft_' + activeHoSoMa;
 
-    window.clearTextarea = function() {
-        if (!textareaChucNang) return;
-        if (confirm('Thầy/Cô có chắc muốn xóa toàn bộ nội dung đã soạn thảo?')) {
-            textareaChucNang.value = '';
-            updateLivePreview();
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Phân bổ điểm chính xác theo cent (tổng luôn đúng bằng trần)
+    function distributeScoresExact(target, count) {
+        if (count <= 0) return [];
+        const targetCents = Math.round(target * 100);
+        const baseCents = Math.floor(targetCents / count);
+        const remainder = targetCents % count;
+        const scores = [];
+        for (let i = 0; i < count; i++) {
+            const cents = baseCents + (i < remainder ? 1 : 0);
+            scores.push(parseFloat((cents / 100).toFixed(2)));
         }
-    };
+        return scores;
+    }
 
-    window.loadSampleTemplate = function(loai) {
-        if (!textareaChucNang) return;
-        if (loai === 'KLKS') {
-            textareaChucNang.value = `- Xây dựng các chức năng cơ bản của ứng dụng:\n  + Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền ứng dụng\n- Cài đặt chức năng nghiệp vụ trên nền tảng Web:\n  * Yêu cầu 1: Quản trị danh mục và dữ liệu hệ thống (0.5đ)\n  * Yêu cầu 2: Quy trình xử lý nghiệp vụ chính trên Web (0.5đ)\n  * Yêu cầu 3: Báo cáo thống kê số liệu và xuất tệp Excel/PDF (0.5đ)\n- Cài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  * Yêu cầu 1: Giao diện người dùng Mobile và xác thực sinh trắc học (0.5đ)\n  * Yêu cầu 2: Thao tác tác nghiệp thực địa qua thiết bị di động (0.5đ)\n  * Yêu cầu 3: Nhận thông báo đẩy (Push Notification) tức thời (0.5đ)\n  * Yêu cầu 4: Đồng bộ trạng thái và dữ liệu thời gian thực giữa Web và Mobile (0.5đ)`;
-        } else {
-            textareaChucNang.value = `+ Chức năng 01: Quản lý và xử lý đơn hàng tự động\n  * Yêu cầu 1: Tiếp nhận và phân loại đơn hàng theo trạng thái\n  * Yêu cầu 2: Tích hợp cổng thanh toán trực tuyến\n+ Chức năng 02: Quản lý danh mục sản phẩm và kho hàng\n  * Yêu cầu 1: Cập nhật tồn kho theo thời gian thực\n  * Yêu cầu 2: Báo cáo thống kê doanh thu và hàng tồn kho\n+ Chức năng 03: Phân hệ người dùng và thông báo đẩy\n  * Yêu cầu 1: Đăng nhập đa kênh và xác thực OTP\n  * Yêu cầu 2: Gửi thông báo đơn hàng qua Email/Zalo\n  * Yêu cầu 3: Phân quyền vai trò và nhật ký thao tác hệ thống`;
-        }
-        updateLivePreview();
-    };
+    // Tự động nhận diện cấu trúc phân cấp từ văn bản thuần:
+    // - Dòng không thụt lề = Nhóm chức năng (hoặc bắt đầu bằng Chức năng, CN, số La Mã, 1., I.)
+    // - Dòng có thụt lề (Tab hoặc 2+ space) = Yêu cầu con (hoặc bắt đầu bằng -, *, •, a), 1.1)
+    // - Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu (không báo lỗi).
+    function parseTextToGroups(text) {
+        const lines = (text || '').split('\n');
+        const rawGroups = [];
+        let currentGroup = null;
 
-    function updateLivePreview() {
-        if (!textareaChucNang || !previewParsedList) return;
-        const text = textareaChucNang.value.trim();
-        const lines = text.split('\n');
-
-        let currentGroup = 'Chức năng bài toán';
-        let groups = {};
-        let totalReqs = 0;
-
-        lines.forEach(line => {
-            const trimmed = line.trim();
+        lines.forEach(rawLine => {
+            const trimmed = rawLine.trim();
             if (!trimmed) return;
 
-            // Nhận diện dòng nhóm chức năng
-            if (/^(Chức năng\s*\d+|Cài đặt chức năng|\+?\s*Chức năng|\-?\s*Cài đặt|\-?\s*Xây dựng)/i.test(trimmed)) {
-                currentGroup = trimmed.replace(/^[\+\-\*\s]+/, '');
-                if (!groups[currentGroup]) groups[currentGroup] = [];
+            const isIndented = /^(\t|\s{2,})/.test(rawLine);
+            const isExplicitGroup = /^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/i.test(trimmed);
+            const isExplicitSub = /^([\*\-\•\+]|[a-z]\)|\d+\.\d+)/i.test(trimmed);
+
+            let isGroup = false;
+            if (isExplicitSub) {
+                isGroup = false;
+            } else if (isExplicitGroup) {
+                isGroup = true;
+            } else if (isIndented) {
+                isGroup = false;
+            } else {
+                isGroup = true;
+            }
+
+            if (isGroup) {
+                const cleanName = trimmed.replace(/^[\+\-\*\•\#\s]+/, '').trim();
+                currentGroup = {
+                    name: cleanName,
+                    items: []
+                };
+                rawGroups.push(currentGroup);
+            } else {
+                let cleanItem = trimmed
+                    .replace(/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/i, '')
+                    .replace(/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/i, '')
+                    .trim();
+
+                if (cleanItem) {
+                    if (!currentGroup) {
+                        currentGroup = {
+                            name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
+                            items: []
+                        };
+                        rawGroups.push(currentGroup);
+                    }
+                    currentGroup.items.push(cleanItem);
+                }
+            }
+        });
+
+        // Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu
+        const finalGroups = [];
+        rawGroups.forEach(g => {
+            if (g.items.length === 0) {
+                finalGroups.push({
+                    name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
+                    items: [g.name]
+                });
+            } else {
+                finalGroups.push(g);
+            }
+        });
+
+        // Gộp các nhóm liền kề có cùng tên
+        const mergedGroups = [];
+        finalGroups.forEach(g => {
+            if (mergedGroups.length > 0 && mergedGroups[mergedGroups.length - 1].name === g.name) {
+                mergedGroups[mergedGroups.length - 1].items.push(...g.items);
+            } else {
+                mergedGroups.push({ name: g.name, items: [...g.items] });
+            }
+        });
+
+        let totalReqs = 0;
+        mergedGroups.forEach(g => { totalReqs += g.items.length; });
+
+        return { groups: mergedGroups, totalReqs };
+    }
+
+    // Cập nhật Live Preview khung xem trước
+    function updateLivePreview() {
+        if (!textareaChucNang) return;
+        const text = textareaChucNang.value.trim();
+        const { groups, totalReqs } = parseTextToGroups(text);
+
+        const scores = distributeScoresExact(targetScoreCap, totalReqs);
+        let totalScore = 0;
+        scores.forEach(s => { totalScore += s; });
+        const formattedTotal = totalReqs > 0 ? totalScore.toFixed(2) : '0.00';
+        const avgScore = totalReqs > 0 ? (targetScoreCap / totalReqs).toFixed(2) : '0.00';
+        const targetFormatted = targetScoreCap.toFixed(2);
+
+        if (previewSummaryText) {
+            previewSummaryText.innerHTML = `${totalReqs} yêu cầu &bull; mỗi yêu cầu &asymp; ${avgScore} đ &bull; tổng ${formattedTotal} / ${targetFormatted}đ`;
+        }
+
+        if (btnSubmitChucNang) {
+            btnSubmitChucNang.disabled = (totalReqs === 0);
+            btnSubmitChucNang.title = (totalReqs === 0) ? 'Vui lòng nhập ít nhất 1 yêu cầu chức năng.' : '';
+        }
+
+        if (textareaInlineAlert) {
+            if (text.length > 0 && totalReqs === 0) {
+                textareaInlineAlert.textContent = 'Vui lòng nhập nội dung yêu cầu hợp lệ.';
+                textareaInlineAlert.classList.remove('d-none');
+            } else {
+                textareaInlineAlert.textContent = '';
+                textareaInlineAlert.classList.add('d-none');
+            }
+        }
+
+        if (previewParsedContainer) {
+            if (totalReqs === 0) {
+                previewParsedContainer.innerHTML = `
+                    <div class="text-center py-4 text-muted small fst-italic">
+                        Chưa có yêu cầu nào.<br>Hãy gõ danh sách bên trái hoặc chọn <strong>[Nhập từ đề cương]</strong> / <strong>[Mẫu chuẩn]</strong>.
+                    </div>
+                `;
                 return;
             }
 
-            // Nhận diện dòng yêu cầu
-            const reqLabel = trimmed.replace(/^[\+\-\*\s]+/, '');
-            if (!groups[currentGroup]) groups[currentGroup] = [];
-            groups[currentGroup].push(reqLabel);
-            totalReqs++;
-        });
-
-        // Cập nhật số liệu
-        const totalPts = (totalReqs * 0.5).toFixed(2);
-        if (previewReqCount) previewReqCount.textContent = `${totalReqs} yêu cầu`;
-        if (previewTotalScore) previewTotalScore.textContent = `${totalPts} đ`;
-
-        // Render cấu trúc nhóm
-        let html = '';
-        const groupKeys = Object.keys(groups);
-        if (groupKeys.length === 0 || totalReqs === 0) {
-            html = `<div class="text-center py-4 text-muted small fst-italic">
-                Chưa có yêu cầu nào được soạn thảo.<br>Bấm các nút công cụ hoặc nhập văn bản bên trái để xem cấu trúc tự động.
-            </div>`;
-        } else {
-            groupKeys.forEach(grp => {
-                const reqs = groups[grp];
-                if (reqs.length === 0) return;
-                html += `<div class="mb-2 p-2 bg-white rounded border">
-                    <div class="fw-bold text-primary small mb-1 border-bottom pb-1">
-                        <i class="fa-solid fa-folder me-1"></i> ${grp}
+            let html = '';
+            let scoreIdx = 0;
+            groups.forEach(g => {
+                html += `
+                <div class="mb-2 p-2 bg-light rounded border border-light-subtle">
+                    <div class="fw-bold text-dark small mb-1 pb-1 border-bottom d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-folder me-1 text-primary"></i> ${escapeHtml(g.name)}</span>
+                        <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.65rem;">${g.items.length} YC</span>
                     </div>
-                    <div class="space-y-1">`;
-                reqs.forEach((r, idx) => {
-                    html += `<div class="d-flex justify-content-between align-items-center py-1 ps-2 border-bottom border-light" style="font-size: 0.73rem;">
-                        <span class="text-dark text-truncate me-2" title="${r}">
-                            &bull; ${r}
+                    <div class="space-y-1">
+                `;
+                g.items.forEach(item => {
+                    const s = scores[scoreIdx++] || 0.50;
+                    html += `
+                    <div class="d-flex justify-content-between align-items-center py-1 ps-2 border-bottom border-light" style="font-size: 0.75rem;">
+                        <span class="text-dark text-truncate me-2" title="${escapeHtml(item)}">
+                            &bull; ${escapeHtml(item)}
                         </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">+0.50đ</span>
-                    </div>`;
+                        <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">
+                            +${s.toFixed(2)}đ
+                        </span>
+                    </div>
+                    `;
                 });
                 html += `</div></div>`;
             });
+            previewParsedContainer.innerHTML = html;
         }
-        previewParsedList.innerHTML = html;
     }
 
-    if (textareaChucNang) {
-        textareaChucNang.addEventListener('input', updateLivePreview);
-        // Khởi tạo live preview khi mở trang
+    // Tự động lưu nháp vào LocalStorage
+    function autoSaveDraft() {
+        if (!textareaChucNang) return;
+        try {
+            localStorage.setItem(draftStorageKey, textareaChucNang.value);
+            if (footerDraftNotice) {
+                const now = new Date();
+                const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
+                footerDraftNotice.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-success me-1"></i> Đã lưu nháp lúc ${timeStr}`;
+            }
+        } catch (e) {}
+    }
+
+    // Nhập từ Đề Cương Chi Tiết đã duyệt
+    window.importFromDeCuong = function() {
+        const store = document.getElementById('outlineDataStore');
+        if (!store) return;
+        const noiDung = store.getAttribute('data-noi-dung') || '';
+        const yeuCau = store.getAttribute('data-yeu-cau') || '';
+        const mucTieu = store.getAttribute('data-muc-tieu') || '';
+
+        const fullSource = `${yeuCau}\n${noiDung}\n${mucTieu}`.trim();
+        if (!fullSource) {
+            alert('Chưa tìm thấy nội dung chi tiết trong đề cương của đề tài này.');
+            return;
+        }
+
+        const rawLines = fullSource.split('\n');
+        const extracted = [];
+        rawLines.forEach(l => {
+            const t = l.trim().replace(/^[\-\*\+\d\.\)]+/, '').trim();
+            if (t.length > 8 && t.length < 150) {
+                extracted.push(t);
+            }
+        });
+
+        if (extracted.length === 0) {
+            alert('Không thể nhận diện danh sách chức năng từ đề cương. Đã nạp mẫu theo loại khóa luận.');
+            loadSampleTemplate(activeLoaiKhoaLuan);
+            return;
+        }
+
+        let resultText = '';
+        const chunkSize = Math.max(2, Math.ceil(extracted.length / 3));
+        for (let i = 0; i < extracted.length; i += chunkSize) {
+            const slice = extracted.slice(i, i + chunkSize);
+            const gNum = Math.floor(i / chunkSize) + 1;
+            resultText += `Phân hệ chức năng ${gNum < 10 ? '0' + gNum : gNum}:\n`;
+            slice.forEach(item => {
+                resultText += `  ${item}\n`;
+            });
+        }
+
+        if (confirm(`Đã tìm thấy ${extracted.length} yêu cầu từ Đề cương chi tiết đã duyệt. Thầy/Cô có muốn nạp vào khung soạn thảo?`)) {
+            textareaChucNang.value = resultText.trim();
+            updateLivePreview();
+            autoSaveDraft();
+        }
+    };
+
+    // Nạp mẫu chuẩn theo loại khóa luận
+    window.loadSampleTemplate = function(loai) {
+        if (loai === 'KLKS') {
+            textareaChucNang.value = "Chức năng cơ bản của ứng dụng:\n  Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền ứng dụng\nCài đặt chức năng nghiệp vụ trên nền tảng Web:\n  Quản trị danh mục và dữ liệu hệ thống\n  Quy trình xử lý nghiệp vụ chính trên Web\n  Báo cáo thống kê số liệu và xuất tệp Excel/PDF\nCài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  Giao diện người dùng Mobile và xác thực sinh trắc học\n  Thao tác tác nghiệp thực địa qua thiết bị di động\n  Nhận thông báo đẩy (Push Notification) tức thời\n  Đồng bộ trạng thái và dữ liệu thời gian thực giữa Web và Mobile";
+        } else {
+            textareaChucNang.value = "Chức năng 01: Quản lý và xử lý đơn hàng tự động\n  Tiếp nhận và phân loại đơn hàng theo trạng thái\n  Tích hợp cổng thanh toán trực tuyến\nChức năng 02: Quản lý danh mục sản phẩm và kho hàng\n  Cập nhật tồn kho theo thời gian thực\n  Báo cáo thống kê doanh thu và hàng tồn kho\nChức năng 03: Phân hệ người dùng và thông báo đẩy\n  Đăng nhập đa kênh và xác thực OTP\n  Gửi thông báo đơn hàng qua Email/Zalo\n  Phân quyền vai trò và nhật ký thao tác hệ thống";
+        }
         updateLivePreview();
+        autoSaveDraft();
+    };
+
+    // Xóa hết toàn bộ
+    window.clearCriteria = function() {
+        if (confirm('Thầy/Cô có chắc chắn muốn xóa toàn bộ nội dung chức năng đã soạn thảo?')) {
+            textareaChucNang.value = '';
+            updateLivePreview();
+            autoSaveDraft();
+        }
+    };
+
+    // Bắt sự kiện trên Textarea
+    if (textareaChucNang) {
+        // Tab / Shift+Tab để thụt dòng / lùi dòng mà không mất focus
+        textareaChucNang.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const val = this.value;
+
+                if (e.shiftKey) {
+                    const beforeStart = val.substring(0, start);
+                    const lineStart = beforeStart.lastIndexOf('\n') + 1;
+                    const currentLine = val.substring(lineStart, end);
+
+                    if (currentLine.startsWith('  ')) {
+                        this.value = val.substring(0, lineStart) + val.substring(lineStart + 2);
+                        this.selectionStart = Math.max(lineStart, start - 2);
+                        this.selectionEnd = Math.max(lineStart, end - 2);
+                    } else if (currentLine.startsWith('\t')) {
+                        this.value = val.substring(0, lineStart) + val.substring(lineStart + 1);
+                        this.selectionStart = Math.max(lineStart, start - 1);
+                        this.selectionEnd = Math.max(lineStart, end - 1);
+                    }
+                } else {
+                    this.value = val.substring(0, start) + '  ' + val.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 2;
+                }
+                updateLivePreview();
+                autoSaveDraft();
+            }
+        });
+
+        textareaChucNang.addEventListener('input', function() {
+            updateLivePreview();
+            autoSaveDraft();
+        });
+
+        // Phục hồi bản nháp nếu ô trống
+        try {
+            const draft = localStorage.getItem(draftStorageKey);
+            if (!textareaChucNang.value.trim() && draft && draft.trim()) {
+                textareaChucNang.value = draft;
+                if (footerDraftNotice) {
+                    footerDraftNotice.innerHTML = `<i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Đã phục hồi bản nháp gần nhất`;
+                }
+            }
+        } catch (e) {}
+
+        updateLivePreview();
+    }
+
+    // Khi nộp form: xóa nháp
+    const formCaiDatChucNang = document.getElementById('formCaiDatChucNang');
+    if (formCaiDatChucNang) {
+        formCaiDatChucNang.addEventListener('submit', function() {
+            try { localStorage.removeItem(draftStorageKey); } catch (e) {}
+        });
     }
 });
 </script>

@@ -18,8 +18,19 @@
             </h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            @if($tienDo['hoiDongDuPhieu'])
-            <form action="{{ route('truongkhoa.ketqua.congbo') }}" method="POST" onsubmit="return confirm('Trưởng khoa có chắc chắn muốn CÔNG BỐ KẾT QUẢ CHÍNH THỨC cho Hội đồng này?\n\nĐiểm số sẽ được khóa bảo vệ toàn vẹn và gửi thông báo đến các sinh viên, giảng viên.');">
+            @php
+                $allPublished = $hoiDong->hoSoBaoVes->isNotEmpty() && $hoiDong->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh', 'CoYeuCauChinhSua']));
+            @endphp
+
+            @if($allPublished)
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
+                    <i class="fa-solid fa-circle-check me-1"></i> Đã Công Bố Kết Quả
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalThuHoiHd">
+                    <i class="fa-solid fa-undo me-1"></i> Thu Hồi Công Bố
+                </button>
+            @elseif($tienDo['hoiDongDuPhieu'])
+            <form action="{{ route('truongkhoa.ketqua.congbo_hoidong') }}" method="POST" onsubmit="return confirm('Trưởng khoa có chắc chắn muốn CÔNG BỐ KẾT QUẢ CHÍNH THỨC cho Hội đồng này?\n\nĐiểm số sẽ được khóa bảo vệ toàn vẹn và gửi thông báo đến các sinh viên, giảng viên.');">
                 @csrf
                 <input type="hidden" name="MaHoiDong" value="{{ $hoiDong->MaHoiDong }}">
                 <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-xs">
@@ -132,7 +143,11 @@
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    @php
+                        $dtDaCongBo = in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']);
+                    @endphp
+
                     @if(!$duPhieu)
                     <form action="{{ route('truongkhoa.ketqua.nhacnho') }}" method="POST" class="d-inline">
                         @csrf
@@ -142,6 +157,18 @@
                             <i class="fa-regular fa-bell me-1"></i> Nhắc Nhở
                         </button>
                     </form>
+                    @elseif(!$dtDaCongBo)
+                    <form action="{{ route('truongkhoa.ketqua.congbo_detai') }}" method="POST" class="d-inline" onsubmit="return confirm('Trưởng khoa có chắc muốn CÔNG BỐ KẾT QUẢ chính thức cho đề tài này?');">
+                        @csrf
+                        <input type="hidden" name="MaHoSo" value="{{ $hoSo->MaHoSo }}">
+                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                            <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Đề Tài
+                        </button>
+                    </form>
+                    @else
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalThuHoiDt_{{ $hoSo->MaHoSo }}">
+                        <i class="fa-solid fa-undo me-1"></i> Thu Hồi Điểm
+                    </button>
                     @endif
 
                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalXacNhan_{{ $hoSo->MaHoSo }}">
@@ -290,7 +317,7 @@
                     <div class="fw-bold mb-1">
                         <i class="fa-solid fa-pen-ruler me-1"></i> Yêu Cầu Chỉnh Sửa Báo Cáo Sau Bảo Vệ:
                     </div>
-                    <div>{{ $hoSo->YeuCauChinhSuaSauBaoVe }}</div>
+                    <div>{!! \App\Helpers\HtmlHelper::renderRichText($hoSo->YeuCauChinhSuaSauBaoVe) !!}</div>
                     <div class="mt-1 text-muted" style="font-size: 0.75rem;">
                         <span>Hạn nộp: <strong>{{ \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe)->format('d/m/Y H:i') }}</strong></span> &bull; 
                         <span>Người kiểm tra: <strong>{{ $hoSo->NguoiKiemTraChinhSua }}</strong></span> &bull; 
@@ -394,7 +421,7 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark">Nội dung yêu cầu chỉnh sửa theo kết luận của Hội đồng <span class="text-danger">*</span>:</label>
                             <textarea name="YeuCauChinhSuaSauBaoVe" rows="4" class="form-control" required
-                                placeholder="Ví dụ: Bổ sung sơ đồ thiết kế kiến trúc phần 3.2; Sửa định dạng danh mục tài liệu tham khảo theo chuẩn IEEE; Cập nhật lại kết quả thực nghiệm...">{{ $hoSo->YeuCauChinhSuaSauBaoVe }}</textarea>
+                                placeholder="Ví dụ: Bổ sung sơ đồ thiết kế kiến trúc phần 3.2; Sửa định dạng danh mục tài liệu tham khảo theo chuẩn IEEE; Cập nhật lại kết quả thực nghiệm...">{{ \App\Helpers\HtmlHelper::toPlainText($hoSo->YeuCauChinhSuaSauBaoVe) }}</textarea>
                         </div>
 
                         <div class="row g-3 mb-3">
@@ -506,6 +533,69 @@
             </div>
         </div>
     </div>
+    @endforeach
+
+    <!-- Modal Thu Hồi Hội Đồng -->
+    <div class="modal fade" id="modalThuHoiHd" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                <div class="modal-header bg-danger text-white py-3">
+                    <h5 class="modal-title fw-bold fs-6 mb-0">Thu Hồi Quyết Định Công Bố Hội Đồng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('truongkhoa.ketqua.thuhoi_hoidong') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="MaHoiDong" value="{{ $hoiDong->MaHoiDong }}">
+                    <div class="modal-body p-4">
+                        <div class="alert alert-danger rounded-3 small p-3 mb-3">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            Điểm của tất cả các đề tài thuộc Hội đồng này sẽ được chuyển về trạng thái <em>Chưa công bố</em>.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Lý do thu hồi công bố <span class="text-danger">*</span>:</label>
+                            <textarea name="ly_do" class="form-control rounded-3" rows="3" placeholder="Nhập lý do thu hồi quyết định công bố của Hội đồng..." required minlength="5"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 bg-light">
+                        <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Xác Nhận Thu Hồi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Thu Hồi Từng Đề Tài -->
+    @foreach($tienDo['danhSachHoSo'] as $item)
+        @php $h = $item['hoSo']; @endphp
+        <div class="modal fade" id="modalThuHoiDt_{{ $h->MaHoSo }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                    <div class="modal-header bg-danger text-white py-3">
+                        <h5 class="modal-title fw-bold fs-6 mb-0">Thu Hồi Công Bố Đề Tài</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{ route('truongkhoa.ketqua.thuhoi_detai') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="MaHoSo" value="{{ $h->MaHoSo }}">
+                        <div class="modal-body p-4">
+                            <div class="alert alert-danger rounded-3 small p-3 mb-3">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                Kết quả đề tài <strong>{{ $h->nhom?->deTai?->TenDeTai ?? $h->MaHoSo }}</strong> sẽ được chuyển về trạng thái <em>Chưa công bố</em>.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-dark small">Lý do thu hồi <span class="text-danger">*</span>:</label>
+                                <textarea name="ly_do" class="form-control rounded-3" rows="3" placeholder="Nhập lý do thu hồi kết quả đề tài..." required minlength="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer py-2 bg-light">
+                            <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Xác Nhận Thu Hồi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endforeach
 </div>
 @endsection

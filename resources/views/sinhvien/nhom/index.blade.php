@@ -57,57 +57,6 @@
         border-bottom: 1px solid #f1f5f9;
     }
 
-    /* Bộ lọc toàn cục có padding cân đối */
-    .filter-item-box {
-        display: flex;
-        align-items: center;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        height: 44px;
-        padding: 0 14px;
-        transition: all 0.15s ease;
-    }
-    .filter-item-box:hover, .filter-item-box:focus-within {
-        border-color: #0072CE;
-        background-color: #ffffff;
-        box-shadow: 0 2px 6px rgba(0, 114, 206, 0.08);
-    }
-    .filter-item-label {
-        font-size: 0.825rem;
-        font-weight: 600;
-        color: #475569;
-        white-space: nowrap;
-        margin-right: 10px;
-        display: flex;
-        align-items: center;
-    }
-    .filter-item-select {
-        border: none !important;
-        background-color: transparent !important;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #003366;
-        padding: 0 4px;
-        box-shadow: none !important;
-        cursor: pointer;
-        width: 100%;
-    }
-    .filter-item-select:focus {
-        outline: none;
-    }
-    .filter-btn-invite {
-        height: 44px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        transition: all 0.15s ease;
-    }
-
     /* Thanh điều hướng Tab có padding rộng rãi */
     .workspace-nav-pills {
         background-color: #f1f5f9;
@@ -220,12 +169,30 @@
 <div class="nhom-page-root">
 
     <!-- ========================================================================================== -->
-    <!-- [1] BẢNG ĐIỀU HƯỚNG BỘ LỌC TẬP TRUNG (GLOBAL HEADER FILTER) -->
+    <!-- [1] BỘ LỌC TẬP TRUNG (GLOBAL HEADER FILTER) - ĐỒNG BỘ GIAO DIỆN VỚI TRANG ĐĂNG KÝ -->
     <!-- ========================================================================================== -->
-    <div class="card border border-slate-200 shadow-xs rounded-4 mb-4 p-3 bg-white">
+    <div class="card mb-4 bg-white border border-slate-200 shadow-xs rounded-4 p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 px-1">
+            <span class="fw-bold text-dark d-flex align-items-center" style="color: #003366 !important; font-size: 0.95rem;">
+                <i class="fa-solid fa-filter me-2" style="color: #0072CE;"></i>Bộ Lọc Nhóm Khóa Luận:
+            </span>
+            @php
+                $loiMoiCount = isset($loiMois) ? $loiMois->count() : 0;
+            @endphp
+            @if($loiMoiCount > 0)
+                <button type="button" 
+                        class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center"
+                        onclick="switchWorkspaceTab('tab-loimoi')">
+                    <i class="fa-regular fa-envelope-open me-2" style="color: #0072CE;"></i>Lời mời tham gia:
+                    <span class="badge bg-danger text-white rounded-pill ms-2">{{ $loiMoiCount }}</span>
+                </button>
+            @endif
+        </div>
+
+        <!-- HÀNG 1: 3 CỘT CÂN ĐỐI (HỌC KỲ, BỘ MÔN, HỌC PHẦN) -->
         <div class="row g-3 align-items-center">
             <!-- 1. HỌC KỲ -->
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-4">
                 <div class="filter-item-box">
                     <span class="filter-item-label">
                         <i class="fa-regular fa-calendar-days text-secondary me-2"></i>Học kỳ:
@@ -233,27 +200,26 @@
                     <select class="form-select form-select-sm filter-item-select" id="filter_hoc_ky" onchange="onHocKyFilterChange()">
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ $maHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '•' : '' }}
+                                {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}
                             </option>
                         @endforeach
                     </select>
                 </div>
             </div>
 
-            <!-- 2. BỘ MÔN CHUYÊN NGÀNH -->
-            <div class="col-12 col-md-3">
+            <!-- 2. BỘ MÔN CHUYÊN NGÀNH (HIỂN THỊ DẠNG FILTER-ITEM-STATIC) -->
+            <div class="col-12 col-md-4">
                 <div class="filter-item-box">
                     <span class="filter-item-label">
                         <i class="fa-solid fa-sitemap text-secondary me-2"></i>Bộ môn:
                     </span>
-                    <select class="form-select form-select-sm filter-item-select" id="filter_bo_mon" onchange="onBoMonChange()">
-                        <option value="ALL" {{ ($selectedBoMon === 'ALL' || !$selectedBoMon) ? 'selected' : '' }}>-- Tất cả bộ môn --</option>
-                        @foreach($boMons as $bm)
-                            <option value="{{ $bm->MaBoMon }}" {{ $selectedBoMon === $bm->MaBoMon ? 'selected' : '' }}>
-                                {{ $bm->TenBoMon }}
-                            </option>
-                        @endforeach
-                    </select>
+                    @php
+                        $boMonDisplayName = $boMons->firstWhere('MaBoMon', $selectedBoMon)->TenBoMon ?? ($sinhVien->lop->nganh->TenNganh ?? 'Bộ môn chuyên ngành');
+                    @endphp
+                    <div class="filter-item-static" title="{{ $boMonDisplayName }}">
+                        {{ $boMonDisplayName }}
+                    </div>
+                    <input type="hidden" id="filter_bo_mon" value="{{ $selectedBoMon }}">
                 </div>
             </div>
 
@@ -275,23 +241,70 @@
                     </select>
                 </div>
             </div>
-
-            <!-- 4. LỜI MỜI NHÓM -->
-            <div class="col-12 col-md-2">
-                @php
-                    $loiMoiCount = isset($loiMois) ? $loiMois->count() : 0;
-                @endphp
-                <button type="button" 
-                        class="btn w-100 filter-btn-invite border {{ $loiMoiCount > 0 ? 'btn-warning text-dark border-warning' : 'btn-light border-slate-200 text-slate-700' }}"
-                        onclick="switchWorkspaceTab('tab-loimoi')">
-                    <i class="fa-regular fa-bell {{ $loiMoiCount > 0 ? 'fa-shake text-danger' : 'text-secondary' }} me-1"></i>
-                    <span>Lời mời</span>
-                    <span class="badge {{ $loiMoiCount > 0 ? 'bg-danger text-white' : 'badge-neutral' }} rounded-pill ms-1" style="font-size: 11px;">
-                        {{ $loiMoiCount }}
-                    </span>
-                </button>
-            </div>
         </div>
+
+        <!-- HÀNG 2: BỘ LỌC TRẠNG THÁI ĐỀ TÀI, CHỖ TRỐNG & TÌM KIẾM MSSV / TÊN NHÓM -->
+        <form method="GET" action="{{ route('sinhvien.nhom.index') }}" id="groupFilterForm" class="mt-3 pt-3 border-top border-slate-200">
+            <input type="hidden" name="hoc_ky" value="{{ $maHocKy }}">
+            <input type="hidden" name="hoc_phan" value="{{ $selectedHocPhan }}">
+            <input type="hidden" name="bo_mon" value="{{ $selectedBoMon }}">
+            <input type="hidden" name="tab" value="tab-timnhom">
+
+            <div class="row g-3 align-items-center">
+                <!-- 1. Trạng Thái Đề Tài -->
+                <div class="col-12 col-md-3">
+                    <div class="filter-item-box">
+                        <span class="filter-item-label">
+                            <i class="fa-solid fa-book-bookmark text-secondary me-2"></i>Đề tài:
+                        </span>
+                        <select name="TrangThaiDeTai" class="filter-item-select" onchange="document.getElementById('groupFilterForm').submit()">
+                            <option value="ALL" {{ ($trangThaiDeTai ?? 'ALL') === 'ALL' ? 'selected' : '' }}>Tất cả</option>
+                            <option value="da_chon" {{ ($trangThaiDeTai ?? '') === 'da_chon' ? 'selected' : '' }}>Đã chọn đề tài</option>
+                            <option value="chua_chon" {{ ($trangThaiDeTai ?? '') === 'chua_chon' ? 'selected' : '' }}>Chưa chọn đề tài (còn trống)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 2. Số Chỗ Trống -->
+                <div class="col-12 col-md-3">
+                    <div class="filter-item-box">
+                        <span class="filter-item-label">
+                            <i class="fa-solid fa-users text-secondary me-2"></i>Chỗ trống:
+                        </span>
+                        <select name="ChoTrong" class="filter-item-select" onchange="document.getElementById('groupFilterForm').submit()">
+                            <option value="ALL" {{ ($choTrong ?? 'ALL') === 'ALL' ? 'selected' : '' }}>Tất cả</option>
+                            <option value="con_cho" {{ ($choTrong ?? '') === 'con_cho' ? 'selected' : '' }}>Còn chỗ trống (&lt;3 SV)</option>
+                            <option value="da_du" {{ ($choTrong ?? '') === 'da_du' ? 'selected' : '' }}>Đã đủ thành viên (3 SV)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 3. Ô Tìm MSSV / Tên Nhóm + Nút Tìm (Không icon thừa, không emoji, bo góc đầy đủ, padding-left 14px) -->
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="filter-item-box flex-grow-1" style="padding-left: 14px; padding-right: 14px;">
+                            <input type="text" 
+                                   name="q" 
+                                   class="filter-item-select w-100 input-search-sync" 
+                                   placeholder="Nhập MSSV hoặc tên nhóm..." 
+                                   value="{{ request('q') }}" 
+                                   style="font-size: 0.875rem; border-radius: 12px; padding-left: 0; outline: none; box-shadow: none; font-weight: normal;">
+                        </div>
+                        <button type="submit" class="btn btn-cyan px-4 fw-bold shadow-xs d-inline-flex align-items-center flex-shrink-0" style="height: 48px; border-radius: 12px;">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>Tìm
+                        </button>
+                        @if(request('q') || (isset($trangThaiDeTai) && $trangThaiDeTai !== 'ALL') || (isset($choTrong) && $choTrong !== 'ALL'))
+                            <a href="{{ route('sinhvien.nhom.index', ['hoc_ky' => $maHocKy, 'hoc_phan' => $selectedHocPhan, 'bo_mon' => $selectedBoMon, 'tab' => 'tab-timnhom']) }}" 
+                               class="btn btn-outline-secondary px-3 d-inline-flex align-items-center justify-content-center flex-shrink-0" 
+                               style="height: 48px; border-radius: 12px;" 
+                               title="Đặt lại bộ lọc">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- ========================================================================================== -->
@@ -435,7 +448,7 @@
 
                         <!-- BỐ CỤC 2 HỘP: THÔNG TIN NHÓM & THÔNG TIN ĐỀ TÀI (ĐÃ ĐƯỢC ĐƯA LÊN ĐẦU TIÊN) -->
                         <div class="row g-4 mb-4">
-                            <!-- 🏢 THÔNG TIN NHÓM & GVHD -->
+                            <!-- THÔNG TIN NHÓM & GVHD -->
                             <div class="col-12 col-lg-6">
                                 <div class="card border border-slate-200 shadow-xs rounded-4 h-100 overflow-hidden">
                                     <div class="card-header bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
@@ -512,7 +525,7 @@
                                 </div>
                             </div>
 
-                            <!-- 📄 THÔNG TIN ĐỀ TÀI KHÓA LUẬN -->
+                            <!-- THÔNG TIN ĐỀ TÀI KHÓA LUẬN -->
                             <div class="col-12 col-lg-6">
                                 <div class="card border border-slate-200 shadow-xs rounded-4 h-100 overflow-hidden">
                                     <div class="card-header bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
@@ -624,7 +637,7 @@
                             </div>
                         </div>
 
-                        <!-- 📊 TIẾN ĐỘ & BẢNG SỰ KIỆN QUA CÁC GIAI ĐOẠN (TIMELINE / MILESTONES) -->
+                        <!-- TIẾN ĐỘ & BẢNG SỰ KIỆN QUA CÁC GIAI ĐOẠN (TIMELINE / MILESTONES) -->
                         <div class="card border border-slate-200 shadow-xs rounded-4 overflow-hidden mb-4">
                             <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0" style="color: #003366; font-size: 0.9rem;">
@@ -749,7 +762,7 @@
                             </div>
                         </div>
 
-                        <!-- 🎓 KẾT QUẢ BẢO VỆ & HOÀN THIỆN BÁO CÁO SAU HỘI ĐỒNG (YÊU CẦU 5) -->
+                        <!-- KẾT QUẢ BẢO VỆ & HOÀN THIỆN BÁO CÁO SAU HỘI ĐỒNG (YÊU CẦU 5) -->
                         @php
                             $currentHoSo = $nhomCurrent->hoSoBaoVe;
                             $hasDefenseInfo = $currentHoSo && ($currentHoSo->hoiDong || !empty($currentHoSo->YeuCauChinhSuaSauBaoVe) || in_array($currentHoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaNopChinhSua', 'DaHoanThanh', 'ChuaDat']));
@@ -842,8 +855,8 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="bg-white p-3 rounded-3 border text-dark small" style="white-space: pre-line; line-height: 1.6;">
-                                        {{ $currentHoSo->YeuCauChinhSuaSauBaoVe }}
+                                    <div class="bg-white p-3 rounded-3 border text-dark small" style="line-height: 1.6;">
+                                        {!! \App\Helpers\HtmlHelper::renderRichText($currentHoSo->YeuCauChinhSuaSauBaoVe) !!}
                                     </div>
                                 </div>
                                 @endif
@@ -862,16 +875,18 @@
                                                 &bull; Người nộp: <strong>{{ $latestBaoCaoSauBaoVe->sinhVienNop->HoTen ?? $latestBaoCaoSauBaoVe->NguoiNop }}</strong>
                                             </div>
                                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;"
+                                                    onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $latestBaoCaoSauBaoVe->id) }}', '{{ addslashes($latestBaoCaoSauBaoVe->TenFile) }}', 'Báo cáo hoàn thiện - {{ addslashes($currentHoSo->nhom->deTai->TenDeTai ?? $currentHoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $latestBaoCaoSauBaoVe->id) }}' })">
                                                     <i class="fa-solid fa-eye me-1"></i> Xem Báo Cáo PDF
-                                                </a>
+                                                </button>
                                                 @if($latestBaoCaoSauBaoVe->FileGiaiTrinh)
-                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->FileGiaiTrinh) }}" target="_blank" class="btn btn-xs btn-outline-info rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;"
+                                                    onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $latestBaoCaoSauBaoVe->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($latestBaoCaoSauBaoVe->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $latestBaoCaoSauBaoVe->id, 'type' => 'giai_trinh']) }}' })">
                                                     <i class="fa-solid fa-file-lines me-1"></i> Bản Giải Trình
-                                                </a>
+                                                </button>
                                                 @endif
                                                 @if($latestBaoCaoSauBaoVe->FileMinhChung)
-                                                <a href="{{ asset('storage/' . $latestBaoCaoSauBaoVe->FileMinhChung) }}" target="_blank" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
+                                                <a href="{{ route('baocao_sau_baove.download', ['id' => $latestBaoCaoSauBaoVe->id, 'type' => 'minh_chung']) }}" download="{{ $latestBaoCaoSauBaoVe->TenFileMinhChung ?: 'MinhChung.zip' }}" class="btn btn-xs btn-outline-success rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;">
                                                     <i class="fa-solid fa-paperclip me-1"></i> Minh Chứng
                                                 </a>
                                                 @endif
@@ -882,8 +897,8 @@
                                                 <i class="fa-solid fa-comment-dots text-info me-1"></i>Ý Kiến Phản Hồi Của Người Kiểm Tra:
                                             </div>
                                             @if(!empty($latestBaoCaoSauBaoVe->NhanXetGV))
-                                                <div class="p-2 bg-white rounded-3 border text-dark small" style="white-space: pre-line; line-height: 1.5;">
-                                                    {{ $latestBaoCaoSauBaoVe->NhanXetGV }}
+                                                <div class="p-2 bg-white rounded-3 border text-dark small" style="line-height: 1.5;">
+                                                    {!! \App\Helpers\HtmlHelper::renderRichText($latestBaoCaoSauBaoVe->NhanXetGV) !!}
                                                 </div>
                                                 <div class="small text-muted mt-1" style="font-size: 0.725rem;">
                                                     <i class="fa-regular fa-clock me-1"></i> {{ $latestBaoCaoSauBaoVe->NgayKiemTra ? \Carbon\Carbon::parse($latestBaoCaoSauBaoVe->NgayKiemTra)->format('d/m/Y H:i') : '' }} &bull; Đánh giá bởi: <strong>{{ $latestBaoCaoSauBaoVe->NguoiKiemTra }}</strong>
@@ -1136,7 +1151,7 @@
                     <div class="card border border-slate-200 shadow-xs rounded-4 mb-4 overflow-hidden">
                         <div class="card-header bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
                             <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;">
-                                <i class="fa-solid fa-bell text-warning me-2"></i>Lời Mời Tham Gia Nhóm Gửi Tới Bạn
+                                <i class="fa-regular fa-envelope-open me-2" style="color: #0072CE;"></i>Lời Mời Tham Gia Nhóm Gửi Tới Bạn
                             </h6>
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1" style="font-size: 0.75rem;">
                                 {{ isset($loiMois) ? $loiMois->count() : 0 }} lời mời
@@ -1300,33 +1315,20 @@
                         @endif
                     </div>
 
-                    <!-- THANH TÌM KIẾM NHÓM MỞ -->
-                    <form method="GET" action="{{ route('sinhvien.nhom.index') }}" class="mb-4">
-                        <input type="hidden" name="hoc_phan" value="{{ $selectedHocPhan }}">
-                        <input type="hidden" name="hoc_ky" value="{{ $maHocKy }}">
-                        <input type="hidden" name="bo_mon" value="{{ $selectedBoMon }}">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-secondary ps-3">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </span>
-                            <input type="text" name="q" class="form-control border-start-0 ps-0 py-2 fw-semibold input-search-sync" 
-                                   placeholder="🔍 Nhập MSSV hoặc tên nhóm..." value="{{ request('q') }}" style="font-size: 0.875rem;">
-                            <button type="submit" class="btn btn-cyan px-4 fw-bold shadow-xs d-inline-flex align-items-center">
-                                <i class="fa-solid fa-search me-2"></i>Tìm
-                            </button>
-                            @if(request('q'))
-                            <a href="{{ route('sinhvien.nhom.index', ['hoc_phan' => $selectedHocPhan, 'hoc_ky' => $maHocKy, 'bo_mon' => $selectedBoMon]) }}" class="btn btn-outline-secondary px-3" title="Xóa tìm kiếm">
-                                <i class="fa-solid fa-rotate-left"></i>
-                            </a>
-                            @endif
-                        </div>
-                    </form>
-
-                    <!-- SỐ LƯỢNG NHÓM -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <!-- SỐ LƯỢNG NHÓM & BỘ LỌC ĐANG ÁP DỤNG -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <span class="badge badge-neutral px-3 py-2" id="badge-group-count" style="font-size: 0.8rem;">
                             Tìm thấy {{ count($nhomsOpen ?? []) }} nhóm
                         </span>
+                        @if(request('q') || (isset($trangThaiDeTai) && $trangThaiDeTai !== 'ALL') || (isset($choTrong) && $choTrong !== 'ALL'))
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted small">Đang áp dụng bộ lọc</span>
+                                <a href="{{ route('sinhvien.nhom.index', ['hoc_ky' => $maHocKy, 'hoc_phan' => $selectedHocPhan, 'bo_mon' => $selectedBoMon, 'tab' => 'tab-timnhom']) }}" 
+                                   class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center" style="font-size: 0.75rem;">
+                                    <i class="fa-solid fa-rotate-left me-1"></i>Xóa bộ lọc
+                                </a>
+                            </div>
+                        @endif
                     </div>
 
                     @php
@@ -1435,7 +1437,14 @@
                         @empty
                         <div class="text-center py-5 text-muted" style="font-size: 0.875rem;">
                             <i class="fa-solid fa-users-slash fs-1 opacity-50 mb-3 d-block"></i>
-                            <p class="mb-2">Không tìm thấy nhóm nào phù hợp với bộ lọc hoặc từ khóa tìm kiếm.</p>
+                            <p class="mb-2 fw-semibold" style="color: #003366; font-size: 1rem;">Không tìm thấy nhóm phù hợp</p>
+                            <p class="small text-secondary mb-3">Không có nhóm nào khớp với bộ lọc trạng thái hoặc từ khóa tìm kiếm đã chọn.</p>
+                            @if(request('q') || (isset($trangThaiDeTai) && $trangThaiDeTai !== 'ALL') || (isset($choTrong) && $choTrong !== 'ALL'))
+                                <a href="{{ route('sinhvien.nhom.index', ['hoc_ky' => $maHocKy, 'hoc_phan' => $selectedHocPhan, 'bo_mon' => $selectedBoMon, 'tab' => 'tab-timnhom']) }}" 
+                                   class="btn btn-sm btn-outline-primary rounded-pill px-4 py-2 fw-semibold">
+                                    <i class="fa-solid fa-rotate-left me-2"></i>Xóa bộ lọc &amp; Xem tất cả nhóm
+                                </a>
+                            @endif
                         </div>
                         @endforelse
                     </div>
@@ -1934,8 +1943,16 @@ function applyCascadeFilter() {
 
     const url = new URL("{{ route('sinhvien.nhom.index') }}", window.location.origin);
     if (hk) url.searchParams.set('hoc_ky', hk);
-    if (bm) url.searchParams.set('bo_mon', bm);
-    if (hp) url.searchParams.set('hoc_phan', hp);
+    if (bm && bm !== 'ALL') url.searchParams.set('bo_mon', bm);
+    if (hp && hp !== 'ALL') url.searchParams.set('hoc_phan', hp);
+
+    // Giữ lại các tham số lọc trạng thái & tìm kiếm nếu có
+    const currentParams = new URLSearchParams(window.location.search);
+    if (currentParams.get('TrangThaiDeTai')) url.searchParams.set('TrangThaiDeTai', currentParams.get('TrangThaiDeTai'));
+    if (currentParams.get('ChoTrong')) url.searchParams.set('ChoTrong', currentParams.get('ChoTrong'));
+    if (currentParams.get('q')) url.searchParams.set('q', currentParams.get('q'));
+    if (currentParams.get('tab')) url.searchParams.set('tab', currentParams.get('tab'));
+
     window.location.href = url.toString();
 }
 
@@ -1961,6 +1978,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const badgeCount = document.getElementById('badge-group-count');
             if (badgeCount) badgeCount.textContent = `Tìm thấy ${visibleCount} nhóm`;
+            const tabBadge = document.querySelector('#tab-timnhom-tab .badge');
+            if (tabBadge) tabBadge.textContent = visibleCount;
         });
     });
 

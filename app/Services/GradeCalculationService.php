@@ -9,6 +9,8 @@ use App\Models\HocKy;
 use App\Models\HoiDong;
 use App\Models\HoSoBaoVe;
 use App\Models\GiangVien;
+use App\Models\LichSuCongBoKetQua;
+use App\Models\TaiKhoan;
 use App\Services\ThongBaoService;
 use Illuminate\Support\Facades\DB;
 
@@ -332,24 +334,386 @@ class GradeCalculationService
     }
 
     /**
-     * Trưởng khoa Công bố kết quả chính thức của toàn Hội đồng hoặc từng Đề tài.
-     * Cập nhật trạng thái 'Đã công bố', đóng băng dữ liệu và phát thông báo.
+     * Kiểm tra điều kiện công bố cho 1 Đề tài (Hồ sơ bảo vệ).
+     * Bắt buộc: Hội đồng phải có thành viên và 100% thành viên đã nộp phiếu 'Đã hoàn thành' cho mọi SV trong nhóm.
      */
-    public function congBoKetQua(string $maHoiDong, string $nguoiCongBo): void
+    public function kiemTraDieuKienCongBoDeTai(string $maHoSo): array
     {
-        $hoiDong = HoiDong::with([
-            'hoSoBaoVes.nhom.thanhViens.sinhVien',
-            'hoSoBaoVes.nhom.deTai.giangVien',
-        ])->findOrFail($maHoiDong);
+        $hoSo = HoSoBaoVe::with([
+            'nhom.thanhViens.sinhVien',
+            'nhom.deTai.giangVien',
+            'hoiDong.thanhViens.giangVien',
+        ])->find($maHoSo);
 
-        DB::transaction(function () use ($hoiDong, $nguoiCongBo) {
+        if (!$hoSo) {
+            return [
+                'du_dieu_kien' => false,
+                'ly_do'        => 'Không tìm thấy hồ sơ bảo vệ ' . $maHoSo,
+                'ma_ho_so'     => $maHoSo,
+            ];
+        }
+
+        if (!$hoSo->MaHoiDong || !$hoSo->hoiDong) {
+            return [
+                'du_dieu_kien' => false,
+                'ly_do'        => 'Đề tài chưa được phân công vào Hội đồng bảo vệ nào.',
+                'ma_ho_so'     => $maHoSo,
+                'ten_de_tai'   => $hoSo->nhom?->deTai?->TenDeTai ?? 'Chưa xác định',
+                'ten_nhom'     => $hoSo->nhom?->TenNhom ?? $hoSo->MaNhom,
+            ];
+        }
+
+        $allMembers = $hoSo->hoiDong->thanhViens;
+        $totalMembers = $allMembers->count();
+
+        if ($totalMembers === 0) {
+            return [
+                'du_dieu_kien' => false,
+                'ly_do'        => "Hội đồng {$hoSo->hoiDong->TenHoiDong} chưa có thành viên giám khảo nào.",
+                'ma_ho_so'     => $maHoSo,
+                'ten_de_tai'   => $hoSo->nhom?->deTai?->TenDeTai ?? 'Chưa xác định',
+                'ten_nhom'     => $hoSo->nhom?->TenNhom ?? $hoSo->MaNhom,
+            ];
+        }
+
+        $phieuChams = PhieuChamDiem::where('MaHoiDong', $hoSo->MaHoiDong)
+            ->where('MaHoSo', $hoSo->MaHoSo)
+            ->get();
+
+        $gvHoanThanh = [];
+        $gvChuaHoanThanh = [];
+
+        foreach ($allMembers as $tv) {
+            $phieusCuaGV = $phieuChams->where('MaGV', $tv->MaGV);
+            $gv = $tv->giangVien;
+            $hoTen = $gv?->HoTen ?? $tv->MaGV;
+            $vaiTro = $tv->VaiTro ?? 'Thành viên';
+
+            if ($phieusCuaGV->isEmpty()) {
+                $gvChuaHoanThanh[] = [
+                    'MaGV'      => $tv->MaGV,
+                    'HoTen'     => $hoTen,
+                    'VaiTro'    => $vaiTro,
+                    'TrangThai' => 'Chưa chấm',
+                ];
+            } else {
+                $tatCaXong = $phieusCuaGV->every(fn($p) => $p->TrangThai === 'Đã hoàn thành');
+                if ($tatCaXong) {
+                    $gvHoanThanh[] = [
+                        'MaGV'   => $tv->MaGV,
+                        'HoTen'  => $hoTen,
+                        'VaiTro' => $vaiTro,
+                    ];
+                } else {
+                    $gvChuaHoanThanh[] = [
+                        'MaGV'      => $tv->MaGV,
+                        'HoTen'     => $hoTen,
+                        'VaiTro'    => $vaiTro,
+                        'TrangThai' => 'Lưu nháp / Chưa ký',
+                    ];
+                }
+            }
+        }
+
+        $duDieuKien = ($totalMembers > 0 && count($gvHoanThanh) === $totalMembers);
+        $daCongBo = in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']);
+
+        $lyDo = '';
+        if (!$duDieuKien) {
+            $danhSachGv = implode(', ', array_map(fn($g) => "{$g['HoTen']} ({$g['TrangThai']})", $gvChuaHoanThanh));
+            $lyDo = "Còn " . count($gvChuaHoanThanh) . " giám khảo chưa hoàn thành nộp phiếu: {$danhSachGv}.";
+        }
+
+        $sinhViens = [];
+        if ($hoSo->nhom) {
+            foreach ($hoSo->nhom->thanhViens as $tvn) {
+                if ($tvn->sinhVien) {
+                    $kq = KetQuaSinhVien::where('MaSV', $tvn->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                    $sinhViens[] = [
+                        'MaSV'          => $tvn->MaSV,
+                        'HoTen'         => $tvn->sinhVien->HoTen,
+                        'DiemTB'        => $kq?->DiemHoiDongTB,
+                        'DiemChinhThuc' => $kq?->DiemChinhThuc ?? $kq?->DiemTongKet,
+                        'TrangThai'     => $kq?->TrangThai ?? 'Chưa chấm',
+                    ];
+                }
+            }
+        }
+
+        return [
+            'du_dieu_kien'       => $duDieuKien,
+            'da_cong_bo'         => $daCongBo,
+            'ly_do'              => $lyDo,
+            'ma_ho_so'           => $hoSo->MaHoSo,
+            'ten_de_tai'         => $hoSo->nhom?->deTai?->TenDeTai ?? 'Chưa xác định',
+            'ten_nhom'           => $hoSo->nhom?->TenNhom ?? $hoSo->MaNhom,
+            'ma_hoi_dong'        => $hoSo->MaHoiDong,
+            'ten_hoi_dong'       => $hoSo->hoiDong->TenHoiDong,
+            'tong_gv'            => $totalMembers,
+            'so_gv_hoan_thanh'   => count($gvHoanThanh),
+            'gv_hoan_thanh'      => $gvHoanThanh,
+            'gv_chua_hoan_thanh' => $gvChuaHoanThanh,
+            'sinh_viens'         => $sinhViens,
+        ];
+    }
+
+    /**
+     * Kiểm tra điều kiện công bố cho toàn bộ 1 Hội đồng.
+     */
+    public function kiemTraDieuKienCongBoHoiDong(string $maHoiDong): array
+    {
+        $hoiDong = HoiDong::with(['hoSoBaoVes'])->find($maHoiDong);
+        if (!$hoiDong) {
+            return [
+                'du_dieu_kien' => false,
+                'ly_do'        => 'Không tìm thấy Hội đồng bảo vệ ' . $maHoiDong,
+                'ma_hoi_dong'  => $maHoiDong,
+            ];
+        }
+
+        $danhSach = [];
+        $tongDeTai = $hoiDong->hoSoBaoVes->count();
+        $deTaiDu = 0;
+        $deTaiDaCongBo = 0;
+        $deTaiChuaDu = [];
+
+        foreach ($hoiDong->hoSoBaoVes as $hoSo) {
+            $chk = $this->kiemTraDieuKienCongBoDeTai($hoSo->MaHoSo);
+            $danhSach[] = $chk;
+            if ($chk['du_dieu_kien']) {
+                $deTaiDu++;
+            } else {
+                $deTaiChuaDu[] = $chk;
+            }
+            if ($chk['da_cong_bo']) {
+                $deTaiDaCongBo++;
+            }
+        }
+
+        $duDieuKien = ($tongDeTai > 0 && $deTaiDu === $tongDeTai);
+        $lyDo = '';
+        if ($tongDeTai === 0) {
+            $lyDo = "Hội đồng {$hoiDong->TenHoiDong} chưa có nhóm đề tài nào.";
+        } elseif (!$duDieuKien) {
+            $lyDo = "Hội đồng có {$deTaiDu}/{$tongDeTai} đề tài đủ điều kiện. Còn " . count($deTaiChuaDu) . " đề tài chưa đủ 100% phiếu chấm hợp lệ.";
+        }
+
+        return [
+            'du_dieu_kien'       => $duDieuKien,
+            'ly_do'              => $lyDo,
+            'ma_hoi_dong'        => $maHoiDong,
+            'ten_hoi_dong'       => $hoiDong->TenHoiDong,
+            'tong_de_tai'        => $tongDeTai,
+            'de_tai_du'          => $deTaiDu,
+            'so_de_tai_chua_du'  => count($deTaiChuaDu),
+            'de_tai_chua_du'     => $deTaiChuaDu,
+            'de_tai_da_cong_bo'  => $deTaiDaCongBo,
+            'danh_sach_de_tai'   => $danhSach,
+            'da_cong_bo_toan_bo' => ($tongDeTai > 0 && $deTaiDaCongBo === $tongDeTai),
+        ];
+    }
+
+    /**
+     * Kiểm tra điều kiện công bố cho toàn bộ 1 Học kỳ / Đợt (Toàn khoa).
+     */
+    public function kiemTraDieuKienCongBoToanDot(string $maHocKy, ?string $maKhoa = null): array
+    {
+        $hoSoQuery = HoSoBaoVe::whereNotNull('MaHoiDong')
+            ->whereHas('hoiDong', fn($q) => $q->where('MaHocKy', $maHocKy))
+            ->with(['nhom.thanhViens.sinhVien', 'nhom.deTai.giangVien', 'hoiDong']);
+
+        if ($maKhoa) {
+            $hoSoQuery->where(function ($q) use ($maKhoa) {
+                $q->whereHas('hoiDong', fn($hd) => $hd->where('MaKhoa', $maKhoa))
+                  ->orWhereHas('nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
+            });
+        }
+
+        $hoSos = $hoSoQuery->get();
+        $totalDeTai = $hoSos->count();
+        $dsDu = [];
+        $dsChuaDu = [];
+        $dsDaCongBo = [];
+        $totalSV = 0;
+
+        foreach ($hoSos as $hoSo) {
+            $chk = $this->kiemTraDieuKienCongBoDeTai($hoSo->MaHoSo);
+            $totalSV += count($chk['sinh_viens'] ?? []);
+            if ($chk['da_cong_bo']) {
+                $dsDaCongBo[] = $chk;
+            }
+            if ($chk['du_dieu_kien']) {
+                $dsDu[] = $chk;
+            } else {
+                $dsChuaDu[] = $chk;
+            }
+        }
+
+        return [
+            'ma_hoc_ky'            => $maHocKy,
+            'tong_de_tai'          => $totalDeTai,
+            'tong_sinh_vien'       => $totalSV,
+            'so_de_tai_du'         => count($dsDu),
+            'so_de_tai_chua_du'    => count($dsChuaDu),
+            'so_de_tai_da_cong_bo' => count($dsDaCongBo),
+            'de_tai_du'            => $dsDu,
+            'de_tai_chua_du'       => $dsChuaDu,
+            'de_tai_da_cong_bo'    => $dsDaCongBo,
+        ];
+    }
+
+    /**
+     * Mức 1: Công bố kết quả chính thức cho 1 Đề tài (Hồ sơ bảo vệ).
+     */
+    public function congBoDeTai(string $maHoSo, string $nguoiCongBo, ?string $maTK = null): array
+    {
+        $chk = $this->kiemTraDieuKienCongBoDeTai($maHoSo);
+        if (!$chk['du_dieu_kien']) {
+            return [
+                'success' => false,
+                'message' => 'Không thể công bố đề tài: ' . $chk['ly_do'],
+            ];
+        }
+
+        $hoSo = HoSoBaoVe::with([
+            'nhom.thanhViens.sinhVien',
+            'nhom.deTai.giangVien',
+            'hoiDong',
+        ])->findOrFail($maHoSo);
+
+        $snapshot = [];
+
+        DB::transaction(function () use ($hoSo, $nguoiCongBo, $maTK, &$snapshot) {
+            $maHocKy = $hoSo->hoiDong?->MaHocKy ?? (HocKy::where('TrangThai', true)->value('MaHocKy') ?? 'HK_CURRENT');
+
+            // Cập nhật điểm cho từng sinh viên
+            foreach ($hoSo->nhom->thanhViens as $tv) {
+                $this->tinhVaLuuDiemSinhVien($tv->MaSV, $hoSo->MaHoiDong, $hoSo, $maHocKy, true);
+
+                $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                if ($kq) {
+                    $finalScore = $kq->DiemChinhThuc ?? $kq->DiemHoiDongTB ?? 0.0;
+                    $kq->DiemChinhThuc = $finalScore;
+                    $kq->DiemTongKet = $finalScore;
+                    $kq->KetQua = KetQuaSinhVien::xepLoai($finalScore);
+                    $kq->TrangThai = 'Đã công bố';
+                    $kq->NguoiCongBo = $nguoiCongBo;
+                    $kq->NgayCongBo = now();
+                    $kq->save();
+
+                    $snapshot[] = [
+                        'MaSV'          => $tv->MaSV,
+                        'HoTen'         => $tv->sinhVien?->HoTen ?? 'N/A',
+                        'DiemHoiDongTB' => $kq->DiemHoiDongTB,
+                        'DiemChinhThuc' => $kq->DiemChinhThuc,
+                        'KetQua'        => $kq->KetQua,
+                    ];
+                }
+            }
+
+            // Cập nhật trạng thái Hồ sơ
+            if ($hoSo->TrangThaiKetQua !== 'DaHoanThanh') {
+                $hoSo->TrangThaiKetQua = !empty($hoSo->YeuCauChinhSuaSauBaoVe)
+                    ? 'CoYeuCauChinhSua'
+                    : 'DaCongBo';
+                $hoSo->save();
+            }
+
+            // Ghi Audit Log
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'CONG_BO',
+                'PhamVi'          => 'DE_TAI',
+                'MaHocKy'         => $maHocKy,
+                'MaHoiDong'       => $hoSo->MaHoiDong,
+                'MaHoSo'          => $hoSo->MaHoSo,
+                'SoLuongDeTai'    => 1,
+                'SoLuongSinhVien' => count($snapshot),
+                'NguoiThucHien'   => $nguoiCongBo,
+                'MaTK'            => $maTK,
+                'LyDo'            => 'Trưởng khoa duyệt công bố điểm chính thức đề tài sau khi hoàn thành 100% phiếu chấm hợp lệ.',
+                'DuLieuSnapshot'  => [
+                    'de_tai'     => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'nhom'       => $hoSo->nhom?->TenNhom ?? 'N/A',
+                    'hoi_dong'   => $hoSo->hoiDong?->TenHoiDong ?? 'N/A',
+                    'sinh_viens' => $snapshot,
+                ],
+            ]);
+
+            // Thông báo đến Nhóm Sinh viên
+            ThongBaoService::guiDenNhom(
+                $hoSo->MaNhom,
+                'Công bố kết quả bảo vệ Khóa luận tốt nghiệp',
+                "Trưởng khoa đã công bố chính thức kết quả bảo vệ Khóa luận tốt nghiệp cho đề tài '{$hoSo->nhom?->deTai?->TenDeTai}'. Sinh viên có thể vào xem bảng điểm và nhận xét chi tiết.",
+                'Kết quả'
+            );
+
+            // Thông báo đến GVHD
+            if ($hoSo->nhom?->deTai?->MaGV) {
+                ThongBaoService::gui(
+                    $hoSo->nhom->deTai->MaGV,
+                    'Công bố kết quả bảo vệ Khóa luận nhóm hướng dẫn',
+                    "Kết quả bảo vệ Khóa luận của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}) đã được Trưởng khoa công bố chính thức.",
+                    'Kết quả'
+                );
+            }
+
+            // Thông báo đến các thành viên Hội đồng
+            foreach ($hoSo->hoiDong?->thanhViens ?? [] as $tvHd) {
+                ThongBaoService::gui(
+                    $tvHd->MaGV,
+                    'Kết quả bảo vệ Khóa luận đã được công bố',
+                    "Kết quả bảo vệ của đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' thuộc Hội đồng {$hoSo->hoiDong?->TenHoiDong} đã được Trưởng khoa công bố chính thức.",
+                    'Kết quả'
+                );
+            }
+
+            // Thông báo cho Giáo vụ / Admin
+            $this->notifyAdmins(
+                'Công bố kết quả bảo vệ Khóa luận',
+                "Trưởng khoa đã công bố chính thức kết quả cho đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' (Hồ sơ: {$hoSo->MaHoSo})."
+            );
+        });
+
+        return [
+            'success' => true,
+            'message' => "Đã công bố chính thức kết quả cho đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' thành công!",
+        ];
+    }
+
+    /**
+     * Mức 2: Công bố kết quả chính thức cho 1 Hội đồng (các đề tài đủ điều kiện).
+     */
+    public function congBoHoiDong(string $maHoiDong, string $nguoiCongBo, ?string $maTK = null): array
+    {
+        $chkHd = $this->kiemTraDieuKienCongBoHoiDong($maHoiDong);
+        if ($chkHd['de_tai_du'] === 0) {
+            return [
+                'success' => false,
+                'message' => "Không thể công bố Hội đồng: Chưa có đề tài nào đủ 100% phiếu chấm hợp lệ! ({$chkHd['ly_do']})",
+            ];
+        }
+
+        $hoiDong = HoiDong::with(['hoSoBaoVes'])->findOrFail($maHoiDong);
+        $publishedCount = 0;
+        $totalSV = 0;
+        $allSnapshots = [];
+
+        DB::transaction(function () use ($hoiDong, $maHoiDong, $nguoiCongBo, $maTK, &$publishedCount, &$totalSV, &$allSnapshots) {
+            $maHocKy = $hoiDong->MaHocKy ?? (HocKy::where('TrangThai', true)->value('MaHocKy') ?? 'HK_CURRENT');
+
             foreach ($hoiDong->hoSoBaoVes as $hoSo) {
-                // Khóa điểm chính thức cho tất cả sinh viên
-                foreach ($hoSo->nhom->thanhViens as $tv) {
-                    $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)
-                        ->where('MaHoSo', $hoSo->MaHoSo)
-                        ->first();
+                $chkDt = $this->kiemTraDieuKienCongBoDeTai($hoSo->MaHoSo);
+                if (!$chkDt['du_dieu_kien']) {
+                    continue; // Bỏ qua đề tài chưa đủ phiếu
+                }
 
+                $hoSo->loadMissing(['nhom.thanhViens.sinhVien', 'nhom.deTai.giangVien']);
+                $subSnap = [];
+
+                foreach ($hoSo->nhom->thanhViens as $tv) {
+                    $this->tinhVaLuuDiemSinhVien($tv->MaSV, $hoSo->MaHoiDong ?? $maHoiDong, $hoSo, $maHocKy, true);
+
+                    $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
                     if ($kq) {
                         $finalScore = $kq->DiemChinhThuc ?? $kq->DiemHoiDongTB ?? 0.0;
                         $kq->DiemChinhThuc = $finalScore;
@@ -359,10 +723,18 @@ class GradeCalculationService
                         $kq->NguoiCongBo = $nguoiCongBo;
                         $kq->NgayCongBo = now();
                         $kq->save();
+
+                        $subSnap[] = [
+                            'MaSV'          => $tv->MaSV,
+                            'HoTen'         => $tv->sinhVien?->HoTen ?? 'N/A',
+                            'DiemHoiDongTB' => $kq->DiemHoiDongTB,
+                            'DiemChinhThuc' => $kq->DiemChinhThuc,
+                            'KetQua'        => $kq->KetQua,
+                        ];
+                        $totalSV++;
                     }
                 }
 
-                // Cập nhật trạng thái hồ sơ
                 if ($hoSo->TrangThaiKetQua !== 'DaHoanThanh') {
                     $hoSo->TrangThaiKetQua = !empty($hoSo->YeuCauChinhSuaSauBaoVe)
                         ? 'CoYeuCauChinhSua'
@@ -370,7 +742,14 @@ class GradeCalculationService
                     $hoSo->save();
                 }
 
-                // Gửi thông báo đến từng sinh viên của nhóm
+                $publishedCount++;
+                $allSnapshots[] = [
+                    'ma_ho_so'   => $hoSo->MaHoSo,
+                    'ten_de_tai' => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'sinh_viens' => $subSnap,
+                ];
+
+                // Thông báo sinh viên nhóm
                 ThongBaoService::guiDenNhom(
                     $hoSo->MaNhom,
                     'Công bố kết quả bảo vệ Khóa luận tốt nghiệp',
@@ -378,17 +757,544 @@ class GradeCalculationService
                     'Kết quả'
                 );
 
-                // Gửi thông báo đến Giảng viên hướng dẫn
+                // Thông báo GVHD
                 if ($hoSo->nhom?->deTai?->MaGV) {
                     ThongBaoService::gui(
                         $hoSo->nhom->deTai->MaGV,
                         'Công bố kết quả bảo vệ Khóa luận nhóm hướng dẫn',
-                        "Kết quả bảo vệ Khóa luận của nhóm {$hoSo->nhom->TenNhom} (Đề tài: {$hoSo->nhom->deTai->TenDeTai}) đã được công bố chính thức bởi Trưởng khoa.",
+                        "Kết quả bảo vệ Khóa luận của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}) đã được Trưởng khoa công bố chính thức.",
                         'Kết quả'
                     );
                 }
             }
+
+            // Ghi Audit Log cho toàn Hội đồng
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'CONG_BO',
+                'PhamVi'          => 'HOI_DONG',
+                'MaHocKy'         => $maHocKy,
+                'MaHoiDong'       => $maHoiDong,
+                'SoLuongDeTai'    => $publishedCount,
+                'SoLuongSinhVien' => $totalSV,
+                'NguoiThucHien'   => $nguoiCongBo,
+                'MaTK'            => $maTK,
+                'LyDo'            => "Trưởng khoa công bố kết quả bảo vệ cho {$publishedCount} đề tài đủ điều kiện thuộc Hội đồng {$hoiDong->TenHoiDong}.",
+                'DuLieuSnapshot'  => [
+                    'hoi_dong' => $hoiDong->TenHoiDong,
+                    'de_tais'  => $allSnapshots,
+                ],
+            ]);
+
+            // Thông báo toàn bộ giám khảo Hội đồng
+            foreach ($hoiDong->thanhViens ?? [] as $tvHd) {
+                ThongBaoService::gui(
+                    $tvHd->MaGV,
+                    'Công bố kết quả Hội đồng bảo vệ Khóa luận',
+                    "Trưởng khoa đã công bố chính thức kết quả bảo vệ của {$publishedCount} đề tài thuộc Hội đồng {$hoiDong->TenHoiDong}.",
+                    'Kết quả'
+                );
+            }
+
+            // Thông báo Giáo vụ / Admin
+            $this->notifyAdmins(
+                'Công bố kết quả Hội đồng bảo vệ',
+                "Trưởng khoa đã công bố kết quả bảo vệ cho {$publishedCount} đề tài thuộc Hội đồng {$hoiDong->TenHoiDong}."
+            );
         });
+
+        return [
+            'success'        => true,
+            'message'        => "Đã công bố chính thức kết quả cho {$publishedCount} đề tài thuộc Hội đồng {$hoiDong->TenHoiDong}!",
+            'publishedCount' => $publishedCount,
+        ];
+    }
+
+    /**
+     * Mức 3: Công bố kết quả chính thức cho Toàn Bộ Đợt / Học kỳ.
+     */
+    public function congBoToanDot(string $maHocKy, string $nguoiCongBo, ?string $maTK = null, ?string $maKhoa = null): array
+    {
+        $chk = $this->kiemTraDieuKienCongBoToanDot($maHocKy, $maKhoa);
+        if ($chk['so_de_tai_du'] === 0) {
+            return [
+                'success' => false,
+                'message' => 'Không thể công bố toàn đợt: Chưa có đề tài nào đủ 100% phiếu chấm hợp lệ để công bố.',
+            ];
+        }
+
+        $totalDeTaiPublished = 0;
+        $totalSVPublished = 0;
+        $allSnapshots = [];
+
+        DB::transaction(function () use ($chk, $maHocKy, $nguoiCongBo, $maTK, &$totalDeTaiPublished, &$totalSVPublished, &$allSnapshots) {
+            foreach ($chk['de_tai_du'] as $dtInfo) {
+                $hoSo = HoSoBaoVe::with(['nhom.thanhViens.sinhVien', 'nhom.deTai.giangVien', 'hoiDong'])->find($dtInfo['ma_ho_so']);
+                if (!$hoSo) continue;
+
+                $subSnap = [];
+                foreach ($hoSo->nhom->thanhViens as $tv) {
+                    $this->tinhVaLuuDiemSinhVien($tv->MaSV, $hoSo->MaHoiDong, $hoSo, $maHocKy, true);
+
+                    $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                    if ($kq) {
+                        $finalScore = $kq->DiemChinhThuc ?? $kq->DiemHoiDongTB ?? 0.0;
+                        $kq->DiemChinhThuc = $finalScore;
+                        $kq->DiemTongKet = $finalScore;
+                        $kq->KetQua = KetQuaSinhVien::xepLoai($finalScore);
+                        $kq->TrangThai = 'Đã công bố';
+                        $kq->NguoiCongBo = $nguoiCongBo;
+                        $kq->NgayCongBo = now();
+                        $kq->save();
+
+                        $subSnap[] = [
+                            'MaSV'          => $tv->MaSV,
+                            'HoTen'         => $tv->sinhVien?->HoTen ?? 'N/A',
+                            'DiemHoiDongTB' => $kq->DiemHoiDongTB,
+                            'DiemChinhThuc' => $kq->DiemChinhThuc,
+                            'KetQua'        => $kq->KetQua,
+                        ];
+                        $totalSVPublished++;
+                    }
+                }
+
+                if ($hoSo->TrangThaiKetQua !== 'DaHoanThanh') {
+                    $hoSo->TrangThaiKetQua = !empty($hoSo->YeuCauChinhSuaSauBaoVe)
+                        ? 'CoYeuCauChinhSua'
+                        : 'DaCongBo';
+                    $hoSo->save();
+                }
+
+                $totalDeTaiPublished++;
+                $allSnapshots[] = [
+                    'ma_ho_so'   => $hoSo->MaHoSo,
+                    'ten_de_tai' => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'sinh_viens' => $subSnap,
+                ];
+
+                // Thông báo sinh viên nhóm
+                ThongBaoService::guiDenNhom(
+                    $hoSo->MaNhom,
+                    'Công bố kết quả bảo vệ Khóa luận tốt nghiệp',
+                    "Trưởng khoa đã công bố chính thức kết quả bảo vệ Khóa luận tốt nghiệp đợt học kỳ {$maHocKy}. Sinh viên có thể vào xem bảng điểm và nhận xét chi tiết.",
+                    'Kết quả'
+                );
+
+                // Thông báo GVHD
+                if ($hoSo->nhom?->deTai?->MaGV) {
+                    ThongBaoService::gui(
+                        $hoSo->nhom->deTai->MaGV,
+                        'Công bố kết quả bảo vệ Khóa luận toàn đợt',
+                        "Kết quả bảo vệ Khóa luận của nhóm {$hoSo->nhom?->TenNhom} đã được Trưởng khoa công bố chính thức.",
+                        'Kết quả'
+                    );
+                }
+            }
+
+            // Ghi Audit Log toàn đợt
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'CONG_BO',
+                'PhamVi'          => 'TOAN_DOT',
+                'MaHocKy'         => $maHocKy,
+                'SoLuongDeTai'    => $totalDeTaiPublished,
+                'SoLuongSinhVien' => $totalSVPublished,
+                'NguoiThucHien'   => $nguoiCongBo,
+                'MaTK'            => $maTK,
+                'LyDo'            => "Trưởng khoa công bố chính thức toàn đợt cho {$totalDeTaiPublished} đề tài đủ điều kiện trong học kỳ {$maHocKy}.",
+                'DuLieuSnapshot'  => [
+                    'ma_hoc_ky' => $maHocKy,
+                    'de_tais'   => $allSnapshots,
+                ],
+            ]);
+
+            // Thông báo Giáo vụ / Admin
+            $this->notifyAdmins(
+                'Công bố kết quả Khóa luận toàn đợt',
+                "Trưởng khoa đã công bố chính thức kết quả bảo vệ toàn đợt cho {$totalDeTaiPublished} đề tài ({$totalSVPublished} sinh viên) trong học kỳ {$maHocKy}."
+            );
+        });
+
+        return [
+            'success'             => true,
+            'message'             => "Đã công bố chính thức toàn đợt thành công cho {$totalDeTaiPublished} đề tài ({$totalSVPublished} sinh viên)!",
+            'totalDeTaiPublished' => $totalDeTaiPublished,
+            'totalSVPublished'    => $totalSVPublished,
+            'soDeTaiChuaDu'       => $chk['so_de_tai_chua_du'],
+        ];
+    }
+
+    /**
+     * Thu hồi công bố kết quả cho 1 Đề tài (Hồ sơ bảo vệ).
+     * Bắt buộc có lý do thu hồi, chuyển trạng thái về chưa công bố, lưu audit log.
+     */
+    public function thuHoiCongBoDeTai(string $maHoSo, string $nguoiThuHoi, string $lyDo, ?string $maTK = null): array
+    {
+        if (empty(trim($lyDo))) {
+            return [
+                'success' => false,
+                'message' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố kết quả.',
+            ];
+        }
+
+        $hoSo = HoSoBaoVe::with([
+            'nhom.thanhViens.sinhVien',
+            'nhom.deTai.giangVien',
+            'hoiDong',
+        ])->findOrFail($maHoSo);
+
+        $snapshot = [];
+
+        DB::transaction(function () use ($hoSo, $nguoiThuHoi, $lyDo, $maTK, &$snapshot) {
+            $maHocKy = $hoSo->hoiDong?->MaHocKy ?? 'HK_CURRENT';
+
+            foreach ($hoSo->nhom->thanhViens as $tv) {
+                $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                if ($kq) {
+                    $snapshot[] = [
+                        'MaSV'          => $tv->MaSV,
+                        'HoTen'         => $tv->sinhVien?->HoTen ?? 'N/A',
+                        'DiemChinhThuc' => $kq->DiemChinhThuc,
+                        'TrangThaiCu'   => $kq->TrangThai,
+                    ];
+
+                    $kq->TrangThai = 'Đã đủ phiếu hợp lệ';
+                    $kq->NgayCongBo = null;
+                    $kq->NguoiCongBo = null;
+                    $kq->save();
+                }
+            }
+
+            // Chuyển trạng thái hồ sơ về Chờ công bố
+            $hoSo->TrangThaiKetQua = 'DaDuPhieu';
+            $hoSo->save();
+
+            // Ghi Audit Log Thu hồi
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'THU_HOI',
+                'PhamVi'          => 'DE_TAI',
+                'MaHocKy'         => $maHocKy,
+                'MaHoiDong'       => $hoSo->MaHoiDong,
+                'MaHoSo'          => $hoSo->MaHoSo,
+                'SoLuongDeTai'    => 1,
+                'SoLuongSinhVien' => count($snapshot),
+                'NguoiThucHien'   => $nguoiThuHoi,
+                'MaTK'            => $maTK,
+                'LyDo'            => $lyDo,
+                'DuLieuSnapshot'  => [
+                    'de_tai'     => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'nhom'       => $hoSo->nhom?->TenNhom ?? 'N/A',
+                    'sinh_viens' => $snapshot,
+                ],
+            ]);
+
+            // Thông báo đến Nhóm Sinh viên
+            ThongBaoService::guiDenNhom(
+                $hoSo->MaNhom,
+                'Thông báo thu hồi quyết định công bố kết quả Khóa luận',
+                "Trưởng khoa đã THU HỒI quyết định công bố kết quả bảo vệ đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' để tiến hành rà soát, kiểm tra lại. Lý do: {$lyDo}. Kết quả tạm thời được chuyển về trạng thái 'Chưa công bố'.",
+                'Cảnh báo'
+            );
+
+            // Thông báo đến GVHD
+            if ($hoSo->nhom?->deTai?->MaGV) {
+                ThongBaoService::gui(
+                    $hoSo->nhom->deTai->MaGV,
+                    'Thông báo thu hồi công bố kết quả đề tài hướng dẫn',
+                    "Trưởng khoa đã thu hồi quyết định công bố kết quả của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}) để thẩm định lại. Lý do: {$lyDo}.",
+                    'Cảnh báo'
+                );
+            }
+
+            // Thông báo Giáo vụ / Admin
+            $this->notifyAdmins(
+                'Thu hồi quyết định công bố kết quả',
+                "Trưởng khoa đã thu hồi công bố đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' (Hồ sơ: {$hoSo->MaHoSo}). Lý do: {$lyDo}."
+            );
+        });
+
+        return [
+            'success' => true,
+            'message' => "Đã thu hồi quyết định công bố kết quả cho đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' thành công!",
+        ];
+    }
+
+    /**
+     * Thu hồi công bố kết quả cho toàn bộ 1 Hội đồng.
+     */
+    public function thuHoiCongBoHoiDong(string $maHoiDong, string $nguoiThuHoi, string $lyDo, ?string $maTK = null): array
+    {
+        if (empty(trim($lyDo))) {
+            return [
+                'success' => false,
+                'message' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố.',
+            ];
+        }
+
+        $hoiDong = HoiDong::with(['hoSoBaoVes.nhom.thanhViens.sinhVien', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($maHoiDong);
+        $revertedCount = 0;
+        $totalSV = 0;
+        $snapshots = [];
+
+        DB::transaction(function () use ($hoiDong, $nguoiThuHoi, $lyDo, $maTK, &$revertedCount, &$totalSV, &$snapshots) {
+            $maHocKy = $hoiDong->MaHocKy ?? 'HK_CURRENT';
+
+            foreach ($hoiDong->hoSoBaoVes as $hoSo) {
+                if (!in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua'])) {
+                    continue;
+                }
+
+                $subSnap = [];
+                foreach ($hoSo->nhom->thanhViens as $tv) {
+                    $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                    if ($kq && $kq->TrangThai === 'Đã công bố') {
+                        $kq->TrangThai = 'Đã đủ phiếu hợp lệ';
+                        $kq->NgayCongBo = null;
+                        $kq->NguoiCongBo = null;
+                        $kq->save();
+
+                        $subSnap[] = ['MaSV' => $tv->MaSV, 'HoTen' => $tv->sinhVien?->HoTen];
+                        $totalSV++;
+                    }
+                }
+
+                $hoSo->TrangThaiKetQua = 'DaDuPhieu';
+                $hoSo->save();
+                $revertedCount++;
+
+                $snapshots[] = [
+                    'ma_ho_so'   => $hoSo->MaHoSo,
+                    'ten_de_tai' => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'sinh_viens' => $subSnap,
+                ];
+
+                ThongBaoService::guiDenNhom(
+                    $hoSo->MaNhom,
+                    'Thông báo thu hồi quyết định công bố kết quả',
+                    "Trưởng khoa đã THU HỒI quyết định công bố kết quả bảo vệ của Hội đồng {$hoiDong->TenHoiDong} để rà soát. Lý do: {$lyDo}.",
+                    'Cảnh báo'
+                );
+            }
+
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'THU_HOI',
+                'PhamVi'          => 'HOI_DONG',
+                'MaHocKy'         => $maHocKy,
+                'MaHoiDong'       => $hoiDong->MaHoiDong,
+                'SoLuongDeTai'    => $revertedCount,
+                'SoLuongSinhVien' => $totalSV,
+                'NguoiThucHien'   => $nguoiThuHoi,
+                'MaTK'            => $maTK,
+                'LyDo'            => $lyDo,
+                'DuLieuSnapshot'  => [
+                    'hoi_dong' => $hoiDong->TenHoiDong,
+                    'de_tais'  => $snapshots,
+                ],
+            ]);
+
+            $this->notifyAdmins(
+                'Thu hồi công bố kết quả Hội đồng',
+                "Trưởng khoa đã thu hồi công bố kết quả {$revertedCount} đề tài thuộc Hội đồng {$hoiDong->TenHoiDong}. Lý do: {$lyDo}."
+            );
+        });
+
+        return [
+            'success'       => true,
+            'message'       => "Đã thu hồi quyết định công bố cho {$revertedCount} đề tài thuộc Hội đồng {$hoiDong->TenHoiDong}!",
+            'revertedCount' => $revertedCount,
+        ];
+    }
+
+    /**
+     * Thu hồi công bố kết quả Toàn Bộ Đợt / Học kỳ.
+     */
+    public function thuHoiCongBoToanDot(string $maHocKy, string $nguoiThuHoi, string $lyDo, ?string $maTK = null, ?string $maKhoa = null): array
+    {
+        if (empty(trim($lyDo))) {
+            return [
+                'success' => false,
+                'message' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố.',
+            ];
+        }
+
+        $hoSoQuery = HoSoBaoVe::whereNotNull('MaHoiDong')
+            ->whereIn('TrangThaiKetQua', ['DaCongBo', 'CoYeuCauChinhSua'])
+            ->whereHas('hoiDong', fn($q) => $q->where('MaHocKy', $maHocKy))
+            ->with(['nhom.thanhViens.sinhVien', 'nhom.deTai.giangVien', 'hoiDong']);
+
+        if ($maKhoa) {
+            $hoSoQuery->where(function ($q) use ($maKhoa) {
+                $q->whereHas('hoiDong', fn($hd) => $hd->where('MaKhoa', $maKhoa))
+                  ->orWhereHas('nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
+            });
+        }
+
+        $hoSos = $hoSoQuery->get();
+        $revertedCount = 0;
+        $totalSV = 0;
+        $snapshots = [];
+
+        DB::transaction(function () use ($hoSos, $maHocKy, $nguoiThuHoi, $lyDo, $maTK, &$revertedCount, &$totalSV, &$snapshots) {
+            foreach ($hoSos as $hoSo) {
+                $subSnap = [];
+                foreach ($hoSo->nhom->thanhViens as $tv) {
+                    $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)->where('MaHoSo', $hoSo->MaHoSo)->first();
+                    if ($kq && $kq->TrangThai === 'Đã công bố') {
+                        $kq->TrangThai = 'Đã đủ phiếu hợp lệ';
+                        $kq->NgayCongBo = null;
+                        $kq->NguoiCongBo = null;
+                        $kq->save();
+
+                        $subSnap[] = ['MaSV' => $tv->MaSV, 'HoTen' => $tv->sinhVien?->HoTen];
+                        $totalSV++;
+                    }
+                }
+
+                $hoSo->TrangThaiKetQua = 'DaDuPhieu';
+                $hoSo->save();
+                $revertedCount++;
+
+                $snapshots[] = [
+                    'ma_ho_so'   => $hoSo->MaHoSo,
+                    'ten_de_tai' => $hoSo->nhom?->deTai?->TenDeTai ?? 'N/A',
+                    'sinh_viens' => $subSnap,
+                ];
+
+                ThongBaoService::guiDenNhom(
+                    $hoSo->MaNhom,
+                    'Thông báo thu hồi công bố kết quả toàn đợt',
+                    "Trưởng khoa đã THU HỒI quyết định công bố kết quả bảo vệ toàn đợt học kỳ {$maHocKy} để kiểm tra, chuẩn hóa dữ liệu. Lý do: {$lyDo}.",
+                    'Cảnh báo'
+                );
+            }
+
+            LichSuCongBoKetQua::create([
+                'LoaiHanhDong'    => 'THU_HOI',
+                'PhamVi'          => 'TOAN_DOT',
+                'MaHocKy'         => $maHocKy,
+                'SoLuongDeTai'    => $revertedCount,
+                'SoLuongSinhVien' => $totalSV,
+                'NguoiThucHien'   => $nguoiThuHoi,
+                'MaTK'            => $maTK,
+                'LyDo'            => $lyDo,
+                'DuLieuSnapshot'  => [
+                    'ma_hoc_ky' => $maHocKy,
+                    'de_tais'   => $snapshots,
+                ],
+            ]);
+
+            $this->notifyAdmins(
+                'Thu hồi công bố kết quả toàn đợt',
+                "Trưởng khoa đã thu hồi công bố kết quả toàn đợt cho {$revertedCount} đề tài trong học kỳ {$maHocKy}. Lý do: {$lyDo}."
+            );
+        });
+
+        return [
+            'success'       => true,
+            'message'       => "Đã thu hồi quyết định công bố toàn đợt cho {$revertedCount} đề tài ({$totalSV} sinh viên) thành công!",
+            'revertedCount' => $revertedCount,
+            'totalSV'       => $totalSV,
+        ];
+    }
+
+    /**
+     * Lấy chi tiết điểm Rubric của 1 đề tài cho Bảng 3 (Modal / API).
+     */
+    public function getChiTietDiemRubric(string $maHoSo): array
+    {
+        $hoSo = HoSoBaoVe::with([
+            'nhom.thanhViens.sinhVien.lop',
+            'nhom.deTai.giangVien.boMon',
+            'hoiDong.thanhViens.giangVien.boMon',
+        ])->findOrFail($maHoSo);
+
+        $hoiDong = $hoSo->hoiDong;
+        $loaiKL = $hoSo->xacDinhLoaiKhoaLuan();
+        $rubric = ($loaiKL === 'KLKS') ? PhieuChamDiem::getRubricKLKS() : PhieuChamDiem::getRubricKLCN();
+
+        $allMembers = $hoiDong?->thanhViens ?? collect();
+        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
+        $sortedMembers = $allMembers->sortBy(fn($tv) => $roleOrder[$tv->VaiTro] ?? 5);
+
+        $phieus = PhieuChamDiem::with(['giangVien'])
+            ->where('MaHoSo', $maHoSo)
+            ->where('MaHoiDong', $hoSo->MaHoiDong)
+            ->get();
+
+        $chiTietSinhVien = [];
+        foreach ($hoSo->nhom?->thanhViens ?? [] as $tvn) {
+            $sv = $tvn->sinhVien;
+            if (!$sv) continue;
+
+            $kq = KetQuaSinhVien::where('MaSV', $sv->MaSV)->where('MaHoSo', $maHoSo)->first();
+            $diemGiamKhaos = [];
+            $validScores = [];
+
+            foreach ($sortedMembers as $tv) {
+                $p = $phieus->where('MaGV', $tv->MaGV)->where('MaSV', $sv->MaSV)->first();
+                $diem = $p ? (float)$p->Diem : null;
+                $isCompleted = ($p && $p->TrangThai === 'Đã hoàn thành');
+
+                if ($isCompleted && $diem !== null) {
+                    $validScores[] = $diem;
+                }
+
+                $diemGiamKhaos[] = [
+                    'MaGV'        => $tv->MaGV,
+                    'HoTen'       => $tv->giangVien?->HoTen ?? $tv->MaGV,
+                    'VaiTro'      => $tv->VaiTro ?? 'Thành viên',
+                    'Diem'        => $diem,
+                    'TrangThai'   => $p?->TrangThai ?? 'Chưa chấm',
+                    'ChiTietDiem' => $p?->ChiTietDiem ?? [],
+                    'NhanXet'     => $p?->NhanXet ?? '',
+                    'ChuKy'       => $p?->ChuKy ?? null,
+                ];
+            }
+
+            $diemTB = !empty($validScores) ? round(array_sum($validScores) / count($validScores), 2) : 0.0;
+            $diemChinhThuc = $kq?->DiemChinhThuc ?? $kq?->DiemTongKet ?? ($kq?->TrangThai === 'Đã công bố' ? $diemTB : null);
+
+            $chiTietSinhVien[] = [
+                'sinhVien'       => $sv,
+                'diemGiamKhaos'  => $diemGiamKhaos,
+                'diemTB'         => $diemTB,
+                'diemChinhThuc'  => $diemChinhThuc,
+                'xepLoai'        => KetQuaSinhVien::xepLoai($diemChinhThuc ?? $diemTB),
+                'trangThai'      => $kq?->TrangThai ?? 'Chưa có điểm',
+                'nhanXetChung'   => $kq?->NhanXetChung ?? '',
+            ];
+        }
+
+        return [
+            'hoSo'            => $hoSo,
+            'hoiDong'         => $hoiDong,
+            'loaiKL'          => $loaiKL,
+            'rubric'          => $rubric,
+            'sortedMembers'   => $sortedMembers,
+            'chiTietSinhVien' => $chiTietSinhVien,
+        ];
+    }
+
+    /**
+     * Gửi thông báo đến tất cả tài khoản Quản trị / Giáo vụ (VT01).
+     */
+    public function notifyAdmins(string $tieuDe, string $noiDung, string $loai = 'Kết quả'): void
+    {
+        try {
+            $admins = TaiKhoan::where('MaVaiTro', 'VT01')->get();
+            foreach ($admins as $adm) {
+                ThongBaoService::guiDen($adm->MaTK, $tieuDe, $noiDung, $loai);
+            }
+        } catch (\Throwable $e) {
+            // Không làm gián đoạn transaction nếu lỗi gửi thông báo
+        }
+    }
+
+    /**
+     * Trưởng khoa Công bố kết quả chính thức của toàn Hội đồng.
+     * (Giữ alias cho tương thích ngược).
+     */
+    public function congBoKetQua(string $maHoiDong, string $nguoiCongBo): void
+    {
+        $this->congBoHoiDong($maHoiDong, $nguoiCongBo);
     }
 
     /**

@@ -47,6 +47,14 @@ class GradingPageAccessTest extends TestCase
     public function test_chair_can_save_functional_requirements_and_reload_grading_page(): void
     {
         $dossier=\App\Models\HoSoBaoVe::whereNotNull('MaHoiDong')->firstOrFail();
+        $hoiDong=\App\Models\HoiDong::findOrFail($dossier->MaHoiDong);
+        \Carbon\Carbon::setTestNow('2026-12-15 09:00:00');
+        $hoiDong->NgayBaoVe = '2026-12-15';
+        $hoiDong->ThoiGianBatDau = '2026-12-15 08:00:00';
+        $hoiDong->ThoiGianKetThuc = '2026-12-15 11:30:00';
+        $hoiDong->TrangThaiCongBo = 'Đã công bố';
+        $hoiDong->save();
+
         $secretary=ThanhVienHoiDong::where('MaHoiDong',$dossier->MaHoiDong)
             ->whereIn('VaiTro',['Thư ký','Ủy viên thư ký'])->first();
         if (!$secretary) {

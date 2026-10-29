@@ -64,8 +64,9 @@
             </div>
 
             <div class="flex-shrink-0 text-nowrap">
-                <span class="badge bg-light text-secondary border rounded-pill px-3 py-2 small shadow-sm">
-                    <i class="fa-solid fa-code-branch me-2 text-primary"></i>Đã nộp {{ $phienBans->count() }} phiên bản
+                <span class="badge bg-light text-secondary border rounded-pill px-3 py-2 small shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                    <i class="fa-solid fa-code-branch text-primary flex-shrink-0 icon-check"></i>
+                    <span>Đã nộp {{ $phienBans->count() }} phiên bản</span>
                 </span>
             </div>
         </div>
@@ -100,18 +101,19 @@
                         <ul class="nav nav-pills gap-2 pt-1 flex-nowrap overflow-x-auto pb-1 max-w-full" id="pills-tab-sv" role="tablist">
                             @foreach($phienBans as $index => $pb)
                                 <li class="nav-item flex-shrink-0" role="presentation">
-                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-2 px-3.5 small fw-bold transition-all text-nowrap" 
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-2 px-3.5 small fw-bold transition-all text-nowrap pill-check-btn d-inline-flex align-items-center" 
                                             id="pills-sv-v{{ $pb->LanNop }}-tab" 
                                             data-bs-toggle="pill" 
                                             data-bs-target="#pills-sv-v{{ $pb->LanNop }}" 
-                                            type="button" role="tab">
-                                        Phiên bản v{{ $pb->LanNop }}
+                                            type="button" role="tab"
+                                            style="gap: 6px;">
+                                        <span>Phiên bản v{{ $pb->LanNop }}</span>
                                         @if($pb->TrangThai === 'Đạt')
-                                            <i class="fa-solid fa-check text-success ms-1"></i>
+                                            <i class="fa-solid fa-check icon-check text-success"></i>
                                         @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
-                                            <i class="fa-solid fa-rotate-left text-warning ms-1"></i>
+                                            <i class="fa-solid fa-rotate-left icon-check text-warning"></i>
                                         @else
-                                            <i class="fa-solid fa-hourglass-half ms-1"></i>
+                                            <i class="fa-solid fa-hourglass-half icon-check"></i>
                                         @endif
                                     </button>
                                 </li>
@@ -151,11 +153,20 @@
                                         </div>
                                         <div class="flex-shrink-0 text-nowrap">
                                             @if($pb->TrangThai === 'Đạt')
-                                                <span class="badge bg-success rounded-pill px-3 py-2 fw-bold shadow-sm">✓ GVHD đã duyệt Đạt</span>
+                                                <span class="badge bg-success rounded-pill px-3 py-2 fw-bold shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                                    <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>
+                                                    <span>GVHD đã duyệt Đạt</span>
+                                                </span>
                                             @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
-                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold shadow-sm">GVHD yêu cầu nộp lại</span>
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                                    <i class="fa-solid fa-rotate-left icon-check" style="font-size: 0.85em;"></i>
+                                                    <span>GVHD yêu cầu nộp lại</span>
+                                                </span>
                                             @else
-                                                <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold shadow-sm">Đang chờ GVHD nhận xét</span>
+                                                <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                                                    <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
+                                                    <span>Đang chờ GVHD nhận xét</span>
+                                                </span>
                                             @endif
                                         </div>
                                     </div>
@@ -244,8 +255,8 @@
 
             @if(!($isLeader ?? true))
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                        <i class="fa-solid fa-user-lock fa-2x"></i>
+                    <div class="concentric-circle-outer rounded-circle bg-warning bg-opacity-10 text-warning mb-3 shadow-sm">
+                        <i class="fa-solid fa-user-lock fa-2x icon-check" style="font-size: 28px;"></i>
                     </div>
                     <h5 class="fw-bold text-dark mb-2 text-break break-words">Quyền Nộp Dành Riêng Cho Nhóm Trưởng</h5>
                     <p class="text-muted small mb-0 px-2 text-break break-words" style="line-height: 1.6;">
@@ -254,8 +265,10 @@
                 </div>
             @elseif($latestPhienBan && $latestPhienBan->TrangThai === 'Đạt')
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                        <i class="fa-solid fa-circle-check fa-2x"></i>
+                    <div class="concentric-circle-outer rounded-circle bg-success bg-opacity-10 mb-3 shadow-sm">
+                        <div class="concentric-circle-inner rounded-circle bg-success text-white shadow-xs">
+                            <i class="fa-solid fa-check icon-check" style="font-size: 20px;"></i>
+                        </div>
                     </div>
                     <h5 class="fw-bold text-dark mb-2 text-break break-words">Đợt Báo Cáo Đã Hoàn Thành</h5>
                     <p class="text-muted small mb-0 px-2 text-break break-words" style="line-height: 1.6;">Giảng viên hướng dẫn đã đánh giá Đạt cho phiên bản v{{ $latestPhienBan->LanNop }}. Bạn không cần nộp thêm cho đợt này.</p>
@@ -267,8 +280,8 @@
                 @endphp
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center transition-all min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
                     @if($isNotYetOpen)
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                            <i class="fa-regular fa-clock fa-2x"></i>
+                        <div class="concentric-circle-outer rounded-circle bg-warning bg-opacity-10 text-warning mb-3 shadow-sm">
+                            <i class="fa-regular fa-clock fa-2x icon-check" style="font-size: 28px;"></i>
                         </div>
                         <h5 class="fw-bold text-dark mb-2 text-break break-words">Chưa Đến Thời Gian Mở Nộp</h5>
                         <p class="text-muted small mb-0 px-2 text-break break-words" style="line-height: 1.6;">
@@ -276,8 +289,8 @@
                             Vui lòng quay lại sau thời gian trên để tải lên báo cáo tiến độ.
                         </p>
                     @elseif($isPastDeadline)
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 text-danger p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                            <i class="fa-solid fa-calendar-xmark fa-2x"></i>
+                        <div class="concentric-circle-outer rounded-circle bg-danger bg-opacity-10 text-danger mb-3 shadow-sm">
+                            <i class="fa-solid fa-calendar-xmark fa-2x icon-check" style="font-size: 28px;"></i>
                         </div>
                         <h5 class="fw-bold text-dark mb-2 text-break break-words">Đã Quá Hạn Nộp Báo Cáo</h5>
                         <p class="text-muted small mb-0 px-2 text-break break-words" style="line-height: 1.6;">
@@ -285,8 +298,8 @@
                             Nếu nhóm có lý do chính đáng cần bổ sung, vui lòng liên hệ trực tiếp Giảng viên hướng dẫn để được gia hạn.
                         </p>
                     @else
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary bg-opacity-10 text-secondary p-4 mb-3 shadow-sm" style="width: 72px; height: 72px;">
-                            <i class="fa-solid fa-lock fa-2x"></i>
+                        <div class="concentric-circle-outer rounded-circle bg-secondary bg-opacity-10 text-secondary mb-3 shadow-sm">
+                            <i class="fa-solid fa-lock fa-2x icon-check" style="font-size: 28px;"></i>
                         </div>
                         <h5 class="fw-bold text-dark mb-2 text-break break-words">Đợt Nộp Đang Tạm Khóa</h5>
                         <p class="text-muted small mb-0 px-2 text-break break-words" style="line-height: 1.6;">Đợt nộp hiện đang được Giảng viên hướng dẫn tạm đóng hoặc đã hoàn thành.</p>

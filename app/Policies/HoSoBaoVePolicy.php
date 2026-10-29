@@ -74,6 +74,12 @@ class HoSoBaoVePolicy
                     return true;
                 }
             }
+
+            // 5. Giảng viên được phân công kiểm tra báo cáo sau bảo vệ
+            if ($hoSo->NguoiKiemTraChinhSua === $gv->MaGV 
+                || ($hoSo->NguoiKiemTraChinhSua && str_contains($hoSo->NguoiKiemTraChinhSua, $gv->HoTen))) {
+                return true;
+            }
         }
 
         return false;

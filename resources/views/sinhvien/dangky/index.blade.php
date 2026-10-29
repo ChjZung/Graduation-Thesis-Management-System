@@ -51,58 +51,6 @@
         border-bottom: 1px solid #f1f5f9;
     }
 
-    /* Bộ lọc toàn cục 3 cột đồng đều, cân đối không bị lệch */
-    .filter-item-box {
-        display: flex;
-        align-items: center;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        height: 48px;
-        padding: 0 16px;
-        transition: all 0.18s ease;
-        width: 100%;
-    }
-    .filter-item-box:hover, .filter-item-box:focus-within {
-        border-color: #0072CE;
-        background-color: #ffffff;
-        box-shadow: 0 4px 12px rgba(0, 114, 206, 0.08);
-    }
-    .filter-item-label {
-        font-size: 0.825rem;
-        font-weight: 600;
-        color: #475569;
-        white-space: nowrap;
-        margin-right: 12px;
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-    }
-    .filter-item-select {
-        border: none !important;
-        background-color: transparent !important;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #003366;
-        padding: 0 4px;
-        box-shadow: none !important;
-        cursor: pointer;
-        width: 100%;
-    }
-    .filter-item-select:focus {
-        outline: none;
-    }
-    .filter-item-static {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #003366;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-        line-height: 46px;
-    }
-
     /* Các nút bấm chủ đạo theo tông màu hệ thống */
     .btn-cyan {
         background-color: #0072CE;

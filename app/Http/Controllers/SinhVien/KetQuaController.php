@@ -76,21 +76,70 @@ class KetQuaController extends Controller
             $daCongBoChinhThuc = true;
         }
 
-        // Kết quả của toàn bộ các thành viên trong nhóm (chỉ hiển thị khi đã công bố)
-        $memberIds = $nhom ? $nhom->thanhViens->pluck('MaSV')->toArray() : [];
-        $allKetQuaNhom = (!empty($memberIds) && $daCongBoChinhThuc)
-            ? KetQuaSinhVien::whereIn('MaSV', $memberIds)->get()->keyBy('MaSV')
-            : collect();
-
-        // Chỉ lấy phiếu của sinh viên hiện tại trong hội đồng của hồ sơ đã công bố.
-        $phieuChamDiems = ($hoSo && $daCongBoChinhThuc)
-            ? PhieuChamDiem::with('giangVien.boMon')
-                ->where('MaHoSo', $hoSo->MaHoSo)
+        // Kiểm tra tình trạng điểm thực tế của Hội đồng
+        $hasCompletedGrading = false;
+        if ($hoSo && $hoSo->MaHoiDong) {
+            $hasCompletedGrading = PhieuChamDiem::where('MaHoSo', $hoSo->MaHoSo)
                 ->where('MaHoiDong', $hoSo->MaHoiDong)
-                ->where('MaSV', $sinhVien->MaSV)
                 ->where('TrangThai', 'Đã hoàn thành')
-                ->get()
-            : collect();
+                ->exists();
+        }
+
+        // Xác định rõ 3 trạng thái hiển thị
+        // 1. 'chua_co_diem': Chưa chấm hoặc chưa đủ phiếu hợp lệ
+        // 2. 'chua_cong_bo': Đã chấm đủ phiếu hợp lệ nhưng Trưởng khoa chưa công bố chính thức
+        // 3. 'da_cong_bo': Đã công bố chính thức
+        $trangThaiHienThi = 'chua_co_diem';
+        if ($daCongBoChinhThuc) {
+            $diemVal = (float)($ketQua?->DiemChinhThuc ?? $ketQua?->DiemTongKet ?? $ketQua?->DiemHoiDongTB ?? 0);
+            // Nếu đã công bố và có điểm thực tế
+            if ($hasCompletedGrading || $diemVal > 0) {
+                $trangThaiHienThi = 'da_cong_bo';
+            } else {
+                $trangThaiHienThi = 'chua_co_diem';
+            }
+        } elseif ($hoSo && in_array($hoSo->TrangThaiKetQua, ['DaDuPhieu', 'ChoCongBo'])) {
+            $trangThaiHienThi = 'chua_cong_bo';
+        } else {
+            $trangThaiHienThi = 'chua_co_diem';
+        }
+
+        // BẢO MẬT & FAIL-CLOSED: Khi chưa công bố chính thức, tuyệt đối không gửi điểm số ra View/API
+        if ($trangThaiHienThi !== 'da_cong_bo') {
+            if ($ketQua) {
+                $ketQua->DiemTongKet = null;
+                $ketQua->DiemHoiDongTB = null;
+                $ketQua->DiemChinhThuc = null;
+                $ketQua->KetQua = null;
+            }
+            $phieuChamDiems = collect();
+        } else {
+            // Chỉ lấy phiếu của sinh viên hiện tại trong hội đồng khi đã công bố
+            $phieuChamDiems = ($hoSo)
+                ? PhieuChamDiem::with('giangVien.boMon')
+                    ->where('MaHoSo', $hoSo->MaHoSo)
+                    ->where('MaHoiDong', $hoSo->MaHoiDong)
+                    ->where('MaSV', $sinhVien->MaSV)
+                    ->where('TrangThai', 'Đã hoàn thành')
+                    ->get()
+                : collect();
+        }
+
+        // Kết quả của toàn bộ các thành viên trong nhóm
+        $memberIds = $nhom ? $nhom->thanhViens->pluck('MaSV')->toArray() : [];
+        $allKetQuaNhom = collect();
+        if (!empty($memberIds)) {
+            $rawKqNhom = KetQuaSinhVien::whereIn('MaSV', $memberIds)->get()->keyBy('MaSV');
+            foreach ($rawKqNhom as $k => $itemKq) {
+                if ($trangThaiHienThi !== 'da_cong_bo') {
+                    $itemKq->DiemTongKet = null;
+                    $itemKq->DiemHoiDongTB = null;
+                    $itemKq->DiemChinhThuc = null;
+                    $itemKq->KetQua = null;
+                }
+                $allKetQuaNhom->put($k, $itemKq);
+            }
+        }
 
         return view('sinhvien.ketqua.index', compact(
             'sinhVien',
@@ -101,7 +150,8 @@ class KetQuaController extends Controller
             'allKetQuaNhom',
             'phieuChamDiems',
             'daBaoCaoXong',
-            'daCongBoChinhThuc'
+            'daCongBoChinhThuc',
+            'trangThaiHienThi'
         ));
     }
 
@@ -313,7 +363,7 @@ class KetQuaController extends Controller
                 'DuongDanFile'     => $filePath,
                 'TenFile'          => $originalName,
                 'DungLuong'        => $file->getSize(),
-                'TomTatChinhSua'   => HtmlHelper::clean($request->TomTatChinhSua),
+                'TomTatChinhSua'   => HtmlHelper::toPlainText($request->TomTatChinhSua),
                 'FileGiaiTrinh'    => $fileGiaiTrinhPath,
                 'TenFileGiaiTrinh' => $tenFileGiaiTrinh,
                 'FileMinhChung'    => $fileMinhChungPath,

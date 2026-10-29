@@ -4,23 +4,84 @@
 <style>
     .input-icon-wrap {
         position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        overflow: visible;
     }
+    .input-icon-wrap input.form-control,
     .input-icon-wrap input {
-        padding-right: 42px;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding-right: 48px !important;
     }
+
+    /* Ẩn triệt để icon reveal mật khẩu mặc định của trình duyệt Edge và Internet Explorer */
+    .input-icon-wrap input::-ms-reveal,
+    .input-icon-wrap input::-ms-clear,
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    /* Ngăn icon validation mặc định đè lên nút con mắt */
+    .input-icon-wrap .form-control.is-invalid,
+    .input-icon-wrap .form-control.is-valid {
+        background-image: none !important;
+    }
+
     .toggle-password {
         position: absolute;
-        right: 12px;
+        right: 8px;
         top: 50%;
         transform: translateY(-50%);
-        color: #64748B;
-        cursor: pointer;
-        background: none;
-        border: none;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 0;
         padding: 0;
+        cursor: pointer;
+        z-index: 2;
+        color: #64748B;
+        border-radius: 6px;
+        transition: color .15s ease, background-color .15s ease;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
     }
     .toggle-password:hover {
         color: #0072CE;
+        background-color: rgba(0, 114, 206, 0.08);
+    }
+    .toggle-password:focus-visible {
+        outline: 2px solid #0072CE;
+        outline-offset: 1px;
+    }
+    .toggle-password .eye-icon {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .toggle-password i {
+        font-size: 16px;
+        line-height: 1;
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
     }
     .checklist-item {
         font-size: 0.85rem;
@@ -71,9 +132,16 @@
                     <div class="mb-3">
                         <label class="form-label text-dark small fw-bold">Mật khẩu hiện tại <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
-                            <input type="password" class="form-control" name="current_password" id="current_password" required placeholder="Nhập mật khẩu đang dùng...">
-                            <button type="button" class="toggle-password" data-target="current_password">
-                                <i class="fa-solid fa-eye"></i>
+                            <input type="password" class="form-control password-input" name="current_password" id="current_password" required placeholder="Nhập mật khẩu đang dùng...">
+                            <button type="button" class="toggle-password" data-target="current_password" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-icon eye-closed d-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -82,9 +150,16 @@
                     <div class="mb-3">
                         <label class="form-label text-dark small fw-bold">Mật khẩu mới <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
-                            <input type="password" class="form-control" name="new_password" id="new_password" required placeholder="Nhập mật khẩu mới...">
-                            <button type="button" class="toggle-password" data-target="new_password">
-                                <i class="fa-solid fa-eye"></i>
+                            <input type="password" class="form-control password-input" name="new_password" id="new_password" required placeholder="Nhập mật khẩu mới...">
+                            <button type="button" class="toggle-password" data-target="new_password" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-icon eye-closed d-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
                             </button>
                         </div>
 
@@ -118,9 +193,16 @@
                     <div class="mb-4">
                         <label class="form-label text-dark small fw-bold">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
-                            <input type="password" class="form-control" name="new_password_confirmation" id="new_password_confirmation" required placeholder="Nhập lại mật khẩu mới...">
-                            <button type="button" class="toggle-password" data-target="new_password_confirmation">
-                                <i class="fa-solid fa-eye"></i>
+                            <input type="password" class="form-control password-input" name="new_password_confirmation" id="new_password_confirmation" required placeholder="Nhập lại mật khẩu mới...">
+                            <button type="button" class="toggle-password" data-target="new_password_confirmation" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-icon eye-closed d-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
                             </button>
                         </div>
                         <div id="confirmFeedback" class="small mt-1 d-none"></div>
@@ -142,13 +224,39 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', function () {
             const targetId = this.getAttribute('data-target');
             const input = document.getElementById(targetId);
-            const icon = this.querySelector('i');
-            if (input.type === 'password') {
+            if (!input) return;
+
+            const isPassword = (input.type === 'password');
+            const eyeOpen = this.querySelector('.eye-open');
+            const eyeClosed = this.querySelector('.eye-closed');
+            const faIcon = this.querySelector('i');
+
+            if (isPassword) {
                 input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                this.setAttribute('aria-label', 'Ẩn mật khẩu');
+                this.setAttribute('title', 'Ẩn mật khẩu');
+                this.setAttribute('aria-pressed', 'true');
+                if (eyeOpen && eyeClosed) {
+                    eyeOpen.classList.add('d-none');
+                    eyeClosed.classList.remove('d-none');
+                }
+                if (faIcon) {
+                    faIcon.classList.remove('fa-eye');
+                    faIcon.classList.add('fa-eye-slash');
+                }
             } else {
                 input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                this.setAttribute('aria-label', 'Hiện mật khẩu');
+                this.setAttribute('title', 'Hiện mật khẩu');
+                this.setAttribute('aria-pressed', 'false');
+                if (eyeOpen && eyeClosed) {
+                    eyeClosed.classList.add('d-none');
+                    eyeOpen.classList.remove('d-none');
+                }
+                if (faIcon) {
+                    faIcon.classList.remove('fa-eye-slash');
+                    faIcon.classList.add('fa-eye');
+                }
             }
         });
     });

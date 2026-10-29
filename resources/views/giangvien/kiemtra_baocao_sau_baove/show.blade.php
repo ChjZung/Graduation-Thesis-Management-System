@@ -19,8 +19,9 @@
         </div>
         <div>
             @if($hoSo->TrangThaiChinhSuaSauBaoVe === 'DaHoanThanh')
-                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                    <i class="fa-solid fa-circle-check me-1"></i> Báo Cáo Đã Xác Nhận Đạt Chuẩn Lưu Trữ
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold badge-check d-inline-flex align-items-center" style="gap: 6px;">
+                    <i class="fa-solid fa-circle-check icon-check"></i>
+                    <span>Báo Cáo Đã Xác Nhận Đạt Chuẩn Lưu Trữ</span>
                 </span>
             @endif
         </div>
@@ -68,7 +69,7 @@
             </span>
         </div>
         <div class="card-body p-4">
-            <div class="p-3 rounded-3 bg-light border text-dark mb-3" style="white-space: pre-line; line-height: 1.6;">{{ $hoSo->YeuCauChinhSuaSauBaoVe ?: 'Nhóm sinh viên thực hiện rà soát, chỉnh sửa và hoàn thiện toàn văn báo cáo theo ý kiến góp ý của Hội đồng bảo vệ khóa luận tốt nghiệp.' }}</div>
+            <div class="p-3 rounded-3 bg-light border text-dark mb-3" style="line-height: 1.6;">{!! \App\Helpers\HtmlHelper::renderRichText($hoSo->YeuCauChinhSuaSauBaoVe ?: 'Nhóm sinh viên thực hiện rà soát, chỉnh sửa và hoàn thiện toàn văn báo cáo theo ý kiến góp ý của Hội đồng bảo vệ khóa luận tốt nghiệp.') !!}</div>
 
             <div class="row g-2 small text-muted">
                 <div class="col-md-6">
@@ -113,19 +114,21 @@
                             <i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $latestBaoCao->TenFile }}
                         </div>
                         <div class="d-flex flex-wrap gap-2">
-                            <a href="{{ asset('storage/' . $latestBaoCao->DuongDanFile) }}" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold"
+                                onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $latestBaoCao->id) }}', '{{ addslashes($latestBaoCao->TenFile) }}', 'Báo cáo hoàn thiện - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $latestBaoCao->id) }}', title: 'Báo Cáo Sau Bảo Vệ (Lần {{ $latestBaoCao->LanChinhSua }}): {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}' })">
                                 <i class="fa-solid fa-eye me-1"></i> Mở Xem Báo Cáo PDF
-                            </a>
-                            <a href="{{ asset('storage/' . $latestBaoCao->DuongDanFile) }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            </button>
+                            <a href="{{ route('baocao_sau_baove.download', $latestBaoCao->id) }}" download="{{ $latestBaoCao->TenFile }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                                 <i class="fa-solid fa-download me-1"></i> Tải Báo Cáo
                             </a>
                             @if($latestBaoCao->FileGiaiTrinh)
-                            <a href="{{ asset('storage/' . $latestBaoCao->FileGiaiTrinh) }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-semibold">
+                            <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-semibold"
+                                onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $latestBaoCao->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($latestBaoCao->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $latestBaoCao->id, 'type' => 'giai_trinh']) }}' })">
                                 <i class="fa-solid fa-file-lines me-1"></i> Xem Bản Giải Trình
-                            </a>
+                            </button>
                             @endif
                             @if($latestBaoCao->FileMinhChung)
-                            <a href="{{ asset('storage/' . $latestBaoCao->FileMinhChung) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                            <a href="{{ route('baocao_sau_baove.download', ['id' => $latestBaoCao->id, 'type' => 'minh_chung']) }}" download="{{ $latestBaoCao->TenFileMinhChung ?: 'MinhChung.zip' }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
                                 <i class="fa-solid fa-paperclip me-1"></i> Tải Minh Chứng
                             </a>
                             @endif
@@ -140,7 +143,7 @@
                 <div class="col-md-5">
                     <div class="p-3 rounded-3 bg-light border h-100">
                         <div class="fw-bold text-dark small mb-2"><i class="fa-solid fa-quote-left text-primary me-1"></i> Tóm Tắt Nội Dung Tiếp Thu &amp; Chỉnh Sửa Của Nhóm:</div>
-                        <div class="text-secondary small" style="white-space: pre-line; line-height: 1.5;">{{ $latestBaoCao->TomTatChinhSua }}</div>
+                        <div class="text-secondary small" style="line-height: 1.5;">{!! \App\Helpers\HtmlHelper::renderRichText($latestBaoCao->TomTatChinhSua) !!}</div>
                     </div>
                 </div>
             </div>
@@ -185,7 +188,7 @@
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-dark">Ý kiến nhận xét chi tiết của Giảng viên <span class="text-danger">*</span>:</label>
                     <textarea name="NhanXetGV" rows="4" class="form-control" required
-                        placeholder="Nhận xét cụ thể các điểm đã đạt hoặc các điểm nhóm cần tiếp tục chỉnh sửa, bổ sung...">{{ $latestBaoCao->NhanXetGV ?? 'Báo cáo toàn văn đã được chỉnh sửa đúng theo ý kiến góp ý của Hội đồng bảo vệ. Hình thức và nội dung đạt chuẩn quy định lưu trữ Khoa.' }}</textarea>
+                        placeholder="Nhận xét cụ thể các điểm đã đạt hoặc các điểm nhóm cần tiếp tục chỉnh sửa, bổ sung...">{{ old('NhanXetGV', \App\Helpers\HtmlHelper::toPlainText($latestBaoCao->NhanXetGV ?? 'Báo cáo toàn văn đã được chỉnh sửa đúng theo ý kiến góp ý của Hội đồng bảo vệ. Hình thức và nội dung đạt chuẩn quy định lưu trữ Khoa.')) }}</textarea>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top">
@@ -232,26 +235,28 @@
                                 </td>
                                 <td>
                                     <div class="fw-semibold text-dark"><i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $b->TenFile }}</div>
-                                    <a href="{{ asset('storage/' . $b->DuongDanFile) }}" target="_blank" class="small text-primary text-decoration-none d-inline-block mt-1">
-                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem báo cáo PDF
-                                    </a>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none d-inline-block mt-1 border-0 bg-transparent"
+                                        onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $b->id) }}', '{{ addslashes($b->TenFile) }}', 'Báo cáo hoàn thiện Lần {{ $b->LanChinhSua }} - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $b->id) }}', title: 'Báo Cáo Sau Bảo Vệ (Lần {{ $b->LanChinhSua }}): {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}' })">
+                                        <i class="fa-solid fa-eye me-1"></i> Xem báo cáo PDF
+                                    </button>
                                     @if($b->FileGiaiTrinh)
                                     <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $b->FileGiaiTrinh) }}" target="_blank" class="small text-info text-decoration-none">
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-info text-decoration-none border-0 bg-transparent"
+                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $b->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($b->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình Lần {{ $b->LanChinhSua }} - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $b->id, 'type' => 'giai_trinh']) }}' })">
                                             <i class="fa-solid fa-file-lines me-1"></i> Xem bản giải trình
-                                        </a>
+                                        </button>
                                     </div>
                                     @endif
                                     @if($b->FileMinhChung)
                                     <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $b->FileMinhChung) }}" target="_blank" class="small text-success text-decoration-none">
+                                        <a href="{{ route('baocao_sau_baove.download', ['id' => $b->id, 'type' => 'minh_chung']) }}" download="{{ $b->TenFileMinhChung ?: 'MinhChung.zip' }}" class="small text-success text-decoration-none">
                                             <i class="fa-solid fa-paperclip me-1"></i> Tải minh chứng
                                         </a>
                                     </div>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="small text-secondary" style="white-space: pre-line; max-width: 300px;">{{ $b->TomTatChinhSua }}</div>
+                                    <div class="small text-secondary" style="max-width: 300px; line-height: 1.5;">{!! \App\Helpers\HtmlHelper::renderRichText($b->TomTatChinhSua) !!}</div>
                                 </td>
                                 <td>
                                     <div class="small fw-semibold text-dark">{{ \Carbon\Carbon::parse($b->NgayNop)->format('d/m/Y H:i') }}</div>
@@ -268,8 +273,8 @@
                                 </td>
                                 <td>
                                     @if($b->NhanXetGV)
-                                        <div class="small fw-semibold text-dark">{{ $b->NhanXetGV }}</div>
-                                        <div class="text-muted" style="font-size: 0.72rem;">{{ $b->NgayKiemTra ? \Carbon\Carbon::parse($b->NgayKiemTra)->format('d/m/Y H:i') : '' }} &bull; {{ $b->NguoiKiemTra }}</div>
+                                        <div class="small fw-semibold text-dark" style="line-height: 1.5;">{!! \App\Helpers\HtmlHelper::renderRichText($b->NhanXetGV) !!}</div>
+                                        <div class="text-muted mt-1" style="font-size: 0.72rem;">{{ $b->NgayKiemTra ? \Carbon\Carbon::parse($b->NgayKiemTra)->format('d/m/Y H:i') : '' }} &bull; {{ $b->NguoiKiemTra }}</div>
                                     @else
                                         <span class="text-muted small fst-italic">--</span>
                                     @endif

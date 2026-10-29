@@ -10,7 +10,7 @@ class HtmlHelper
     protected static array $allowedTags = [
         'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
         'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'span', 'div', 'blockquote', 'hr'
+        'span', 'div', 'blockquote', 'hr', 'a'
     ];
 
     /**
@@ -55,10 +55,21 @@ class HtmlHelper
         // 6. Loại bỏ href/src chứa javascript:, vbscript:, data:
         $sanitized = preg_replace('/\s+(href|src)\s*=\s*(["\']?\s*(javascript|vbscript|data):[^"\'>]*["\']?)/i', '', $sanitized);
 
-        // 7. Chuẩn hóa thuộc tính các thẻ: chỉ cho phép text-align trong style
+        // 7. Chuẩn hóa thuộc tính các thẻ: chỉ cho phép text-align trong style, an toàn cho thẻ <a>
         $sanitized = preg_replace_callback('/<([a-z0-9]+)\s+([^>]+)>/i', function ($matches) {
             $tag = strtolower($matches[1]);
             $attrs = $matches[2];
+
+            if ($tag === 'a') {
+                $extra = '';
+                if (preg_match('/href\s*=\s*["\']([^"\']*)["\']/i', $attrs, $hm)) {
+                    $url = trim($hm[1]);
+                    if (preg_match('/^(https?:\/\/|mailto:|\/)/i', $url)) {
+                        $extra = ' href="' . e($url) . '" target="_blank" rel="noopener noreferrer"';
+                    }
+                }
+                return "<a{$extra}>";
+            }
 
             // Trích xuất text-align nếu có cho các block văn bản
             $styleAttr = '';
@@ -74,6 +85,66 @@ class HtmlHelper
         }, $sanitized);
 
         return trim($sanitized);
+    }
+
+    /**
+     * Render an toàn nội dung Rich Text:
+     * - Tự động giải mã nếu nội dung bị mã hóa thực thể HTML (&lt;p&gt;...).
+     * - Làm sạch XSS triệt để, giữ lại các thẻ an toàn.
+     * - Tự động chuyển đổi xuống dòng cho văn bản thuần nếu không có thẻ HTML.
+     */
+    public static function renderRichText(?string $html): string
+    {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+
+        $raw = trim($html);
+
+        // Trường hợp nội dung bị mã hóa entity (ví dụ: &lt;p&gt;...)
+        if (preg_match('/&lt;[a-z\/]/i', $raw) || (stripos($raw, '&lt;') !== false && stripos($raw, '<') === false)) {
+            $raw = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        return self::clean($raw);
+    }
+
+    /**
+     * Chuyển đổi mã HTML/Rich Text thành văn bản thuần hoàn chỉnh (dùng cho textarea, export, không giới hạn độ dài):
+     * - Giữ nguyên các ký tự ngắt dòng \n từ <p>, <div>, <br>, <li>, v.v.
+     * - Loại bỏ hoàn toàn các thẻ HTML và giải mã các thực thể HTML.
+     * - KHÔNG bị cắt ngắn ký tự.
+     */
+    public static function toPlainText(?string $html): string
+    {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+
+        $content = trim($html);
+
+        // Nếu nội dung bị mã hóa entity, giải mã trước
+        if (preg_match('/&lt;[a-z\/]/i', $content) || (stripos($content, '&lt;') !== false && stripos($content, '<') === false)) {
+            $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        // Chuyển đổi ngắt dòng và thẻ khối thành ký tự xuống dòng \n
+        $content = preg_replace('/<(br|hr)\s*\/?>/i', "\n", $content);
+        $content = preg_replace('/<\/(p|div|h[1-6]|li|tr|blockquote)>/i', "\n", $content);
+
+        // Bỏ tất cả các thẻ còn lại
+        $content = strip_tags($content);
+
+        // Giải mã các entity còn lại
+        $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $content = str_replace(["\xc2\xa0", '&nbsp;'], ' ', $content);
+
+        // Chuẩn hóa ngắt dòng
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+        // Thu gọn 3 dòng trống trở lên thành tối đa 2 dòng trống
+        $content = preg_replace("/\n{3,}/", "\n\n", $content);
+
+        return trim($content);
     }
 
     /**

@@ -29,16 +29,16 @@ class HoiDongController extends Controller
             $q->where('MaGV', $gv->MaGV);
         });
 
-        // 1. Thống kê tổng quan số lượng hội đồng tham gia
-        $now = now();
-        $today = $now->toDateString();
+        // 1. Thống kê tổng quan số lượng hội đồng tham gia (Dùng duy nhất trạng thái thời gian chuẩn từ Model HoiDong)
+        $now = HoiDong::getSystemNow();
+        $nowStr = $now->toDateTimeString();
 
         $allMyHoiDongs = (clone $baseQuery)->with('thanhViens')->get();
         $counts = [
             'tong_cong'     => $allMyHoiDongs->count(),
-            'sap_dien_ra'   => $allMyHoiDongs->filter(fn($hd) => $hd->TrangThai === 'Chưa diễn ra' || (!$hd->TrangThai && $hd->NgayBaoVe && $hd->NgayBaoVe->gt($today)))->count(),
-            'dang_dien_ra'  => $allMyHoiDongs->filter(fn($hd) => $hd->TrangThai === 'Đang diễn ra' || (!$hd->TrangThai && $hd->NgayBaoVe && $hd->NgayBaoVe->toDateString() === $today))->count(),
-            'da_hoan_thanh' => $allMyHoiDongs->filter(fn($hd) => in_array($hd->TrangThai, ['Đã kết thúc', 'Đã hoàn thành']) || (!$hd->TrangThai && $hd->NgayBaoVe && $hd->NgayBaoVe->lt($today)))->count(),
+            'sap_dien_ra'   => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'SapDienRa')->count(),
+            'dang_dien_ra'  => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'DangDienRa')->count(),
+            'da_hoan_thanh' => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'DaKetThuc')->count(),
             'chu_tich'      => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Chủ tịch')->count(),
             'thu_ky'        => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Thư ký')->count(),
             'phan_bien'     => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Phản biện')->count(),
@@ -67,29 +67,38 @@ class HoiDongController extends Controller
             });
         }
 
-        // Lọc theo Trạng thái
+        // Lọc theo Trạng thái (Đồng bộ tuyệt đối với logic thời gian chuẩn của HoiDong)
         if ($request->filled('TrangThai') && $request->TrangThai !== 'ALL') {
             $st = $request->TrangThai;
             if ($st === 'SapDienRa') {
-                $query->where(function ($q) use ($today) {
-                    $q->where('TrangThai', 'Chưa diễn ra')
-                      ->orWhere(function ($sub) use ($today) {
-                          $sub->whereNull('TrangThai')->where('NgayBaoVe', '>', $today);
+                $query->where(function ($q) use ($nowStr) {
+                    $q->where('ThoiGianBatDau', '>', $nowStr)
+                      ->orWhere(function ($sub) use ($nowStr) {
+                          $sub->whereNull('ThoiGianBatDau')
+                              ->whereRaw("CONCAT(NgayBaoVe, ' 07:30:00') > ?", [$nowStr]);
                       });
                 });
             } elseif ($st === 'DangDienRa') {
-                $query->where(function ($q) use ($today) {
-                    $q->where('TrangThai', 'Đang diễn ra')
-                      ->orWhere(function ($sub) use ($today) {
-                          $sub->whereNull('TrangThai')->whereDate('NgayBaoVe', $today);
-                      });
+                $query->where(function ($q) use ($nowStr) {
+                    $q->where(function ($sub) use ($nowStr) {
+                        $sub->where('ThoiGianBatDau', '<=', $nowStr)
+                            ->where(function ($sub2) use ($nowStr) {
+                                $sub2->where('ThoiGianKetThuc', '>=', $nowStr)
+                                     ->orWhereNull('ThoiGianKetThuc');
+                            });
+                    })->orWhere(function ($sub) use ($nowStr) {
+                        $sub->whereNull('ThoiGianBatDau')
+                            ->whereRaw("CONCAT(NgayBaoVe, ' 07:30:00') <= ? AND CONCAT(NgayBaoVe, ' 17:00:00') >= ?", [$nowStr, $nowStr]);
+                    });
                 });
             } elseif ($st === 'DaHoanThanh') {
-                $query->where(function ($q) use ($today) {
-                    $q->whereIn('TrangThai', ['Đã kết thúc', 'Đã hoàn thành'])
-                      ->orWhere(function ($sub) use ($today) {
-                          $sub->whereNull('TrangThai')->where('NgayBaoVe', '<', $today);
-                      });
+                $query->where(function ($q) use ($nowStr) {
+                    $q->where(function ($sub) use ($nowStr) {
+                        $sub->whereNotNull('ThoiGianKetThuc')->where('ThoiGianKetThuc', '<', $nowStr);
+                    })->orWhere(function ($sub) use ($nowStr) {
+                        $sub->whereNull('ThoiGianKetThuc')
+                            ->whereRaw("CONCAT(NgayBaoVe, ' 17:00:00') < ?", [$nowStr]);
+                    });
                 });
             }
         }
@@ -123,6 +132,19 @@ class HoiDongController extends Controller
         }
         if (!in_array($activeTab, ['danhsach', 'chamdiem'])) {
             $activeTab = 'danhsach';
+        }
+
+        // BẢO VỆ CHẶN TRUY CẬP TRỰC TIẾP URL CHẤM ĐIỂM KHI HỘI ĐỒNG CHƯA ĐẾN GIỜ (Yêu cầu B)
+        $reqHd = $request->query('hd') ?? $request->query('MaHoiDong');
+        if ($activeTab === 'chamdiem' && !empty($reqHd)) {
+            $targetHd = HoiDong::with('thanhViens')->find($reqHd);
+            if ($targetHd) {
+                $checkReason = '';
+                if (!$targetHd->canGrade($gv, null, $checkReason)) {
+                    return redirect()->route('giangvien.hoidong.index', ['tab' => 'danhsach'])
+                        ->with('error', $checkReason ?? 'Hội đồng chưa đến thời gian chấm điểm.');
+                }
+            }
         }
 
         return view('giangvien.hoidong.index', array_merge([

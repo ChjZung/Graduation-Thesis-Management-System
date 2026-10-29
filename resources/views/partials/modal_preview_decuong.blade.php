@@ -6,8 +6,8 @@
 
 @once('modal_preview_decuong')
 <div class="modal fade" id="modalQuickPreviewDeCuong" tabindex="-1" aria-labelledby="modalQuickPreviewLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 95vw; height: 92vh; margin: 4vh auto;">
-        <div class="modal-content h-100 border-0 shadow-lg" style="border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 90vh; max-height: 90vh; margin: auto;">
+        <div class="modal-content border-0 shadow-lg" style="height: 90vh; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
             
             <!-- Modal Header -->
             <div class="modal-header py-3 px-4 text-white" style="background-color: #00529b; flex-shrink: 0;">
@@ -245,7 +245,8 @@ function renderAllPdfPages(pdfDoc, scale) {
                 let actualScale = scale;
                 if (scale === 'fit' || !scale) {
                     const unscaledViewport = page.getViewport({ scale: 1.0 });
-                    actualScale = Math.min(Math.max(availableWidth / unscaledViewport.width, 0.6), 2.2);
+                    const maxFitScale = 1.25;
+                    actualScale = Math.min(Math.max(availableWidth / unscaledViewport.width, 0.6), maxFitScale);
                     if (zoomEl) zoomEl.textContent = Math.round(actualScale * 100) + '%';
                 } else if (zoomEl) {
                     zoomEl.textContent = Math.round(scale * 100) + '%';
@@ -362,7 +363,17 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
     }
 
     // Tiêu đề modal
-    titleEl.textContent = topicTitle ? ('Đề cương: ' + topicTitle) : ('Xem nhanh: ' + safeName);
+    if (options.title) {
+        titleEl.textContent = options.title;
+    } else if (topicTitle) {
+        if (/^(báo cáo|đề cương|đề tài|hồ sơ)/i.test(topicTitle.trim())) {
+            titleEl.textContent = topicTitle;
+        } else {
+            titleEl.textContent = 'Đề cương: ' + topicTitle;
+        }
+    } else {
+        titleEl.textContent = 'Xem nhanh: ' + safeName;
+    }
     titleEl.title = titleEl.textContent;
 
     // Reset giao diện trước khi tải
@@ -483,8 +494,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (zoomInBtn) {
         zoomInBtn.addEventListener('click', function() {
             if (!currentPdfDoc) return;
-            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') ? 1.0 : currentPdfScale;
-            currentPdfScale = Math.min(curScale + 0.2, 2.5);
+            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') 
+                ? (parseFloat(document.getElementById('pdfZoomLevel')?.textContent) / 100 || 1.0) 
+                : currentPdfScale;
+            currentPdfScale = Math.min(Math.round((curScale + 0.15) * 100) / 100, 2.5);
             renderAllPdfPages(currentPdfDoc, currentPdfScale);
         });
     }
@@ -494,8 +507,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (zoomOutBtn) {
         zoomOutBtn.addEventListener('click', function() {
             if (!currentPdfDoc) return;
-            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') ? 1.0 : currentPdfScale;
-            currentPdfScale = Math.max(curScale - 0.2, 0.5);
+            const curScale = (currentPdfScale === 'fit' || typeof currentPdfScale !== 'number') 
+                ? (parseFloat(document.getElementById('pdfZoomLevel')?.textContent) / 100 || 1.0) 
+                : currentPdfScale;
+            currentPdfScale = Math.max(Math.round((curScale - 0.15) * 100) / 100, 0.5);
             renderAllPdfPages(currentPdfDoc, currentPdfScale);
         });
     }

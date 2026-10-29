@@ -25,8 +25,10 @@ class ChamDiemController extends Controller
      */
     public static function prepareGradingData($giangVien, Request $request): array
     {
+        $now = HoiDong::getSystemNow();
+
         // Lấy tất cả Hội đồng mà giảng viên này tham gia
-        $hoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
+        $allHoiDongs = HoiDong::whereHas('thanhViens', fn($q) => $q->where('MaGV', $giangVien->MaGV))
             ->with([
                 'thanhViens.giangVien',
                 'hoSoBaoVes.nhom.thanhViens.sinhVien.lop',
@@ -35,13 +37,21 @@ class ChamDiemController extends Controller
             ])
             ->get();
 
+        // CHỈ cho phép hiển thị các Hội đồng đủ điều kiện chấm điểm (Đang diễn ra hoặc Đã kết thúc còn trong hạn)
+        $gradingHoiDongs = $allHoiDongs->filter(fn($hd) => $hd->isWithinGradingWindow($now))->values();
+
+        // Tìm hội đồng sắp diễn ra gần nhất để hỗ trợ hiển thị gợi ý thông minh
+        $sapDienRaGanNhat = $allHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'SapDienRa')
+            ->sortBy(fn($hd) => $hd->thoi_diem_bat_dau?->timestamp ?? PHP_INT_MAX)
+            ->first();
+
         $activeHoiDong = null;
         $reqHd = $request->query('hd') ?? $request->query('MaHoiDong');
-        if ($hoiDongs->isNotEmpty()) {
+        if ($gradingHoiDongs->isNotEmpty()) {
             if (!empty($reqHd)) {
-                $activeHoiDong = $hoiDongs->firstWhere('MaHoiDong', $reqHd) ?? $hoiDongs->first();
+                $activeHoiDong = $gradingHoiDongs->firstWhere('MaHoiDong', $reqHd) ?? $gradingHoiDongs->first();
             } else {
-                $activeHoiDong = $hoiDongs->first();
+                $activeHoiDong = $gradingHoiDongs->first();
             }
         }
 
@@ -120,9 +130,9 @@ class ChamDiemController extends Controller
         $tenBieuMau = ($loaiKhoaLuan === 'KLKS') ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
         $functionalRequirements = PhieuChamDiem::parseFunctionalRequirements($customChucNang, $loaiKhoaLuan);
 
-        // Đếm số lượng nhóm/hồ sơ bảo vệ đang chờ giảng viên này chấm điểm (chưa hoàn thành)
+        // Đếm số lượng nhóm/hồ sơ bảo vệ đang chờ giảng viên này chấm điểm (CHỈ tính trong các hội đồng ĐƯỢC PHÉP CHẤM ĐIỂM)
         $choChamDiemCount = 0;
-        foreach ($hoiDongs as $hdItem) {
+        foreach ($gradingHoiDongs as $hdItem) {
             foreach ($hdItem->hoSoBaoVes as $hsItem) {
                 $daHoanThanh = PhieuChamDiem::where('MaHoiDong', $hdItem->MaHoiDong)
                     ->where('MaHoSo', $hsItem->MaHoSo)
@@ -137,7 +147,9 @@ class ChamDiemController extends Controller
 
         return [
             'giangVien'                => $giangVien,
-            'gradingHoiDongs'          => $hoiDongs,
+            'gradingHoiDongs'          => $gradingHoiDongs,
+            'allHoiDongs'              => $allHoiDongs,
+            'sapDienRaGanNhat'         => $sapDienRaGanNhat,
             'activeHoiDong'            => $activeHoiDong,
             'activeHoSo'               => $activeHoSo,
             'activeDeTai'              => $activeDeTai,
@@ -166,9 +178,31 @@ class ChamDiemController extends Controller
 
     /**
      * Chuyển hướng 302 từ URL chấm điểm cũ sang Tab Chấm điểm tại /giangvien/hoi-dong?tab=chamdiem
+     * Bảo vệ IDOR và chặn truy cập sớm khi hội đồng chưa đến thời gian chấm điểm
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        $reqHd = $request->query('hd') ?? $request->query('MaHoiDong');
+
+        if ($giangVien && !empty($reqHd)) {
+            $targetHd = HoiDong::with('thanhViens')->find($reqHd);
+            if ($targetHd) {
+                $reason = '';
+                if (!$targetHd->canGrade($giangVien, null, $reason)) {
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $reason ?? 'Hội đồng chưa đến thời gian chấm điểm.',
+                        ], 403);
+                    }
+                    return redirect()->route('giangvien.hoidong.index', ['tab' => 'danhsach'])
+                        ->with('error', $reason ?? 'Hội đồng chưa đến thời gian chấm điểm.');
+                }
+            }
+        }
+
         $query = $request->query();
         $query['tab'] = 'chamdiem';
 
@@ -191,16 +225,28 @@ class ChamDiemController extends Controller
             abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
         }
 
-        // Kiểm tra quyền: Chỉ Giảng viên thuộc Hội đồng mới được chấm điểm
-        $isMember = ThanhVienHoiDong::where('MaHoiDong', $request->MaHoiDong)
-            ->where('MaGV', $giangVien->MaGV)
-            ->exists();
-
-        if (!$isMember) {
-            abort(403, 'Bạn không thuộc Hội đồng bảo vệ này và không có quyền nhập điểm.');
-        }
-
+        $hoiDong = HoiDong::with('thanhViens')->findOrFail($request->MaHoiDong);
         $hoSo = HoSoBaoVe::with(['nhom.deTai', 'nhom.thanhViens'])->findOrFail($request->MaHoSo);
+
+        // BẢO VỆ CHẶN CHẤM ĐIỂM / LƯU NHÁP KHI HỘI ĐỒNG CHƯA ĐẾN GIỜ (Yêu cầu C)
+        $reason = '';
+        if (!$hoiDong->canGrade($giangVien, $hoSo, $reason)) {
+            \Illuminate\Support\Facades\Log::warning("Chấm điểm ngoài thời gian cho phép: Giảng viên [{$giangVien->MaGV}] cố tình chấm Hội đồng [{$hoiDong->MaHoiDong}] - Hồ sơ [{$hoSo->MaHoSo}]. Lý do từ chối: {$reason}", [
+                'ip'        => $request->ip(),
+                'user_id'   => $user->MaNguoiDung ?? null,
+                'action'    => $request->action_type,
+                'system_now'=> HoiDong::getSystemNow()->toDateTimeString(),
+            ]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $reason,
+                ], 403);
+            }
+
+            return redirect()->back()->with('error', $reason);
+        }
 
         // Chống BOLA/IDOR: Xác thực Hồ sơ bảo vệ phải thuộc đúng Hội đồng đang chấm
         if ($hoSo->MaHoiDong !== $request->MaHoiDong) {
@@ -425,13 +471,20 @@ class ChamDiemController extends Controller
         $request->validate([
             'MaHoiDong'       => 'required|exists:HoiDong,MaHoiDong',
             'MaHoSo'          => 'required|exists:HoSoBaoVe,MaHoSo',
-            'TieuChiChucNang' => 'nullable|string|max:5000',
+            'TieuChiChucNang' => 'nullable|string|max:10000',
         ]);
 
         $user = Auth::user();
         $giangVien = GiangVien::getLoggedInGiangVien($user);
         if (!$giangVien) {
             abort(403, 'Không tìm thấy thông tin giảng viên.');
+        }
+
+        $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
+
+        // Chống BOLA/IDOR: Kiểm tra Hồ sơ phải thuộc Hội đồng
+        if ($hoSo->MaHoiDong !== $request->MaHoiDong) {
+            abort(403, 'Hồ sơ bảo vệ không thuộc Hội đồng đang làm việc.');
         }
 
         // Kiểm tra quyền: Bắt buộc là Thư ký Hội đồng hoặc Trưởng khoa/Giáo vụ/Admin
@@ -443,21 +496,45 @@ class ChamDiemController extends Controller
         $isGiaoVuOrTruongKhoa = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
 
         if (!$isThuKy && !$isGiaoVuOrTruongKhoa) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chức năng chuẩn bị phiếu chấm và yêu cầu tiêu chí chức năng thuộc thẩm quyền của Thư ký Hội đồng.',
+                ], 403);
+            }
             return redirect()->back()->with('error', 'Chức năng chuẩn bị phiếu chấm và yêu cầu tiêu chí chức năng thuộc thẩm quyền của Thư ký Hội đồng. Chủ tịch Hội đồng chỉ thực hiện điều hành buổi bảo vệ theo quy chế mới.');
         }
 
-        $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
-        $hoSo->TieuChiChucNang = $request->TieuChiChucNang;
+        // Xác định loại khóa luận và trần điểm quy định
+        $loaiKhoaLuan = $hoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
+        $maxCap = PhieuChamDiem::getMaxDiemChucNang($loaiKhoaLuan);
+
+        // Chuẩn hóa và lưu nội dung tiêu chí chức năng
+        $rawText = trim($request->TieuChiChucNang ?? '');
+        $hoSo->TieuChiChucNang = $rawText;
         $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
         $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
         $hoSo->NgayChuanBiPhieu = now();
         $hoSo->save();
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Thư ký Hội đồng đã cập nhật yêu cầu chức năng thành công (Hệ {$loaiKhoaLuan} - Trần: {$maxCap}đ). Toàn bộ phiếu chấm của các thành viên Hội đồng đã được đồng bộ.",
+                'data'    => [
+                    'TieuChiChucNang' => $hoSo->TieuChiChucNang,
+                    'loaiKhoaLuan'    => $loaiKhoaLuan,
+                    'maxCap'          => $maxCap,
+                    'requirements'    => PhieuChamDiem::parseFunctionalRequirements($rawText, $loaiKhoaLuan),
+                ],
+            ]);
+        }
+
         return redirect()->route('giangvien.hoidong.index', [
             'tab'  => 'chamdiem',
             'hd'   => $request->MaHoiDong,
             'hoso' => $request->MaHoSo,
-        ])->with('success', 'Thư ký Hội đồng đã cập nhật yêu cầu chức năng và tiêu chí phiếu chấm thành công! Toàn bộ phiếu chấm của các thành viên Hội đồng đã được đồng bộ.');
+        ])->with('success', "Thư ký Hội đồng đã cập nhật yêu cầu chức năng và tiêu chí phiếu chấm thành công (Hệ {$loaiKhoaLuan} - Trần: {$maxCap}đ)! Toàn bộ phiếu chấm của các thành viên Hội đồng đã được đồng bộ.");
     }
 
     /**
@@ -505,7 +582,9 @@ class ChamDiemController extends Controller
                     'MucTieu'          => $deTai?->MucTieu ?? 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt.',
                     'PhamVi'           => $deTai?->PhamVi ?? 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.',
                     'NoiDung'          => $deTai?->NoiDung ?? 'Khảo sát hiện trạng, phân tích yêu cầu, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.',
+                    'YeuCau'           => $deTai?->YeuCau ?? '',
                     'SanPham'          => $deTai?->SanPhamDuKien ?? 'Báo cáo toàn văn, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.',
+                    'NoiDungDeCuongJson' => $hoSo->NoiDungDeCuongJson,
                     'FileDeCuong'      => $deTai?->FileDeCuong ? asset('storage/' . $deTai->FileDeCuong) : null,
                     'TrangThaiChuanBi' => $hoSo->TrangThaiChuanBiPhieu ?? 'ChuaChuanBi',
                     'NguoiChuanBi'     => $hoSo->nguoiChuanBi?->HoTen ?? $hoSo->NguoiChuanBiPhieu,
@@ -581,12 +660,18 @@ class ChamDiemController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy giảng viên.'], 403);
         }
 
-        // Kiểm tra thành viên hội đồng
-        $isMember = ThanhVienHoiDong::where('MaHoiDong', $request->MaHoiDong)
-            ->where('MaGV', $giangVien->MaGV)
-            ->exists();
-        if (!$isMember) {
-            return response()->json(['success' => false, 'message' => 'Bạn không thuộc hội đồng này.'], 403);
+        $hoiDong = HoiDong::with('thanhViens')->findOrFail($request->MaHoiDong);
+        $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
+
+        $reason = '';
+        if (!$hoiDong->canGrade($giangVien, $hoSo, $reason)) {
+            \Illuminate\Support\Facades\Log::warning("Ký tên ngoài thời gian cho phép: Giảng viên [{$giangVien->MaGV}] cố ký tên Hội đồng [{$hoiDong->MaHoiDong}]. Lý do: {$reason}", [
+                'ip'        => $request->ip(),
+                'user_id'   => $user->MaNguoiDung ?? null,
+                'system_now'=> HoiDong::getSystemNow()->toDateTimeString(),
+            ]);
+
+            return response()->json(['success' => false, 'message' => $reason], 403);
         }
 
         $chuKy = $request->chu_ky;

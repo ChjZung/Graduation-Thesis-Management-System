@@ -2567,18 +2567,116 @@ small, .small, .text-muted, .badge, .badge-code, .kpi-label, .kpi-subtext,
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
 }
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
 }
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Khối cảnh báo đề tài thiếu điểm Trưởng khoa - chống tràn hoàn toàn */
+.warning-de-tai-container {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+}
+
+.warning-de-tai-container * {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+.warning-topic-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHUẨN HÓA CĂN GIỮA ICON CHECK VÀ VÒNG TRÒN ĐỒNG TÂM
+   ═══════════════════════════════════════════════════════════ */
+.concentric-circle-outer {
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+}
+
+.concentric-circle-inner {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+}
+
+.icon-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    width: 1em !important;
+    height: 1em !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+}
+
+.badge-check {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    line-height: 1.25 !important;
+    vertical-align: middle !important;
+}
+
+.pill-check-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    line-height: 1.25 !important;
+    vertical-align: middle !important;
+}
+
+/* Khi tab nav-pills active, icon đổi màu trắng đồng bộ */
+.nav-pills .nav-link.active .icon-check,
+.nav-pills .nav-link.active .icon-check.text-success,
+.nav-pills .nav-link.active .icon-check.text-warning {
+    color: #ffffff !important;
 }
 .break-words,
 .text-break,
@@ -4241,7 +4339,338 @@ div[class*="modal-header"] {
     padding: 3px 8px;
     font-weight: 600;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODAL XEM ĐỀ CƯƠNG CHI TIẾT ĐÃ PHÊ DUYỆT (#modalXemDeCuong)
+   Chống tràn nội dung với chuỗi văn bản dài (200+ ký tự không có khoảng trắng)
+   ══════════════════════════════════════════════════════════════════════ */
+#modalXemDeCuong .modal-dialog {
+    max-width: min(900px, 95vw) !important;
+    width: 100% !important;
+    margin: 1.75rem auto !important;
 }
+
+#modalXemDeCuong .modal-content {
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+#modalXemDeCuong .modal-header,
+#modalXemDeCuong .modal-footer {
+    flex-shrink: 0 !important;
+}
+
+#modalXemDeCuong .modal-body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: calc(90vh - 130px) !important;
+    min-width: 0 !important;
+}
+
+#modalXemDeCuong [style*="overflow-wrap"],
+#modalXemDeCuong h5,
+#modalXemDeCuong h6,
+#modalXemDeCuong span,
+#modalXemDeCuong div {
+    min-width: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DATATABLES & RESPONSIVE SCROLLBAR CHO BẢNG KẾT QUẢ KHÓA LUẬN
+   ══════════════════════════════════════════════════════════════════════ */
+.table-scroll-wrapper {
+    position: relative;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.custom-table-scroll {
+    overflow-x: auto !important;
+    overflow-x: scroll !important;
+    overflow-y: auto !important;
+    max-height: 70vh !important;
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.custom-table-scroll::-webkit-scrollbar {
+    height: 11px;
+    width: 8px;
+}
+.custom-table-scroll::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+.custom-table-scroll::-webkit-scrollbar-thumb {
+    background: #0072ce;
+    border-radius: 4px;
+}
+.custom-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #00569c;
+}
+
+/* Không sử dụng after overlay để tránh che mất nội dung và thanh cuộn */
+.table-scroll-wrapper::after {
+    display: none !important;
+}
+
+#tableToanKhoa thead th,
+#tableHoiDong thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 3 !important;
+    background-color: #0b3a6e !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid #082a50 !important;
+    border-top: none !important;
+    vertical-align: middle !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+}
+
+#tableToanKhoa .sticky-col-stt {
+    position: sticky !important;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+}
+#tableToanKhoa .sticky-col-masv {
+    position: sticky !important;
+    left: 50px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+}
+#tableToanKhoa .sticky-col-hoten {
+    position: sticky !important;
+    left: 160px;
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    border-right: 1px solid #082a50;
+}
+
+#tableToanKhoa thead th.sticky-col-stt,
+#tableToanKhoa thead th.sticky-col-masv,
+#tableToanKhoa thead th.sticky-col-hoten {
+    z-index: 4 !important;
+    background-color: #0b3a6e !important;
+    color: #ffffff !important;
+}
+
+#tableToanKhoa tbody td.sticky-col-stt,
+#tableToanKhoa tbody td.sticky-col-masv,
+#tableToanKhoa tbody td.sticky-col-hoten {
+    z-index: 2 !important;
+    background-color: #ffffff !important;
+}
+
+#tableToanKhoa tbody td.sticky-col-hoten {
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.08);
+    border-right: 1px solid #dee2e6;
+}
+
+#tableToanKhoa tbody tr:hover td.sticky-col-stt,
+#tableToanKhoa tbody tr:hover td.sticky-col-masv,
+#tableToanKhoa tbody tr:hover td.sticky-col-hoten {
+    background-color: #f1f5f9 !important;
+}
+
+#tableHoiDong .sticky-col-hd-stt {
+    position: sticky !important;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+}
+#tableHoiDong .sticky-col-hd-name {
+    position: sticky !important;
+    left: 50px;
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    border-right: 1px solid #082a50;
+}
+
+#tableHoiDong thead th.sticky-col-hd-stt,
+#tableHoiDong thead th.sticky-col-hd-name {
+    z-index: 4 !important;
+    background-color: #0b3a6e !important;
+    color: #ffffff !important;
+}
+
+#tableHoiDong tbody td.sticky-col-hd-stt,
+#tableHoiDong tbody td.sticky-col-hd-name {
+    z-index: 2 !important;
+    background-color: #ffffff !important;
+}
+
+#tableHoiDong tbody td.sticky-col-hd-name {
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.08);
+    border-right: 1px solid #dee2e6;
+}
+
+/* ========================================================
+   GLOBAL PASSWORD TOGGLE & INPUT FIX
+   Ngăn chặn icon con mắt đè lên chữ, ẩn icon Edge mặc định
+   ======================================================== */
+.input-icon-wrap {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow: visible !important;
+}
+
+.input-icon-wrap input.form-control,
+.input-icon-wrap input,
+input.password-input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-right: 48px !important;
+}
+
+/* Ẩn triệt để icon reveal mật khẩu mặc định của Edge / IE */
+.input-icon-wrap input::-ms-reveal,
+.input-icon-wrap input::-ms-clear,
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.input-icon-wrap .form-control.is-invalid,
+.input-icon-wrap .form-control.is-valid {
+    background-image: none !important;
+}
+
+.toggle-password {
+    position: absolute !important;
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    z-index: 2 !important;
+    color: #64748B !important;
+    border-radius: 6px !important;
+    transition: color 0.15s ease, background-color 0.15s ease !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.toggle-password:hover {
+    color: #0072CE !important;
+    background-color: rgba(0, 114, 206, 0.08) !important;
+}
+
+.toggle-password:focus-visible {
+    outline: 2px solid #0072CE !important;
+    outline-offset: 1px !important;
+}
+
+.toggle-password .eye-icon {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: currentColor !important;
+    stroke-width: 2 !important;
+    fill: none !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    pointer-events: none !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+.toggle-password i {
+    font-size: 16px !important;
+    line-height: 1 !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+}
+
+/* ==========================================================================
+   Global Filter Bar Components (Dùng chung cho sinh viên đăng ký, nhóm, v.v.)
+   ========================================================================== */
+.filter-item-box {
+    display: flex;
+    align-items: center;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    height: 48px;
+    padding: 0 16px;
+    transition: all 0.18s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-item-box:hover,
+.filter-item-box:focus-within {
+    border-color: #0072CE;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 114, 206, 0.08);
+}
+
+.filter-item-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.filter-item-select {
+    border: none !important;
+    background-color: transparent !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #003366;
+    padding: 0 4px;
+    box-shadow: none !important;
+    cursor: pointer;
+    width: 100%;
+}
+
+.filter-item-select:focus {
+    outline: none;
+}
+
+.filter-item-static {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #003366;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    line-height: 46px;
+}
+
+
+
 
 
 

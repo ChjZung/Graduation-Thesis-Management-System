@@ -11,6 +11,7 @@ use App\Models\HoiDong;
 use App\Models\HoSoBaoVe;
 use App\Models\PhieuChamDiem;
 use App\Models\KetQuaSinhVien;
+use App\Models\LichSuCongBoKetQua;
 use App\Services\GradeCalculationService;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
@@ -54,7 +55,23 @@ class KetQuaController extends Controller
 
         $boMons = BoMon::where('MaKhoa', $maKhoa)->orderBy('TenBoMon')->get();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
-        $activeHocKy = HocKy::where('TrangThai', true)->first() ?? $hocKies->first();
+        $activeHocKy = HocKy::where('TrangThai', 'Đang diễn ra')->first() 
+            ?? HocKy::where('TrangThai', true)->first() 
+            ?? $hocKies->first();
+
+        $selectedHocKy = $request->query('MaHocKy');
+        $currentMaHocKy = $request->filled('MaHocKy') ? $request->MaHocKy : ($activeHocKy?->MaHocKy);
+
+        // Danh sách tất cả Hội đồng để làm filter dropdown
+        $allHoiDongs = HoiDong::where(function ($q) use ($maKhoa) {
+                $q->where('MaKhoa', $maKhoa)
+                  ->orWhereNull('MaKhoa')
+                  ->orWhere('MaKhoa', '')
+                  ->orWhereHas('hoSoBaoVes.nhom.deTai.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
+            })
+            ->when($currentMaHocKy, fn($q) => $q->where('MaHocKy', $currentMaHocKy))
+            ->orderBy('TenHoiDong')
+            ->get();
 
         // 1. Dữ liệu Tab Tổng Hợp Theo Hội Đồng
         $hoiDongsQuery = HoiDong::where(function ($q) use ($maKhoa) {
@@ -65,8 +82,9 @@ class KetQuaController extends Controller
                   ->orWhereHas('thanhViens.giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa));
             })
             ->with([
-                'thanhViens.giangVien',
-                'hoSoBaoVes.nhom.deTai',
+                'thanhViens.giangVien.boMon',
+                'hoSoBaoVes.nhom.deTai.giangVien.boMon',
+                'hoSoBaoVes.deTai.giangVien.boMon',
                 'hoSoBaoVes.nhom.thanhViens.sinhVien',
             ])
             ->orderBy('NgayBaoVe', 'desc')
@@ -76,13 +94,31 @@ class KetQuaController extends Controller
             $hoiDongsQuery->where('MaHocKy', $request->MaHocKy);
         }
 
-        if ($request->filled('search_hd')) {
-            $s = mb_substr(trim($request->search_hd), 0, 100);
+        if ($request->filled('MaHoiDong')) {
+            $hoiDongsQuery->where('MaHoiDong', $request->MaHoiDong);
+        }
+
+        if ($request->filled('MaBoMon')) {
+            $maBM = $request->MaBoMon;
+            $hoiDongsQuery->where(function ($sq) use ($maBM) {
+                $sq->whereHas('thanhViens.giangVien', fn($gv) => $gv->where('MaBoMon', $maBM))
+                   ->orWhereHas('hoSoBaoVes.nhom.deTai.giangVien', fn($gv) => $gv->where('MaBoMon', $maBM))
+                   ->orWhereHas('hoSoBaoVes.deTai.giangVien', fn($gv) => $gv->where('MaBoMon', $maBM));
+            });
+        }
+
+        $searchTermHd = $request->input('search_hd') ?? $request->input('search');
+        if (!empty($searchTermHd) && trim($searchTermHd) !== '') {
+            $s = mb_substr(trim($searchTermHd), 0, 100);
             $escaped = addcslashes($s, '%_\\');
             $hoiDongsQuery->where(function ($q) use ($escaped) {
                 $q->where('TenHoiDong', 'like', "%{$escaped}%")
                   ->orWhere('DiaDiem', 'like', "%{$escaped}%")
-                  ->orWhere('MaHoiDong', 'like', "%{$escaped}%");
+                  ->orWhere('MaHoiDong', 'like', "%{$escaped}%")
+                  ->orWhereHas('thanhViens.giangVien', fn($gv) => $gv->where('HoTen', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVes.nhom.deTai', fn($dt) => $dt->where('TenDeTai', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVes.deTai', fn($dt) => $dt->where('TenDeTai', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVes.nhom', fn($n) => $n->where('TenNhom', 'like', "%{$escaped}%"));
             });
         }
 
@@ -94,93 +130,174 @@ class KetQuaController extends Controller
             $tienDoHoiDongs[$hd->MaHoiDong] = $this->gradeService->kiemTraTienDoChamHoiDong($hd->MaHoiDong);
         }
 
-        // 2. Dữ liệu Tab Toàn Khoa (Sinh viên)
-        $query = KetQuaSinhVien::with([
-            'sinhVien.lop.nganh',
-            'hocKy',
-            'hoSoBaoVe.nhom',
-            'hoSoBaoVe.deTai.giangVien.boMon',
-            'hoSoBaoVe.hoiDong'
-        ])->where(function ($sub) use ($maKhoa) {
-            $sub->whereHas('sinhVien', fn($q) => $q->where('MaKhoa', $maKhoa))
-                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
-        });
-
-        if ($request->filled('MaHocKy')) {
-            $query->where('MaHocKy', $request->MaHocKy);
-        }
-
-        if ($request->filled('MaBoMon')) {
-            $maBM = $request->MaBoMon;
-            $query->whereHas('hoSoBaoVe.deTai.giangVien', fn($q) => $q->where('MaBoMon', $maBM));
-        }
-
-        if ($request->filled('xep_loai')) {
-            $xl = $request->xep_loai;
-            if ($xl === 'XuatSac') {
-                $query->where('DiemTongKet', '>=', 9.0);
-            } elseif ($xl === 'Gioi') {
-                $query->whereBetween('DiemTongKet', [8.0, 8.99]);
-            } elseif ($xl === 'Kha') {
-                $query->whereBetween('DiemTongKet', [7.0, 7.99]);
-            } elseif ($xl === 'TrungBinh') {
-                $query->whereBetween('DiemTongKet', [5.0, 6.99]);
-            } elseif ($xl === 'KhongDat') {
-                $query->where('DiemTongKet', '<', 5.0);
-            }
-        }
-
-        if ($request->filled('search')) {
-            $s = mb_substr(trim($request->search), 0, 100);
-            $escaped = addcslashes($s, '%_\\');
-            $query->where(function ($q) use ($escaped) {
-                $q->where('MaSV', 'LIKE', "%{$escaped}%")
-                  ->orWhereHas('sinhVien', fn($sv) => $sv->where('HoTen', 'LIKE', "%{$escaped}%"))
-                  ->orWhereHas('hoSoBaoVe.deTai', fn($dt) => $dt->where('TenDeTai', 'LIKE', "%{$escaped}%"));
+        // Lọc theo trạng thái công bố trên Tab Hội Đồng nếu có filter
+        if ($request->filled('trang_thai_cong_bo')) {
+            $ttFilter = $request->trang_thai_cong_bo;
+            $hoiDongs = $hoiDongs->filter(function ($hd) use ($ttFilter) {
+                $daCongBo = $hd->hoSoBaoVes->isNotEmpty() && $hd->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh', 'CoYeuCauChinhSua']));
+                if ($ttFilter === 'DaCongBo') return $daCongBo;
+                if ($ttFilter === 'ChuaCongBo') return !$daCongBo;
+                if ($ttFilter === 'ChuaDuPhieu') {
+                    return $hd->hoSoBaoVes->contains(fn($h) => in_array($h->TrangThaiKetQua, ['ChuaDuPhieu', 'DangNhapDiem']));
+                }
+                return true;
             });
         }
 
-        $ketQuas = $query->orderBy('DiemTongKet', 'desc')->paginate(15)->withQueryString();
-
-        // Thống kê xếp loại toàn khoa
-        $baseQuery = KetQuaSinhVien::where(function ($sub) use ($maKhoa) {
+        // 2. Dữ liệu Tab Toàn Khoa - Danh Sách Sinh Viên Theo Đề Tài
+        $query = KetQuaSinhVien::with([
+            'sinhVien.lop.nganh',
+            'hocKy',
+            'hoSoBaoVe.nhom.truongNhom',
+            'hoSoBaoVe.nhom.deTai.giangVien.boMon',
+            'hoSoBaoVe.deTai.giangVien.boMon',
+            'hoSoBaoVe.hoiDong.thanhViens.giangVien',
+        ])->where(function ($sub) use ($maKhoa) {
             $sub->whereHas('sinhVien', fn($q) => $q->where('MaKhoa', $maKhoa))
-                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+                ->orWhereHas('hoSoBaoVe.nhom.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
         });
 
-        if ($request->filled('MaHocKy')) {
-            $baseQuery->where('MaHocKy', $request->MaHocKy);
+        // Áp dụng bộ lọc toàn diện
+        $this->filterKetQuaQuery($query, $request);
+
+        $ketQuas = (clone $query)->orderBy('DiemTongKet', 'desc')
+            ->orderBy('MaSV', 'asc')
+            ->paginate(15)
+            ->withQueryString();
+
+        // 3. TÍNH TOÁN CÁC THẺ KPI TỔNG HỢP VÀ BIỂU ĐỒ ĐỒNG NHẤT VỚI BỘ LỌC
+        $allKqRecords = (clone $query)->get();
+        $totalSV = $allKqRecords->count();
+
+        // Danh sách điểm hợp lệ (> 0)
+        $scoresList = $allKqRecords->map(fn($item) => (float)($item->DiemChinhThuc ?? $item->DiemTongKet ?? $item->DiemHoiDongTB))
+            ->filter(fn($val) => $val > 0);
+
+        $diemTB = $scoresList->isNotEmpty() ? round($scoresList->avg(), 2) : 0.0;
+        $diemMax = $scoresList->isNotEmpty() ? round($scoresList->max(), 2) : 0.0;
+        $diemMin = $scoresList->isNotEmpty() ? round($scoresList->min(), 2) : 0.0;
+
+        $countDat = $scoresList->filter(fn($v) => $v >= 5.0)->count();
+        $countKhongDat = $scoresList->filter(fn($v) => $v < 5.0)->count();
+        $tyLeDat = $scoresList->isNotEmpty() ? round(($countDat / $scoresList->count()) * 100, 1) : 0;
+
+        // Thống kê Đề tài & Hội đồng (từ các hồ sơ trong tập kết quả lọc hoặc hội đồng lọc)
+        $hoSoIds = $allKqRecords->pluck('MaHoSo')->filter()->unique();
+        if ($hoSoIds->isNotEmpty()) {
+            $filteredHoSos = HoSoBaoVe::whereIn('MaHoSo', $hoSoIds)->with(['nhom.thanhViens', 'hoiDong.thanhViens'])->get();
+        } else {
+            $filteredHoSos = collect();
+        }
+
+        $tongDeTai = $filteredHoSos->count();
+        $soHoiDong = $filteredHoSos->pluck('MaHoiDong')->filter()->unique()->count();
+
+        $deTaiDaCongBo = $filteredHoSos->filter(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']))->count();
+        $deTaiChuaCongBo = $tongDeTai - $deTaiDaCongBo;
+
+        // Đề tài đã đủ 100% phiếu chấm
+        $deTaiDaCham = 0;
+        $deTaiChuaCham = 0;
+        $canhBaoDeTaiThieuDiem = [];
+
+        foreach ($filteredHoSos as $h) {
+            $chk = $this->gradeService->kiemTraDieuKienCongBoDeTai($h->MaHoSo);
+            if ($chk['du_dieu_kien']) {
+                $deTaiDaCham++;
+            } else {
+                $deTaiChuaCham++;
+                $canhBaoDeTaiThieuDiem[] = [
+                    'ma_ho_so'           => $h->MaHoSo,
+                    'ten_de_tai'         => $chk['ten_de_tai'] ?? ($h->nhom?->deTai?->TenDeTai ?? 'Chưa xác định'),
+                    'ten_nhom'           => $chk['ten_nhom'] ?? ($h->nhom?->TenNhom ?? $h->MaNhom),
+                    'ten_hoi_dong'       => $chk['ten_hoi_dong'] ?? ($h->hoiDong?->TenHoiDong ?? 'Chưa phân công'),
+                    'ma_hoi_dong'        => $chk['ma_hoi_dong'] ?? $h->MaHoiDong,
+                    'gv_chua_hoan_thanh' => $chk['gv_chua_hoan_thanh'] ?? [],
+                    'ly_do'              => $chk['ly_do'] ?? 'Chưa hoàn thành nộp phiếu.',
+                ];
+            }
+        }
+
+        $tyLeHoanThanh = ($tongDeTai > 0) ? round(($deTaiDaCham / $tongDeTai) * 100, 1) : 0;
+
+        // Phân bố điểm theo thang chữ cho Biểu đồ
+        $chartDistribution = [
+            'A'      => $scoresList->filter(fn($v) => $v >= 8.5)->count(),
+            'B_plus' => $scoresList->filter(fn($v) => $v >= 8.0 && $v < 8.5)->count(),
+            'B'      => $scoresList->filter(fn($v) => $v >= 7.0 && $v < 8.0)->count(),
+            'C_plus' => $scoresList->filter(fn($v) => $v >= 6.5 && $v < 7.0)->count(),
+            'C'      => $scoresList->filter(fn($v) => $v >= 5.5 && $v < 6.5)->count(),
+            'D_plus' => $scoresList->filter(fn($v) => $v >= 5.0 && $v < 5.5)->count(),
+            'D'      => $scoresList->filter(fn($v) => $v >= 4.0 && $v < 5.0)->count(),
+            'F'      => $scoresList->filter(fn($v) => $v < 4.0)->count(),
+        ];
+
+        // Thống kê Hội đồng cho Biểu đồ (chống tràn nhãn trục x và xoay chéo cắt chữ)
+        $chartCouncils = [];
+        foreach ($hoiDongs as $hd) {
+            $td = $tienDoHoiDongs[$hd->MaHoiDong] ?? [];
+            $rawName = $hd->TenHoiDong ?: ('HĐ ' . $hd->MaHoiDong);
+            $shortName = mb_substr($rawName, 0, 14) . (mb_strlen($rawName) > 14 ? '…' : '');
+            $chartCouncils[] = [
+                'name'     => $shortName,
+                'fullName' => $rawName,
+                'code'     => $hd->MaHoiDong,
+                'total'    => $td['tongSoDeTai'] ?? 0,
+                'duPhieu'  => $td['soDeTaiDuPhieu'] ?? 0,
+            ];
         }
 
         $stats = [
-            'total'        => (clone $baseQuery)->count(),
-            'xuat_sac'     => (clone $baseQuery)->where('DiemTongKet', '>=', 9.0)->count(),
-            'gioi'         => (clone $baseQuery)->whereBetween('DiemTongKet', [8.0, 8.99])->count(),
-            'kha'          => (clone $baseQuery)->whereBetween('DiemTongKet', [7.0, 7.99])->count(),
-            'trung_binh'   => (clone $baseQuery)->whereBetween('DiemTongKet', [5.0, 6.99])->count(),
-            'khong_dat'    => (clone $baseQuery)->where('DiemTongKet', '<', 5.0)->count(),
+            'tong_sinh_vien'        => $totalSV,
+            'tong_de_tai'           => $tongDeTai,
+            'so_hoi_dong'           => $soHoiDong ?: $hoiDongs->count(),
+            'de_tai_da_cham'        => $deTaiDaCham,
+            'de_tai_chua_cham'      => $deTaiChuaCham,
+            'ty_le_hoan_thanh'      => $tyLeHoanThanh,
+            'de_tai_da_cong_bo'     => $deTaiDaCongBo,
+            'de_tai_chua_cong_bo'   => $deTaiChuaCongBo,
+            'diem_trung_binh'       => $diemTB,
+            'diem_cao_nhat'         => $diemMax,
+            'diem_thap_nhat'        => $diemMin,
+            'so_dat'                => $countDat,
+            'so_khong_dat'          => $countKhongDat,
+            'ty_le_dat'             => $tyLeDat,
+            'chart_distribution'    => $chartDistribution,
+            'chart_councils'        => $chartCouncils,
+            'de_tai_thieu_diem'     => $canhBaoDeTaiThieuDiem,
+            // Các metrics cũ để tương thích view & tests
+            'total'                 => $totalSV,
+            'xuat_sac'              => $allKqRecords->where('DiemTongKet', '>=', 9.0)->count(),
+            'gioi'                  => $allKqRecords->whereBetween('DiemTongKet', [8.0, 8.99])->count(),
+            'kha'                   => $allKqRecords->whereBetween('DiemTongKet', [7.0, 7.99])->count(),
+            'trung_binh'            => $allKqRecords->whereBetween('DiemTongKet', [5.0, 6.99])->count(),
+            'khong_dat'             => $allKqRecords->where('DiemTongKet', '<', 5.0)->count(),
         ];
 
-        // Phản hồi AJAX linh hoạt (không tải lại cả trang khi gõ/lọc)
+        // Lấy 5 logs mới nhất để hiển thị nhanh
+        $recentLogs = LichSuCongBoKetQua::latest()->take(5)->get();
+
+        // Phản hồi AJAX linh hoạt
         if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             if ($viewMode === 'hoidong') {
                 $html = view('truongkhoa.ketqua.partials._hoidong_list', compact('hoiDongs', 'tienDoHoiDongs'))->render();
                 return response()->json([
-                    'success' => true,
+                    'success'  => true,
                     'viewMode' => 'hoidong',
-                    'html' => $html,
-                    'total' => $hoiDongs->count(),
-                    'stats' => $stats,
+                    'html'     => $html,
+                    'total'    => $hoiDongs->count(),
+                    'stats'    => $stats,
                 ]);
             }
 
             $html = view('truongkhoa.ketqua.partials._toankhoa_table', compact('ketQuas'))->render();
             return response()->json([
-                'success' => true,
+                'success'  => true,
                 'viewMode' => 'toankhoa',
-                'html' => $html,
-                'total' => $ketQuas->total(),
-                'stats' => $stats,
+                'html'     => $html,
+                'total'    => $ketQuas->total(),
+                'stats'    => $stats,
             ]);
         }
 
@@ -192,7 +309,10 @@ class KetQuaController extends Controller
             'ketQuas',
             'boMons',
             'hocKies',
-            'stats'
+            'currentMaHocKy',
+            'allHoiDongs',
+            'stats',
+            'recentLogs'
         ));
     }
 
@@ -221,6 +341,9 @@ class KetQuaController extends Controller
         $rubricKLCN = PhieuChamDiem::getRubricKLCN();
         $rubricKLKS = PhieuChamDiem::getRubricKLKS();
 
+        // Kiểm tra điều kiện công bố cho Hội đồng này
+        $chkHd = $this->gradeService->kiemTraDieuKienCongBoHoiDong($id);
+
         return view('truongkhoa.ketqua.show_hoidong', compact(
             'khoa',
             'hoiDong',
@@ -228,7 +351,8 @@ class KetQuaController extends Controller
             'giangViensKhoa',
             'allPhieuChams',
             'rubricKLCN',
-            'rubricKLKS'
+            'rubricKLKS',
+            'chkHd'
         ));
     }
 
@@ -257,25 +381,261 @@ class KetQuaController extends Controller
     }
 
     /**
-     * Trưởng khoa công bố kết quả chính thức của toàn Hội đồng
+     * Mức 1: Trưởng khoa công bố kết quả cho 1 Đề tài
      */
-    public function congBoKetQua(Request $request)
+    public function congBoDeTai(Request $request)
+    {
+        $request->validate([
+            'MaHoSo' => 'required|exists:HoSoBaoVe,MaHoSo',
+        ]);
+
+        $user = Auth::user();
+        $nguoiCongBo = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
+
+        $res = $this->gradeService->congBoDeTai($request->MaHoSo, $nguoiCongBo, $maTK);
+
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Mức 1: Trưởng khoa thu hồi công bố kết quả của 1 Đề tài
+     */
+    public function thuHoiDeTai(Request $request)
+    {
+        $request->validate([
+            'MaHoSo' => 'required|exists:HoSoBaoVe,MaHoSo',
+            'ly_do'  => 'required|string|min:5|max:1000',
+        ], [
+            'ly_do.required' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố kết quả.',
+            'ly_do.min'      => 'Lý do thu hồi cần tối thiểu 5 ký tự.',
+        ]);
+
+        $user = Auth::user();
+        $nguoiThuHoi = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
+
+        $res = $this->gradeService->thuHoiCongBoDeTai($request->MaHoSo, $nguoiThuHoi, $request->ly_do, $maTK);
+
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Mức 2: Trưởng khoa công bố kết quả chính thức cho 1 Hội đồng
+     */
+    public function congBoHoiDong(Request $request)
     {
         $request->validate([
             'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
         ]);
 
-        $tienDo = $this->gradeService->kiemTraTienDoChamHoiDong($request->MaHoiDong);
-        if (!$tienDo['exists'] || !$tienDo['hoiDongDuPhieu']) {
-            return redirect()->back()->with('error', 'Hội đồng chưa đủ 100% phiếu chấm hợp lệ từ các giám khảo! Chưa thể công bố kết quả.');
-        }
-
         $user = Auth::user();
         $nguoiCongBo = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
 
-        $this->gradeService->congBoKetQua($request->MaHoiDong, $nguoiCongBo);
+        $res = $this->gradeService->congBoHoiDong($request->MaHoiDong, $nguoiCongBo, $maTK);
 
-        return redirect()->back()->with('success', 'Đã CÔNG BỐ KẾT QUẢ bảo vệ thành công! Dữ liệu điểm đã được khóa và hệ thống đã gửi thông báo đến toàn bộ sinh viên, giảng viên hướng dẫn.');
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Mức 2: Trưởng khoa thu hồi công bố kết quả của 1 Hội đồng
+     */
+    public function thuHoiHoiDong(Request $request)
+    {
+        $request->validate([
+            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
+            'ly_do'     => 'required|string|min:5|max:1000',
+        ], [
+            'ly_do.required' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố của Hội đồng.',
+            'ly_do.min'      => 'Lý do thu hồi cần tối thiểu 5 ký tự.',
+        ]);
+
+        $user = Auth::user();
+        $nguoiThuHoi = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
+
+        $res = $this->gradeService->thuHoiCongBoHoiDong($request->MaHoiDong, $nguoiThuHoi, $request->ly_do, $maTK);
+
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Mức 3: Trưởng khoa công bố kết quả chính thức Toàn Bộ Đợt / Học kỳ
+     */
+    public function congBoToanDot(Request $request)
+    {
+        $request->validate([
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+        ]);
+
+        $khoa = $this->getKhoa();
+        $user = Auth::user();
+        $nguoiCongBo = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
+
+        $res = $this->gradeService->congBoToanDot($request->MaHocKy, $nguoiCongBo, $maTK, $khoa?->MaKhoa);
+
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Mức 3: Trưởng khoa thu hồi công bố kết quả Toàn Bộ Đợt / Học kỳ
+     */
+    public function thuHoiToanDot(Request $request)
+    {
+        $request->validate([
+            'MaHocKy' => 'required|exists:HocKy,MaHocKy',
+            'ly_do'   => 'required|string|min:5|max:1000',
+        ], [
+            'ly_do.required' => 'Vui lòng cung cấp lý do thu hồi quyết định công bố toàn đợt.',
+            'ly_do.min'      => 'Lý do thu hồi cần tối thiểu 5 ký tự.',
+        ]);
+
+        $khoa = $this->getKhoa();
+        $user = Auth::user();
+        $nguoiThuHoi = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+        $maTK = $user->MaTK ?? null;
+
+        $res = $this->gradeService->thuHoiCongBoToanDot($request->MaHocKy, $nguoiThuHoi, $request->ly_do, $maTK, $khoa?->MaKhoa);
+
+        if ($request->ajax()) {
+            return response()->json($res);
+        }
+
+        if ($res['success']) {
+            return redirect()->back()->with('success', $res['message']);
+        }
+        return redirect()->back()->with('error', $res['message']);
+    }
+
+    /**
+     * Alias cũ cho công bố hội đồng
+     */
+    public function congBoKetQua(Request $request)
+    {
+        return $this->congBoHoiDong($request);
+    }
+
+    /**
+     * AJAX: Kiểm tra điều kiện công bố trước khi mở Modal xác nhận
+     */
+    public function kiemTraDieuKienAjax(Request $request)
+    {
+        $phamVi = $request->query('pham_vi', 'DE_TAI');
+        $khoa = $this->getKhoa();
+
+        if ($phamVi === 'DE_TAI') {
+            $data = $this->gradeService->kiemTraDieuKienCongBoDeTai($request->query('MaHoSo', ''));
+        } elseif ($phamVi === 'HOI_DONG') {
+            $data = $this->gradeService->kiemTraDieuKienCongBoHoiDong($request->query('MaHoiDong', ''));
+        } else {
+            $maHocKy = $request->query('MaHocKy') ?? (HocKy::where('TrangThai', true)->value('MaHocKy') ?? 'HK_CURRENT');
+            $data = $this->gradeService->kiemTraDieuKienCongBoToanDot($maHocKy, $khoa?->MaKhoa);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Bảng 3: Chi tiết điểm từng đề tài theo Rubric (AJAX / Modal)
+     */
+    public function chiTietRubricAjax(string $maHoSo)
+    {
+        $data = $this->gradeService->getChiTietDiemRubric($maHoSo);
+        return view('truongkhoa.ketqua.partials._modal_rubric_detail', $data);
+    }
+
+    /**
+     * Xem Lịch sử Audit Log Công bố / Thu hồi (AJAX / Modal)
+     */
+    public function lichSuCongBoAjax(Request $request)
+    {
+        $logs = LichSuCongBoKetQua::with(['hoiDong', 'hoSoBaoVe'])
+            ->latest()
+            ->paginate(15);
+
+        if ($request->ajax()) {
+            return view('truongkhoa.ketqua.partials._modal_audit_log', compact('logs'));
+        }
+
+        return view('truongkhoa.ketqua.partials._modal_audit_log', compact('logs'));
+    }
+
+    /**
+     * In / Báo Cáo Tổng Hợp Điểm Khóa Luận (Print-ready view)
+     */
+    public function inBaoCaoTongHop(Request $request)
+    {
+        $khoa = $this->getKhoa();
+        $maKhoa = $khoa ? $khoa->MaKhoa : 'CNTT';
+        $maHocKy = $request->query('MaHocKy') ?? (HocKy::where('TrangThai', 'Đang diễn ra')->value('MaHocKy') ?? 'HK2627_1');
+        $hocKy = HocKy::find($maHocKy);
+
+        $query = KetQuaSinhVien::with([
+            'sinhVien.lop.nganh',
+            'hoSoBaoVe.nhom.deTai.giangVien.boMon',
+            'hoSoBaoVe.deTai.giangVien.boMon',
+            'hoSoBaoVe.hoiDong.thanhViens.giangVien',
+        ])->where(function ($sub) use ($maKhoa) {
+            $sub->whereHas('sinhVien', fn($q) => $q->where('MaKhoa', $maKhoa))
+                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+                ->orWhereHas('hoSoBaoVe.nhom.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+        });
+
+        if ($request->filled('MaHocKy')) {
+            $query->where('MaHocKy', $request->MaHocKy);
+        } else {
+            $query->where('MaHocKy', $maHocKy);
+        }
+
+        $this->filterKetQuaQuery($query, $request);
+        $kqs = $query->orderBy('DiemTongKet', 'desc')->get();
+
+        $hoiDongs = HoiDong::where('MaHocKy', $maHocKy)
+            ->with(['thanhViens.giangVien', 'hoSoBaoVes.nhom.deTai'])
+            ->orderBy('TenHoiDong')
+            ->get();
+
+        return view('truongkhoa.ketqua.print_report', compact('khoa', 'hocKy', 'kqs', 'hoiDongs'));
     }
 
     /**
@@ -376,37 +736,16 @@ class KetQuaController extends Controller
         $query = KetQuaSinhVien::with([
             'sinhVien.lop.nganh',
             'hocKy',
-            'hoSoBaoVe.nhom',
+            'hoSoBaoVe.nhom.deTai.giangVien.boMon',
             'hoSoBaoVe.deTai.giangVien.boMon',
             'hoSoBaoVe.hoiDong'
         ])->where(function ($sub) use ($maKhoa) {
             $sub->whereHas('sinhVien', fn($q) => $q->where('MaKhoa', $maKhoa))
-                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
+                ->orWhereHas('hoSoBaoVe.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa))
+                ->orWhereHas('hoSoBaoVe.nhom.deTai.giangVien.boMon', fn($q) => $q->where('MaKhoa', $maKhoa));
         });
 
-        if ($request->filled('MaHocKy')) {
-            $query->where('MaHocKy', $request->MaHocKy);
-        }
-
-        if ($request->filled('MaBoMon')) {
-            $maBM = $request->MaBoMon;
-            $query->whereHas('hoSoBaoVe.deTai.giangVien', fn($q) => $q->where('MaBoMon', $maBM));
-        }
-
-        if ($request->filled('xep_loai')) {
-            $xl = $request->xep_loai;
-            if ($xl === 'XuatSac') {
-                $query->where('DiemTongKet', '>=', 9.0);
-            } elseif ($xl === 'Gioi') {
-                $query->whereBetween('DiemTongKet', [8.0, 8.99]);
-            } elseif ($xl === 'Kha') {
-                $query->whereBetween('DiemTongKet', [7.0, 7.99]);
-            } elseif ($xl === 'TrungBinh') {
-                $query->whereBetween('DiemTongKet', [5.0, 6.99]);
-            } elseif ($xl === 'KhongDat') {
-                $query->where('DiemTongKet', '<', 5.0);
-            }
-        }
+        $this->filterKetQuaQuery($query, $request);
 
         $list = $query->orderBy('DiemTongKet', 'desc')->get();
 
@@ -443,13 +782,17 @@ class KetQuaController extends Controller
             foreach ($list as $index => $row) {
                 $diemTB = (float)($row->DiemHoiDongTB ?? 0);
                 $diemCT = (float)($row->DiemChinhThuc ?? $row->DiemTongKet ?? $diemTB);
+                $deTai = $row->hoSoBaoVe?->nhom?->deTai ?? $row->hoSoBaoVe?->deTai;
+                $tenDeTai = $deTai?->TenDeTai ?? 'N/A';
+                $tenBoMon = $deTai?->giangVien?->boMon?->TenBoMon ?? 'N/A';
+
                 fputcsv($handle, [
                     $index + 1,
                     $row->MaSV,
                     $row->sinhVien->HoTen ?? 'N/A',
                     $row->sinhVien->lop->TenLop ?? ($row->sinhVien->MaLop ?? 'N/A'),
-                    $row->hoSoBaoVe->deTai->giangVien->boMon->TenBoMon ?? 'N/A',
-                    $row->hoSoBaoVe->deTai->TenDeTai ?? 'N/A',
+                    $tenBoMon,
+                    $tenDeTai,
                     $row->LoaiKhoaLuan ?? 'KLCN',
                     number_format($diemTB, 2),
                     number_format($diemCT, 2),
@@ -464,5 +807,80 @@ class KetQuaController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Áp dụng bộ lọc toàn diện cho truy vấn Kết Quả Sinh Viên
+     */
+    protected function filterKetQuaQuery($query, Request $request): void
+    {
+        // 1. Lọc theo Học kỳ
+        if ($request->filled('MaHocKy')) {
+            $query->where('MaHocKy', $request->MaHocKy);
+        }
+
+        // 2. Lọc theo Hội đồng
+        if ($request->filled('MaHoiDong')) {
+            $query->whereHas('hoSoBaoVe', fn($q) => $q->where('MaHoiDong', $request->MaHoiDong));
+        }
+
+        // 3. Lọc theo Bộ môn (qua GVHD của Đề tài)
+        if ($request->filled('MaBoMon')) {
+            $maBM = $request->MaBoMon;
+            $query->where(function ($sq) use ($maBM) {
+                $sq->whereHas('hoSoBaoVe.nhom.deTai.giangVien', fn($q) => $q->where('MaBoMon', $maBM))
+                   ->orWhereHas('hoSoBaoVe.deTai.giangVien', fn($q) => $q->where('MaBoMon', $maBM));
+            });
+        }
+
+        // 4. Lọc theo Trạng thái công bố
+        if ($request->filled('trang_thai_cong_bo')) {
+            $ttFilter = $request->trang_thai_cong_bo;
+            if ($ttFilter === 'DaCongBo') {
+                $query->where(function ($sq) {
+                    $sq->where('TrangThai', 'Đã công bố')
+                       ->orWhereHas('hoSoBaoVe', fn($h) => $h->whereIn('TrangThaiKetQua', ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']));
+                });
+            } elseif ($ttFilter === 'ChuaCongBo') {
+                $query->where(function ($sq) {
+                    $sq->where('TrangThai', '!=', 'Đã công bố')->orWhereNull('TrangThai');
+                })->whereHas('hoSoBaoVe', fn($h) => $h->whereNotIn('TrangThaiKetQua', ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']));
+            } elseif ($ttFilter === 'ChuaDuPhieu') {
+                $query->whereHas('hoSoBaoVe', fn($h) => $h->whereIn('TrangThaiKetQua', ['ChuaDuPhieu', 'DangNhapDiem']));
+            }
+        }
+
+        // 5. Lọc theo Xếp loại (thang điểm 10)
+        if ($request->filled('xep_loai')) {
+            $xl = $request->xep_loai;
+            $scoreCol = DB::raw('COALESCE(DiemChinhThuc, DiemTongKet, DiemHoiDongTB, 0)');
+            if ($xl === 'XuatSac') {
+                $query->where($scoreCol, '>=', 9.0);
+            } elseif ($xl === 'Gioi') {
+                $query->whereBetween($scoreCol, [8.0, 8.99]);
+            } elseif ($xl === 'Kha') {
+                $query->whereBetween($scoreCol, [7.0, 7.99]);
+            } elseif ($xl === 'TrungBinh') {
+                $query->whereBetween($scoreCol, [5.0, 6.99]);
+            } elseif ($xl === 'KhongDat') {
+                $query->where($scoreCol, '<', 5.0);
+            }
+        }
+
+        // 6. Tìm kiếm linh hoạt từ khóa (Mã SV, họ tên, lớp, nhóm, tên đề tài, hội đồng)
+        $searchTerm = $request->input('search');
+        if (!empty($searchTerm) && trim($searchTerm) !== '') {
+            $s = mb_substr(trim($searchTerm), 0, 100);
+            $escaped = addcslashes($s, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('MaSV', 'like', "%{$escaped}%")
+                  ->orWhereHas('sinhVien', fn($sv) => $sv->where('HoTen', 'like', "%{$escaped}%"))
+                  ->orWhereHas('sinhVien.lop', fn($l) => $l->where('TenLop', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVe.nhom', fn($n) => $n->where('TenNhom', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVe.nhom.deTai', fn($dt) => $dt->where('TenDeTai', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVe.deTai', fn($dt) => $dt->where('TenDeTai', 'like', "%{$escaped}%"))
+                  ->orWhereHas('hoSoBaoVe.hoiDong', fn($hd) => $hd->where('TenHoiDong', 'like', "%{$escaped}%"));
+            });
+        }
     }
 }

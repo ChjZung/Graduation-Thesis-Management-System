@@ -192,14 +192,18 @@
                             @endif
 
                             {{-- Trạng thái diễn ra --}}
-                            @if($hd->TrangThai === 'Đã kết thúc')
-                                <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">Đã kết thúc</span>
-                            @elseif($hd->TrangThai === 'Đang diễn ra')
-                                <span class="badge bg-success text-white rounded-pill px-2 py-1 small">
-                                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang diễn ra
+                            @if($hd->trang_thai_thoi_gian === 'DaKetThuc')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-bold">
+                                    <i class="fa-solid fa-check me-1"></i> Đã Kết Thúc
+                                </span>
+                            @elseif($hd->trang_thai_thoi_gian === 'DangDienRa')
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small fw-bold">
+                                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang Diễn Ra
                                 </span>
                             @else
-                                <span class="badge bg-info-subtle text-info border rounded-pill px-2 py-1 small">Chưa diễn ra</span>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small fw-bold">
+                                    <i class="fa-regular fa-clock me-1"></i> Sắp Diễn Ra
+                                </span>
                             @endif
                         </div>
                     </div>

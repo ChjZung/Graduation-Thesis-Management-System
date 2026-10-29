@@ -6,6 +6,7 @@ use App\Models\BaoCaoTienDo;
 use App\Models\KhoiBaoCaoTienDo;
 use App\Models\HoSoBaoVe;
 use App\Models\TepHoSoBaoVe;
+use App\Models\BaoCaoSauBaoVe;
 use App\Models\DeTai;
 use App\Models\SinhVien;
 use App\Models\GiangVien;
@@ -125,6 +126,58 @@ class FileDownloadController extends Controller
     }
 
     /**
+     * Xem inline file báo cáo sau bảo vệ (PDF Viewer)
+     */
+    public function viewBaoCaoSauBaoVe($id)
+    {
+        return $this->handleBaoCaoSauBaoVe($id, false);
+    }
+
+    /**
+     * Tải file báo cáo sau bảo vệ về máy (Download attachment)
+     */
+    public function downloadBaoCaoSauBaoVe($id)
+    {
+        return $this->handleBaoCaoSauBaoVe($id, true);
+    }
+
+    /**
+     * Xử lý xác thực quyền và phục vụ file báo cáo sau bảo vệ
+     */
+    private function handleBaoCaoSauBaoVe($id, bool $asAttachment = false)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập để xem tài liệu.');
+        }
+
+        $baoCao = BaoCaoSauBaoVe::findOrFail($id);
+        $hoSo = $baoCao->hoSoBaoVe;
+
+        if (!$hoSo) {
+            abort(404, 'Không tìm thấy thông tin hồ sơ bảo vệ của báo cáo này.');
+        }
+
+        if (!Gate::forUser($user)->allows('view', $hoSo)) {
+            abort(403, 'Bạn không có quyền tải xuống hoặc xem tệp tài liệu này.');
+        }
+
+        $type = request('type', 'main');
+        if ($type === 'giai_trinh') {
+            $filePath = $baoCao->FileGiaiTrinh;
+            $fileName = $baoCao->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf';
+        } elseif ($type === 'minh_chung') {
+            $filePath = $baoCao->FileMinhChung;
+            $fileName = $baoCao->TenFileMinhChung ?: 'Minh_Chung.pdf';
+        } else {
+            $filePath = $baoCao->DuongDanFile;
+            $fileName = $baoCao->TenFile ?: 'Bao_Cao_Hoan_Thien.pdf';
+        }
+
+        return $this->serveFile($filePath, $fileName, $asAttachment);
+    }
+
+    /**
      * Xem nhanh file inline có kiểm tra quyền (Preview trong iframe/modal)
      */
     public function viewFile(Request $request)
@@ -133,17 +186,18 @@ class FileDownloadController extends Controller
         $id = $request->query('id');
 
         return match($type) {
-            'baocao'  => $this->downloadBaoCao($id),
-            'hoso'    => $this->downloadHoSo($id),
-            'decuong' => $this->downloadDeCuong($id),
-            default   => abort(400, 'Loại tài liệu không hợp lệ.'),
+            'baocao'          => $this->downloadBaoCao($id),
+            'hoso'            => $this->downloadHoSo($id),
+            'decuong'         => $this->downloadDeCuong($id),
+            'baocao_saubaove' => $this->viewBaoCaoSauBaoVe($id),
+            default           => abort(400, 'Loại tài liệu không hợp lệ.'),
         };
     }
 
     /**
      * Phục vụ file an toàn từ Storage
      */
-    private function serveFile(?string $storedPath, string $downloadName)
+    private function serveFile(?string $storedPath, string $downloadName, bool $asAttachment = false)
     {
         if (empty($storedPath)) {
             abort(404, 'Đường dẫn tệp không tồn tại.');
@@ -155,30 +209,42 @@ class FileDownloadController extends Controller
             $cleanPath = substr($cleanPath, 8);
         }
 
+        $disposition = $asAttachment ? 'attachment' : 'inline';
+        $encodedName = rawurlencode(basename($downloadName));
+        $headers = [
+            'Content-Disposition' => "{$disposition}; filename=\"{$encodedName}\"; filename*=UTF-8''{$encodedName}",
+        ];
+
         $disk = Storage::disk('public');
         if (!$disk->exists($cleanPath)) {
             // Thử kiểm tra đường dẫn trực tiếp trong storage/app
             $directPath = storage_path('app/' . $cleanPath);
             if (file_exists($directPath)) {
-                return response()->file($directPath, [
-                    'Content-Disposition' => 'inline; filename="' . basename($downloadName) . '"',
-                ]);
+                return response()->file($directPath, $headers);
+            }
+
+            // Thử đường dẫn trong storage/app/public/
+            $storagePublicPath = storage_path('app/public/' . $cleanPath);
+            if (file_exists($storagePublicPath)) {
+                return response()->file($storagePublicPath, $headers);
             }
 
             // Thử đường dẫn trong public/
             $publicPath = public_path($cleanPath);
             if (file_exists($publicPath)) {
-                return response()->file($publicPath, [
-                    'Content-Disposition' => 'inline; filename="' . basename($downloadName) . '"',
-                ]);
+                return response()->file($publicPath, $headers);
+            }
+
+            // Thử đường dẫn trong public/storage/
+            $publicStoragePath = public_path('storage/' . $cleanPath);
+            if (file_exists($publicStoragePath)) {
+                return response()->file($publicStoragePath, $headers);
             }
 
             abort(404, 'Tệp tin không còn tồn tại trên máy chủ lưu trữ.');
         }
 
         $fullPath = $disk->path($cleanPath);
-        return response()->file($fullPath, [
-            'Content-Disposition' => 'inline; filename="' . basename($downloadName) . '"',
-        ]);
+        return response()->file($fullPath, $headers);
     }
 }

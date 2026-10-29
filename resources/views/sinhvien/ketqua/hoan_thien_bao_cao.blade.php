@@ -151,8 +151,8 @@
                     <i class="fa-solid fa-clipboard-list text-primary me-1"></i>Kết luận &amp; Yêu cầu chỉnh sửa chung của Hội đồng:
                 </label>
                 @if(!empty($hoSo->YeuCauChinhSuaSauBaoVe))
-                    <div class="p-3 rounded-3 bg-light border text-dark" style="white-space: pre-line; line-height: 1.6; font-size: 0.93rem;">
-                        {{ $hoSo->YeuCauChinhSuaSauBaoVe }}
+                    <div class="p-3 rounded-3 bg-light border text-dark" style="line-height: 1.6; font-size: 0.93rem;">
+                        {!! \App\Helpers\HtmlHelper::renderRichText($hoSo->YeuCauChinhSuaSauBaoVe) !!}
                     </div>
                 @else
                     <div class="p-3 rounded-3 bg-light border text-muted fst-italic">
@@ -386,18 +386,25 @@
                                     <div class="text-muted small">
                                         {{ $item->DungLuong ? round($item->DungLuong / 1024 / 1024, 2) . ' MB' : '' }}
                                     </div>
-                                    <a href="{{ asset('storage/' . $item->DuongDanFile) }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.75rem;">
-                                        <i class="fa-solid fa-download me-1"></i> Tải báo cáo v{{ $item->LanChinhSua }}
-                                    </a>
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 d-inline-flex align-items-center" style="font-size: 0.75rem;"
+                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $item->id) }}', '{{ addslashes($item->TenFile) }}', 'Báo cáo hoàn thiện v{{ $item->LanChinhSua }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $item->id) }}' })">
+                                            <i class="fa-solid fa-eye me-1"></i> Xem PDF
+                                        </button>
+                                        <a href="{{ route('baocao_sau_baove.download', $item->id) }}" download="{{ $item->TenFile }}" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0 d-inline-flex align-items-center" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-download me-1"></i> Tải về
+                                        </a>
+                                    </div>
 
                                     @if($item->FileGiaiTrinh)
                                     <div class="mt-2 pt-1 border-top">
                                         <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileGiaiTrinh }}">
                                             <i class="fa-solid fa-file-lines text-info me-1"></i>{{ $item->TenFileGiaiTrinh ?? 'Bản giải trình' }}
                                         </div>
-                                        <a href="{{ asset('storage/' . $item->FileGiaiTrinh) }}" target="_blank" class="btn btn-xs btn-outline-info rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-download me-1"></i> Giải trình
-                                        </a>
+                                        <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;"
+                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $item->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($item->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình v{{ $item->LanChinhSua }}', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $item->id, 'type' => 'giai_trinh']) }}' })">
+                                            <i class="fa-solid fa-eye me-1"></i> Xem giải trình
+                                        </button>
                                     </div>
                                     @endif
 
@@ -406,15 +413,15 @@
                                         <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileMinhChung }}">
                                             <i class="fa-solid fa-paperclip text-success me-1"></i>{{ $item->TenFileMinhChung ?? 'Minh chứng' }}
                                         </div>
-                                        <a href="{{ asset('storage/' . $item->FileMinhChung) }}" target="_blank" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
+                                        <a href="{{ route('baocao_sau_baove.download', ['id' => $item->id, 'type' => 'minh_chung']) }}" download="{{ $item->TenFileMinhChung ?: 'MinhChung.zip' }}" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
                                             <i class="fa-solid fa-download me-1"></i> Minh chứng
                                         </a>
                                     </div>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="small text-dark" style="white-space: pre-line; line-height: 1.5;">
-                                        {{ $item->TomTatChinhSua }}
+                                    <div class="small text-dark" style="line-height: 1.5;">
+                                        {!! \App\Helpers\HtmlHelper::renderRichText($item->TomTatChinhSua) !!}
                                     </div>
                                 </td>
                                 <td>
@@ -425,23 +432,26 @@
                                 </td>
                                 <td class="text-center">
                                     @if($item->TrangThai === 'Đạt' || $item->TrangThai === 'Đã duyệt')
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
-                                            <i class="fa-solid fa-check me-1"></i> Đã duyệt
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                            <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Đã duyệt</span>
                                         </span>
                                     @elseif($item->TrangThai === 'Yêu cầu sửa tiếp')
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">
-                                            <i class="fa-solid fa-rotate-right me-1"></i> Yêu cầu sửa tiếp
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                            <i class="fa-solid fa-rotate-right icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Yêu cầu sửa tiếp</span>
                                         </span>
                                     @else
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">
-                                            <i class="fa-solid fa-hourglass-half me-1"></i> Chờ duyệt
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                            <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
+                                            <span>Chờ duyệt</span>
                                         </span>
                                     @endif
                                 </td>
                                 <td>
                                     @if(!empty($item->NhanXetGV))
-                                        <div class="small text-dark" style="white-space: pre-line; line-height: 1.5;">
-                                            {{ $item->NhanXetGV }}
+                                        <div class="small text-dark" style="line-height: 1.5;">
+                                            {!! \App\Helpers\HtmlHelper::renderRichText($item->NhanXetGV) !!}
                                         </div>
                                         <div class="small text-muted mt-1" style="font-size: 0.75rem;">
                                             <i class="fa-regular fa-clock me-1"></i>{{ $item->NgayKiemTra ? \Carbon\Carbon::parse($item->NgayKiemTra)->format('d/m/Y H:i') : '' }}

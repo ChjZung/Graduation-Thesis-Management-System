@@ -15,9 +15,15 @@
             </div>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-xs" onclick="switchHoiDongTab('chamdiem')">
-                <i class="fa-solid fa-calculator me-1"></i> Vào Phòng Chấm Điểm
-            </button>
+            @if(!empty($gradingHoiDongs) && $gradingHoiDongs->isNotEmpty())
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs" onclick="switchHoiDongTab('chamdiem')">
+                    <i class="fa-solid fa-calculator me-1"></i> Vào Phòng Chấm Điểm
+                </button>
+            @else
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold text-muted" onclick="switchHoiDongTab('chamdiem')">
+                    <i class="fa-solid fa-clipboard-check me-1"></i> Phòng Chấm Điểm
+                </button>
+            @endif
         </div>
     </div>
 
@@ -223,10 +229,10 @@
                                     $myRole = $myTv?->VaiTro ?? 'Thành viên';
                                     $isThuKyThis = ($myRole === 'Thư ký' || mb_stripos($myRole, 'thư ký') !== false);
                                     
-                                    $today = now()->toDateString();
-                                    $isToday = $hd->NgayBaoVe && $hd->NgayBaoVe->toDateString() === $today;
-                                    $isPast = $hd->NgayBaoVe && $hd->NgayBaoVe->lt($today);
-                                    $isFuture = $hd->NgayBaoVe && $hd->NgayBaoVe->gt($today);
+                                    $ttThoiGian = $hd->trang_thai_thoi_gian;
+                                    $demNguoc = $hd->dem_nguoc_bat_dau;
+                                    $reasonCheck = '';
+                                    $canGradeThis = $hd->canGrade($gv, null, $reasonCheck);
                                 @endphp
                                 <tr>
                                     <td>
@@ -293,18 +299,21 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        @if($hd->TrangThai === 'Đã kết thúc' || $hd->TrangThai === 'Đã hoàn thành' || ($isPast && !$hd->TrangThai))
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-check me-1"></i> Đã Hoàn Thành
+                                        @if($ttThoiGian === 'DaKetThuc')
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold">
+                                                <i class="fa-solid fa-check me-1"></i> Đã Kết Thúc
                                             </span>
-                                        @elseif($hd->TrangThai === 'Đang diễn ra' || $isToday)
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                        @elseif($ttThoiGian === 'DangDienRa')
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang Diễn Ra
                                             </span>
                                         @else
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-regular fa-clock me-1"></i> Sắp Diễn Ra
                                             </span>
+                                            @if($demNguoc)
+                                                <div class="text-muted small mt-1" style="font-size: 0.72rem;">{{ $demNguoc }}</div>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="text-end pe-4">
@@ -312,9 +321,20 @@
                                             <a href="{{ route('giangvien.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 fw-semibold">
                                                 <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                             </a>
-                                            <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $hd->MaHoiDong]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
-                                                <i class="fa-solid fa-calculator me-1"></i> Chấm điểm
-                                            </a>
+                                            @if($canGradeThis)
+                                                <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $hd->MaHoiDong]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
+                                                    <i class="fa-solid fa-calculator me-1"></i> Chấm điểm
+                                                </a>
+                                            @elseif($ttThoiGian === 'SapDienRa')
+                                                <button type="button" class="btn btn-xs btn-secondary rounded-pill px-3 py-1 fw-semibold text-white-50 opacity-75" disabled 
+                                                        title="{{ $reasonCheck ?: 'Chưa đến giờ chấm điểm. Mở chấm điểm từ ' . ($hd->thoi_diem_bat_dau ? $hd->thoi_diem_bat_dau->format('H:i \n\g\à\y d/m/Y') : 'thời gian bảo vệ') }}">
+                                                    <i class="fa-solid fa-lock me-1"></i> Chấm điểm
+                                                </button>
+                                            @else
+                                                <a href="{{ route('giangvien.hoidong.show', $hd->MaHoiDong) }}" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" title="Xem bảng điểm và biên bản hội đồng (Chế độ chỉ đọc)">
+                                                    <i class="fa-solid fa-file-lines me-1"></i> Xem điểm
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

@@ -303,17 +303,43 @@ class NhomController extends Controller
                     }
                 });
             });
-        } else {
-            // Khi không tìm kiếm theo từ khóa 'q': Lọc theo học phần và bộ môn được chọn (CÙNG HỌC PHẦN, CÙNG BỘ MÔN)
-            if ($selectedHocPhan && $selectedHocPhan !== 'ALL') {
-                $queryNhoms->where('MaHocPhan', $selectedHocPhan);
-            }
-            if ($selectedBoMon && $selectedBoMon !== 'ALL') {
-                $cleanBm = str_replace('BM_', '', $selectedBoMon);
-                $queryNhoms->whereHas('hocPhan', function($q) use ($cleanBm) {
-                    $q->where('MaBoMon', $cleanBm)->orWhere('MaBoMon', 'BM_' . $cleanBm);
-                });
-            }
+        }
+
+        // Lọc theo học phần nếu đã chọn
+        if ($selectedHocPhan && $selectedHocPhan !== 'ALL') {
+            $queryNhoms->where('MaHocPhan', $selectedHocPhan);
+        }
+
+        // Lọc theo bộ môn nếu đã chọn
+        if ($selectedBoMon && $selectedBoMon !== 'ALL') {
+            $cleanBm = str_replace('BM_', '', $selectedBoMon);
+            $queryNhoms->whereHas('hocPhan', function($q) use ($cleanBm) {
+                $q->where('MaBoMon', $cleanBm)->orWhere('MaBoMon', 'BM_' . $cleanBm);
+            });
+        }
+
+        // 3. LỌC THEO TRẠNG THÁI ĐỀ TÀI (TrangThaiDeTai: ALL | da_chon | chua_chon)
+        $trangThaiDeTai = $request->input('TrangThaiDeTai', $request->input('trang_thai_de_tai', 'ALL'));
+        if ($trangThaiDeTai === 'da_chon') {
+            $queryNhoms->whereHas('phieuDangKys', function($pq) {
+                $pq->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']);
+            });
+        } elseif ($trangThaiDeTai === 'chua_chon') {
+            $queryNhoms->whereDoesntHave('phieuDangKys', function($pq) {
+                $pq->whereIn('TrangThai', ['Chờ duyệt', 'Đã duyệt']);
+            });
+        }
+
+        // 4. LỌC THEO SỐ CHỖ TRỐNG (ChoTrong: ALL | con_cho | da_du)
+        $choTrong = $request->input('ChoTrong', $request->input('cho_trong', 'ALL'));
+        if ($choTrong === 'con_cho') {
+            $queryNhoms->whereHas('thanhViens', function($tq) {
+                $tq->where('TrangThai', 'da_tham_gia');
+            }, '<', 3);
+        } elseif ($choTrong === 'da_du') {
+            $queryNhoms->whereHas('thanhViens', function($tq) {
+                $tq->where('TrangThai', 'da_tham_gia');
+            }, '>=', 3);
         }
 
         // Loại bỏ các nhóm đã gửi lời mời gia nhập tới sinh viên này ra khỏi danh sách mở bên dưới
@@ -327,7 +353,7 @@ class NhomController extends Controller
         $groupPhaseState = \App\Services\PlanPhaseService::getGroupPhaseState($maHocKy);
         $isTaoNhomOpen = $groupPhaseState['is_open'];
 
-        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai', 'yeuCauXinVao', 'loiMoiDaGui') + ['NhomOpen' => $nhomsOpen]);
+        return view('sinhvien.nhom.index', compact('sinhVien', 'nhomCurrent', 'loiMois', 'yeuCauDaGui', 'nhomsOpen', 'isNhomLocked', 'hocPhans', 'selectedHocPhan', 'selectedBoMon', 'sinhVienAllGroups', 'hocKies', 'boMons', 'maHocKy', 'isTaoNhomOpen', 'groupPhaseState', 'nhomHocKyHienTai', 'yeuCauXinVao', 'loiMoiDaGui', 'trangThaiDeTai', 'choTrong') + ['NhomOpen' => $nhomsOpen]);
     }
 
     /**

@@ -3,6 +3,10 @@
 @section('page_title', 'Chi Tiết Hội Đồng: ' . $hoiDong->TenHoiDong)
 
 @section('content')
+@php
+    $reasonCheckShow = '';
+    $canGradeShow = $hoiDong->canGrade($gv, null, $reasonCheckShow);
+@endphp
 <div class="container-fluid px-0">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -28,9 +32,19 @@
                     <i class="fa-solid fa-file-pdf me-1"></i> Quyết Định Thành Lập HĐ (PDF)
                 </a>
             @endif
-            <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #0072ce; border-color: #0072ce;">
-                <i class="fa-solid fa-calculator me-1"></i> Vào Phòng Chấm Điểm
-            </a>
+            @if($canGradeShow)
+                <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #0072ce; border-color: #0072ce;">
+                    <i class="fa-solid fa-calculator me-1"></i> Vào Phòng Chấm Điểm
+                </a>
+            @elseif($hoiDong->trang_thai_thoi_gian === 'SapDienRa')
+                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4 fw-semibold text-white-50 opacity-75 shadow-sm" disabled title="{{ $reasonCheckShow ?: 'Chưa đến thời gian chấm điểm' }}">
+                    <i class="fa-solid fa-lock me-1"></i> Phòng Chấm Điểm
+                </button>
+            @else
+                <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm" title="Xem bảng điểm và biên bản hội đồng (Chỉ đọc)">
+                    <i class="fa-solid fa-file-lines me-1"></i> Xem Điểm Hội Đồng
+                </a>
+            @endif
         </div>
     </div>
 
@@ -73,18 +87,21 @@
                         <div class="p-3 rounded-3 bg-light border border-slate-200">
                             <span class="text-muted small d-block mb-1"><i class="fa-solid fa-shield-halved text-success me-1"></i>Trạng thái hội đồng:</span>
                             <div>
-                                @if($hoiDong->TrangThai === 'Đã kết thúc' || $hoiDong->TrangThai === 'Đã hoàn thành')
+                                @if($hoiDong->trang_thai_thoi_gian === 'DaKetThuc')
                                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                                        <i class="fa-solid fa-check me-1"></i> Đã Hoàn Thành Phiên Bảo Vệ
+                                        <i class="fa-solid fa-check me-1"></i> Đã Kết Thúc
                                     </span>
-                                @elseif($hoiDong->TrangThai === 'Đang diễn ra')
+                                @elseif($hoiDong->trang_thai_thoi_gian === 'DangDienRa')
                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-bold">
                                         <i class="fa-solid fa-spinner fa-spin me-1"></i> Đang Diễn Ra
                                     </span>
                                 @else
                                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-bold">
-                                        <i class="fa-regular fa-clock me-1"></i> Sắp Diễn Ra (Chưa Bắt Đầu)
+                                        <i class="fa-regular fa-clock me-1"></i> Sắp Diễn Ra
                                     </span>
+                                    @if($hoiDong->dem_nguoc_bat_dau)
+                                        <div class="text-muted small mt-1" style="font-size: 0.72rem;">{{ $hoiDong->dem_nguoc_bat_dau }}</div>
+                                    @endif
                                 @endif
                             </div>
                         </div>
@@ -146,9 +163,19 @@
                 </div>
 
                 <div>
-                    <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-primary rounded-pill w-100 fw-bold py-2 shadow-xs" style="background: #0072ce; border-color: #0072ce;">
-                        <i class="fa-solid fa-file-signature me-1"></i> Mở Bảng Điểm Hội Đồng
-                    </a>
+                    @if($canGradeShow)
+                        <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-primary rounded-pill w-100 fw-bold py-2 shadow-xs" style="background: #0072ce; border-color: #0072ce;">
+                            <i class="fa-solid fa-file-signature me-1"></i> Mở Bảng Điểm Hội Đồng
+                        </a>
+                    @elseif($hoiDong->trang_thai_thoi_gian === 'SapDienRa')
+                        <button type="button" class="btn btn-secondary rounded-pill w-100 fw-semibold py-2 text-white-50 opacity-75" disabled title="{{ $reasonCheckShow ?: 'Chưa đến thời gian chấm điểm' }}">
+                            <i class="fa-solid fa-lock me-1"></i> Mở Bảng Điểm Hội Đồng
+                        </button>
+                    @else
+                        <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong]) }}" class="btn btn-outline-secondary rounded-pill w-100 fw-semibold py-2" title="Xem bảng điểm và biên bản hội đồng (Chỉ đọc)">
+                            <i class="fa-solid fa-file-lines me-1"></i> Xem Bảng Điểm Hội Đồng
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -303,10 +330,24 @@
                                         @endif
                                     </td>
                                     <td class="text-end pe-4">
+                                        @php
+                                            $reasonHs = '';
+                                            $canGradeHs = $hoiDong->canGrade($gv, $hoSo, $reasonHs);
+                                        @endphp
                                         <div class="d-flex justify-content-end gap-1 flex-wrap">
-                                            <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong, 'MaHoSo' => $hoSo->MaHoSo]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
-                                                <i class="fa-solid fa-calculator me-1"></i> Chấm điểm
-                                            </a>
+                                            @if($canGradeHs)
+                                                <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong, 'MaHoSo' => $hoSo->MaHoSo]) }}" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
+                                                    <i class="fa-solid fa-calculator me-1"></i> Chấm điểm
+                                                </a>
+                                            @elseif($hoiDong->trang_thai_thoi_gian === 'SapDienRa')
+                                                <button type="button" class="btn btn-xs btn-secondary rounded-pill px-3 py-1 fw-semibold text-white-50 opacity-75" disabled title="{{ $reasonHs ?: 'Chưa đến thời gian bảo vệ' }}">
+                                                    <i class="fa-solid fa-lock me-1"></i> Chấm điểm
+                                                </button>
+                                            @else
+                                                <a href="{{ route('giangvien.chamdiem.index', ['MaHoiDong' => $hoiDong->MaHoiDong, 'MaHoSo' => $hoSo->MaHoSo]) }}" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" title="Xem chi tiết phiếu điểm (Chỉ đọc)">
+                                                    <i class="fa-solid fa-eye me-1"></i> Xem điểm
+                                                </a>
+                                            @endif
                                             <a href="{{ route('giangvien.chamdiem.xuatPdf', ['MaHoiDong' => $hoiDong->MaHoiDong, 'MaHoSo' => $hoSo->MaHoSo]) }}" target="_blank" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1" title="Xuất phiếu điểm PDF">
                                                 <i class="fa-solid fa-file-pdf"></i>
                                             </a>

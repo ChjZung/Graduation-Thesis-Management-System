@@ -81,7 +81,10 @@
                             </div>
                             <div class="mt-1">
                                 @if($isPassed)
-                                    <span class="badge bg-success rounded-pill" style="font-size: 9.5px;">✓ Đạt</span>
+                                    <span class="badge bg-success rounded-pill badge-check d-inline-flex align-items-center" style="font-size: 9.5px; gap: 3px;">
+                                        <i class="fa-solid fa-check icon-check" style="font-size: 8px;"></i>
+                                        <span>Đạt</span>
+                                    </span>
                                 @elseif($isCurrent)
                                     <span class="badge bg-primary text-white rounded-pill" style="font-size: 9.5px;">Đang duyệt</span>
                                 @elseif($stBc)
@@ -260,13 +263,15 @@
                                         {{-- Nút chọn Đạt / Yêu cầu nộp lại --}}
                                         <div class="btn-group btn-group-sm" role="group">
                                             <input type="radio" class="btn-check" name="LoaiNhanXet" id="opt_dat_{{ $khoi->MaKhoi }}" value="Đạt" {{ $khoi->TrangThai === 'Đạt' || !$khoi->NhanXetGV ? 'checked' : '' }}>
-                                            <label class="btn btn-outline-success px-3 fw-bold" for="opt_dat_{{ $khoi->MaKhoi }}">
-                                                ✓ Đạt yêu cầu
+                                            <label class="btn btn-outline-success px-3 fw-bold badge-check d-inline-flex align-items-center" for="opt_dat_{{ $khoi->MaKhoi }}" style="gap: 6px;">
+                                                <i class="fa-solid fa-check icon-check"></i>
+                                                <span>Đạt yêu cầu</span>
                                             </label>
 
                                             <input type="radio" class="btn-check" name="LoaiNhanXet" id="opt_nop_lai_{{ $khoi->MaKhoi }}" value="Yêu cầu nộp lại" {{ $khoi->TrangThai === 'Yêu cầu nộp lại' ? 'checked' : '' }}>
-                                            <label class="btn btn-outline-warning text-dark px-3 fw-bold" for="opt_nop_lai_{{ $khoi->MaKhoi }}">
-                                                🔄 Yêu cầu nộp lại
+                                            <label class="btn btn-outline-warning text-dark px-3 fw-bold badge-check d-inline-flex align-items-center" for="opt_nop_lai_{{ $khoi->MaKhoi }}" style="gap: 6px;">
+                                                <i class="fa-solid fa-rotate-left icon-check"></i>
+                                                <span>Yêu cầu nộp lại</span>
                                             </label>
                                         </div>
                                     </div>

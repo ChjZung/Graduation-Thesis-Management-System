@@ -147,7 +147,7 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
         }
 
         $isDat = ($request->HanhDong === 'dat');
-        $cleanedComment = HtmlHelper::clean($request->NhanXetGV);
+        $cleanedComment = HtmlHelper::toPlainText($request->NhanXetGV);
 
         // Cập nhật bản ghi BaoCaoSauBaoVe hiện tại
         $latestBaoCao->update([

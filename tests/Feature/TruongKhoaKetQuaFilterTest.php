@@ -20,7 +20,8 @@ class TruongKhoaKetQuaFilterTest extends TestCase
     {
         parent::setUp();
 
-        $this->userTruongKhoa = TaiKhoan::where('MaVaiTro', 'VT05')->first();
+        $this->userTruongKhoa = TaiKhoan::where('TenDangNhap', 'like', 'TK_CNTT_%')->first()
+            ?? TaiKhoan::where('MaVaiTro', 'VT05')->first();
         if (!$this->userTruongKhoa) {
             $this->userTruongKhoa = TaiKhoan::whereHas('vaiTro', function($q) {
                 $q->where('TenVaiTro', 'like', '%Trưởng khoa%');
@@ -206,5 +207,134 @@ class TruongKhoaKetQuaFilterTest extends TestCase
 
         // 4. Đồng bộ chiều cao 42px giữa input, select và nút lọc
         $this->assertStringContainsString('min-height: 42px !important', $content);
+    }
+
+    public function test_khong_con_chu_bang_1_va_bang_2_trong_view()
+    {
+        if (!$this->userTruongKhoa) {
+            $this->markTestSkipped('Không tìm thấy tài khoản Trưởng khoa.');
+        }
+
+        // Test Tab Toàn Khoa
+        $responseTK = $this->actingAs($this->userTruongKhoa)->get(route('truongkhoa.ketqua.index', ['view' => 'toankhoa']));
+        $responseTK->assertStatus(200);
+        $contentTK = $responseTK->getContent();
+        $this->assertStringNotContainsString('Bảng 1:', $contentTK);
+        $this->assertStringNotContainsString('Bảng 2:', $contentTK);
+        $this->assertStringContainsString('Danh Sách Sinh Viên Theo Đề Tài', $contentTK);
+        $this->assertStringContainsString('Danh Sách Hội Đồng &amp; Tiến Độ', $contentTK);
+
+        // Test Tab Hội Đồng
+        $responseHD = $this->actingAs($this->userTruongKhoa)->get(route('truongkhoa.ketqua.index', ['view' => 'hoidong']));
+        $responseHD->assertStatus(200);
+        $contentHD = $responseHD->getContent();
+        $this->assertStringNotContainsString('Bảng 1:', $contentHD);
+        $this->assertStringNotContainsString('Bảng 2:', $contentHD);
+    }
+
+    public function test_loc_ket_hop_va_tim_kiem_tieng_viet()
+    {
+        if (!$this->userTruongKhoa) {
+            $this->markTestSkipped('Không tìm thấy tài khoản Trưởng khoa.');
+        }
+
+        // Tìm kiếm có dấu
+        $res1 = $this->actingAs($this->userTruongKhoa)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('truongkhoa.ketqua.index', [
+                'view' => 'toankhoa',
+                'search' => 'Nam'
+            ]));
+        $res1->assertStatus(200);
+        $this->assertTrue($res1->json('success'));
+
+        // Lọc theo xếp loại
+        $res2 = $this->actingAs($this->userTruongKhoa)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('truongkhoa.ketqua.index', [
+                'view' => 'toankhoa',
+                'xep_loai' => 'Gioi'
+            ]));
+        $res2->assertStatus(200);
+        $this->assertTrue($res2->json('success'));
+
+        // Lọc theo trạng thái công bố
+        $res3 = $this->actingAs($this->userTruongKhoa)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('truongkhoa.ketqua.index', [
+                'view' => 'toankhoa',
+                'trang_thai_cong_bo' => 'DaCongBo'
+            ]));
+        $res3->assertStatus(200);
+        $this->assertTrue($res3->json('success'));
+
+        // Lọc trên Tab Hội Đồng
+        $res4 = $this->actingAs($this->userTruongKhoa)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('truongkhoa.ketqua.index', [
+                'view' => 'hoidong',
+                'trang_thai_cong_bo' => 'DaCongBo'
+            ]));
+        $res4->assertStatus(200);
+        $this->assertTrue($res4->json('success'));
+    }
+
+    public function test_cau_truc_bang_toan_khoa_chong_tran_va_co_dinh_cot_sticky()
+    {
+        if (!$this->userTruongKhoa) {
+            $this->markTestSkipped('Không tìm thấy tài khoản Trưởng khoa.');
+        }
+
+        $response = $this->actingAs($this->userTruongKhoa)->get(route('truongkhoa.ketqua.index', ['view' => 'toankhoa']));
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        // 1. Kiểm tra container cuộn ngang và chống tràn
+        $this->assertStringContainsString('table-scroll-wrapper', $content);
+        $this->assertStringContainsString('custom-table-scroll', $content);
+        $this->assertStringContainsString('overflow-x: scroll', $content);
+
+        // 2. Kiểm tra độ rộng cố định table-layout: fixed và colgroup
+        $this->assertStringContainsString('table-layout: fixed', $content);
+        $this->assertStringContainsString('<colgroup>', $content);
+        $this->assertStringContainsString('width: max-content', $content);
+
+        // 3. Kiểm tra các class sticky cho STT, Mã SV, Họ và Tên
+        $this->assertStringContainsString('sticky-col-stt', $content);
+        $this->assertStringContainsString('sticky-col-masv', $content);
+        $this->assertStringContainsString('sticky-col-hoten', $content);
+
+        // 4. Kiểm tra Header màu xanh đậm #0b3a6e và chữ trắng
+        $this->assertStringContainsString('background-color: #0b3a6e !important', $content);
+        $this->assertStringContainsString('color: #ffffff !important', $content);
+
+        // 5. Kiểm tra email, tên đề tài, nhóm có class chống tràn
+        $this->assertStringContainsString('line-clamp-1', $content);
+        $this->assertStringContainsString('line-clamp-2', $content);
+        $this->assertStringContainsString('line-clamp-3', $content);
+
+        // 6. Kiểm tra các badge trạng thái có white-space: nowrap
+        $this->assertStringContainsString('white-space: nowrap', $content);
+
+        // 7. Kiểm tra cột Ngày Giờ & Phòng: giới hạn 190px, không tràn sang cột Điểm
+        $this->assertStringContainsString('min-width: 190px', $content);
+        $this->assertStringContainsString('max-width: 190px', $content);
+    }
+
+    public function test_render_tab_toankhoa_va_hoidong_khong_loi_blade_khi_du_lieu_dai()
+    {
+        if (!$this->userTruongKhoa) {
+            $this->markTestSkipped('Không tìm thấy tài khoản Trưởng khoa.');
+        }
+
+        $resTK = $this->actingAs($this->userTruongKhoa)->get(route('truongkhoa.ketqua.index', ['view' => 'toankhoa']));
+        $resTK->assertStatus(200);
+        $htmlTK = $resTK->getContent();
+        $this->assertStringContainsString('id="tableToanKhoa"', $htmlTK);
+
+        $resHD = $this->actingAs($this->userTruongKhoa)->get(route('truongkhoa.ketqua.index', ['view' => 'hoidong']));
+        $resHD->assertStatus(200);
+        $htmlHD = $resHD->getContent();
+        $this->assertStringContainsString('id="tableHoiDong"', $htmlHD);
     }
 }

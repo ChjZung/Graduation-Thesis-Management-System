@@ -16,6 +16,14 @@ class GradingDraftSaveTest extends TestCase
     private function fixture(): array
     {
         $dossier=HoSoBaoVe::with('nhom.thanhViens')->whereNotNull('MaHoiDong')->firstOrFail();
+        $hoiDong = \App\Models\HoiDong::findOrFail($dossier->MaHoiDong);
+        \Carbon\Carbon::setTestNow('2026-12-15 09:00:00');
+        $hoiDong->NgayBaoVe = '2026-12-15';
+        $hoiDong->ThoiGianBatDau = '2026-12-15 08:00:00';
+        $hoiDong->ThoiGianKetThuc = '2026-12-15 11:30:00';
+        $hoiDong->TrangThaiCongBo = 'Đã công bố';
+        $hoiDong->save();
+
         $chair=ThanhVienHoiDong::where('MaHoiDong',$dossier->MaHoiDong)->where('VaiTro','Chủ tịch')->firstOrFail();
         $gv=GiangVien::findOrFail($chair->MaGV);
         $user=TaiKhoan::where('MaTK',$gv->MaTK)->firstOrFail();
