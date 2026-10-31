@@ -1236,26 +1236,37 @@
                     <div class="space-y-3" style="min-width: 0;">
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">1. Mục tiêu đề tài:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->MucTieu ?: 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->MucTieu ?: ($activeDeTai?->ban_nhap_data['muc_tieu'] ?? 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.') }}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">2. Phạm vi thực hiện:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->PhamVi ?: 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->PhamVi ?: ($activeDeTai?->ban_nhap_data['pham_vi'] ?? 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.') }}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
-                            <label class="form-label small fw-bold text-secondary mb-1">3. Nội dung và phương pháp nghiên cứu:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->NoiDung ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.' }}</div>
+                            <label class="form-label small fw-bold text-secondary mb-1">3. Mô tả &amp; Nội dung nghiên cứu:</label>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->NoiDung ?: ($activeDeTai?->MoTa ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.') }}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
-                            <label class="form-label small fw-bold text-secondary mb-1">4. Sản phẩm dự kiến:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->SanPhamDuKien ?: 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.' }}</div>
+                            <label class="form-label small fw-bold text-secondary mb-1">4. Yêu cầu bài toán &amp; Kỹ thuật:</label>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->YeuCau ?: 'Thực hiện đầy đủ các yêu cầu theo phân công và hướng dẫn của cán bộ hướng dẫn.' }}</div>
+                        </div>
+                        <div class="mb-3" style="min-width: 0;">
+                            <label class="form-label small fw-bold text-secondary mb-1">5. Sản phẩm dự kiến:</label>
+                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->SanPhamDuKien ?: ($activeDeTai?->ban_nhap_data['san_pham'] ?? 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.') }}</div>
                         </div>
                         @if(!empty($activeDeTai?->FileDeCuong))
+                        @php
+                            $dcFileUrl = Str::startsWith($activeDeTai->FileDeCuong, ['http', 'storage/']) ? asset($activeDeTai->FileDeCuong) : asset('storage/' . $activeDeTai->FileDeCuong);
+                            $dcFileName = basename($activeDeTai->FileDeCuong);
+                        @endphp
                         <div class="mb-2" style="min-width: 0;">
-                            <label class="form-label small fw-bold text-secondary mb-1">5. Tệp tài liệu đề cương gốc đã duyệt:</label>
-                            <div>
-                                <a href="{{ asset('storage/' . $activeDeTai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">6. Tệp tài liệu đề cương gốc đã duyệt:</label>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="quickPreviewOutline('{{ $dcFileUrl }}', '{{ $dcFileName }}', '{{ addslashes($activeDeTai->TenDeTai ?? '') }}')">
                                     <i class="fa-solid fa-file-pdf text-danger me-1"></i> Xem Tệp Đề Cương PDF Gốc
+                                </button>
+                                <a href="{{ $dcFileUrl }}" download="{{ $dcFileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                    <i class="fa-solid fa-download me-1"></i> Tải về
                                 </a>
                             </div>
                         </div>
@@ -1277,8 +1288,22 @@
 
 {{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO THƯ KÝ HỘI ĐỒNG - YÊU CẦU 3.1 & 3.3) --}}
 @if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
+@php
+    $dtMoTa = $activeDeTai->MoTa ?? ($activeDeTai->NoiDung ?? '');
+    $dtYeuCau = $activeDeTai->YeuCau ?? '';
+    $dtMucTieu = $activeDeTai->MucTieu ?? ($activeDeTai->ban_nhap_data['muc_tieu'] ?? '');
+    $dtPhamVi = $activeDeTai->PhamVi ?? ($activeDeTai->ban_nhap_data['pham_vi'] ?? '');
+    $dtSanPham = $activeDeTai->SanPhamDuKien ?? ($activeDeTai->ban_nhap_data['san_pham'] ?? '');
+    $dtFile = $activeDeTai->FileDeCuong ?? '';
+    $dtFileUrl = '';
+    $dtFileName = '';
+    if (!empty($dtFile)) {
+        $dtFileUrl = Str::startsWith($dtFile, ['http', 'storage/']) ? asset($dtFile) : asset('storage/' . $dtFile);
+        $dtFileName = basename($dtFile);
+    }
+@endphp
 <div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: min(1280px, 96vw);">
         <form id="formCaiDatChucNang" action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
             @csrf
             <input type="hidden" name="MaHoiDong" value="{{ $activeHoiDong->MaHoiDong }}">
@@ -1287,9 +1312,16 @@
 
             {{-- Kho dữ liệu đề cương ẩn để nạp nhanh --}}
             <div id="outlineDataStore" class="d-none"
-                 data-noi-dung="{{ e($activeDeTai->NoiDung ?? '') }}"
-                 data-yeu-cau="{{ e($activeDeTai->YeuCau ?? '') }}"
-                 data-muc-tieu="{{ e($activeDeTai->MucTieu ?? '') }}"
+                 data-mo-ta="{{ e($dtMoTa) }}"
+                 data-noi-dung="{{ e($dtMoTa) }}"
+                 data-yeu-cau="{{ e($dtYeuCau) }}"
+                 data-muc-tieu="{{ e($dtMucTieu) }}"
+                 data-pham-vi="{{ e($dtPhamVi) }}"
+                 data-san-pham="{{ e($dtSanPham) }}"
+                 data-file-de-cuong="{{ e($dtFile) }}"
+                 data-file-url="{{ e($dtFileUrl) }}"
+                 data-file-name="{{ e($dtFileName) }}"
+                 data-ten-de-tai="{{ e($activeDeTai->TenDeTai ?? '') }}"
                  data-json-decuong="{{ e(json_encode($activeHoSo->NoiDungDeCuongJson ?? [])) }}"></div>
 
             <div class="modal-content border-0 shadow-lg rounded-3">
@@ -1333,20 +1365,32 @@
 
                     {{-- Hàng 3 nút cùng kích thước & kiểu dáng --}}
                     <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="importFromDeCuong()" style="height: 34px;">
-                            <i class="fa-solid fa-file-import me-1"></i> Nhập từ đề cương
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" id="btnImportDeCuong" onclick="importFromDeCuong()" style="height: 34px;">
+                            <i class="fa-solid fa-file-import me-1 text-primary"></i> Nhập từ đề cương
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLCN')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLKS' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLKS' ? 'Đề tài này thuộc hệ Kỹ sư, không áp dụng Mẫu Cử nhân' : 'Áp dụng mẫu chuẩn Cử nhân (3.5đ)' }}">
+                        <button type="button" class="btn btn-sm btn-outline-info fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" id="btnToggleXemDeCuong" onclick="toggleDeCuongTab()" style="height: 34px;">
+                            <i class="fa-solid fa-book-open me-1 text-info"></i> Xem đề cương
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" onclick="loadSampleTemplate('KLCN')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLKS' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLKS' ? 'Đề tài này thuộc hệ Kỹ sư, không áp dụng Mẫu Cử nhân' : 'Áp dụng mẫu chuẩn Cử nhân (3.5đ)' }}">
                             <i class="fa-solid fa-file-lines me-1"></i> Mẫu Cử nhân
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLKS')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLCN' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLCN' ? 'Đề tài này thuộc hệ Cử nhân, không áp dụng Mẫu Kỹ sư' : 'Áp dụng mẫu chuẩn Kỹ sư (4.0đ)' }}">
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" onclick="loadSampleTemplate('KLKS')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLCN' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLCN' ? 'Đề tài này thuộc hệ Cử nhân, không áp dụng Mẫu Kỹ sư' : 'Áp dụng mẫu chuẩn Kỹ sư (4.0đ)' }}">
                             <i class="fa-solid fa-file-lines me-1"></i> Mẫu Kỹ sư
                         </button>
                     </div>
 
+                    {{-- Banner hướng dẫn trực quan khi mở xem đề cương --}}
+                    <div id="outlineNoticeBanner" class="alert alert-info py-2 px-3 small rounded-3 mb-3 border-0 bg-info-subtle text-info-emphasis d-none align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-circle-info fs-6"></i>
+                            <span id="outlineNoticeText">Đang hiển thị Đề cương chi tiết của đề tài ở cột bên phải. Thầy/Cô có thể đối chiếu nội dung đề cương để tự do nhập/chỉnh sửa thông tin tiêu chí chấm ở khung bên trái.</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-sm" onclick="document.getElementById('outlineNoticeBanner').classList.remove('d-flex'); document.getElementById('outlineNoticeBanner').classList.add('d-none');" aria-label="Close"></button>
+                    </div>
+
                     <div class="row g-3">
                         {{-- Cột Trái: Textarea duy nhất --}}
-                        <div class="col-lg-7 col-12">
+                        <div class="col-lg-6 col-12">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div>
                                     <label for="textareaChucNang" class="form-label small fw-bold text-dark mb-0">
@@ -1366,27 +1410,172 @@
                             @endphp
                             <textarea id="textareaChucNang"
                                       name="TieuChiChucNang"
-                                      rows="12"
+                                      rows="14"
                                       class="form-control font-monospace border rounded-3 p-3"
-                                      style="min-height: 280px; font-size: 0.85rem; line-height: 1.6;"
+                                      style="min-height: 380px; font-size: 0.85rem; line-height: 1.6;"
                                       placeholder="{{ $defaultPlaceholder }}">{{ $customChucNang ?? '' }}</textarea>
 
                             <div id="textareaInlineAlert" class="small text-danger mt-1 d-none"></div>
                         </div>
 
-                        {{-- Cột Phải: Khung Xem Trước tối giản --}}
-                        <div class="col-lg-5 col-12">
+                        {{-- Cột Phải: Khung 2 Tab (Đề Cương Đề Tài & Xem Trước Cấu Trúc Khung Chấm) --}}
+                        <div class="col-lg-6 col-12">
                             <div class="card h-100 border rounded-3 bg-light-subtle shadow-sm">
-                                <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-1">
-                                    <span class="fw-bold text-dark small">
-                                        <i class="fa-solid fa-eye text-primary me-1"></i> Xem Trước Cấu Trúc Khung Chấm
-                                    </span>
+                                <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <ul class="nav nav-pills card-header-pills gap-1" id="pillsRightTab" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link btn-xs py-1 px-3 fw-bold rounded-pill d-inline-flex align-items-center gap-1"
+                                                    id="tab-decuong-btn"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#pane-decuong"
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-controls="pane-decuong"
+                                                    aria-selected="false"
+                                                    style="font-size: 0.78rem;">
+                                                <i class="fa-solid fa-book-open text-primary"></i> <span>Đề Cương Đề Tài</span>
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link btn-xs py-1 px-3 fw-bold active rounded-pill d-inline-flex align-items-center gap-1"
+                                                    id="tab-preview-btn"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#pane-preview"
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-controls="pane-preview"
+                                                    aria-selected="true"
+                                                    style="font-size: 0.78rem;">
+                                                <i class="fa-solid fa-eye text-success"></i> <span>Xem Trước Khung Chấm</span>
+                                            </button>
+                                        </li>
+                                    </ul>
                                     <span id="previewSummaryText" class="small fw-semibold text-primary" style="font-size: 0.75rem;">
                                         0 yêu cầu &bull; mỗi yêu cầu &asymp; 0.00 đ &bull; tổng 0.00 / {{ $loaiKhoaLuan === 'KLKS' ? '4.00' : '3.50' }}đ
                                     </span>
                                 </div>
-                                <div class="card-body p-3 bg-white" style="min-height: 280px; max-height: 420px; overflow-y: auto;" id="previewParsedContainer">
-                                    {{-- Render danh sách nhóm và yêu cầu --}}
+
+                                <div class="card-body p-0 bg-white tab-content" style="min-height: 380px; max-height: 520px; overflow-y: auto;">
+                                    {{-- PANE 1: ĐỀ CƯƠNG ĐỀ TÀI ĐÃ DUYỆT (CHẾ ĐỘ XEM ĐỐI CHIẾU CHO THƯ KÝ) --}}
+                                    <div class="tab-pane fade p-3" id="pane-decuong" role="tabpanel" aria-labelledby="tab-decuong-btn">
+                                        {{-- Thanh tác vụ nhanh đề cương --}}
+                                        <div class="d-flex align-items-center justify-content-between p-2 mb-3 rounded-2 bg-primary-subtle border border-primary-subtle flex-wrap gap-2">
+                                            <div class="small fw-bold text-primary">
+                                                <i class="fa-solid fa-circle-check text-success me-1"></i> Đề Cương Đã Phê Duyệt
+                                            </div>
+                                            <div class="d-flex gap-1 flex-wrap">
+                                                <button type="button" class="btn btn-xs btn-primary fw-bold px-2 py-1 shadow-sm" onclick="applyOutlineAllToTextarea()" title="Nạp tự động các phân hệ chức năng từ đề cương vào ô soạn thảo">
+                                                    <i class="fa-solid fa-bolt me-1"></i> Nạp vào ô soạn thảo
+                                                </button>
+                                                @if(!empty($dtFileUrl))
+                                                <button type="button" class="btn btn-xs btn-outline-danger fw-semibold px-2 py-1 bg-white" onclick="quickPreviewOutline('{{ $dtFileUrl }}', '{{ $dtFileName }}', '{{ addslashes($activeDeTai->TenDeTai ?? '') }}')" title="Xem trực tiếp tệp PDF gốc">
+                                                    <i class="fa-solid fa-file-pdf me-1"></i> File PDF gốc
+                                                </button>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        {{-- Tóm tắt đề tài & GVHD --}}
+                                        <div class="mb-3 p-2 bg-light rounded border">
+                                            <div class="fw-bold text-dark small mb-1">{{ $activeDeTai->TenDeTai ?? 'Chưa cập nhật tên đề tài' }}</div>
+                                            <div class="text-muted small" style="font-size: 0.75rem;">
+                                                <span><i class="fa-solid fa-user-tie me-1 text-secondary"></i>GVHD: <strong>{{ $gvhdHoTen }}</strong></span>
+                                                <span class="mx-1">&bull;</span>
+                                                <span><i class="fa-solid fa-users me-1 text-secondary"></i>Nhóm: <strong>{{ $activeNhom?->MaNhom }} ({{ $sinhViens->pluck('HoTen')->implode(', ') }})</strong></span>
+                                            </div>
+                                        </div>
+
+                                        {{-- 1. Mục tiêu (nếu có) --}}
+                                        @if(!empty($dtMucTieu))
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label small fw-bold text-secondary mb-0">
+                                                    <i class="fa-solid fa-bullseye text-danger me-1"></i> 1. Mục tiêu đề tài:
+                                                </label>
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtMucTieu) }}`)">
+                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
+                                                </button>
+                                            </div>
+                                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtMucTieu }}</div>
+                                        </div>
+                                        @endif
+
+                                        {{-- 2. Mô tả & Phân hệ chức năng --}}
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label small fw-bold text-secondary mb-0">
+                                                    <i class="fa-solid fa-list-check text-primary me-1"></i> 2. Mô tả &amp; Phân hệ chức năng:
+                                                </label>
+                                                @if(!empty($dtMoTa))
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtMoTa) }}`)">
+                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
+                                                </button>
+                                                @endif
+                                            </div>
+                                            <div class="p-2 bg-light rounded border small text-dark" id="deCuongMoTaBox" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtMoTa ?: 'Chưa cập nhật mô tả chi tiết trong đề cương.' }}</div>
+                                        </div>
+
+                                        {{-- 3. Yêu cầu bài toán & Kỹ thuật --}}
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label small fw-bold text-secondary mb-0">
+                                                    <i class="fa-solid fa-clipboard-check text-success me-1"></i> 3. Yêu cầu bài toán &amp; Kỹ thuật:
+                                                </label>
+                                                @if(!empty($dtYeuCau))
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtYeuCau) }}`)">
+                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
+                                                </button>
+                                                @endif
+                                            </div>
+                                            <div class="p-2 bg-light rounded border small text-dark" id="deCuongYeuCauBox" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtYeuCau ?: 'Thực hiện đầy đủ theo yêu cầu và hướng dẫn của GVHD.' }}</div>
+                                        </div>
+
+                                        {{-- 4. Phạm vi & Sản phẩm dự kiến (nếu có) --}}
+                                        @if(!empty($dtPhamVi) || !empty($dtSanPham))
+                                        <div class="mb-3">
+                                            @if(!empty($dtPhamVi))
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-bold text-secondary mb-1"><i class="fa-solid fa-compass me-1 text-info"></i> Phạm vi nghiên cứu:</label>
+                                                <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtPhamVi }}</div>
+                                            </div>
+                                            @endif
+                                            @if(!empty($dtSanPham))
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-bold text-secondary mb-1"><i class="fa-solid fa-box-archive me-1 text-warning"></i> Sản phẩm dự kiến:</label>
+                                                <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtSanPham }}</div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        @endif
+
+                                        {{-- 5. Tệp PDF đề cương gốc (nếu có) --}}
+                                        @if(!empty($dtFileUrl))
+                                        <div class="p-2 rounded border bg-light d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                                                <i class="fa-solid fa-file-pdf text-danger fs-5"></i>
+                                                <div class="small text-truncate">
+                                                    <span class="fw-bold text-dark d-block text-truncate">{{ $dtFileName }}</span>
+                                                    <span class="text-muted" style="font-size: 0.7rem;">Tài liệu đề cương gốc đã phê duyệt</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-1 flex-shrink-0">
+                                                <button type="button" class="btn btn-xs btn-outline-primary" onclick="quickPreviewOutline('{{ $dtFileUrl }}', '{{ $dtFileName }}', '{{ addslashes($activeDeTai->TenDeTai ?? '') }}')">
+                                                    <i class="fa-solid fa-eye me-1"></i> Xem PDF
+                                                </button>
+                                                <a href="{{ $dtFileUrl }}" download="{{ $dtFileName }}" class="btn btn-xs btn-outline-secondary">
+                                                    <i class="fa-solid fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- PANE 2: XEM TRƯỚC CẤU TRÚC KHUNG CHẤM --}}
+                                    <div class="tab-pane fade show active p-3" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview-btn">
+                                        <div id="previewParsedContainer">
+                                            {{-- Render danh sách nhóm và yêu cầu --}}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1845,15 +2034,58 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {}
     }
 
-    // Nhập từ Đề Cương Chi Tiết đã duyệt
-    window.importFromDeCuong = function() {
+    // Chuyển tab hiển thị Đề Cương Đề Tài (Đã Phê Duyệt)
+    window.showOutlineTab = function() {
+        const tabBtn = document.getElementById('tab-decuong-btn');
+        if (tabBtn && window.bootstrap) {
+            const tab = bootstrap.Tab.getOrCreateInstance(tabBtn);
+            tab.show();
+        }
+        const banner = document.getElementById('outlineNoticeBanner');
+        if (banner) {
+            banner.classList.remove('d-none');
+            banner.classList.add('d-flex');
+        }
+    };
+
+    // Toggle chuyển đổi qua lại giữa Đề Cương và Xem Trước
+    window.toggleDeCuongTab = function() {
+        const decuongPane = document.getElementById('pane-decuong');
+        if (decuongPane && decuongPane.classList.contains('active')) {
+            const previewBtn = document.getElementById('tab-preview-btn');
+            if (previewBtn && window.bootstrap) {
+                bootstrap.Tab.getOrCreateInstance(previewBtn).show();
+            }
+        } else {
+            showOutlineTab();
+        }
+    };
+
+    // Chèn đoạn văn bản vào vị trí con trỏ của ô soạn thảo
+    window.insertSnippetToTextarea = function(text) {
+        if (!textareaChucNang || !text) return;
+        const cleanText = text.trim();
+        const start = textareaChucNang.selectionStart;
+        const end = textareaChucNang.selectionEnd;
+        const currentVal = textareaChucNang.value;
+        const prefix = (start > 0 && !currentVal.substring(0, start).endsWith('\n')) ? '\n' : '';
+        const suffix = (!currentVal.substring(end).startsWith('\n')) ? '\n' : '';
+        
+        textareaChucNang.value = currentVal.substring(0, start) + prefix + cleanText + suffix + currentVal.substring(end);
+        textareaChucNang.focus();
+        updateLivePreview();
+        autoSaveDraft();
+    };
+
+    // Nạp tự động các phân hệ chức năng từ Đề Cương vào ô soạn thảo
+    window.applyOutlineAllToTextarea = function() {
         const store = document.getElementById('outlineDataStore');
         if (!store) return;
-        const noiDung = store.getAttribute('data-noi-dung') || '';
+        const moTa = store.getAttribute('data-mo-ta') || store.getAttribute('data-noi-dung') || '';
         const yeuCau = store.getAttribute('data-yeu-cau') || '';
         const mucTieu = store.getAttribute('data-muc-tieu') || '';
 
-        const fullSource = `${yeuCau}\n${noiDung}\n${mucTieu}`.trim();
+        const fullSource = `${moTa}\n${yeuCau}\n${mucTieu}`.trim();
         if (!fullSource) {
             alert('Chưa tìm thấy nội dung chi tiết trong đề cương của đề tài này.');
             return;
@@ -1863,7 +2095,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const extracted = [];
         rawLines.forEach(l => {
             const t = l.trim().replace(/^[\-\*\+\d\.\)]+/, '').trim();
-            if (t.length > 8 && t.length < 150) {
+            if (t.length > 8 && t.length < 250) {
                 extracted.push(t);
             }
         });
@@ -1885,10 +2117,25 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        if (confirm(`Đã tìm thấy ${extracted.length} yêu cầu từ Đề cương chi tiết đã duyệt. Thầy/Cô có muốn nạp vào khung soạn thảo?`)) {
-            textareaChucNang.value = resultText.trim();
-            updateLivePreview();
-            autoSaveDraft();
+        textareaChucNang.value = resultText.trim();
+        updateLivePreview();
+        autoSaveDraft();
+        textareaChucNang.focus();
+    };
+
+    // Nhập từ Đề Cương:
+    // 1. Luôn mở hiển thị Đề cương của đề tài đó để thư ký xem đối chiếu ngay tại chỗ
+    // 2. Tùy theo trạng thái ô nhập: tự động nạp hoặc gợi ý nạp để thư ký dễ dàng dựa vào đó hoàn thiện thông tin
+    window.importFromDeCuong = function() {
+        showOutlineTab();
+
+        const currentVal = textareaChucNang ? textareaChucNang.value.trim() : '';
+        if (!currentVal) {
+            applyOutlineAllToTextarea();
+        } else {
+            if (confirm('Đã mở nội dung Đề cương chi tiết ở cột bên phải để Thầy/Cô đối chiếu.\n\nThầy/Cô có muốn tự động nạp toàn bộ cấu trúc phân hệ từ đề cương vào khung soạn thảo không? (Chọn Hủy nếu Thầy/Cô muốn tự nhập dựa trên đề cương)')) {
+                applyOutlineAllToTextarea();
+            }
         }
     };
 
