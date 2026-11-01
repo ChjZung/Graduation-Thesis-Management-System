@@ -96,30 +96,32 @@ Khi kéo code từ GitHub về môi trường máy mới (đặc biệt là Wind
 
 ---
 
-### 6. Lỗi thuật toán phân đoạn bị "hỗn loạn" về cuối (False Positive Chapter & Tree Collapse)
+### 6. Lỗi thuật toán phân đoạn bị "hỗn loạn" về cuối (False Positive Headings & Tree Collapse)
 - **Hiện tượng trên giao diện:**
   - Ở các chương đầu (Chương 1 đến 5), các mục và nội dung được nhóm rất gọn gàng theo từng khối Accordion.
-  - Nhưng đến cuối Chương 6 (ví dụ trang 151–153), cấu trúc bị vỡ vụn:
-    + Xuất hiện một thẻ chương kỳ lạ: *"Chương 3 và được thử nghiệm trong mục 6.4. Những chức năng có dữ liệu kiểm (Trang 151–152)"*.
-    + Khối `CHƯƠNG 6: THỬ NGHIỆM VÀ TRIỂN KHAI` bị ngắt sớm (Trang 124–151 thay vì 153).
-    + Các mục con của Chương 6 như `6.7.2`, `6.7.3`, `6.8. KẾT CHƯƠNG` đều bị "văng" ra ngoài thành từng thẻ Accordion cấp 1 độc lập.
+  - Nhưng đến cuối Chương 6 (ví dụ trang 127–135 ở bản v2 hoặc trang 151–153 ở bản v3), cấu trúc bị vỡ vụn:
+    + Xuất hiện các thẻ lạ: *"Chương 3 và được thử nghiệm trong mục 6.4..."* hoặc *"2.3 thay vì cắt toàn bộ văn bản..."* hoặc *"Tóm tắt báo cáo"*.
+    + Khối `CHƯƠNG 6: THỬ NGHIỆM VÀ TRIỂN KHAI` bị ngắt sớm (Trang 121–127 thay vì 135).
+    + Các mục con của Chương 6 như `6.5.5`, `6.5.6`, `6.7.2`, `6.7.3`, `6.8. KẾT CHƯƠNG` đều bị "văng" ra ngoài thành từng thẻ Accordion cấp 1 độc lập.
 - **Nguyên nhân kỹ thuật:**
-  1. **Bắt nhầm câu thân bài thành Chương (`heading_detector.py`)**:
-     - Trong đoạn văn tại trang 151: *"Kết quả triển khai được tổng hợp theo từng nhóm chức năng đã phân tích ở [xuống dòng] Chương 3 và được thử nghiệm trong mục 6.4. Những chức năng có dữ liệu kiểm tra..."*.
-     - Vì dòng text bắt đầu bằng `"Chương 3"`, Regex `CHAPTER` khớp và tự động cộng `+4.0` điểm (vượt ngưỡng 3.0), biến câu văn thành một tiêu đề `Level 1` (Chương 3).
-     - Bộ lọc loại trừ cũ bỏ sót do không kiểm tra từ nối ngay sau chữ Chương (`và`, `được`, `là`,...), không kiểm tra dấu chấm ngắt câu giữa dòng, và không kiểm tra định dạng chữ (chữ thường, không in đậm, cỡ chữ 12.96pt của thân bài).
+  1. **Bắt nhầm câu thân bài thành Tiêu đề mục (`heading_detector.py`)**:
+     - Do câu văn trong đoạn bị ngắt dòng rơi đúng cụm từ bắt đầu bằng số/chương:
+       + Bản v3 (Trang 151): *"đã phân tích ở [xuống dòng] Chương 3 và được thử nghiệm..."* $\rightarrow$ dính Regex `CHAPTER`.
+       + Bản v2 (Trang 127): *"như 1, 1.1, [xuống dòng] 2.3 thay vì cắt toàn bộ văn bản..."* $\rightarrow$ dính Regex `NUMBERED`.
+       + Bản v2 (Trang 133): ô chữ *"Tóm tắt báo cáo"* trong Bảng 6.5 $\rightarrow$ dính `SPECIAL` (Abstract heading).
+     - Thuật toán cũ tự động cộng điểm cao cho các regex này mà không kiểm tra chữ thường (`thay vì...`), không kiểm tra in đậm (`bold=False`), không kiểm tra từ nối, và không khóa phạm vi chương hiện tại (đang ở Chương 6 không thể định nghĩa mục `2.3`).
   2. **Hiệu ứng sụp đổ cây phân cấp (`section_tree.py`)**:
-     - Dòng `"Chương 3..."` giả có `Level 1`, khiến thuật toán pop `CHƯƠNG 6` thật ra khỏi stack.
-     - Khi các mục con thật sự tiếp theo xuất hiện (`6.7.2`, `6.7.3`, `6.8`), thuật toán kiểm tra tiền tố: `if not h['section_number'].startswith(parent['section_number'] + '.'): parent = None; stack.clear()`.
-     - Vì `6.7.2` không bắt đầu bằng tiền tố `3.`, lệnh `stack.clear()` xóa sạch toàn bộ stack. Hậu quả là `6.7.2`, `6.7.3`, `6.8` đều mất cha (`Parent = None`), bị đôn lên làm các Root Section độc lập trên giao diện.
+     - Khi một mục con giả mạo xuất hiện, thuật toán duyệt stack và pop mất `CHƯƠNG 6` cấp 1 thật ra khỏi cây.
+     - Khi các mục con thật sự tiếp theo xuất hiện (`6.5.5`, `6.7.2`), do không tìm thấy tiền tố cha, chúng đều mất cha (`Parent = None`) và bị đôn lên làm các Root Section độc lập trên giao diện.
 - **Cách khắc phục đã triển khai:**
   1. Trong [`heading_detector.py`](file:///D:/laragon/www/KhoaLuanCuNhan/app/Services/pdf_lab/core/heading_detector.py):
-     - Chặn từ nối/giới từ ngay sau số chương (`và`, `được`, `trong`, `ở`, `có`, `là`,...).
-     - Chặn các dòng có dấu chấm ngắt câu văn bản (`. ` + từ tiếp theo).
-     - Kiểm tra kiểu chữ: Tiêu đề chương chuẩn phải in hoa hoặc in đậm hoặc có cỡ chữ nổi bật; chữ thường không đậm cỡ thân bài sẽ bị từ chối.
-     - Kiểm tra tính đơn điệu: Chương không thể nhảy lùi về số nhỏ hơn chương trước đó (đang ở Chương 6 không thể nhảy lùi về Chương 3).
+     - **Bắt buộc viết hoa**: Tiêu đề mục thật bắt buộc viết hoa chữ cái đầu; nếu bắt đầu bằng chữ thường (`thay vì...`) sẽ bị loại bỏ ngay.
+     - **Chặn từ nối / giới từ**: Loại bỏ các dòng bắt đầu bằng `thay vì`, `và`, `được`, `trong`, `ở`, `có`, `là`,...
+     - **Khóa phạm vi chương hiện tại**: Khi đang ở Chương 6, chỉ chấp nhận mục con có tiền tố `6.x`; số mục ngoại lai như `2.3` sẽ bị từ chối.
+     - **Ràng buộc Front-Matter**: Mục tóm tắt (Abstract / Lời cảm ơn) chỉ được chấp nhận ở phần đầu tài liệu (trang $\le 20$ và trước Chương 1), không chấp nhận ô chữ trong bảng biểu giữa thân bài.
+     - **Ràng buộc định dạng chữ**: Tiêu đề chuẩn phải in đậm (`bold=True`) hoặc cỡ chữ nổi bật; chữ thân bài thường (`13pt`, không đậm) bị từ chối.
   2. Trong [`section_tree.py`](file:///D:/laragon/www/KhoaLuanCuNhan/app/Services/pdf_lab/core/section_tree.py):
-     - Khi số mục không khớp với mục cha hiện tại, duyệt lùi lên stack (`while stack: stack.pop()`) để tìm mục tổ tiên khớp tiền tố thay vì xóa sạch toàn bộ cây (`stack.clear()`).
+     - Ràng buộc ngăn xếp: Một mục con cấp 2 trở đi (`level > 1`) **tuyệt đối không bao giờ được phép pop Chương cấp 1 (`section_level == 1`) ra khỏi cây**, đảm bảo khối Chương 6 luôn được giữ nguyên vẹn cho toàn bộ các mục con phía sau.
 
 ---
 
