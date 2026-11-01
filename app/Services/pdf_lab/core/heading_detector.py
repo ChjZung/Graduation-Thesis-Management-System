@@ -63,6 +63,7 @@ def detect_headings(document, settings):
             toc_pages.add(page['page'])
     candidates, accepted, consumed = [], [], set()
     in_introduction = False
+    current_chapter_num = None
     for i, row in enumerate(lines):
         if row['line_id'] in consumed:
             continue
@@ -99,7 +100,7 @@ def detect_headings(document, settings):
             score += .45; signals.append('vertical_gap_or_page_start')
         if row['bbox'][0] < row['page_width'] * .3:
             score += .25; signals.append('left_alignment')
-        if numbered and any(h['section_number'] == number.split('.')[0] for h in accepted):
+        if numbered and current_chapter_num and number.split('.')[0] == current_chapter_num:
             score += .45; signals.append('known_chapter')
         if len(text) > 200:
             rejected.append('Dòng quá dài, có khả năng là nội dung đoạn văn.')
@@ -123,6 +124,30 @@ def detect_headings(document, settings):
                 if accepted_ch_vals and ch_val < max(accepted_ch_vals):
                     if not (row['bold'] and (row['font_size'] > body_size * 1.15 or text.isupper())):
                         rejected.append(f'Số chương ({ch_val}) nhỏ hơn chương đã xuất hiện trước đó ({max(accepted_ch_vals)}), có khả năng là câu tham chiếu ngược.')
+        # CHECKS FOR NUMBERED SECTIONS
+        if numbered and numbered.group(2):
+            title_part = numbered.group(2).strip()
+            if title_part and title_part[0].islower() and not bookmark:
+                rejected.append('Tiêu đề mục bắt đầu bằng chữ thường, có khả năng là câu văn trong đoạn.')
+            g2_lower = title_part.casefold()
+            if re.match(r'^(?:thay|va|và|duoc|được|da|đã|trong|o|ở|co|có|la|là|nay|này|se|sẽ|nham|nhằm|voi|với|cho|do|boi|bởi|theo|tai|tại|nhu|như|khi|de|để|neu|nếu|vi|vì)\b', g2_lower):
+                rejected.append('Sau số mục là từ nối/giới từ/vị ngữ, là câu văn trong đoạn chứ không phải tiêu đề mục.')
+        if numbered and not bookmark:
+            if not row['bold'] and not text.isupper() and row['font_size'] <= body_size * 1.08:
+                rejected.append('Định dạng chữ thường/không đậm giống nội dung văn bản, không phải tiêu đề mục.')
+            if current_chapter_num:
+                major_num = number.split('.')[0]
+                if major_num != current_chapter_num and not (row['bold'] and row['font_size'] > body_size * 1.15):
+                    rejected.append(f'Số mục {number} không thuộc phạm vi chương hiện tại ({current_chapter_num}).')
+
+        # CHECKS FOR SPECIAL / FRONT-MATTER HEADINGS
+        if special and not bookmark:
+            if is_abstract_heading(text) or folded(text) in {'loi mo dau', 'loi cam on', 'loi cam doan', 'nhan xet cua giang vien huong dan', 'nhan xet cua giao vien huong dan'}:
+                if current_chapter_num is not None or row['page'] > 20:
+                    rejected.append('Mục front-matter (tóm tắt/lời cảm ơn) chỉ xuất hiện ở đầu tài liệu, không xuất hiện trong thân bài/bảng.')
+            if not row['bold'] and not text.isupper() and row['font_size'] <= body_size * 1.08:
+                rejected.append('Định dạng chữ thường/không đậm giống nội dung văn bản, không phải tiêu đề đặc biệt.')
+
         if caption:
             rejected.append('Chú thích hình/bảng, không phải heading.')
         if page_number:
@@ -184,8 +209,12 @@ def detect_headings(document, settings):
         candidates.append(candidate)
         if accepted_flag:
             accepted.append(candidate)
-            if chapter or special:
-                in_introduction = special and folded(text) in {'mo dau', 'loi mo dau', 'introduction'}
+            if chapter:
+                current_chapter_num = number
+            elif special:
+                if folded(text) in {'ket luan', 'tai lieu tham khao', 'phu luc', 'conclusion', 'references', 'appendix'} or bool(re.match(r'^phu luc\s+[a-z0-9]', folded(text))):
+                    current_chapter_num = None
+                in_introduction = folded(text) in {'mo dau', 'loi mo dau', 'introduction'}
     return {'accepted': accepted, 'candidates': candidates, 'body_font_size': body_size,
             'toc_pages': sorted(toc_pages), 'heading_threshold': settings.heading_threshold,
             'score_kind': 'heuristic_not_probability'}
