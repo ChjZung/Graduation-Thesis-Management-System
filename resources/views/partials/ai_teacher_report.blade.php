@@ -1,4 +1,5 @@
 @php
+    $cancelUrl = $cancelUrl ?? ($citationAvailable ? route('baocao.ai.dung_phan_tich', $pb->MaKhoi) : '');
     $reportTopic = $deTai ?? ($reviewRound?->deTai ?? ($nhom->deTai ?? null));
     $reportAdvisor = $giangVien ?? $reportTopic?->giangVien;
     $uiMetrics = \App\Support\AiReportPresentation::metrics($aiData);
@@ -7,7 +8,7 @@
     $generatedAt = null;
     try { if(!empty($analysis['generated_at'])) $generatedAt=\Carbon\Carbon::parse($analysis['generated_at'])->timezone(config('app.timezone'))->format('H:i d/m/Y').' ('.config('app.timezone').')'; } catch(\Throwable $e) {}
 @endphp
-<section class="ai-summary ai-summary-card ai-teacher-report" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-teacher-ui="1" data-report-key="{{ $pb->MaKhoi ?? '' }}" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
+<section class="ai-summary ai-summary-card ai-teacher-report" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-teacher-ui="1" data-report-key="{{ $pb->MaKhoi ?? '' }}" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-cancel-url="{{ $cancelUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
     <header class="ai-header">
         <div class="ai-heading"><div class="ai-brand-icon" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></div><div>
             <h2 class="ai-title" id="{{ $uniqueId }}-title">Kết quả phân tích báo cáo AI</h2>
@@ -15,6 +16,14 @@
             <div class="ai-file" data-summary-metadata>{{ $showingSavedSummary ? 'Đang hiển thị bản đã lưu' : ($analysisComplete ? 'Đã có kết quả phân tích' : 'Chưa hoàn tất phân tích') }}</div>
         </div></div>
         <div class="ai-actions">
+            @if($cancelUrl)
+                <form method="POST" action="{{ $cancelUrl }}" data-teacher-cancel-form style="margin:0; display:{{ in_array($aiData['_processing']['status'] ?? '', ['queued','running','waiting']) ? 'inline-block' : 'none' }};">
+                    @csrf
+                    <button type="submit" class="ai-button ai-button-cancel" data-ai-cancel-submit style="color:#dc3545; border-color:#dc3545; background:#fff;">
+                        <i class="fa-solid fa-stop" aria-hidden="true"></i>Dừng phân tích
+                    </button>
+                </form>
+            @endif
             @if($reanalyzeUrl)<form method="POST" action="{{ $reanalyzeUrl }}" data-teacher-analyze-form>@csrf<button type="submit" class="ai-button" data-ai-review-submit><i class="fa-solid fa-rotate" aria-hidden="true"></i>Phân tích lại</button></form>@endif
             <button type="button" class="ai-button ai-button-primary" data-ai-action="open-large" aria-haspopup="dialog"><i class="fa-solid fa-expand" aria-hidden="true"></i><span>Xem lớn</span></button>
             <button type="button" class="ai-button" data-ai-action="copy-summary"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Sao chép</span></button>

@@ -91,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/files/bao-cao-sau-bao-ve/{id}/download', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCaoSauBaoVe'])->name('baocao_sau_baove.download');
     Route::get('/files/view', [\App\Http\Controllers\FileDownloadController::class, 'viewFile'])->name('files.view');
     Route::post('/bao-cao-ai/{id}/phan-tich-lai', [\App\Http\Controllers\BaoCaoAiController::class, 'reanalyze'])->middleware('throttle:3,1,ai-reanalyze')->name('baocao.ai.phan_tich_lai');
+    Route::post('/bao-cao-ai/{id}/dung-phan-tich', [\App\Http\Controllers\BaoCaoAiController::class, 'cancel'])->name('baocao.ai.dung_phan_tich');
 
     // Đánh dấu tất cả thông báo đã đọc (Dành cho tất cả vai trò)
     Route::post('/thongbao/mark-all-read', [\App\Http\Controllers\ThongBaoController::class, 'markAllReadGlobal'])->name('thongbao.markAllReadGlobal');

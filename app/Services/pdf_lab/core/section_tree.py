@@ -24,10 +24,11 @@ def build_sections(document, detection):
         while stack and stack[-1]['section_level'] >= h['level']:
             stack.pop()
         parent = stack[-1] if stack and h['kind'] != 'fallback' else None
-        # A numbered parent must be a prefix; avoid silently nesting chapter 2 under chapter 1.
+        # A numbered parent must be a prefix; walk up stack to find matching ancestor instead of wiping out.
         if parent and h.get('section_number') and parent.get('section_number'):
-            if not h['section_number'].startswith(parent['section_number'] + '.'):
-                parent = None; stack.clear()
+            while stack and stack[-1].get('section_number') and not h['section_number'].startswith(stack[-1]['section_number'] + '.'):
+                stack.pop()
+            parent = stack[-1] if stack and h['kind'] != 'fallback' else None
         section = {'section_id': f's{index + 1:05}', 'heading_id': h['heading_id'],
                    'section_number': h['section_number'], 'section_title': h['title'],
                    'section_level': h['level'], 'kind': h['kind'],

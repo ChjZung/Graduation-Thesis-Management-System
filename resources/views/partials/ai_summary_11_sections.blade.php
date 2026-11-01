@@ -27,6 +27,7 @@
     $pdfUrl = $citationAvailable ? route('baocao.ai.pdf', $pb->MaKhoi) : '';
     $reviewUrl = $citationAvailable && $reviewRound ? route('baocao.ai.doi_chieu', $pb->MaKhoi) : '';
     $reanalyzeUrl = $citationAvailable ? route('baocao.ai.phan_tich_lai', $pb->MaKhoi) : '';
+    $cancelUrl = $citationAvailable ? route('baocao.ai.dung_phan_tich', $pb->MaKhoi) : '';
     $uniqueId = 'ai-summary-' . uniqid();
     $documentType = strtolower(pathinfo($pb->DuongDanFile ?? '', PATHINFO_EXTENSION)) === 'docx' ? 'docx' : ($aiData['document_type'] ?? 'pdf');
     $sourceLabels = $analysis['source_labels'] ?? [];
@@ -222,7 +223,7 @@
 @endonce
 
 @if($teacherReportUi)
-@include('partials.ai_teacher_report')
+@include('partials.ai_teacher_report', ['cancelUrl' => $cancelUrl])
 @else
 <section class="ai-summary ai-summary-card" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
     <header class="ai-header">
@@ -245,6 +246,14 @@
             </div>
         </div>
         <div class="ai-actions">
+            @if($cancelUrl)
+                <form method="POST" action="{{ $cancelUrl }}" style="margin:0; display:{{ in_array($aiData['_processing']['status'] ?? '', ['queued','running','waiting']) ? 'inline-block' : 'none' }};" data-ai-cancel-form>
+                    @csrf
+                    <button type="submit" class="ai-button ai-button-cancel" data-ai-cancel-btn style="color:#dc3545; border-color:#dc3545;">
+                        <i class="fa-solid fa-stop" aria-hidden="true"></i> Dừng phân tích
+                    </button>
+                </form>
+            @endif
             @if($reanalyzeUrl)
                 <form method="POST" action="{{ $reanalyzeUrl }}" style="margin:0">@csrf<button type="submit" class="ai-button" data-ai-review-submit data-busy-label="Đang phân tích báo cáo…"><i class="fa-solid fa-rotate" aria-hidden="true"></i>Phân tích lại</button></form>
             @endif

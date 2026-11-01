@@ -55,22 +55,34 @@ class AiReportProcessingService
         catch (\Throwable) { return false; }
     }
 
-    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false): array
+    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false, bool $force = false): array
     {
         // Database queue insertion is in the same short transaction as the pending state.
         // An explicit connection keeps QUEUE_CONNECTION=sync from running AI in HTTP.
-        return DB::transaction(function () use ($report,$reviewOnly) {
+        return DB::transaction(function () use ($report,$reviewOnly,$force) {
             $locked = KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->lockForUpdate()->findOrFail($report->MaKhoi);
             $data = $this->payload($locked);
             $state = $data['_processing'] ?? [];
             $fingerprint = $this->fingerprint($locked);
-            if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete'])) {
-                return array_merge($state, ['status'=>($data['analysis']['status'] ?? '') === 'completed' ? 'completed' : 'partial', 'reused'=>true,
-                    'message'=>'Đang sử dụng kết quả đã kiểm chứng. Tệp và cấu hình không đổi nên không gọi AI sinh lại.']);
+
+            if ($force) {
+                // Khi ép buộc phân tích lại: xóa các job đang chờ/delay cũ trong bảng jobs
+                DB::table('jobs')->where('queue', 'ai-reports')->where('payload', 'like', '%' . $locked->MaKhoi . '%')->delete();
+                $oldToken = $state['token'] ?? null;
+                if ($oldToken) {
+                    $prog = $this->progressPath($oldToken);
+                    if (is_file($prog)) @unlink($prog);
+                }
+            } else {
+                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete'])) {
+                    return array_merge($state, ['status'=>($data['analysis']['status'] ?? '') === 'completed' ? 'completed' : 'partial', 'reused'=>true,
+                        'message'=>'Đang sử dụng kết quả đã kiểm chứng. Tệp và cấu hình không đổi nên không gọi AI sinh lại.']);
+                }
+                if (($state['fingerprint'] ?? '') === $fingerprint && in_array($state['status'] ?? '', ['queued','running','waiting'])) {
+                    return $state; // The worker owns retries; repeated clicks cannot bypass cooldown.
+                }
             }
-            if (($state['fingerprint'] ?? '') === $fingerprint && in_array($state['status'] ?? '', ['queued','running','waiting'])) {
-                return $state; // The worker owns retries; repeated clicks cannot bypass cooldown.
-            }
+
             // A changed brief also changes the focus of a flexible summary. Map checkpoints remain reusable.
             if ($reviewOnly && (int) ($data['schema_version'] ?? 0) === 5 &&
                 ($data['summary_scope']['context_hash'] ?? '') !== $locked->dotNop?->maNguCanhDoiChieuAi()) {
@@ -82,6 +94,41 @@ class AiReportProcessingService
             $data['_processing'] = $state;
             $locked->update(['TomTatJson'=>$data]);
             AnalyzeReportVersion::dispatch($locked->MaKhoi,$state['token'])->onConnection('ai')->onQueue('ai-reports');
+            return $state;
+        });
+    }
+
+    public function cancel(KhoiBaoCaoTienDo $report): array
+    {
+        return DB::transaction(function () use ($report) {
+            $locked = KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
+            $data = $this->payload($locked);
+            $oldToken = $data['_processing']['token'] ?? null;
+            if ($oldToken) {
+                $prog = $this->progressPath($oldToken);
+                if (is_file($prog)) @unlink($prog);
+            }
+
+            // Xóa các job đang chờ xử lý của báo cáo này trong hàng đợi database
+            DB::table('jobs')
+                ->where('queue', 'ai-reports')
+                ->where('payload', 'like', '%' . $locked->MaKhoi . '%')
+                ->delete();
+
+            $state = [
+                'token' => (string) Str::uuid(),
+                'fingerprint' => $this->fingerprint($locked),
+                'status' => 'cancelled',
+                'mode' => 'full',
+                'attempts' => 0,
+                'updated_at' => time(),
+                'queued_at' => time(),
+                'message' => 'Đã dừng tiến trình phân tích. Bạn có thể bấm "Phân tích lại" để thực hiện lại.',
+                'errors' => []
+            ];
+
+            $data['_processing'] = $state;
+            $locked->update(['TomTatJson' => $data]);
             return $state;
         });
     }

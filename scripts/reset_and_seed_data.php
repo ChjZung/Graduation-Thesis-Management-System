@@ -499,15 +499,31 @@ function runResetAndSeed($dbName = null)
     echo "=================================================================\n\n";
 }
 
-// 1. Chạy trên CSDL chính ql_khoaluan_totnghiep
-runResetAndSeed('ql_khoaluan_totnghiep');
+// Kiểm tra và chạy trên cơ sở dữ liệu hiện hành (quanly_doan hoặc ql_khoaluan_totnghiep)
+$activeDb = config('database.connections.mysql.database');
+$allDbs = array_map(function($r) {
+    return is_array($r) ? ($r['SCHEMA_NAME'] ?? '') : ($r->SCHEMA_NAME ?? '');
+}, DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA"));
 
-// 2. Chạy trên CSDL quanly_doan để đồng bộ nếu DB này tồn tại
-try {
-    $hasQLDoAn = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'quanly_doan'");
-    if (!empty($hasQLDoAn)) {
-        runResetAndSeed('quanly_doan');
+$targetDbs = [];
+if (in_array($activeDb, $allDbs)) {
+    $targetDbs[] = $activeDb;
+}
+if (in_array('quanly_doan', $allDbs) && !in_array('quanly_doan', $targetDbs)) {
+    $targetDbs[] = 'quanly_doan';
+}
+if (in_array('ql_khoaluan_totnghiep', $allDbs) && !in_array('ql_khoaluan_totnghiep', $targetDbs)) {
+    $targetDbs[] = 'ql_khoaluan_totnghiep';
+}
+
+if (empty($targetDbs)) {
+    $targetDbs = [$activeDb];
+}
+
+foreach ($targetDbs as $db) {
+    try {
+        runResetAndSeed($db);
+    } catch (\Throwable $e) {
+        echo "Lỗi khi chạy trên {$db}: " . $e->getMessage() . "\n";
     }
-} catch (\Throwable $e) {
-    echo "Lưu ý: Không thể đồng bộ quanly_doan: " . $e->getMessage() . "\n";
 }

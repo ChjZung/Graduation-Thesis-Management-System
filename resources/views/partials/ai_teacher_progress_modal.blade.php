@@ -10,7 +10,7 @@
       <p class="mb-1" data-progress-detail>Đang tiếp nhận yêu cầu phân tích.</p><p class="mb-0" data-progress-timing>Thời gian đã chờ: <span data-progress-elapsed>00:00</span></p>
       <p class="small text-muted mt-3 mb-0" data-progress-note>Đóng cửa sổ không làm mất kết quả đã lưu. Nếu đang phân tích, tác vụ vẫn tiếp tục.</p>
     </div>
-    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tiếp tục sử dụng trang</button><button type="button" class="btn btn-primary" data-progress-view hidden>Xem kết quả</button><button type="button" class="btn btn-primary" data-progress-retry hidden>Thử lại</button></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-danger" data-progress-cancel hidden><i class="fa-solid fa-stop" aria-hidden="true"></i> Dừng phân tích</button><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tiếp tục sử dụng trang</button><button type="button" class="btn btn-primary" data-progress-view hidden>Xem kết quả</button><button type="button" class="btn btn-primary" data-progress-retry hidden>Thử lại</button></div>
   </div></div>
 </div>
 

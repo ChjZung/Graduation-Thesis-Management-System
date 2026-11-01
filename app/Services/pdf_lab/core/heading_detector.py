@@ -107,6 +107,22 @@ def detect_headings(document, settings):
             rejected.append('Câu giới thiệu/kết chương, không phải tiêu đề chương.')
         if chapter and len(text) > 65 and not chapter.group(2).isupper() and re.search(r'\b(?:khao\s*sat\s*va|phan\s*tich\s*yeu\s*cau|thiet\s*ke\s*kien\s*truc)\b', folded(chapter.group(2))):
             rejected.append('Mô tả chương trong danh sách cấu trúc đề tài.')
+        if chapter and chapter.group(2):
+            g2_lower = chapter.group(2).casefold().strip()
+            if re.match(r'^(?:và|va|được|duoc|đã|da|trong|ở|có|là|la|này|nay|sẽ|se|nhằm|nham|với|voi|cho|do|bởi|boi|theo|tại|tai|như|nhu)\b', g2_lower):
+                rejected.append('Sau từ Chương là từ nối/giới từ/vị ngữ, là câu văn trong đoạn chứ không phải tiêu đề chương.')
+        if chapter and chapter.group(2) and re.search(r'\.\s+[a-zà-ỹA-ZÀ-Ỹ]', chapter.group(2)):
+            rejected.append('Tiêu đề chứa dấu chấm ngắt câu văn, là nội dung đoạn văn chứ không phải tiêu đề.')
+        if chapter and not bookmark:
+            if not row['bold'] and not text.isupper() and row['font_size'] <= body_size * 1.08:
+                rejected.append('Định dạng chữ thường/không đậm giống nội dung văn bản, không phải tiêu đề chương.')
+            num_str = chapter.group(1)
+            if num_str.isdigit():
+                ch_val = int(num_str)
+                accepted_ch_vals = [int(h['section_number']) for h in accepted if h['kind'] == 'chapter' and h['section_number'] and h['section_number'].isdigit()]
+                if accepted_ch_vals and ch_val < max(accepted_ch_vals):
+                    if not (row['bold'] and (row['font_size'] > body_size * 1.15 or text.isupper())):
+                        rejected.append(f'Số chương ({ch_val}) nhỏ hơn chương đã xuất hiện trước đó ({max(accepted_ch_vals)}), có khả năng là câu tham chiếu ngược.')
         if caption:
             rejected.append('Chú thích hình/bảng, không phải heading.')
         if page_number:
