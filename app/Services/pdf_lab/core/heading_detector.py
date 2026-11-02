@@ -130,7 +130,8 @@ def detect_headings(document, settings):
             if title_part and title_part[0].islower() and not bookmark:
                 rejected.append('Tiêu đề mục bắt đầu bằng chữ thường, có khả năng là câu văn trong đoạn.')
             g2_lower = title_part.casefold()
-            if re.match(r'^(?:thay|va|và|duoc|được|da|đã|trong|o|ở|co|có|la|là|nay|này|se|sẽ|nham|nhằm|voi|với|cho|do|boi|bởi|theo|tai|tại|nhu|như|khi|de|để|neu|nếu|vi|vì)\b', g2_lower):
+            is_subordinating = bool(re.match(r'^(?:thay|va|và|duoc|được|da|đã|trong|o|ở|co|có|la|là|nay|này|se|sẽ|nham|nhằm|voi|với|cho|do|boi|bởi|tai|tại|nhu|như|khi|de|để|neu|nếu|vi|vì)\b', g2_lower))
+            if is_subordinating or (re.match(r'^theo\b', g2_lower) and not re.match(r'^theo\s+(?:dõi|doi|sát|sat)\b', g2_lower)):
                 rejected.append('Sau số mục là từ nối/giới từ/vị ngữ, là câu văn trong đoạn chứ không phải tiêu đề mục.')
         if numbered and not bookmark:
             if not row['bold'] and not text.isupper() and row['font_size'] <= body_size * 1.08:
