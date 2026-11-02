@@ -42,23 +42,83 @@
 .ai-summary-expanded .ai-review-item h4 { font-size: 17px; }
 .ai-summary-expanded .ai-review-heading p { font-size: 14px; }
 .ai-citation-dialog {
-    width: calc(100vw - 32px); max-width: 1200px; height: calc(100vh - 32px); height: calc(100dvh - 32px);
-    max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 10px;
-    margin: auto; background: #fff; color: #1a2b4a; box-shadow: 0 20px 70px rgba(0, 40, 85, .25); overflow: hidden;
+    width: calc(100vw - 24px); width: 98vw; max-width: 1800px;
+    height: calc(100vh - 24px); height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+    padding: 0; border: 0; border-radius: 12px;
+    margin: auto; background: #fff; color: #1a2b4a;
+    box-shadow: 0 25px 80px rgba(0, 30, 70, .28);
+    overflow: hidden;
+    transition: width .2s ease, height .2s ease, border-radius .2s ease;
+}
+.ai-citation-dialog.ai-dialog-fullscreen {
+    width: 100vw !important; max-width: 100vw !important;
+    height: 100vh !important; height: 100dvh !important;
+    max-height: 100vh !important; max-height: 100dvh !important;
+    border-radius: 0 !important; margin: 0 !important;
 }
 .ai-citation-dialog[open] { display: flex; flex-direction: column; }
-.ai-citation-dialog::backdrop { background: rgba(15, 23, 42, .65); }
-.ai-citation-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-.ai-citation-toolbar h3 { margin: 0; font-size: 17px; font-weight: 700; }
-.ai-citation-toolbar button, .ai-citation-toolbar a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; margin-left: 8px; font-size: 14px; font-family: inherit; border: 1px solid #c8dff7; border-radius: 6px; background: #fff; color: #004a8f; text-decoration: none; cursor: pointer; }
-.ai-citation-toolbar button:focus-visible, .ai-citation-toolbar a:focus-visible { outline: 3px solid #a2d2ff; outline-offset: 2px; }
+.ai-citation-dialog::backdrop { background: rgba(15, 23, 42, .65); backdrop-filter: blur(2px); }
+.ai-citation-toolbar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px 14px; padding: 10px 16px; border-bottom: 1px solid #d8e5f2;
+    background: linear-gradient(180deg, #f9fbfd, #eff5fb); flex-shrink: 0;
+}
+.ai-citation-toolbar h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f3d64; display: flex; align-items: center; gap: 8px; }
+.ai-citation-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ai-citation-group {
+    display: inline-flex; align-items: center; gap: 2px; background: #fff;
+    padding: 3px 5px; border: 1px solid #c9dcf0; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.ai-citation-toolbar button, .ai-citation-toolbar a {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 6px 11px; font-size: 13px; font-weight: 600; font-family: inherit;
+    border: 1px solid #c8dff7; border-radius: 6px; background: #fff; color: #004a8f;
+    text-decoration: none; cursor: pointer; transition: all .15s ease;
+}
+.ai-citation-toolbar button:hover, .ai-citation-toolbar a:hover {
+    background: #eef6ff; border-color: #0072ce; color: #003366;
+}
+.ai-citation-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.ai-citation-group button { border: 0; background: transparent; padding: 5px 8px; border-radius: 4px; }
+.ai-citation-group button:hover { background: #e8f2fc; }
+.ai-citation-zoom-badge {
+    min-width: 58px; text-align: center; font-variant-numeric: tabular-nums;
+    font-size: 12.5px; font-weight: 700; color: #004a8f; padding: 4px 6px;
+    border-radius: 4px; background: #edf5fd; user-select: none; cursor: pointer;
+    border: 1px solid transparent;
+}
+.ai-citation-zoom-badge:hover { background: #dceaf7; border-color: #bcd4ec; }
+.ai-citation-page-badge { font-size: 12.5px; font-weight: 600; color: #2d4f6e; padding: 0 6px; user-select: none; white-space: nowrap; }
+.ai-citation-toolbar .ai-citation-close { background: #0072ce; color: #fff; border-color: #0072ce; }
+.ai-citation-toolbar .ai-citation-close:hover { background: #004a8f; border-color: #004a8f; color: #fff; }
 .ai-citation-context { margin: 0; padding: 10px 18px; max-height: 90px; overflow: auto; font-size: 14px; line-height: 1.6; background: #eff6ff; flex-shrink: 0; }
 .ai-citation-transcript { flex-shrink: 0; border-bottom: 1px solid #e2e8f0; }
 .ai-citation-transcript summary { padding: 8px 18px; cursor: pointer; color: #004a8f; font-size: 13px; }
 .ai-citation-transcript summary:focus-visible { outline: 3px solid #a2d2ff; outline-offset: -3px; }
 .ai-citation-quote { margin: 0; padding: 12px 18px; max-height: 110px; overflow: auto; background: #fffbeb; border-bottom: 1px solid #e2e8f0; font-size: 14px; line-height: 1.65; white-space: pre-line; flex-shrink: 0; }
-.ai-citation-state { padding: 8px 18px; font-size: 13px; flex-shrink: 0; }
-.ai-citation-viewer { flex: 1; min-height: 0; padding: 18px; overflow: auto; background: #e8edf3; overscroll-behavior: contain; }
-.ai-citation-viewer img { display: block; width: 100%; min-width: 600px; max-width: 1100px; height: auto; margin: 0 auto; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.ai-citation-state { padding: 7px 18px; font-size: 12.5px; color: #475569; background: #fbfcfe; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+.ai-citation-viewer {
+    flex: 1; min-height: 0; padding: 24px; overflow: auto;
+    background: #cbd5e1; overscroll-behavior: contain;
+    position: relative; text-align: center;
+}
+.ai-citation-viewer.ai-can-pan { cursor: grab; }
+.ai-citation-viewer.ai-dragging { cursor: grabbing !important; user-select: none !important; }
+.ai-citation-canvas {
+    display: inline-block; vertical-align: top; margin: 0 auto;
+    transform-origin: center top; transition: width .1s ease-out;
+}
+.ai-citation-canvas img {
+    display: block; width: 100%; height: auto;
+    margin: 0 auto; box-shadow: 0 4px 24px rgba(15,23,42,.22);
+    border-radius: 4px; pointer-events: none;
+}
+.ai-docx-source {
+    display: inline-block; text-align: left; background: #fff; padding: 40px;
+    max-width: 960px; width: 100%; box-shadow: 0 4px 24px rgba(15,23,42,.15);
+    border-radius: 6px; line-height: 1.8; user-select: text; transition: font-size .1s ease-out;
+}
 .ai-citation-viewer:focus-visible { outline: 3px solid #a2d2ff; outline-offset: -3px; }
 </style>

@@ -51,7 +51,8 @@ def render_citation(pdf_path, page_number, quote=""):
             annotation.set_opacity(.5)
             annotation.update()
             page = doc.reload_page(page)
-        scale = min(1.7, 1600 / max(page.rect.width, page.rect.height, 1))
+        # Dựng ảnh với độ phân giải cao sắc nét (khoảng 200-220 DPI) để người dùng phóng to xem rõ chi tiết bảng biểu và sơ đồ
+        scale = min(2.5, 2400 / max(page.rect.width, page.rect.height, 1))
         pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False, annots=True)
         return {
             "page": page_number, "total_pages": len(doc), "matched": bool(rects),

@@ -77,3 +77,22 @@
 .ai-teacher-report [data-ai-work-content]>.tab-pane.active,.ai-teacher-report [data-ai-requirement-content]>.tab-pane.active{animation:ai-subtab-slide 180ms ease-out;}
 @keyframes ai-subtab-slide{from{transform:translateX(var(--ai-subtab-enter,14px));}to{transform:translateX(0);}}
 @media(prefers-reduced-motion:reduce){.ai-teacher-report [data-ai-work-content]>.tab-pane.active,.ai-teacher-report [data-ai-requirement-content]>.tab-pane.active{animation:none;}.ai-teacher-report .ai-report-tab-content .ai-report-tabs .nav-link{transition:none;}}
+
+/* Cửa sổ xem lớn và toàn màn hình */
+.ai-summary-dialog {
+    width: calc(100vw - 24px); width: 98vw; max-width: 1800px;
+    height: calc(100vh - 24px); height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+    margin: auto; padding: 0; border: 0; border-radius: 12px;
+    background: #fff; color: #1a2b4a; overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0, 30, 70, .28);
+    transition: width .2s ease, height .2s ease, border-radius .2s ease;
+}
+.ai-summary-dialog.ai-dialog-fullscreen {
+    width: 100vw !important; max-width: 100vw !important;
+    height: 100vh !important; height: 100dvh !important;
+    max-height: 100vh !important; max-height: 100dvh !important;
+    border-radius: 0 !important; margin: 0 !important;
+}
+.ai-summary-dialog::backdrop { background: rgba(15, 23, 42, .65); backdrop-filter: blur(2px); }
+
