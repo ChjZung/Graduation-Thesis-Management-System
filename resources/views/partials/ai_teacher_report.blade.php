@@ -27,18 +27,10 @@
             @if($reanalyzeUrl)
                 <form method="POST" action="{{ $reanalyzeUrl }}" data-teacher-analyze-form style="margin:0; display:inline-block;">
                     @csrf
-                    <input type="hidden" name="fresh" value="1">
-                    <button type="submit" class="ai-button" data-ai-review-submit title="Chạy phân tích mới với AI">
+                    <button type="submit" class="ai-button" data-ai-review-submit title="Phân tích lại báo cáo này">
                         <i class="fa-solid fa-rotate" aria-hidden="true"></i>Phân tích lại
                     </button>
                 </form>
-                <button type="button" class="ai-button" data-bs-toggle="modal" data-bs-target="#aiConsistencyModal-{{ $uniqueId }}" title="Đối chiếu tính nhất quán giữa các lần phân tích AI">
-                    <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-                    <span>Đối chiếu AI</span>
-                    @if(!empty($aiData['_analysis_history']))
-                        <span class="badge bg-primary ms-1" style="font-size:0.75em;">{{ count($aiData['_analysis_history']) + 1 }}</span>
-                    @endif
-                </button>
             @endif
             <button type="button" class="ai-button ai-button-primary" data-ai-action="open-large" aria-haspopup="dialog"><i class="fa-solid fa-expand" aria-hidden="true"></i><span>Xem lớn</span></button>
             <button type="button" class="ai-button" data-ai-action="copy-summary"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>Sao chép</span></button>
@@ -58,25 +50,6 @@
             <div><dt>Giai đoạn / Đợt nộp</dt><dd>{{ $reportPhase }} · {{ $reportRound }}</dd></div>
             <div><dt>Thời điểm phân tích</dt><dd>{{ $generatedAt ?? 'Chưa có kết quả đã lưu' }}</dd></div>
         </dl>
-        @if(!empty($aiData['_consistency_metrics']))
-            @php $cMetrics = $aiData['_consistency_metrics']; @endphp
-            <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" role="region" aria-label="Đánh giá tính nhất quán AI">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-scale-balanced text-primary fs-5" aria-hidden="true"></i>
-                    <div>
-                        <strong>Đối chiếu tính nhất quán (Lần {{ $cMetrics['runs_count'] ?? 2 }}):</strong>
-                        Độ tương đồng tóm tắt đạt <span class="badge bg-success">{{ $cMetrics['summary_similarity'] ?? 100 }}%</span>,
-                        công việc trùng khớp <span class="badge bg-info text-dark">{{ $cMetrics['completed_match_rate'] ?? 100 }}%</span>
-                        @if(!empty($cMetrics['identical_hash']))
-                            <span class="badge bg-success ms-1"><i class="fa-solid fa-check-double me-1"></i>Trùng khớp tuyệt đối</span>
-                        @endif
-                    </div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#aiConsistencyModal-{{ $uniqueId }}">
-                    <i class="fa-solid fa-chart-pie me-1"></i>Xem chi tiết đối chiếu
-                </button>
-            </div>
-        @endif
         <h3 class="ai-subheading">Thông tin kiểm chứng kết quả AI</h3>
         <div class="row g-2 ai-verification-cards">
             <div class="col-12 col-md-4"><div class="card h-100 ai-metric-source"><div class="card-body"><i class="fa-solid fa-check-double" aria-hidden="true"></i><h4>Dẫn chứng khớp nguồn PDF</h4><strong data-verified-count>{{ $uiMetrics['measured'] ? $uiMetrics['matched'].' / '.$uiMetrics['references'] : 'Chưa có dữ liệu kiểm chứng' }}</strong><p>Kiểm tra câu trích với nguồn.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>Số câu trích khớp chữ trong các nguồn đang hiển thị; không phải độ chính xác ngữ nghĩa.</p></details></div></div></div>
@@ -114,7 +87,6 @@
         </div>
     </div>
 </section>
-@include('partials.ai_consistency_modal', ['aiData' => $aiData, 'uniqueId' => $uniqueId, 'pb' => $pb, 'reanalyzeUrl' => $reanalyzeUrl ?? null, 'generatedAt' => $generatedAt])
 @once
 <link rel="stylesheet" href="{{ asset('css/ai_teacher_report.css') }}?v={{ filemtime(public_path('css/ai_teacher_report.css')) }}">
 <script src="{{ asset('js/ai_teacher_report.js') }}?v={{ filemtime(public_path('js/ai_teacher_report.js')) }}" defer></script>

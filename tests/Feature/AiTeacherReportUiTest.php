@@ -91,39 +91,5 @@ class AiTeacherReportUiTest extends TestCase
         $this->assertStringContainsString('data-citation-page="45"',$html);
         $this->assertStringNotContainsString('<script>bad</script>',$html);
     }
-    public function test_consistency_banner_and_modal_render_when_metrics_present(): void
-    {
-        $metrics = [
-            'runs_count' => 2,
-            'compared_to_run' => 1,
-            'identical_hash' => true,
-            'summary_similarity' => 98.5,
-            'completed_match_rate' => 100.0,
-            'chapters_count_diff' => 0,
-            'evaluated_at' => now()->toIso8601String(),
-        ];
-        $history = [
-            'snap_1' => [
-                'id' => 'snap_1',
-                'run_index' => 1,
-                'created_at_human' => '10:00:00 01/11/2026',
-                'summary' => 'Tóm tắt lần 1.',
-                'summary_hash' => md5('Tóm tắt lần 1.'),
-                'completed_work' => ['Công việc 1'],
-                'completed_work_count' => 1,
-                'chapters_count' => 3,
-            ]
-        ];
-        $html = $this->renderCard([
-            '_consistency_metrics' => $metrics,
-            '_analysis_history' => $history,
-        ]);
-        $this->assertStringContainsString('Đối chiếu tính nhất quán (Lần 2)', $html);
-        $this->assertStringContainsString('98.5%', $html);
-        $this->assertStringContainsString('100%', $html);
-        $this->assertStringContainsString('aiConsistencyModal', $html);
-        $this->assertStringContainsString('Lịch sử phân tích & Đối chiếu tính nhất quán AI', $html);
-        $this->assertStringContainsString('Lần 1 (Bản lưu trước đó)', $html);
-    }
 }
 
