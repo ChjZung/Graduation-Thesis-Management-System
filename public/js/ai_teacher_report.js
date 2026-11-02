@@ -12,7 +12,7 @@
   const delta=button.left<bounds.left ? button.left-bounds.left : button.right>bounds.right ? button.right-bounds.right : 0;
   if(delta)nav.scrollTo({left:Math.max(0,nav.scrollLeft+delta),behavior:'instant'});
  }
- function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(['chapters','work','requirements'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
+ function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(key==='work')key='chapters';if(['chapters','requirements'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
  function clock(e){if(e.finished!=null)return e.finished;return Math.max(0,Math.floor((Date.now()-(e.anchor||Date.now()))/1000));}
  function stamp(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
  function title(e){if(e.state?.status==='partial'&&e.state?.summary_status==='completed')return 'Tóm tắt đã hoàn thành';if(e.network)return 'Đang kiểm tra kết nối';return {queued:'Đang chờ phân tích',running:'Đang phân tích báo cáo',waiting:'Đang tiếp tục xử lý',completed:'Đã có kết quả xử lý',partial:'Kết quả xử lý một phần',failed:'Không thể hoàn tất phân tích',cancelled:'Đã dừng phân tích'}[e.state?.status]||'Đang tiếp nhận yêu cầu';}

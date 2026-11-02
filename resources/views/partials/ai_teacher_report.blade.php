@@ -62,7 +62,7 @@
         @if($sourceChanged)<p class="alert alert-warning">Tệp báo cáo đã thay đổi. Chọn Phân tích lại để đọc đúng tệp hiện tại.</p>@endif
         @if($showingSavedSummary)<p class="ai-empty" data-showing-saved-summary>Đây là bản đã lưu; kết quả mới sẽ được cập nhật sau khi phân tích xong.</p>@endif
         <nav class="ai-report-tabs nav nav-tabs" role="tablist" aria-label="Kết quả AI dành cho giảng viên">
-            @foreach(['chapters'=>'Tóm tắt theo chương','work'=>'Công việc trong báo cáo','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
+            @foreach(['chapters'=>'Tóm tắt theo chương','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
                 <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $uniqueId }}-tab-{{ $tabKey }}" data-bs-toggle="tab" data-bs-target="#{{ $uniqueId }}-pane-{{ $tabKey }}" type="button" role="tab" aria-controls="{{ $uniqueId }}-pane-{{ $tabKey }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" data-ai-result-tab="{{ $tabKey }}">{{ $tabLabel }}</button>
             @endforeach
         </nav>
@@ -77,9 +77,6 @@
                     @forelse($aiData['chapters'] ?? [] as $chapter)@include('partials.ai_document_node',['node'=>$chapter])@empty<p class="ai-empty">Chưa có bản tóm tắt theo chương. Kết quả đã lưu, nếu có, được giữ ở phần tổng quan.</p>@endforelse
                     @include('partials.ai_unassigned_captions')
                 </section>
-            </div>
-            <div class="tab-pane fade" id="{{ $uniqueId }}-pane-work" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-work" tabindex="0" data-ai-pane="work">
-                @include('partials.ai_work_content')
             </div>
             <div class="tab-pane fade" id="{{ $uniqueId }}-pane-requirements" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-requirements" tabindex="0" data-ai-pane="requirements">
                 @if(($analysis['engine'] ?? '')==='pdf_lab')@include('partials.ai_lab_requirements')@elseif($reviewRound)@include('partials.ai_requirement_review')@else<p class="ai-empty">Giảng viên chưa thiết lập yêu cầu phân tích cho đợt nộp này.</p>@endif

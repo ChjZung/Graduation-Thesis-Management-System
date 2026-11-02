@@ -21,10 +21,11 @@ class AiTeacherReportUiTest extends TestCase
         $p=\Mockery::mock(AiReportProcessingService::class)->makePartial();$p->shouldReceive('sourceMatches')->andReturn(true);$this->app->instance(AiReportProcessingService::class,$p);
         return view('partials.ai_summary_11_sections',['pb'=>$r,'teacherReportUi'=>$teacher])->render();
     }
-    public function test_three_tabs_keep_current_content_and_quote_relationships(): void
+    public function test_two_tabs_keep_current_content_and_quote_relationships(): void
     {
         $html=$this->renderCard();$dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xpath=new \DOMXPath($dom);
-        $this->assertCount(3,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(2,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(0,$xpath->query('//*[@data-ai-work-summary] | //*[@data-ai-result-tab="work"] | //*[@data-ai-pane="work"]'));
         foreach($xpath->query('//*[@data-ai-result-tab]') as $tab){$id=$tab->getAttribute('aria-controls');$this->assertCount(1,$xpath->query('//*[@id="'.$id.'"]'));}
         $this->assertStringContainsString('Nội dung chương giữ nguyên.',$html);
         $this->assertStringContainsString('1. Yêu cầu gốc',$html);
@@ -40,7 +41,7 @@ class AiTeacherReportUiTest extends TestCase
             'teacher_requirements'=>[],'requirements_document'=>['text'=>''], 'overall_summary'=>'<script>fake_ai()</script>', 'analysis'=>['total_chunks'=>null]]);
         $this->assertStringNotContainsString('<script>fake_ai()</script>',$html);
         $this->assertStringContainsString('Chưa có dữ liệu kiểm chứng',$html);
-        $this->assertStringContainsString('Không tìm thấy công việc đã hoàn thành có đủ bằng chứng trong báo cáo.',$html);
+        $this->assertStringNotContainsString('Không tìm thấy công việc đã hoàn thành có đủ bằng chứng trong báo cáo.',$html);
         $this->assertStringContainsString('Giảng viên chưa thiết lập yêu cầu phân tích cho đợt nộp này.',$html);
     }
     public function test_atomic_requirements_show_individual_answers_and_abstain_without_sources(): void
@@ -70,7 +71,7 @@ class AiTeacherReportUiTest extends TestCase
         $this->app['request']->setRouteResolver(fn()=>$route);
         $html=$this->renderCard([],null);
         $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xpath=new \DOMXPath($dom);
-        $this->assertCount(3,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(2,$xpath->query('//*[@data-ai-result-tab]'));
         $this->assertCount(2,$xpath->query('//*[@data-ai-requirement-tab]'));
     }
     public function test_explicit_legacy_partial_keeps_previous_layout(): void
@@ -90,6 +91,29 @@ class AiTeacherReportUiTest extends TestCase
         $this->assertStringContainsString('#page=45',$html);
         $this->assertStringContainsString('data-citation-page="45"',$html);
         $this->assertStringNotContainsString('<script>bad</script>',$html);
+    }
+    public function test_each_page_button_uses_its_own_source_quote(): void
+    {
+        $items=[['content'=>'Ý thứ nhất.','source_pages'=>[3,7,9],'source_references'=>[
+            ['page'=>3,'quote'=>'Nguồn riêng trang ba.'],['page'=>7,'quote'=>'Nguồn riêng trang bảy.']]]];
+        $html=$this->renderCard(['chapters'=>[['id'=>'PAGES','title'=>'Nhiều trang','level'=>2,'kind'=>'section',
+            'start_page'=>3,'end_page'=>9,'items'=>$items]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        foreach([3=>'Nguồn riêng trang ba.',7=>'Nguồn riêng trang bảy.'] as $page=>$quote) {
+            $buttons=$xp->query('//*[@data-summary-group="PAGES"]//*[@data-citation-page="'.$page.'"]');
+            $this->assertCount(1,$buttons);
+            $this->assertSame($quote,$buttons->item(0)->getAttribute('data-citation-quote'));
+        }
+        $this->assertCount(0,$xp->query('//*[@data-summary-group="PAGES"]//*[@data-citation-page="9"]'));
+    }
+    public function test_parent_keeps_access_to_evidence_with_child_sections(): void
+    {
+        $html=$this->renderCard(['chapters'=>[['id'=>'PARENT','title'=>'Mục cha','level'=>2,'kind'=>'section',
+            'start_page'=>1,'end_page'=>3,'items'=>[['content'=>'Nội dung riêng của cha.',
+            'source_references'=>[['page'=>1,'quote'=>'Nguồn trực tiếp của cha.']]]],
+            'sections'=>[['id'=>'CHILD','title'=>'Mục con','level'=>3,'kind'=>'section','start_page'=>2,'end_page'=>3,'items'=>[]]]]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-summary-group="PARENT"]//*[@data-lab-source-references]'));
     }
 }
 

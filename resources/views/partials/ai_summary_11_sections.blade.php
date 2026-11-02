@@ -12,7 +12,6 @@
     $structuralSummary = (int) ($aiData['schema_version'] ?? 0) >= 6 && is_array($aiData['chapters'] ?? null);
     $overallSummary = $aiData['overall_summary'] ?? $aiData['tom_tat'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
     $documentContent = $aiData['document_content'] ?? [];
-    $completedWork = $aiData['completed_work'] ?? $aiData['cong_viec_hoan_thanh'] ?? [];
     $difficulties = $aiData['difficulties'] ?? $aiData['kho_khan'] ?? [];
     $nextSteps = $aiData['next_steps'] ?? $aiData['ke_hoach_tiep_theo'] ?? [];
     $analysis = $aiData['analysis'] ?? [];
@@ -38,11 +37,7 @@
     if (!$analysisComplete && !$documentContent && isset($analysis['analyzed_chunks'], $analysis['total_chunks']) && $analysis['analyzed_chunks'] < $analysis['total_chunks']) {
         $overallSummary = 'Bản tóm tắt chưa hoàn tất. Các thông tin đã trích xuất được giữ bên dưới; chưa thể kết luận những nội dung còn lại không có trong báo cáo.';
     }
-    $sections = [
-        ['key' => 'completed_work', 'number' => 1, 'title' => 'Công việc đã thực hiện', 'icon' => 'fa-circle-check', 'tone' => 'success', 'items' => $completedWork],
-        ['key' => 'difficulties', 'number' => 2, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties],
-        ['key' => 'next_steps', 'number' => 3, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps],
-    ];
+    $sections = [];
     $aiEvaluation = $aiData['completion_percentage'] ?? ($pb->PhanTramHoanThanh ?? null);
     $aiBasis = $aiData['completion_basis'] ?? [];
     $versionComparison = $aiData['version_comparison'] ?? null;
@@ -65,8 +60,7 @@
         $sections = [];
     }
     if ($structuralSummary) {
-        $sections = [['key'=>'completed_work', 'number'=>3, 'title'=>'Công việc đã hoàn thành',
-            'icon'=>'fa-circle-check', 'tone'=>'success', 'items'=>$completedWork]];
+        $sections = [];
     }
     if ($sourceChanged) { $overallSummary = ''; $sections = []; }
     $missingGroups = [];
@@ -475,12 +469,6 @@
                     @include('partials.ai_summary_section')
                 @endif
             @endforeach
-            @if($structuralSummary && !$completedWork)
-                <section class="ai-section ai-section-wide" data-completed-work-empty>
-                    <h3 class="ai-section-title">Công việc đã hoàn thành</h3>
-                    <p class="ai-empty">Chưa xác minh được công việc hoàn thành đủ căn cứ từ phần tài liệu đã xử lý. Đây không phải kết luận sinh viên chưa thực hiện.</p>
-                </section>
-            @endif
         </div>
         @if($flexibleSummary && !$sections)
             <p class="ai-empty">Chưa có mục trọng tâm được trích xuất. Đây chưa phải kết luận tài liệu thiếu yêu cầu; hãy xem độ bao phủ và phần đối chiếu bên dưới.</p>
