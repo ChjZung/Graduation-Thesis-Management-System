@@ -117,10 +117,11 @@ class BaoCaoAiController extends Controller
     {
         $report = $this->authorizedReport($id);
         $this->pdfPath($report);
+        $fresh = request()->boolean('fresh', true);
         // Cho phép force reanalyze để người dùng bấm là chạy lại ngay lập tức
-        $state = $processing->enqueue($report, false, true);
+        $state = $processing->enqueue($report, false, true, $fresh);
         if (request()->expectsJson()) return response()->json(['state'=>$processing->status($report->fresh()),'reused'=>(bool)($state['reused'] ?? false)])->header('Cache-Control','private, no-store');
-        return back()->with('success',$state['message']);
+        return back()->with('success', 'Đã yêu cầu AI phân tích lại báo cáo. Tiến trình đang xử lý nền.');
     }
 
     public function cancel(string $id, \App\Services\AiReportProcessingService $processing)

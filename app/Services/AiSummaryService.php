@@ -33,14 +33,57 @@ class AiSummaryService
                     Storage::disk('local')->put('ai_history/'.$snapshotId.'.json', $encoded);
                 }
                 $history = $old['_analysis_history'] ?? [];
-                $history[$snapshotId] = ['id'=>$snapshotId, 'schema_version'=>$old['schema_version'],
-                    'source_hash'=>$old['_source_hash'] ?? $old['source_identity']['source_hash'] ?? null];
+                
+                $completedList = array_map(function($w) {
+                    return is_array($w) ? ($w['content'] ?? '') : (string)$w;
+                }, $snapshot['completed_work'] ?? []);
+
+                $history[$snapshotId] = [
+                    'id' => $snapshotId,
+                    'run_index' => count($history) + 1,
+                    'created_at' => now()->toIso8601String(),
+                    'created_at_human' => now()->format('H:i:s d/m/Y'),
+                    'schema_version' => $old['schema_version'],
+                    'source_hash' => $old['_source_hash'] ?? $old['source_identity']['source_hash'] ?? null,
+                    'summary' => $snapshot['overall_summary'] ?? $snapshot['tom_tat'] ?? '',
+                    'summary_hash' => md5($snapshot['overall_summary'] ?? $snapshot['tom_tat'] ?? ''),
+                    'completed_work' => $completedList,
+                    'completed_work_count' => count($completedList),
+                    'chapters_count' => count($snapshot['chapters'] ?? []),
+                ];
                 $old['_analysis_history'] = $history;
             }
             $merged = (new AiResultMerger)->merge($old,$result['data'],!empty($options['review_only']));
-            foreach (['_submission_identity', '_analysis_history'] as $field) {
-                if (isset($old[$field])) $merged[$field] = $old[$field];
+
+            // Tính toán chỉ số nhất quán (Consistency Metrics) với lần chạy trước
+            if (!empty($old['_analysis_history'])) {
+                $lastSnapshot = end($old['_analysis_history']);
+                $newSummary = $merged['overall_summary'] ?? $merged['tom_tat'] ?? '';
+                $oldSummary = $lastSnapshot['summary'] ?? '';
+
+                similar_text($newSummary, $oldSummary, $similarityPercent);
+
+                $newCompleted = array_map(fn($w) => is_array($w) ? ($w['content'] ?? '') : (string)$w, $merged['completed_work'] ?? []);
+                $oldCompleted = $lastSnapshot['completed_work'] ?? [];
+
+                $matchedCompleted = array_intersect($newCompleted, $oldCompleted);
+                $completedMatchRate = !empty($oldCompleted) || !empty($newCompleted)
+                    ? (count($matchedCompleted) / max(1, max(count($oldCompleted), count($newCompleted)))) * 100
+                    : 100;
+
+                $merged['_consistency_metrics'] = [
+                    'runs_count' => count($old['_analysis_history']) + 1,
+                    'compared_to_run' => $lastSnapshot['run_index'] ?? count($old['_analysis_history']),
+                    'identical_hash' => ($lastSnapshot['summary_hash'] ?? '') === md5($newSummary),
+                    'summary_similarity' => round($similarityPercent, 1),
+                    'completed_match_rate' => round($completedMatchRate, 1),
+                    'chapters_count_diff' => count($merged['chapters'] ?? []) - ($lastSnapshot['chapters_count'] ?? 0),
+                    'evaluated_at' => now()->toIso8601String(),
+                ];
             }
+
+            if (isset($old['_submission_identity'])) $merged['_submission_identity'] = $old['_submission_identity'];
+            if (isset($old['_analysis_history'])) $merged['_analysis_history'] = $old['_analysis_history'];
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
@@ -243,6 +286,9 @@ class AiSummaryService
         if (!empty($options['review_only'])) {
             $command[] = '--review-only';
         }
+        if (!empty($options['fresh'])) {
+            $command[] = '--fresh';
+        }
         // Previous-version comparison belongs to the legacy pipeline only.
         // PDF Lab does not accept this flag; passing the entire prior JSON also
         // exceeds Windows command/environment limits before Python can start.
@@ -443,7 +489,7 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
+                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', '_analysis_history', '_consistency_metrics'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],

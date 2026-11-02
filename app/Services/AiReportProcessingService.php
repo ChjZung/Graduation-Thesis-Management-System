@@ -55,11 +55,11 @@ class AiReportProcessingService
         catch (\Throwable) { return false; }
     }
 
-    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false, bool $force = false): array
+    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false, bool $force = false, bool $fresh = false): array
     {
         // Database queue insertion is in the same short transaction as the pending state.
         // An explicit connection keeps QUEUE_CONNECTION=sync from running AI in HTTP.
-        return DB::transaction(function () use ($report,$reviewOnly,$force) {
+        return DB::transaction(function () use ($report,$reviewOnly,$force,$fresh) {
             $locked = KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->lockForUpdate()->findOrFail($report->MaKhoi);
             $data = $this->payload($locked);
             $state = $data['_processing'] ?? [];
@@ -92,6 +92,7 @@ class AiReportProcessingService
             }
             if (!$this->sourceMatches($locked, $data)) $reviewOnly = false;
             $state = ['token'=>(string) Str::uuid(), 'fingerprint'=>$fingerprint, 'status'=>'queued', 'mode'=>$reviewOnly ? 'review' : 'full',
+                'fresh'=>$fresh || $force,
                 'attempts'=>0, 'updated_at'=>time(), 'queued_at'=>time(), 'message'=>'Đã lưu bài nộp. AI đang chờ xử lý nền.', 'errors'=>[]];
             $data['_processing'] = $state;
             $locked->update(['TomTatJson'=>$data]);

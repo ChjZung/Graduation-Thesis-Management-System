@@ -193,7 +193,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             'processing_time':round(elapsed,3),'metrics':{'total_pages':analysis['total_pages'],'chunk_count':counts['total_chunks']}}
 
 
-def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=None,provider_factory=None,import_checkpoint=None):
+def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=None,provider_factory=None,import_checkpoint=None,fresh=False):
     started=time.monotonic();options=options or {};context=context or {};identity=identity or {}
     direct_review=options.get('review_engine')=='verified_v2'
     settings=RunSettings(int(options.get('input_budget',8500)),int(options.get('max_output_tokens',16384)),int(options.get('max_generation_calls',5)))
@@ -204,6 +204,10 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
     reader_requirements=context_document({}) if direct_review else requirements
     binding=fingerprint([ENGINE_VERSION,READER_VERSION,identity,source['document']['sha256'],model,settings.input_budget,settings.max_output_tokens,plan['fingerprint']])
     folder=Path(cache_dir)/'pdf_lab'/binding;folder.mkdir(parents=True,exist_ok=True)
+    if fresh or options.get('fresh'):
+        for p in folder.glob('*.json'):
+            try: p.unlink()
+            except OSError: pass
     summary_path=folder/'summary.json';reader_path=folder/'reader.json'
     summary_state=load_state(summary_path);reader_state=load_state(reader_path)
     if direct_review:
@@ -338,12 +342,13 @@ def main():
     parser.add_argument('--cache-dir',required=True);parser.add_argument('--review-context');parser.add_argument('--document-identity')
     parser.add_argument('--lab-settings');parser.add_argument('--import-lab-checkpoint');parser.add_argument('--output')
     parser.add_argument('--review-only',action='store_true')
+    parser.add_argument('--fresh',action='store_true',help='Force fresh run without reading disk cache')
     for name in ('stage','chunk-size','chunk-overlap','method','pipeline-version','target-tokens','overlap-tokens','prompt-reserve-tokens','max-input-tokens'):parser.add_argument('--'+name)
     args=parser.parse_args()
     try:
         result=run_pipeline(args.pdf,os.environ.get('GEMINI_API_KEY',''),args.model,args.cache_dir,
             json.loads(args.review_context) if args.review_context else {},json.loads(args.document_identity) if args.document_identity else {},
-            json.loads(args.lab_settings) if args.lab_settings else {},import_checkpoint=args.import_lab_checkpoint)
+            json.loads(args.lab_settings) if args.lab_settings else {},import_checkpoint=args.import_lab_checkpoint,fresh=args.fresh)
     except Exception as exc:
         import traceback
         try:

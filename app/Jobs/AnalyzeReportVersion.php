@@ -63,6 +63,7 @@ class AnalyzeReportVersion implements ShouldQueue
             $result = $ai->summarizePdf($processing->path($report),$report->dotNop?->giaiDoan?->ThuTu ?? 1,[
                 'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
                 'review_only'=>$only,
+                'fresh'=>!empty($state['fresh']),
                 'progress_path'=>$processing->progressPath($this->token),
                 'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,
