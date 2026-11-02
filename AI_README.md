@@ -161,9 +161,11 @@ Module AI trong hệ thống GTMS được thiết kế để tự động phân
 
 ---
 
-## 5. HƯỚNG DẪN THIẾT LẬP & CHẠY TRÊN MÁY MỚI
+## 5. HƯỚNG DẪN THIẾT LẬP & CHẠY TRÊN MÁY MỚI (TỰ ĐỘNG HÓA 100%)
 
-Khi clone dự án về máy mới, thực hiện lần lượt các bước sau:
+Hệ thống đã được **tự động hóa hoàn toàn**. Lệnh `php artisan serve` mặc định đã được ghi đè (`AppServiceProvider.php`) bằng `ServeWithAiWorkerCommand` để tự động làm mọi việc cho bạn.
+
+Khi clone về máy mới, bạn chỉ cần thực hiện:
 
 ### Bước 1: Cài đặt PHP & Node dependencies
 ```powershell
@@ -172,29 +174,23 @@ npm install
 npm run build
 ```
 
-### Bước 2: Cài đặt môi trường Python cho AI
-Kiểm tra đường dẫn Python của Laragon trên máy (ví dụ `D:/laragon/bin/python/python-3.10/python.exe` hoặc `C:/laragon/...`), sau đó cài thư viện:
-```powershell
-& "D:\laragon\bin\python\python-3.10\python.exe" -m pip install -r app/Services/pdf_lab/requirements.txt
-```
-*(Yêu cầu tối thiểu: `PyMuPDF>=1.24.0`, khuyến nghị `1.28.2`)*.
-
-### Bước 3: Cấu hình file `.env`
-Mở file `.env` và kiểm tra 2 biến:
+### Bước 2: Cấu hình API Key trong `.env`
+Chỉ cần điền API Key của bạn (không bắt buộc khai báo `PYTHON_PATH` vì hệ thống tự động dò tìm Python ở các ổ `D:`, `C:`, `E:` của Laragon hoặc virtualenv):
 ```env
-# Dùng dấu gạch xuôi /, không dùng dấu ngoặc kép
-PYTHON_PATH=D:/laragon/bin/python/python-3.10/python.exe
 GEMINI_API_KEY=AIzaSy... (API Key của bạn)
 ```
 
-### Bước 4: Chạy hệ thống & Worker AI
-Bạn có thể khởi động cả web server và worker AI chỉ bằng một lệnh:
+### Bước 3: Khởi động hệ thống
+Chỉ cần gõ **một lệnh duy nhất**:
 ```powershell
-php artisan serve:ai
+php artisan serve
 ```
-Hoặc mở 2 cửa sổ terminal riêng biệt:
-- **Terminal 1 (Web):** `php artisan serve`
-- **Terminal 2 (AI Worker):** `php artisan ai:work`
+✨ **Cơ chế tự động kích hoạt:**
+1. **Tự động quét Python**: Tự động dò tìm Python 3.10+ của Laragon (`D:`, `C:`, `E:`) hoặc `.venv`.
+2. **Tự động cài đặt thư viện**: Tự động kiểm tra `import pymupdf`; nếu môi trường máy mới chưa có thư viện, script sẽ tự động gọi `pip install -r app/Services/pdf_lab/requirements.txt` để tải và cài đặt ngay trong lúc khởi động mà không cần gõ lệnh tay!
+3. **Tự động khởi động Worker AI**: Khởi chạy ngầm tiến trình `php artisan ai:work` để lắng nghe hàng đợi xử lý báo cáo song song với máy chủ web.
+
+*(Lưu ý: Bạn cũng có thể dùng `php artisan serve:ai` hoặc lệnh tách biệt `php artisan ai:work` nếu muốn theo dõi log worker riêng).*
 
 ---
 
