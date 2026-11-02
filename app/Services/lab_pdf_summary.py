@@ -18,6 +18,7 @@ from ai_runtime.summarizer import fingerprint
 from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
 from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION
+from core.caption_index import extract_captions, section_nodes, VERSION as CAPTION_VERSION
 
 ENGINE_VERSION='pdf-lab-v1.3'
 
@@ -120,6 +121,10 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         return {'content':text,'kind':kind,'source_ids':[r['source_id'] for r in refs],
                 'source_pages':sorted({r['page'] for r in refs}), 'evidence':refs[0]['quote'],
                 'source_references':refs,'verified':True,'relevance_verified':False,'semantic_support':'NOT_VERIFIED'}
+    try:
+        caption_index = extract_captions(result)
+    except Exception:
+        caption_index = {'version':CAPTION_VERSION,'status':'failed','assets':[]}
     overview=[item(p['text'],p['evidence_ids']) for p in (reader or {}).get('report_overview',[])]
     summaries={c['root_id']:c for c in (reader or {}).get('chapter_summaries',[])}
     roots=list(dict.fromkeys(b['root_id'] for b in plan['batches']));chapters=[]
@@ -130,6 +135,9 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             'summary':' '.join(p['text'] for p in c.get('paragraphs',[])),
             'items':[item(p['text'],p['evidence_ids']) for p in c.get('paragraphs',[])],
             'status':'completed' if c.get('paragraphs') and c.get('coverage')=='selected_text_complete' else 'partial','sections':[]})
+    for chapter in chapters:
+        chapter['sections'] = section_nodes(result, evidence, item, chapter['id'], caption_index)
+        chapter['related_assets'] = [a for a in caption_index['assets'] if a['section_id'] == chapter['id']]
     completed=[item(p['text'],p['item_ids'],'reported_work') for p in ((base or {}).get('final_result') or {}).get('completed_work',[])]
     teacher=[]
     matches={i['requirement_id']:i for i in (links or {}).get('links',[])}
@@ -160,7 +168,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'note':'Đã xử lý đủ các gói text của phương án. Câu trích đã khớp nguồn; chưa kiểm chứng ngữ nghĩa toàn diện, chưa đọc hình/sơ đồ hoặc các mục loại khỏi Map.' if full else 'Bản đọc đang xử lý; chưa dùng phần chưa đọc để kết luận báo cáo thiếu nội dung.',
         'generated_at':datetime.now(timezone.utc).isoformat(),'source_labels':{str(p['page']):f"Trang {p['page']}" for p in result['document']['pages']}}
     content_review=safe_review_content(result,base)
-    data={'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
+    data={'caption_index':caption_index,'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
         'source_identity':identity,'_source_hash':identity['source_hash'],'analysis_status':analysis['status'],'analysis':analysis,
         'overview_summary':'\n\n'.join(p['content'] for p in overview),'overall_summary':'\n\n'.join(p['content'] for p in overview),
         'document_content':overview,'chapters':chapters,'completed_work':completed,'processing_errors':errors,
@@ -220,6 +228,23 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         from ai_runtime.checkpoints import restore_completed_checkpoint
         summary_state=restore_completed_checkpoint(json.loads(Path(import_checkpoint).read_text(encoding='utf-8-sig')),source,plan,model,settings)
     base=summary_state.get('report');reader=reader_state.get('report')
+    if base:
+        from ai_runtime.summarizer import validate_map, map_prompt, MAP_SCHEMA
+        batches_by_id = {b['batch_id']: b for b in plan['batches']}
+        invalid_maps = []
+        for bid, mapped in base.get('map_results', {}).items():
+            try:
+                rebuilt = validate_map({'processed_source_ids':mapped['processed_source_ids'],
+                    'items':[{k:i[k] for k in ('source_id','summary','evidence_quote','kind')} for i in mapped['items']]}, batches_by_id[bid], source['document'])
+                mapped.update(rebuilt)
+            except (ApiError,KeyError,TypeError):
+                invalid_maps.append(bid)
+        if invalid_maps:
+            base = None
+            summary_state.pop('report', None)
+            summary_state['tasks'] = {k:v for k,v in summary_state.get('tasks',{}).items()
+                if v.get('label','').startswith('Map ') and v.get('label')[4:] not in invalid_maps}
+            reader_state = {}; reader = None; links_state = {}
     if reader and (not base or (not direct_review and reader.get('identity')!=reader_fingerprint(base,reader_requirements,model,settings))):
         reader=None
     links=links_state.get('report')

@@ -68,6 +68,7 @@
                 @endif
                 <section class="ai-section" data-structural-summary><h3 class="ai-section-title mb-3">Bản đọc theo chương dành cho giảng viên</h3>
                     @forelse($aiData['chapters'] ?? [] as $chapter)@include('partials.ai_document_node',['node'=>$chapter])@empty<p class="ai-empty">Chưa có bản tóm tắt theo chương. Kết quả đã lưu, nếu có, được giữ ở phần tổng quan.</p>@endforelse
+                    @include('partials.ai_unassigned_captions')
                 </section>
             </div>
             <div class="tab-pane fade" id="{{ $uniqueId }}-pane-work" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-work" tabindex="0" data-ai-pane="work">

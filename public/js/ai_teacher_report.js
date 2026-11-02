@@ -65,7 +65,7 @@
   if(done){bar.setAttribute('aria-valuenow','100');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');}else bar.removeAttribute('aria-valuenow');
   node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done);
  }
- function open(e){current=e;render(e);if(window.bootstrap?.Modal)bootstrap.Modal.getOrCreateInstance(modalNode()).show();}
+ function open(e){current=e;const node=modalNode();if(!node)return;if(node.parentElement!==document.body)document.body.appendChild(node);render(e);if(window.bootstrap?.Modal)bootstrap.Modal.getOrCreateInstance(node).show();}
  function accept(e,data){e.state=data;e.network=false;if(!e.reused&&data.queued_at&&data.server_time){e.anchor=Date.now()-Math.max(0,data.server_time-data.queued_at)*1000;}
   if(active(data.status))e.finished=null;else e.finished=clock(e);render(e);
  }
@@ -125,12 +125,13 @@
  function scan(){document.querySelectorAll('.ai-teacher-report').forEach(card=>{if(!initialized.has(card)){initialized.add(card);restoreTabs(card);}const b=card.querySelector('[data-ai-processing-url]');if(!b)return;
    let e=jobs.get(b.dataset.aiProcessingUrl);
    if(!e){e={url:b.dataset.aiProcessingUrl,key:card.dataset.reportKey,lastRevision:b.dataset.resultRevision||null,anchor:Date.now(),state:{status:b.dataset.processingStatus||'idle',summary_status:b.dataset.summaryStatus||null,review_status:b.dataset.reviewStatus||null,review_has_results:b.dataset.reviewHasResults==='1',queued_at:Number(b.dataset.processingStarted)||null},loaded:true};jobs.set(e.url,e);
-    if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);if(!current){let dismissed=false;try{dismissed=sessionStorage.getItem('huit-ai-dismissed:'+e.url+':'+e.state.queued_at)==='1';}catch{}if(!dismissed)open(e);}}}
+    // Background processing must not lock navigation or scrolling on page load.
+    if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);}}
    render(e);
   });}
  async function submit(form){const card=form.closest('.ai-teacher-report'),b=card.querySelector('[data-ai-processing-url]');if(!b)return;
   const e=jobs.get(b.dataset.aiProcessingUrl);if(!e||e.submitting||active(e.state?.status))return;
-  card.closest('dialog[open]')?.close();e.submitting=true;e.loaded=false;e.reused=false;e.finished=null;e.anchor=Date.now();e.state={status:'submitting'};open(e);render(e);
+  e.submitting=true;e.loaded=false;e.reused=false;e.finished=null;e.anchor=Date.now();e.state={status:'submitting'};render(e);
   try{const response=await fetch(form.action,{method:'POST',body:new FormData(form),headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
    if(!response.ok||response.redirected){if([401,403,419].includes(response.status))e.denied=true;throw Error('submit');}
    const data=await response.json();e.reused=!!data.reused;accept(e,data.state);if(active(e.state.status))poll(e);else{e.loaded=true;await refresh(e);}

@@ -74,7 +74,9 @@ class AiReportProcessingService
                     if (is_file($prog)) @unlink($prog);
                 }
             } else {
-                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete'])) {
+                $captionReady = ($data['analysis']['engine'] ?? '') !== 'pdf_lab' ||
+                    (($data['caption_index']['version'] ?? '') === 'caption-text-1' && ($data['caption_index']['status'] ?? '') === 'completed');
+                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete']) && $captionReady) {
                     return array_merge($state, ['status'=>($data['analysis']['status'] ?? '') === 'completed' ? 'completed' : 'partial', 'reused'=>true,
                         'message'=>'Đang sử dụng kết quả đã kiểm chứng. Tệp và cấu hình không đổi nên không gọi AI sinh lại.']);
                 }

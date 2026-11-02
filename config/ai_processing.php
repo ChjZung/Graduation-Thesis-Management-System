@@ -9,7 +9,7 @@ return [
     'lite_rpm' => (int) env('GEMINI_LITE_SAFE_RPM', 12),
     'tpm' => (int) env('GEMINI_SAFE_TPM', 200000),
     'max_passes' => 20,
-    'pipeline_version' => 'pdf-lab-v1.7-verified-requirement-review',
+    'pipeline_version' => 'pdf-lab-v1.8-section-caption-text',
     'pdf_engine' => 'pdf_lab',
     'lab' => [
         'review_engine' => 'verified_v2',

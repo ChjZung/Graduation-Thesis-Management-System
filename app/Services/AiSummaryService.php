@@ -443,7 +443,7 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                '_source_hash', 'chapters', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
+                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],

@@ -79,5 +79,17 @@ class AiTeacherReportUiTest extends TestCase
         $this->assertCount(0,$xpath->query('//*[@data-ai-result-tab]'));
         $this->assertStringContainsString('Nội dung chương giữ nguyên.',$html);
     }
+    public function test_caption_pointer_keeps_deepest_section_and_escapes_text(): void
+    {
+        $asset=['display_text'=>'Hình 3.8 <script>bad</script>','raw_text'=>'Hình 3.8 nguồn',
+            'section_number'=>'3.2.1','section_title'=>'Đăng ký đề tài','page'=>45];
+        $html=$this->renderCard(['chapters'=>[['id'=>'S','title'=>'Thiết kế','level'=>2,'kind'=>'section',
+            'start_page'=>45,'end_page'=>45,'status'=>'insufficient_text','related_assets'=>[$asset]]]]);
+        $this->assertStringContainsString('Mục 3.2.1',$html);
+        $this->assertStringContainsString('Trang PDF 45',$html);
+        $this->assertStringContainsString('#page=45',$html);
+        $this->assertStringContainsString('data-citation-page="45"',$html);
+        $this->assertStringNotContainsString('<script>bad</script>',$html);
+    }
 }
 
