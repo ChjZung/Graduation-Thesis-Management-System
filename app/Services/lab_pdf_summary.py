@@ -153,6 +153,13 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             report_explanation=match.get('explanation',''),report_matches=report_items))
     direct=(links or {}).get('_verified_report')
     if direct is not None:teacher=(links or {}).get('teacher_requirements',[])
+    try:
+        from ai_runtime.requirement_cross_matcher import cross_match_teacher_requirements
+        matched_teacher = cross_match_teacher_requirements(requirements, chapters, completed, caption_index, context)
+        if matched_teacher:
+            teacher = matched_teacher
+    except Exception:
+        pass
     full=(base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
     visual=[p['page'] for p in result['document']['pages'] if p.get('image_count') or p.get('visual_regions')]
     source_coverage={'selected_text_coverage':plan['metrics'].get('selected_text_coverage'), 'excluded_sections':plan.get('excluded_sections',[])}
@@ -180,7 +187,14 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'summary_scope':{'context_hash':hashlib.sha256(json.dumps(context or {},ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
         'validation':{'semantic_audit':False,'quote_matching':True,'quality_rules':'targeted_heuristics'},
         'analysis_metadata':{'pages_total':result['document']['page_count'],'chunks_total':counts['total_chunks'],'chunks_succeeded':counts['analyzed_chunks'],'chunks_failed':counts['total_chunks']-counts['analyzed_chunks']}}
-    if direct is not None:
+    if teacher:
+        data['teacher_requirements'] = teacher
+        data['teacher_requirements_status'] = 'provided'
+        data['requirements_links_status'] = 'completed'
+        data['requirements_review'] = {'status':'completed','mode':'verified_v2','items':teacher,
+            'note':'Dẫn chứng đối chiếu trực tiếp từ các chương và công việc đã tóm tắt của báo cáo.'}
+        data['analysis']['requirements_link_version'] = 'verified_v2'
+    elif direct is not None:
         data['requirements_review']={'status':'completed' if (links or {}).get('status')=='complete' else 'partial','mode':'verified_v2',
             'items':direct.get('results',[]),'processing':direct.get('processing',{}),'policy_version':direct.get('verification_policy_version'),
             'note':'Dẫn chứng hỗ trợ đối chiếu; chưa tìm được nguồn không có nghĩa sinh viên chưa thực hiện.'}

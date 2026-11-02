@@ -42,6 +42,32 @@ class AiSummaryService
                 if (isset($old[$field])) $merged[$field] = $old[$field];
             }
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
+
+            $reviewContext = $report->dotNop?->nguCanhDoiChieuAi() ?? [];
+            if (!empty($reviewContext) && !empty($merged['chapters'])) {
+                $hasSupported = false;
+                foreach ($merged['teacher_requirements'] ?? [] as $req) {
+                    if (($req['report_relation'] ?? '') === 'related_text' || !empty($req['report_points'][0]['source_references'])) {
+                        $hasSupported = true;
+                        break;
+                    }
+                }
+                if (!$hasSupported) {
+                    $matchedTeacher = AiRequirementCrossMatcher::crossMatch($merged, $reviewContext);
+                    if (!empty($matchedTeacher)) {
+                        $merged['teacher_requirements'] = $matchedTeacher;
+                        $merged['teacher_requirements_status'] = 'provided';
+                        $merged['requirements_links_status'] = 'completed';
+                        $merged['requirements_review'] = [
+                            'status' => 'completed',
+                            'mode' => 'verified_v2',
+                            'items' => $matchedTeacher,
+                            'note' => 'Dẫn chứng đối chiếu trực tiếp từ các chương của báo cáo.',
+                        ];
+                    }
+                }
+            }
+
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
 

@@ -23,7 +23,36 @@ class AiReportProcessingService
     {
         $data = $report->TomTatJson ?? [];
         if (is_string($data)) $data = json_decode($data,true) ?: [];
-        return isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+        $payload = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+
+        if (!empty($payload['chapters']) && $report->dotNop) {
+            $hasSupported = false;
+            foreach ($payload['teacher_requirements'] ?? [] as $req) {
+                if (($req['report_relation'] ?? '') === 'related_text' || !empty($req['report_points'][0]['source_references'])) {
+                    $hasSupported = true;
+                    break;
+                }
+            }
+            if (!$hasSupported) {
+                $context = $report->dotNop->nguCanhDoiChieuAi();
+                if ($context) {
+                    $matched = AiRequirementCrossMatcher::crossMatch($payload, $context);
+                    if ($matched) {
+                        $payload['teacher_requirements'] = $matched;
+                        $payload['teacher_requirements_status'] = 'provided';
+                        $payload['requirements_links_status'] = 'completed';
+                        $payload['requirements_review'] = [
+                            'status' => 'completed',
+                            'mode' => 'verified_v2',
+                            'items' => $matched,
+                            'note' => 'Dẫn chứng đối chiếu trực tiếp từ các chương của báo cáo.',
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $payload;
     }
 
     public function fingerprint(KhoiBaoCaoTienDo $report): string
