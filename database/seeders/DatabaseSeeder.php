@@ -546,5 +546,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(RolesAndAccountsSeeder::class);
+        $this->call(TestNhomBaoCaoSeeder::class);
     }
 }
