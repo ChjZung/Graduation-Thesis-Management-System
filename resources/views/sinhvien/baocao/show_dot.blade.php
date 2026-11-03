@@ -3,31 +3,23 @@
 @section('page_title', 'Chi Tiết Đợt Báo Cáo — ' . $dotNop->TenDotNop)
 
 @section('content')
-<div class="container-fluid px-2 px-md-4 py-3 min-w-0 max-w-full overflow-x-hidden">
+<div class="container-fluid ai-report-submission-page px-2 px-md-4 py-3 min-w-0 max-w-full">
 
-    @include('partials.report_milestone_progress')
+    @once('ai-report-mobile-styles')
+        <link rel="stylesheet" href="{{ asset('css/ai_report_mobile.css') }}?v={{ filemtime(public_path('css/ai_report_mobile.css')) }}">
+    @endonce
 
-    {{-- HEADER ĐIỀU HƯỚNG & THÔNG TIN ĐỢT NỘP --}}
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 p-md-4 mb-4 transition-all hover-shadow min-w-0 max-w-full overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3 min-w-0 max-w-full">
-            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3 min-w-0 flex-grow-1 max-w-full">
-                <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 d-inline-flex align-items-center transition-all hover-scale flex-shrink-0 text-nowrap">
-                    <i class="fa-solid fa-arrow-left me-2"></i>Về danh sách tiến độ
-                </a>
-                <div class="min-w-0 flex-grow-1 max-w-full">
-                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1 min-w-0 max-w-full">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-bold text-truncate d-inline-block max-w-full align-middle" style="max-width: 100%;" title="{{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}">
-                            {{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}
-                        </span>
-                        <h5 class="fw-bold text-dark mb-0 min-w-0 max-w-full text-break break-words line-clamp-2" style="overflow-wrap: anywhere; word-break: break-word;" title="{{ $dotNop->TenDotNop }}">
-                            {{ $dotNop->TenDotNop }}
-                        </h5>
-                        @php $tt = $dotNop->getTrangThaiHienThi(); @endphp
-                        <span class="badge {{ $tt['badge'] }} rounded-pill px-3 py-1.5 fw-bold flex-shrink-0 text-nowrap">
-                            {{ $tt['label'] }}
-                        </span>
-                    </div>
-
+    {{-- Thông tin đợt nộp: tách tiêu đề, trạng thái và thông tin phụ --}}
+    <header class="report-round-header mb-4">
+        <div class="report-round-header-grid">
+            <a href="{{ route('sinhvien.baocao.index',['nhom_id'=>$nhom->MaNhom]) }}" class="report-round-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Danh sách tiến độ</span></a>
+            <div class="report-round-heading">
+                <div class="report-round-badges">
+                    <span class="report-round-stage">{{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}</span>
+                    @php $tt = $dotNop->getTrangThaiHienThi(); @endphp
+                    <span class="badge {{ $tt['badge'] }} report-round-state">{{ $tt['label'] }}</span>
+                </div>
+                <h1>{{ $dotNop->TenDotNop }}</h1>
                     @php
                         $isOverdue = $dotNop->HanNop && now()->gt($dotNop->HanNop);
                         $isDueSoon = $dotNop->HanNop && now()->diffInDays($dotNop->HanNop, false) <= 2 && !$isOverdue;
@@ -49,41 +41,28 @@
                             $deadlineText = \Carbon\Carbon::parse($dotNop->HanNop)->format('H:i d/m/Y');
                         }
                     @endphp
-                    <div class="text-muted small mt-1 py-1 d-flex flex-wrap align-items-center gap-x-3 gap-y-1 min-w-0 max-w-full">
-                        <span class="d-inline-flex align-items-center min-w-0 text-truncate max-w-full">
-                            <i class="fa-solid fa-chalkboard-user text-primary me-2 flex-shrink-0"></i>
-                            <span class="text-truncate">GVHD: <strong class="text-dark">{{ $dotNop->deTai->giangVien?->HoTen ?? 'Chưa rõ' }}</strong></span>
-                        </span>
-                        <span class="d-none d-sm-inline text-muted">•</span>
-                        <span class="d-inline-flex align-items-center text-nowrap">
-                            <i class="fa-regular fa-clock {{ $deadlineIconClass }} me-1.5 flex-shrink-0"></i>
-                            Hạn nộp: <strong class="{{ $deadlineBadgeClass }} ms-1">{{ $deadlineText }}</strong>
-                        </span>
-                    </div>
+                <div class="report-round-meta">
+                    <div><i class="fa-solid fa-chalkboard-user text-primary" aria-hidden="true"></i><span>GVHD: <strong>{{ $dotNop->deTai->giangVien?->HoTen ?? 'Chưa rõ' }}</strong></span></div>
+                    <div><i class="fa-regular fa-clock {{ $deadlineIconClass }}" aria-hidden="true"></i><span>Hạn nộp: <strong class="{{ $deadlineBadgeClass }}">{{ $deadlineText }}</strong></span></div>
                 </div>
             </div>
-
-            <div class="flex-shrink-0 text-nowrap">
-                <span class="badge bg-light text-secondary border rounded-pill px-3 py-2 small shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
-                    <i class="fa-solid fa-code-branch text-primary flex-shrink-0 icon-check"></i>
-                    <span>Đã nộp {{ $phienBans->count() }} phiên bản</span>
-                </span>
-            </div>
+            <div class="report-round-versions"><i class="fa-solid fa-code-branch" aria-hidden="true"></i><span>{{ $phienBans->count() }} phiên bản đã nộp</span></div>
         </div>
-    </div>
+        @if($dotNop->NoiDungYeuCau)
+            <details class="report-round-requirements">
+                <summary>
+                    <span class="report-round-requirements-title"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>Yêu cầu của giảng viên</span>
+                    <span class="report-round-requirements-action"><span class="when-closed">Xem nội dung</span><span class="when-open">Thu gọn</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+                </summary>
+                <div class="report-round-requirements-body">{{ $dotNop->NoiDungYeuCau }}</div>
+            </details>
+        @endif
+    </header>
 
-    @if($dotNop->NoiDungYeuCau)
-        <div class="info-callout info-callout-info mb-4">
-            <div class="callout-title text-primary fs-6 mb-2">
-                <i class="fa-solid fa-circle-info me-1 flex-shrink-0"></i>
-                <span>Yêu Cầu Từ Giảng Viên Hướng Dẫn:</span>
-            </div>
-            <div class="callout-body ps-1" style="font-size: 13px; line-height: 1.65; white-space: pre-wrap;">{{ $dotNop->NoiDungYeuCau }}</div>
-        </div>
-    @endif
+    @include('partials.student_report_feedback')
 
     {{-- BỐ CỤC 2 CỘT: XEM CÁC PHIÊN BẢN (TRÁI) & BIỂU MẪU NỘP BÁO CÁO (PHẢI) --}}
-    <div class="row g-4 align-items-start min-w-0 max-w-full">
+    <div class="report-workspace-layout">
         
         {{-- CỘT TRÁI: DANH SÁCH & NỘI DUNG CÁC PHIÊN BẢN ĐÃ NỘP --}}
         <div class="col-12 col-lg-7 min-w-0 max-w-full">
@@ -98,10 +77,11 @@
                     </div>
 
                     @if($phienBans->isNotEmpty())
-                        <ul class="nav nav-pills gap-2 pt-1 flex-nowrap overflow-x-auto pb-1 max-w-full" id="pills-tab-sv" role="tablist">
+                        <ul class="nav report-version-tabs flex-nowrap overflow-x-auto max-w-full" id="pills-tab-sv" role="tablist">
                             @foreach($phienBans as $index => $pb)
-                                <li class="nav-item flex-shrink-0" role="presentation">
-                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} rounded-pill py-2 px-3.5 small fw-bold transition-all text-nowrap pill-check-btn d-inline-flex align-items-center" 
+                                @php $canDeleteVersion=($isLeader??false) && $pb->TrangThai==='Chờ duyệt' && !filled($pb->NguoiNhanXet) && !filled($pb->NgayNhanXet) && !filled($pb->NhanXetGV); @endphp
+                                <li class="nav-item flex-shrink-0 report-version-item {{ $canDeleteVersion?'has-close':'' }}" role="presentation">
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} small fw-bold text-nowrap d-inline-flex align-items-center"
                                             id="pills-sv-v{{ $pb->LanNop }}-tab" 
                                             data-bs-toggle="pill" 
                                             data-bs-target="#pills-sv-v{{ $pb->LanNop }}" 
@@ -112,10 +92,14 @@
                                             <i class="fa-solid fa-check icon-check text-success"></i>
                                         @elseif($pb->TrangThai === 'Yêu cầu nộp lại')
                                             <i class="fa-solid fa-rotate-left icon-check text-warning"></i>
-                                        @else
-                                            <i class="fa-solid fa-hourglass-half icon-check"></i>
                                         @endif
                                     </button>
+                                    @if($canDeleteVersion)
+                                        <form method="POST" action="{{ route('sinhvien.baocao.dot_nop.xoa_phien_ban',[$dotNop->MaDotNop,$pb->MaKhoi]) }}" class="report-version-close-form" onsubmit="return confirm('Xóa phiên bản này? Kết quả AI của bản bị xóa sẽ mất; các bản còn lại được đánh lại số thứ tự.');">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="report-version-close" title="Xóa phiên bản" aria-label="Xóa phiên bản v{{ $pb->LanNop }}">&times;</button>
+                                        </form>
+                                    @endif
                                 </li>
                             @endforeach
                         </ul>
@@ -140,15 +124,20 @@
                                     $canhBao = $aiJson['canh_bao'] ?? [];
                                 @endphp
 
-                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} min-w-0 max-w-full" id="pills-sv-v{{ $pb->LanNop }}" role="tabpanel">
+                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} min-w-0 max-w-full" id="pills-sv-v{{ $pb->LanNop }}" role="tabpanel" data-report-key="{{ $pb->MaKhoi }}" data-report-version="{{ $pb->LanNop }}">
                                     
+                                    @include('partials.ai_requirement_coverage',[
+                                        'aiData'=>app(\App\Services\AiReportProcessingService::class)->payload($pb),
+                                        'reviewRound'=>$dotNop,'coverageSidebar'=>false,'coverageSourceOnly'=>true,
+                                        'coverageReportKey'=>$pb->MaKhoi,'coverageVersion'=>$pb->LanNop,
+                                    ])
+
                                     {{-- Thông tin phiên bản --}}
                                     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center pb-3 mb-4 border-bottom gap-2 min-w-0 max-w-full">
                                         <div class="min-w-0 flex-grow-1 max-w-full">
                                             <div class="fw-bold text-dark fs-5 mb-1 min-w-0 max-w-full text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;" title="{{ $pb->TieuDe }}">{{ $pb->TieuDe }}</div>
                                             <div class="text-muted small">
-                                                <i class="fa-regular fa-clock me-1 text-primary"></i>Nộp lúc: <strong>{{ \Carbon\Carbon::parse($pb->NgayNop)->format('H:i d/m/Y') }}</strong> •
-                                                Tự đánh giá: <strong class="text-primary">{{ $pb->PhanTramHoanThanh }}%</strong>
+                                                <i class="fa-regular fa-clock me-1 text-primary"></i>Nộp lúc: <strong>{{ \Carbon\Carbon::parse($pb->NgayNop)->format('H:i d/m/Y') }}</strong>
                                             </div>
                                         </div>
                                         <div class="flex-shrink-0 text-nowrap">
@@ -164,7 +153,6 @@
                                                 </span>
                                             @else
                                                 <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-bold shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
-                                                    <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
                                                     <span>Đang chờ GVHD nhận xét</span>
                                                 </span>
                                             @endif
@@ -173,13 +161,13 @@
 
                                     {{-- File đính kèm & Git repository --}}
                                     <div class="row g-3 mb-4 min-w-0 max-w-full">
-                                        <div class="col-12 {{ ($dotNop->YeuCauSourceCode || $pb->LinkCode) ? 'col-md-6' : '' }} min-w-0 max-w-full">
+                                        <div class="col-12 {{ ($dotNop->YeuCauSourceCode || $pb->LinkCode) ? 'col-md-6' : '' }} d-flex min-w-0 max-w-full">
                                             @include('partials.report_attachment', ['report' => $pb])
                                         </div>
 
                                         @if($dotNop->YeuCauSourceCode || $pb->LinkCode)
-                                        <div class="col-12 col-md-6 min-w-0 max-w-full">
-                                            <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between transition-all hover-shadow-sm min-w-0 max-w-full">
+                                        <div class="col-12 col-md-6 d-flex min-w-0 max-w-full">
+                                            <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between transition-all hover-shadow-sm w-100 min-w-0 max-w-full">
                                                 <div class="d-flex align-items-center gap-3 text-truncate me-2 min-w-0">
                                                     <i class="fa-brands fa-github text-dark fs-3 flex-shrink-0"></i>
                                                     <div class="text-truncate min-w-0">
@@ -313,23 +301,30 @@
                         </h6>
                         <span class="badge bg-primary rounded-pill px-3 py-1.5 shadow-sm flex-shrink-0">v{{ $nextVersionNumber }}</span>
                     </div>
-                    <span class="text-muted small mb-3.5 d-block text-break break-words">
-                        {{ $latestPhienBan ? 'Nộp lại theo yêu cầu chỉnh sửa của Giảng viên hướng dẫn' : 'Nộp bài báo cáo lần đầu cho đợt này' }}
-                    </span>
+                    @if($latestPhienBan && in_array($latestPhienBan->TrangThai,['Yêu cầu nộp lại','Cần bổ sung'],true))
+                        <p class="small text-warning-emphasis mt-2 mb-3">Nộp lại theo yêu cầu chỉnh sửa của Giảng viên hướng dẫn.</p>
+                    @endif
 
-                    {{-- Thông báo nghiệp vụ: AI tự động phân tích không cần nhập thủ công --}}
-                    <div class="info-callout info-callout-primary mb-3">
-                        <div class="callout-title text-primary">
-                            <i class="fa-solid fa-wand-magic-sparkles me-1 flex-shrink-0"></i>
-                            <span>Tự Động Phân Tích Bằng AI:</span>
+                    <div class="info-callout info-callout-primary ai-result-notice ai-analysis-info mb-3">
+                        <div class="callout-title text-primary d-flex align-items-center gap-2 mb-0">
+                            <i class="fa-solid fa-wand-magic-sparkles flex-shrink-0" aria-hidden="true"></i>
+                            <span class="flex-grow-1">Tự động phân tích báo cáo</span>
+                            <button type="button" class="ai-info-icon-button" data-ai-open-notice data-ai-notice-title="Tự động phân tích báo cáo" aria-label="Xem thông tin về tự động phân tích báo cáo" aria-haspopup="dialog" title="Xem thông tin">
+                                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                            </button>
                         </div>
-                        <div class="callout-body">
-                            Hệ thống tự động sử dụng AI đọc hiểu báo cáo PDF hoặc DOCX, phân tích đầy đủ 3 nhóm thông tin: công việc đã thực hiện, khó khăn và kế hoạch tiếp theo.
-                            <strong class="text-primary d-inline">Sinh viên không cần phải nhập thủ công lại các thông tin đã có trong tệp báo cáo.</strong>
-                        </div>
+                        <template data-ai-notice-content>
+                            <p>Sau khi nộp tệp PDF hoặc DOCX, hệ thống tự động xử lý văn bản và tạo bản tóm tắt. Bạn không cần nhập lại bản tóm tắt; ghi chú gửi giảng viên vẫn là phần tùy chọn.</p>
+                            <ul>
+                                <li><strong>Tóm tắt báo cáo:</strong> trình bày nội dung theo chương/mục khi nhận diện được cấu trúc tài liệu.</li>
+                                <li><strong>Đối chiếu yêu cầu:</strong> nếu giảng viên đã cung cấp yêu cầu cho đợt nộp, hệ thống tìm nội dung liên quan và dẫn chứng để mở báo cáo gốc.</li>
+                            </ul>
+                            <p>AI không tự xác nhận công việc đã hoàn thành. Tên hình/bảng chỉ giúp tìm vị trí; giảng viên cần kiểm chứng nội dung trong báo cáo gốc.</p>
+                            <p class="small text-muted mb-0">Thời gian xử lý có thể từ 3 đến 5 phút hoặc lâu hơn, tùy kích thước tài liệu và tình trạng dịch vụ AI. Bạn có thể tiếp tục sử dụng trang trong khi chờ.</p>
+                        </template>
                     </div>
 
-                    <form method="POST" action="{{ route('sinhvien.baocao.dot_nop.nop', $dotNop->MaDotNop) }}" enctype="multipart/form-data" class="min-w-0 max-w-full">
+                    <form id="student-report-resubmission-form" tabindex="-1" method="POST" action="{{ route('sinhvien.baocao.dot_nop.nop', $dotNop->MaDotNop) }}" enctype="multipart/form-data" class="min-w-0 max-w-full">
                         @csrf
 
                         {{-- Tệp PDF Báo Cáo --}}
@@ -340,7 +335,7 @@
                             <input type="file" name="FilePdf" class="form-control form-control-sm py-2 px-3 rounded-3 transition-all w-100 max-w-full" accept=".pdf,.docx" {{ $latestPhienBan ? '' : 'required' }}>
                             <div class="form-text small mt-1 text-break break-words" style="font-size: 11px;">
                                 @if($latestPhienBan)
-                                    Đã có tệp báo cáo từ phiên bản trước. Chỉ cần tải lên nếu bạn có bản cập nhật mới.
+                                    Không chọn tệp mới: hệ thống dùng lại tệp của phiên bản v{{ $latestPhienBan->LanNop }}.
                                 @else
                                     Tệp PDF hoặc DOCX báo cáo tiến độ (tối đa 25MB). AI sẽ tự động đọc và lập tóm tắt.
                                 @endif
@@ -368,26 +363,26 @@
                                 'name'         => 'NoiDungBaoCao',
                                 'id'           => 'NoiDungBaoCao',
                                 'value'        => old('NoiDungBaoCao', ''),
-                                'label'        => 'Ghi chú & mô tả chi tiết gửi GVHD',
-                                'placeholder'  => 'Nhập lời nhắn, mô tả chi tiết tiến độ hoặc các điểm lưu ý gửi GVHD (có thể định dạng in đậm, danh sách gạch đầu dòng)...',
+                                'label'        => 'Ghi chú gửi GVHD (không bắt buộc)',
+                                'placeholder'  => 'Ví dụ: Nhóm đã bổ sung phần kiểm thử theo góp ý của giảng viên...',
                                 'required'     => false,
                                 'minHeight'    => '140px',
                                 'compact'      => true,
                                 'showTemplate' => false,
-                                'helpText'     => 'Không bắt buộc. Nếu để trống, hệ thống sẽ tự động dùng bản tóm tắt trích xuất từ AI.',
+                                'helpText'     => 'Ghi nội dung đã chỉnh sửa hoặc lời nhắn cho giảng viên. Có thể để trống.',
                             ])
                         </div>
 
-                        {{-- Thông báo: Tỷ lệ hoàn thành được AI tự động đánh giá khách quan --}}
-                        <div class="info-callout info-callout-neutral mb-4">
-                            <div class="callout-title text-primary">
-                                <i class="fa-solid fa-calculator me-1 flex-shrink-0"></i>
-                                <span>Tỷ Lệ Hoàn Thành Được AI Tự Động Đánh Giá:</span>
-                            </div>
-                            <div class="callout-body">
-                                Hệ thống sẽ tự động phân tích mức độ hoàn thành công việc dựa trên nhiệm vụ được giao, kết quả đạt được và bằng chứng trong báo cáo. Tỷ lệ hoàn thành sẽ hiển thị sau khi AI thẩm định xong.
-                            </div>
+                        <div data-ai-coverage-sidebar data-report-key="{{ $latestPhienBan->MaKhoi ?? '' }}">
+                            @include('partials.ai_requirement_coverage',[
+                                'aiData'=>$latestPhienBan ? app(\App\Services\AiReportProcessingService::class)->payload($latestPhienBan) : [],
+                                'reviewRound'=>$dotNop,
+                                'coverageSidebar'=>true,
+                                'coverageReportKey'=>$latestPhienBan->MaKhoi ?? '',
+                                'coverageVersion'=>$latestPhienBan->LanNop ?? null,
+                            ])
                         </div>
+                        <script src="{{ asset('js/ai_teacher_report.js') }}?v={{ filemtime(public_path('js/ai_teacher_report.js')) }}" defer></script>
 
                         <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center transition-all hover-scale">
                             <i class="fa-solid fa-cloud-arrow-up me-2 fs-5"></i>Gửi Nộp &amp; Kích Hoạt AI Thẩm Định

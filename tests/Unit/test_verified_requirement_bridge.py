@@ -43,6 +43,9 @@ def test_new_review_runs_after_summary_and_resumes_without_api(tmp_path):
     again=bridge.run_pipeline(PDF,'',p.model,tmp_path,context=context,options=options,provider_factory=lambda:(_ for _ in ()).throw(AssertionError('Unnecessary API')))
     assert again['data']['requirements_review']['status']=='completed' and p.calls==before
     assert 'fake-key' not in json.dumps(data)
+    assert data['requirements_provenance']['method']=='verified_pdf_review'
+    assert data['requirements_provenance']['context_hash']==data['summary_scope']['context_hash']
+    assert data['requirements_provenance']['source_hash']==data['_source_hash']
 
 def test_verified_partial_support_keeps_sources_and_safe_rewrite(tmp_path):
     p=VerifiedProvider(partial=True)
@@ -62,6 +65,21 @@ def test_verified_review_finishes_across_small_background_passes(tmp_path):
     assert result['data']['analysis']['status']=='completed'
     assert result['data']['requirements_review']['status']=='completed'
     assert attempt>0
+
+
+def test_changed_brief_reuses_map_and_source_index_but_not_old_review(tmp_path, monkeypatch):
+    import verified_requirement_review as review
+    p=VerifiedProvider();options={'review_engine':'verified_v2','max_generation_calls':100}
+    first=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,
+        context={'submission_requirements':'1. Describe students and teachers.'},options=options,provider_factory=lambda:p)
+    summary=next((tmp_path/'pdf_lab').rglob('summary.json'))
+    before=json.loads(summary.read_text(encoding='utf-8'))['report']['map_results']
+    monkeypatch.setattr(review,'build_source_index',lambda *a,**k:(_ for _ in ()).throw(AssertionError('Source index rebuilt for unchanged PDF')))
+    second=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,
+        context={'submission_requirements':'1. Describe the application users.'},options=options,provider_factory=lambda:p)
+    assert second['data']['requirements_review']['status']=='completed'
+    assert before==json.loads(summary.read_text(encoding='utf-8'))['report']['map_results']
+    assert first['data']['requirements_provenance']['context_hash']!=second['data']['requirements_provenance']['context_hash']
 
 
 def test_broad_vietnamese_usecase_requirement_covers_each_document_section():

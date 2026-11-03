@@ -78,6 +78,8 @@ class AiQueuePolicyTest extends TestCase
         $service=new AiReportProcessingService;
         $data=['analysis'=>['status'=>'partial','errors'=>[['code'=>'authentication']]]];
         $this->assertSame('partial',$service->retryState($data,false,1)['status']);
+        $data['analysis']['errors']=[['code'=>'output_validation','engine_code'=>'reader_too_long']];
+        $this->assertSame('partial',$service->retryState($data,false,1)['status']);
         $data['analysis']['errors']=[['code'=>'timeout']];
         $this->assertSame('partial',$service->retryState($data,false,20)['status']);
         $this->assertSame('completed',$service->retryState(['analysis'=>['status'=>'completed']],false,1)['status']);

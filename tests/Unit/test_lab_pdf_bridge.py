@@ -57,6 +57,19 @@ def test_full_adapter_output_has_chapters_individual_citations_and_no_fake_seman
     assert all('not-a-real-key' not in f.read_text(encoding='utf-8') for f in tmp_path.rglob('*.json'))
 
 
+def test_cached_map_without_section_metadata_is_rebuilt_from_exact_sources(tmp_path):
+    p=Provider(); opts={'max_generation_calls':100}
+    bridge.run_pipeline(PDF,'fake',p.model,tmp_path,options=opts,provider_factory=lambda:p)
+    path=next((tmp_path/'pdf_lab').rglob('summary.json'))
+    state=json.loads(path.read_text(encoding='utf-8'))
+    for mapped in state['report']['map_results'].values():
+        for item in mapped['items']: item.pop('section_id',None)
+    path.write_text(json.dumps(state),encoding='utf-8')
+    before=p.calls
+    out=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,options=opts,provider_factory=lambda:p)
+    assert p.calls==before and any(c['sections'] for c in out['data']['chapters'])
+    assert out['data']['caption_index']['status']=='completed'
+
 def test_resume_from_disk_and_completed_read_never_calls_provider(tmp_path):
     calls=[]
     def provider():p=Provider();calls.append(p);return p
@@ -98,7 +111,7 @@ def test_submission_binding_prevents_other_versions_reusing_full_result(tmp_path
 
 def test_provider_error_classification_and_context_sources_are_separate():
     assert bridge.processing_error(bridge.ApiError('bad','authentication'))['code']=='authentication'
-    assert bridge.processing_error(bridge.ApiError('stop','reader_missing_key_outputs'))['code']=='invalid_request'
+    assert bridge.processing_error(bridge.ApiError('stop','reader_missing_key_outputs'))['code']=='output_validation'
     assert bridge.processing_error(bridge.ApiError('pause','reader_call_budget'))['code']=='budget_exhausted'
     doc=bridge.context_document({'submission_requirements':'Nộp sơ đồ hoạt động.','require_source_code':True})
     assert 'Yêu cầu nộp mã nguồn' in doc['text']
@@ -203,3 +216,11 @@ def test_old_atomic_cache_still_runs_new_support_audit(tmp_path):
     result=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,context={'submission_requirements':'Mô tả quy trình của hệ thống.'},options=opts,provider_factory=lambda:p)
     assert result['data']['analysis']['status']=='completed' and p.calls>before
     assert json.loads(path.read_text(encoding='utf-8'))['report']['support_review']=='complete'
+
+
+def test_reader_validation_is_not_a_provider_request_failure():
+    error=bridge.processing_error(bridge.ApiError('Too long','reader_too_long'))
+    assert error['code']=='output_validation'
+    assert error['engine_code']=='reader_too_long'
+    provider_error=bridge.processing_error(bridge.ApiError('Bad HTTP','http_error',400))
+    assert provider_error['code']=='invalid_request'

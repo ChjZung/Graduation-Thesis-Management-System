@@ -393,7 +393,12 @@
 
                 <div class="card-body p-3">
                     @php
-                        $summaryReport = (object) ['TomTatJson' => $tomTat?->TomTatJson ?? [], 'TomTatAI' => $tomTat?->NoiDungAI ?? '', 'TenFile' => $baoCao->TenFile, 'DuongDanFile' => $baoCao->DuongDanFile, 'MaKhoi' => $tomTat?->MaKhoi, 'dotNop' => null];
+                        // Bind the saved result, displayed version and viewer to the SAME submission.
+                        $summaryReport = $baoCao->khoiBaoCaos->firstWhere('MaKhoi', $tomTat?->MaKhoi);
+                        if (!$summaryReport) {
+                            // Unbound legacy snapshots cannot safely open a different submission's PDF.
+                            $summaryReport = (object) ['TomTatJson' => $tomTat?->TomTatJson ?? [], 'TomTatAI' => $tomTat?->NoiDungAI ?? '', 'TenFile' => $tomTat?->TenFile, 'DuongDanFile' => null, 'MaKhoi' => null, 'dotNop' => null];
+                        }
                     @endphp
                     @include('partials.ai_summary_11_sections', ['pb' => $summaryReport])
                 </div>

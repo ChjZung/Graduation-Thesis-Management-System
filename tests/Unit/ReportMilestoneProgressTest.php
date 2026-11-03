@@ -48,4 +48,18 @@ class ReportMilestoneProgressTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $result['percentage'], .0000001);
         $this->assertSame(9, $result['completed_rounds']);
     }
+
+    public function test_defense_gate_requires_every_configured_round_to_be_confirmed(): void
+    {
+        $service = new ReportMilestoneProgressService;
+        foreach ([[], [['rounds'=>[]]], [['rounds'=>[$this->round()]], ['rounds'=>[]]],
+            [['rounds'=>[$this->round(), $this->round(false, 'Chờ duyệt')]]],
+            [['rounds'=>[$this->round(true, 'Yêu cầu nộp lại')]]],
+            [['rounds'=>[$this->round(false)]]]] as $configuration) {
+            $this->assertFalse($service->calculate($configuration)['can_open_defense_submission']);
+        }
+        $this->assertTrue($service->calculate([
+            ['rounds'=>[$this->round(), $this->round()]], ['rounds'=>[$this->round()]],
+        ])['can_open_defense_submission']);
+    }
 }

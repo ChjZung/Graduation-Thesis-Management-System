@@ -33,11 +33,12 @@ class AnalyzeReportVersion implements ShouldQueue
             if (($state['token'] ?? '') !== $this->token || !in_array($state['status'] ?? '',['queued','running','waiting'])) return;
             if (($state['next_retry_at'] ?? 0) > time()) { $this->release($state['next_retry_at']-time()); return; }
             if ($processing->fingerprint($report) !== $state['fingerprint']) {
-                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi. Hãy chọn Phân tích lại để xử lý theo đầu vào mới.']);
+                $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi. Hãy chọn Phân tích lại để xử lý theo đầu vào mới.',
+                    'errors'=>[['stage'=>'worker','code'=>'input_changed']]]);
                 return;
             }
             $attempt = (int) ($state['attempts'] ?? 0)+1;
-            $processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.']);
+            $processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'errors'=>[],'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.']);
             $only = ($state['mode'] ?? '') === 'review';
             // The Lab reader reuses Map when the brief changes, then refreshes its cited requirements.
             if (config('ai_processing.pdf_engine') === 'pdf_lab' && strtolower(pathinfo($processing->path($report), PATHINFO_EXTENSION)) === 'pdf') $only = false;
@@ -63,6 +64,8 @@ class AnalyzeReportVersion implements ShouldQueue
             $result = $ai->summarizePdf($processing->path($report),$report->dotNop?->giaiDoan?->ThuTu ?? 1,[
                 'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
                 'review_only'=>$only,
+                // Reset checkpoints once, not on every budget/timeout continuation.
+                'fresh'=>!empty($state['fresh']) && $attempt === 1,
                 'progress_path'=>$processing->progressPath($this->token),
                 'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,

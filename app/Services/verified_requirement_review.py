@@ -40,7 +40,8 @@ def render_teacher_items(report):
                     for page in sorted({r['page_number'] for r in e['char_ranges']}):
                         refs.append({'source_id':e['source_id'],'page':page,'end_page':page,'quote':e['quote'],
                             'start':e['char_start'],'end':e['char_end'],'char_ranges':[r for r in e['char_ranges'] if r['page_number']==page],
-                            'quote_verified':True,'semantic_support':e.get('semantic_support','SUPPORTS'),'document_sha256':e['document_sha256']})
+                            'quote_verified':True,'semantic_support':e.get('semantic_support','SUPPORTS'),
+                            'source_type':e.get('source_type','text'),'document_sha256':e['document_sha256']})
             relation='related_text' if refs else ('pending' if check['status'] in ('NOT_PROCESSED','PENDING_VERIFICATION','PROCESSING_ERROR') else 'not_found')
             points.append({'title':check['description'],'relation':relation,'explanation':check.get('finding') if refs else MISSING,
                 'source_references':refs,'check_status':check['status'],
@@ -68,7 +69,8 @@ def run_direct_review(path,context,document,identity,model,settings,cache_dir,pr
     index_key=fingerprint([INDEX_VERSION,digest,identity.get('document_id'),identity.get('document_version_id')])
     index_path=folder/('index_'+index_key+'.json');index=load_state(index_path)
     if not index or index.get('index_version')!=INDEX_VERSION or index.get('document',{}).get('sha256')!=digest:
-        index=build_source_index(path,document_id=identity.get('document_id'),version_id=identity.get('document_version_id'),on_progress=on_progress)
+        index=build_source_index(path,document_id=identity.get('document_id'),version_id=identity.get('document_version_id'),on_progress=on_progress,
+            page_checkpoint_dir=folder/('pages_'+index_key[:16]),deadline=getattr(provider,'deadline',None))
         atomic_json(index_path,index)
     key=analysis_identity(index,requirements,model,settings);state_path=folder/(key+'.json');state=load_state(state_path)
     retry_failed=bool(state and state.get('_worker_run')!=run_id)

@@ -33,7 +33,10 @@ def validate_plan(data,items):
         for n,c in enumerate(checks,1):
             if not isinstance(c,dict):bad('Tiêu chí không hợp lệ.')
             desc=short_text(c.get('description'),220,40);quote=c.get('requirement_excerpt');kind=c.get('kind')
-            if kind not in KINDS or not isinstance(quote,str) or not quote.strip() or ' '.join(quote.split()) not in ' '.join(item['original_text'].split()) or desc.casefold() in seen:bad('Tiêu chí không thuộc đúng yêu cầu gốc.','review_coverage')
+            if kind not in KINDS:bad('AI trả loại tiêu chí không được hỗ trợ.','review_coverage')
+            if not isinstance(quote,str) or not quote.strip():bad('AI chưa cung cấp câu trích yêu cầu cho tiêu chí.','review_coverage')
+            if ' '.join(quote.split()) not in ' '.join(item['original_text'].split()):bad('Câu trích tiêu chí do AI trả về không khớp nguyên văn yêu cầu gốc.','review_coverage')
+            if desc.casefold() in seen:bad('AI trả tiêu chí trùng nội dung trong cùng yêu cầu.','review_coverage')
             seen.add(desc.casefold());clean.append({'check_id':item['item_id']+f'_c{n:02}','item_id':item['item_id'],
                 'requirement_text':item['original_text'],'description':desc,'requirement_excerpt':quote.strip(),'kind':kind})
         # Named Use Case fields are explicit requirements, not optional guesses.

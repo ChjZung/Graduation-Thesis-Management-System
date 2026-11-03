@@ -233,7 +233,19 @@ def run_summary(result, plan, provider, checkpoint=None, settings=None, batch_id
         if entry.get('error'):
             raise ApiError('Tác vụ đã có đầu ra lỗi. Bấm xóa tác vụ lỗi trước khi thử lại; các tác vụ đạt vẫn được giữ.', 'cached_invalid_output')
         if 'validated' in entry:
-            return entry['validated']
+            if label.startswith('Map '):
+                cached = entry['validated']
+                try:
+                    # Rebuild section/offset provenance from the current exact plan.
+                    entry['validated'] = validator({'processed_source_ids': cached['processed_source_ids'],
+                        'items': [{k: i[k] for k in ('source_id', 'summary', 'evidence_quote', 'kind')} for i in cached['items']]})
+                except (ApiError, KeyError, TypeError):
+                    del entry['validated']
+                    entry.pop('error', None)
+                else:
+                    return entry['validated']
+            else:
+                return entry['validated']
         if state['generation_attempts'] - generation_start >= settings.max_generation_calls:
             raise _Pause('Đã đạt số lượt sinh nội dung cho lần bấm này. Bấm tiếp tục để dùng kết quả đã có.')
         if on_progress:

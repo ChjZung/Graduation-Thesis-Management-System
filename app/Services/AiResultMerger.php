@@ -24,6 +24,26 @@ class AiResultMerger
             (empty($newAnalysis['total_units']) && empty($newAnalysis['total_pages']))
         ));
         $merged = $keepSummary ? $old : $new;
+        // Caption metadata is independent of summary/review completion.
+        if (($new['caption_index']['status'] ?? '') === 'completed' &&
+            ($new['_source_hash'] ?? null) === ($old['_source_hash'] ?? $new['_source_hash'] ?? null)) {
+            $merged['caption_index'] = $new['caption_index'];
+            if ($keepSummary) {
+                $enrich = function(array $nodes, array $fresh) use (&$enrich): array {
+                    $byId = array_column($fresh, null, 'id');
+                    foreach ($nodes as &$node) {
+                        $other = $byId[$node['id'] ?? ''] ?? null;
+                        if (!$other) continue;
+                        $node['related_assets'] = $other['related_assets'] ?? [];
+                        $node['sections'] = empty($node['sections']) ? ($other['sections'] ?? []) :
+                            $enrich($node['sections'], $other['sections'] ?? []);
+                    }
+                    unset($node);
+                    return $nodes;
+                };
+                $merged['chapters'] = $enrich($merged['chapters'] ?? [], $new['chapters'] ?? []);
+            }
+        }
         $previous = $old['requirements_review'] ?? null;
         $review = $new['requirements_review'] ?? null;
         if (is_array($review)) {
@@ -54,7 +74,7 @@ class AiResultMerger
             $merged['requirements_review'] = $previous;
         }
         // Keep the new brief summary even when a stronger prior document result is retained.
-        foreach (['teacher_requirements','requirements_document','teacher_requirements_status'] as $field) {
+        foreach (['teacher_requirements','requirements_document','teacher_requirements_status','requirements_links_status','requirements_provenance'] as $field) {
             if (array_key_exists($field,$new)) $merged[$field]=$new[$field];
         }
         // The local content audit is independent of an incomplete LLM generation.
@@ -65,6 +85,6 @@ class AiResultMerger
             $merged['content_review']=$audit;
         }
         if (isset($new['_source_hash'])) $merged['_source_hash'] = $new['_source_hash'];
-        return $merged;
+        return AiRequirementResultPolicy::preserveVerified($old, $merged, $new);
     }
 }

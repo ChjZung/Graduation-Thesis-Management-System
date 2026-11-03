@@ -9,10 +9,12 @@
     $sourceChanged = $pb instanceof \App\Models\KhoiBaoCaoTienDo
         && !app(\App\Services\AiReportProcessingService::class)->sourceMatches($pb, $aiData);
     if ($sourceChanged) $aiData = ['_processing'=>$aiData['_processing'] ?? []];
+    elseif ($pb instanceof \App\Models\KhoiBaoCaoTienDo && !empty($aiData['chapters'])) {
+        $aiData = app(\App\Services\AiReportProcessingService::class)->payload($pb);
+    }
     $structuralSummary = (int) ($aiData['schema_version'] ?? 0) >= 6 && is_array($aiData['chapters'] ?? null);
     $overallSummary = $aiData['overall_summary'] ?? $aiData['tom_tat'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
     $documentContent = $aiData['document_content'] ?? [];
-    $completedWork = $aiData['completed_work'] ?? $aiData['cong_viec_hoan_thanh'] ?? [];
     $difficulties = $aiData['difficulties'] ?? $aiData['kho_khan'] ?? [];
     $nextSteps = $aiData['next_steps'] ?? $aiData['ke_hoach_tiep_theo'] ?? [];
     $analysis = $aiData['analysis'] ?? [];
@@ -38,11 +40,7 @@
     if (!$analysisComplete && !$documentContent && isset($analysis['analyzed_chunks'], $analysis['total_chunks']) && $analysis['analyzed_chunks'] < $analysis['total_chunks']) {
         $overallSummary = 'Bản tóm tắt chưa hoàn tất. Các thông tin đã trích xuất được giữ bên dưới; chưa thể kết luận những nội dung còn lại không có trong báo cáo.';
     }
-    $sections = [
-        ['key' => 'completed_work', 'number' => 1, 'title' => 'Công việc đã thực hiện', 'icon' => 'fa-circle-check', 'tone' => 'success', 'items' => $completedWork],
-        ['key' => 'difficulties', 'number' => 2, 'title' => 'Khó khăn gặp phải', 'icon' => 'fa-triangle-exclamation', 'tone' => 'danger', 'items' => $difficulties],
-        ['key' => 'next_steps', 'number' => 3, 'title' => 'Kế hoạch tiếp theo', 'icon' => 'fa-calendar-check', 'tone' => 'primary', 'items' => $nextSteps],
-    ];
+    $sections = [];
     $aiEvaluation = $aiData['completion_percentage'] ?? ($pb->PhanTramHoanThanh ?? null);
     $aiBasis = $aiData['completion_basis'] ?? [];
     $versionComparison = $aiData['version_comparison'] ?? null;
@@ -65,8 +63,7 @@
         $sections = [];
     }
     if ($structuralSummary) {
-        $sections = [['key'=>'completed_work', 'number'=>3, 'title'=>'Công việc đã hoàn thành',
-            'icon'=>'fa-circle-check', 'tone'=>'success', 'items'=>$completedWork]];
+        $sections = [];
     }
     if ($sourceChanged) { $overallSummary = ''; $sections = []; }
     $missingGroups = [];
@@ -162,14 +159,21 @@
 .ai-summary .ai-feedback { margin: 0; padding: 8px 20px; color: var(--ai-navy); border-bottom: 1px solid var(--ai-border); background: var(--ai-tint); font-size: 13px; }
 .ai-summary .ai-feedback:empty { display: none; }
 .ai-summary-dialog {
-    width: calc(100vw - 40px); max-width: 1320px;
-    height: calc(100vh - 40px); height: calc(100dvh - 40px);
-    max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px);
-    margin: auto; padding: 0; border: 0; border-radius: 10px;
+    width: calc(100vw - 24px); width: 98vw; max-width: 1800px;
+    height: calc(100vh - 24px); height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+    margin: auto; padding: 0; border: 0; border-radius: 12px;
     background: #fff; color: #1a2b4a; overflow: hidden;
-    box-shadow: 0 20px 70px rgba(0, 40, 85, .24);
+    box-shadow: 0 25px 80px rgba(0, 30, 70, .28);
+    transition: width .2s ease, height .2s ease, border-radius .2s ease;
 }
-.ai-summary-dialog::backdrop { background: rgba(15, 23, 42, .6); }
+.ai-summary-dialog.ai-dialog-fullscreen {
+    width: 100vw !important; max-width: 100vw !important;
+    height: 100vh !important; height: 100dvh !important;
+    max-height: 100vh !important; max-height: 100dvh !important;
+    border-radius: 0 !important; margin: 0 !important;
+}
+.ai-summary-dialog::backdrop { background: rgba(15, 23, 42, .65); backdrop-filter: blur(2px); }
 .ai-summary-dialog .ai-summary-expanded {
     display: flex; flex-direction: column; width: 100%; height: 100%;
     margin: 0; border: 0; border-radius: 0; font-size: 16px; line-height: 1.8;
@@ -220,6 +224,9 @@
 @media (prefers-reduced-motion: reduce) { .ai-summary .ai-button { transition: none; } }
 </style>
 @include('partials.ai_review_styles')
+@endonce
+@once('ai-report-mobile-styles')
+<link rel="stylesheet" href="{{ asset('css/ai_report_mobile.css') }}?v={{ filemtime(public_path('css/ai_report_mobile.css')) }}">
 @endonce
 
 @if($teacherReportUi)
@@ -468,12 +475,6 @@
                     @include('partials.ai_summary_section')
                 @endif
             @endforeach
-            @if($structuralSummary && !$completedWork)
-                <section class="ai-section ai-section-wide" data-completed-work-empty>
-                    <h3 class="ai-section-title">Công việc đã hoàn thành</h3>
-                    <p class="ai-empty">Chưa xác minh được công việc hoàn thành đủ căn cứ từ phần tài liệu đã xử lý. Đây không phải kết luận sinh viên chưa thực hiện.</p>
-                </section>
-            @endif
         </div>
         @if($flexibleSummary && !$sections)
             <p class="ai-empty">Chưa có mục trọng tâm được trích xuất. Đây chưa phải kết luận tài liệu thiếu yêu cầu; hãy xem độ bao phủ và phần đối chiếu bên dưới.</p>
@@ -524,26 +525,104 @@
         const toolbar = document.createElement('div');
         toolbar.className = 'ai-citation-toolbar';
         const title = document.createElement('h3');
-        title.textContent = isDocx ? 'Bằng chứng trong DOCX' : 'Trang ' + originalPage + ' · Báo cáo PDF';
+        title.innerHTML = isDocx
+            ? '<i class="fa-regular fa-file-word text-primary"></i><span>Bằng chứng DOCX</span>'
+            : '<i class="fa-regular fa-file-pdf text-danger"></i><span>Trang ' + originalPage + ' · Báo cáo PDF</span>';
         toolbar.appendChild(title);
+        
         const controls = document.createElement('div');
-        function control(label, handler) {
+        controls.className = 'ai-citation-controls';
+
+        function btn(parent, html, tip, handler) {
             const button = document.createElement('button');
-            button.type = 'button'; button.textContent = label;
+            button.type = 'button'; button.innerHTML = html; button.title = tip;
             button.addEventListener('click', handler);
-            controls.appendChild(button);
+            parent.appendChild(button);
             return button;
         }
+
         let currentPage = originalPage, totalPages = originalPage, pendingRequest = null;
-        const previous = control(isDocx ? 'Vị trí trước' : 'Trang trước', () => loadPage(currentPage - 1));
-        const next = control(isDocx ? 'Vị trí sau' : 'Trang sau', () => loadPage(currentPage + 1));
-        control('Về đoạn trích', () => loadPage(originalPage));
+        
+        // --- Nhóm 1: Chuyển trang ---
+        const pageGroup = document.createElement('div');
+        pageGroup.className = 'ai-citation-group';
+        const previous = btn(pageGroup, '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>', isDocx ? 'Vị trí trước' : 'Trang trước', () => loadPage(currentPage - 1));
+        const pageBadge = document.createElement('span');
+        pageBadge.className = 'ai-citation-page-badge';
+        pageBadge.textContent = isDocx ? 'Vị trí ' + originalPage : 'Trang ' + originalPage;
+        pageGroup.appendChild(pageBadge);
+        const next = btn(pageGroup, '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>', isDocx ? 'Vị trí sau' : 'Trang sau', () => loadPage(currentPage + 1));
+        const originBtn = btn(pageGroup, '<i class="fa-solid fa-quote-left text-primary" aria-hidden="true"></i> <span style="font-size:12px;">Về đoạn trích</span>', 'Quay lại trang chứa trích dẫn gốc', () => loadPage(originalPage));
+        originBtn.style.borderLeft = '1px solid #d4e2ee';
+        originBtn.style.paddingLeft = '8px';
+        controls.appendChild(pageGroup);
+
+        // --- Nhóm 2: Thu phóng (Zoom) ---
+        let currentZoom = 100;
+        let zoomMode = 'fit-width';
+        let currentImg = null;
+        let currentDocx = null;
+        let baseImgWidth = 1200;
+
+        const zoomGroup = document.createElement('div');
+        zoomGroup.className = 'ai-citation-group';
+        btn(zoomGroup, '<i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>', 'Thu nhỏ (-25%)', () => adjustZoom(-25));
+        const zoomBadge = document.createElement('span');
+        zoomBadge.className = 'ai-citation-zoom-badge';
+        zoomBadge.textContent = 'Vừa ngang';
+        zoomBadge.title = 'Bấm để đổi mức thu phóng (100% / 150% / Vừa ngang)';
+        zoomBadge.addEventListener('click', () => {
+            if (zoomMode === 'fit-width') setZoom(100, 'custom');
+            else if (currentZoom === 100) setZoom(150, 'custom');
+            else if (currentZoom === 150) setZoom(200, 'custom');
+            else setZoom(100, 'fit-width');
+        });
+        zoomGroup.appendChild(zoomBadge);
+        btn(zoomGroup, '<i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>', 'Phóng to (+25%)', () => adjustZoom(25));
+        
+        const btnFitWidth = btn(zoomGroup, '<i class="fa-solid fa-arrows-left-right-to-line" aria-hidden="true"></i>', 'Vừa chiều ngang', () => setZoom(100, 'fit-width'));
+        btnFitWidth.style.borderLeft = '1px solid #d4e2ee';
+        btnFitWidth.style.paddingLeft = '8px';
+        btn(zoomGroup, '<i class="fa-solid fa-compress" aria-hidden="true"></i>', 'Vừa toàn bộ khung', () => setZoom(100, 'fit-page'));
+        controls.appendChild(zoomGroup);
+
+        // --- Nhóm 3: Toàn màn hình & Hành động ---
+        const actionGroup = document.createElement('div');
+        actionGroup.style.display = 'inline-flex';
+        actionGroup.style.alignItems = 'center';
+        actionGroup.style.gap = '6px';
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.type = 'button';
+        fullscreenBtn.title = 'Bật/Tắt toàn màn hình';
+        fullscreenBtn.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i>';
+        fullscreenBtn.addEventListener('click', () => {
+            const isFull = dialog.classList.toggle('ai-dialog-fullscreen');
+            fullscreenBtn.innerHTML = isFull
+                ? '<i class="fa-solid fa-down-left-and-up-right-to-center" aria-hidden="true"></i>'
+                : '<i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i>';
+            setTimeout(applyZoom, 150);
+        });
+        actionGroup.appendChild(fullscreenBtn);
+
         const fullPdf = document.createElement('a');
         fullPdf.href = card.dataset.pdfUrl + '#page=' + originalPage;
         fullPdf.target = '_blank'; fullPdf.rel = 'noopener noreferrer';
-        fullPdf.textContent = isDocx ? 'Tải DOCX gốc' : 'Mở PDF đầy đủ'; controls.appendChild(fullPdf);
-        const close = control('Đóng', () => dialog.close());
+        fullPdf.title = isDocx ? 'Tải DOCX gốc' : 'Mở PDF đầy đủ';
+        fullPdf.innerHTML = isDocx ? '<i class="fa-solid fa-download" aria-hidden="true"></i><span>Tải DOCX</span>' : '<i class="fa-regular fa-file-pdf" aria-hidden="true"></i><span>Mở PDF</span>';
+        actionGroup.appendChild(fullPdf);
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'ai-citation-close';
+        close.title = 'Đóng (Esc)';
+        close.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Đóng</span>';
+        close.addEventListener('click', () => dialog.close());
+        actionGroup.appendChild(close);
+
+        controls.appendChild(actionGroup);
         toolbar.appendChild(controls);
+
         const quote = document.createElement('blockquote'); quote.className = 'ai-citation-quote';
         const transcript = document.createElement('details'); transcript.className = 'ai-citation-transcript';
         const transcriptLabel = document.createElement('summary'); transcriptLabel.textContent = 'Xem trích dẫn nguyên văn';
@@ -552,7 +631,12 @@
         context.textContent = citationContext; context.hidden = !citationContext;
         const state = document.createElement('div'); state.className = 'ai-citation-state'; state.setAttribute('role', 'status');
         const viewer = document.createElement('div'); viewer.className = 'ai-citation-viewer'; viewer.tabIndex = 0;
-        viewer.setAttribute('role', 'region'); viewer.setAttribute('aria-label', 'Trang PDF, cuộn để xem toàn bộ');
+        viewer.setAttribute('role', 'region'); viewer.setAttribute('aria-label', 'Trang PDF, cuộn hoặc kéo chuột để di chuyển');
+        
+        const canvas = document.createElement('div');
+        canvas.className = 'ai-citation-canvas';
+        viewer.appendChild(canvas);
+
         dialog.append(toolbar, context, transcript, state, viewer);
         document.body.appendChild(dialog);
         const previousOverflow = document.body.style.overflow;
@@ -563,6 +647,99 @@
         }, { once: true });
         dialog.showModal(); document.body.style.overflow = 'hidden'; close.focus();
 
+        function applyZoom() {
+            if (currentDocx) {
+                currentDocx.style.fontSize = (15 * (currentZoom / 100)) + 'px';
+                zoomBadge.textContent = Math.round(currentZoom) + '%';
+                return;
+            }
+            if (!currentImg) return;
+            if (zoomMode === 'fit-width') {
+                canvas.style.width = '100%';
+                canvas.style.maxWidth = '100%';
+                currentImg.style.width = '100%';
+                currentImg.style.maxWidth = '100%';
+                currentImg.style.maxHeight = 'none';
+                zoomBadge.textContent = 'Vừa ngang';
+                viewer.classList.remove('ai-can-pan');
+            } else if (zoomMode === 'fit-page') {
+                canvas.style.width = 'auto';
+                canvas.style.maxWidth = '100%';
+                currentImg.style.width = 'auto';
+                currentImg.style.maxWidth = '100%';
+                currentImg.style.maxHeight = Math.max(300, (viewer.clientHeight - 60)) + 'px';
+                zoomBadge.textContent = 'Vừa khung';
+                viewer.classList.remove('ai-can-pan');
+            } else {
+                canvas.style.maxWidth = 'none';
+                const targetW = Math.max(300, Math.round(baseImgWidth * (currentZoom / 100)));
+                canvas.style.width = targetW + 'px';
+                currentImg.style.width = '100%';
+                currentImg.style.maxWidth = 'none';
+                currentImg.style.maxHeight = 'none';
+                zoomBadge.textContent = Math.round(currentZoom) + '%';
+                if (targetW > viewer.clientWidth || currentImg.clientHeight > viewer.clientHeight) {
+                    viewer.classList.add('ai-can-pan');
+                } else {
+                    viewer.classList.remove('ai-can-pan');
+                }
+            }
+        }
+
+        function setZoom(val, mode = 'custom') {
+            zoomMode = mode;
+            if (mode === 'custom') {
+                currentZoom = Math.max(40, Math.min(350, Math.round(val)));
+            }
+            applyZoom();
+        }
+
+        function adjustZoom(delta) {
+            if (zoomMode !== 'custom') {
+                if (currentImg && viewer.clientWidth > 0 && baseImgWidth > 0) {
+                    currentZoom = Math.round((currentImg.clientWidth / baseImgWidth) * 100);
+                } else {
+                    currentZoom = 100;
+                }
+            }
+            setZoom(currentZoom + delta, 'custom');
+        }
+
+        // Kéo chuột để di chuyển (Pan) khi ảnh phóng to
+        let isPanning = false, panStartX = 0, panStartY = 0, panScrollLeft = 0, panScrollTop = 0;
+        viewer.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (viewer.scrollWidth <= viewer.clientWidth && viewer.scrollHeight <= viewer.clientHeight) return;
+            isPanning = true;
+            viewer.classList.add('ai-dragging');
+            panStartX = e.pageX - viewer.offsetLeft;
+            panStartY = e.pageY - viewer.offsetTop;
+            panScrollLeft = viewer.scrollLeft;
+            panScrollTop = viewer.scrollTop;
+        });
+        window.addEventListener('mouseup', () => {
+            if (isPanning) {
+                isPanning = false;
+                viewer.classList.remove('ai-dragging');
+            }
+        });
+        viewer.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            e.preventDefault();
+            const x = e.pageX - viewer.offsetLeft;
+            const y = e.pageY - viewer.offsetTop;
+            viewer.scrollLeft = panScrollLeft - (x - panStartX);
+            viewer.scrollTop = panScrollTop - (y - panStartY);
+        });
+
+        // Thu phóng bằng Ctrl + Cuộn chuột
+        viewer.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                adjustZoom(e.deltaY < 0 ? 15 : -15);
+            }
+        }, { passive: false });
+
         async function loadPage(page) {
             pendingRequest?.abort(); pendingRequest = new AbortController();
             const request = pendingRequest;
@@ -570,7 +747,7 @@
             quote.textContent = page === originalPage && originalQuote ? originalQuote : 'Xem nội dung trang PDF để đối chiếu trực tiếp.';
             transcript.open = false;
             transcript.hidden = page !== originalPage || !originalQuote;
-            state.textContent = 'Đang mở vị trí dẫn chứng…'; viewer.replaceChildren();
+            state.textContent = 'Đang mở vị trí dẫn chứng…'; canvas.replaceChildren();
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST', credentials: 'same-origin', signal: request.signal,
@@ -587,7 +764,8 @@
                 if (request.signal.aborted || !dialog.open) return;
                 if (data.kind === 'docx') {
                     currentPage = Number(data.page); totalPages = Number(data.total_pages);
-                    title.textContent = 'Bằng chứng · ' + data.label + ' · DOCX';
+                    title.innerHTML = '<i class="fa-regular fa-file-word text-primary"></i><span>Bằng chứng · ' + data.label + ' · DOCX</span>';
+                    pageBadge.textContent = 'Vị trí ' + currentPage + ' / ' + totalPages;
                     fullPdf.href = card.dataset.pdfUrl;
                     const source = document.createElement('article'); source.className = 'ai-docx-source';
                     const text = String(data.text || '');
@@ -600,7 +778,9 @@
                         mark = document.createElement('mark'); mark.textContent = characters.slice(start, end).join(''); source.appendChild(mark);
                         source.appendChild(document.createTextNode(characters.slice(end).join('')));
                     } else source.textContent = text;
-                    viewer.appendChild(source);
+                    currentDocx = source; currentImg = null;
+                    canvas.replaceChildren(source);
+                    applyZoom();
                     state.textContent = matched ? 'Đã tô vàng đoạn trích trong nội dung DOCX. Đây là vị trí đoạn/bảng, không phải số trang Word.' : 'Chưa khớp chính xác đoạn trích. Hãy đối chiếu trực tiếp nội dung nguồn.';
                     if (mark) mark.scrollIntoView({ block: 'center', inline: 'nearest' });
                     else viewer.scrollTop = 0;
@@ -609,18 +789,24 @@
                 }
                 if (typeof data.image !== 'string' || !data.image.startsWith('data:image/png;base64,')) throw new Error('Dữ liệu xem PDF chưa hợp lệ.');
                 currentPage = Number(data.page); totalPages = Number(data.total_pages);
-                title.textContent = 'Bằng chứng · Trang PDF ' + currentPage + ' / ' + totalPages;
+                title.innerHTML = '<i class="fa-regular fa-file-pdf text-danger"></i><span>Bằng chứng · Trang PDF ' + currentPage + ' / ' + totalPages + '</span>';
+                pageBadge.textContent = 'Trang ' + currentPage + ' / ' + totalPages;
                 fullPdf.href = card.dataset.pdfUrl + '#page=' + currentPage;
-                state.textContent = data.matched ? 'Đoạn trích đã được tô vàng trên trang PDF. Có thể cuộn để xem thêm ngữ cảnh.'
+                state.textContent = data.matched ? 'Đoạn trích đã được tô vàng trên trang PDF. Bạn có thể phóng to, thu nhỏ hoặc kéo cuộn để xem chi tiết.'
                     : (page === originalPage && originalQuote ? 'Không khớp chính xác đoạn trích trên trang này. Vui lòng đối chiếu trực tiếp; chưa có vùng được đánh dấu.' : 'Đang hiển thị trang PDF gốc.');
                 const image = document.createElement('img');
                 image.alt = 'Nội dung trang ' + currentPage + ' của báo cáo PDF';
+                currentImg = image; currentDocx = null;
+                baseImgWidth = Number(data.width) || 1200;
                 image.addEventListener('load', () => {
                     if (!dialog.open || request.signal.aborted || pendingRequest !== request) return;
+                    baseImgWidth = image.naturalWidth || Number(data.width) || 1200;
+                    applyZoom();
                     const offset = image.getBoundingClientRect().top - viewer.getBoundingClientRect().top + viewer.scrollTop;
                     viewer.scrollTop = Math.max(0, offset + image.clientHeight * (data.matched ? Number(data.focus_y) : 0) - viewer.clientHeight * .25);
                 }, { once: true });
-                image.src = data.image; viewer.appendChild(image);
+                image.src = data.image;
+                canvas.replaceChildren(image);
                 previous.disabled = currentPage <= 1; next.disabled = currentPage >= totalPages;
             } catch (error) {
                 if (!request.signal.aborted) state.textContent = error.message || 'Chưa mở được PDF. Hãy chọn Mở PDF đầy đủ.';
@@ -646,6 +832,21 @@
         const body = panel.querySelector('.ai-details');
         body.id = panel.id + '-body';
         body.hidden = false;
+        
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.type = 'button';
+        fullscreenBtn.className = 'ai-button';
+        fullscreenBtn.dataset.aiAction = 'toggle-fullscreen';
+        fullscreenBtn.title = 'Bật/Tắt toàn màn hình';
+        fullscreenBtn.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i><span>Toàn màn hình</span>';
+        fullscreenBtn.addEventListener('click', () => {
+            const isFull = dialog.classList.toggle('ai-dialog-fullscreen');
+            fullscreenBtn.innerHTML = isFull
+                ? '<i class="fa-solid fa-down-left-and-up-right-to-center" aria-hidden="true"></i><span>Thu gọn</span>'
+                : '<i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i><span>Toàn màn hình</span>';
+        });
+        panel.querySelector('.ai-actions').appendChild(fullscreenBtn);
+
         const closeButton = document.createElement('button');
         closeButton.type = 'button';
         closeButton.className = 'ai-button ai-button-primary';

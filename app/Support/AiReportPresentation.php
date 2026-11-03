@@ -15,7 +15,7 @@ final class AiReportPresentation
                 $refs[$key]=($refs[$key]??null)===true ? true : (is_bool($flag)?$flag:null);
             }
         };
-        $visit($data['document_content']??[]);$visit($data['completed_work']??[]);
+        $visit($data['document_content']??[]);
         foreach(($data['chapters']??[]) as $chapter) {
             $walk=function($node) use (&$walk,$visit): void {$visit($node['items']??[]);foreach(($node['sections']??[]) as $child)$walk($child);};
             $walk($chapter);

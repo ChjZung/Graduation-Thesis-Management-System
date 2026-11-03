@@ -1,5 +1,8 @@
 """Original text plus spatially bounded table cells. No summary data enters this index."""
 import hashlib
+import json
+from pathlib import Path
+import uuid
 import re
 import time
 import unicodedata
@@ -15,12 +18,38 @@ def normalized(text):
     return ' '.join(re.findall(r'\w+',''.join(c for c in text if not unicodedata.combining(c))))
 
 
-def build_source_index(pdf,document_id=None,version_id=None,on_progress=None):
+def build_source_index(pdf,document_id=None,version_id=None,on_progress=None,page_checkpoint_dir=None,deadline=None):
     started=time.monotonic();data=source_bytes(pdf);doc=extract_pdf(data);digest=doc['sha256']
     identity={'document_id':document_id or 'pdf_'+digest[:16],'version_id':version_id or digest,
         'sha256':digest,'total_pages':doc['page_count']}
     sources={};tables=[];warnings=[]
     by_page={p['page']:[l for l in doc['lines'] if l['page']==p['page']] for p in doc['pages']}
+    cache_folder=Path(page_checkpoint_dir) if page_checkpoint_dir is not None else None
+    if cache_folder:cache_folder.mkdir(parents=True,exist_ok=True)
+    canonical_hash=hashlib.sha256(json.dumps(doc['lines'],sort_keys=True,ensure_ascii=False).encode('utf-8')).hexdigest() if cache_folder else None
+    cache_identity={'policy':1,'index_version':VERSION,'document':identity,'canonical_hash':canonical_hash}
+    reused_pages=0
+    def restore_page(page_info):
+        if not cache_folder:return None
+        try:
+            saved=json.loads((cache_folder/f'page_{page_info["page"]:05}.json').read_text(encoding='utf-8'))
+            if not isinstance(saved,dict):return None
+            if saved.get('identity')!=cache_identity or saved.get('page')!=page_info['page'] or saved.get('complete') is not True:return None
+            if not isinstance(saved.get('sources'),dict) or not isinstance(saved.get('tables'),list) or not isinstance(saved.get('warnings'),list):return None
+            return saved
+        except (OSError,ValueError,TypeError):return None
+    def save_page(page_info,previous):
+        if not cache_folder:return
+        saved={'identity':cache_identity,'page':page_info['page'],'complete':True,
+            'sources':{sid:source for sid,source in sources.items() if source['page_number']==page_info['page']},
+            'tables':[table for table in tables if table['page_number']==page_info['page']],
+            'warnings':[warning for warning in warnings if warning.get('page')==page_info['page']],
+            'previous':previous,'geometry':{k:page_info[k] for k in ('rotation','cropbox') if k in page_info}}
+        path=cache_folder/f'page_{page_info["page"]:05}.json';temporary=path.with_suffix('.'+uuid.uuid4().hex[:8]+'.tmp')
+        try:
+            temporary.write_text(json.dumps(saved,ensure_ascii=False),encoding='utf-8');temporary.replace(path)
+        finally:
+            if temporary.exists():temporary.unlink()
     def add(kind,lines,page,extra=None):
         if not lines:return None
         parts=[];segments=[];pos=0
@@ -49,6 +78,13 @@ def build_source_index(pdf,document_id=None,version_id=None,on_progress=None):
     with fitz.open(stream=data,filetype='pdf') as pdfdoc:
         previous=None
         for page_info in doc['pages']:
+            saved=restore_page(page_info)
+            if saved:
+                sources.update(saved['sources']);tables.extend(saved['tables']);warnings.extend(saved['warnings'])
+                previous=saved.get('previous');page_info.update(saved.get('geometry',{}));reused_pages+=1
+                continue
+            if deadline is not None and time.monotonic()+15>=deadline:
+                raise ApiError('Đã lưu chỉ mục từng trang; lượt nền sau tiếp tục từ trang còn thiếu.','worker_budget')
             page=pdfdoc[page_info['page_index']];page_info['rotation']=page.rotation;page_info['cropbox']=list(page.cropbox)
             lines=by_page[page_info['page']];inside=set()
             if on_progress:on_progress(f'Lập chỉ mục trang {page_info["page"]}/{doc["page_count"]}')
@@ -110,8 +146,9 @@ def build_source_index(pdf,document_id=None,version_id=None,on_progress=None):
                 stop=min(at+2000,page_info['end']);selected=[l for l in lines if l['start']>=at and l['start']<stop and not l.get('running_margin')]
                 if selected and sum(len(l['text']) for l in selected)>100:
                     add('page_context',selected,page_info)
+            save_page(page_info,previous)
     result={'index_version':VERSION,'document':identity,'canonical':doc,'sources':sources,'tables':tables,
-        'warnings':warnings,'statistics':{'sources':len(sources),'tables':len(tables),'table_cells':sum(s['source_type']=='table_cell' for s in sources.values()),'seconds':round(time.monotonic()-started,3)}}
+        'warnings':warnings,'statistics':{'pages_reused':reused_pages,'sources':len(sources),'tables':len(tables),'table_cells':sum(s['source_type']=='table_cell' for s in sources.values()),'seconds':round(time.monotonic()-started,3)}}
     return add_section_context(result)
 
 

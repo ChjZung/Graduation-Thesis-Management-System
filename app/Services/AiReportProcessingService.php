@@ -21,9 +21,21 @@ class AiReportProcessingService
 
     public function payload(KhoiBaoCaoTienDo $report): array
     {
+        $payload = $this->storedPayload($report);
+        // Loading the round is a database read only; never retrieval or generation.
+        if (($report->relationLoaded('dotNop') || $report->MaDotNop !== null) && $report->dotNop) {
+            $payload = AiRequirementResultPolicy::forContext($payload, $report->dotNop->nguCanhDoiChieuAi());
+        }
+        return $payload;
+    }
+
+    public function storedPayload(KhoiBaoCaoTienDo $report): array
+    {
         $data = $report->TomTatJson ?? [];
         if (is_string($data)) $data = json_decode($data,true) ?: [];
-        return isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+        $payload = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+
+        return $payload;
     }
 
     public function fingerprint(KhoiBaoCaoTienDo $report): string
@@ -35,7 +47,7 @@ class AiReportProcessingService
 
     public function identity(KhoiBaoCaoTienDo $report): array
     {
-        $data = $this->payload($report);
+        $data = $this->storedPayload($report);
         $bound = $data['_submission_identity'] ?? $data['source_identity'] ?? [];
         $topic = $report->deTai ?? $report->dotNop?->deTai;
         $owners = \App\Models\PhieuDangKy::where('MaDeTai', $report->MaDeTai)
@@ -44,7 +56,7 @@ class AiReportProcessingService
         $semester = $bound['semester_id'] ?? ($groupId ? \App\Models\Nhom::find($groupId)?->MaHocKy : null) ?? $topic?->MaHocKy;
         return ['document_id'=>$report->MaBaoCao, 'document_version_id'=>$report->MaKhoi,
             'group_id'=>$groupId, 'topic_id'=>$report->MaDeTai, 'semester_id'=>$semester,
-            'stage_id'=>$report->MaGiaiDoan, 'round_id'=>$report->MaDotNop, 'submission_version'=>$report->LanNop];
+            'stage_id'=>$report->MaGiaiDoan, 'round_id'=>$report->MaDotNop, 'submission_version'=>$bound['submission_version'] ?? $report->LanNop];
     }
 
     public function sourceMatches(KhoiBaoCaoTienDo $report, array $data): bool
@@ -55,15 +67,27 @@ class AiReportProcessingService
         catch (\Throwable) { return false; }
     }
 
-    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false, bool $force = false): array
+    public function enqueue(KhoiBaoCaoTienDo $report, bool $reviewOnly = false, bool $force = false, bool $fresh = false): array
     {
         // Database queue insertion is in the same short transaction as the pending state.
         // An explicit connection keeps QUEUE_CONNECTION=sync from running AI in HTTP.
-        return DB::transaction(function () use ($report,$reviewOnly,$force) {
+        return DB::transaction(function () use ($report,$reviewOnly,$force,$fresh) {
             $locked = KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->lockForUpdate()->findOrFail($report->MaKhoi);
-            $data = $this->payload($locked);
+            $data = $this->storedPayload($locked);
+            // Freeze source identity before dispatch. LanNop is only a display number
+            // and may be renumbered when another unreviewed submission is deleted.
+            $boundIdentity = is_array($data['_submission_identity'] ?? null) ? $data['_submission_identity'] : [];
+            $data['_submission_identity'] = array_replace($this->identity($locked), $boundIdentity);
+            $locked->TomTatJson = $data;
             $state = $data['_processing'] ?? [];
             $fingerprint = $this->fingerprint($locked);
+
+            // Force means a new generation AFTER the active job finishes/cancels.
+            // Repeated clicks must not delete a reserved job or bypass its cooldown.
+            if (($state['fingerprint'] ?? '') === $fingerprint &&
+                in_array($state['status'] ?? '', ['queued','running','waiting'])) {
+                return $state;
+            }
 
             if ($force) {
                 // Khi ép buộc phân tích lại: xóa các job đang chờ/delay cũ trong bảng jobs
@@ -74,7 +98,12 @@ class AiReportProcessingService
                     if (is_file($prog)) @unlink($prog);
                 }
             } else {
-                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete'])) {
+                $captionReady = ($data['analysis']['engine'] ?? '') !== 'pdf_lab' ||
+                    (($data['caption_index']['version'] ?? '') === 'caption-text-2' && ($data['caption_index']['status'] ?? '') === 'completed');
+                $reviewGuardReady = ($data['analysis']['engine'] ?? '') !== 'pdf_lab' ||
+                    ($data['requirements_review']['status'] ?? '') === 'not_configured' ||
+                    ($data['requirements_review']['presentation_guard']['version'] ?? '') === AiRequirementResultPolicy::OUTPUT_GUARD_VERSION;
+                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete']) && $captionReady && $reviewGuardReady) {
                     return array_merge($state, ['status'=>($data['analysis']['status'] ?? '') === 'completed' ? 'completed' : 'partial', 'reused'=>true,
                         'message'=>'Đang sử dụng kết quả đã kiểm chứng. Tệp và cấu hình không đổi nên không gọi AI sinh lại.']);
                 }
@@ -90,6 +119,7 @@ class AiReportProcessingService
             }
             if (!$this->sourceMatches($locked, $data)) $reviewOnly = false;
             $state = ['token'=>(string) Str::uuid(), 'fingerprint'=>$fingerprint, 'status'=>'queued', 'mode'=>$reviewOnly ? 'review' : 'full',
+                'fresh'=>$fresh,
                 'attempts'=>0, 'updated_at'=>time(), 'queued_at'=>time(), 'message'=>'Đã lưu bài nộp. AI đang chờ xử lý nền.', 'errors'=>[]];
             $data['_processing'] = $state;
             $locked->update(['TomTatJson'=>$data]);
@@ -102,7 +132,7 @@ class AiReportProcessingService
     {
         return DB::transaction(function () use ($report) {
             $locked = KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
-            $data = $this->payload($locked);
+            $data = $this->storedPayload($locked);
             $oldToken = $data['_processing']['token'] ?? null;
             if ($oldToken) {
                 $prog = $this->progressPath($oldToken);
@@ -138,7 +168,7 @@ class AiReportProcessingService
         return DB::transaction(function () use ($id,$token,$changes) {
             $report = KhoiBaoCaoTienDo::lockForUpdate()->find($id);
             if (!$report) return false;
-            $data = $this->payload($report);
+            $data = $this->storedPayload($report);
             if (($data['_processing']['token'] ?? '') !== $token) return false;
             $data['_processing'] = array_merge($data['_processing'], $changes, ['updated_at'=>time()]);
             $report->update(['TomTatJson'=>$data]);
@@ -178,6 +208,13 @@ class AiReportProcessingService
             if (is_array($value)) $progress = array_intersect_key($value,array_flip(['stage','completed_calls','reused_calls','waiting_seconds','model','map_done','map_total','chapter_done','chapter_total','engine','started_at','updated_at']));
         }
         $active = in_array($state['status'] ?? '', ['queued', 'running', 'waiting']);
+        if (!$active && ($state['status'] ?? '') === 'partial') {
+            foreach ($state['errors'] ?? [] as $index => $error) {
+                if (($error['code'] ?? '') === 'budget_exhausted') {
+                    $state['errors'][$index]['message'] = 'Lượt xử lý đã dừng ở giới hạn số lần tiếp tục. Tiến độ được giữ; chọn Tiếp tục từ tiến độ đã lưu để chạy tiếp.';
+                }
+            }
+        }
         $workerRunning = $active ? $this->workerRunning() : null;
         if ($active && !$workerRunning && time() - ($state['queued_at'] ?? $state['updated_at'] ?? time()) >= 15) {
             $state['message'] = 'Tiến trình xử lý AI đang tắt. Bài nộp đã được lưu; vui lòng báo quản trị viên khởi động lại tiến trình xử lý AI. Không cần nộp lại bài.';
@@ -220,7 +257,7 @@ class AiReportProcessingService
         $review = $data['requirements_review'] ?? null;
         $reviewDone = ($reviewOnly ? is_array($review) : true) && (!$review || in_array($review['status'] ?? '', ['completed', 'not_configured']));
         if ($summaryDone && $reviewDone) return ['status'=>'completed','message'=>$reviewOnly ? 'Đã hoàn tất đối chiếu yêu cầu. Phần tóm tắt trước đó được giữ nguyên.' : 'Đã hoàn tất phân tích và các bước đối chiếu hiện có.','errors'=>[]];
-        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','invalid_request','input_too_large','extraction_failed']));
+        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','invalid_request','input_too_large','extraction_failed','output_validation']));
         if ($fatal || $attempt >= config('ai_processing.max_passes',20) || !$errors) {
             return ['status'=>'partial','message'=>'Đã giữ kết quả hợp lệ. Một số bước chưa hoàn tất; xem nguyên nhân bên dưới trước khi thử lại.','errors'=>$errors];
         }
@@ -229,6 +266,12 @@ class AiReportProcessingService
                 'message'=>'Đã lưu tiến độ; đang tiếp tục các bước còn thiếu từ checkpoint.'];
         }
         $delay = min(900, 30 * (2 ** min(5,max(0,$attempt-1))));
+        // A local subprocess deadline is not a provider outage. Resume its
+        // checkpoint without escalating to a fifteen-minute provider cooldown.
+        if ($errors && !array_filter($errors, fn ($e) => !in_array($e['code'] ?? '', ['timeout','budget_exhausted']) ||
+            (($e['code'] ?? '') === 'timeout' && ($e['stage'] ?? '') !== 'process'))) {
+            $delay = 5;
+        }
         foreach ($errors as $error) $delay = max($delay,(int) ($error['retry_after'] ?? 0));
         $quota = array_filter($errors,fn ($e) => ($e['code'] ?? '') === 'rate_limit');
         $daily = array_filter($quota,fn ($e) => ($e['quota'] ?? '') === 'day');

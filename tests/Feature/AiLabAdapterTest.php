@@ -109,6 +109,19 @@ class AiLabAdapterTest extends TestCase
         $data['processing_errors'][0]['code']='authentication';
         $this->assertSame('partial',$service->retryState($data,false,1)['status']);
     }
+    public function test_local_process_timeout_resumes_without_provider_cooldown_but_quota_is_preserved(): void
+    {
+        $service=app(AiReportProcessingService::class);
+        $data=['analysis'=>['status'=>'completed','engine'=>'pdf_lab'],
+            'requirements_review'=>['status'=>'partial'],
+            'processing_errors'=>[['stage'=>'process','code'=>'timeout']]];
+        $retry=$service->retryState($data,false,11);
+        $this->assertSame('waiting',$retry['status']);
+        $this->assertLessThanOrEqual(time()+6,$retry['next_retry_at']);
+        $data['processing_errors'][]=['stage'=>'requirements_review','code'=>'rate_limit','retry_after'=>950];
+        $retry=$service->retryState($data,false,11);
+        $this->assertGreaterThanOrEqual(time()+949,$retry['next_retry_at']);
+    }
     public function test_summary_does_not_put_a_deadline_on_the_long_running_cli_worker(): void
     {
         $before=ini_get('max_execution_time');
