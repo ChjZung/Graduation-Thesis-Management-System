@@ -225,6 +225,9 @@
 </style>
 @include('partials.ai_review_styles')
 @endonce
+@once('ai-report-mobile-styles')
+<link rel="stylesheet" href="{{ asset('css/ai_report_mobile.css') }}?v={{ filemtime(public_path('css/ai_report_mobile.css')) }}">
+@endonce
 
 @if($teacherReportUi)
 @include('partials.ai_teacher_report', ['cancelUrl' => $cancelUrl])

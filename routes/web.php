@@ -410,6 +410,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'store'])->name('sinhvien.baocao.store');
     Route::get('/baocao/dot-nop/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showDotNop'])->name('sinhvien.baocao.dot_nop.show');
     Route::post('/baocao/dot-nop/{id}/nop', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'nopPhienBan'])->name('sinhvien.baocao.dot_nop.nop');
+    Route::delete('/baocao/dot-nop/{id}/phien-ban/{maKhoi}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'xoaPhienBan'])->name('sinhvien.baocao.dot_nop.xoa_phien_ban');
     Route::get('/baocao/giai-doan/{lanBaoCao}/them-khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'createKhoi'])->name('sinhvien.baocao.create_khoi');
     Route::post('/baocao/khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'storeKhoi'])->name('sinhvien.baocao.store_khoi');
     Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showKhoi'])->name('sinhvien.baocao.show_khoi');

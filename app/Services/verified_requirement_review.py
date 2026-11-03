@@ -69,7 +69,8 @@ def run_direct_review(path,context,document,identity,model,settings,cache_dir,pr
     index_key=fingerprint([INDEX_VERSION,digest,identity.get('document_id'),identity.get('document_version_id')])
     index_path=folder/('index_'+index_key+'.json');index=load_state(index_path)
     if not index or index.get('index_version')!=INDEX_VERSION or index.get('document',{}).get('sha256')!=digest:
-        index=build_source_index(path,document_id=identity.get('document_id'),version_id=identity.get('document_version_id'),on_progress=on_progress)
+        index=build_source_index(path,document_id=identity.get('document_id'),version_id=identity.get('document_version_id'),on_progress=on_progress,
+            page_checkpoint_dir=folder/('pages_'+index_key[:16]),deadline=getattr(provider,'deadline',None))
         atomic_json(index_path,index)
     key=analysis_identity(index,requirements,model,settings);state_path=folder/(key+'.json');state=load_state(state_path)
     retry_failed=bool(state and state.get('_worker_run')!=run_id)

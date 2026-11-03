@@ -2,12 +2,16 @@
     $processingState = $aiData['_processing'] ?? [];
     $reviewHasResults=(int)($aiData['requirements_review']['processing']['completed_checks']??0)>0;
     $processingActive = in_array($processingState['status'] ?? '', ['queued','running','waiting']);
+    $processingErrors=$processingState['errors']??[];
+    $hideProcessingBanner=($processingState['status']??'')==='completed' ||
+        (($processingState['status']??'')==='partial' && ($aiData['analysis']['status']??'')==='completed' && count($processingErrors)>0 &&
+         count(array_filter($processingErrors,fn($e)=>($e['stage']??'')==='requirements_review' && ($e['engine_code']??'')==='review_incomplete'))===count($processingErrors));
     $processingUrl = $citationAvailable ? route('baocao.ai.trang_thai', $pb->MaKhoi) : '';
     $stepLabels = ['summary_part'=>'Đọc từng phần báo cáo','summary_audit'=>'Kiểm chứng ý tóm tắt','completion_audit'=>'Kiểm tra căn cứ công việc hoàn thành','summary_merge'=>'Tổng hợp chương và mục','review_part'=>'Tìm bằng chứng theo yêu cầu','review_repair'=>'Kiểm tra lại tiêu chí lỗi','review_decision'=>'Đối chiếu yêu cầu','citation_audit'=>'Kiểm chứng trích dẫn'];
 @endphp
 @if($teacherReportUi ?? false)
     @if($processingUrl)
-    <div class="ai-processing-status" role="status" aria-live="polite" data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+    <div class="ai-processing-status" @if($hideProcessingBanner) hidden style="display:none" @endif role="status" aria-live="polite" data-processing-errors='@json($processingErrors)' data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
         <strong data-processing-title>{{ $processingActive ? 'Đang phân tích báo cáo' : (($processingState['status'] ?? '') === 'completed' ? 'Đã có kết quả phân tích' : 'Trạng thái phân tích') }}</strong>
         <p data-processing-message>{{ $processingActive ? 'Bạn có thể tiếp tục sử dụng trang trong khi chờ.' : 'Kết quả đã lưu được hiển thị bên dưới.' }}</p>
         <div class="ai-result-status-lines">
@@ -16,15 +20,7 @@
         </div>
         <p data-processing-step></p>
         <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
-        <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem tiến độ</button>
-        @if($cancelUrl ?? '')
-        <form method="POST" action="{{ $cancelUrl }}" data-teacher-cancel-form style="margin:0; display:{{ $processingActive ? 'inline-block' : 'none' }};">
-            @csrf
-            <button type="submit" class="ai-button ai-button-cancel" data-ai-cancel-submit style="color:#dc3545; border-color:#dc3545; background:#fff;">
-                <i class="fa-solid fa-stop" aria-hidden="true"></i> Dừng phân tích
-            </button>
-        </form>
-        @endif
+        <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem chi tiết tiến độ và thông báo</button>
         <button type="button" class="ai-button" data-ai-refresh-result hidden>Xem kết quả mới</button>
     </div>
     @endif

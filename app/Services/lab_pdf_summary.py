@@ -67,6 +67,7 @@ def processing_error(error,stage='summary'):
     elif code in ('network_error','worker_network'):mapped='connection_error'
     elif isinstance(error,SegmentationError):mapped='extraction_failed'
     elif code in ('http_error',):mapped='model_unavailable' if status==404 else 'service_unavailable'
+    elif code.startswith('reader_') or code in ('cached_reader_error','invalid_reader_output','invalid_reader_reference'):mapped='output_validation'
     elif isinstance(error,ApiError):mapped='invalid_request'
     else:mapped='service_unavailable'
     detail={'stage':stage,'code':mapped,'engine_code':code,'message':str(error) if isinstance(error,(ApiError,SegmentationError)) else 'Chưa hoàn tất xử lý AI. Các bước đã lưu được giữ.'}

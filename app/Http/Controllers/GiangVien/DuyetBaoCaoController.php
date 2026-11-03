@@ -842,6 +842,17 @@ class DuyetBaoCaoController extends Controller
         $nguoiXacNhan = ($giangVien->HocHam ? $giangVien->HocHam . '.' : '') . ($giangVien->HocVi ? $giangVien->HocVi . '. ' : '') . $giangVien->HoTen;
 
         DB::transaction(function () use ($nhom, $deTai, $giangVien, $nguoiXacNhan, $request, $user) {
+            // Recheck current reviews when confirming, rather than trusting the rendered button.
+            GiaiDoanThucHien::where('MaDeTai', $deTai->MaDeTai)->lockForUpdate()->get();
+            DotNopBaoCao::where('MaDeTai', $deTai->MaDeTai)->lockForUpdate()->get();
+            KhoiBaoCaoTienDo::where('MaDeTai', $deTai->MaDeTai)->lockForUpdate()->get();
+            $milestones = app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom, $deTai);
+            if (!$milestones['can_open_defense_submission']) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'bao_cao' => 'Chỉ được mở cổng nộp hồ sơ bảo vệ khi phiên bản mới nhất của tất cả đợt báo cáo trong các giai đoạn đã được giảng viên xác nhận Đạt. Mỗi giai đoạn cần có ít nhất một đợt báo cáo.',
+                ]);
+            }
+
             // 1. Cập nhật tiến độ nghiệp vụ sang Giai đoạn 6 (Hoàn thiện và bảo vệ)
             $tienDo = TienDoNghiepVuKhoaLuan::firstOrCreate(
                 ['MaNhom' => $nhom->MaNhom],

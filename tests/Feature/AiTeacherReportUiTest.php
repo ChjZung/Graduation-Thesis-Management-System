@@ -21,6 +21,51 @@ class AiTeacherReportUiTest extends TestCase
         $p=\Mockery::mock(AiReportProcessingService::class)->makePartial();$p->shouldReceive('sourceMatches')->andReturn(true);$this->app->instance(AiReportProcessingService::class,$p);
         return view('partials.ai_summary_11_sections',['pb'=>$r,'teacherReportUi'=>$teacher])->render();
     }
+    public function test_evidence_coverage_has_equal_weights_without_claiming_completion(): void
+    {
+        $html=$this->renderCard(['requirements_review'=>['status'=>'completed'],'teacher_requirements'=>[
+            ['text'=>'1. ERD','report_points'=>[['title'=>'ERD','relation'=>'related_text',
+                'source_references'=>[['page'=>3,'quote'=>'Hình ERD','quote_verified'=>true,'source_type'=>'CAPTION_REFERENCE']]]]],
+            ['text'=>'2. Kiểm thử','report_points'=>[]],
+        ]]);
+        $this->assertStringContainsString('data-ai-requirement-coverage',$html);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(4,$xp->query('//*[contains(concat(" ",normalize-space(@class)," ")," ai-verification-cards ")]/*'));
+        $this->assertStringContainsString('50,00%',$html);
+        $this->assertStringContainsString('không phải tỷ lệ hoàn thành công việc',$html);
+        $this->assertStringContainsString('chỉ tìm được tên hình/bảng',$html);
+    }
+
+    public function test_coverage_rules_are_in_a_popup_template_and_sidebar_links_to_its_report(): void
+    {
+        $html=view('partials.ai_requirement_coverage',[
+            'aiData'=>['teacher_requirements'=>[['text'=>'1. ERD','report_points'=>[['title'=>'ERD','relation'=>'related_text','source_references'=>[['page'=>3,'quote'=>'ERD','quote_verified'=>true]]]]]],'requirements_review'=>['status'=>'completed']],
+            'coverageSidebar'=>true,'coverageReportKey'=>'REPORT_LATEST','coverageVersion'=>2,
+        ])->render();
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-ai-open-requirements and @type="button"]'));
+        $this->assertCount(1,$xp->query('//*[@data-ai-coverage-widget and @data-report-key="REPORT_LATEST"]'));
+        $this->assertCount(1,$xp->query('//template[@data-ai-coverage-rules-content]//table'));
+        $this->assertCount(0,$xp->query('//table[not(ancestor::template)]'));
+        $this->assertStringContainsString('100,00%',$html);
+        $this->assertStringContainsString('Thể lệ ước tính tỷ lệ',$html);
+        $this->assertStringContainsString('(v2)',$html);
+        $this->assertStringContainsString('data-report-version="2"',$html);
+    }
+
+    public function test_finished_summary_with_review_gap_uses_local_note_instead_of_large_banner(): void
+    {
+        $html=$this->renderCard([
+            '_processing'=>['status'=>'partial','errors'=>[['stage'=>'requirements_review','code'=>'invalid_request','engine_code'=>'review_incomplete']]],
+            'requirements_review'=>['mode'=>'verified_v2','status'=>'partial','processing'=>['completed_checks'=>12,'total_checks'=>13]],
+        ]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-ai-processing-url and @hidden]'));
+        $this->assertCount(1,$xp->query('//*[@data-review-incomplete-note]'));
+        $this->assertStringContainsString('12/13',$html);
+        $this->assertStringContainsString('1 tiêu chí chưa xác minh được nguồn',$html);
+    }
+
     public function test_two_tabs_keep_current_content_and_quote_relationships(): void
     {
         $html=$this->renderCard();$dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xpath=new \DOMXPath($dom);

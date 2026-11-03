@@ -8,7 +8,7 @@
     $generatedAt = null;
     try { if(!empty($analysis['generated_at'])) $generatedAt=\Carbon\Carbon::parse($analysis['generated_at'])->timezone(config('app.timezone'))->format('H:i d/m/Y').' ('.config('app.timezone').')'; } catch(\Throwable $e) {}
 @endphp
-<section class="ai-summary ai-summary-card ai-teacher-report" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-teacher-ui="1" data-report-key="{{ $pb->MaKhoi ?? '' }}" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-cancel-url="{{ $cancelUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
+<section class="ai-summary ai-summary-card ai-teacher-report" id="{{ $uniqueId }}" aria-labelledby="{{ $uniqueId }}-title" data-teacher-ui="1" data-showing-saved-summary="{{ $showingSavedSummary ? '1' : '0' }}" data-report-key="{{ $pb->MaKhoi ?? '' }}" data-document-type="{{ $documentType }}" data-citation-url="{{ $citationUrl }}" data-cancel-url="{{ $cancelUrl }}" data-pdf-url="{{ $pdfUrl }}" data-csrf-token="{{ $citationAvailable ? csrf_token() : '' }}">
     <header class="ai-header">
         <div class="ai-heading"><div class="ai-brand-icon" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></div><div>
             <h2 class="ai-title" id="{{ $uniqueId }}-title">Kết quả phân tích báo cáo AI</h2>
@@ -51,16 +51,28 @@
             <div><dt>Thời điểm phân tích</dt><dd>{{ $generatedAt ?? 'Chưa có kết quả đã lưu' }}</dd></div>
         </dl>
         <h3 class="ai-subheading">Thông tin kiểm chứng kết quả AI</h3>
-        <div class="row g-2 ai-verification-cards">
-            <div class="col-12 col-md-4"><div class="card h-100 ai-metric-source"><div class="card-body"><i class="fa-solid fa-check-double" aria-hidden="true"></i><h4>Dẫn chứng khớp nguồn PDF</h4><strong data-verified-count>{{ $uiMetrics['measured'] ? $uiMetrics['matched'].' / '.$uiMetrics['references'] : 'Chưa có dữ liệu kiểm chứng' }}</strong><p>Kiểm tra câu trích với nguồn.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>Số câu trích khớp chữ trong các nguồn đang hiển thị; không phải độ chính xác ngữ nghĩa.</p></details></div></div></div>
-            <div class="col-12 col-md-4"><div class="card h-100 ai-metric-coverage"><div class="card-body"><i class="fa-regular fa-file-lines" aria-hidden="true"></i><h4>Văn bản đã xử lý</h4><strong data-coverage-count>{{ $uiMetrics['total'] ? $uiMetrics['done'].' / '.$uiMetrics['total'].' phần' : 'Chưa có dữ liệu bao phủ' }}</strong><p>Phạm vi văn bản đã phân tích.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>Chỉ tính phần văn bản được chọn phân tích. Chưa bao gồm nội dung ảnh và sơ đồ.</p></details></div></div></div>
-            <div class="col-12 col-md-4"><div class="card h-100 ai-metric-review"><div class="card-body"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h4>Nội dung cần đối chiếu</h4><strong>{{ $uiMetrics['empty_chapters']+$uiMetrics['unlinked_requirements'] }} phần</strong><p>Các mục cần xem thêm nguồn.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>{{ $uiMetrics['empty_chapters'] }} chương/phần và {{ $uiMetrics['unlinked_requirements'] }} yêu cầu chưa có dẫn chứng liên kết. Các nhận định còn lại vẫn cần kiểm tra.</p></details></div></div></div>
+        <div class="ai-result-notice ai-result-notice-inline">
+            <span>Lưu ý về kết quả AI</span>
+            <button type="button" class="ai-info-icon-button" data-ai-open-notice aria-haspopup="dialog" aria-label="Xem lưu ý về kết quả AI" title="Lưu ý về kết quả AI">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            </button>
+            <template data-ai-notice-content>
+                <p>Nội dung được AI tổng hợp có thể chưa đầy đủ hoặc chưa hoàn toàn chính xác. Giảng viên nên đối chiếu với báo cáo gốc trước khi đưa ra đánh giá.</p>
+                @if($pdfUrl)<a href="{{ $pdfUrl }}" target="_blank" rel="noopener" class="btn btn-outline-primary">Xem báo cáo gốc <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>@endif
+            </template>
         </div>
-        <div class="alert alert-warning ai-limit-alert" role="note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div><strong>Lưu ý:</strong> Nội dung được AI tổng hợp có thể chưa đầy đủ hoặc chưa hoàn toàn chính xác. Giảng viên nên đối chiếu với báo cáo gốc trước khi đưa ra đánh giá.
-            @if($pdfUrl)<a href="{{ $pdfUrl }}" target="_blank" rel="noopener" class="d-block mt-1">Xem báo cáo gốc <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>@endif
-        </div></div>
+        <div class="row g-2 ai-verification-cards">
+            <div class="col-12"><div class="card h-100 ai-metric-source"><div class="card-body"><i class="fa-solid fa-check-double" aria-hidden="true"></i><h4>Dẫn chứng khớp nguồn PDF</h4><strong data-verified-count>{{ $uiMetrics['measured'] ? $uiMetrics['matched'].' / '.$uiMetrics['references'] : 'Chưa có dữ liệu kiểm chứng' }}</strong><p>Kiểm tra câu trích với nguồn.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>Số câu trích khớp chữ trong các nguồn đang hiển thị; không phải độ chính xác ngữ nghĩa.</p></details></div></div></div>
+            <div class="col-12"><div class="card h-100 ai-metric-coverage"><div class="card-body"><i class="fa-regular fa-file-lines" aria-hidden="true"></i><h4>Văn bản đã xử lý</h4><strong data-coverage-count>{{ $uiMetrics['total'] ? $uiMetrics['done'].' / '.$uiMetrics['total'].' phần' : 'Chưa có dữ liệu bao phủ' }}</strong><p>Phạm vi văn bản đã phân tích.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>Chỉ tính phần văn bản được chọn phân tích. Chưa bao gồm nội dung ảnh và sơ đồ.</p></details></div></div></div>
+            <div class="col-12"><div class="card h-100 ai-metric-review"><div class="card-body"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h4>Nội dung cần đối chiếu</h4><strong>{{ $uiMetrics['empty_chapters']+$uiMetrics['unlinked_requirements'] }} phần</strong><p>Các mục cần xem thêm nguồn.</p><details class="ai-metric-help"><summary>Xem giải thích</summary><p>{{ $uiMetrics['empty_chapters'] }} chương/phần và {{ $uiMetrics['unlinked_requirements'] }} yêu cầu chưa có dẫn chứng liên kết. Các nhận định còn lại vẫn cần kiểm tra.</p></details></div></div></div>
+            <div class="col-12">
+                @include('partials.ai_requirement_coverage',['coverageMetric'=>true,'coverageSourceOnly'=>false,'coverageSidebar'=>false,'coverageVersion'=>$pb->LanNop??null,'coverageReportKey'=>$pb->MaKhoi??''])
+            </div>
+        </div>
+        @if(request()->routeIs('sinhvien.baocao.dot_nop.show','sinhvien.baocao.show_dot'))
+            @include('partials.ai_requirement_coverage',['coverageMetric'=>false,'coverageSourceOnly'=>true,'coverageSidebar'=>false,'coverageVersion'=>$pb->LanNop??null,'coverageReportKey'=>$pb->MaKhoi??''])
+        @endif
         @if($sourceChanged)<p class="alert alert-warning">Tệp báo cáo đã thay đổi. Chọn Phân tích lại để đọc đúng tệp hiện tại.</p>@endif
-        @if($showingSavedSummary)<p class="ai-empty" data-showing-saved-summary>Đây là bản đã lưu; kết quả mới sẽ được cập nhật sau khi phân tích xong.</p>@endif
         <nav class="ai-report-tabs nav nav-tabs" role="tablist" aria-label="Kết quả AI dành cho giảng viên">
             @foreach(['chapters'=>'Tóm tắt theo chương','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
                 <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $uniqueId }}-tab-{{ $tabKey }}" data-bs-toggle="tab" data-bs-target="#{{ $uniqueId }}-pane-{{ $tabKey }}" type="button" role="tab" aria-controls="{{ $uniqueId }}-pane-{{ $tabKey }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" data-ai-result-tab="{{ $tabKey }}">{{ $tabLabel }}</button>

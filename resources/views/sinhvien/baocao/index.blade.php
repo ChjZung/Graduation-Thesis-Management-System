@@ -221,6 +221,8 @@
     </div>
 @endif
 
+@include('partials.report_milestone_progress')
+
 @php
     $hasGvStages = isset($giaiDoans) && $giaiDoans->isNotEmpty();
     $allCompleted = ($baoCaos->count() >= 6 && isset($baoCaos[6]) && $baoCaos[6]->TrangThai === 'Đạt');

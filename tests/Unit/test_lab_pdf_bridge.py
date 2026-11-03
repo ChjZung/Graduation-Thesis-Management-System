@@ -111,7 +111,7 @@ def test_submission_binding_prevents_other_versions_reusing_full_result(tmp_path
 
 def test_provider_error_classification_and_context_sources_are_separate():
     assert bridge.processing_error(bridge.ApiError('bad','authentication'))['code']=='authentication'
-    assert bridge.processing_error(bridge.ApiError('stop','reader_missing_key_outputs'))['code']=='invalid_request'
+    assert bridge.processing_error(bridge.ApiError('stop','reader_missing_key_outputs'))['code']=='output_validation'
     assert bridge.processing_error(bridge.ApiError('pause','reader_call_budget'))['code']=='budget_exhausted'
     doc=bridge.context_document({'submission_requirements':'Nộp sơ đồ hoạt động.','require_source_code':True})
     assert 'Yêu cầu nộp mã nguồn' in doc['text']
@@ -216,3 +216,11 @@ def test_old_atomic_cache_still_runs_new_support_audit(tmp_path):
     result=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,context={'submission_requirements':'Mô tả quy trình của hệ thống.'},options=opts,provider_factory=lambda:p)
     assert result['data']['analysis']['status']=='completed' and p.calls>before
     assert json.loads(path.read_text(encoding='utf-8'))['report']['support_review']=='complete'
+
+
+def test_reader_validation_is_not_a_provider_request_failure():
+    error=bridge.processing_error(bridge.ApiError('Too long','reader_too_long'))
+    assert error['code']=='output_validation'
+    assert error['engine_code']=='reader_too_long'
+    provider_error=bridge.processing_error(bridge.ApiError('Bad HTTP','http_error',400))
+    assert provider_error['code']=='invalid_request'

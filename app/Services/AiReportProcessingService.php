@@ -56,7 +56,7 @@ class AiReportProcessingService
         $semester = $bound['semester_id'] ?? ($groupId ? \App\Models\Nhom::find($groupId)?->MaHocKy : null) ?? $topic?->MaHocKy;
         return ['document_id'=>$report->MaBaoCao, 'document_version_id'=>$report->MaKhoi,
             'group_id'=>$groupId, 'topic_id'=>$report->MaDeTai, 'semester_id'=>$semester,
-            'stage_id'=>$report->MaGiaiDoan, 'round_id'=>$report->MaDotNop, 'submission_version'=>$report->LanNop];
+            'stage_id'=>$report->MaGiaiDoan, 'round_id'=>$report->MaDotNop, 'submission_version'=>$bound['submission_version'] ?? $report->LanNop];
     }
 
     public function sourceMatches(KhoiBaoCaoTienDo $report, array $data): bool
@@ -74,6 +74,11 @@ class AiReportProcessingService
         return DB::transaction(function () use ($report,$reviewOnly,$force,$fresh) {
             $locked = KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->lockForUpdate()->findOrFail($report->MaKhoi);
             $data = $this->storedPayload($locked);
+            // Freeze source identity before dispatch. LanNop is only a display number
+            // and may be renumbered when another unreviewed submission is deleted.
+            $boundIdentity = is_array($data['_submission_identity'] ?? null) ? $data['_submission_identity'] : [];
+            $data['_submission_identity'] = array_replace($this->identity($locked), $boundIdentity);
+            $locked->TomTatJson = $data;
             $state = $data['_processing'] ?? [];
             $fingerprint = $this->fingerprint($locked);
 
@@ -252,7 +257,7 @@ class AiReportProcessingService
         $review = $data['requirements_review'] ?? null;
         $reviewDone = ($reviewOnly ? is_array($review) : true) && (!$review || in_array($review['status'] ?? '', ['completed', 'not_configured']));
         if ($summaryDone && $reviewDone) return ['status'=>'completed','message'=>$reviewOnly ? 'Đã hoàn tất đối chiếu yêu cầu. Phần tóm tắt trước đó được giữ nguyên.' : 'Đã hoàn tất phân tích và các bước đối chiếu hiện có.','errors'=>[]];
-        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','invalid_request','input_too_large','extraction_failed']));
+        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','invalid_request','input_too_large','extraction_failed','output_validation']));
         if ($fatal || $attempt >= config('ai_processing.max_passes',20) || !$errors) {
             return ['status'=>'partial','message'=>'Đã giữ kết quả hợp lệ. Một số bước chưa hoàn tất; xem nguyên nhân bên dưới trước khi thử lại.','errors'=>$errors];
         }
@@ -261,6 +266,12 @@ class AiReportProcessingService
                 'message'=>'Đã lưu tiến độ; đang tiếp tục các bước còn thiếu từ checkpoint.'];
         }
         $delay = min(900, 30 * (2 ** min(5,max(0,$attempt-1))));
+        // A local subprocess deadline is not a provider outage. Resume its
+        // checkpoint without escalating to a fifteen-minute provider cooldown.
+        if ($errors && !array_filter($errors, fn ($e) => !in_array($e['code'] ?? '', ['timeout','budget_exhausted']) ||
+            (($e['code'] ?? '') === 'timeout' && ($e['stage'] ?? '') !== 'process'))) {
+            $delay = 5;
+        }
         foreach ($errors as $error) $delay = max($delay,(int) ($error['retry_after'] ?? 0));
         $quota = array_filter($errors,fn ($e) => ($e['code'] ?? '') === 'rate_limit');
         $daily = array_filter($quota,fn ($e) => ($e['quota'] ?? '') === 'day');

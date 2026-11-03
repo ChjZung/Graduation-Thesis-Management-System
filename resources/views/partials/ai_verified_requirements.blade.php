@@ -23,7 +23,15 @@
     @endif
     @if($briefStale)<p class="ai-empty">Yêu cầu của đợt đã thay đổi. Chọn đối chiếu lại để cập nhật; không sử dụng kết quả cũ cho yêu cầu mới.</p>@endif
     @if($reviewPending)<p class="alert alert-info" data-requirements-pending>Đang chờ đối chiếu yêu cầu. Hệ thống xử lý bản tóm tắt trước; dẫn chứng sẽ tự xuất hiện tại đây khi được kiểm chứng. Chưa có kết quả không có nghĩa báo cáo thiếu nội dung.</p>@endif
-    @if(($review['status']??'')==='partial')<p class="ai-empty">Đối chiếu đang xử lý hoặc đã dừng một phần. Các mục chưa kiểm chứng chưa có kết luận.</p>@endif
+    @if(($review['status']??'')==='partial')
+        @if($reviewActive)
+            <p class="small text-muted">Đang tiếp tục đối chiếu yêu cầu. Các mục chưa kiểm chứng chưa có kết luận.</p>
+        @else
+            @php $checked=(int)($review['processing']['completed_checks']??0); $checkTotal=(int)($review['processing']['total_checks']??0); @endphp
+            <p class="small text-muted" data-review-incomplete-note>Đã lưu kết quả đối chiếu@if($checkTotal>0) cho {{ $checked }}/{{ $checkTotal }} tiêu chí; {{ max(0,$checkTotal-$checked) }} tiêu chí chưa xác minh được nguồn@endif. Giảng viên vui lòng kiểm tra các mục chưa đủ dẫn chứng trong PDF gốc.</p>
+            <button type="button" class="ai-button" data-open-ai-progress>Xem chi tiết tiến độ và thông báo</button>
+        @endif
+    @endif
     @if(!$briefText)<p class="ai-empty">Chưa có mô tả yêu cầu để đối chiếu.</p>
     @elseif(!$briefItems && !$reviewPending)<p class="ai-empty">Chưa có kết quả đối chiếu cho mô tả này.</p>
     @elseif($briefItems)

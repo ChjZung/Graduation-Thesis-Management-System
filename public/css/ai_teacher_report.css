@@ -96,3 +96,12 @@
 }
 .ai-summary-dialog::backdrop { background: rgba(15, 23, 42, .65); backdrop-filter: blur(2px); }
 
+
+.ai-teacher-report .ai-verification-cards { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 12px 0 18px; }
+.ai-teacher-report .ai-verification-cards > .col-12 { width: auto; max-width: 100%; min-width: 0; margin: 0; padding: 0; }
+.ai-teacher-report .ai-verification-cards .ai-metric-requirement-rate { --metric-accent:#6750a4; --metric-bg:#f5f1fd; border-color:#dfd5f1; }
+.ai-teacher-report .ai-metric-action { display: block; width: fit-content; max-width: 100%; margin: 8px 0 0; padding: 2px 0; border: 0; background: transparent; color: #4f4280; text-align: left; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ai-teacher-report .ai-metric-action:hover { color: #31205c; text-decoration: underline; }
+.ai-teacher-report .ai-metric-action:focus-visible { outline: 2px solid #6750a4; outline-offset: 2px; }
+@container (max-width: 1000px) { .ai-teacher-report .ai-verification-cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@container (max-width: 480px) { .ai-teacher-report .ai-verification-cards { grid-template-columns: minmax(0,1fr); } .ai-teacher-report .ai-metric-action { min-height: 44px; } }
