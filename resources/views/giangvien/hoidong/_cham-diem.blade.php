@@ -1734,7 +1734,7 @@ input[type=number],
                             $dcFileName = basename($activeDeTai->FileDeCuong);
                         @endphp
                         <div class="mb-2" style="min-width: 0;">
-                            <label class="form-label small fw-bold text-secondary mb-1">5. Tệp tài liệu đề cương gốc đã duyệt:</label>
+                            <label class="form-label small fw-bold text-secondary mb-1">6. Tệp tài liệu đề cương gốc đã duyệt:</label>
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <a href="{{ route('files.decuong.download', $activeDeTai->MaDeTai) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                     <i class="fa-solid fa-file-lines me-1"></i> Xem Tệp Đề Cương
