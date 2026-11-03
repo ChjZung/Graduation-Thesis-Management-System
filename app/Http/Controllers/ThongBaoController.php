@@ -134,7 +134,7 @@ class ThongBaoController extends Controller
             }
         }
 
-        $thongbaos = $query->paginate(10)->withQueryString();
+        $thongbaos = $query->paginate(5)->withQueryString();
 
         // Thống kê tổng quan dựa trên phạm vi được xem
         $baseScopeQuery = ThongBao::whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài']);

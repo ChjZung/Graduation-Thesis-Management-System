@@ -62,7 +62,7 @@ class QuyDinhKhoaLuanController extends Controller
             'gpa_chuan'       => '2.0 GPA',
         ];
 
-        $quyDinhs = $query->orderBy('created_at', 'asc')->paginate(12)->withQueryString();
+        $quyDinhs = $query->orderBy('created_at', 'asc')->paginate(5)->withQueryString();
 
         return view('admin.quydinh.index', compact('quyDinhs', 'keHoachs', 'stats'));
     }

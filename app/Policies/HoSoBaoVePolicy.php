@@ -69,7 +69,7 @@ class HoSoBaoVePolicy
                 if (!$maKhoa && preg_match('/^TK_([A-Z0-9]+)_/i', $user->TenDangNhap, $m)) {
                     $maKhoa = $m[1];
                 }
-                $dtKhoa = $hoSo->deTai?->giangVien?->boMon?->MaKhoa;
+                $dtKhoa = $hoSo->deTai?->giangVien?->boMon?->MaKhoa ?? $hoSo->hoiDong?->MaKhoa;
                 if ($maKhoa && $dtKhoa && $maKhoa === $dtKhoa) {
                     return true;
                 }

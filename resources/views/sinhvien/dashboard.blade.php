@@ -857,7 +857,7 @@
                                 @if($truongNhom)
                                     <div class="p-2 rounded-2 border bg-primary-subtle bg-opacity-25 border-primary d-flex align-items-center justify-content-between">
                                         <div>
-                                            <span class="fw-bold text-dark small">👑 {{ $truongNhom->HoTen }}</span>
+                                            <span class="fw-bold text-dark small"><i class="fa-solid fa-crown text-warning me-1"></i>{{ $truongNhom->HoTen }}</span>
                                             <div class="text-muted font-monospace" style="font-size: 11px;">{{ $truongNhom->MaSV ?? '' }}</div>
                                         </div>
                                         <span class="badge bg-warning text-dark border rounded-pill px-2 py-1" style="font-size: 10px;">Trưởng nhóm</span>

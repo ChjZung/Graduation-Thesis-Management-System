@@ -57,7 +57,7 @@ class KeHoachController extends Controller
             });
         }
 
-        $keHoachs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $keHoachs = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // Thống kê các mốc thời gian sắp tới
         $upcomingMocs = MocThoiGianKhoaLuan::with('keHoachKhoaLuan.hocKy')

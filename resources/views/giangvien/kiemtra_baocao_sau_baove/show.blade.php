@@ -2,6 +2,96 @@
 
 @section('page_title', 'Đánh Giá Báo Cáo Chỉnh Sửa — ' . ($hoSo->nhom->TenNhom ?? $hoSo->MaHoSo))
 
+@push('styles')
+<style>
+/* ════ BẢNG LỊCH SỬ PHIÊN BẢN NỘP LẠI (CHỐNG TRÀN CHỮ & THANH CUỘN NGANG) ════ */
+.table-history-versions {
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin-bottom: 0;
+}
+
+.table-history-versions th,
+.table-history-versions td {
+    min-width: 0 !important;
+    vertical-align: middle;
+}
+
+.table-history-versions thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.text-break-anywhere {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    min-width: 0;
+}
+
+.rich-comment-box {
+    white-space: normal;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    line-height: 1.5;
+}
+
+.rich-comment-box p {
+    margin-bottom: 0.35rem;
+}
+
+.rich-comment-box p:last-child {
+    margin-bottom: 0;
+}
+
+.rich-comment-box img,
+.rich-comment-box table,
+.rich-comment-box pre {
+    max-width: 100% !important;
+}
+
+.rich-comment-box pre {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+}
+
+.line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.btn-toggle-expand {
+    font-size: 0.73rem !important;
+    cursor: pointer;
+}
+
+.file-action-link {
+    font-size: 0.78rem !important;
+    text-decoration: none !important;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.file-action-link:hover {
+    text-decoration: underline !important;
+}
+
+.file-action-icon {
+    width: 15px;
+    text-align: center;
+    flex-shrink: 0;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid px-0">
     <!-- Header -->
@@ -216,65 +306,79 @@
                 <div class="text-center py-4 text-muted small">Chưa có lịch sử nộp lại.</div>
             @else
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.84rem;">
+                    <table class="table table-hover align-middle mb-0 table-history-versions" style="font-size: 0.84rem;">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 80px;" class="text-center">Lần nộp</th>
-                                <th>Tệp Báo Cáo &amp; Đính Kèm</th>
-                                <th style="min-width: 200px;">Nội dung tiếp thu</th>
-                                <th style="width: 140px;">Thời gian nộp</th>
-                                <th class="text-center" style="width: 130px;">Trạng thái</th>
-                                <th style="min-width: 200px;">Nhận xét Giảng viên</th>
+                                <th style="width: 85px;" class="text-center align-middle">Lần nộp</th>
+                                <th style="width: 220px;" class="align-middle">Tệp Báo Cáo &amp; Đính Kèm</th>
+                                <th style="width: 22%;" class="align-middle">Nội dung tiếp thu</th>
+                                <th style="width: 135px;" class="align-middle">Thời gian nộp</th>
+                                <th style="width: 125px;" class="text-center align-middle">Trạng thái</th>
+                                <th style="width: auto; min-width: 260px;" class="align-middle">Nhận xét Giảng viên</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($lichSuNop as $b)
+                            @php
+                                $rawTomTat = strip_tags($b->TomTatChinhSua ?? '');
+                                $isTomTatLong = mb_strlen($rawTomTat) > 140;
+
+                                $rawNhanXet = strip_tags($b->NhanXetGV ?? '');
+                                $isNhanXetLong = mb_strlen($rawNhanXet) > 140;
+                            @endphp
                             <tr>
                                 <td class="text-center">
                                     <span class="badge bg-primary text-white rounded-pill px-3 py-1">Lần {{ $b->LanChinhSua }}</span>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold text-dark"><i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $b->TenFile }}</div>
-                                    <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none d-inline-block mt-1 border-0 bg-transparent"
-                                        onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $b->id) }}', '{{ addslashes($b->TenFile) }}', 'Báo cáo hoàn thiện Lần {{ $b->LanChinhSua }} - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $b->id) }}', title: 'Báo Cáo Sau Bảo Vệ (Lần {{ $b->LanChinhSua }}): {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}' })">
-                                        <i class="fa-solid fa-eye me-1"></i> Xem báo cáo PDF
-                                    </button>
-                                    @if($b->FileGiaiTrinh)
-                                    <div class="mt-1">
-                                        <button type="button" class="btn btn-link btn-sm p-0 text-info text-decoration-none border-0 bg-transparent"
-                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $b->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($b->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình Lần {{ $b->LanChinhSua }} - {{ addslashes($hoSo->nhom->deTai->TenDeTai ?? $hoSo->MaHoSo) }}', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $b->id, 'type' => 'giai_trinh']) }}' })">
-                                            <i class="fa-solid fa-file-lines me-1"></i> Xem bản giải trình
+                                    <x-file-actions :b="$b" :hoSo="$hoSo" />
+                                </td>
+                                <td>
+                                    @if(!empty($b->TomTatChinhSua))
+                                        <div class="rich-comment-box {{ $isTomTatLong ? 'line-clamp-4' : '' }}" title="{{ $rawTomTat }}">
+                                            {!! \App\Helpers\HtmlHelper::renderRichText($b->TomTatChinhSua) !!}
+                                        </div>
+                                        @if($isTomTatLong)
+                                        <button type="button" class="btn btn-link btn-xs p-0 text-primary text-decoration-none fw-semibold btn-toggle-expand mt-1 d-inline-flex align-items-center" onclick="toggleExpandRowText(this)">
+                                            Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>
                                         </button>
-                                    </div>
-                                    @endif
-                                    @if($b->FileMinhChung)
-                                    <div class="mt-1">
-                                        <a href="{{ route('baocao_sau_baove.download', ['id' => $b->id, 'type' => 'minh_chung']) }}" download="{{ $b->TenFileMinhChung ?: 'MinhChung.zip' }}" class="small text-success text-decoration-none">
-                                            <i class="fa-solid fa-paperclip me-1"></i> Tải minh chứng
-                                        </a>
-                                    </div>
+                                        @endif
+                                    @else
+                                        <span class="text-muted small fst-italic">--</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="small text-secondary" style="max-width: 300px; line-height: 1.5;">{!! \App\Helpers\HtmlHelper::renderRichText($b->TomTatChinhSua) !!}</div>
-                                </td>
-                                <td>
-                                    <div class="small fw-semibold text-dark">{{ \Carbon\Carbon::parse($b->NgayNop)->format('d/m/Y H:i') }}</div>
-                                    <div class="small text-muted">{{ $b->sinhVienNop->HoTen ?? $b->NguoiNop }}</div>
+                                    <div class="small fw-semibold text-dark text-nowrap">{{ \Carbon\Carbon::parse($b->NgayNop)->format('d/m/Y H:i') }}</div>
+                                    <div class="small text-muted text-break-anywhere mt-1" title="{{ $b->sinhVienNop->HoTen ?? $b->NguoiNop }}">
+                                        <i class="fa-regular fa-user me-1"></i>{{ $b->sinhVienNop->HoTen ?? $b->NguoiNop }}
+                                    </div>
                                 </td>
                                 <td class="text-center">
                                     @if($b->TrangThai === 'Đạt')
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Đạt Yêu Cầu</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-bold text-nowrap">Đạt Yêu Cầu</span>
                                     @elseif($b->TrangThai === 'Yêu cầu sửa tiếp')
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">Sửa Lại</span>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 fw-bold text-nowrap">Sửa Lại</span>
                                     @else
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">Đã Nộp</span>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-bold text-nowrap">Đã Nộp</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($b->NhanXetGV)
-                                        <div class="small fw-semibold text-dark" style="line-height: 1.5;">{!! \App\Helpers\HtmlHelper::renderRichText($b->NhanXetGV) !!}</div>
-                                        <div class="text-muted mt-1" style="font-size: 0.72rem;">{{ $b->NgayKiemTra ? \Carbon\Carbon::parse($b->NgayKiemTra)->format('d/m/Y H:i') : '' }} &bull; {{ $b->NguoiKiemTra }}</div>
+                                        <div class="rich-comment-box fw-semibold text-dark {{ $isNhanXetLong ? 'line-clamp-4' : '' }}" title="{{ $rawNhanXet }}">
+                                            {!! \App\Helpers\HtmlHelper::renderRichText($b->NhanXetGV) !!}
+                                        </div>
+                                        @if($isNhanXetLong)
+                                        <button type="button" class="btn btn-link btn-xs p-0 text-primary text-decoration-none fw-semibold btn-toggle-expand mt-1 d-inline-flex align-items-center" onclick="toggleExpandRowText(this)">
+                                            Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>
+                                        </button>
+                                        @endif
+                                        <div class="text-muted mt-1 d-flex flex-wrap align-items-center gap-1" style="font-size: 0.73rem;">
+                                            @if($b->NgayKiemTra)
+                                            <span><i class="fa-regular fa-clock me-1"></i>{{ \Carbon\Carbon::parse($b->NgayKiemTra)->format('d/m/Y H:i') }}</span>
+                                            <span>&bull;</span>
+                                            @endif
+                                            <span class="text-secondary text-break-anywhere">{{ $b->NguoiKiemTra }}</span>
+                                        </div>
                                     @else
                                         <span class="text-muted small fst-italic">--</span>
                                     @endif
@@ -295,6 +399,18 @@ function toggleHanNop(val) {
     const el = document.getElementById('groupHanNopMoi');
     if (el) {
         el.style.display = (val === 'yeu_cau_sua_tiep') ? 'block' : 'none';
+    }
+}
+function toggleExpandRowText(btn) {
+    const container = btn.previousElementSibling;
+    if (!container) return;
+    const isClamped = container.classList.contains('line-clamp-4');
+    if (isClamped) {
+        container.classList.remove('line-clamp-4');
+        btn.innerHTML = 'Thu gọn <i class="fa-solid fa-angle-up ms-1"></i>';
+    } else {
+        container.classList.add('line-clamp-4');
+        btn.innerHTML = 'Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>';
     }
 }
 </script>

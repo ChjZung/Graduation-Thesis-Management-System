@@ -957,8 +957,8 @@
                                         <div class="row g-2 align-items-center">
                                             <div class="col-md-2">
                                                 <select name="LienKetKhac[{{ $index }}][loai]" class="form-select form-select-sm fw-semibold" onchange="toggleLienKetType(this)">
-                                                    <option value="link" {{ !$isTypeFile ? 'selected' : '' }}>🔗 Link URL</option>
-                                                    <option value="file" {{ $isTypeFile ? 'selected' : '' }}>📁 Tệp File</option>
+                                                    <option value="link" {{ !$isTypeFile ? 'selected' : '' }}>Link URL</option>
+                                                    <option value="file" {{ $isTypeFile ? 'selected' : '' }}>Tệp File</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-3">
@@ -1265,8 +1265,8 @@
             <div class="row g-2 align-items-center">
                 <div class="col-md-2">
                     <select name="LienKetKhac[${linkIndex}][loai]" class="form-select form-select-sm fw-semibold" onchange="toggleLienKetType(this)">
-                        <option value="link">🔗 Link URL</option>
-                        <option value="file">📁 Tệp File</option>
+                        <option value="link">Link URL</option>
+                        <option value="file">Tệp File</option>
                     </select>
                 </div>
                 <div class="col-md-3">

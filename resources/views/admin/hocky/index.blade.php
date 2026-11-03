@@ -100,9 +100,9 @@
                 </div>
                 <select name="trang_thai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Đang diễn ra" {{ in_array(request('trang_thai'), ['1', 'Đang diễn ra', 'Hoạt động']) ? 'selected' : '' }}>🟢 Đang mở (Hoạt động)</option>
-                    <option value="Đã kết thúc" {{ in_array(request('trang_thai'), ['0', 'Đã kết thúc']) ? 'selected' : '' }}>⚪ Đã kết thúc</option>
-                    <option value="Chưa bắt đầu" {{ request('trang_thai') === 'Chưa bắt đầu' ? 'selected' : '' }}>🔵 Chưa bắt đầu</option>
+                    <option value="Đang diễn ra" {{ in_array(request('trang_thai'), ['1', 'Đang diễn ra', 'Hoạt động']) ? 'selected' : '' }}>Đang mở (Hoạt động)</option>
+                    <option value="Đã kết thúc" {{ in_array(request('trang_thai'), ['0', 'Đã kết thúc']) ? 'selected' : '' }}>Đã kết thúc</option>
+                    <option value="Chưa bắt đầu" {{ request('trang_thai') === 'Chưa bắt đầu' ? 'selected' : '' }}>Chưa bắt đầu</option>
                 </select>
                 @if(request('search') || request('trang_thai') !== null)
                     <a href="{{ route('hocky.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
@@ -314,9 +314,9 @@
                     <div class="mb-2">
                         <label class="form-label-huit">Trạng Thái Học Kỳ Hệ Thống</label>
                         <select name="TrangThai" class="form-select form-select-huit">
-                            <option value="UPCOMING" selected>🔵 Chưa bắt đầu (Chuẩn bị kích hoạt)</option>
-                            <option value="1">🟢 Đang diễn ra (Active)</option>
-                            <option value="0">⚪ Đã kết thúc (Completed)</option>
+                            <option value="UPCOMING" selected>Chưa bắt đầu (Chuẩn bị kích hoạt)</option>
+                            <option value="1">Đang diễn ra (Active)</option>
+                            <option value="0">Đã kết thúc (Completed)</option>
                         </select>
                     </div>
                 </div>

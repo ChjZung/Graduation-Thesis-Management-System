@@ -271,12 +271,13 @@
                     <!-- File Đề Cương / Tài Liệu Đính Kèm -->
                     @if($detai->FileDeCuong)
                         @php
-                            $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                            $filePath = route('files.decuong.download', $detai->MaDeTai);
+                            $downloadUrl = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                             $fileName = basename($detai->FileDeCuong);
                         @endphp
                         <div class="alert alert-light border rounded-3 p-3 d-flex align-items-center justify-content-between mb-0 mt-3 flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-2 min-w-0">
-                                <i class="fa-solid fa-file-pdf text-danger fs-3 shrink-0 flex-shrink-0"></i>
+                                <i class="fa-solid fa-file-lines text-primary fs-3 shrink-0 flex-shrink-0"></i>
                                 <div class="min-w-0">
                                     <div class="fw-bold text-dark">File Đề Cương Chi Tiết Đính Kèm</div>
                                     <div class="small text-muted text-break break-words" style="overflow-wrap: anywhere; word-break: break-word;">Tệp: {{ $fileName }}</div>
@@ -284,10 +285,10 @@
                             </div>
                             <div class="d-flex gap-2 shrink-0 flex-shrink-0">
                                 <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs d-inline-flex align-items-center" 
-                                        onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
                                     <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
                                 </button>
-                                <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                                <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
                                     <i class="fa-solid fa-download me-2"></i> Tải Về
                                 </a>
                             </div>

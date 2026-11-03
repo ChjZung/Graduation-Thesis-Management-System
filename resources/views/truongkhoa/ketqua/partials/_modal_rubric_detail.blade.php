@@ -56,12 +56,8 @@
                         <tbody>
                             @foreach($item['diemGiamKhaos'] as $gIdx => $gk)
                                 @php
-                                    $badgeRole = match($gk['VaiTro']) {
-                                        'Chủ tịch'  => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                        'Thư ký'    => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                        'Phản biện' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
-                                        default     => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                    };
+                                    $normRole = \App\Enums\VaiTroHoiDong::normalize($gk['VaiTro'] ?? null);
+                                    $badgeRole = \App\Enums\VaiTroHoiDong::getBadgeClass($normRole);
                                 @endphp
                                 <tr>
                                     <td class="text-center text-muted">{{ $gIdx + 1 }}</td>
@@ -70,7 +66,7 @@
                                             {{ $gk['HoTen'] }}
                                         </div>
                                         <span class="badge {{ $badgeRole }} rounded-pill px-2 py-0" style="font-size: 10.5px;">
-                                            {{ $gk['VaiTro'] }}
+                                            {{ $normRole }}
                                         </span>
                                     </td>
                                     {{-- Điểm từng tiêu chí rubric --}}

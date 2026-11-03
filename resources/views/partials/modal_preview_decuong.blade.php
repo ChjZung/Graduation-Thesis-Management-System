@@ -344,7 +344,14 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
     }
 
     const safeName = fileName || 'De_Cuong_Chi_Tiet';
-    const downloadUrl = options.downloadUrl || targetUrl;
+    let downloadUrl = options.downloadUrl;
+    if (!downloadUrl) {
+        if (targetUrl.includes('?')) {
+            downloadUrl = targetUrl + '&download=1';
+        } else {
+            downloadUrl = targetUrl + '?download=1';
+        }
+    }
 
     // Cập nhật các liên kết mở tab và tải về
     openTabBtn.href = targetUrl;
@@ -404,7 +411,10 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
 
         if (window.pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('js/pdf.worker.min.js') }}";
-            pdfjsLib.getDocument(targetUrl).promise.then(function(pdfDoc) {
+            pdfjsLib.getDocument({
+                url: targetUrl,
+                withCredentials: true
+            }).promise.then(function(pdfDoc) {
                 currentPdfDoc = pdfDoc;
                 currentPdfNumPages = pdfDoc.numPages;
                 currentPdfScale = 'fit';
@@ -435,9 +445,53 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
             return;
         }
 
-        fetch(targetUrl)
-            .then(function(res) {
-                if (!res.ok) throw new Error('Không thể tải tệp từ máy chủ (Mã: ' + res.status + ')');
+        fetch(targetUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/octet-stream, application/json, */*'
+            }
+        })
+            .then(async function(res) {
+                if (!res.ok) {
+                    let errDetail = '';
+                    try {
+                        const text = await res.text();
+                        try {
+                            const json = JSON.parse(text);
+                            if (json && json.message) errDetail = json.message;
+                        } catch (_) {
+                            // Không phải JSON
+                        }
+                    } catch (_) {}
+
+                    if (res.status === 401) {
+                        throw {
+                            type: 'auth',
+                            status: 401,
+                            message: 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại để xem tài liệu.'
+                        };
+                    } else if (res.status === 403) {
+                        throw {
+                            type: 'forbidden',
+                            status: 403,
+                            message: errDetail || 'Bạn không có quyền truy cập hoặc xem tệp tài liệu này. Vui lòng liên hệ người quản trị hoặc giảng viên phụ trách nếu bạn cần cấp quyền.'
+                        };
+                    } else if (res.status === 404) {
+                        throw {
+                            type: 'not_found',
+                            status: 404,
+                            message: errDetail || 'Tệp tài liệu không tồn tại hoặc đã bị gỡ bỏ khỏi hệ thống lưu trữ.'
+                        };
+                    } else {
+                        throw {
+                            type: 'server',
+                            status: res.status,
+                            message: errDetail || 'Máy chủ phản hồi trạng thái không hợp lệ. Bạn vui lòng tải về máy để mở trực tiếp bằng Microsoft Word.'
+                        };
+                    }
+                }
                 return res.arrayBuffer();
             })
             .then(function(arrayBuffer) {
@@ -446,13 +500,17 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
             .then(function(result) {
                 loadingEl.classList.add('d-none');
                 docxContainer.classList.remove('d-none');
-                docxContent.innerHTML = result.value || '<div class="alert alert-info text-center">Tệp tài liệu này không có nội dung văn bản.</div>';
+                docxContent.innerHTML = result.value || '<div class="alert alert-info text-center py-4">Tệp tài liệu Word này không có nội dung văn bản hiển thị.</div>';
             })
             .catch(function(err) {
                 console.warn('Lỗi đọc nhanh Word:', err);
                 loadingEl.classList.add('d-none');
                 fallbackContainer.classList.remove('d-none');
-                fallbackMsg.textContent = 'Không thể xem trước tệp Word này: ' + (err.message || 'Lỗi đọc tệp') + '. Bạn có thể tải về để mở trên máy.';
+                if (err && err.message) {
+                    fallbackMsg.textContent = err.message;
+                } else {
+                    fallbackMsg.textContent = 'Không thể xem trước tệp Word này trên trình duyệt do định dạng phức tạp. Bạn có thể bấm nút "Tải về máy" bên dưới để mở trực tiếp bằng Microsoft Word.';
+                }
             });
     } else {
         badgeEl.className = 'badge bg-secondary text-white fw-bold px-2 py-1';
@@ -460,9 +518,9 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
         loadingEl.classList.add('d-none');
         fallbackContainer.classList.remove('d-none');
         if (isDoc) {
-            fallbackMsg.textContent = 'Tệp có định dạng Word cũ (.doc). Trình duyệt hỗ trợ xem nhanh tốt nhất với tệp .pdf và .docx. Bạn có thể mở hoặc tải về máy để xem bằng Word.';
+            fallbackMsg.textContent = 'Tệp có định dạng Word cũ (.doc). Trình duyệt hỗ trợ xem nhanh tốt nhất với tệp .pdf và .docx. Bạn có thể tải về máy tính để mở bằng Microsoft Word.';
         } else {
-            fallbackMsg.textContent = 'Tệp có định dạng đặc biệt. Bạn có thể mở hoặc tải về máy tính để xem đầy đủ.';
+            fallbackMsg.textContent = 'Tệp có định dạng đặc biệt. Bạn có thể tải về máy tính để xem đầy đủ.';
         }
     }
 }

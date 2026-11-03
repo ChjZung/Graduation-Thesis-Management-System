@@ -199,9 +199,12 @@
                                     <div class="small text-muted">Được tải lên bởi Giảng viên hướng dẫn</div>
                                 </div>
                             </div>
-                            <div>
-                                <a href="{{ asset($detai->FileDeCuong) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
-                                    <i class="fa-solid fa-eye me-2"></i> Xem / Tải file
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('files.decuong.download', $detai->MaDeTai) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                    <i class="fa-solid fa-eye me-2"></i> Xem file
+                                </a>
+                                <a href="{{ route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]) }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                                    <i class="fa-solid fa-download me-2"></i> Tải về
                                 </a>
                             </div>
                         </div>

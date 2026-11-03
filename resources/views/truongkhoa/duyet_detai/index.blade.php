@@ -423,7 +423,7 @@
                             <select name="MaHocKy" id="statsSelectHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                                     </option>
                                 @endforeach
                             </select>

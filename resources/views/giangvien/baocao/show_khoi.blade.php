@@ -163,10 +163,10 @@
                         </label>
                         <select name="LoaiNhanXet" class="form-select fw-bold" required>
                             <option value="Đạt" {{ old('LoaiNhanXet', $khoi->TrangThai) === 'Đạt' ? 'selected' : '' }}>
-                                ✅ Đạt (Công nhận kết quả đợt này)
+                                Đạt (Công nhận kết quả đợt này)
                             </option>
                             <option value="Yêu cầu nộp lại" {{ old('LoaiNhanXet', $khoi->TrangThai) === 'Yêu cầu nộp lại' ? 'selected' : '' }}>
-                                🔄 Yêu cầu chỉnh sửa / Bổ sung
+                                Yêu cầu chỉnh sửa / Bổ sung
                             </option>
                         </select>
                         <div class="form-text text-muted" style="font-size: 12px;">

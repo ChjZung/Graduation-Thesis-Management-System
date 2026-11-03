@@ -59,7 +59,7 @@ class PhanBienDeCuongController extends Controller
             }
         }
 
-        $phanCongs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $phanCongs = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // Base query tính counts scoped theo Học kỳ
         $baseCountQuery = PhanCongPhanBien::where('MaGV', $gv->MaGV)->where('VaiTro', 'Phản biện đề cương');

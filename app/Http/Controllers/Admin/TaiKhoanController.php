@@ -187,7 +187,7 @@ class TaiKhoanController extends Controller
             }
         }
 
-        $taiKhoans = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $taiKhoans = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // Danh mục phục vụ các bộ lọc & modal
         $khoas = Khoa::orderBy('TenKhoa')->get();

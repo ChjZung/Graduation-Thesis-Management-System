@@ -260,11 +260,12 @@
 
                     @if($dt->coTepDeCuong())
                         @php
-                            $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                            $filePath = route('files.decuong.download', $dt->MaDeTai);
+                            $downloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
                             $pbDt = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
                         @endphp
                         <button type="button" class="badge bg-success-subtle text-success border text-decoration-none btn px-2 py-1 small d-inline-flex align-items-center text-truncate truncate" style="max-width: 100%;" 
-                                onclick="quickPreviewOutline('{{ $filePath }}', '{{ basename($dt->FileDeCuong) }}', '{{ addslashes($dt->TenDeTai) }}')"
+                                onclick="quickPreviewOutline('{{ $filePath }}', '{{ basename($dt->FileDeCuong) }}', '{{ addslashes($dt->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })"
                                 title="Xem nhanh đề cương chi tiết: {{ basename($dt->FileDeCuong) }}">
                             <i class="fa-solid fa-paperclip me-2"></i>Đề cương
                         </button>

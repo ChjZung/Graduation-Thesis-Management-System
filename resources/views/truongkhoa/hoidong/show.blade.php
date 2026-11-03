@@ -274,15 +274,7 @@
                                         </div>
                                     </td>
                                     <td class="text-center py-2">
-                                        @php
-                                            $badgeStyle = match($tv->VaiTro) {
-                                                'Chủ tịch' => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                                'Thư ký', 'Ủy viên thư ký' => 'bg-info-subtle text-info border border-info-subtle',
-                                                'Phản biện', 'Ủy viên phản biện' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                                default => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                            };
-                                        @endphp
-                                        <span class="badge {{ $badgeStyle }} rounded-pill px-3 py-1" style="font-size: 0.75rem;">{{ $tv->VaiTro }}</span>
+                                        <span class="badge {{ $tv->badge_class }} rounded-pill px-3 py-1" style="font-size: 0.75rem;">{{ $tv->short_vai_tro }}</span>
                                     </td>
                                     <td class="pe-3 text-center py-2">
                                         <div class="d-flex justify-content-center gap-1">
@@ -410,10 +402,10 @@
                                                             <div class="mb-2">
                                                                 <label class="form-label small fw-semibold text-secondary">Vai trò mới:</label>
                                                                 <select name="VaiTro" class="form-select form-select-sm" required>
-                                                                    <option value="Chủ tịch" {{ $tv->VaiTro === 'Chủ tịch' ? 'selected' : '' }}>Chủ tịch</option>
-                                                                    <option value="Ủy viên thư ký" {{ in_array($tv->VaiTro, ['Thư ký', 'Ủy viên thư ký']) ? 'selected' : '' }}>Ủy viên thư ký</option>
-                                                                    <option value="Ủy viên phản biện" {{ in_array($tv->VaiTro, ['Phản biện', 'Ủy viên phản biện']) ? 'selected' : '' }}>Ủy viên phản biện</option>
-                                                                    <option value="Ủy viên" {{ in_array($tv->VaiTro, ['Ủy viên', 'Thành viên']) ? 'selected' : '' }}>Ủy viên</option>
+                                                                    <option value="Chủ tịch" {{ \App\Enums\VaiTroHoiDong::isChuTich($tv->VaiTro) ? 'selected' : '' }}>Chủ tịch</option>
+                                                                    <option value="Thư ký" {{ \App\Enums\VaiTroHoiDong::isThuKy($tv->VaiTro) ? 'selected' : '' }}>Thư ký</option>
+                                                                    <option value="Phản biện" {{ \App\Enums\VaiTroHoiDong::isPhanBien($tv->VaiTro) ? 'selected' : '' }}>Phản biện</option>
+                                                                    <option value="Ủy viên" {{ \App\Enums\VaiTroHoiDong::isUyVien($tv->VaiTro) ? 'selected' : '' }}>Ủy viên</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -690,9 +682,9 @@
                         <label class="form-label fw-semibold text-secondary small">Vai trò trong Hội đồng: <span class="text-danger">*</span></label>
                         <select name="VaiTro" class="form-select" required>
                             <option value="Ủy viên">Ủy viên</option>
-                            <option value="Chủ tịch">Chủ tịch Hội đồng</option>
-                            <option value="Ủy viên thư ký">Ủy viên thư ký</option>
-                            <option value="Ủy viên phản biện">Ủy viên phản biện</option>
+                            <option value="Chủ tịch">Chủ tịch</option>
+                            <option value="Thư ký">Thư ký</option>
+                            <option value="Phản biện">Phản biện</option>
                         </select>
                     </div>
                     <div class="p-3 bg-light rounded-3 text-muted small mb-2">

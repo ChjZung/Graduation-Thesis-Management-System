@@ -79,11 +79,9 @@ trait HandlesExcelImport
                       . "</div>";
             }
 
-            $alertType = $hasErrors ? ($res['success_count'] > 0 ? 'import_warning' : 'import_danger') : 'import_result';
+            $alertType = $hasErrors ? ($res['success_count'] > 0 ? 'warning' : 'error') : 'success';
 
             return redirect()->back()
-                ->with('import_result', $msg)
-                ->with('import_alert_type', $alertType)
                 ->with($alertType, $msg);
         } catch (\Throwable $e) {
             Log::error("Import {$entityLabel} error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -92,12 +90,7 @@ trait HandlesExcelImport
                      . "<div><strong>Lỗi Import {$entityLabel}:</strong> " . e($e->getMessage()) . "</div></div>"
                      . "<div class='small text-muted'>Vui lòng kiểm tra lại cấu trúc file (.xlsx, .xls, .csv) theo đúng file mẫu chuẩn và thử lại.</div>";
             return redirect()->back()
-                ->with('import_danger', $errHtml)
-                ->with('import_result', $errHtml)
-                ->withErrors(
-                    'Lỗi khi đọc file: ' . $e->getMessage()
-                    . '. Vui lòng đảm bảo file đúng định dạng (.xlsx, .xls, .csv) và thử lại.'
-                );
+                ->with('error', $errHtml);
         }
     }
 }

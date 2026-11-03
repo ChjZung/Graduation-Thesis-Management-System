@@ -115,7 +115,7 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalRaSoat">
-                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> ⚡ Tự Động Rà Soát
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Tự Động Rà Soát
             </button>
             <form method="POST" action="{{ route('admin.sinhvien.cong_bo') }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn công bố chính thức danh sách đủ điều kiện cho học kỳ này?')">
                 @csrf
@@ -287,7 +287,7 @@
                             <td colspan="9" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary"></i>
                                 <div class="fw-bold">Chưa có dữ liệu rà soát cho học kỳ {{ $selectedHocKy }}</div>
-                                <div class="small">Nhấn nút <strong>⚡ Tự Động Rà Soát</strong> để hệ thống tự động quét tiêu chí tích lũy tín chỉ của tất cả sinh viên.</div>
+                                <div class="small">Nhấn nút <strong>Tự Động Rà Soát</strong> để hệ thống tự động quét tiêu chí tích lũy tín chỉ của tất cả sinh viên.</div>
                             </td>
                         </tr>
                     @endforelse

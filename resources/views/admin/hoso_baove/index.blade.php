@@ -93,11 +93,11 @@
                 </div>
                 <select name="TrangThai" class="form-select" style="min-width: 210px;" onchange="this.form.submit()">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Chờ thẩm định" {{ request('TrangThai') === 'Chờ thẩm định' ? 'selected' : '' }}>🟠 Chờ thẩm định</option>
-                    <option value="Đủ điều kiện bảo vệ" {{ request('TrangThai') === 'Đủ điều kiện bảo vệ' ? 'selected' : '' }}>🟢 Đủ điều kiện bảo vệ</option>
-                    <option value="Đã phân công" {{ request('TrangThai') === 'Đã phân công' ? 'selected' : '' }}>🔵 Đã xếp Hội đồng</option>
-                    <option value="Không đủ điều kiện" {{ request('TrangThai') === 'Không đủ điều kiện' ? 'selected' : '' }}>🔴 Không đủ điều kiện</option>
-                    <option value="Đã lưu trữ" {{ request('TrangThai') === 'Đã lưu trữ' ? 'selected' : '' }}>⚪ Đã lưu trữ</option>
+                    <option value="Chờ thẩm định" {{ request('TrangThai') === 'Chờ thẩm định' ? 'selected' : '' }}>Chờ thẩm định</option>
+                    <option value="Đủ điều kiện bảo vệ" {{ request('TrangThai') === 'Đủ điều kiện bảo vệ' ? 'selected' : '' }}>Đủ điều kiện bảo vệ</option>
+                    <option value="Đã phân công" {{ request('TrangThai') === 'Đã phân công' ? 'selected' : '' }}>Đã xếp Hội đồng</option>
+                    <option value="Không đủ điều kiện" {{ request('TrangThai') === 'Không đủ điều kiện' ? 'selected' : '' }}>Không đủ điều kiện</option>
+                    <option value="Đã lưu trữ" {{ request('TrangThai') === 'Đã lưu trữ' ? 'selected' : '' }}>Đã lưu trữ</option>
                 </select>
                 @if(request('search') || request('TrangThai'))
                     <a href="{{ route('admin.hosoBaoVe.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>

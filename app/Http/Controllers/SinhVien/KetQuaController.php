@@ -323,7 +323,7 @@ class KetQuaController extends Controller
             return redirect()->back()->with('error', 'Báo cáo sau bảo vệ của nhóm đã được xác nhận Đạt/Hoàn thành chuẩn lưu trữ. Không thể nộp lại.');
         }
 
-        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien) {
+        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien, $user) {
             $lanChinhSuaHienTai = BaoCaoSauBaoVe::where('MaHoSo', $hoSo->MaHoSo)->count() + 1;
             $subFolder = "hoso/{$hoSo->MaNhom}/bao_cao_sau_bao_ve/lan_{$lanChinhSuaHienTai}";
 
@@ -399,6 +399,14 @@ class KetQuaController extends Controller
                 "Báo cáo khóa luận hoàn thiện sau bảo vệ (Lần {$lanChinhSuaHienTai}) đã được nộp thành công bởi {$sinhVien->HoTen}.",
                 'Báo cáo sau bảo vệ'
             );
+
+            // Gửi thông báo đến Cán bộ Quản lý liên quan: Giáo vụ, Trưởng khoa, Trưởng bộ môn (không gửi trùng)
+            ThongBaoService::thongBaoCanBoQuanLy(
+                $hoSo,
+                'Sinh viên đã nộp lại báo cáo hoàn thiện sau bảo vệ',
+                "Sinh viên {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp Báo cáo hoàn thiện sau bảo vệ (Lần {$lanChinhSuaHienTai}). Kính mời Thầy/Cô kiểm tra.",
+                $user->MaTK
+            );
         });
 
         return redirect()->route('sinhvien.ketqua.hoanthien')
@@ -455,7 +463,7 @@ class KetQuaController extends Controller
             return redirect()->back()->with('error', 'Vui lòng đính kèm tệp Báo cáo toàn văn khóa luận hoàn chỉnh sau bảo vệ (.pdf, .docx, .zip).');
         }
 
-        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien) {
+        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien, $user) {
             $updateData = [
                 'NgayNopBanChinhSua' => now(),
             ];

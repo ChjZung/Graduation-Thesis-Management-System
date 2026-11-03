@@ -45,7 +45,7 @@ class DeTaiPolicy
             return $maBoMon && $detaiBoMon && ($maBoMon === $detaiBoMon || 'BM_' . $maBoMon === $detaiBoMon || $maBoMon === 'BM_' . $detaiBoMon);
         }
 
-        // Giảng viên: chỉ xem đề tài do mình đề xuất HOẶC được phân công phản biện
+        // Giảng viên: chỉ xem đề tài do mình đề xuất HOẶC được phân công phản biện HOẶC thuộc hội đồng bảo vệ HOẶC đề tài đã công bố
         if ($role === 'Giảng viên') {
             $gv = GiangVien::getLoggedInGiangVien($user);
             if (!$gv) return false;
@@ -55,12 +55,27 @@ class DeTaiPolicy
             }
 
             // Được phân công phản biện đề tài này
-            return $deTai->phanCongPhanBiens()->where('MaGV', $gv->MaGV)->exists();
+            if ($deTai->phanCongPhanBiens()->where('MaGV', $gv->MaGV)->exists()) {
+                return true;
+            }
+
+            // Thành viên Hội đồng bảo vệ đánh giá đề tài này
+            if ($deTai->hoiDongs()->whereHas('thanhViens', fn($q) => $q->where('MaGV', $gv->MaGV))->exists()
+                || $deTai->hoSoBaoVes()->whereHas('hoiDong.thanhViens', fn($q) => $q->where('MaGV', $gv->MaGV))->exists()) {
+                return true;
+            }
+
+            // Đề tài đã công bố hoặc hoàn thành
+            if (in_array($deTai->TrangThai, ['Đã công bố', 'Hoàn thành'])) {
+                return true;
+            }
+
+            return false;
         }
 
         // Sinh viên: chỉ xem đề tài đã công bố HOẶC nhóm mình đã đăng ký
         if ($role === 'Sinh viên') {
-            if ($deTai->TrangThai === 'Đã công bố') {
+            if (in_array($deTai->TrangThai, ['Đã công bố', 'Hoàn thành'])) {
                 return true;
             }
 

@@ -15,8 +15,8 @@ class PhanCongController extends Controller
     use HandlesExcelImport;
 
     public function index(Request $request) {
-        $phancongs = PhanCongHuongDanLop::with(['giangVien.boMon', 'lop', 'hocKy'])->paginate(10, ['*'], 'page_hc');
-        $lophocphans = LopHocPhan::with(['giangVien.boMon', 'monHoc', 'hocKy', 'sinhVienLopHocPhans'])->orderBy('MaLopHP', 'desc')->paginate(10, ['*'], 'page_hp');
+        $phancongs = PhanCongHuongDanLop::with(['giangVien.boMon', 'lop', 'hocKy'])->paginate(5, ['*'], 'page_hc')->withQueryString();
+        $lophocphans = LopHocPhan::with(['giangVien.boMon', 'monHoc', 'hocKy', 'sinhVienLopHocPhans'])->orderBy('MaLopHP', 'desc')->paginate(5, ['*'], 'page_hp')->withQueryString();
         
         $giangviens = GiangVien::with('boMon')->get();
         $lops = Lop::all();

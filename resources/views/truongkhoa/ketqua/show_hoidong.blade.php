@@ -2,6 +2,52 @@
 
 @section('page_title', 'Chi Tiết Hội Đồng Bảo Vệ — ' . $hoiDong->TenHoiDong)
 
+@push('styles')
+<style>
+/* ════ BẢNG ĐỐI CHIẾU ĐIỂM GIÁM KHẢO (TRƯỞNG KHOA) ════ */
+.table-doichieu-diem {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.table-doichieu-diem thead th {
+    background-color: #003366 !important;
+    color: #ffffff !important;
+    vertical-align: middle !important;
+    border-bottom: 2px solid #002244 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+}
+
+/* Tên giám khảo: Không cắt chữ, cho phép xuống tối đa 2 dòng */
+.table-doichieu-diem thead th .gk-head-name {
+    color: #ffffff !important;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: normal !important;
+    line-height: 1.25;
+    overflow-wrap: anywhere !important;
+    word-break: normal;
+}
+
+/* Vai trò giám khảo: Màu sáng tương phản cao trên nền navy (>10:1 WCAG AA), không gạch chân */
+.table-doichieu-diem thead th .gk-head-role {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.72rem !important;
+    font-weight: 500;
+    text-decoration: none !important;
+    display: block;
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+}
+
+.table-doichieu-diem thead th .gk-head-role * {
+    color: rgba(255, 255, 255, 0.85) !important;
+    text-decoration: none !important;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid px-0">
     <!-- Header Navigation -->
@@ -85,12 +131,12 @@
             <div class="mt-3 pt-3 border-top">
                 <div class="small fw-bold text-secondary mb-2">Thành phần Giám khảo Hội đồng:</div>
                 <div class="row g-2">
-                    @foreach($hoiDong->thanhViens as $idx => $tv)
+                    @foreach($hoiDong->sorted_thanh_viens as $idx => $tv)
                     <div class="col-md-4 col-lg-3">
                         <div class="p-2 bg-white rounded-2 border d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="fw-bold text-dark small">{{ $tv->giangVien->HoTen ?? $tv->MaGV }}</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">{{ $tv->VaiTro ?? 'Thành viên' }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ $tv->short_vai_tro }}</div>
                             </div>
                             <span class="badge bg-light text-secondary border font-monospace">{{ $tv->MaGV }}</span>
                         </div>
@@ -186,7 +232,7 @@
                 <span class="text-muted fw-bold">Giám khảo:</span>
                 @foreach($item['gvHoanThanh'] as $gv)
                     <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2">
-                        <i class="fa-solid fa-check me-1"></i> {{ $gv['HoTen'] }} (Đã ký)
+                        <i class="fa-solid fa-check me-1"></i> {{ $gv['HoTen'] }}
                     </span>
                 @endforeach
                 @foreach($item['gvLuuNhap'] as $gv)
@@ -204,24 +250,30 @@
 
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.84rem;">
-                    <thead class="table-light">
+                <table class="table table-bordered table-hover align-middle mb-0 table-doichieu-diem" style="font-size: 0.84rem;">
+                    <thead>
                         <tr>
-                            <th style="width: 40px;" class="text-center">STT</th>
-                            <th style="min-width: 180px;">Sinh viên thực hiện</th>
-                            @foreach($hoiDong->thanhViens as $sIdx => $tv)
-                            <th class="text-center" style="min-width: 130px;">
-                                <div class="text-truncate" style="max-width: 120px;" title="{{ $tv->giangVien->HoTen ?? $tv->MaGV }}">
-                                    {{ $tv->giangVien->HoTen ?? $tv->MaGV }}
+                            <th style="width: 45px; min-width: 45px;" class="text-center align-middle text-white">STT</th>
+                            <th style="min-width: 190px;" class="align-middle text-white">Sinh viên thực hiện</th>
+                            @foreach($hoiDong->sorted_thanh_viens as $sIdx => $tv)
+                            @php
+                                $tenGk = $tv->giangVien->HoTen ?? $tv->MaGV;
+                                $vaiTroGk = $tv->short_vai_tro ?? 'Giám khảo';
+                            @endphp
+                            <th class="text-center align-middle text-white" style="min-width: 155px; width: 160px;" title="{{ $tenGk }} ({{ $vaiTroGk }})">
+                                <div class="gk-head-name" title="{{ $tenGk }} ({{ $vaiTroGk }})">
+                                    {{ $tenGk }}
                                 </div>
-                                <div class="text-muted" style="font-size: 0.72rem;">{{ $tv->VaiTro ?? 'Giám khảo' }}</div>
+                                <div class="gk-head-role">
+                                    {{ $vaiTroGk }}
+                                </div>
                             </th>
                             @endforeach
-                            <th class="text-center" style="width: 110px;">Độ lệch điểm</th>
-                            <th class="text-center" style="width: 110px;">Điểm TB Sơ Bộ</th>
-                            <th class="text-center text-primary" style="width: 120px;">Điểm Chính Thức</th>
-                            <th class="text-center" style="width: 110px;">Trạng Thái</th>
-                            <th class="text-center" style="width: 100px;">Xếp Loại</th>
+                            <th class="text-center align-middle text-white" style="min-width: 115px; width: 115px;">Độ lệch điểm</th>
+                            <th class="text-center align-middle text-white" style="min-width: 115px; width: 115px;">Điểm TB Sơ Bộ</th>
+                            <th class="text-center align-middle text-white" style="min-width: 125px; width: 125px;">Điểm Chính Thức</th>
+                            <th class="text-center align-middle text-white" style="min-width: 115px; width: 115px;">Trạng Thái</th>
+                            <th class="text-center align-middle text-white" style="min-width: 100px; width: 100px;">Xếp Loại</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -237,7 +289,7 @@
                             </td>
 
                             {{-- Điểm từng Giám khảo --}}
-                            @foreach($hoiDong->thanhViens as $tv)
+                            @foreach($hoiDong->sorted_thanh_viens as $tv)
                             @php
                                 $judgeInfo = $svDetail['diemCacGiamKhao'][$tv->MaGV] ?? null;
                                 $scoreVal = $judgeInfo['Diem'] ?? null;
@@ -434,9 +486,9 @@
                                 <label class="form-label small fw-bold text-dark">Người phụ trách kiểm tra, xác nhận <span class="text-danger">*</span>:</label>
                                 <select name="NguoiKiemTraChinhSua" class="form-select" required>
                                     <option value="{{ $deTai->giangVien->MaGV ?? '' }}">GVHD: {{ $deTai->giangVien->HoTen ?? 'Chưa rõ' }}</option>
-                                    @foreach($hoiDong->thanhViens as $tv)
+                                    @foreach($hoiDong->sorted_thanh_viens as $tv)
                                         @if($tv->MaGV !== ($deTai->giangVien->MaGV ?? ''))
-                                            <option value="{{ $tv->MaGV }}">{{ $tv->VaiTro ?? 'Thành viên HĐ' }}: {{ $tv->giangVien->HoTen ?? $tv->MaGV }}</option>
+                                            <option value="{{ $tv->MaGV }}">{{ $tv->short_vai_tro }}: {{ $tv->giangVien->HoTen ?? $tv->MaGV }}</option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -462,7 +514,10 @@
     {{-- MODAL XEM CHI TIẾT TỪNG PHIẾU CHẤM GỐC --}}
     @foreach($allPhieuChams as $phieu)
     @php
-        $rubricP = ($phieu->LoaiKhoaLuan === 'KLKS') ? $rubricKLKS : $rubricKLCN;
+        $customChucNangP = $phieu->hoSoBaoVe?->TieuChiChucNang;
+        $rubricP = ($phieu->LoaiKhoaLuan === 'KLKS') 
+            ? \App\Models\PhieuChamDiem::getRubricKLKS($customChucNangP) 
+            : \App\Models\PhieuChamDiem::getRubricKLCN($customChucNangP);
         $chiTietP = $phieu->ChiTietDiem ?? [];
     @endphp
     <div class="modal fade" id="modalXemPhieu_{{ $phieu->MaGV }}_{{ $phieu->MaSV }}" tabindex="-1" aria-hidden="true">
@@ -486,28 +541,30 @@
                         <table class="table table-bordered table-sm align-middle text-center mb-0" style="font-size: 0.8rem;">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 40px;">STT</th>
-                                    <th class="text-start">Tiêu chí đánh giá</th>
-                                    <th style="width: 70px;">CLO</th>
-                                    <th style="width: 80px;">Tối đa</th>
-                                    <th style="width: 90px;">Điểm chấm</th>
+                                    <th style="width: 45px; min-width: 45px;" class="text-center align-middle">STT</th>
+                                    <th class="text-start align-middle" style="width: 58%; min-width: 320px;">Tiêu chí đánh giá</th>
+                                    <th style="width: 70px; min-width: 70px;" class="text-center align-middle">CLO</th>
+                                    <th style="width: 75px; min-width: 75px;" class="text-center align-middle">Tối đa</th>
+                                    <th style="width: 85px; min-width: 85px;" class="text-center align-middle">Điểm chấm</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($rubricP as $cr)
                                 <tr>
-                                    <td>{{ $cr['stt'] }}</td>
-                                    <td class="text-start">{{ $cr['noi_dung'] }}</td>
-                                    <td><span class="badge bg-light text-secondary border">{{ $cr['clo'] }}</span></td>
-                                    <td class="fw-bold">{{ number_format($cr['max'], 2) }}</td>
-                                    <td class="fw-bold text-primary">
+                                    <td class="text-center align-top py-2 fw-semibold text-secondary">{{ $cr['stt'] }}</td>
+                                    <td class="text-start align-top py-2" style="white-space: normal !important; overflow-wrap: anywhere !important; word-break: normal;">
+                                        @include('partials.tieu_chi_renderer', ['cr' => $cr])
+                                    </td>
+                                    <td class="text-center align-top py-2"><span class="badge bg-light text-secondary border">{{ $cr['clo'] }}</span></td>
+                                    <td class="text-center align-top py-2 fw-bold">{{ number_format($cr['max'], 2) }}</td>
+                                    <td class="text-center align-top py-2 fw-bold text-primary">
                                         {{ isset($chiTietP[$cr['id']]) ? number_format((float)$chiTietP[$cr['id']], 2) : '0.00' }}
                                     </td>
                                 </tr>
                                 @endforeach
                                 <tr class="table-primary fw-bold">
                                     <td colspan="4" class="text-end">TỔNG ĐIỂM:</td>
-                                    <td class="fs-6 text-primary">{{ number_format((float)$phieu->Diem, 2) }}</td>
+                                    <td class="fs-6 text-primary text-center">{{ number_format((float)$phieu->Diem, 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -520,14 +577,7 @@
                     </div>
                     @endif
                 </div>
-                <div class="modal-footer bg-light py-2 d-flex justify-content-between">
-                    <form action="{{ route('truongkhoa.ketqua.mokhoaphieu') }}" method="POST" class="d-inline" onsubmit="return confirm('Trưởng khoa có chắc muốn MỞ KHÓA phiếu chấm này để Giám khảo chấm lại?');">
-                        @csrf
-                        <input type="hidden" name="MaPhieuChamDiem" value="{{ $phieu->MaPhieuChamDiem }}">
-                        <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3">
-                            <i class="fa-solid fa-unlock me-1"></i> Mở Khóa Phiếu
-                        </button>
-                    </form>
+                <div class="modal-footer bg-light py-2 d-flex justify-content-end">
                     <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>

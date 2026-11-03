@@ -50,13 +50,7 @@ class HoiDongController extends Controller
         $hoiDong = $hoSo?->hoiDong;
 
         // Thành viên hội đồng được công khai cho sinh viên (Sắp xếp: Chủ tịch -> Thư ký -> Phản biện -> Ủy viên)
-        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
-        $publicThanhViens = collect();
-        if ($hoiDong) {
-            $publicThanhViens = $hoiDong->thanhViens->sortBy(function ($t) use ($roleOrder) {
-                return $roleOrder[$t->VaiTro] ?? 5;
-            });
-        }
+        $publicThanhViens = $hoiDong ? $hoiDong->sorted_thanh_viens : collect();
 
         // Kết quả điểm của sinh viên hiện tại (nếu đã công bố)
         $ketQua = KetQuaSinhVien::where('MaSV', $sinhVien->MaSV)->latest()->first();

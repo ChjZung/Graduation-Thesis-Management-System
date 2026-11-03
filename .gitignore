@@ -36,6 +36,7 @@ quanly_doan.sql
 *.sql
 !database/migrations/*.sql
 !database/migrations_sql/*.sql
+!database/seed_data_test_nhom_baocao.sql
 
 # Environment variants
 .env.*

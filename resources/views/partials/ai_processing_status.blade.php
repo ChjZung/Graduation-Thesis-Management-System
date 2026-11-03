@@ -2,12 +2,16 @@
     $processingState = $aiData['_processing'] ?? [];
     $reviewHasResults=(int)($aiData['requirements_review']['processing']['completed_checks']??0)>0;
     $processingActive = in_array($processingState['status'] ?? '', ['queued','running','waiting']);
+    $processingErrors=$processingState['errors']??[];
+    $hideProcessingBanner=($processingState['status']??'')==='completed' ||
+        (($processingState['status']??'')==='partial' && ($aiData['analysis']['status']??'')==='completed' && count($processingErrors)>0 &&
+         count(array_filter($processingErrors,fn($e)=>($e['stage']??'')==='requirements_review' && ($e['engine_code']??'')==='review_incomplete'))===count($processingErrors));
     $processingUrl = $citationAvailable ? route('baocao.ai.trang_thai', $pb->MaKhoi) : '';
     $stepLabels = ['summary_part'=>'Đọc từng phần báo cáo','summary_audit'=>'Kiểm chứng ý tóm tắt','completion_audit'=>'Kiểm tra căn cứ công việc hoàn thành','summary_merge'=>'Tổng hợp chương và mục','review_part'=>'Tìm bằng chứng theo yêu cầu','review_repair'=>'Kiểm tra lại tiêu chí lỗi','review_decision'=>'Đối chiếu yêu cầu','citation_audit'=>'Kiểm chứng trích dẫn'];
 @endphp
 @if($teacherReportUi ?? false)
     @if($processingUrl)
-    <div class="ai-processing-status" role="status" aria-live="polite" data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+    <div class="ai-processing-status" @if($hideProcessingBanner) hidden style="display:none" @endif role="status" aria-live="polite" data-processing-errors='@json($processingErrors)' data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
         <strong data-processing-title>{{ $processingActive ? 'Đang phân tích báo cáo' : (($processingState['status'] ?? '') === 'completed' ? 'Đã có kết quả phân tích' : 'Trạng thái phân tích') }}</strong>
         <p data-processing-message>{{ $processingActive ? 'Bạn có thể tiếp tục sử dụng trang trong khi chờ.' : 'Kết quả đã lưu được hiển thị bên dưới.' }}</p>
         <div class="ai-result-status-lines">
@@ -16,7 +20,7 @@
         </div>
         <p data-processing-step></p>
         <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
-        <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem tiến độ</button>
+        <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem chi tiết tiến độ và thông báo</button>
         <button type="button" class="ai-button" data-ai-refresh-result hidden>Xem kết quả mới</button>
     </div>
     @endif
@@ -33,6 +37,14 @@
             <li>{{ $stepLabels[$error['stage'] ?? ''] ?? 'Xử lý AI' }}: {{ $error['message'] ?? 'Chưa hoàn tất.' }}</li>
         @endforeach
     </ul>
+    @if($cancelUrl ?? '')
+    <form method="POST" action="{{ $cancelUrl }}" data-ai-cancel-form style="margin:0; display:{{ $processingActive ? 'inline-block' : 'none' }};">
+        @csrf
+        <button type="submit" class="ai-button ai-button-cancel" data-ai-cancel-btn style="color:#dc3545; border-color:#dc3545; background:#fff;">
+            <i class="fa-solid fa-stop" aria-hidden="true"></i> Dừng phân tích
+        </button>
+    </form>
+    @endif
     <button type="button" class="ai-button" data-ai-refresh-result hidden>Cập nhật kết quả mới</button>
     <small>Bài nộp đã được lưu. Lỗi API không phải kết luận báo cáo thiếu nội dung.</small>
 </div>
@@ -56,9 +68,12 @@
 <script>
 (() => {
     const stages = {extract:'Trích xuất tài liệu',map:'Đọc các phần báo cáo',chapter_reduce:'Tổng hợp theo chương',final_reduce:'Tổng hợp kết quả cuối',waiting:'Đang chờ giới hạn API',complete:'Hoàn tất xử lý',partial:'Đã lưu tiến độ',summary_part:'Đọc từng phần báo cáo',summary_audit:'Kiểm chứng ý tóm tắt',completion_audit:'Kiểm tra căn cứ công việc hoàn thành',summary_merge:'Tổng hợp chương và mục',review_part:'Tìm bằng chứng theo yêu cầu',review_repair:'Kiểm tra lại tiêu chí lỗi',review_decision:'Đối chiếu yêu cầu',citation_audit:'Kiểm chứng trích dẫn'};
-    const labels = {queued:'Đang chờ xử lý',running:'Đang phân tích',waiting:'Đang chờ thử tiếp',completed:'Đã hoàn tất',partial:'Hoàn tất một phần'};
+    const labels = {queued:'Đang chờ xử lý',running:'Đang phân tích',waiting:'Đang chờ thử tiếp',completed:'Đã hoàn tất',partial:'Hoàn tất một phần',cancelled:'Đã dừng phân tích'};
     function updateButtons(root, active) {
-        root.closest('.ai-summary')?.querySelectorAll('[data-ai-review-submit]').forEach(button => {button.disabled=active;});
+        const card = root.closest('.ai-summary-card, .ai-summary');
+        if (!card) return;
+        card.querySelectorAll('[data-ai-review-submit]').forEach(button => { button.disabled = active; });
+        card.querySelectorAll('[data-ai-cancel-form]').forEach(form => { form.style.display = active ? 'inline-block' : 'none'; });
     }
     async function poll(node) {
         if (!node.isConnected) return;
@@ -109,6 +124,42 @@
             if(active) poll(node);
         });
     }
+    document.addEventListener('submit', async event => {
+        const cancelForm = event.target.closest('[data-ai-cancel-form]');
+        if (!cancelForm) return;
+        event.preventDefault();
+        const btn = cancelForm.querySelector('button');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch(cancelForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': cancelForm.querySelector('input[name="_token"]')?.value || '',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+            if (res.ok) {
+                const json = await res.json();
+                document.querySelectorAll('[data-ai-processing-url]').forEach(banner => {
+                    banner.dataset.processingActive = '0';
+                    const title = banner.querySelector('[data-processing-title]');
+                    if (title) title.textContent = 'Đã dừng phân tích';
+                    const msg = banner.querySelector('[data-processing-message]');
+                    if (msg) msg.textContent = json.message || 'Đã dừng tiến trình phân tích. Bạn có thể bấm "Phân tích lại" bất cứ lúc nào.';
+                    const step = banner.querySelector('[data-processing-step]');
+                    if (step) step.textContent = '';
+                    const retry = banner.querySelector('[data-processing-retry]');
+                    if (retry) retry.textContent = '';
+                    updateButtons(banner, false);
+                });
+            } else {
+                cancelForm.submit();
+            }
+        } catch(e) {
+            cancelForm.submit();
+        }
+    });
     document.addEventListener('click',event=> {if(event.target.closest('[data-ai-refresh-result]') && !event.target.closest('[data-teacher-ui="1"]')) location.reload();});
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else setTimeout(start,0);
 })();

@@ -53,7 +53,7 @@ class HoiDongController extends Controller
             $query->where('TrangThaiCongBo', $request->TrangThaiCongBo);
         }
 
-        $hoiDongs = $query->paginate(12)->withQueryString();
+        $hoiDongs = $query->paginate(5)->withQueryString();
         $hocKys = HocKy::orderBy('created_at', 'desc')->get();
 
         return view('admin.hoidong.index', compact('hoiDongs', 'hocKys'));

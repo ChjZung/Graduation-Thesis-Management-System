@@ -4,6 +4,29 @@
 
 @push('styles')
 <style>
+    .teacher-round-list { display: grid; gap: 10px; container-type: inline-size; }
+    .teacher-round-list-row { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; gap: 14px 22px; }
+    .teacher-round-list-info { min-width: 0; overflow-wrap: anywhere; }
+    .teacher-round-list-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .teacher-round-list-actions .btn { min-height: 36px; padding: 8px 10px !important; font-size: 12px !important; line-height: 1.4; white-space: nowrap; }
+    .teacher-round-list-actions form { flex-shrink: 0; }
+    .teacher-round-list-actions .teacher-review-link { color: #0068bd !important; background: #eef6ff !important; border: 1px solid #91bff0 !important; box-shadow: none !important; border-radius: 8px !important; }
+    .teacher-round-list-actions .teacher-review-link:hover,
+    .teacher-round-list-actions .teacher-review-link:focus-visible { color: #fff !important; background: #0072ce !important; border-color: #0072ce !important; }
+    .teacher-round-list-actions .teacher-review-link:focus-visible { outline: 3px solid #b9d9fb; outline-offset: 2px; }
+    @container (min-width: 900px) {
+        .teacher-round-list-row { grid-template-columns: minmax(0,1fr) auto; }
+        .teacher-round-list-actions { flex-wrap: nowrap; justify-content: flex-end; }
+    }
+    @container (max-width: 540px) {
+        .teacher-round-list-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+        .teacher-round-list-actions .btn { width: 100%; min-height: 44px; white-space: normal; display: inline-flex; align-items: center; justify-content: center; }
+        .teacher-round-list-actions > a:last-child { grid-column: 1 / -1; }
+    }
+
+    #modalEditDotNop .modal-header { background: #0072ce !important; border-bottom: 1px solid #005caa !important; }
+    #modalEditDotNop .modal-header .modal-title, #modalEditDotNop .modal-header .modal-title i { color: #fff !important; }
+
     :root {
         --gv-border: #e2e8f0;
         --gv-bg-subtle: #f8fafc;
@@ -393,9 +416,13 @@
                                 @else
                                     <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center" 
                                             data-bs-toggle="modal" data-bs-target="#modalChoPhepBaoVe{{ $nhom->MaNhom }}"
-                                            title="Xác nhận nhóm hoàn thành thực hiện và cho phép nộp hồ sơ bảo vệ khóa luận">
+                                            @disabled(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
+                                            title="{{ ($nhom->report_milestone_progress['can_open_defense_submission'] ?? false) ? 'Tất cả đợt báo cáo đã được xác nhận Đạt' : 'Cần xác nhận Đạt phiên bản mới nhất của tất cả đợt báo cáo trong các giai đoạn' }}">
                                         <i class="fa-solid fa-graduation-cap me-2"></i>Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ
                                     </button>
+                                    @if(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
+                                        <small class="text-muted w-100 text-end">Chỉ mở sau khi tất cả đợt báo cáo được xác nhận Đạt.</small>
+                                    @endif
                                 @endif
 
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center" 
@@ -639,7 +666,7 @@
                                                     Chưa có đợt nộp báo cáo nào trong giai đoạn này. Bấm "Thêm Đợt Nộp" ở trên để tạo mốc cho sinh viên.
                                                 </div>
                                             @else
-                                                <div class="d-flex flex-column gap-2">
+                                                <div class="teacher-round-list">
                                                     @foreach($stageDots as $dot)
                                                         @php
                                                             $tt = $dot->getTrangThaiHienThi();
@@ -655,9 +682,9 @@
                                                                 'TrangThai' => $dot->TrangThai,
                                                             ];
                                                         @endphp
-                                                        <div class="dot-nop-row d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                                            <div class="flex-grow-1" style="min-width: 240px;">
-                                                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                                        <div class="dot-nop-row teacher-round-list-row">
+                                                            <div class="teacher-round-list-info">
+                                                                <div class="d-flex flex-column align-items-start gap-2 mb-2">
                                                                     <span class="fw-bold text-dark" style="font-size: 13px; color: #003366 !important;">
                                                                         {{ $dot->TenDotNop }}
                                                                     </span>
@@ -677,7 +704,7 @@
                                                                 @endif
                                                             </div>
 
-                                                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                                            <div class="teacher-round-list-actions">
                                                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                                                         data-edit-round data-round-id="{{ $dot->MaDotNop }}"
                                                                         data-nhom="{{ $nhom->MaNhom }}"
@@ -690,7 +717,7 @@
                                                                         data-stage-end-vn="{{ $gd->NgayKetThuc ? \Carbon\Carbon::parse($gd->NgayKetThuc)->format('d/m/Y') : '' }}"
                                                                         data-update-url="{{ route('giangvien.tiendo.dot_nop.update', $dot->MaDotNop) }}"
                                                                         onclick="openEditDotNopModal(this)">
-                                                                    <i class="fa-solid fa-pen-to-square me-1"></i>Sửa đợt
+                                                                    Sửa đợt
                                                                 </button>
                                                                 <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.destroy', $dot->MaDotNop) }}"
                                                                       class="m-0" onsubmit="return confirm('Xóa đợt nộp này? Thao tác không thể hoàn tác.');">
@@ -701,7 +728,7 @@
                                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                                                             @disabled($countVersions > 0)
                                                                             title="{{ $countVersions > 0 ? 'Không thể xóa đợt đã có bài nộp của sinh viên' : 'Xóa đợt nộp này' }}">
-                                                                        <i class="fa-solid fa-trash-can me-1"></i>Xóa đợt
+                                                                        Xóa đợt
                                                                     </button>
                                                                 </form>
                                                                 @if($latest && $latest->DuongDanFile)
@@ -718,8 +745,8 @@
                                                                 @endif
 
                                                                 <a href="{{ route('giangvien.tiendo.dot_nop.show', $dot->MaDotNop) }}" 
-                                                                   class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs d-inline-flex align-items-center" style="font-size: 11.5px;">
-                                                                    <i class="fa-solid fa-pen-to-square me-1"></i>Xem &amp; Nhận Xét ({{ $countVersions }})
+                                                                   class="btn btn-sm teacher-review-link px-3 py-1 fw-semibold d-inline-flex align-items-center">
+                                                                    Xem &amp; Nhận xét ({{ $countVersions }})
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -771,7 +798,7 @@
                                 </div>
                                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                                     <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" @disabled(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))>
                                         <i class="fa-solid fa-check me-2"></i>Xác Nhận Mở Cổng Nộp Bảo Vệ
                                     </button>
                                 </div>
@@ -1012,7 +1039,7 @@
 
                 <div class="modal-header border-bottom px-4 py-3">
                     <h6 class="modal-title fw-bold text-dark">
-                        <i class="fa-solid fa-file-circle-plus text-success me-2"></i>Sửa Đợt Nộp Báo Cáo
+                        <i class="fa-solid fa-pen-to-square me-2"></i>Sửa Đợt Nộp Báo Cáo
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>

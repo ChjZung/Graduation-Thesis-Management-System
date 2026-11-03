@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GiangVien;
 
+use App\Enums\VaiTroHoiDong;
 use App\Http\Controllers\Controller;
 use App\Models\PhieuChamDiem;
 use App\Models\HoiDong;
@@ -90,7 +91,7 @@ class ChamDiemController extends Controller
         }
 
         // Lấy phiếu điểm đã chấm của giảng viên này cho hồ sơ đang chọn
-        $diemDaCham = [];
+        $diemDaCham = collect();
         $daKhoaPhieu = false;
         $phieuCu = null;
 
@@ -121,9 +122,9 @@ class ChamDiemController extends Controller
         $sinhViens = $activeThanhViens->pluck('sinhVien')->filter();
 
         $tvRecord = $activeHoiDong?->thanhViens->firstWhere('MaGV', $giangVien->MaGV);
-        $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
-        $isChuTich = in_array($vaiTroGV, ['Chủ tịch', 'Chủ tịch Hội đồng']);
-        $isThuKy = in_array($vaiTroGV, ['Thư ký', 'Ủy viên thư ký']);
+        $vaiTroGV = VaiTroHoiDong::normalize($tvRecord?->VaiTro ?? null);
+        $isChuTich = VaiTroHoiDong::isChuTich($vaiTroGV);
+        $isThuKy = VaiTroHoiDong::isThuKy($vaiTroGV);
         $gvhdHoTen = $activeDeTai?->giangVien?->HoTen ?? 'Chưa phân công';
 
         $rubric = ($loaiKhoaLuan === 'KLKS') ? $rubricKLKS : $rubricKLCN;
@@ -144,6 +145,8 @@ class ChamDiemController extends Controller
                 }
             }
         }
+
+        $councilCloData = self::prepareCouncilCloData($activeHoiDong, $loaiKhoaLuan, $rubric);
 
         return [
             'giangVien'                => $giangVien,
@@ -173,6 +176,7 @@ class ChamDiemController extends Controller
             'rubricKLCN'               => $rubricKLCN,
             'rubricKLKS'               => $rubricKLKS,
             'choChamDiemCount'         => $choChamDiemCount,
+            'councilCloData'           => $councilCloData,
         ];
     }
 
@@ -260,7 +264,7 @@ class ChamDiemController extends Controller
             ->first();
 
         if ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành' && !$request->has('unlock_token')) {
-            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Ký xác nhận & Khóa. Nếu cần điều chỉnh, vui lòng gửi yêu cầu mở khóa đến Trưởng khoa.');
+            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Ký xác nhận & Khóa để bảo toàn vẹn dữ liệu.');
         }
 
         $isFinal = ($request->action_type === 'xac_nhan_hoan_thanh');
@@ -320,8 +324,12 @@ class ChamDiemController extends Controller
                     }
 
                     if ($val !== null) {
-                        if ($val < 0) $val = 0.0;
-                        if ($val > $maxVal) $val = $maxVal;
+                        if ($val < 0) {
+                            abort(422, "Điểm tiêu chí {$criterion['stt']} ({$criterion['clo']}) của sinh viên [{$maSV}] không được là số âm ({$val}đ).");
+                        }
+                        if ($val > ($maxVal + 0.005)) {
+                            abort(422, "Điểm tiêu chí {$criterion['stt']} ({$criterion['clo']}) của sinh viên [{$maSV}] là {$val}đ, vượt quá điểm tối đa cho phép ({$maxVal}đ).");
+                        }
 
                         $validatedChiTiet[$cId] = round($val, 2);
 
@@ -335,17 +343,26 @@ class ChamDiemController extends Controller
                     }
                 }
 
-                // Lưu thêm các điểm chi tiết của từng yêu cầu chức năng (tc7_*)
+                // Lưu thêm và validate các điểm chi tiết của từng yêu cầu chức năng (tc7_*)
                 foreach ($rawChiTiet as $subKey => $subVal) {
                     if (str_starts_with($subKey, 'tc7_')) {
-                        $validatedChiTiet[$subKey] = round(max(0.0, floatval($subVal)), 2);
+                        $subFloat = floatval($subVal);
+                        if ($subFloat < 0) {
+                            abort(422, "Điểm thành phần [{$subKey}] của sinh viên [{$maSV}] không được là số âm ({$subFloat}đ).");
+                        }
+                        $validatedChiTiet[$subKey] = round($subFloat, 2);
                     }
                 }
 
                 // Điểm khuyến khích không vượt quá 1.0
                 if ($diemKhuyenKhich > 1.0) $diemKhuyenKhich = 1.0;
 
-                // Tổng điểm tối đa là 10.0
+                // Tổng điểm cơ bản không vượt quá 10.0
+                if ($tongDiemCoBan > 10.005) {
+                    abort(422, "Tổng điểm cơ bản của sinh viên [{$maSV}] là " . round($tongDiemCoBan, 2) . "đ, vượt quá 10.0 điểm tối đa!");
+                }
+
+                // Tổng điểm tối đa của toàn phiếu là 10.0
                 $diemSo = round(min(10.0, $tongDiemCoBan + $diemKhuyenKhich), 2);
 
                 $nhanXet = $diemData['NhanXet'] ?? null;
@@ -425,44 +442,6 @@ class ChamDiemController extends Controller
     }
 
     /**
-     * Giảng viên gửi yêu cầu mở khóa phiếu chấm đã ký
-     */
-    public function yeuCauMoKhoa(Request $request)
-    {
-        $request->validate([
-            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
-            'MaHoSo'    => 'required|exists:HoSoBaoVe,MaHoSo',
-            'LyDo'      => 'required|string|max:1000',
-        ]);
-
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        if (!$giangVien) {
-            abort(403);
-        }
-
-        $hoiDong = HoiDong::findOrFail($request->MaHoiDong);
-        $hoSo = HoSoBaoVe::with('nhom.deTai')->findOrFail($request->MaHoSo);
-
-        // Gửi thông báo đến Trưởng khoa
-        if ($hoiDong->MaKhoa) {
-            $truongKhoaGV = GiangVien::whereHas('boMon.khoa', fn($q) => $q->where('MaKhoa', $hoiDong->MaKhoa))
-                ->whereHas('taiKhoan.vaiTro', fn($v) => $v->where('TenVaiTro', 'like', '%Trưởng khoa%'))
-                ->first();
-            if ($truongKhoaGV) {
-                ThongBaoService::gui(
-                    $truongKhoaGV->MaGV,
-                    'Yêu cầu mở khóa phiếu chấm điểm',
-                    "Giám khảo {$giangVien->HoTen} gửi yêu cầu mở khóa phiếu chấm điểm đề tài '{$hoSo->nhom?->deTai?->TenDeTai}' (HĐ: {$hoiDong->TenHoiDong}). Lý do: {$request->LyDo}",
-                    'Yêu cầu'
-                );
-            }
-        }
-
-        return redirect()->back()->with('success', 'Đã gửi yêu cầu mở khóa phiếu chấm điểm đến Trưởng khoa thành công!');
-    }
-
-    /**
      * Thư ký Hội đồng cập nhật yêu cầu chức năng bài toán (Chuẩn Yêu cầu 3: Chuyển quyền từ Chủ tịch sang Thư ký)
      * Thư ký chịu trách nhiệm chuẩn bị phiếu chấm dựa trên đề cương của GVHD
      */
@@ -492,7 +471,7 @@ class ChamDiemController extends Controller
             ->where('MaGV', $giangVien->MaGV)
             ->first();
 
-        $isThuKy = $tvRecord && in_array($tvRecord->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+        $isThuKy = $tvRecord && VaiTroHoiDong::isThuKy($tvRecord->VaiTro);
         $isGiaoVuOrTruongKhoa = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
 
         if (!$isThuKy && !$isGiaoVuOrTruongKhoa) {
@@ -568,7 +547,7 @@ class ChamDiemController extends Controller
 
         $nhom = $hoSo->nhom;
         $deTai = $nhom?->deTai;
-        $isThuKy = $isMember && in_array($isMember->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+        $isThuKy = $isMember && VaiTroHoiDong::isThuKy($isMember->VaiTro);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -620,7 +599,7 @@ class ChamDiemController extends Controller
             ->where('MaGV', $giangVien->MaGV)
             ->first();
 
-        $isThuKy = $tvRecord && in_array($tvRecord->VaiTro, ['Thư ký', 'Ủy viên thư ký']);
+        $isThuKy = $tvRecord && VaiTroHoiDong::isThuKy($tvRecord->VaiTro);
         $isManager = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
 
         if (!$isThuKy && !$isManager) {
@@ -890,5 +869,205 @@ class ChamDiemController extends Controller
 
         $filename = "Phieu_Cham_Diem_{$activeHoiDong->MaHoiDong}_{$safeDeTai}_{$giangVien->MaGV}.docx";
         return response()->download($outDocx, $filename)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Xuất Báo cáo Tổng hợp Chuẩn Đầu Ra (CLO) theo mẫu biểu chính thức của Khoa CNTT
+     */
+    public function xuatBaoCaoClo(Request $request)
+    {
+        $request->validate([
+            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
+        ]);
+
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+        if (!$giangVien) {
+            abort(403, 'Không tìm thấy thông tin giảng viên.');
+        }
+
+        $hoiDong = HoiDong::with(['thanhViens.giangVien', 'hoSoBaoVes.nhom.deTai'])->findOrFail($request->MaHoiDong);
+
+        // Kiểm tra quyền truy cập: thành viên hội đồng hoặc ban chủ nhiệm khoa / bộ môn / admin
+        $isMember = $hoiDong->thanhViens->contains('MaGV', $giangVien->MaGV);
+        $roleId = $user->vaiTro?->MaVaiTro ?? '';
+        if (!$isMember && !in_array($roleId, ['VT01', 'VT02', 'VT03'])) {
+            abort(403, 'Bạn không có quyền truy cập hoặc xuất báo cáo của Hội đồng này.');
+        }
+
+        $loaiKhoaLuan = $request->query('loai', null);
+        if (!$loaiKhoaLuan) {
+            $firstHoSo = $hoiDong->hoSoBaoVes->first();
+            $loaiKhoaLuan = $firstHoSo?->xacDinhLoaiKhoaLuan() ?? 'KLCN';
+        }
+
+        $exportService = app(\App\Services\CloReportExportService::class);
+        $spreadsheet = $exportService->export($hoiDong, $loaiKhoaLuan);
+
+        $safeHd = preg_replace('/[^A-Za-z0-9_-]/', '_', $hoiDong->MaHoiDong);
+        $filename = "BaoCao_TongHop_CLO_{$safeHd}_{$loaiKhoaLuan}.xlsx";
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Chuẩn bị dữ liệu tính toán Hội đồng và Chuẩn đầu ra CLO phục vụ Modal Công thức và Tính toán thời gian thực
+     */
+    public static function prepareCouncilCloData(?HoiDong $activeHoiDong, string $loaiKhoaLuan, array $rubric): array
+    {
+        if (!$activeHoiDong) {
+            return [
+                'students' => [],
+                'cloGroups' => [],
+                'rubric' => $rubric,
+            ];
+        }
+
+        // Gom nhóm CLO động từ Rubric
+        $cloGroups = [];
+        $criteriaMap = [];
+        foreach ($rubric as $crit) {
+            $criteriaMap[$crit['id']] = $crit;
+            if (!empty($crit['is_bonus'])) continue;
+            $baseClo = preg_replace('/(\.[0-9]+)$/', '', $crit['clo']);
+            if (!isset($cloGroups[$baseClo])) {
+                $cloGroups[$baseClo] = [
+                    'clo' => $baseClo,
+                    'name' => "Chuẩn đầu ra {$baseClo}",
+                    'criteria' => [],
+                    'max_sum' => 0.0,
+                ];
+            }
+            $cloGroups[$baseClo]['criteria'][] = [
+                'id' => $crit['id'],
+                'stt' => $crit['stt'],
+                'noi_dung' => strtok($crit['noi_dung'], "\n"),
+                'clo' => $crit['clo'],
+                'max' => (float)$crit['max'],
+            ];
+            $cloGroups[$baseClo]['max_sum'] += (float)$crit['max'];
+        }
+        ksort($cloGroups);
+
+        $phieuChams = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)->get();
+        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
+        $sortedMembers = $activeHoiDong->thanhViens->sortBy(fn($tv) => $roleOrder[$tv->VaiTro] ?? 5);
+
+        $students = [];
+        foreach ($activeHoiDong->hoSoBaoVes as $hoSo) {
+            $nhom = $hoSo->nhom;
+            $deTai = $nhom?->deTai;
+            foreach ($nhom?->thanhViens ?? [] as $tvn) {
+                $sv = $tvn->sinhVien;
+                if (!$sv) continue;
+
+                $svPhieus = $phieuChams->where('MaSV', $sv->MaSV);
+                $completedPhieus = $svPhieus->where('TrangThai', 'Đã hoàn thành');
+                $validPhieus = $completedPhieus->isNotEmpty() ? $completedPhieus : $svPhieus;
+
+                $examiners = [];
+                foreach ($sortedMembers as $tv) {
+                    $p = $svPhieus->firstWhere('MaGV', $tv->MaGV);
+                    $examiners[] = [
+                        'maGV' => $tv->MaGV,
+                        'hoTen' => $tv->giangVien?->HoTen ?? $tv->MaGV,
+                        'vaiTro' => $tv->VaiTro ?? 'Thành viên',
+                        'trangThai' => $p?->TrangThai ?? 'Chưa chấm',
+                        'diem' => $p ? (float)$p->Diem : null,
+                        'chiTietDiem' => $p ? (is_array($p->ChiTietDiem) ? $p->ChiTietDiem : json_decode($p->ChiTietDiem, true) ?? []) : [],
+                    ];
+                }
+
+                $critAverages = [];
+                $critFormulas = [];
+                foreach ($rubric as $crit) {
+                    $cId = $crit['id'];
+                    $scores = [];
+                    foreach ($validPhieus as $p) {
+                        $cd = is_array($p->ChiTietDiem) ? $p->ChiTietDiem : json_decode($p->ChiTietDiem, true);
+                        if (isset($cd[$cId]) && is_numeric($cd[$cId])) {
+                            $scores[] = (float)$cd[$cId];
+                        }
+                    }
+                    $avg = !empty($scores) ? round(array_sum($scores) / count($scores), 2) : 0.0;
+                    $critAverages[$cId] = $avg;
+                    $critFormulas[$cId] = !empty($scores) 
+                        ? "(" . implode(' + ', array_map(fn($v) => number_format($v, 2), $scores)) . ") / " . count($scores) . " = " . number_format($avg, 2)
+                        : "Chưa có điểm giám khảo";
+                }
+
+                $cloScores = [];
+                $allPassed = true;
+                foreach ($cloGroups as $code => $g) {
+                    $sumTb = 0.0;
+                    $tbParts = [];
+                    $maxParts = [];
+                    foreach ($g['criteria'] as $c) {
+                        $tbVal = $critAverages[$c['id']] ?? 0.0;
+                        $sumTb += $tbVal;
+                        $tbParts[] = number_format($tbVal, 2);
+                        $maxParts[] = number_format($c['max'], 2);
+                    }
+                    $dClo = $g['max_sum'] > 0 ? round(($sumTb / $g['max_sum']) * 10, 2) : 0.0;
+                    $isPass = ($dClo >= 4.0);
+                    if (!$isPass) $allPassed = false;
+
+                    $formulaString = "(" . implode(' + ', $tbParts) . ") / (" . implode(' + ', $maxParts) . ") * 10 = (" . number_format($sumTb, 2) . " / " . number_format($g['max_sum'], 2) . ") * 10 = " . number_format($dClo, 2);
+
+                    $cloScores[$code] = [
+                        'score' => $dClo,
+                        'sum_tb' => round($sumTb, 2),
+                        'max_sum' => $g['max_sum'],
+                        'passed' => $isPass,
+                        'formula' => $formulaString,
+                        'criteria_breakdown' => array_map(fn($c) => [
+                            'id' => $c['id'],
+                            'stt' => $c['stt'],
+                            'clo' => $c['clo'],
+                            'noi_dung' => $c['noi_dung'],
+                            'max' => $c['max'],
+                            'score' => $critAverages[$c['id']] ?? 0.0,
+                        ], $g['criteria']),
+                    ];
+                }
+
+                $sumCrit = array_sum(array_filter($critAverages, fn($k) => empty($criteriaMap[$k]['is_bonus']), ARRAY_FILTER_USE_KEY));
+                $bonusScore = $critAverages['tc13'] ?? 0.0;
+                $finalScore = min(10.0, round($sumCrit + $bonusScore, 2));
+
+                $students[] = [
+                    'maSV' => $sv->MaSV,
+                    'hoTen' => $sv->HoTen,
+                    'lop' => $sv->lop?->TenLop ?? 'N/A',
+                    'tenDeTai' => $deTai?->TenDeTai ?? 'Chưa cập nhật',
+                    'maHoSo' => $hoSo->MaHoSo,
+                    'examiners' => $examiners,
+                    'critAverages' => $critAverages,
+                    'critFormulas' => $critFormulas,
+                    'cloScores' => $cloScores,
+                    'allPassed' => $allPassed,
+                    'finalScore' => $finalScore,
+                ];
+            }
+        }
+
+        return [
+            'students' => $students,
+            'cloGroups' => $cloGroups,
+            'rubric' => array_map(fn($c) => [
+                'id' => $c['id'],
+                'stt' => $c['stt'],
+                'noi_dung' => strtok($c['noi_dung'], "\n"),
+                'clo' => $c['clo'],
+                'max' => (float)$c['max'],
+                'is_bonus' => !empty($c['is_bonus']),
+            ], $rubric),
+        ];
     }
 }

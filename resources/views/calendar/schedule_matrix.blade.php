@@ -51,10 +51,10 @@
     <div class="card-header-premium d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-table-cells text-primary me-2"></i> Kế Hoạch: <strong>{{ $activePlan->TenKeHoach }}</strong></span>
         <div class="d-flex gap-2">
-            <span class="badge bg-success rounded-pill px-2 py-1">🟢 Hoàn thành</span>
-            <span class="badge bg-warning text-dark rounded-pill px-2 py-1">🟡 Sắp đến hạn</span>
-            <span class="badge bg-danger rounded-pill px-2 py-1">🔴 Quá hạn</span>
-            <span class="badge bg-secondary rounded-pill px-2 py-1">⚪ Chưa mở</span>
+            <span class="badge bg-success rounded-pill px-2 py-1">Hoàn thành</span>
+            <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Sắp đến hạn</span>
+            <span class="badge bg-danger rounded-pill px-2 py-1">Quá hạn</span>
+            <span class="badge bg-secondary rounded-pill px-2 py-1">Chưa mở</span>
         </div>
     </div>
     <div class="card-body p-0">

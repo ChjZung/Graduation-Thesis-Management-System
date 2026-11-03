@@ -21,7 +21,7 @@ class AiSummaryService
         // Each submission keeps its own JSON. The legacy table has ONE snapshot per MaBaoCao.
         \Illuminate\Support\Facades\DB::transaction(function () use ($report, $result, $options) {
             $report = \App\Models\KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
-            $old = app(AiReportProcessingService::class)->payload($report);
+            $old = app(AiReportProcessingService::class)->storedPayload($report);
             if (isset($options['token']) && ($old['_processing']['token'] ?? '') !== $options['token']) return;
             // Retain an immutable private snapshot before replacing a saved AI generation.
             if (!empty($old['schema_version']) && (!empty($old['document_content']) || !empty($old['chapters']))) {
@@ -42,6 +42,11 @@ class AiSummaryService
                 if (isset($old[$field])) $merged[$field] = $old[$field];
             }
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
+
+            // Retrieval belongs to the background Python pipeline, never the read path.
+            // Preserve a stronger verified result when a heuristic fallback arrives.
+            $merged = AiRequirementResultPolicy::preserveVerified($old, $merged, $result['data']);
+
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
 
@@ -89,6 +94,99 @@ class AiSummaryService
     }
 
     /**
+     * Tự động dò tìm đường dẫn Python phù hợp trên nhiều môi trường khác nhau:
+     * 1. Biến môi trường/config PYTHON_PATH
+     * 2. Virtual environment (.venv hoặc venv cục bộ trong project)
+     * 3. Laragon trên mọi ổ đĩa (D:\, C:\, E:\, F:\)
+     * 4. Môi trường Linux server / Docker / Production (python3)
+     */
+    public static function resolvePythonBinary(): string
+    {
+        $configured = config('ai_processing.python_path') ?: env('PYTHON_PATH');
+        if ($configured && (file_exists($configured) || PHP_OS_FAMILY !== 'Windows')) {
+            return $configured;
+        }
+
+        // Virtual environments (local to project)
+        $venvs = [
+            base_path('.venv/Scripts/python.exe'),
+            base_path('.venv/bin/python'),
+            base_path('venv/Scripts/python.exe'),
+            base_path('venv/bin/python'),
+        ];
+        foreach ($venvs as $v) {
+            if (file_exists($v)) return $v;
+        }
+
+        // Common Laragon installation drives on Windows
+        if (PHP_OS_FAMILY === 'Windows') {
+            foreach (['D', 'C', 'E', 'F'] as $drive) {
+                $laragonPath = "{$drive}:/laragon/bin/python/python-3.10/python.exe";
+                if (file_exists($laragonPath)) {
+                    return $laragonPath;
+                }
+            }
+        }
+
+        // Linux/Unix server detection (e.g. Ubuntu / Docker / Production)
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $which = trim((string) @shell_exec('which python3 2>/dev/null'));
+            if ($which && file_exists($which)) {
+                return $which;
+            }
+        }
+
+        return PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3';
+    }
+
+    /**
+     * Tự động kiểm tra và cài đặt thư viện cần thiết cho AI (PyMuPDF) nếu phát hiện máy mới / server mới.
+     */
+    public static function checkAndSetupEnvironment(?\Closure $notify = null): array
+    {
+        $notify = $notify ?? fn ($type, $msg) => null;
+        $python = self::resolvePythonBinary();
+
+        // 1. Kiểm tra Python executable
+        $testProcess = new \Symfony\Component\Process\Process([$python, '--version']);
+        $testProcess->run();
+        if (!$testProcess->isSuccessful()) {
+            $notify('error', "Không tìm thấy Python khả dụng tại [{$python}]. Vui lòng cài đặt Python 3.10+ hoặc cấu hình PYTHON_PATH trong .env.");
+            return ['ready' => false, 'error' => "Python không chạy được tại: {$python}"];
+        }
+        $pythonVer = trim($testProcess->getOutput()) ?: 'Python 3.x';
+
+        // 2. Kiểm tra thư viện PyMuPDF
+        $checkProcess = new \Symfony\Component\Process\Process([$python, '-c', 'import pymupdf']);
+        $checkProcess->run();
+        if (!$checkProcess->isSuccessful()) {
+            $notify('warn', "Phát hiện môi trường chưa có thư viện PyMuPDF. Đang tự động tải và cài đặt qua pip...");
+            $reqPath = base_path('app/Services/pdf_lab/requirements.txt');
+
+            $installProcess = new \Symfony\Component\Process\Process([$python, '-m', 'pip', 'install', '-r', $reqPath]);
+            $installProcess->setTimeout(300);
+            $installProcess->run();
+
+            if ($installProcess->isSuccessful()) {
+                $notify('info', "Đã tự động cài đặt thành công thư viện PyMuPDF vào {$pythonVer}!");
+            } else {
+                $errMsg = trim($installProcess->getErrorOutput()) ?: trim($installProcess->getOutput());
+                $notify('error', "Tự động cài đặt thư viện thất bại: {$errMsg}");
+                $notify('line', "Vui lòng chạy lệnh: \"{$python}\" -m pip install -r " . $reqPath);
+                return ['ready' => false, 'error' => 'Cài đặt PyMuPDF qua pip thất bại'];
+            }
+        }
+
+        // 3. Kiểm tra biến GEMINI_API_KEY
+        $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY');
+        if (empty($apiKey) || $apiKey === 'your_gemini_api_key_here' || str_starts_with((string)$apiKey, 'your_')) {
+            $notify('warn', "CHÚ Ý: Chưa cấu hình GEMINI_API_KEY thực tế trong file .env.");
+        }
+
+        return ['ready' => true, 'python' => $python, 'version' => $pythonVer];
+    }
+
+    /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
      * Sử dụng Python PyMuPDF + Google Gemini API (xác thực qua header x-goog-api-key).
      * V6 dùng ngân sách token trong ai_processing.summary; tham số ký tự giữ tương thích cũ.
@@ -107,7 +205,7 @@ class AiSummaryService
         $chunkOverlap = $options['chunk_overlap'] ?? self::CHUNK_OVERLAP;
         $method = $options['method'] ?? 'map_reduce';
 
-        $pythonBin = env('PYTHON_PATH') ?: (file_exists('C:\laragon\bin\python\python-3.10\python.exe') ? 'C:\laragon\bin\python\python-3.10\python.exe' : 'python');
+        $pythonBin = self::resolvePythonBinary();
 
         $command = [
             $pythonBin,
@@ -150,6 +248,9 @@ class AiSummaryService
         if (!empty($options['review_only'])) {
             $command[] = '--review-only';
         }
+        if (!empty($options['fresh'])) {
+            $command[] = '--fresh';
+        }
         // Previous-version comparison belongs to the legacy pipeline only.
         // PDF Lab does not accept this flag; passing the entire prior JSON also
         // exceeds Windows command/environment limits before Python can start.
@@ -172,7 +273,7 @@ class AiSummaryService
             $processEnv = array_filter([
                 'SystemRoot' => getenv('SystemRoot') ?: 'C:\Windows',
                 'SYSTEMROOT' => getenv('SYSTEMROOT') ?: 'C:\Windows',
-                'PATH' => getenv('PATH') ?: 'C:\Windows\system32;C:\Windows;C:\laragon\bin\python\python-3.10',
+                'PATH' => (is_file($pythonBin) ? dirname($pythonBin) . PATH_SEPARATOR : '') . (getenv('PATH') ?: 'C:\Windows\system32;C:\Windows'),
                 'TEMP' => getenv('TEMP') ?: 'C:\Windows\Temp',
                 'TMP' => getenv('TMP') ?: 'C:\Windows\Temp',
                 'PYTHONUTF8' => '1',
@@ -350,7 +451,7 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                '_source_hash', 'chapters', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status'] as $field) {
+                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', 'requirements_provenance', '_analysis_history'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],

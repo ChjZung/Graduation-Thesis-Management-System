@@ -85,7 +85,7 @@ class SanPhamController extends Controller
             });
         }
 
-        $sanphams = $query->orderBy('NgayNop', 'desc')->paginate(15);
+        $sanphams = $query->orderBy('NgayNop', 'desc')->paginate(5)->withQueryString();
 
         // Nạp thêm danh sách báo cáo tiến độ cho từng nhóm sản phẩm
         foreach ($sanphams as $sp) {

@@ -106,7 +106,7 @@
                 </div>
                 <select name="trang_thai" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Hoạt động" {{ request('trang_thai') == 'Hoạt động' ? 'selected' : '' }}>🟢 Đang hoạt động</option>
+                    <option value="Hoạt động" {{ request('trang_thai') == 'Hoạt động' ? 'selected' : '' }}>Đang hoạt động</option>
                 </select>
                 @if(request('search') || request('trang_thai'))
                     <a href="{{ route('khoa.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>
@@ -289,8 +289,8 @@
                         <div class="col-md-5">
                             <label class="form-label-huit">Trạng Thái Hoạt Động</label>
                             <select name="TrangThai" class="form-select form-select-huit">
-                                <option value="Active" selected>🟢 Hoạt động (Active)</option>
-                                <option value="Inactive">🔴 Tạm ngưng</option>
+                                <option value="Active" selected>Hoạt động (Active)</option>
+                                <option value="Inactive">Tạm ngưng</option>
                             </select>
                         </div>
                     </div>

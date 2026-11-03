@@ -21,10 +21,56 @@ class AiTeacherReportUiTest extends TestCase
         $p=\Mockery::mock(AiReportProcessingService::class)->makePartial();$p->shouldReceive('sourceMatches')->andReturn(true);$this->app->instance(AiReportProcessingService::class,$p);
         return view('partials.ai_summary_11_sections',['pb'=>$r,'teacherReportUi'=>$teacher])->render();
     }
-    public function test_three_tabs_keep_current_content_and_quote_relationships(): void
+    public function test_evidence_coverage_has_equal_weights_without_claiming_completion(): void
+    {
+        $html=$this->renderCard(['requirements_review'=>['status'=>'completed'],'teacher_requirements'=>[
+            ['text'=>'1. ERD','report_points'=>[['title'=>'ERD','relation'=>'related_text',
+                'source_references'=>[['page'=>3,'quote'=>'Hình ERD','quote_verified'=>true,'source_type'=>'CAPTION_REFERENCE']]]]],
+            ['text'=>'2. Kiểm thử','report_points'=>[]],
+        ]]);
+        $this->assertStringContainsString('data-ai-requirement-coverage',$html);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(4,$xp->query('//*[contains(concat(" ",normalize-space(@class)," ")," ai-verification-cards ")]/*'));
+        $this->assertStringContainsString('50,00%',$html);
+        $this->assertStringContainsString('không phải tỷ lệ hoàn thành công việc',$html);
+        $this->assertStringContainsString('chỉ tìm được tên hình/bảng',$html);
+    }
+
+    public function test_coverage_rules_are_in_a_popup_template_and_sidebar_links_to_its_report(): void
+    {
+        $html=view('partials.ai_requirement_coverage',[
+            'aiData'=>['teacher_requirements'=>[['text'=>'1. ERD','report_points'=>[['title'=>'ERD','relation'=>'related_text','source_references'=>[['page'=>3,'quote'=>'ERD','quote_verified'=>true]]]]]],'requirements_review'=>['status'=>'completed']],
+            'coverageSidebar'=>true,'coverageReportKey'=>'REPORT_LATEST','coverageVersion'=>2,
+        ])->render();
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-ai-open-requirements and @type="button"]'));
+        $this->assertCount(1,$xp->query('//*[@data-ai-coverage-widget and @data-report-key="REPORT_LATEST"]'));
+        $this->assertCount(1,$xp->query('//template[@data-ai-coverage-rules-content]//table'));
+        $this->assertCount(0,$xp->query('//table[not(ancestor::template)]'));
+        $this->assertStringContainsString('100,00%',$html);
+        $this->assertStringContainsString('Thể lệ ước tính tỷ lệ',$html);
+        $this->assertStringContainsString('(v2)',$html);
+        $this->assertStringContainsString('data-report-version="2"',$html);
+    }
+
+    public function test_finished_summary_with_review_gap_uses_local_note_instead_of_large_banner(): void
+    {
+        $html=$this->renderCard([
+            '_processing'=>['status'=>'partial','errors'=>[['stage'=>'requirements_review','code'=>'invalid_request','engine_code'=>'review_incomplete']]],
+            'requirements_review'=>['mode'=>'verified_v2','status'=>'partial','processing'=>['completed_checks'=>12,'total_checks'=>13]],
+        ]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-ai-processing-url and @hidden]'));
+        $this->assertCount(1,$xp->query('//*[@data-review-incomplete-note]'));
+        $this->assertStringContainsString('12/13',$html);
+        $this->assertStringContainsString('1 tiêu chí chưa xác minh được nguồn',$html);
+    }
+
+    public function test_two_tabs_keep_current_content_and_quote_relationships(): void
     {
         $html=$this->renderCard();$dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xpath=new \DOMXPath($dom);
-        $this->assertCount(3,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(2,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(0,$xpath->query('//*[@data-ai-work-summary] | //*[@data-ai-result-tab="work"] | //*[@data-ai-pane="work"]'));
         foreach($xpath->query('//*[@data-ai-result-tab]') as $tab){$id=$tab->getAttribute('aria-controls');$this->assertCount(1,$xpath->query('//*[@id="'.$id.'"]'));}
         $this->assertStringContainsString('Nội dung chương giữ nguyên.',$html);
         $this->assertStringContainsString('1. Yêu cầu gốc',$html);
@@ -40,7 +86,7 @@ class AiTeacherReportUiTest extends TestCase
             'teacher_requirements'=>[],'requirements_document'=>['text'=>''], 'overall_summary'=>'<script>fake_ai()</script>', 'analysis'=>['total_chunks'=>null]]);
         $this->assertStringNotContainsString('<script>fake_ai()</script>',$html);
         $this->assertStringContainsString('Chưa có dữ liệu kiểm chứng',$html);
-        $this->assertStringContainsString('Không tìm thấy công việc đã hoàn thành có đủ bằng chứng trong báo cáo.',$html);
+        $this->assertStringNotContainsString('Không tìm thấy công việc đã hoàn thành có đủ bằng chứng trong báo cáo.',$html);
         $this->assertStringContainsString('Giảng viên chưa thiết lập yêu cầu phân tích cho đợt nộp này.',$html);
     }
     public function test_atomic_requirements_show_individual_answers_and_abstain_without_sources(): void
@@ -70,7 +116,7 @@ class AiTeacherReportUiTest extends TestCase
         $this->app['request']->setRouteResolver(fn()=>$route);
         $html=$this->renderCard([],null);
         $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xpath=new \DOMXPath($dom);
-        $this->assertCount(3,$xpath->query('//*[@data-ai-result-tab]'));
+        $this->assertCount(2,$xpath->query('//*[@data-ai-result-tab]'));
         $this->assertCount(2,$xpath->query('//*[@data-ai-requirement-tab]'));
     }
     public function test_explicit_legacy_partial_keeps_previous_layout(): void
@@ -78,6 +124,57 @@ class AiTeacherReportUiTest extends TestCase
         $html=$this->renderCard([],false);$dom=new \DOMDocument;@$dom->loadHTML($html);$xpath=new \DOMXPath($dom);
         $this->assertCount(0,$xpath->query('//*[@data-ai-result-tab]'));
         $this->assertStringContainsString('Nội dung chương giữ nguyên.',$html);
+    }
+    public function test_caption_pointer_keeps_deepest_section_and_escapes_text(): void
+    {
+        $asset=['display_text'=>'Hình 3.8 <script>bad</script>','raw_text'=>'Hình 3.8 nguồn',
+            'section_number'=>'3.2.1','section_title'=>'Đăng ký đề tài','page'=>45];
+        $html=$this->renderCard(['chapters'=>[['id'=>'S','title'=>'Thiết kế','level'=>2,'kind'=>'section',
+            'start_page'=>45,'end_page'=>45,'status'=>'insufficient_text','related_assets'=>[$asset]]]]);
+        $this->assertStringContainsString('Mục 3.2.1',$html);
+        $this->assertStringContainsString('Trang PDF 45',$html);
+        $this->assertStringContainsString('#page=45',$html);
+        $this->assertStringContainsString('data-citation-page="45"',$html);
+        $this->assertStringNotContainsString('<script>bad</script>',$html);
+    }
+    public function test_each_page_button_uses_its_own_source_quote(): void
+    {
+        $items=[['content'=>'Ý thứ nhất.','source_pages'=>[3,7,9],'source_references'=>[
+            ['page'=>3,'quote'=>'Nguồn riêng trang ba.'],['page'=>7,'quote'=>'Nguồn riêng trang bảy.']]]];
+        $html=$this->renderCard(['chapters'=>[['id'=>'PAGES','title'=>'Nhiều trang','level'=>2,'kind'=>'section',
+            'start_page'=>3,'end_page'=>9,'items'=>$items]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        foreach([3=>'Nguồn riêng trang ba.',7=>'Nguồn riêng trang bảy.'] as $page=>$quote) {
+            $buttons=$xp->query('//*[@data-summary-group="PAGES"]//*[@data-citation-page="'.$page.'"]');
+            $this->assertCount(1,$buttons);
+            $this->assertSame($quote,$buttons->item(0)->getAttribute('data-citation-quote'));
+        }
+        $this->assertCount(0,$xp->query('//*[@data-summary-group="PAGES"]//*[@data-citation-page="9"]'));
+    }
+    public function test_parent_keeps_access_to_evidence_with_child_sections(): void
+    {
+        $html=$this->renderCard(['chapters'=>[['id'=>'PARENT','title'=>'Mục cha','level'=>2,'kind'=>'section',
+            'start_page'=>1,'end_page'=>3,'items'=>[['content'=>'Nội dung riêng của cha.',
+            'source_references'=>[['page'=>1,'quote'=>'Nguồn trực tiếp của cha.']]]],
+            'sections'=>[['id'=>'CHILD','title'=>'Mục con','level'=>3,'kind'=>'section','start_page'=>2,'end_page'=>3,'items'=>[]]]]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $this->assertCount(1,$xp->query('//*[@data-summary-group="PARENT"]//*[@data-lab-source-references]'));
+    }
+    public function test_caption_sources_render_once_and_keep_every_relevant_diagram(): void
+    {
+        $a=['source_id'=>'A','page'=>85,'quote'=>'Hình 4.7 Sơ đồ tuần tự theo dõi tiến độ'];
+        $b=['source_id'=>'B','page'=>86,'quote'=>'Hình 4.8 Sơ đồ tuần tự quản lý hồ sơ bảo vệ'];
+        $point=['relation'=>'related_text','check_status'=>'NEEDS_VISUAL_REVIEW','explanation'=>'Có hai tên sơ đồ liên quan.',
+            'source_references'=>[$a],'manual_references'=>[$a,$b,$b]];
+        $html=$this->renderCard(['requirements_review'=>['mode'=>'verified_v2','status'=>'completed'],
+            'teacher_requirements'=>[['requirement_id'=>'R4','text'=>'4. Theo dõi tiến độ và hồ sơ bảo vệ.','report_points'=>[$point]]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $prefix='//*[@data-requirement-id="R4"]';
+        $this->assertCount(2,$xp->query($prefix.'//*[@data-requirement-caption]'));
+        foreach([85,86] as $page)$this->assertCount(1,$xp->query($prefix.'//*[@data-citation-page="'.$page.'"]'));
+        $this->assertCount(1,$xp->query($prefix.'//*[@data-lab-source-references]'));
+        $this->assertCount(2,$xp->query($prefix.'//*[@data-lab-source-references]//*[@data-requirement-caption]'));
+        $this->assertStringContainsString('quản lý hồ sơ bảo vệ',$html);
     }
 }
 

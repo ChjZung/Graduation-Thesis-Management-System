@@ -33,18 +33,7 @@ class HoiDongPdfService
         $nganh = $hoiDong->nganh ?? \App\Models\Nganh::first();
 
         // Chuẩn bị danh sách thành viên Hội đồng
-        $thanhViens = $hoiDong->thanhViens->sortBy(function ($tv) {
-            $order = [
-                'Chủ tịch' => 1,
-                'Ủy viên phản biện' => 2,
-                'Phản biện' => 2,
-                'Ủy viên thư ký' => 3,
-                'Thư ký' => 3,
-                'Ủy viên' => 4,
-                'Thành viên' => 5,
-            ];
-            return $order[$tv->VaiTro] ?? 99;
-        });
+        $thanhViens = $hoiDong->sorted_thanh_viens;
 
         // Chuẩn bị danh sách đề tài và sinh viên
         $danhSachDeTai = [];

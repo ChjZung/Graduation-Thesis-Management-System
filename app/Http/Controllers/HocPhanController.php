@@ -50,7 +50,7 @@ class HocPhanController extends Controller
             $queryDanhMuc->where('TrangThai', $request->trang_thai);
         }
 
-        $hocPhanBoMons = $queryDanhMuc->orderBy('MaBoMon')->orderBy('LoaiHocPhan', 'desc')->orderBy('TenHocPhan')->paginate(15, ['*'], 'hp_page')->withQueryString();
+        $hocPhanBoMons = $queryDanhMuc->orderBy('MaBoMon')->orderBy('LoaiHocPhan', 'desc')->orderBy('TenHocPhan')->paginate(5, ['*'], 'hp_page')->withQueryString();
 
         // 2. Query cho Tab 2: Phân bổ học phần theo học kỳ
         $queryPhanBo = HocPhan::with(['boMon', 'hocPhanHocKies' => function($q) use ($selectedHocKy) {

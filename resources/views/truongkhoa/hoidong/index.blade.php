@@ -131,9 +131,9 @@
 
             <select name="TrangThaiCongBo" class="form-select" style="min-width: 170px; flex: 1;" onchange="this.form.submit()">
                 <option value="">-- Trạng thái công bố --</option>
-                <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>🟢 Đã công bố</option>
-                <option value="Chưa công bố" {{ request('TrangThaiCongBo') === 'Chưa công bố' ? 'selected' : '' }}>🟡 Chưa công bố (Nháp)</option>
-                <option value="Đã thu hồi" {{ request('TrangThaiCongBo') === 'Đã thu hồi' ? 'selected' : '' }}>🔴 Đã thu hồi</option>
+                <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>Đã công bố</option>
+                <option value="Chưa công bố" {{ request('TrangThaiCongBo') === 'Chưa công bố' ? 'selected' : '' }}>Chưa công bố (Nháp)</option>
+                <option value="Đã thu hồi" {{ request('TrangThaiCongBo') === 'Đã thu hồi' ? 'selected' : '' }}>Đã thu hồi</option>
             </select>
 
             <select name="TrangThai" class="form-select" style="min-width: 160px; flex: 1;" onchange="this.form.submit()">

@@ -171,14 +171,6 @@
         </div>
     </div>
 
-    {{-- Alert Messages --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     {{-- ── TIẾN ĐỘ 6 GIAI ĐOẠN CHI TIẾT (PERCENTAGE & PROGRESS BARS) ── --}}
     @if(!empty($nhom->stage_breakdown))
         <div class="mb-4">

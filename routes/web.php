@@ -91,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/files/bao-cao-sau-bao-ve/{id}/download', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCaoSauBaoVe'])->name('baocao_sau_baove.download');
     Route::get('/files/view', [\App\Http\Controllers\FileDownloadController::class, 'viewFile'])->name('files.view');
     Route::post('/bao-cao-ai/{id}/phan-tich-lai', [\App\Http\Controllers\BaoCaoAiController::class, 'reanalyze'])->middleware('throttle:3,1,ai-reanalyze')->name('baocao.ai.phan_tich_lai');
+    Route::post('/bao-cao-ai/{id}/dung-phan-tich', [\App\Http\Controllers\BaoCaoAiController::class, 'cancel'])->name('baocao.ai.dung_phan_tich');
 
     // Đánh dấu tất cả thông báo đã đọc (Dành cho tất cả vai trò)
     Route::post('/thongbao/mark-all-read', [\App\Http\Controllers\ThongBaoController::class, 'markAllReadGlobal'])->name('thongbao.markAllReadGlobal');
@@ -217,6 +218,15 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::get('/ketqua', [\App\Http\Controllers\Admin\KetQuaController::class, 'index'])->name('admin.ketqua.index');
     Route::get('/ketqua/export', [\App\Http\Controllers\Admin\KetQuaController::class, 'exportExcel'])->name('admin.ketqua.export');
 
+    // Báo cáo sau chấm điểm
+    Route::get('/bao-cao-sau-cham-diem', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'index'])->name('admin.baocao_sau_chamdiem.index');
+    Route::get('/bao-cao-sau-cham-diem/{id}', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'show'])->name('admin.baocao_sau_chamdiem.show');
+
+    // Thống kê & Báo cáo (Giáo vụ)
+    Route::get('/thong-ke-bao-cao', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'index'])->name('admin.thongke_baocao.index');
+    Route::get('/thong-ke-bao-cao/preview-report', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'previewReport'])->name('admin.thongke_baocao.preview_report');
+    Route::get('/thong-ke-bao-cao/export-pdf', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'exportPdf'])->name('admin.thongke_baocao.export_pdf');
+
     // Excel Import & Templates
     Route::get('/import/template/{type}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadTemplate'])->name('admin.import.template');
     Route::get('/import/error-log/{filename}', [\App\Http\Controllers\Admin\ImportTemplateController::class, 'downloadErrorLog'])->name('admin.import.errorLog');
@@ -323,6 +333,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::get('/chamdiem/xuat-pdf', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatPdf'])->name('giangvien.chamdiem.xuatPdf');
     Route::get('/chamdiem/xuat-word', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatWord'])->name('giangvien.chamdiem.xuatWord');
     Route::post('/chamdiem/ky-ten', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'kyTen'])->name('giangvien.chamdiem.kyTen');
+    Route::get('/chamdiem/xuat-bao-cao-clo', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'xuatBaoCaoClo'])->name('giangvien.chamdiem.xuatBaoCaoClo');
     Route::get('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'index']);
     Route::post('/cham-diem', [\App\Http\Controllers\GiangVien\ChamDiemController::class, 'store']);
 
@@ -409,6 +420,7 @@ Route::middleware(['auth', 'role:Sinh viên'])->prefix('sinhvien')->group(functi
     Route::post('/baocao', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'store'])->name('sinhvien.baocao.store');
     Route::get('/baocao/dot-nop/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showDotNop'])->name('sinhvien.baocao.dot_nop.show');
     Route::post('/baocao/dot-nop/{id}/nop', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'nopPhienBan'])->name('sinhvien.baocao.dot_nop.nop');
+    Route::delete('/baocao/dot-nop/{id}/phien-ban/{maKhoi}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'xoaPhienBan'])->name('sinhvien.baocao.dot_nop.xoa_phien_ban');
     Route::get('/baocao/giai-doan/{lanBaoCao}/them-khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'createKhoi'])->name('sinhvien.baocao.create_khoi');
     Route::post('/baocao/khoi', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'storeKhoi'])->name('sinhvien.baocao.store_khoi');
     Route::get('/baocao/khoi/{id}', [\App\Http\Controllers\SinhVien\BaoCaoController::class, 'showKhoi'])->name('sinhvien.baocao.show_khoi');
@@ -495,6 +507,10 @@ Route::middleware(['auth', 'role:Trưởng bộ môn'])->prefix('truongbomon')->
     Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('truongbomon.thongbao.index');
     Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('truongbomon.thongbao.show');
 
+    // Báo cáo sau chấm điểm (Trưởng bộ môn)
+    Route::get('/bao-cao-sau-cham-diem', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'index'])->name('truongbomon.baocao_sau_chamdiem.index');
+    Route::get('/bao-cao-sau-cham-diem/{id}', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'show'])->name('truongbomon.baocao_sau_chamdiem.show');
+
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
     Route::get('/change-password', fn() => redirect()->route('password.change'));
@@ -577,6 +593,15 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::get('/thongbao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('truongkhoa.thongbao.index');
     Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('truongkhoa.thongbao.show');
 
+    // Báo cáo sau chấm điểm (Trưởng khoa)
+    Route::get('/bao-cao-sau-cham-diem', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'index'])->name('truongkhoa.baocao_sau_chamdiem.index');
+    Route::get('/bao-cao-sau-cham-diem/{id}', [\App\Http\Controllers\BaoCaoSauChamDiemController::class, 'show'])->name('truongkhoa.baocao_sau_chamdiem.show');
+
+    // Thống kê & Báo cáo (Trưởng khoa)
+    Route::get('/thong-ke-bao-cao', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'index'])->name('truongkhoa.thongke_baocao.index');
+    Route::get('/thong-ke-bao-cao/preview-report', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'previewReport'])->name('truongkhoa.thongke_baocao.preview_report');
+    Route::get('/thong-ke-bao-cao/export-pdf', [\App\Http\Controllers\ThongKeBaoCaoController::class, 'exportPdf'])->name('truongkhoa.thongke_baocao.export_pdf');
+
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));
     Route::get('/change-password', fn() => redirect()->route('password.change'));
@@ -592,6 +617,9 @@ Route::get('/api/khoa/{maKhoa}/bomons', [\App\Http\Controllers\ThongKeDeTaiContr
 // ==========================================
 Route::post('/dev/mock-time', [\App\Http\Controllers\TimeMachineController::class, 'setMockTime'])->name('dev.mock-time');
 Route::post('/dev/reset-mock-time', [\App\Http\Controllers\TimeMachineController::class, 'resetMockTime'])->name('dev.reset-mock-time');
+
+// Fallback storage route cho các tài liệu nội bộ (Word docx, pdf)
+Route::get('/storage/{path}', [\App\Http\Controllers\FileDownloadController::class, 'serveStorageFallback'])->where('path', '.*')->name('storage.fallback');
 
 
 

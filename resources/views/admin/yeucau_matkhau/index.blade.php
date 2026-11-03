@@ -188,8 +188,8 @@
                     </select>
                     <select name="TrangThai" class="form-select" style="min-width: 210px;" onchange="this.form.submit()">
                         <option value="">-- Trạng thái tài khoản --</option>
-                        <option value="1" {{ request('TrangThai') === '1' ? 'selected' : '' }}>🟢 Đang hoạt động</option>
-                        <option value="0" {{ request('TrangThai') === '0' ? 'selected' : '' }}>🔴 Đang bị khóa</option>
+                        <option value="1" {{ request('TrangThai') === '1' ? 'selected' : '' }}>Đang hoạt động</option>
+                        <option value="0" {{ request('TrangThai') === '0' ? 'selected' : '' }}>Đang bị khóa</option>
                     </select>
                     @if(request()->anyFilled(['search', 'MaVaiTro', 'TrangThai']))
                         <a href="{{ route('admin.yeucau.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center"><i class="fa-solid fa-xmark me-2"></i>Xóa lọc</a>

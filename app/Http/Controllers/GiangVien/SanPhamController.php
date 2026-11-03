@@ -50,7 +50,7 @@ class SanPhamController extends Controller
             $query->where('MaNhom', $selectedNhomId);
         }
 
-        $Nhom = $query->paginate(10);
+        $Nhom = $query->paginate(5)->withQueryString();
 
         // Nạp báo cáo tiến độ và nhận xét của từng nhóm
         foreach ($Nhom as $nhom) {

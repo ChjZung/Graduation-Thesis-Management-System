@@ -77,7 +77,7 @@
                         <option value="ALL" {{ $selectedHocKy === 'ALL' ? 'selected' : '' }}>-- Tất cả học kỳ --</option>
                         @foreach($hocKies as $hk)
                             <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -194,11 +194,12 @@
                                     <td>
                                         @if($pc->deTai && $pc->deTai->FileDeCuong)
                                             @php
-                                                $filePath = Str::startsWith($pc->deTai->FileDeCuong, ['http', 'storage/']) ? asset($pc->deTai->FileDeCuong) : asset('storage/' . $pc->deTai->FileDeCuong);
+                                                $filePath = route('files.decuong.download', $pc->deTai->MaDeTai);
+                                                $downloadUrl = route('files.decuong.download', ['id' => $pc->deTai->MaDeTai, 'download' => 1]);
                                                 $fileName = basename($pc->deTai->FileDeCuong);
                                             @endphp
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 shadow-xs fw-medium small d-inline-flex align-items-center"
-                                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($pc->deTai->TenDeTai) }}')"
+                                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($pc->deTai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })"
                                                     title="Xem nhanh đề cương trực tiếp trên web">
                                                 <i class="fa-solid fa-eye me-2"></i> Xem đề cương
                                             </button>

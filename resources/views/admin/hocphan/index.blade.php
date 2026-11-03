@@ -359,9 +359,9 @@
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">🎓 Khóa luận</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-graduation-cap me-1"></i>Khóa luận</span>
                                         @elseif($hp->LoaiHocPhan === 'Đồ án')
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1">📁 Đồ án</span>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-folder me-1"></i>Đồ án</span>
                                         @else
                                             <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">Chuyên ngành</span>
                                         @endif
@@ -545,7 +545,7 @@
                                     </td>
                                     <td class="text-center">
                                         @if($hp->LoaiHocPhan === 'Khóa luận')
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">🎓 Khóa luận</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1"><i class="fa-solid fa-graduation-cap me-1"></i>Khóa luận</span>
                                         @else
                                             <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">{{ $hp->LoaiHocPhan }}</span>
                                         @endif

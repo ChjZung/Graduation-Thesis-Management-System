@@ -67,7 +67,7 @@
                             @if(!empty($ver->ThayDoiSoVoiTruocJson))
                                 <ul class="mb-0 small text-danger ps-3">
                                     @foreach($ver->ThayDoiSoVoiTruocJson as $d)
-                                        <li>{{ $d['phase_name'] ?? $d['TenMoc'] }}: {{ $d['old_range'] ?? $d['Truoc'] }} ➔ <strong class="text-success">{{ $d['new_range'] ?? $d['Sau'] }}</strong></li>
+                                        <li>{{ $d['phase_name'] ?? $d['TenMoc'] }}: {{ $d['old_range'] ?? $d['Truoc'] }} <i class="fa-solid fa-arrow-right mx-1 text-muted"></i> <strong class="text-success">{{ $d['new_range'] ?? $d['Sau'] }}</strong></li>
                                     @endforeach
                                 </ul>
                             @else

@@ -39,7 +39,7 @@
                         <select name="DoiTuong" class="form-select select2-enable" required>
                             @if($nhoms->isNotEmpty())
                                 <option value="ALL" {{ old('DoiTuong') === 'ALL' ? 'selected' : '' }}>
-                                    📢 [TẤT CẢ] Gửi đồng loạt cho toàn bộ {{ $nhoms->count() }} nhóm đang hướng dẫn
+                                    [TẤT CẢ] Gửi đồng loạt cho toàn bộ {{ $nhoms->count() }} nhóm đang hướng dẫn
                                 </option>
                                 <optgroup label="── Gửi riêng cho từng nhóm cụ thể ──">
                                     @foreach($nhoms as $nhom)
@@ -57,10 +57,10 @@
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Loại Thông Báo <span class="text-danger">*</span></label>
                         <select name="LoaiThongBao" class="form-select" required>
-                            <option value="Nhắc nhở" {{ old('LoaiThongBao') === 'Nhắc nhở' ? 'selected' : '' }}>⏰ Nhắc nhở nộp tiến độ</option>
-                            <option value="Lịch hẹn" {{ old('LoaiThongBao') === 'Lịch hẹn' ? 'selected' : '' }}>📅 Lịch hẹn gặp / Họp hướng dẫn</option>
-                            <option value="Góp ý đề tài" {{ old('LoaiThongBao') === 'Góp ý đề tài' ? 'selected' : '' }}>📝 Góp ý chỉnh sửa đề cương / đồ án</option>
-                            <option value="Khác" {{ old('LoaiThongBao') === 'Khác' ? 'selected' : '' }}>📌 Thông báo chung khác</option>
+                            <option value="Nhắc nhở" {{ old('LoaiThongBao') === 'Nhắc nhở' ? 'selected' : '' }}>Nhắc nhở nộp tiến độ</option>
+                            <option value="Lịch hẹn" {{ old('LoaiThongBao') === 'Lịch hẹn' ? 'selected' : '' }}>Lịch hẹn gặp / Họp hướng dẫn</option>
+                            <option value="Góp ý đề tài" {{ old('LoaiThongBao') === 'Góp ý đề tài' ? 'selected' : '' }}>Góp ý chỉnh sửa đề cương / đồ án</option>
+                            <option value="Khác" {{ old('LoaiThongBao') === 'Khác' ? 'selected' : '' }}>Thông báo chung khác</option>
                         </select>
                     </div>
                 </div>

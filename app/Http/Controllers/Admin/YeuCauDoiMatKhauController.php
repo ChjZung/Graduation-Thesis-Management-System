@@ -48,7 +48,7 @@ class YeuCauDoiMatKhauController extends Controller
             $query->where('TrangThai', $request->TrangThai == '1');
         }
 
-        $taiKhoans = $query->orderBy('MaTK')->paginate(15);
+        $taiKhoans = $query->orderBy('MaTK')->paginate(5)->withQueryString();
         $vaiTros = VaiTro::all();
 
         $stats = [

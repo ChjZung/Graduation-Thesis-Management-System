@@ -184,7 +184,8 @@
                         <div>
                             @if($detai->FileDeCuong)
                                 @php
-                                    $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $filePath = route('files.decuong.download', $detai->MaDeTai);
+                                    $downloadUrl = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                                     $fileName = basename($detai->FileDeCuong);
                                 @endphp
                                 <div class="p-4 bg-light rounded-4 border">
@@ -201,13 +202,13 @@
                                     </div>
                                     <div class="d-flex flex-wrap gap-2 pt-2">
                                         <button type="button" class="btn btn-primary rounded-pill px-4 py-2 shadow-xs fw-bold small d-inline-flex align-items-center justify-content-center" 
-                                                onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                                onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
                                             <i class="fa-solid fa-eye me-2"></i> Xem Nhanh Đề Cương
                                         </button>
                                         <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small d-inline-flex align-items-center justify-content-center">
                                             <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                                         </a>
-                                        <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small d-inline-flex align-items-center justify-content-center">
+                                        <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small d-inline-flex align-items-center justify-content-center">
                                             <i class="fa-solid fa-download me-2"></i> Tải về máy
                                         </a>
                                     </div>

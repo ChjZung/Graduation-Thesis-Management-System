@@ -82,7 +82,7 @@ class DuyetDangKyDeTaiController extends Controller
             });
         }
 
-        $dangKys = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $dangKys = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // Danh sách nhóm chưa có đề tài và đề tài còn trống để phục vụ ngoại lệ tại VPK
         $nhomChuaCoDeTai = \App\Models\Nhom::whereDoesntHave('phieuDangKys', fn($q) => $q->where('TrangThai', 'Đã duyệt'))

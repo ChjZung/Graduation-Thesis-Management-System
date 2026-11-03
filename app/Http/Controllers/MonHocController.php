@@ -13,7 +13,7 @@ class MonHocController extends Controller
 
     public function index()
     {
-        $monhocs = MonHoc::with('boMon')->paginate(10);
+        $monhocs = MonHoc::with('boMon')->paginate(5)->withQueryString();
         return view('admin.monhoc.index', compact('monhocs'));
     }
 

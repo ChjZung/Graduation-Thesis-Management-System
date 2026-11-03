@@ -27,7 +27,7 @@ class BieuMauController extends Controller
             });
         }
 
-        $bieuMaus = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $bieuMaus = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $keHoachs = KeHoachKhoaLuan::with('hocKy')->orderBy('created_at', 'desc')->get();
 
         $stats = [

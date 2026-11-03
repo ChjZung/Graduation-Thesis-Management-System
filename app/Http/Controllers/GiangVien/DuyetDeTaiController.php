@@ -15,7 +15,7 @@ class DuyetDeTaiController extends Controller
         // Lấy các đăng ký thuộc về đề tài của Giảng viên này
         $dangkys = DangKyDeTai::whereHas('deTai', function($query) use ($maGV) {
             $query->where('MaGV', $maGV);
-        })->with(['nhomDoAn', 'deTai'])->paginate(10);
+        })->with(['nhomDoAn', 'deTai'])->paginate(5)->withQueryString();
         return view('giangvien.duyet.index', compact('dangkys'));
     }
     

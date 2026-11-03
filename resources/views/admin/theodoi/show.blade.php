@@ -334,7 +334,7 @@
                                             <div class="text-muted font-monospace" style="font-size: 11px;">{{ $tv->MaSV }}</div>
                                         </div>
                                         @if($isLeader)
-                                            <span class="badge bg-warning text-dark border rounded-pill px-2 py-1" style="font-size: 10px;">👑 Trưởng nhóm</span>
+                                            <span class="badge bg-warning text-dark border rounded-pill px-2 py-1" style="font-size: 10px;"><i class="fa-solid fa-crown me-1"></i>Trưởng nhóm</span>
                                         @else
                                             <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 10px;">Thành viên</span>
                                         @endif

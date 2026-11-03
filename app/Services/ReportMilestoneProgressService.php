@@ -97,6 +97,8 @@ class ReportMilestoneProgressService
         unset($stage);
         return ['label'=>'Tiến độ hoàn thành các mốc báo cáo', 'percentage'=>min(100.0, $total),
             'stage_count'=>$count, 'round_count'=>$roundCount, 'completed_rounds'=>$done, 'stages'=>$stages,
-            'configuration_incomplete'=>$incompleteConfiguration, 'scope'=>$scope];
+            'configuration_incomplete'=>$incompleteConfiguration,
+            'can_open_defense_submission'=>$count > 0 && $roundCount > 0 && !$incompleteConfiguration && $done === $roundCount,
+            'scope'=>$scope];
     }
 }

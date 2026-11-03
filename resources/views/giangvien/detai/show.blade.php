@@ -403,7 +403,8 @@
                 <div class="card-body p-4">
                     @if($detai->coTepDeCuong())
                         @php
-                            $filePathShow = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                            $filePathShow = route('files.decuong.download', $detai->MaDeTai);
+                            $downloadUrlShow = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                             $fileName = basename($detai->FileDeCuong);
                         @endphp
                         <div class="p-3 bg-light rounded-3 border mb-3">
@@ -420,10 +421,10 @@
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 flex-fill fw-semibold shadow-xs small d-inline-flex align-items-center justify-content-center"
-                                        onclick="quickPreviewOutline('{{ $filePathShow }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        onclick="quickPreviewOutline('{{ $filePathShow }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrlShow }}' })">
                                     <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
                                 </button>
-                                <a href="{{ $filePathShow }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 small d-inline-flex align-items-center justify-content-center">
+                                <a href="{{ $downloadUrlShow }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 small d-inline-flex align-items-center justify-content-center">
                                     <i class="fa-solid fa-download me-2"></i> Tải Về
                                 </a>
                             </div>

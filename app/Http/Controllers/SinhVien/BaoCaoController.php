@@ -134,10 +134,11 @@ class BaoCaoController extends Controller
         $mocDeadlines = $this->getMocDeadlines();
 
         $giaiDoans = $nhom->deTai->giaiDoanThucHiens()->with('dotNops.khoiBaoCaos')->get();
+        $reportMilestoneProgress = app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom,$nhom->deTai);
 
         return view('sinhvien.baocao.index', compact(
             'sinhVien', 'nhom', 'baoCaos', 'mocHienTai', 'mocDeadlines', 'timeCheckHienTai', 'giaiDoans',
-            'allStudentMemberships', 'stageBreakdown', 'isLeader'
+            'allStudentMemberships', 'stageBreakdown', 'isLeader', 'reportMilestoneProgress'
         ) + ['mocs' => self::MOCS, 'error' => null]);
     }
 
@@ -754,10 +755,33 @@ class BaoCaoController extends Controller
         return redirect()->route('sinhvien.baocao.show_khoi', $id)->with('success', 'Đã cập nhật và nộp lại báo cáo thành công!');
     }
 
+    public function xoaPhienBan($id,$maKhoi)
+    {
+        $student=SinhVien::where('MaTK',Auth::user()->MaTK)->firstOrFail();
+        $member=ThanhVienNhom::where('MaSV',$student->MaSV)->where('TrangThai','da_tham_gia')->firstOrFail();
+        $group=Nhom::with(['deTai','truongNhom'])->findOrFail($member->MaNhom);
+        abort_unless(($group->truongNhom?->MaSV===$student->MaSV) || mb_stripos((string)$member->VaiTro,'trưởng')!==false,403,'Chỉ nhóm trưởng được xóa phiên bản nộp nhầm.');
+        $round=DotNopBaoCao::findOrFail($id);
+        $result=app(\App\Services\ReportSubmissionDeletionService::class)->deletePendingVersion($round,$group,(string)$maKhoi);
+        $message=$result['latest_version'] ? 'Đã xóa phiên bản nộp nhầm. Đang hiển thị phiên bản v'.$result['latest_version'].'.' : 'Đã xóa phiên bản nộp nhầm. Lần nộp tiếp theo sẽ là v1.';
+        return redirect()->route('sinhvien.baocao.dot_nop.show',$id)->with('success',$message);
+    }
+
     public function destroyKhoi($id)
     {
         $khoi = KhoiBaoCaoTienDo::with('baoCaoTienDo')->where('MaKhoi', $id)->orWhere('id', $id)->firstOrFail();
-        if ($khoi->TrangThai !== 'Chờ duyệt') {
+        if ($khoi->MaDotNop) return $this->xoaPhienBan($khoi->MaDotNop,$khoi->MaKhoi);
+        $student=SinhVien::where('MaTK',Auth::user()->MaTK)->firstOrFail();
+        $member=ThanhVienNhom::where('MaSV',$student->MaSV)->where('TrangThai','da_tham_gia')->firstOrFail();
+        $group=Nhom::with(['deTai','truongNhom'])->findOrFail($member->MaNhom);
+        abort_unless($group->deTai && $group->deTai->MaDeTai===$khoi->MaDeTai && (($group->truongNhom?->MaSV===$student->MaSV) || mb_stripos((string)$member->VaiTro,'trưởng')!==false),403);
+        $identity=($khoi->TomTatJson??[])['_submission_identity']??($khoi->TomTatJson??[])['source_identity']??[];
+        if(!empty($identity['group_id']))abort_unless((string)$identity['group_id']===(string)$group->MaNhom,403);
+        else {
+            $owners=\App\Models\PhieuDangKy::where('MaDeTai',$khoi->MaDeTai)->whereIn('TrangThai',['Đã duyệt','da_duyet'])->distinct()->pluck('MaNhom');
+            abort_unless($owners->count()===1 && (string)$owners->first()===(string)$group->MaNhom,403);
+        }
+        if ($khoi->TrangThai !== 'Chờ duyệt' || filled($khoi->NhanXetGV) || filled($khoi->NguoiNhanXet) || filled($khoi->NgayNhanXet)) {
             return back()->with('error', 'Chỉ có thể xóa báo cáo nhỏ đang ở trạng thái Chờ duyệt.');
         }
 
@@ -893,9 +917,8 @@ class BaoCaoController extends Controller
         $latestPhienBan = $phienBans->first();
         $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
 
-        $reportMilestoneProgress = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom, $dotNop->deTai) : null;
         return view('sinhvien.baocao.show_dot', compact(
-            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader', 'reportMilestoneProgress'
+            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader'
         ));
     }
 }

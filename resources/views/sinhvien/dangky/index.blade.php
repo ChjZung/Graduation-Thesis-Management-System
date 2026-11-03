@@ -240,7 +240,8 @@
 
                 @if(!empty($dtCurrent->FileDeCuong))
                     @php
-                        $fileDcUrl = Str::startsWith($dtCurrent->FileDeCuong, ['http', 'storage/']) ? asset($dtCurrent->FileDeCuong) : asset('storage/' . $dtCurrent->FileDeCuong);
+                        $fileDcUrl = route('files.decuong.download', $dtCurrent->MaDeTai);
+                        $fileDcDownloadUrl = route('files.decuong.download', ['id' => $dtCurrent->MaDeTai, 'download' => 1]);
                         $fileName = basename($dtCurrent->FileDeCuong);
                     @endphp
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 shadow-xs bg-white fw-semibold d-inline-flex align-items-center"
@@ -259,9 +260,10 @@
                             data-mota="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dtCurrent->MoTa)) }}"
                             data-yeucau="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dtCurrent->YeuCau)) }}"
                             data-fileurl="{{ $fileDcUrl }}"
+                            data-downloadurl="{{ $fileDcDownloadUrl }}"
                             data-filename="{{ $fileName }}"
                             style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-file-pdf me-2 text-danger"></i>Xem Đề Cương PDF
+                        <i class="fa-solid fa-file-word me-2 text-primary"></i>Xem Đề Cương
                     </button>
                 @endif
 
@@ -556,7 +558,8 @@
                                     @endif
                                     @if($dt->FileDeCuong)
                                         @php
-                                            $dtDcUrl = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                                            $dtDcUrl = route('files.decuong.download', $dt->MaDeTai);
+                                            $dtDcDownloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
                                             $dtDcName = basename($dt->FileDeCuong);
                                         @endphp
                                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 ms-1 bg-white fw-semibold shadow-xs d-inline-flex align-items-center"
@@ -575,10 +578,11 @@
                                                 data-mota="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dt->MoTa)) }}"
                                                 data-yeucau="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dt->YeuCau)) }}"
                                                 data-fileurl="{{ $dtDcUrl }}"
+                                                data-downloadurl="{{ $dtDcDownloadUrl }}"
                                                 data-filename="{{ $dtDcName }}"
                                                 style="font-size: 0.8rem;"
                                                 title="Xem đề cương và chi tiết đề tài">
-                                            <i class="fa-solid fa-file-pdf me-2 text-danger"></i>Xem đề cương
+                                            <i class="fa-solid fa-file-word me-2 text-primary"></i>Xem đề cương
                                         </button>
                                     @endif
                                 </div>
@@ -962,30 +966,43 @@ function openTopicOutlineSplitModal(btn) {
     document.getElementById('splitPdfPagesContainer').innerHTML = '';
 
     if (fileUrl) {
+        const downloadUrl = ds.downloadurl || (fileUrl.includes('?') ? fileUrl + '&download=1' : fileUrl + '?download=1');
         openTabBtn.href = fileUrl;
         openTabBtn.classList.remove('d-none');
-        downloadBtn.href = fileUrl;
+        downloadBtn.href = downloadUrl;
         downloadBtn.setAttribute('download', fileName);
         downloadBtn.classList.remove('d-none');
         subOpenTab.href = fileUrl;
-        subDownload.href = fileUrl;
+        subDownload.href = downloadUrl;
         subDownload.setAttribute('download', fileName);
 
         const cleanUrl = fileUrl.split('?')[0].toLowerCase();
-        if (cleanUrl.endsWith('.docx') || cleanUrl.endsWith('.doc')) {
+        const isWord = /\.(docx?)$/i.test(fileName) || /\.(docx?)$/i.test(cleanUrl);
+        if (isWord) {
             typeBadge.className = 'badge bg-primary text-white';
             typeBadge.innerHTML = '<i class="fa-solid fa-file-word me-2"></i> DOCX';
             loadingBox.classList.add('d-none');
             docxBox.classList.remove('d-none');
             
             if (typeof mammoth !== 'undefined') {
-                fetch(fileUrl)
-                    .then(res => res.arrayBuffer())
+                fetch(fileUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/octet-stream, application/json, */*'
+                    }
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Không thể tải tệp từ máy chủ (Mã: ' + res.status + ')');
+                        return res.arrayBuffer();
+                    })
                     .then(ab => mammoth.convertToHtml({ arrayBuffer: ab }))
                     .then(res => {
                         document.getElementById('splitModalDocxContent').innerHTML = res.value || '<div class="alert alert-info">Tài liệu không có nội dung văn bản.</div>';
                     })
                     .catch(err => {
+                        console.warn('Lỗi đọc nhanh Word:', err);
                         document.getElementById('splitModalDocxContent').innerHTML = '<div class="alert alert-warning text-center">Không thể hiển thị trực tiếp Word. Vui lòng bấm "Mở tab riêng" hoặc "Tải về" để xem file.</div>';
                     });
             } else {
@@ -997,7 +1014,10 @@ function openTopicOutlineSplitModal(btn) {
 
             // Dùng Mozilla PDF.js dựng các trang PDF thành ảnh Canvas trực tiếp
             if (window.pdfjsLib) {
-                pdfjsLib.getDocument(fileUrl).promise.then(function(pdfDoc) {
+                pdfjsLib.getDocument({
+                    url: fileUrl,
+                    withCredentials: true
+                }).promise.then(function(pdfDoc) {
                     loadingBox.classList.add('d-none');
                     canvasWrapper.style.display = 'block';
                     renderPdfPagesToCanvas(pdfDoc);

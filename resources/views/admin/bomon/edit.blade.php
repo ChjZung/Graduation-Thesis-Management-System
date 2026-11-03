@@ -59,8 +59,8 @@
                     <div class="mb-4">
                         <label class="form-label-huit">Trạng Thái Hoạt Động</label>
                         <select name="TrangThai" class="form-select form-select-huit">
-                            <option value="Active" selected>🟢 Hoạt động bình thường (Active)</option>
-                            <option value="Inactive">🔴 Tạm ngưng</option>
+                            <option value="Active" selected>Hoạt động bình thường (Active)</option>
+                            <option value="Inactive">Tạm ngưng</option>
                         </select>
                     </div>
 

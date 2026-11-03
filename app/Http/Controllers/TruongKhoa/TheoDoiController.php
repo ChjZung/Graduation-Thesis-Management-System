@@ -342,7 +342,7 @@ class TheoDoiController extends Controller
             });
         }
 
-        $hoSoBaoVes = $queryHoSo->orderBy('created_at', 'desc')->paginate(10, ['*'], 'page_hoso')->withQueryString();
+        $hoSoBaoVes = $queryHoSo->orderBy('created_at', 'desc')->paginate(5, ['*'], 'page_hoso')->withQueryString();
 
         $giangViens = GiangVien::whereHas('boMon', fn($q) => $q->where('MaKhoa', $maKhoa))->orderBy('HoTen')->get();
 

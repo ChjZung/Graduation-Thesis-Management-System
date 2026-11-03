@@ -37,7 +37,7 @@ class LopHocPhanController extends Controller
             $query->where('MaGV', $request->ma_gv);
         }
 
-        $lopHocPhans = $query->orderBy('MaLopHP', 'desc')->paginate(15);
+        $lopHocPhans = $query->orderBy('MaLopHP', 'desc')->paginate(5)->withQueryString();
         $monHocs = MonHoc::all();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $giangViens = GiangVien::all();

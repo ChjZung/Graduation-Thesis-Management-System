@@ -66,7 +66,7 @@ class HoSoBaoVeController extends Controller
               ->orWhereNotNull('MaHoiDong');
         })->count();
 
-        $hoSos = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $hoSos = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $hoiDongs = HoiDong::orderBy('TenHoiDong')->get();
 
         return view('admin.hoso_baove.index', compact(

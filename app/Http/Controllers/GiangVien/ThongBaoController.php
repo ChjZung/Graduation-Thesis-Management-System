@@ -71,7 +71,7 @@ class ThongBaoController extends Controller
             $query->where('LoaiThongBao', $request->LoaiThongBao);
         }
 
-        $thongbaos = $query->paginate(10)->withQueryString();
+        $thongbaos = $query->paginate(5)->withQueryString();
 
         $stats = [
             'da_gui'      => ThongBao::where('MaGV', $gv->MaGV)->count(),

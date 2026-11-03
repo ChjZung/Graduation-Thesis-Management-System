@@ -116,7 +116,7 @@
             <!-- 4. BẢO VỆ & KẾT QUẢ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isHoiDongActive = request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*');
+                    $isHoiDongActive = request()->routeIs('admin.hosoBaoVe.*') || request()->routeIs('admin.ketqua.*') || request()->routeIs('admin.baocao_sau_chamdiem.*') || request()->routeIs('admin.thongke_baocao.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isHoiDongActive ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-hoidong" aria-expanded="{{ $isHoiDongActive ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -131,6 +131,12 @@
                     </a>
                     <a href="{{ route('admin.ketqua.index') }}" class="submenu-link {{ request()->routeIs('admin.ketqua.*') ? 'active-sub' : '' }}">
                         <span>Bảng điểm &amp; Kết quả</span>
+                    </a>
+                    <a href="{{ route('admin.baocao_sau_chamdiem.index') }}" class="submenu-link {{ request()->routeIs('admin.baocao_sau_chamdiem.*') ? 'active-sub' : '' }}">
+                        <span>Báo cáo sau chấm điểm</span>
+                    </a>
+                    <a href="{{ route('admin.thongke_baocao.index') }}" class="submenu-link {{ request()->routeIs('admin.thongke_baocao.*') ? 'active-sub' : '' }}">
+                        <span>Thống kê &amp; Báo cáo</span>
                     </a>
                 </div>
             </div>
@@ -275,47 +281,7 @@
         <!-- Alerts + Content -->
         <div class="content-body admin-page-transition">
 
-            @if (isset($errors) && $errors->any())
-
-                <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-xmark me-2"></i>
-                    <strong>Có lỗi xảy ra:</strong>
-                    <ul class="mb-0 mt-1 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li style="font-size: 0.875rem;">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #198754 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-check me-2"></i>
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-xmark me-2"></i>
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('warning'))
-                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                    {{ session('warning') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
+            @include('partials.flash_alert')
 
             @yield('content')
         </div>

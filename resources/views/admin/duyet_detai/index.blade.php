@@ -428,7 +428,7 @@
                         <select name="MaHocKy" class="form-select form-select-sm" style="font-size: 13px;" onchange="this.form.submit()">
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -688,7 +688,7 @@
                             <select name="MaHocKy" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                                 @foreach($hocKies as $hk)
                                     <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '★' : '' }}
+                                        {{ $hk->TenHocKy }} {{ $hk->TrangThai == 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -1057,15 +1057,16 @@
                     </div>
                     @if($dt->FileDeCuong)
                         @php
-                            $filePath = Str::startsWith($dt->FileDeCuong, ['http', 'storage/']) ? asset($dt->FileDeCuong) : asset('storage/' . $dt->FileDeCuong);
+                            $filePath = route('files.decuong.download', $dt->MaDeTai);
+                            $downloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
                             $fileName = basename($dt->FileDeCuong);
                         @endphp
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm d-inline-flex align-items-center"
-                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}')">
+                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
                                 <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
                             </button>
-                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                            <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
                                 <i class="fa-solid fa-download me-2"></i> Tải Về
                             </a>
                         </div>

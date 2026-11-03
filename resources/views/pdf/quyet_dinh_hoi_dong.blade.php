@@ -281,7 +281,7 @@
                     <td class="text-bold">{{ $tv->giangVien?->HoTen ?? 'Chưa rõ' }}</td>
                     <td class="text-center">{{ $tv->giangVien?->HocVi ?? ($tv->giangVien?->HocHam ?? 'Thạc sĩ') }}</td>
                     <td>{{ $tv->giangVien?->boMon?->TenBoMon ?? ($khoa->TenKhoa ?? 'Khoa CNTT') }}</td>
-                    <td class="text-center text-bold" style="color: #00305a;">{{ $tv->VaiTro }}</td>
+                    <td class="text-center text-bold" style="color: #00305a;">{{ $tv->short_vai_tro }}</td>
                 </tr>
             @empty
                 <tr>

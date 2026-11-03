@@ -193,7 +193,7 @@
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
-                                @forelse($hoiDong->thanhViens as $tv)
+                                @forelse($hoiDong->sorted_thanh_viens as $tv)
                                 <tr>
                                     <td class="ps-3 py-2">
                                         <div class="d-flex align-items-center gap-2">
@@ -214,15 +214,7 @@
                                         </div>
                                     </td>
                                     <td class="pe-3 text-center py-2">
-                                        @php
-                                            $badgeStyle = match($tv->VaiTro) {
-                                                'Chủ tịch' => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                                'Thư ký', 'Ủy viên thư ký' => 'bg-info-subtle text-info border border-info-subtle',
-                                                'Phản biện', 'Ủy viên phản biện' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                                default => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                            };
-                                        @endphp
-                                        <span class="badge {{ $badgeStyle }} rounded-pill px-3 py-1" style="font-size: 0.75rem;">{{ $tv->VaiTro }}</span>
+                                        <span class="badge {{ $tv->badge_class }} rounded-pill px-3 py-1" style="font-size: 0.75rem;">{{ $tv->short_vai_tro }}</span>
                                     </td>
                                 </tr>
                                 @empty

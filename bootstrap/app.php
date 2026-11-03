@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->redirectGuestsTo(fn (Request $request) => ($request->expectsJson() || $request->ajax()) ? null : route('login'));
         $middleware->web(append: [
             \App\Http\Middleware\EnsurePasswordStatus::class,
             \App\Http\Middleware\MockTimeMiddleware::class,
@@ -27,6 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson() || $request->ajax(),
         );
     })->create();

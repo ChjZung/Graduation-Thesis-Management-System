@@ -110,9 +110,9 @@
 
             <select name="TrangThaiCongBo" class="form-select" style="min-width: 170px; flex: 1;" onchange="this.form.submit()">
                 <option value="">-- Trạng thái công bố --</option>
-                <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>🟢 Đã công bố</option>
-                <option value="Chưa công bố" {{ request('TrangThaiCongBo') === 'Chưa công bố' ? 'selected' : '' }}>🟡 Bản nháp (Chưa công bố)</option>
-                <option value="Đã thu hồi" {{ request('TrangThaiCongBo') === 'Đã thu hồi' ? 'selected' : '' }}>🔴 Đã thu hồi</option>
+                <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>Đã công bố</option>
+                <option value="Chưa công bố" {{ request('TrangThaiCongBo') === 'Chưa công bố' ? 'selected' : '' }}>Bản nháp (Chưa công bố)</option>
+                <option value="Đã thu hồi" {{ request('TrangThaiCongBo') === 'Đã thu hồi' ? 'selected' : '' }}>Đã thu hồi</option>
             </select>
 
             <select name="TrangThai" class="form-select" style="min-width: 160px; flex: 1;" onchange="this.form.submit()">
@@ -190,21 +190,10 @@
                             {{-- Thành viên Hội đồng --}}
                             <td class="py-3">
                                 <div class="d-flex flex-column gap-1.5" style="font-size: 0.82rem;">
-                                    @forelse($hd->thanhViens->take(3) as $tv)
+                                    @forelse($hd->sorted_thanh_viens->take(3) as $tv)
                                     @php
-                                        $vt = $tv->VaiTro;
-                                        $shortVt = match($vt) {
-                                            'Ủy viên phản biện', 'Phản biện' => 'Phản biện',
-                                            'Ủy viên thư ký', 'Thư ký' => 'Thư ký',
-                                            'Chủ tịch' => 'Chủ tịch',
-                                            default => 'Ủy viên',
-                                        };
-                                        $badgeBg = match($shortVt) {
-                                            'Chủ tịch' => 'bg-danger-subtle text-danger border-danger-subtle',
-                                            'Phản biện' => 'bg-primary-subtle text-primary border-primary-subtle',
-                                            'Thư ký' => 'bg-info-subtle text-info border-info-subtle',
-                                            default => 'bg-secondary-subtle text-secondary border-secondary-subtle',
-                                        };
+                                        $shortVt = $tv->short_vai_tro;
+                                        $badgeBg = $tv->badge_class;
                                     @endphp
                                     <div class="d-flex align-items-center gap-2 text-nowrap">
                                         <span class="badge {{ $badgeBg }} border px-2 py-1 fw-semibold flex-shrink-0" style="font-size: 0.72rem; min-width: 68px; text-align: center;">

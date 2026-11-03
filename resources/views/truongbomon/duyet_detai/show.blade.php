@@ -103,18 +103,19 @@
                         <div class="min-w-0">
                             @if($detai->coTepDeCuong())
                                 @php
-                                    $filePath = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $filePath = route('files.decuong.download', $detai->MaDeTai);
+                                    $downloadUrl = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                                     $fileName = basename($detai->FileDeCuong);
                                 @endphp
                                 <div class="d-flex flex-wrap align-items-center gap-2">
                                     <button type="button" class="btn btn-primary shadow-sm d-inline-flex align-items-center" 
-                                            onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                            onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
                                         <i class="fa-solid fa-eye me-2"></i> Xem Nhanh Đề Cương
                                     </button>
                                     <a href="{{ $filePath }}" target="_blank" class="btn btn-outline-secondary d-inline-flex align-items-center">
                                         <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                                     </a>
-                                    <a href="{{ $filePath }}" download="{{ $fileName }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
+                                    <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
                                         <i class="fa-solid fa-download me-2"></i> Tải về máy
                                     </a>
                                 </div>

@@ -533,4 +533,174 @@ class PhieuChamDiem extends Model
 
         return $requirements;
     }
+
+    /**
+     * Phân tích nội dung tiêu chí rubric thành cấu trúc cây phân cấp (tiêu đề, nhóm chức năng, yêu cầu con/bullet)
+     * Kèm phân bổ điểm nếu có ($targetScore hoặc $diemLines).
+     *
+     * @param string $noiDung
+     * @param float|null $targetScore
+     * @param array|null $diemLines
+     * @return array
+     */
+    public static function parseTieuChi(string $noiDung, ?float $targetScore = null, ?array $diemLines = null): array
+    {
+        $text = str_replace(["\r\n", "\r"], "\n", trim($noiDung));
+        
+        // Tách các ký hiệu phân cách nội dòng " - ", " + ", " * " (chỉ tách khi có khoảng trắng trước và sau)
+        // Không tách "Use-Case" hay "backup & restore"
+        $text = preg_replace('/[ \t]+(?=[\+\-\*][ \t]+)/u', "\n", $text);
+        $rawLines = explode("\n", $text);
+
+        $parsed = [
+            'title' => '',
+            'items' => [],
+        ];
+
+        $currentGroupKey = null;
+
+        foreach ($rawLines as $rawLine) {
+            $trimmed = trim($rawLine);
+            if ($trimmed === '') continue;
+
+            $isIndented = (bool) preg_match('/^(\t|\s{2,})/', $rawLine);
+
+            if (str_starts_with($trimmed, '+')) {
+                $content = trim(ltrim($trimmed, "+ \t"));
+                $isGroupHeader = str_ends_with($content, ':') || preg_match('/^(Chức năng|CN|Module|Phần|\b\d+\.|\b[IVXLCDM]+\.)/iu', $content);
+                if ($isGroupHeader || $currentGroupKey === null) {
+                    $parsed['items'][] = [
+                        'type' => 'group',
+                        'title' => $content,
+                        'children' => [],
+                    ];
+                    $currentGroupKey = array_key_last($parsed['items']);
+                } else {
+                    $score = null;
+                    if (preg_match('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', $content, $m)) {
+                        $score = $m[1] . 'đ';
+                        $content = trim(preg_replace('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', '', $content));
+                    }
+                    $parsed['items'][$currentGroupKey]['children'][] = [
+                        'text' => $content,
+                        'score' => $score,
+                    ];
+                }
+            } elseif (str_starts_with($trimmed, '*')) {
+                $reqText = trim(ltrim($trimmed, "* \t"));
+                $score = null;
+                if (preg_match('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', $reqText, $m)) {
+                    $score = $m[1] . 'đ';
+                    $reqText = trim(preg_replace('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', '', $reqText));
+                }
+                if ($currentGroupKey !== null && $parsed['items'][$currentGroupKey]['type'] === 'group') {
+                    $parsed['items'][$currentGroupKey]['children'][] = [
+                        'text' => $reqText,
+                        'score' => $score,
+                    ];
+                } else {
+                    $parsed['items'][] = [
+                        'type' => 'bullet',
+                        'text' => $reqText,
+                        'score' => $score,
+                    ];
+                }
+            } elseif (str_starts_with($trimmed, '-') || str_starts_with($trimmed, '•')) {
+                $bulletText = trim(preg_replace('/^[\-\•]\s*/u', '', $trimmed));
+                if (str_ends_with($bulletText, ':') || preg_match('/^(Chức năng|CN|Module|Cài đặt chức năng|Xây dựng các chức năng)\b/iu', $bulletText)) {
+                    $parsed['items'][] = [
+                        'type' => 'group',
+                        'title' => $bulletText,
+                        'children' => [],
+                    ];
+                    $currentGroupKey = array_key_last($parsed['items']);
+                } else {
+                    $currentGroupKey = null;
+                    $parsed['items'][] = [
+                        'type' => 'bullet',
+                        'text' => $bulletText,
+                        'score' => null,
+                    ];
+                }
+            } else {
+                if (empty($parsed['title'])) {
+                    $parsed['title'] = $trimmed;
+                } elseif ($isIndented && $currentGroupKey !== null && $parsed['items'][$currentGroupKey]['type'] === 'group') {
+                    $score = null;
+                    if (preg_match('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', $trimmed, $m)) {
+                        $score = $m[1] . 'đ';
+                        $trimmed = trim(preg_replace('/\((\d+(?:\.\d+)?)\s*đ\)$/iu', '', $trimmed));
+                    }
+                    $parsed['items'][$currentGroupKey]['children'][] = [
+                        'text' => $trimmed,
+                        'score' => $score,
+                    ];
+                } elseif (str_ends_with($trimmed, ':') || preg_match('/^(Chức năng|CN|Module|Cài đặt chức năng|Xây dựng các chức năng|Phần|\d+\.|\b[IVXLCDM]+\.)/iu', $trimmed)) {
+                    $parsed['items'][] = [
+                        'type' => 'group',
+                        'title' => $trimmed,
+                        'children' => [],
+                    ];
+                    $currentGroupKey = array_key_last($parsed['items']);
+                } else {
+                    $currentGroupKey = null;
+                    $parsed['items'][] = [
+                        'type' => 'bullet',
+                        'text' => $trimmed,
+                        'score' => null,
+                    ];
+                }
+            }
+        }
+
+        // Tính điểm thành phần nếu có:
+        $totalChildrenWithoutScore = 0;
+        foreach ($parsed['items'] as $item) {
+            if ($item['type'] === 'group') {
+                foreach ($item['children'] as $ch) {
+                    if (empty($ch['score'])) {
+                        $totalChildrenWithoutScore++;
+                    }
+                }
+            }
+        }
+
+        if ($totalChildrenWithoutScore > 0 && $targetScore !== null && $targetScore > 0) {
+            // Phân bổ điểm cho từng yêu cầu con chưa có điểm
+            $cents = (int) round($targetScore * 100);
+            $base = intdiv($cents, $totalChildrenWithoutScore);
+            $rem = $cents % $totalChildrenWithoutScore;
+            $idx = 0;
+            foreach ($parsed['items'] as &$item) {
+                if ($item['type'] === 'group') {
+                    foreach ($item['children'] as &$ch) {
+                        if (empty($ch['score'])) {
+                            $s = round(($base + ($idx < $rem ? 1 : 0)) / 100, 2);
+                            $ch['score'] = number_format($s, 2) . 'đ';
+                            $idx++;
+                        }
+                    }
+                }
+            }
+            unset($item, $ch);
+        } elseif ($totalChildrenWithoutScore === 0 && !empty($diemLines)) {
+            // Nếu không có nhóm con, nhưng có diemLines (ví dụ tc1 có ['0.25', '0.5'])
+            $bulletIndices = [];
+            foreach ($parsed['items'] as $i => $item) {
+                if ($item['type'] === 'bullet') {
+                    $bulletIndices[] = $i;
+                }
+            }
+            if (count($bulletIndices) === count($diemLines)) {
+                foreach ($bulletIndices as $k => $itemIdx) {
+                    $val = trim($diemLines[$k]);
+                    if (is_numeric($val)) {
+                        $parsed['items'][$itemIdx]['score'] = number_format((float)$val, 2) . 'đ';
+                    }
+                }
+            }
+        }
+
+        return $parsed;
+    }
 }

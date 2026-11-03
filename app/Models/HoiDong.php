@@ -409,7 +409,45 @@ class HoiDong extends Model
     }
 
     /**
-     * Danh sách thành viên sắp xếp theo thứ tự cố định: Chủ tịch -> Phản biện -> Thư ký -> Ủy viên
+     * Thành viên giữ vai trò Chủ tịch Hội đồng
+     */
+    public function getChuTichAttribute(): ?ThanhVienHoiDong
+    {
+        return $this->thanhViens->first(fn($tv) => \App\Enums\VaiTroHoiDong::isChuTich($tv->VaiTro));
+    }
+
+    /**
+     * Thành viên giữ vai trò Thư ký Hội đồng
+     */
+    public function getThuKyAttribute(): ?ThanhVienHoiDong
+    {
+        return $this->thanhViens->first(fn($tv) => \App\Enums\VaiTroHoiDong::isThuKy($tv->VaiTro));
+    }
+
+    /**
+     * Thành viên giữ vai trò Phản biện Hội đồng
+     */
+    public function getPhanBienAttribute(): ?ThanhVienHoiDong
+    {
+        return $this->thanhViens->first(fn($tv) => \App\Enums\VaiTroHoiDong::isPhanBien($tv->VaiTro));
+    }
+
+    /**
+     * Danh sách thành viên khác (Ủy viên & Phản biện, không bao gồm người đã là Chủ tịch hoặc Thư ký)
+     */
+    public function getThanhVienKhacAttribute()
+    {
+        $chuTich = $this->chu_tich;
+        $thuKy = $this->thu_ky;
+        return $this->thanhViens->filter(function($tv) use ($chuTich, $thuKy) {
+            if ($chuTich && $tv->MaGV === $chuTich->MaGV) return false;
+            if ($thuKy && $tv->MaGV === $thuKy->MaGV) return false;
+            return true;
+        })->values();
+    }
+
+    /**
+     * Danh sách thành viên sắp xếp theo thứ tự cố định: Chủ tịch -> Thư ký -> Phản biện -> Ủy viên
      */
     public function getSortedThanhViensAttribute()
     {

@@ -92,9 +92,9 @@
                                     <i class="fa-solid fa-toggle-on text-primary me-2"></i> Trạng Thái Học Kỳ Hệ Thống
                                 </label>
                                 <select name="TrangThai" class="form-select form-select-huit fw-semibold text-dark">
-                                    <option value="1" selected>🟢 Đang diễn ra (Active)</option>
-                                    <option value="UPCOMING">🔵 Chuẩn bị kích hoạt (Upcoming)</option>
-                                    <option value="0">⚪ Đã kết thúc (Completed)</option>
+                                    <option value="1" selected>Đang diễn ra (Active)</option>
+                                    <option value="UPCOMING">Chuẩn bị kích hoạt (Upcoming)</option>
+                                    <option value="0">Đã kết thúc (Completed)</option>
                                 </select>
                                 <div class="form-text text-muted small mt-1">Cập nhật tình trạng hoạt động đợt khóa luận</div>
                             </div>

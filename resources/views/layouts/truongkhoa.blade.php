@@ -36,7 +36,7 @@
         $isTkTongQuan = request()->routeIs('truongkhoa.dashboard') || request()->routeIs('thongbao.*');
         $isPheDuyetTkActive = request()->routeIs('truongkhoa.duyet_detai.*') || request()->routeIs('truongkhoa.bomon.*') || request()->routeIs('truongkhoa.phe_duyet_detai.*') || request()->routeIs('truongkhoa.thongke.*');
         $isTkDeTai = $isPheDuyetTkActive || request()->routeIs('truongkhoa.theodoi.*');
-        $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*');
+        $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*') || request()->routeIs('truongkhoa.baocao_sau_chamdiem.*') || request()->routeIs('truongkhoa.thongke_baocao.*');
 
         $tkMenuGroups = [
             [
@@ -105,6 +105,16 @@
                         'title' => 'Kết quả khóa luận',
                         'url' => route('truongkhoa.ketqua.index'),
                         'active' => request()->routeIs('truongkhoa.ketqua.*'),
+                    ],
+                    [
+                        'title' => 'Báo cáo sau chấm điểm',
+                        'url' => route('truongkhoa.baocao_sau_chamdiem.index'),
+                        'active' => request()->routeIs('truongkhoa.baocao_sau_chamdiem.*'),
+                    ],
+                    [
+                        'title' => 'Thống kê & Báo cáo',
+                        'url' => route('truongkhoa.thongke_baocao.index'),
+                        'active' => request()->routeIs('truongkhoa.thongke_baocao.*'),
                     ],
                 ],
             ],
@@ -196,46 +206,7 @@
         <!-- Alerts + Content -->
         <div class="content-body admin-page-transition">
 
-            @if (isset($errors) && $errors->any())
-                <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-xmark me-2"></i>
-                    <strong>Có lỗi xảy ra:</strong>
-                    <ul class="mb-0 mt-1 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li style="font-size: 0.875rem;">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #198754 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-check me-2"></i>
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
-                    <i class="fa-solid fa-circle-xmark me-2"></i>
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('warning'))
-                <div class="alert alert-warning alert-dismissible fade show border-0 mb-4" role="alert"
-                     style="border-left: 4px solid #f59e0b !important; border-radius: 10px;">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                    {{ session('warning') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
+            @include('partials.flash_alert')
 
             @yield('content')
         </div>

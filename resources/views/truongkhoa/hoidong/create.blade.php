@@ -110,7 +110,7 @@
                                     <select name="MaHocKy" id="MaHocKy" class="form-select" required onchange="onSemesterChange(this.value)">
                                         @foreach($hocKys as $hk)
                                         <option value="{{ $hk->MaHocKy }}" {{ $selectedMaHocKy == $hk->MaHocKy ? 'selected' : '' }} data-namhoc="{{ $hk->NamHoc }}" data-tendaydu="{{ $hk->TenDayDu }}">
-                                            {{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★ (Hiện tại)' : '' }}
+                                            {{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}
                                         </option>
                                         @endforeach
                                     </select>
@@ -396,7 +396,7 @@
                             <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 border-0 bg-info-subtle text-info-emphasis d-flex align-items-center">
                                 <i class="fa-solid fa-circle-info fs-5 me-2"></i>
                                 <div>
-                                    Cơ cấu bắt buộc tối thiểu: <strong>01 Chủ tịch</strong>, <strong>01 Ủy viên phản biện</strong>, <strong>01 Ủy viên thư ký</strong>.
+                                    Cơ cấu bắt buộc tối thiểu: <strong>01 Chủ tịch</strong>, <strong>01 Thư ký</strong>, <strong>01 Phản biện</strong>.
                                     Không phân công một giảng viên vào nhiều vị trí trong cùng một hội đồng. Giảng viên hướng dẫn không được tham gia hội đồng chấm nhóm mình.
                                 </div>
                             </div>
@@ -447,11 +447,11 @@
                                         <div class="p-3 bg-white rounded-3 border h-100">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label fw-bold text-primary mb-0">
-                                                    <i class="fa-solid fa-clipboard-check me-2"></i>2. ỦY VIÊN PHẢN BIỆN <span class="text-danger">*</span>
+                                                    <i class="fa-solid fa-clipboard-check me-2"></i>2. PHẢN BIỆN <span class="text-danger">*</span>
                                                 </label>
                                                 <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">Bắt buộc</span>
                                             </div>
-                                            <input type="hidden" name="thanh_viens[1][VaiTro]" value="Ủy viên phản biện">
+                                            <input type="hidden" name="thanh_viens[1][VaiTro]" value="Phản biện">
                                             <div class="mb-1">
                                                 <select name="thanh_viens[1][MaGV]" id="selectPhanBien" class="form-select select-faculty" required onchange="validateFacultySelection()">
                                                     <option value="">— Chọn Giảng viên Phản biện —</option>
@@ -470,11 +470,11 @@
                                         <div class="p-3 bg-white rounded-3 border h-100">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label fw-bold text-success mb-0">
-                                                    <i class="fa-solid fa-pen-to-square me-2"></i>3. ỦY VIÊN THƯ KÝ <span class="text-danger">*</span>
+                                                    <i class="fa-solid fa-pen-to-square me-2"></i>3. THƯ KÝ <span class="text-danger">*</span>
                                                 </label>
                                                 <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">Bắt buộc</span>
                                             </div>
-                                            <input type="hidden" name="thanh_viens[2][VaiTro]" value="Ủy viên thư ký">
+                                            <input type="hidden" name="thanh_viens[2][VaiTro]" value="Thư ký">
                                             <div class="mb-1">
                                                 <select name="thanh_viens[2][MaGV]" id="selectThuKy" class="form-select select-faculty" required onchange="validateFacultySelection()">
                                                     <option value="">— Chọn Giảng viên Thư ký —</option>
@@ -1163,8 +1163,8 @@
     function getSelectRoleName(sel) {
         if (!sel) return 'Ủy viên';
         if (sel.id === 'selectChuTich') return 'Chủ tịch';
-        if (sel.id === 'selectPhanBien') return 'Ủy viên phản biện';
-        if (sel.id === 'selectThuKy') return 'Ủy viên thư ký';
+        if (sel.id === 'selectPhanBien') return 'Phản biện';
+        if (sel.id === 'selectThuKy') return 'Thư ký';
         const row = sel.closest('.dong-uy-vien-them');
         if (row) {
             const txt = row.querySelector('input[type="text"]')?.value?.trim();
@@ -1444,11 +1444,11 @@
         let sttTV = 1;
 
         // Chủ tịch
-        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectChuTich', 'Chủ tịch Hội đồng', 'text-danger fw-bold');
+        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectChuTich', 'Chủ tịch', 'text-danger fw-bold');
         // Phản biện
-        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectPhanBien', 'Ủy viên phản biện', 'text-primary fw-bold');
+        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectPhanBien', 'Phản biện', 'text-primary fw-bold');
         // Thư ký
-        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectThuKy', 'Ủy viên thư ký', 'text-success fw-bold');
+        addPreviewFacultyRow(tbodyTV, sttTV++, 'selectThuKy', 'Thư ký', 'text-success fw-bold');
 
         // Các ủy viên thêm
         document.querySelectorAll('.dong-uy-vien-them').forEach(dong => {

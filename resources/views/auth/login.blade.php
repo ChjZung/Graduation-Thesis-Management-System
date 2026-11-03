@@ -106,6 +106,8 @@
         position: relative;
         background: #003B73;
         overflow: hidden;
+        min-width: 0;
+        box-sizing: border-box;
     }
 
     .bg-photo {
@@ -131,32 +133,53 @@
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        padding: 50px 40px;
+        padding: 45px 24px;
+        padding-inline: 24px;
+        min-width: 0;
+        box-sizing: border-box;
+        width: 100%;
         color: white;
         text-align: center;
     }
 
     .school-logo {
-        width: 120px;
-        height: 120px;
+        width: 110px;
+        height: 110px;
         border-radius: 18px;
         border: 4px solid rgba(255, 255, 255, .35);
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         box-shadow: 0 8px 24px rgba(0,0,0,.2);
     }
 
-    .login-left h5 {
-        font-size: 1.75rem;
+    .login-left h5,
+    .school-title {
+        font-size: clamp(1.1rem, 2.2vw, 1.75rem);
         font-weight: 700;
+        margin-top: 0;
         margin-bottom: 16px;
-        line-height: 1.3;
+        line-height: 1.35;
+        white-space: nowrap;
+        text-align: center;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        color: #ffffff;
+    }
+
+    /* Giảm cỡ chữ xuống ~24px (1.5rem) ở desktop để tiêu đề luôn nằm trọn trên MỘT hàng */
+    @media(min-width: 993px) {
+        .login-left h5,
+        .school-title {
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+        }
     }
 
     .tagline {
-        font-size: 1.05rem;
-        line-height: 1.7;
+        font-size: 1.02rem;
+        line-height: 1.65;
         max-width: 440px;
-        margin-bottom: 28px;
+        margin-bottom: 26px;
         color: rgba(255, 255, 255, .9);
     }
 
@@ -421,9 +444,30 @@
         }
         .login-left {
             padding: 35px 20px;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .login-left .left-inner {
+            padding: 20px 16px;
+            padding-inline: 16px;
+        }
+        .login-left h5,
+        .school-title {
+            font-size: clamp(0.95rem, 3.2vw, 1.4rem);
         }
         .login-right {
             padding: 40px 30px;
+        }
+    }
+
+    @media(max-width: 576px) {
+        .login-left .left-inner {
+            padding: 20px 12px;
+            padding-inline: 12px;
+        }
+        .login-left h5,
+        .school-title {
+            font-size: clamp(0.85rem, 4.2vw, 1.15rem);
         }
     }
 </style>
@@ -436,7 +480,7 @@
         <div class="overlay"></div>
         <div class="left-inner">
             <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="school-logo">
-            <h5>Trường Đại Học Công Thương TP. Hồ Chí Minh</h5>
+            <h5 class="school-title">Trường Đại Học Công Thương TP. Hồ Chí Minh</h5>
             <p class="tagline">
                 Hệ thống quản lý công tác khóa luận tốt nghiệp trực tuyến dành riêng cho Giảng Viên và Sinh Viên.
             </p>
@@ -589,6 +633,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 icon.classList.add('fa-eye');
             }
         });
+    }
+
+    // Tự động điều chỉnh cỡ chữ tiêu đề trường để luôn vừa vặn trên 1 hàng (tối thiểu 14px)
+    function fitSchoolTitle() {
+        const titleEl = document.querySelector('.school-title') || document.querySelector('.login-left h5');
+        if (!titleEl) return;
+        const parent = titleEl.parentElement;
+        if (!parent) return;
+
+        // Reset về style ban đầu trước khi tính toán
+        titleEl.style.fontSize = '';
+
+        const style = window.getComputedStyle(parent);
+        const paddingLeft = parseFloat(style.paddingLeft) || 0;
+        const paddingRight = parseFloat(style.paddingRight) || 0;
+        const maxW = parent.clientWidth - paddingLeft - paddingRight;
+
+        const minSize = 14; // tối thiểu 14px theo yêu cầu
+        let currentSize = parseFloat(window.getComputedStyle(titleEl).fontSize);
+
+        // Giảm dần font-size đến khi scrollWidth <= maxW (không tràn, không xuống hàng)
+        while ((titleEl.scrollWidth > maxW || titleEl.offsetWidth > maxW) && currentSize > minSize) {
+            currentSize -= 0.5;
+            titleEl.style.fontSize = currentSize + 'px';
+        }
+    }
+
+    fitSchoolTitle();
+    window.addEventListener('resize', fitSchoolTitle);
+    if (document.fonts) {
+        document.fonts.ready.then(fitSchoolTitle);
     }
 });
 </script>

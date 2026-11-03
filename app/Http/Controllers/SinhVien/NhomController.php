@@ -858,7 +858,7 @@ class NhomController extends Controller
             );
         });
 
-        return redirect()->back()->with('invite_success', "Đã gửi lời mời gia nhập nhóm đến sinh viên {$svThem->HoTen} ({$svThem->taiKhoan->TenDangNhap}) thành công!");
+        return redirect()->back()->with('success', "Đã gửi lời mời gia nhập nhóm đến sinh viên {$svThem->HoTen} ({$svThem->taiKhoan->TenDangNhap}) thành công!");
     }
 
     /**

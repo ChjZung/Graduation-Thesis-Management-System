@@ -48,13 +48,32 @@ class BaoCaoPolicy
             }
         }
 
-        // GV hướng dẫn của đề tài
+        // Giảng viên: GVHD, GVPB, hoặc Thành viên Hội đồng bảo vệ của đề tài
         if ($role === 'Giảng viên') {
             $gv = GiangVien::getLoggedInGiangVien($user);
             if (!$gv) return false;
 
             $baoCao->loadMissing('deTai');
-            return $baoCao->deTai && $baoCao->deTai->MaGV === $gv->MaGV;
+            $dt = $baoCao->deTai;
+            if (!$dt) return false;
+
+            // GV hướng dẫn của đề tài
+            if ($dt->MaGV === $gv->MaGV) {
+                return true;
+            }
+
+            // Giảng viên phản biện
+            if ($dt->phanCongPhanBiens()->where('MaGV', $gv->MaGV)->exists()) {
+                return true;
+            }
+
+            // Thành viên hội đồng bảo vệ của đề tài
+            if ($dt->hoiDongs()->whereHas('thanhViens', fn($q) => $q->where('MaGV', $gv->MaGV))->exists()
+                || $dt->hoSoBaoVes()->whereHas('hoiDong.thanhViens', fn($q) => $q->where('MaGV', $gv->MaGV))->exists()) {
+                return true;
+            }
+
+            return false;
         }
 
         // Sinh viên thuộc nhóm nộp báo cáo

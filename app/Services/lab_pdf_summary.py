@@ -18,6 +18,8 @@ from ai_runtime.summarizer import fingerprint
 from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
 from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION
+from core.caption_index import extract_captions, section_nodes, VERSION as CAPTION_VERSION
+from ai_runtime.requirement_relevance import VERSION as MATCHER_VERSION
 
 ENGINE_VERSION='pdf-lab-v1.3'
 
@@ -65,6 +67,7 @@ def processing_error(error,stage='summary'):
     elif code in ('network_error','worker_network'):mapped='connection_error'
     elif isinstance(error,SegmentationError):mapped='extraction_failed'
     elif code in ('http_error',):mapped='model_unavailable' if status==404 else 'service_unavailable'
+    elif code.startswith('reader_') or code in ('cached_reader_error','invalid_reader_output','invalid_reader_reference'):mapped='output_validation'
     elif isinstance(error,ApiError):mapped='invalid_request'
     else:mapped='service_unavailable'
     detail={'stage':stage,'code':mapped,'engine_code':code,'message':str(error) if isinstance(error,(ApiError,SegmentationError)) else 'Chưa hoàn tất xử lý AI. Các bước đã lưu được giữ.'}
@@ -120,6 +123,10 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         return {'content':text,'kind':kind,'source_ids':[r['source_id'] for r in refs],
                 'source_pages':sorted({r['page'] for r in refs}), 'evidence':refs[0]['quote'],
                 'source_references':refs,'verified':True,'relevance_verified':False,'semantic_support':'NOT_VERIFIED'}
+    try:
+        caption_index = extract_captions(result)
+    except Exception:
+        caption_index = {'version':CAPTION_VERSION,'status':'failed','assets':[]}
     overview=[item(p['text'],p['evidence_ids']) for p in (reader or {}).get('report_overview',[])]
     summaries={c['root_id']:c for c in (reader or {}).get('chapter_summaries',[])}
     roots=list(dict.fromkeys(b['root_id'] for b in plan['batches']));chapters=[]
@@ -130,6 +137,9 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             'summary':' '.join(p['text'] for p in c.get('paragraphs',[])),
             'items':[item(p['text'],p['evidence_ids']) for p in c.get('paragraphs',[])],
             'status':'completed' if c.get('paragraphs') and c.get('coverage')=='selected_text_complete' else 'partial','sections':[]})
+    for chapter in chapters:
+        chapter['sections'] = section_nodes(result, evidence, item, chapter['id'], caption_index)
+        chapter['related_assets'] = [a for a in caption_index['assets'] if a['section_id'] == chapter['id']]
     completed=[item(p['text'],p['item_ids'],'reported_work') for p in ((base or {}).get('final_result') or {}).get('completed_work',[])]
     teacher=[]
     matches={i['requirement_id']:i for i in (links or {}).get('links',[])}
@@ -144,7 +154,22 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         teacher.append(dict(req,report_points=points,requirement_id=f'R{index+1:04}',report_relation=match.get('relation','pending'),
             report_explanation=match.get('explanation',''),report_matches=report_items))
     direct=(links or {}).get('_verified_report')
-    if direct is not None:teacher=(links or {}).get('teacher_requirements',[])
+    if direct is not None:
+        from ai_runtime.requirement_output_guard import guard_direct_report
+        from verified_requirement_review import render_teacher_items
+        direct=guard_direct_report(direct)
+        teacher=render_teacher_items(direct)
+    cross_matched = False
+    try:
+        from ai_runtime.requirement_cross_matcher import cross_match_teacher_requirements
+        matched_teacher = cross_match_teacher_requirements(requirements, chapters, completed, caption_index, context)
+        if matched_teacher and direct is None and (links or {}).get('status') == 'complete':
+            for req in matched_teacher:
+                req['document_fingerprint'] = requirements.get('fingerprint')
+            teacher = matched_teacher
+            cross_matched = True
+    except Exception:
+        pass
     full=(base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
     visual=[p['page'] for p in result['document']['pages'] if p.get('image_count') or p.get('visual_regions')]
     source_coverage={'selected_text_coverage':plan['metrics'].get('selected_text_coverage'), 'excluded_sections':plan.get('excluded_sections',[])}
@@ -160,7 +185,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'note':'Đã xử lý đủ các gói text của phương án. Câu trích đã khớp nguồn; chưa kiểm chứng ngữ nghĩa toàn diện, chưa đọc hình/sơ đồ hoặc các mục loại khỏi Map.' if full else 'Bản đọc đang xử lý; chưa dùng phần chưa đọc để kết luận báo cáo thiếu nội dung.',
         'generated_at':datetime.now(timezone.utc).isoformat(),'source_labels':{str(p['page']):f"Trang {p['page']}" for p in result['document']['pages']}}
     content_review=safe_review_content(result,base)
-    data={'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
+    data={'caption_index':caption_index,'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
         'source_identity':identity,'_source_hash':identity['source_hash'],'analysis_status':analysis['status'],'analysis':analysis,
         'overview_summary':'\n\n'.join(p['content'] for p in overview),'overall_summary':'\n\n'.join(p['content'] for p in overview),
         'document_content':overview,'chapters':chapters,'completed_work':completed,'processing_errors':errors,
@@ -172,7 +197,14 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'summary_scope':{'context_hash':hashlib.sha256(json.dumps(context or {},ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
         'validation':{'semantic_audit':False,'quote_matching':True,'quality_rules':'targeted_heuristics'},
         'analysis_metadata':{'pages_total':result['document']['page_count'],'chunks_total':counts['total_chunks'],'chunks_succeeded':counts['analyzed_chunks'],'chunks_failed':counts['total_chunks']-counts['analyzed_chunks']}}
-    if direct is not None:
+    if cross_matched:
+        data['teacher_requirements'] = teacher
+        data['teacher_requirements_status'] = 'provided'
+        data['requirements_links_status'] = 'completed'
+        data['requirements_review'] = {'status':'completed','mode':'verified_v2','items':teacher,
+            'note':'Dẫn chứng đối chiếu trực tiếp từ các chương và công việc đã tóm tắt của báo cáo.'}
+        data['analysis']['requirements_link_version'] = 'verified_v2'
+    elif direct is not None:
         data['requirements_review']={'status':'completed' if (links or {}).get('status')=='complete' else 'partial','mode':'verified_v2',
             'items':direct.get('results',[]),'processing':direct.get('processing',{}),'policy_version':direct.get('verification_policy_version'),
             'note':'Dẫn chứng hỗ trợ đối chiếu; chưa tìm được nguồn không có nghĩa sinh viên chưa thực hiện.'}
@@ -181,11 +213,22 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
     elif (links or {}).get('not_configured'):
         data['requirements_review']={'status':'not_configured','mode':'verified_v2','items':[]}
         data['teacher_requirements']=[]
+    from ai_runtime.requirement_output_guard import guard_teacher_items
+    data['teacher_requirements'], scope_audit = guard_teacher_items(data['teacher_requirements'], caption_index)
+    data['requirements_review']['presentation_guard'] = scope_audit
+    data['requirements_provenance'] = {
+        'method': 'verified_pdf_review' if direct is not None else ('heuristic_summary' if cross_matched else 'source_links'),
+        'algorithm_version': direct.get('verification_policy_version') if direct is not None else MATCHER_VERSION,
+        'context_hash': data['summary_scope']['context_hash'],
+        'source_hash': data.get('_source_hash'),
+        'created_at': time.time(),
+        'scope_guard_version': MATCHER_VERSION,
+    }
     return {'success':True,'source':'pdf_lab_map_reduce','data':data,'total_pages':analysis['total_pages'],'total_units':analysis['total_pages'],
             'processing_time':round(elapsed,3),'metrics':{'total_pages':analysis['total_pages'],'chunk_count':counts['total_chunks']}}
 
 
-def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=None,provider_factory=None,import_checkpoint=None):
+def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=None,provider_factory=None,import_checkpoint=None,fresh=False):
     started=time.monotonic();options=options or {};context=context or {};identity=identity or {}
     direct_review=options.get('review_engine')=='verified_v2'
     settings=RunSettings(int(options.get('input_budget',8500)),int(options.get('max_output_tokens',16384)),int(options.get('max_generation_calls',5)))
@@ -196,6 +239,10 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
     reader_requirements=context_document({}) if direct_review else requirements
     binding=fingerprint([ENGINE_VERSION,READER_VERSION,identity,source['document']['sha256'],model,settings.input_budget,settings.max_output_tokens,plan['fingerprint']])
     folder=Path(cache_dir)/'pdf_lab'/binding;folder.mkdir(parents=True,exist_ok=True)
+    if fresh or options.get('fresh'):
+        for p in folder.glob('*.json'):
+            try: p.unlink()
+            except OSError: pass
     summary_path=folder/'summary.json';reader_path=folder/'reader.json'
     summary_state=load_state(summary_path);reader_state=load_state(reader_path)
     if direct_review:
@@ -220,6 +267,23 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         from ai_runtime.checkpoints import restore_completed_checkpoint
         summary_state=restore_completed_checkpoint(json.loads(Path(import_checkpoint).read_text(encoding='utf-8-sig')),source,plan,model,settings)
     base=summary_state.get('report');reader=reader_state.get('report')
+    if base:
+        from ai_runtime.summarizer import validate_map, map_prompt, MAP_SCHEMA
+        batches_by_id = {b['batch_id']: b for b in plan['batches']}
+        invalid_maps = []
+        for bid, mapped in base.get('map_results', {}).items():
+            try:
+                rebuilt = validate_map({'processed_source_ids':mapped['processed_source_ids'],
+                    'items':[{k:i[k] for k in ('source_id','summary','evidence_quote','kind')} for i in mapped['items']]}, batches_by_id[bid], source['document'])
+                mapped.update(rebuilt)
+            except (ApiError,KeyError,TypeError):
+                invalid_maps.append(bid)
+        if invalid_maps:
+            base = None
+            summary_state.pop('report', None)
+            summary_state['tasks'] = {k:v for k,v in summary_state.get('tasks',{}).items()
+                if v.get('label','').startswith('Map ') and v.get('label')[4:] not in invalid_maps}
+            reader_state = {}; reader = None; links_state = {}
     if reader and (not base or (not direct_review and reader.get('identity')!=reader_fingerprint(base,reader_requirements,model,settings))):
         reader=None
     links=links_state.get('report')
@@ -313,12 +377,13 @@ def main():
     parser.add_argument('--cache-dir',required=True);parser.add_argument('--review-context');parser.add_argument('--document-identity')
     parser.add_argument('--lab-settings');parser.add_argument('--import-lab-checkpoint');parser.add_argument('--output')
     parser.add_argument('--review-only',action='store_true')
+    parser.add_argument('--fresh',action='store_true',help='Force fresh run without reading disk cache')
     for name in ('stage','chunk-size','chunk-overlap','method','pipeline-version','target-tokens','overlap-tokens','prompt-reserve-tokens','max-input-tokens'):parser.add_argument('--'+name)
     args=parser.parse_args()
     try:
         result=run_pipeline(args.pdf,os.environ.get('GEMINI_API_KEY',''),args.model,args.cache_dir,
             json.loads(args.review_context) if args.review_context else {},json.loads(args.document_identity) if args.document_identity else {},
-            json.loads(args.lab_settings) if args.lab_settings else {},import_checkpoint=args.import_lab_checkpoint)
+            json.loads(args.lab_settings) if args.lab_settings else {},import_checkpoint=args.import_lab_checkpoint,fresh=args.fresh)
     except Exception as exc:
         import traceback
         try:

@@ -231,6 +231,25 @@ body {
     transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Shared responsive baseline for every portal; wide data stays inside its table. */
+#content form, #content .card-body, #content .card-header { min-width: 0; }
+#content .table-responsive { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+#content input:not([type="checkbox"]):not([type="radio"]), #content select, #content textarea { max-width: 100%; }
+@media (max-width: 1199.98px) {
+    #content .btn:not(.btn-close):not(.dropdown-toggle) { max-width: 100%; white-space: normal !important; overflow-wrap: anywhere; }
+    #content .card-header { flex-wrap: wrap; gap: 10px; }
+    #content :is(.nav-tabs,.nav-pills):not(.flex-column) { flex-wrap: nowrap !important; overflow-x: auto; overflow-y: hidden; max-width: 100%; overscroll-behavior-x: contain; }
+    #content :is(.nav-tabs,.nav-pills):not(.flex-column) > * { flex-shrink: 0; }
+}
+@media (max-width: 575.98px) {
+    #content .form-control, #content .form-select { font-size: 16px; }
+    .modal-dialog { max-width: calc(100% - 16px); margin: 8px auto; }
+    .modal-content { max-height: calc(100dvh - 16px); }
+    .modal-body { min-width: 0; overflow-y: auto; overflow-wrap: anywhere; }
+    .modal-footer { flex-wrap: wrap; gap: 8px; }
+    .modal-footer .btn { min-height: 44px; white-space: normal !important; }
+}
+
 /* ── Sticky Header Wrapper Toàn Hệ Thống ── */
 .huit-header-sticky {
     position: -webkit-sticky;
@@ -4667,6 +4686,82 @@ input[type="password"]::-ms-clear {
     text-overflow: ellipsis;
     width: 100%;
     line-height: 46px;
+}
+
+/* ════ CẤU TRÚC FILE-ACTIONS COMPONENT DÙNG CHUNG ════ */
+.file-actions-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+}
+
+.file-name-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    color: #1e293b;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    margin-bottom: 2px;
+}
+
+.file-name-heading i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.file-links-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+}
+
+.file-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.8125rem !important; /* 13px */
+    font-weight: 500 !important;
+    line-height: 1.35 !important;
+    color: var(--huit-blue, #0072ce) !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 1px 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    white-space: nowrap !important;
+    text-align: left !important;
+    transition: color 0.15s ease-in-out;
+}
+
+.file-link:hover,
+.file-link:focus {
+    color: var(--huit-navy, #004a8f) !important;
+    text-decoration: underline !important;
+}
+
+.file-link i,
+.file-link .fa-fw {
+    width: 1.25em !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+    font-size: 0.9em !important;
+    color: currentColor !important;
+}
+
+.file-link.disabled,
+.file-link[aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+    text-decoration: none !important;
 }
 
 

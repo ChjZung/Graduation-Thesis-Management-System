@@ -20,6 +20,7 @@ class ServeWithAiWorkerCommand extends ServeCommand
         $this->serving = true;
         try {
             if (!$this->option('without-ai-worker')) {
+                $this->ensureAiEnvironment();
                 $this->startAiWorker();
                 // Parent ServeCommand exits directly when handling Unix signals.
                 register_shutdown_function(fn () => $this->stopOwnedWorker());
@@ -28,6 +29,22 @@ class ServeWithAiWorkerCommand extends ServeCommand
         } finally {
             $this->stopOwnedWorker();
             $this->serving = false;
+        }
+    }
+
+    protected function ensureAiEnvironment(): void
+    {
+        $status = \App\Services\AiSummaryService::checkAndSetupEnvironment(function (string $type, string $message) {
+            match ($type) {
+                'warn' => $this->components->warn($message),
+                'error' => $this->components->error($message),
+                'line' => $this->components->line($message),
+                default => $this->components->info($message),
+            };
+        });
+
+        if (!($status['ready'] ?? false)) {
+            $this->components->warn('Môi trường AI chưa hoàn toàn sẵn sàng: ' . ($status['error'] ?? 'Vui lòng kiểm tra lại cấu hình.'));
         }
     }
 

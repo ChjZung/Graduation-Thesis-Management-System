@@ -22,6 +22,15 @@ class AiWorkCommand extends Command
             return self::SUCCESS;
         }
         try {
+            // Tự động kiểm tra và cài đặt thư viện cần thiết nếu môi trường còn thiếu
+            \App\Services\AiSummaryService::checkAndSetupEnvironment(function (string $type, string $message) {
+                match ($type) {
+                    'warn' => $this->warn($message),
+                    'error' => $this->error($message),
+                    default => $this->info($message),
+                };
+            });
+
             $this->info('AI report worker started; submission data is saved before analysis.');
             return $this->call('queue:work',[
                 'connection'=>'ai','--queue'=>'ai-reports','--sleep'=>3,'--timeout'=>390,

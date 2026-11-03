@@ -43,7 +43,7 @@ class KeHoachKhoaLuanController extends Controller
             });
         }
 
-        $keHoachs = $query->orderBy('created_at', 'desc')->paginate(10);
+        $keHoachs = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         return view('admin.kehoach.index', compact('keHoachs', 'hocKies'));

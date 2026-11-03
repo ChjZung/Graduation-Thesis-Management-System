@@ -147,7 +147,7 @@ class DuyetDeCuongController extends Controller
             // Hiển thị tất cả đề tài trong giai đoạn đề cương
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         // Counts
         $counts = [

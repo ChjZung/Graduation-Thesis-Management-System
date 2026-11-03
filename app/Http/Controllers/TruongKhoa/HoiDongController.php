@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\TruongKhoa;
 
+use App\Enums\VaiTroHoiDong;
 use App\Http\Controllers\Controller;
 use App\Models\HoiDong;
 use App\Models\ThanhVienHoiDong;
@@ -96,7 +97,7 @@ class HoiDongController extends Controller
             $query->where('DotBaoVe', 'like', "%{$request->DotBaoVe}%");
         }
 
-        $hoiDongs = $query->paginate(12)->withQueryString();
+        $hoiDongs = $query->paginate(5)->withQueryString();
         $hocKys = HocKy::orderBy('created_at', 'desc')->get();
 
         return view('truongkhoa.hoidong.index', compact('hoiDongs', 'khoa', 'hocKys'));
@@ -236,7 +237,7 @@ class HoiDongController extends Controller
             // Bước 3: Thành viên hội đồng (tối thiểu 3 giảng viên, mỗi giảng viên duy nhất 1 chức vụ)
             'thanh_viens'          => 'required|array|min:3',
             'thanh_viens.*.MaGV'   => 'required|exists:GiangVien,MaGV|distinct',
-            'thanh_viens.*.VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
+            'thanh_viens.*.VaiTro' => 'required|string',
         ], [
             'TenHoiDong.required'         => 'Vui lòng nhập tên Hội đồng bảo vệ.',
             'MaHocKy.required'            => 'Vui lòng chọn học kỳ áp dụng.',
@@ -273,21 +274,17 @@ class HoiDongController extends Controller
 
         // Kiểm tra cơ cấu thành viên bắt buộc
         $vaiTros = array_map(function($tv) {
-            $v = trim($tv['VaiTro']);
-            if ($v === 'Ủy viên thư ký') return 'Thư ký';
-            if ($v === 'Ủy viên phản biện') return 'Phản biện';
-            if ($v === 'Ủy viên') return 'Thành viên';
-            return $v;
+            return VaiTroHoiDong::normalize($tv['VaiTro'] ?? null);
         }, $request->thanh_viens);
 
-        if (!in_array('Chủ tịch', $vaiTros)) {
+        if (!in_array(VaiTroHoiDong::CHU_TICH->value, $vaiTros)) {
             return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Chủ tịch Hội đồng.']);
         }
-        if (!in_array('Thư ký', $vaiTros)) {
-            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Thư ký (hoặc Ủy viên thư ký).']);
+        if (!in_array(VaiTroHoiDong::THU_KY->value, $vaiTros)) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Thư ký.']);
         }
-        if (!in_array('Phản biện', $vaiTros)) {
-            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Phản biện (hoặc Ủy viên phản biện).']);
+        if (!in_array(VaiTroHoiDong::PHAN_BIEN->value, $vaiTros)) {
+            return redirect()->back()->withInput()->withErrors(['thanh_viens' => 'Cơ cấu Hội đồng bắt buộc phải có chức danh Phản biện.']);
         }
 
         // Kiểm tra không phân công trùng lặp 1 giảng viên vào nhiều vị trí trong cùng Hội đồng (Báo lỗi chi tiết từng người và vai trò)
@@ -408,11 +405,7 @@ class HoiDongController extends Controller
 
             // Thêm thành viên Hội đồng
             foreach ($request->thanh_viens as $tv) {
-                $vaiTro = $tv['VaiTro'];
-                // Chuẩn hóa tên vai trò
-                if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
-                if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
-                if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+                $vaiTro = VaiTroHoiDong::normalize($tv['VaiTro']);
 
                 ThanhVienHoiDong::create([
                     'MaHoiDong' => $hoiDongMoi->MaHoiDong,
@@ -423,7 +416,7 @@ class HoiDongController extends Controller
 
             // Tìm giảng viên phản biện của Hội đồng để đồng bộ phân công phản biện cho đề tài
             $gvPhanBien = collect($request->thanh_viens)->first(function($tv) {
-                return str_contains(mb_strtolower($tv['VaiTro']), 'phản biện');
+                return VaiTroHoiDong::isPhanBien($tv['VaiTro']);
             })['MaGV'] ?? null;
 
             // Gắn danh sách đề tài vào Hội đồng
@@ -817,7 +810,7 @@ class HoiDongController extends Controller
     {
         $request->validate([
             'MaGV'   => 'required|exists:GiangVien,MaGV',
-            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
+            'VaiTro' => 'required|string',
         ]);
 
         $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes.nhom.deTai.giangVien'])->findOrFail($id);
@@ -868,10 +861,7 @@ class HoiDongController extends Controller
             }
         }
 
-        $vaiTro = $request->VaiTro;
-        if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
-        if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
-        if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+        $vaiTro = VaiTroHoiDong::normalize($request->VaiTro);
 
         ThanhVienHoiDong::create([
             'MaHoiDong' => $hoiDong->MaHoiDong,
@@ -892,13 +882,10 @@ class HoiDongController extends Controller
     public function doiVaiTroThanhVien(Request $request, $id, $maGV)
     {
         $request->validate([
-            'VaiTro' => 'required|in:Chủ tịch,Thư ký,Ủy viên thư ký,Phản biện,Ủy viên phản biện,Thành viên,Ủy viên',
+            'VaiTro' => 'required|string',
         ]);
 
-        $vaiTro = $request->VaiTro;
-        if ($vaiTro === 'Phản biện') $vaiTro = 'Ủy viên phản biện';
-        if ($vaiTro === 'Thư ký') $vaiTro = 'Ủy viên thư ký';
-        if ($vaiTro === 'Thành viên') $vaiTro = 'Ủy viên';
+        $vaiTro = VaiTroHoiDong::normalize($request->VaiTro);
 
         $tv = ThanhVienHoiDong::where('MaHoiDong', $id)->where('MaGV', $maGV)->firstOrFail();
         $tv->update(['VaiTro' => $vaiTro]);

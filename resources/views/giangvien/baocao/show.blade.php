@@ -108,20 +108,6 @@
         {{-- ═════════════════════════════════════════════════════════════════════ --}}
         <div class="col-lg-7 col-xl-8">
 
-            {{-- Thông báo session --}}
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-3 rounded-3 shadow-xs" role="alert" style="font-size: 13px;">
-                    <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3 rounded-3 shadow-xs" role="alert" style="font-size: 13px;">
-                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ session('error') }}
-                    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
             {{-- DANH SÁCH CÁC KHỐI NỘP BÀI (SUB-REPORTS) --}}
             @if($baoCao->khoiBaoCaos && $baoCao->khoiBaoCaos->isNotEmpty())
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -393,7 +379,12 @@
 
                 <div class="card-body p-3">
                     @php
-                        $summaryReport = (object) ['TomTatJson' => $tomTat?->TomTatJson ?? [], 'TomTatAI' => $tomTat?->NoiDungAI ?? '', 'TenFile' => $baoCao->TenFile, 'DuongDanFile' => $baoCao->DuongDanFile, 'MaKhoi' => $tomTat?->MaKhoi, 'dotNop' => null];
+                        // Bind the saved result, displayed version and viewer to the SAME submission.
+                        $summaryReport = $baoCao->khoiBaoCaos->firstWhere('MaKhoi', $tomTat?->MaKhoi);
+                        if (!$summaryReport) {
+                            // Unbound legacy snapshots cannot safely open a different submission's PDF.
+                            $summaryReport = (object) ['TomTatJson' => $tomTat?->TomTatJson ?? [], 'TomTatAI' => $tomTat?->NoiDungAI ?? '', 'TenFile' => $tomTat?->TenFile, 'DuongDanFile' => null, 'MaKhoi' => null, 'dotNop' => null];
+                        }
                     @endphp
                     @include('partials.ai_summary_11_sections', ['pb' => $summaryReport])
                 </div>

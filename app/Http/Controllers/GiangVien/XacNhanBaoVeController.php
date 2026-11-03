@@ -87,7 +87,7 @@ class XacNhanBaoVeController extends Controller
 
         $hoSos = $query->orderBy('NgayNopGanNhat', 'desc')
                        ->orderBy('created_at', 'desc')
-                       ->paginate(12)
+                       ->paginate(5)
                        ->withQueryString();
 
         // Thống kê số lượng theo nhóm trạng thái

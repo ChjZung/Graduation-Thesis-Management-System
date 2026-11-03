@@ -35,7 +35,7 @@ class GradeCalculationService
             ];
         }
 
-        $allThanhViens = $hoiDong->thanhViens;
+        $allThanhViens = $hoiDong->sorted_thanh_viens;
         $totalMembers = $allThanhViens->count();
         $thanhVienMap = $allThanhViens->keyBy('MaGV');
 

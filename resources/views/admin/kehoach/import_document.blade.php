@@ -103,7 +103,7 @@
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             const display = document.getElementById('file-name-display');
-            display.innerText = '📄 Đã chọn file: ' + input.files[0].name + ' (' + (input.files[0].size / 1024 / 1024).toFixed(2) + ' MB)';
+            display.innerText = 'Đã chọn file: ' + input.files[0].name + ' (' + (input.files[0].size / 1024 / 1024).toFixed(2) + ' MB)';
             display.classList.remove('d-none');
         }
     }

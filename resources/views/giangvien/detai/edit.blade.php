@@ -195,10 +195,11 @@
                             @if(!empty($banNhap['FileDeCuong']) || $detai->FileDeCuong)
                                 @php
                                     $currOutline = $banNhap['FileDeCuong'] ?? $detai->FileDeCuong;
-                                    $filePathEdit = Str::startsWith($currOutline, ['http', 'storage/']) ? asset($currOutline) : asset('storage/' . $currOutline);
+                                    $filePathEdit = route('files.decuong.download', $detai->MaDeTai);
+                                    $downloadEdit = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                                 @endphp
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center"
-                                        onclick="quickPreviewOutline('{{ $filePathEdit }}', '{{ basename($currOutline) }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                        onclick="quickPreviewOutline('{{ $filePathEdit }}', '{{ basename($currOutline) }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadEdit }}' })">
                                     <i class="fa-solid fa-eye me-2"></i> Xem đề cương hiện tại
                                 </button>
                             @endif

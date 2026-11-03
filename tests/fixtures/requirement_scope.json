@@ -1,0 +1,14 @@
+{
+ "chapters":[{"id":"C","title":"Thiết kế hệ thống","start_page":60,"end_page":90,"items":[{"content":"Thiết kế cơ sở dữ liệu và sơ đồ lớp.","source_references":[{"page":62,"quote":"Sơ đồ hoạt động quản lý đề tài."}]}],"sections":[
+  {"id":"DB","title":"Thiết kế cơ sở dữ liệu","start_page":80,"end_page":80,"items":[]},
+  {"id":"ANALYSIS","title":"Sơ đồ lớp mức phân tích","start_page":79,"end_page":79,"items":[]},
+  {"id":"DESIGN","title":"Sơ đồ lớp mức thiết kế","start_page":81,"end_page":81,"items":[]}
+ ]}],
+ "caption_index":{"assets":[
+  {"asset_id":"ACT","page":62,"display_text":"Hình 3.3 Sơ đồ hoạt động quản lý danh sách sinh viên đủ điều kiện","section_title":"Thiết kế cơ sở dữ liệu"},
+  {"asset_id":"ERD","page":80,"display_text":"Hình 4.1 Sơ đồ ERD","section_title":"Thiết kế cơ sở dữ liệu"},
+  {"asset_id":"AN","page":79,"display_text":"Hình 3.11 Sơ đồ lớp mức phân tích","section_title":"Sơ đồ lớp mức phân tích"},
+  {"asset_id":"CL","page":81,"display_text":"Hình 4.2 Sơ đồ lớp mức thiết kế","section_title":"Sơ đồ lớp mức thiết kế"}
+ ]},
+ "context":{"submission_requirements":"1. Thiết kế cơ sở dữ liệu và trình bày sơ đồ ERD, các bảng dữ liệu chính và quan hệ giữa các bảng.\n2. Xây dựng sơ đồ lớp ở mức thiết kế.\n3. Trình bày mô hình dự đoán giá chứng khoán."}
+}

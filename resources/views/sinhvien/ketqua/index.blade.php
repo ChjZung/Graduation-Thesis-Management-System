@@ -52,8 +52,7 @@
     $isDaLuuTru = ($hoSo?->TrangThai === 'Đã lưu trữ');
 
     // Sắp xếp thứ tự cố định thành viên hội đồng: Chủ tịch -> Thư ký -> Phản biện -> Ủy viên
-    $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
-    $sortedThanhViens = ($hoSo?->hoiDong?->thanhViens ?? collect())->sortBy(fn($tv) => $roleOrder[$tv->VaiTro] ?? 5);
+    $sortedThanhViens = $hoSo?->hoiDong ? $hoSo->hoiDong->sorted_thanh_viens : collect();
 @endphp
 
 <!-- Header Trang -->
@@ -76,23 +75,6 @@
         </span>
     @endif
 </div>
-
-<!-- Alert Thông báo -->
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 rounded-3 mb-4" role="alert">
-        <i class="fa-solid fa-circle-check fs-5 text-success"></i>
-        <div>{{ session('success') }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 rounded-3 mb-4" role="alert">
-        <i class="fa-solid fa-circle-exclamation fs-5 text-danger"></i>
-        <div>{{ session('error') }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
 
 @if(!empty($hoSo?->YeuCauChinhSuaSauBaoVe))
     <div class="alert alert-warning border-warning shadow-sm rounded-3 p-4 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -255,19 +237,14 @@
                                 <tbody>
                                     @foreach($sortedThanhViens as $idx => $tvHd)
                                         @php
-                                            $badgeRole = match($tvHd->VaiTro) {
-                                                'Chủ tịch'  => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                                'Thư ký'    => 'bg-primary-subtle text-primary border border-primary-subtle',
-                                                'Phản biện' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
-                                                default     => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-                                            };
+                                            $badgeRole = $tvHd->badge_class;
                                             $phieuOfGv = $phieuChamDiems->firstWhere('MaGV', $tvHd->MaGV);
                                         @endphp
                                         <tr>
                                             <td class="text-center text-muted">{{ $idx + 1 }}</td>
                                             <td>
                                                 <span class="badge {{ $badgeRole }} rounded-pill px-2 py-1 fw-bold" style="font-size: 11.5px;">
-                                                    {{ $tvHd->VaiTro ?? 'Thành viên' }}
+                                                    {{ $tvHd->short_vai_tro }}
                                                 </span>
                                             </td>
                                             <td>

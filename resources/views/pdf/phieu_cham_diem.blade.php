@@ -163,7 +163,8 @@
             @php
                 $isBonus = !empty($cr['is_bonus']);
                 $cId = $cr['id'];
-                $lines = explode("\n", $cr['noi_dung']);
+                $cNormalized = preg_replace('/[ \t]+(?=[\+\-\*][ \t]+)/u', "\n", str_replace(["\r\n", "\r"], "\n", $cr['noi_dung'] ?? ''));
+                $lines = explode("\n", $cNormalized);
             @endphp
             <tr>
                 <td class="text-center" style="vertical-align: top; font-weight: {{ $isBonus ? 'bold' : 'normal' }};">

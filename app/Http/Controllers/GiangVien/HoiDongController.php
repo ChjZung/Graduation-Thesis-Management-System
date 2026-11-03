@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GiangVien;
 
+use App\Enums\VaiTroHoiDong;
 use App\Http\Controllers\Controller;
 use App\Models\GiangVien;
 use App\Models\HoiDong;
@@ -39,10 +40,10 @@ class HoiDongController extends Controller
             'sap_dien_ra'   => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'SapDienRa')->count(),
             'dang_dien_ra'  => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'DangDienRa')->count(),
             'da_hoan_thanh' => $allMyHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'DaKetThuc')->count(),
-            'chu_tich'      => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Chủ tịch')->count(),
-            'thu_ky'        => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Thư ký')->count(),
-            'phan_bien'     => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Phản biện')->count(),
-            'uy_vien'       => $allMyHoiDongs->filter(fn($hd) => $hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro === 'Ủy viên')->count(),
+            'chu_tich'      => $allMyHoiDongs->filter(fn($hd) => VaiTroHoiDong::isChuTich($hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro))->count(),
+            'thu_ky'        => $allMyHoiDongs->filter(fn($hd) => VaiTroHoiDong::isThuKy($hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro))->count(),
+            'phan_bien'     => $allMyHoiDongs->filter(fn($hd) => VaiTroHoiDong::isPhanBien($hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro))->count(),
+            'uy_vien'       => $allMyHoiDongs->filter(fn($hd) => VaiTroHoiDong::isUyVien($hd->thanhViens->where('MaGV', $gv->MaGV)->first()?->VaiTro))->count(),
         ];
 
         // 2. Query lọc danh sách
@@ -50,6 +51,7 @@ class HoiDongController extends Controller
             'thanhViens.giangVien.boMon',
             'hoSoBaoVes.nhom.deTai.giangVien',
             'hoSoBaoVes.nhom.truongNhom',
+            'hoSoBaoVes.nhom.thanhViens.sinhVien',
             'hocKy',
             'khoa',
             'nganh',
@@ -62,8 +64,18 @@ class HoiDongController extends Controller
 
         // Lọc theo Vai trò
         if ($request->filled('VaiTro') && $request->VaiTro !== 'ALL') {
-            $query->whereHas('thanhViens', function ($q) use ($gv, $request) {
-                $q->where('MaGV', $gv->MaGV)->where('VaiTro', $request->VaiTro);
+            $vtNorm = VaiTroHoiDong::normalize($request->VaiTro);
+            $query->whereHas('thanhViens', function ($q) use ($gv, $vtNorm) {
+                $q->where('MaGV', $gv->MaGV);
+                if ($vtNorm === VaiTroHoiDong::CHU_TICH->value) {
+                    $q->whereIn('VaiTro', ['Chủ tịch', 'Chủ tịch Hội đồng', 'chu_tich']);
+                } elseif ($vtNorm === VaiTroHoiDong::THU_KY->value) {
+                    $q->whereIn('VaiTro', ['Thư ký', 'Ủy viên thư ký', 'thu_ky', 'uy_vien_thu_ky']);
+                } elseif ($vtNorm === VaiTroHoiDong::PHAN_BIEN->value) {
+                    $q->whereIn('VaiTro', ['Phản biện', 'Ủy viên phản biện', 'phan_bien', 'uy_vien_phan_bien']);
+                } else {
+                    $q->whereNotIn('VaiTro', ['Chủ tịch', 'Chủ tịch Hội đồng', 'chu_tich', 'Thư ký', 'Ủy viên thư ký', 'thu_ky', 'uy_vien_thu_ky', 'Phản biện', 'Ủy viên phản biện', 'phan_bien', 'uy_vien_phan_bien']);
+                }
             });
         }
 
@@ -116,7 +128,7 @@ class HoiDongController extends Controller
 
         $hoiDongs = $query->orderBy('NgayBaoVe', 'desc')
             ->orderBy('ThoiGianBatDau', 'desc')
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
@@ -183,15 +195,12 @@ class HoiDongController extends Controller
             abort(403, 'Bạn không được phân công tham gia Hội đồng này.');
         }
 
-        $myRole = $myMemberRecord->VaiTro;
-        $isThuKy = ($myRole === 'Thư ký' || mb_stripos($myRole, 'thư ký') !== false);
-        $isChuTich = ($myRole === 'Chủ tịch' || mb_stripos($myRole, 'chủ tịch') !== false);
+        $myRole = VaiTroHoiDong::normalize($myMemberRecord->VaiTro);
+        $isThuKy = VaiTroHoiDong::isThuKy($myRole);
+        $isChuTich = VaiTroHoiDong::isChuTich($myRole);
 
         // Sắp xếp thứ tự chức danh thành viên: Chủ tịch -> Thư ký -> Phản biện -> Ủy viên
-        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
-        $sortedThanhViens = $hoiDong->thanhViens->sortBy(function ($tv) use ($roleOrder) {
-            return $roleOrder[$tv->VaiTro] ?? 5;
-        });
+        $sortedThanhViens = $hoiDong->sorted_thanh_viens;
 
         return view('giangvien.hoidong.show', compact(
             'gv',

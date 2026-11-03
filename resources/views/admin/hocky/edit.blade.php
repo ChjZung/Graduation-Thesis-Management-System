@@ -150,13 +150,13 @@
                                 </label>
                                 <select name="TrangThai" class="form-select form-select-huit fw-semibold text-dark">
                                     <option value="Đang diễn ra" {{ (!$isEnded && !$isUpcoming) ? 'selected' : '' }}>
-                                        🟢 Đang diễn ra (Hoạt động)
+                                        Đang diễn ra (Hoạt động)
                                     </option>
                                     <option value="Chưa bắt đầu" {{ $isUpcoming ? 'selected' : '' }}>
-                                        🔵 Chưa bắt đầu (Sắp diễn ra)
+                                        Chưa bắt đầu (Sắp diễn ra)
                                     </option>
                                     <option value="Đã kết thúc" {{ $isEnded ? 'selected' : '' }}>
-                                        ⚪ Đã kết thúc (Lưu trữ)
+                                        Đã kết thúc (Lưu trữ)
                                     </option>
                                 </select>
                                 <div class="form-text text-muted small mt-1">

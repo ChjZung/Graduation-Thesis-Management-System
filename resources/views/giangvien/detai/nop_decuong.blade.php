@@ -142,16 +142,17 @@
 
                             @if($detai->coTepDeCuong())
                                 @php
-                                    $filePathCurrent = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $filePathCurrent = route('files.decuong.download', $detai->MaDeTai);
+                                    $downloadCurrent = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                                 @endphp
                                 <div class="mt-3 pt-3 border-top">
                                     <div class="small text-muted mb-1">Đề cương hiện tại:</div>
                                     <div class="d-flex gap-2 flex-wrap">
                                         <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 d-inline-flex align-items-center"
-                                                onclick="quickPreviewOutline('{{ $filePathCurrent }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                                onclick="quickPreviewOutline('{{ $filePathCurrent }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadCurrent }}' })">
                                             <i class="fa-solid fa-eye me-2"></i> Xem Nhanh
                                         </button>
-                                        <a href="{{ $filePathCurrent }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                        <a href="{{ $downloadCurrent }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                                             <i class="fa-solid fa-download me-2"></i> Tải Về
                                         </a>
                                     </div>
@@ -239,14 +240,15 @@
                 </p>
                 @if($detai->coTepDeCuong())
                     @php
-                        $filePathLocked = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                        $filePathLocked = route('files.decuong.download', $detai->MaDeTai);
+                        $downloadLocked = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                     @endphp
                     <div class="d-flex justify-content-center gap-2">
                         <button type="button" class="btn btn-primary rounded-pill px-4 d-inline-flex align-items-center"
-                                onclick="quickPreviewOutline('{{ $filePathLocked }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}')">
+                                onclick="quickPreviewOutline('{{ $filePathLocked }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadLocked }}' })">
                             <i class="fa-solid fa-eye me-2"></i> Mở Đề Cương Chi Tiết
                         </button>
-                        <a href="{{ $filePathLocked }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <a href="{{ $downloadLocked }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-outline-secondary rounded-pill px-4">
                             <i class="fa-solid fa-download me-2"></i> Tải Về Máy
                         </a>
                     </div>
@@ -390,11 +392,11 @@
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-circle d-inline-flex align-items-center"
-                                                    onclick="quickPreviewOutline('{{ $linkTl }}', '{{ basename($tl->DuongDan) }}', '{{ addslashes($detai->TenDeTai) }}')"
+                                                    onclick="quickPreviewOutline('{{ $linkTl }}', '{{ basename($tl->DuongDan) }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $linkTl }}?download=1' })"
                                                     title="Xem nhanh">
                                                 <i class="fa-solid fa-eye"></i>
                                             </button>
-                                            <a href="{{ $linkTl }}" download="{{ basename($tl->DuongDan) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Tải về máy">
+                                            <a href="{{ $linkTl }}?download=1" download="{{ basename($tl->DuongDan) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Tải về máy">
                                                 <i class="fa-solid fa-download"></i>
                                             </a>
                                         </div>
@@ -403,7 +405,8 @@
                                 @endforeach
                             @elseif($detai->coTepDeCuong())
                                 @php
-                                    $linkCurrent = Str::startsWith($detai->FileDeCuong, ['http', 'storage/']) ? asset($detai->FileDeCuong) : asset('storage/' . $detai->FileDeCuong);
+                                    $linkCurrent = route('files.decuong.download', $detai->MaDeTai);
+                                    $downloadLinkCurrent = route('files.decuong.download', ['id' => $detai->MaDeTai, 'download' => 1]);
                                 @endphp
                                 <tr>
                                     <td class="text-center">
@@ -427,11 +430,11 @@
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-circle d-inline-flex align-items-center"
-                                                    onclick="quickPreviewOutline('{{ $linkCurrent }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}')"
+                                                    onclick="quickPreviewOutline('{{ $linkCurrent }}', '{{ basename($detai->FileDeCuong) }}', '{{ addslashes($detai->TenDeTai) }}', { downloadUrl: '{{ $downloadLinkCurrent }}' })"
                                                     title="Xem nhanh">
                                                 <i class="fa-solid fa-eye"></i>
                                             </button>
-                                            <a href="{{ $linkCurrent }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Tải về máy">
+                                            <a href="{{ $downloadLinkCurrent }}" download="{{ basename($detai->FileDeCuong) }}" class="btn btn-sm btn-light border text-secondary rounded-circle" title="Tải về máy">
                                                 <i class="fa-solid fa-download"></i>
                                             </a>
                                         </div>

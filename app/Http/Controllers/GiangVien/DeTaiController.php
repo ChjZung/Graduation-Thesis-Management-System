@@ -91,7 +91,7 @@ class DeTaiController extends Controller
             }
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(6)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // B3: Danh sách các nhóm chưa có đề tài đã duyệt VÀ ĐỦ 3 SINH VIÊN

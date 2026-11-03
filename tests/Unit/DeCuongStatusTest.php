@@ -12,7 +12,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class DeCuongStatusTest extends TestCase
 {
@@ -21,6 +21,7 @@ class DeCuongStatusTest extends TestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
         $this->directory = sys_get_temp_dir() . '/outline-status-' . bin2hex(random_bytes(8));
         mkdir($this->directory);
         file_put_contents($this->directory . '/outline.pdf', '%PDF-1.4 test');
@@ -43,6 +44,7 @@ class DeCuongStatusTest extends TestCase
         else Storage::clearResolvedInstance('filesystem');
         unlink($this->directory . '/outline.pdf');
         rmdir($this->directory);
+        parent::tearDown();
     }
 
     private function topic(?string $file = null, string $status = 'Đã công bố', array $history = []): DeTai

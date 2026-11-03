@@ -24,6 +24,9 @@ class FileDownloadController extends Controller
     public function downloadBaoCao($id)
     {
         $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập để xem tài liệu.');
+        }
 
         // Tìm theo MaBaoCao hoặc id của KhoiBaoCaoTienDo
         $khoi = KhoiBaoCaoTienDo::where('MaKhoi', $id)
@@ -53,7 +56,7 @@ class FileDownloadController extends Controller
             abort(403, 'Bạn không có quyền tải xuống hoặc xem báo cáo tiến độ này.');
         }
 
-        return $this->serveFile($filePath, $fileName ?: 'BaoCaoTienDo.pdf');
+        return $this->serveFile($filePath, $fileName ?: 'BaoCaoTienDo.pdf', request()->boolean('download'));
     }
 
     /**
@@ -62,6 +65,9 @@ class FileDownloadController extends Controller
     public function downloadHoSo($id)
     {
         $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập để xem tài liệu.');
+        }
 
         // Có thể là MaTep, id của TepHoSoBaoVe, hoặc MaHoSo
         $tep = TepHoSoBaoVe::where('MaTep', $id)
@@ -100,7 +106,7 @@ class FileDownloadController extends Controller
             abort(403, 'Bạn không có quyền tải xuống hoặc xem tệp tài liệu này.');
         }
 
-        return $this->serveFile($filePath, $fileName ?: 'TaiLieuKhoaLuan.pdf');
+        return $this->serveFile($filePath, $fileName ?: 'TaiLieuKhoaLuan.pdf', request()->boolean('download'));
     }
 
     /**
@@ -109,11 +115,15 @@ class FileDownloadController extends Controller
     public function downloadDeCuong($id)
     {
         $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập để xem tài liệu.');
+        }
+
         $detai = DeTai::where('MaDeTai', $id)->firstOrFail();
 
         // Kiểm tra phân quyền qua DeTaiPolicy
         if (!Gate::forUser($user)->allows('view', $detai)) {
-            abort(403, 'Bạn không có quyền tải xuống file đề cương của đề tài này.');
+            abort(403, 'Bạn không có quyền tải xuống hoặc xem file đề cương của đề tài này.');
         }
 
         $filePath = $detai->FileDeCuong;
@@ -121,8 +131,8 @@ class FileDownloadController extends Controller
             abort(404, 'Đề tài này hiện chưa có file đề cương đính kèm.');
         }
 
-        $fileName = 'De_Cuong_' . $detai->MaDeTai . '.' . pathinfo($filePath, PATHINFO_EXTENSION);
-        return $this->serveFile($filePath, $fileName);
+        $fileName = basename($filePath) ?: ('De_Cuong_' . $detai->MaDeTai . '.' . pathinfo($filePath, PATHINFO_EXTENSION));
+        return $this->serveFile($filePath, $fileName, request()->boolean('download'));
     }
 
     /**
@@ -204,47 +214,190 @@ class FileDownloadController extends Controller
         }
 
         // Chuẩn hóa path loại bỏ tiền tố public/ hoặc storage/ nếu có
-        $cleanPath = ltrim($storedPath, '/');
+        $cleanPath = ltrim(str_replace('\\', '/', $storedPath), '/');
         if (str_starts_with($cleanPath, 'storage/')) {
             $cleanPath = substr($cleanPath, 8);
         }
-
-        $disposition = $asAttachment ? 'attachment' : 'inline';
-        $encodedName = rawurlencode(basename($downloadName));
-        $headers = [
-            'Content-Disposition' => "{$disposition}; filename=\"{$encodedName}\"; filename*=UTF-8''{$encodedName}",
-        ];
-
-        $disk = Storage::disk('public');
-        if (!$disk->exists($cleanPath)) {
-            // Thử kiểm tra đường dẫn trực tiếp trong storage/app
-            $directPath = storage_path('app/' . $cleanPath);
-            if (file_exists($directPath)) {
-                return response()->file($directPath, $headers);
-            }
-
-            // Thử đường dẫn trong storage/app/public/
-            $storagePublicPath = storage_path('app/public/' . $cleanPath);
-            if (file_exists($storagePublicPath)) {
-                return response()->file($storagePublicPath, $headers);
-            }
-
-            // Thử đường dẫn trong public/
-            $publicPath = public_path($cleanPath);
-            if (file_exists($publicPath)) {
-                return response()->file($publicPath, $headers);
-            }
-
-            // Thử đường dẫn trong public/storage/
-            $publicStoragePath = public_path('storage/' . $cleanPath);
-            if (file_exists($publicStoragePath)) {
-                return response()->file($publicStoragePath, $headers);
-            }
-
-            abort(404, 'Tệp tin không còn tồn tại trên máy chủ lưu trữ.');
+        if (str_starts_with($cleanPath, 'public/')) {
+            $cleanPath = substr($cleanPath, 7);
         }
 
-        $fullPath = $disk->path($cleanPath);
-        return response()->file($fullPath, $headers);
+        $ext = strtolower(pathinfo($downloadName ?: $cleanPath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'pdf'  => 'application/pdf',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'doc'  => 'application/msword',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls'  => 'application/vnd.ms-excel',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'ppt'  => 'application/vnd.ms-powerpoint',
+            'zip'  => 'application/zip',
+            'rar'  => 'application/x-rar-compressed',
+            'txt'  => 'text/plain; charset=UTF-8',
+        ];
+        $contentType = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+        $disposition = $asAttachment ? 'attachment' : 'inline';
+        $baseName = basename($downloadName ?: $cleanPath);
+        $asciiName = preg_replace('/[^\x20-\x7E]/', '_', \Illuminate\Support\Str::ascii($baseName));
+        if (empty(trim($asciiName))) {
+            $asciiName = 'tai_lieu.' . $ext;
+        }
+        $encodedName = rawurlencode($baseName);
+
+        $headers = [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => "{$disposition}; filename=\"{$asciiName}\"; filename*=UTF-8''{$encodedName}",
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Cache-Control' => 'private, no-cache, must-revalidate',
+        ];
+
+        $decodedPath = urldecode($cleanPath);
+        $candidates = [
+            Storage::disk('public')->path($cleanPath),
+            Storage::disk('public')->path($decodedPath),
+            storage_path('app/public/' . $cleanPath),
+            storage_path('app/public/' . $decodedPath),
+            storage_path('app/' . $cleanPath),
+            storage_path('app/' . $decodedPath),
+            public_path('storage/' . $cleanPath),
+            public_path('storage/' . $decodedPath),
+            public_path($cleanPath),
+            public_path($decodedPath),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return response()->file($candidate, $headers);
+            }
+        }
+
+        abort(404, 'Tệp tin không còn tồn tại trên máy chủ lưu trữ.');
+    }
+
+    /**
+     * Fallback bảo mật phục vụ các đường dẫn trực tiếp /storage/{path}
+     * Ngăn chặn hoàn toàn lỗi 403 mặc định của Laravel 11 khi thiếu symlink public/storage
+     */
+    public function serveStorageFallback(Request $request, string $path)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            abort(401, 'Vui lòng đăng nhập để xem tài liệu.');
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $path), '/');
+        if (str_starts_with($cleanPath, 'storage/')) {
+            $cleanPath = substr($cleanPath, 8);
+        }
+        $decodedPath = urldecode($cleanPath);
+
+        // 1. Nếu là tệp Đề cương chi tiết (de_cuong/...) hoặc Tài liệu nộp
+        if (str_starts_with($cleanPath, 'de_cuong/') || str_starts_with($cleanPath, 'tailieu/') || str_starts_with($decodedPath, 'de_cuong/') || str_starts_with($decodedPath, 'tailieu/')) {
+            $detai = DeTai::where('FileDeCuong', 'like', "%{$cleanPath}%")
+                ->orWhere('FileDeCuong', 'like', "%{$decodedPath}%")
+                ->orWhere('FileDeCuong', 'like', "%" . basename($cleanPath) . "%")
+                ->orWhere('FileDeCuong', 'like', "%" . basename($decodedPath) . "%")
+                ->first();
+
+            if ($detai) {
+                if (!Gate::forUser($user)->allows('view', $detai)) {
+                    abort(403, 'Bạn không có quyền truy cập đề cương của đề tài này.');
+                }
+                return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
+            }
+
+            $taiLieu = \App\Models\TaiLieuNop::where('DuongDan', 'like', "%{$cleanPath}%")
+                ->orWhere('DuongDan', 'like', "%{$decodedPath}%")
+                ->orWhere('DuongDan', 'like', "%" . basename($cleanPath) . "%")
+                ->orWhere('DuongDan', 'like', "%" . basename($decodedPath) . "%")
+                ->first();
+
+            if ($taiLieu && $taiLieu->deTai) {
+                if (!Gate::forUser($user)->allows('view', $taiLieu->deTai)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp tài liệu này.');
+                }
+                return $this->serveFile($cleanPath, $taiLieu->TenTaiLieu ?: basename($cleanPath), $request->boolean('download'));
+            }
+        }
+
+        // 2. Nếu là tệp Báo cáo tiến độ (baocao/...)
+        if (str_starts_with($cleanPath, 'baocao/') || str_starts_with($decodedPath, 'baocao/')) {
+            $khoi = KhoiBaoCaoTienDo::where('DuongDanFile', 'like', "%{$cleanPath}%")
+                ->orWhere('DuongDanFile', 'like', "%{$decodedPath}%")
+                ->orWhere('DuongDanFile', 'like', "%" . basename($cleanPath) . "%")
+                ->orWhere('DuongDanFile', 'like', "%" . basename($decodedPath) . "%")
+                ->first();
+
+            if ($khoi && $khoi->baoCao) {
+                if (!Gate::forUser($user)->allows('view', $khoi->baoCao)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp báo cáo tiến độ này.');
+                }
+                return $this->serveFile($cleanPath, $khoi->TenFile ?: basename($cleanPath), $request->boolean('download'));
+            }
+
+            $baoCao = BaoCaoTienDo::where('DuongDanFile', 'like', "%{$cleanPath}%")
+                ->orWhere('DuongDanFile', 'like', "%{$decodedPath}%")
+                ->orWhere('DuongDanFile', 'like', "%" . basename($cleanPath) . "%")
+                ->orWhere('DuongDanFile', 'like', "%" . basename($decodedPath) . "%")
+                ->first();
+
+            if ($baoCao) {
+                if (!Gate::forUser($user)->allows('view', $baoCao)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp báo cáo tiến độ này.');
+                }
+                return $this->serveFile($cleanPath, $baoCao->TenFile ?: basename($cleanPath), $request->boolean('download'));
+            }
+        }
+
+        // 3. Nếu là tệp Hồ sơ bảo vệ (hoso/...)
+        if (str_starts_with($cleanPath, 'hoso/') || str_starts_with($cleanPath, 'tep_hoso/') || str_starts_with($decodedPath, 'hoso/') || str_starts_with($decodedPath, 'tep_hoso/')) {
+            $tep = TepHoSoBaoVe::where('DuongDanFile', 'like', "%{$cleanPath}%")
+                ->orWhere('DuongDanFile', 'like', "%{$decodedPath}%")
+                ->first();
+            if ($tep && $tep->hoSoBaoVe) {
+                if (!Gate::forUser($user)->allows('view', $tep->hoSoBaoVe)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp hồ sơ này.');
+                }
+                return $this->serveFile($cleanPath, $tep->TenTep ?: basename($cleanPath), $request->boolean('download'));
+            }
+
+            $hoSo = HoSoBaoVe::where('ToanVanKhoaLuan', 'like', "%{$cleanPath}%")
+                ->orWhere('ToanVanKhoaLuan', 'like', "%{$decodedPath}%")
+                ->orWhere('FileBanChinhSua', 'like', "%{$cleanPath}%")
+                ->orWhere('FileBanChinhSua', 'like', "%{$decodedPath}%")
+                ->orWhere('MinhChungDaoVan', 'like', "%{$cleanPath}%")
+                ->orWhere('MinhChungDaoVan', 'like', "%{$decodedPath}%")
+                ->first();
+
+            if ($hoSo) {
+                if (!Gate::forUser($user)->allows('view', $hoSo)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp hồ sơ này.');
+                }
+                return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
+            }
+        }
+
+        // 4. Nếu là tệp Báo cáo sau bảo vệ
+        if (str_starts_with($cleanPath, 'baocao_saubaove/') || str_starts_with($decodedPath, 'baocao_saubaove/')) {
+            $baoCao = BaoCaoSauBaoVe::where('DuongDanFile', 'like', "%{$cleanPath}%")
+                ->orWhere('DuongDanFile', 'like', "%{$decodedPath}%")
+                ->orWhere('FileGiaiTrinh', 'like', "%{$cleanPath}%")
+                ->orWhere('FileGiaiTrinh', 'like', "%{$decodedPath}%")
+                ->orWhere('FileMinhChung', 'like', "%{$cleanPath}%")
+                ->orWhere('FileMinhChung', 'like', "%{$decodedPath}%")
+                ->first();
+
+            if ($baoCao && $baoCao->hoSoBaoVe) {
+                if (!Gate::forUser($user)->allows('view', $baoCao->hoSoBaoVe)) {
+                    abort(403, 'Bạn không có quyền truy cập tệp báo cáo này.');
+                }
+                return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
+            }
+        }
+
+        // 5. Nếu không khớp các nhóm tài liệu nhạy cảm ở trên, phục vụ file an toàn nếu tồn tại
+        return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
     }
 }

@@ -245,23 +245,6 @@ input::-webkit-search-results-decoration {
         </div>
     </div>
 
-    <!-- Alert Thông báo -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-circle-check fs-5 text-success"></i>
-            <div>{{ session('success') }}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-circle-exclamation fs-5 text-danger"></i>
-            <div>{{ session('error') }}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <!-- ═══ SUMMARY KPI CARDS (MỞ RỘNG TOÀN DIỆN 8 CHỈ SỐ) ═══ -->
     <div class="row g-3 mb-4">
         <!-- KPI 1: Đề Tài & Tiến Độ Chấm -->

@@ -49,11 +49,11 @@ class BaoCaoAiController extends Controller
         $input = $request->validate(['page' => 'required|integer|min:1|max:10000', 'quote' => 'nullable|string|max:3000']);
         $report = $this->authorizedReport($id);
         $path = $this->pdfPath($report);
-        $python = env('PYTHON_PATH') ?: (file_exists('C:\\laragon\\bin\\python\\python-3.10\\python.exe') ? 'C:\\laragon\\bin\\python\\python-3.10\\python.exe' : 'python');
+        $python = \App\Services\AiSummaryService::resolvePythonBinary();
         try {
             $process = Process::timeout(30)->env([
                 'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows', 'SYSTEMROOT' => getenv('SYSTEMROOT') ?: 'C:\\Windows',
-                'PATH' => getenv('PATH') ?: 'C:\\Windows\\system32;C:\\Windows',
+                'PATH' => (is_file($python) ? dirname($python) . PATH_SEPARATOR : '') . (getenv('PATH') ?: 'C:\\Windows\\system32;C:\\Windows'),
                 'TEMP' => getenv('TEMP') ?: sys_get_temp_dir(), 'TMP' => getenv('TMP') ?: sys_get_temp_dir(),
                 'PYTHONUTF8' => '1', 'PYTHONIOENCODING' => 'utf-8',
             ])->run(strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'docx'
@@ -73,14 +73,29 @@ class BaoCaoAiController extends Controller
     {
         $report = $this->authorizedReport($id);
         $path = $this->pdfPath($report);
-        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'docx') {
-            return response()->download($path, basename($report->TenFile ?: 'bao-cao.docx'), [
+        $name = basename(str_replace('\\', '/', $report->TenFile ?: 'bao-cao.docx'));
+        $asAttachment = request()->boolean('download');
+
+        if ($asAttachment) {
+            return response()->download($path, $name, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'Content-Disposition' => 'attachment; filename="' . $name . '"',
+                'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
+            ]);
+        }
+
+        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'docx') {
+            return response()->file($path, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'Content-Disposition' => 'inline; filename=' . basename($path),
                 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
             ]);
         }
         return response()->file($this->pdfPath($report), [
-            'Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename=' . basename($path),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
         ]);
     }
 
@@ -90,13 +105,15 @@ class BaoCaoAiController extends Controller
         $path = $this->pdfPath($report);
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $name = basename(str_replace('\\', '/', $report->TenFile ?: ('bao-cao.' . $extension)));
-        return response()->download($path, $name, [
+        $response = response()->download($path, $name, [
             'Content-Type' => $extension === 'docx'
                 ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                 : 'application/pdf',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
         ]);
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $name . '"; filename*=UTF-8\'\'' . rawurlencode($name));
+        return $response;
     }
 
     public function status(string $id, \App\Services\AiReportProcessingService $processing)
@@ -117,8 +134,23 @@ class BaoCaoAiController extends Controller
     {
         $report = $this->authorizedReport($id);
         $this->pdfPath($report);
-        $state = $processing->enqueue($report);
+        $fresh = request()->boolean('fresh', true);
+        // Cho phép force reanalyze để người dùng bấm là chạy lại ngay lập tức
+        $state = $processing->enqueue($report, false, true, $fresh);
         if (request()->expectsJson()) return response()->json(['state'=>$processing->status($report->fresh()),'reused'=>(bool)($state['reused'] ?? false)])->header('Cache-Control','private, no-store');
-        return back()->with('success',$state['message']);
+        return back()->with('success', 'Đã yêu cầu AI phân tích lại báo cáo. Tiến trình đang xử lý nền.');
+    }
+
+    public function cancel(string $id, \App\Services\AiReportProcessingService $processing)
+    {
+        $report = $this->authorizedReport($id);
+        $state = $processing->cancel($report);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'state' => $processing->status($report->fresh()),
+                'message' => $state['message']
+            ])->header('Cache-Control', 'private, no-store');
+        }
+        return back()->with('success', $state['message']);
     }
 }

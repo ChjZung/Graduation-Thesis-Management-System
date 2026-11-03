@@ -114,7 +114,8 @@
     $isDocx = false;
 
     if ($hasFile) {
-        $fileUrl = Str::startsWith($deTai->FileDeCuong, ['http', 'storage/']) ? asset($deTai->FileDeCuong) : asset('storage/' . $deTai->FileDeCuong);
+        $fileUrl = route('files.decuong.download', $deTai->MaDeTai);
+        $downloadUrl = route('files.decuong.download', ['id' => $deTai->MaDeTai, 'download' => 1]);
         $fileName = basename($deTai->FileDeCuong);
         $cleanLower = strtolower($fileName);
         $isPdf = str_ends_with($cleanLower, '.pdf');
@@ -149,7 +150,7 @@
                 <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs bg-white d-inline-flex align-items-center">
                     <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Mở File Riêng
                 </a>
-                <a href="{{ $fileUrl }}" download="{{ $fileName }}" class="btn btn-warning btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-inline-flex align-items-center">
+                <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-warning btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-inline-flex align-items-center">
                     <i class="fa-solid fa-download me-2"></i>Tải Đề Cương
                 </a>
             @endif
@@ -339,7 +340,7 @@
                             <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-outline-light py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Mở trong tab mới của trình duyệt" style="font-size: 0.775rem;">
                                 <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Mở Tab Mới
                             </a>
-                            <a href="{{ $fileUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Tải file về máy tính" style="font-size: 0.775rem;">
+                            <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Tải file về máy tính" style="font-size: 0.775rem;">
                                 <i class="fa-solid fa-download me-2"></i>Tải Về
                             </a>
                         @endif
@@ -367,8 +368,18 @@
                             <script src="{{ asset('js/mammoth.browser.min.js') }}"></script>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
-                                    fetch("{{ $fileUrl }}")
-                                        .then(res => res.arrayBuffer())
+                                    fetch("{{ $fileUrl }}", {
+                                        method: 'GET',
+                                        credentials: 'same-origin',
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/octet-stream, application/json, */*'
+                                        }
+                                    })
+                                        .then(res => {
+                                            if (!res.ok) throw new Error('Không thể tải tệp từ máy chủ (Mã: ' + res.status + ')');
+                                            return res.arrayBuffer();
+                                        })
                                         .then(ab => {
                                             if (typeof mammoth !== 'undefined') {
                                                 return mammoth.convertToHtml({ arrayBuffer: ab });
@@ -385,7 +396,7 @@
                                                 <i class="fa-solid fa-file-word text-primary display-4 mb-3"></i>
                                                 <h6 class="fw-bold">Tài Liệu Đề Cương Microsoft Word</h6>
                                                 <p class="text-muted small">Tệp Word đã sẵn sàng. Bạn có thể mở trong tab riêng hoặc tải về máy để xem trọn vẹn.</p>
-                                                <a href="{{ $fileUrl }}" download class="btn btn-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center">
+                                                <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center">
                                                     <i class="fa-solid fa-download me-2"></i>Tải Đề Cương Word (.docx)
                                                 </a>
                                             `;
@@ -402,7 +413,7 @@
                                     <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-primary rounded-pill px-4 py-2 d-inline-flex align-items-center">
                                         <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Mở Trong Tab Mới
                                     </a>
-                                    <a href="{{ $fileUrl }}" download class="btn btn-warning rounded-pill px-4 py-2 text-dark fw-semibold d-inline-flex align-items-center">
+                                    <a href="{{ $downloadUrl }}" download="{{ $fileName }}" class="btn btn-warning rounded-pill px-4 py-2 text-dark fw-semibold d-inline-flex align-items-center">
                                         <i class="fa-solid fa-download me-2"></i>Tải Về Máy
                                     </a>
                                 </div>

@@ -100,7 +100,7 @@ class SinhVienController extends Controller
             'active'    => $activeSV,
         ];
 
-        $sinhviens = $querySv->orderBy('SinhVien.MaSV')->paginate(15, ['*'], 'page_sv')->withQueryString();
+        $sinhviens = $querySv->orderBy('SinhVien.MaSV')->paginate(5, ['*'], 'page_sv')->withQueryString();
 
         // ══════════════════════════════════════════════════════════════
         // 2. DATA CHO TAB 2: DANH SÁCH SV ĐỦ ĐIỀU KIỆN (THEO HỌC KỲ)
@@ -140,7 +140,7 @@ class SinhVienController extends Controller
 
         $dsDuDieuKien = $queryDk->orderBy('DanhSachSVDuDieuKien.NgayXetDuyet', 'desc')
             ->orderBy('DanhSachSVDuDieuKien.MaSV', 'asc')
-            ->paginate(15, ['*'], 'page_dk')
+            ->paginate(5, ['*'], 'page_dk')
             ->withQueryString();
 
         $totalEvaluated = \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $selectedHocKy)->distinct('MaSV')->count('MaSV');

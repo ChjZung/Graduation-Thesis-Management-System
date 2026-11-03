@@ -62,7 +62,7 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
             });
         }
 
-        $hoSos = $query->orderBy('updated_at', 'desc')->paginate(12)->withQueryString();
+        $hoSos = $query->orderBy('updated_at', 'desc')->paginate(5)->withQueryString();
 
         // Thống kê
         $base = HoSoBaoVe::where(function ($q) {
@@ -172,20 +172,13 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
                 'Hoàn thành'
             );
 
-            // Thông báo cho Trưởng khoa
-            if ($hoSo->hoiDong?->MaKhoa) {
-                $tk = GiangVien::whereHas('boMon.khoa', fn($q) => $q->where('MaKhoa', $hoSo->hoiDong->MaKhoa))
-                    ->whereHas('taiKhoan.vaiTro', fn($v) => $v->where('TenVaiTro', 'like', '%Trưởng khoa%'))
-                    ->first();
-                if ($tk) {
-                    ThongBaoService::gui(
-                        $tk->MaGV,
-                        'Nhóm khóa luận đã hoàn thành báo cáo sau bảo vệ',
-                        "Thầy/Cô {$gv->HoTen} đã kiểm tra và xác nhận ĐẠT cho báo cáo hoàn thiện sau bảo vệ của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}).",
-                        'Báo cáo sau bảo vệ'
-                    );
-                }
-            }
+            // Thông báo đến Cán bộ Quản lý liên quan: Giáo vụ, Trưởng khoa, Trưởng bộ môn (không gửi trùng)
+            ThongBaoService::thongBaoCanBoQuanLy(
+                $hoSo,
+                'Báo cáo chỉnh sửa sau bảo vệ đã được xác nhận ĐẠT',
+                "Thầy/Cô {$gv->HoTen} đã kiểm tra và xác nhận ĐẠT YÊU CẦU cho báo cáo sau bảo vệ của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}).",
+                $user->MaTK
+            );
 
             return redirect()->route('giangvien.kiemtra_baocao_sau_baove.show', $hoSo->MaHoSo)
                 ->with('success', 'Đã xác nhận báo cáo chỉnh sửa ĐẠT YÊU CẦU thành công! Hồ sơ khóa luận đã chuyển sang trạng thái Đã hoàn thành.');
@@ -206,6 +199,14 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
                 'Yêu cầu chỉnh sửa lại báo cáo sau bảo vệ',
                 "Thầy/Cô {$gv->HoTen} đã kiểm tra bản nộp lại của nhóm và yêu cầu TIẾP TỤC CHỈNH SỬA. Nhận xét: " . strip_tags($cleanedComment) . ".{$hanStr} Vui lòng kiểm tra và nộp lại bản sửa đổi.",
                 'Yêu cầu sửa lại'
+            );
+
+            // Thông báo đến Cán bộ Quản lý liên quan: Giáo vụ, Trưởng khoa, Trưởng bộ môn (không gửi trùng)
+            ThongBaoService::thongBaoCanBoQuanLy(
+                $hoSo,
+                'Báo cáo sau bảo vệ có yêu cầu tiếp tục chỉnh sửa',
+                "Thầy/Cô {$gv->HoTen} đã kiểm tra báo cáo của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}) và yêu cầu TIẾP TỤC CHỈNH SỬA. Nhận xét: " . strip_tags($cleanedComment) . ".{$hanStr}",
+                $user->MaTK
             );
 
             return redirect()->route('giangvien.kiemtra_baocao_sau_baove.show', $hoSo->MaHoSo)

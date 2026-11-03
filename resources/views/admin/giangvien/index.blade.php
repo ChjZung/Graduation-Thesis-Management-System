@@ -385,7 +385,7 @@
                                     <select name="MaHocKy" class="form-select form-select-sm rounded-pill fw-bold" style="min-width: 320px;" onchange="this.form.submit()">
                                         @foreach($hocKys as $hk)
                                             <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                                {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★ (Đang diễn ra)' : '' }}
+                                                {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -1160,7 +1160,7 @@
                         <select name="MaHocKy" class="form-select fw-bold" required>
                             @foreach($hocKys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '★ (Đang diễn ra)' : '' }}
+                                    {{ $hk->TenHocKy }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Đang diễn ra)' : '' }}
                                 </option>
                             @endforeach
                         </select>

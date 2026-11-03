@@ -2,6 +2,96 @@
 
 @section('page_title', 'Hoàn Thiện Báo Cáo Sau Bảo Vệ')
 
+@push('styles')
+<style>
+/* ════ BẢNG LỊCH SỬ PHIÊN BẢN NỘP LẠI (CHỐNG TRÀN CHỮ & THANH CUỘN NGANG) ════ */
+.table-history-versions {
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin-bottom: 0;
+}
+
+.table-history-versions th,
+.table-history-versions td {
+    min-width: 0 !important;
+    vertical-align: middle;
+}
+
+.table-history-versions thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.text-break-anywhere {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    min-width: 0;
+}
+
+.rich-comment-box {
+    white-space: normal;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    line-height: 1.5;
+}
+
+.rich-comment-box p {
+    margin-bottom: 0.35rem;
+}
+
+.rich-comment-box p:last-child {
+    margin-bottom: 0;
+}
+
+.rich-comment-box img,
+.rich-comment-box table,
+.rich-comment-box pre {
+    max-width: 100% !important;
+}
+
+.rich-comment-box pre {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+}
+
+.line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.btn-toggle-expand {
+    font-size: 0.73rem !important;
+    cursor: pointer;
+}
+
+.file-action-link {
+    font-size: 0.78rem !important;
+    text-decoration: none !important;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.file-action-link:hover {
+    text-decoration: underline !important;
+}
+
+.file-action-icon {
+    width: 15px;
+    text-align: center;
+    flex-shrink: 0;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid px-0">
     <!-- ═══ HEADER ═══ -->
@@ -21,37 +111,6 @@
             </a>
         </div>
     </div>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-xs d-flex align-items-center mb-4" role="alert">
-            <i class="fa-solid fa-circle-check fs-5 me-2 text-success"></i>
-            <div>{{ session('success') }}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-xs d-flex align-items-center mb-4" role="alert">
-            <i class="fa-solid fa-triangle-exclamation fs-5 me-2 text-danger"></i>
-            <div>{{ session('error') }}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-xs mb-4" role="alert">
-            <div class="d-flex align-items-center mb-1">
-                <i class="fa-solid fa-triangle-exclamation fs-5 me-2 text-danger"></i>
-                <strong>Có lỗi xảy ra khi nộp báo cáo:</strong>
-            </div>
-            <ul class="mb-0 ps-4 small">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
     <!-- ═══ THÔNG TIN ĐỀ TÀI & HỘI ĐỒNG ═══ -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
@@ -360,19 +419,26 @@
                 </div>
             @else
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                    <table class="table table-hover align-middle mb-0 table-history-versions" style="font-size: 0.88rem;">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 80px;" class="text-center">Phiên bản</th>
-                                <th>Hồ sơ nộp (Báo cáo &amp; Đính kèm)</th>
-                                <th style="min-width: 250px;">Nội dung đã chỉnh sửa</th>
-                                <th style="width: 170px;">Thời gian &amp; Người nộp</th>
-                                <th class="text-center" style="width: 140px;">Trạng thái</th>
-                                <th style="min-width: 200px;">Nhận xét Giảng viên kiểm tra</th>
+                                <th style="width: 85px;" class="text-center align-middle">Phiên bản</th>
+                                <th style="width: 220px;" class="align-middle">Hồ sơ nộp (Báo cáo &amp; Đính kèm)</th>
+                                <th style="width: 22%;" class="align-middle">Nội dung đã chỉnh sửa</th>
+                                <th style="width: 140px;" class="align-middle">Thời gian &amp; Người nộp</th>
+                                <th style="width: 130px;" class="text-center align-middle">Trạng thái</th>
+                                <th style="width: auto; min-width: 250px;" class="align-middle">Nhận xét Giảng viên kiểm tra</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($lichSuNop as $item)
+                            @php
+                                $rawTomTat = strip_tags($item->TomTatChinhSua ?? '');
+                                $isTomTatLong = mb_strlen($rawTomTat) > 140;
+
+                                $rawNhanXet = strip_tags($item->NhanXetGV ?? '');
+                                $isNhanXetLong = mb_strlen($rawNhanXet) > 140;
+                            @endphp
                             <tr>
                                 <td class="text-center">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold">
@@ -380,69 +446,41 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold text-dark">
-                                        <i class="fa-solid fa-file-pdf text-danger me-1"></i>{{ $item->TenFile }}
-                                    </div>
-                                    <div class="text-muted small">
-                                        {{ $item->DungLuong ? round($item->DungLuong / 1024 / 1024, 2) . ' MB' : '' }}
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-1 mt-1">
-                                        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 d-inline-flex align-items-center" style="font-size: 0.75rem;"
-                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', $item->id) }}', '{{ addslashes($item->TenFile) }}', 'Báo cáo hoàn thiện v{{ $item->LanChinhSua }}', { downloadUrl: '{{ route('baocao_sau_baove.download', $item->id) }}' })">
-                                            <i class="fa-solid fa-eye me-1"></i> Xem PDF
-                                        </button>
-                                        <a href="{{ route('baocao_sau_baove.download', $item->id) }}" download="{{ $item->TenFile }}" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0 d-inline-flex align-items-center" style="font-size: 0.75rem;">
-                                            <i class="fa-solid fa-download me-1"></i> Tải về
-                                        </a>
-                                    </div>
-
-                                    @if($item->FileGiaiTrinh)
-                                    <div class="mt-2 pt-1 border-top">
-                                        <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileGiaiTrinh }}">
-                                            <i class="fa-solid fa-file-lines text-info me-1"></i>{{ $item->TenFileGiaiTrinh ?? 'Bản giải trình' }}
+                                    <x-file-actions :b="$item" />
+                                </td>
+                                <td>
+                                    @if(!empty($item->TomTatChinhSua))
+                                        <div class="rich-comment-box {{ $isTomTatLong ? 'line-clamp-4' : '' }}" title="{{ $rawTomTat }}">
+                                            {!! \App\Helpers\HtmlHelper::renderRichText($item->TomTatChinhSua) !!}
                                         </div>
-                                        <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;"
-                                            onclick="quickPreviewOutline('{{ route('baocao_sau_baove.pdf', ['id' => $item->id, 'type' => 'giai_trinh']) }}', '{{ addslashes($item->TenFileGiaiTrinh ?: 'Ban_Giai_Trinh.pdf') }}', 'Bản Giải Trình v{{ $item->LanChinhSua }}', { downloadUrl: '{{ route('baocao_sau_baove.download', ['id' => $item->id, 'type' => 'giai_trinh']) }}' })">
-                                            <i class="fa-solid fa-eye me-1"></i> Xem giải trình
+                                        @if($isTomTatLong)
+                                        <button type="button" class="btn btn-link btn-xs p-0 text-primary text-decoration-none fw-semibold btn-toggle-expand mt-1 d-inline-flex align-items-center" onclick="toggleExpandRowText(this)">
+                                            Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>
                                         </button>
-                                    </div>
-                                    @endif
-
-                                    @if($item->FileMinhChung)
-                                    <div class="mt-2 pt-1 border-top">
-                                        <div class="small fw-semibold text-secondary text-truncate" style="max-width: 220px;" title="{{ $item->TenFileMinhChung }}">
-                                            <i class="fa-solid fa-paperclip text-success me-1"></i>{{ $item->TenFileMinhChung ?? 'Minh chứng' }}
-                                        </div>
-                                        <a href="{{ route('baocao_sau_baove.download', ['id' => $item->id, 'type' => 'minh_chung']) }}" download="{{ $item->TenFileMinhChung ?: 'MinhChung.zip' }}" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0 mt-1 d-inline-flex align-items-center" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-download me-1"></i> Minh chứng
-                                        </a>
-                                    </div>
+                                        @endif
+                                    @else
+                                        <span class="text-muted small fst-italic">--</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="small text-dark" style="line-height: 1.5;">
-                                        {!! \App\Helpers\HtmlHelper::renderRichText($item->TomTatChinhSua) !!}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="small fw-semibold text-dark">{{ $item->NgayNop ? \Carbon\Carbon::parse($item->NgayNop)->format('d/m/Y H:i') : '-' }}</div>
-                                    <div class="text-muted small">
+                                    <div class="small fw-semibold text-dark text-nowrap">{{ $item->NgayNop ? \Carbon\Carbon::parse($item->NgayNop)->format('d/m/Y H:i') : '-' }}</div>
+                                    <div class="small text-muted text-break-anywhere mt-1" title="{{ $item->sinhVienNop->HoTen ?? ($item->NguoiNop ?? 'Sinh viên') }}">
                                         <i class="fa-regular fa-user me-1"></i>{{ $item->sinhVienNop->HoTen ?? ($item->NguoiNop ?? 'Sinh viên') }}
                                     </div>
                                 </td>
                                 <td class="text-center">
                                     @if($item->TrangThai === 'Đạt' || $item->TrangThai === 'Đã duyệt')
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center text-nowrap" style="gap: 5px;">
                                             <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>
                                             <span>Đã duyệt</span>
                                         </span>
                                     @elseif($item->TrangThai === 'Yêu cầu sửa tiếp')
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center text-nowrap" style="gap: 5px;">
                                             <i class="fa-solid fa-rotate-right icon-check" style="font-size: 0.85em;"></i>
                                             <span>Yêu cầu sửa tiếp</span>
                                         </span>
                                     @else
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center" style="gap: 5px;">
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center text-nowrap" style="gap: 5px;">
                                             <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
                                             <span>Chờ duyệt</span>
                                         </span>
@@ -450,10 +488,15 @@
                                 </td>
                                 <td>
                                     @if(!empty($item->NhanXetGV))
-                                        <div class="small text-dark" style="line-height: 1.5;">
+                                        <div class="rich-comment-box fw-semibold text-dark {{ $isNhanXetLong ? 'line-clamp-4' : '' }}" title="{{ $rawNhanXet }}">
                                             {!! \App\Helpers\HtmlHelper::renderRichText($item->NhanXetGV) !!}
                                         </div>
-                                        <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                        @if($isNhanXetLong)
+                                        <button type="button" class="btn btn-link btn-xs p-0 text-primary text-decoration-none fw-semibold btn-toggle-expand mt-1 d-inline-flex align-items-center" onclick="toggleExpandRowText(this)">
+                                            Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>
+                                        </button>
+                                        @endif
+                                        <div class="small text-muted mt-1" style="font-size: 0.73rem;">
                                             <i class="fa-regular fa-clock me-1"></i>{{ $item->NgayKiemTra ? \Carbon\Carbon::parse($item->NgayKiemTra)->format('d/m/Y H:i') : '' }}
                                         </div>
                                     @else
@@ -469,4 +512,21 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+function toggleExpandRowText(btn) {
+    const container = btn.previousElementSibling;
+    if (!container) return;
+    const isClamped = container.classList.contains('line-clamp-4');
+    if (isClamped) {
+        container.classList.remove('line-clamp-4');
+        btn.innerHTML = 'Thu gọn <i class="fa-solid fa-angle-up ms-1"></i>';
+    } else {
+        container.classList.add('line-clamp-4');
+        btn.innerHTML = 'Xem thêm <i class="fa-solid fa-angle-down ms-1"></i>';
+    }
+}
+</script>
+@endpush
 @endsection

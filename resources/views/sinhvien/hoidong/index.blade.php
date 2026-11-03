@@ -180,15 +180,18 @@
                                 <tr>
                                     <td class="text-center font-monospace">{{ $pIdx + 1 }}</td>
                                     <td>
-                                        @if($ptv->VaiTro === 'Chủ tịch')
+                                        @php
+                                            $normRole = $ptv->short_vai_tro;
+                                        @endphp
+                                        @if($normRole === 'Chủ tịch')
                                             <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-solid fa-crown me-1"></i> Chủ Tịch
                                             </span>
-                                        @elseif($ptv->VaiTro === 'Thư ký')
+                                        @elseif($normRole === 'Thư ký')
                                             <span class="badge bg-info text-white rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-solid fa-pen-nib me-1"></i> Thư Ký
                                             </span>
-                                        @elseif($ptv->VaiTro === 'Phản biện')
+                                        @elseif($normRole === 'Phản biện')
                                             <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold">
                                                 <i class="fa-solid fa-user-check me-1"></i> Phản Biện
                                             </span>

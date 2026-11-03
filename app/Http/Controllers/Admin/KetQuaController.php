@@ -85,7 +85,7 @@ class KetQuaController extends Controller
             'pct_dat_tn' => $totalSV > 0 ? round(($countDatTN / $totalSV) * 100, 1) : 100,
         ];
 
-        $ketQuas = $query->orderBy('DiemTongKet', 'desc')->paginate(15);
+        $ketQuas = $query->orderBy('DiemTongKet', 'desc')->paginate(5)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
         $hoiDongs = \App\Models\HoiDong::orderBy('TenHoiDong')->get();
 

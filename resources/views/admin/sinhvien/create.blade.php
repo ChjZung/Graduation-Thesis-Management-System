@@ -74,9 +74,9 @@
                         <div class="col-md-6">
                             <label class="form-label-huit">Trạng Thái Học Tập</label>
                             <select name="TrangThai" class="form-select form-select-huit">
-                                <option value="Đang học" {{ old('TrangThai', 'Đang học') == 'Đang học' ? 'selected' : '' }}>🟢 Đang học</option>
-                                <option value="Tạm dừng" {{ old('TrangThai') == 'Tạm dừng' ? 'selected' : '' }}>🔴 Tạm dừng học</option>
-                                <option value="Đã tốt nghiệp" {{ old('TrangThai') == 'Đã tốt nghiệp' ? 'selected' : '' }}>🎓 Đã tốt nghiệp</option>
+                                <option value="Đang học" {{ old('TrangThai', 'Đang học') == 'Đang học' ? 'selected' : '' }}>Đang học</option>
+                                <option value="Tạm dừng" {{ old('TrangThai') == 'Tạm dừng' ? 'selected' : '' }}>Tạm dừng học</option>
+                                <option value="Đã tốt nghiệp" {{ old('TrangThai') == 'Đã tốt nghiệp' ? 'selected' : '' }}>Đã tốt nghiệp</option>
                             </select>
                         </div>
                     </div>

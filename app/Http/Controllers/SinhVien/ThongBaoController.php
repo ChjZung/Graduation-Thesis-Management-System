@@ -71,7 +71,7 @@ class ThongBaoController extends Controller
             'target_all_count'     => $targetAllCount,
         ];
 
-        $thongbaos = $query->paginate(15)->withQueryString();
+        $thongbaos = $query->paginate(5)->withQueryString();
 
         $thongbaos->getCollection()->transform(function($tb) use ($readIds) {
             $tb->DaDoc = in_array($tb->MaThongBao, $readIds);

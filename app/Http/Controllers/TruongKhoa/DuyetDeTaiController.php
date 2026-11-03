@@ -456,7 +456,7 @@ class DuyetDeTaiController extends Controller
             $query->whereIn('DeTai.MaGV', $matchedGvIds);
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('truongkhoa.duyet_detai.bomon', compact(
             'khoa',

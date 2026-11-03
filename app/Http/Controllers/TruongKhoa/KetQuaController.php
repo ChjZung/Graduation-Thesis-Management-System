@@ -163,7 +163,7 @@ class KetQuaController extends Controller
 
         $ketQuas = (clone $query)->orderBy('DiemTongKet', 'desc')
             ->orderBy('MaSV', 'asc')
-            ->paginate(15)
+            ->paginate(5)
             ->withQueryString();
 
         // 3. TÍNH TOÁN CÁC THẺ KPI TỔNG HỢP VÀ BIỂU ĐỒ ĐỒNG NHẤT VỚI BỘ LỌC
@@ -334,7 +334,7 @@ class KetQuaController extends Controller
         $giangViensKhoa = GiangVien::whereHas('boMon', fn($q) => $q->where('MaKhoa', $khoa->MaKhoa))->orderBy('HoTen')->get();
 
         // Lấy tất cả các phiếu chấm gốc để modal xem trước hiển thị chi tiết
-        $allPhieuChams = PhieuChamDiem::with(['giangVien', 'sinhVien'])
+        $allPhieuChams = PhieuChamDiem::with(['giangVien', 'sinhVien', 'hoSoBaoVe'])
             ->where('MaHoiDong', $id)
             ->get();
 
@@ -591,7 +591,8 @@ class KetQuaController extends Controller
     {
         $logs = LichSuCongBoKetQua::with(['hoiDong', 'hoSoBaoVe'])
             ->latest()
-            ->paginate(15);
+            ->paginate(5)
+            ->withQueryString();
 
         if ($request->ajax()) {
             return view('truongkhoa.ketqua.partials._modal_audit_log', compact('logs'));
@@ -696,36 +697,6 @@ class KetQuaController extends Controller
         );
 
         return redirect()->back()->with('success', 'Đã ghi nhận yêu cầu chỉnh sửa báo cáo sau bảo vệ và phát thông báo đến nhóm sinh viên cùng giảng viên phụ trách kiểm tra!');
-    }
-
-    /**
-     * Trưởng khoa mở khóa phiếu chấm điểm theo yêu cầu của giám khảo
-     */
-    public function moKhoaPhieu(Request $request)
-    {
-        $request->validate([
-            'MaPhieuChamDiem' => 'required|exists:PhieuChamDiem,MaPhieuChamDiem',
-            'LyDoMoKhoa'      => 'nullable|string|max:500',
-        ]);
-
-        $phieu = PhieuChamDiem::with(['giangVien', 'hoiDong'])->findOrFail($request->MaPhieuChamDiem);
-        $phieu->TrangThai = 'Lưu nháp';
-        $phieu->NgayXacNhan = null;
-        $phieu->GhiChuMoKhoa = $request->LyDoMoKhoa ?? 'Trưởng khoa cho phép mở khóa để điều chỉnh điểm.';
-        $phieu->save();
-
-        // Cập nhật lại tổng hợp điểm hội đồng
-        $this->gradeService->tongHopKetQuaHoiDong($phieu->MaHoiDong);
-
-        // Gửi thông báo cho giám khảo
-        ThongBaoService::gui(
-            $phieu->MaGV,
-            'Phiếu chấm điểm đã được mở khóa',
-            "Trưởng khoa đã mở khóa phiếu chấm điểm của Thầy/Cô cho sinh viên {$phieu->MaSV} (HĐ: {$phieu->hoiDong?->TenHoiDong}). Thầy/Cô có thể vào chỉnh sửa và Ký xác nhận lại.",
-            'Mở khóa'
-        );
-
-        return redirect()->back()->with('success', 'Đã mở khóa phiếu chấm điểm thành công! Giám khảo có thể chỉnh sửa lại phiếu này.');
     }
 
     public function exportExcel(Request $request)

@@ -564,7 +564,8 @@
                                                     </div>
                                                     @if($currentDeTai->coTepDeCuong())
                                                         @php
-                                                            $fileDcUrl = Str::startsWith($currentDeTai->FileDeCuong, ['http', 'storage/']) ? asset($currentDeTai->FileDeCuong) : asset('storage/' . $currentDeTai->FileDeCuong);
+                                                            $fileDcUrl = route('files.decuong.download', $currentDeTai->MaDeTai);
+                                                            $downloadDcUrl = route('files.decuong.download', ['id' => $currentDeTai->MaDeTai, 'download' => 1]);
                                                             $fileName = basename($currentDeTai->FileDeCuong);
                                                         @endphp
                                                         <div class="text-muted mb-2" style="font-size: 0.8rem;">
@@ -572,10 +573,10 @@
                                                         </div>
                                                         <div class="d-flex gap-2 flex-wrap">
                                                             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold bg-white d-inline-flex align-items-center"
-                                                                    onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($currentDeTai->TenDeTai ?? '') }}')" style="font-size: 0.8rem;">
+                                                                    onclick="quickPreviewOutline('{{ $fileDcUrl }}', '{{ $fileName }}', '{{ addslashes($currentDeTai->TenDeTai ?? '') }}', { downloadUrl: '{{ $downloadDcUrl }}' })" style="font-size: 0.8rem;">
                                                                 <i class="fa-solid fa-eye me-2" style="color: #0072CE;"></i>Xem nhanh
                                                             </button>
-                                                            <a href="{{ $fileDcUrl }}" download="{{ $fileName }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold bg-white d-inline-flex align-items-center" style="font-size: 0.8rem;">
+                                                            <a href="{{ $downloadDcUrl }}" download="{{ $fileName }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold bg-white d-inline-flex align-items-center" style="font-size: 0.8rem;">
                                                                 <i class="fa-solid fa-download me-2"></i>Tải về
                                                             </a>
                                                         </div>

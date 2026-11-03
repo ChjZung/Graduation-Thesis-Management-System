@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VaiTroHoiDong;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,17 +39,19 @@ class ThanhVienHoiDong extends Model
     }
 
     /**
-     * Nhãn vai trò rút gọn chuẩn hóa
+     * Nhãn vai trò rút gọn chuẩn hóa theo VaiTroHoiDong
      */
     public function getShortVaiTroAttribute(): string
     {
-        $vt = trim($this->VaiTro ?? '');
-        return match($vt) {
-            'Ủy viên phản biện', 'Phản biện' => 'Phản biện',
-            'Ủy viên thư ký', 'Thư ký' => 'Thư ký',
-            'Chủ tịch', 'Chủ tịch Hội đồng' => 'Chủ tịch',
-            default => 'Ủy viên',
-        };
+        return VaiTroHoiDong::normalize($this->VaiTro);
+    }
+
+    /**
+     * Tên vai trò chuẩn thống nhất
+     */
+    public function getVaiTroChuanAttribute(): string
+    {
+        return VaiTroHoiDong::normalize($this->VaiTro);
     }
 
     /**
@@ -56,24 +59,14 @@ class ThanhVienHoiDong extends Model
      */
     public function getBadgeClassAttribute(): string
     {
-        return match($this->short_vai_tro) {
-            'Chủ tịch' => 'bg-danger-subtle text-danger border-danger-subtle',
-            'Phản biện' => 'bg-primary-subtle text-primary border-primary-subtle',
-            'Thư ký' => 'bg-info-subtle text-info border-info-subtle',
-            default => 'bg-secondary-subtle text-secondary border-secondary-subtle',
-        };
+        return VaiTroHoiDong::getBadgeClass($this->VaiTro);
     }
 
     /**
-     * Thứ tự ưu tiên sắp xếp: Chủ tịch (1) -> Phản biện (2) -> Thư ký (3) -> Ủy viên (4)
+     * Thứ tự ưu tiên sắp xếp: Chủ tịch (1) -> Thư ký (2) -> Phản biện (3) -> Ủy viên (4)
      */
     public function getRolePriorityAttribute(): int
     {
-        return match($this->short_vai_tro) {
-            'Chủ tịch' => 1,
-            'Phản biện' => 2,
-            'Thư ký' => 3,
-            default => 4,
-        };
+        return VaiTroHoiDong::getPriority($this->VaiTro);
     }
 }

@@ -62,9 +62,9 @@
                                         $daCongBo = $hd->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh', 'CoYeuCauChinhSua']));
                                     }
 
-                                    $chuTich = $hd->thanhViens->firstWhere('VaiTro', 'Chủ tịch');
-                                    $thuKy = $hd->thanhViens->firstWhere('VaiTro', 'Thư ký');
-                                    $uyViens = $hd->thanhViens->filter(fn($tv) => !in_array($tv->VaiTro, ['Chủ tịch', 'Thư ký']));
+                                    $chuTich = $hd->chu_tich;
+                                    $thuKy = $hd->thu_ky;
+                                    $uyViens = $hd->thanh_vien_khac;
                                     $boMonHd = $hd->thanhViens->first()?->giangVien?->boMon?->TenBoMon ?? ($hd->khoa?->TenKhoa ?? 'Khoa CNTT');
 
                                     $rawDiaDiem = $hd->DiaDiem ?? '';
@@ -119,7 +119,7 @@
                                                 @foreach($uyViens as $uv)
                                                     <div class="line-clamp-1 mb-1" style="font-size: 11.5px;" title="{{ $uv->giangVien->HoTen ?? $uv->MaGV }} ({{ $uv->VaiTro ?? 'Ủy viên' }})">
                                                         &bull; <strong>{{ $uv->giangVien->HoTen ?? $uv->MaGV }}</strong>
-                                                        <span class="text-muted">({{ $uv->VaiTro ?? 'Ủy viên' }})</span>
+                                                        <span class="text-muted">({{ $uv->short_vai_tro }})</span>
                                                     </div>
                                                 @endforeach
                                             </div>

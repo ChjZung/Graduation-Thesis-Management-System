@@ -147,7 +147,7 @@ class PhanCongPhanBienController extends Controller
             });
         }
 
-        $detais = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $detais = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
         $hocKies = HocKy::orderBy('MaHocKy', 'desc')->get();
 
         // Base query đếm số lượng cho các tab: chỉ tính đề tài đủ điều kiện phản biện

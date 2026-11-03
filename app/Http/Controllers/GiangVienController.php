@@ -126,7 +126,7 @@ class GiangVienController extends Controller
                     $q->where('MaHocKy', $scopedHocKy);
                 }
             }
-        ])->orderBy('MaGV')->paginate(15, ['*'], 'page_gv')->withQueryString();
+        ])->orderBy('MaGV')->paginate(5, ['*'], 'page_gv')->withQueryString();
 
         $councilAssignmentService = app(\App\Services\CouncilAssignmentService::class);
         $giangviens->getCollection()->transform(function($gv) use ($councilAssignmentService, $scopedHocKy) {
@@ -221,7 +221,7 @@ class GiangVienController extends Controller
             }
         }
 
-        $dsGiangVienHk = $queryHk->orderBy('MaGV')->paginate(15, ['*'], 'page_hk')->withQueryString();
+        $dsGiangVienHk = $queryHk->orderBy('MaGV')->paginate(5, ['*'], 'page_hk')->withQueryString();
 
         $pageHkGvIds = $dsGiangVienHk->pluck('MaGV')->toArray();
         $chiTieuStatsHk = ChiTieuService::getChiTieuStatsBatch($pageHkGvIds, $selectedHocKy);

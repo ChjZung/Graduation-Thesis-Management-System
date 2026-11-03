@@ -96,6 +96,85 @@ class ThongBaoService
     }
 
     /**
+     * Gửi thông báo đến các Cán bộ Quản lý liên quan đến hồ sơ bảo vệ:
+     * - Giáo vụ (Admin / Giáo vụ)
+     * - Trưởng khoa (thuộc Khoa của đề tài / hội đồng)
+     * - Trưởng bộ môn (thuộc Bộ môn của đề tài)
+     * Đảm bảo loại trừ người gửi (nếu có) và không gửi trùng lặp.
+     */
+    public static function thongBaoCanBoQuanLy(
+        \App\Models\HoSoBaoVe $hoSo,
+        string $tieuDe,
+        string $noiDung,
+        ?string $excludeMaTK = null
+    ): void {
+        $hoSo->loadMissing(['deTai.giangVien.boMon.khoa', 'hoiDong.khoa']);
+
+        $maKhoa = $hoSo->deTai?->giangVien?->boMon?->MaKhoa ?? $hoSo->hoiDong?->MaKhoa;
+        $maBoMon = $hoSo->deTai?->giangVien?->MaBoMon;
+
+        $targetTKs = collect();
+
+        // 1. Giáo vụ / Admin
+        $giaoVuTKs = TaiKhoan::whereHas('vaiTro', fn($v) => $v->whereIn('TenVaiTro', ['Admin', 'Giáo vụ']))
+            ->pluck('MaTK');
+        foreach ($giaoVuTKs as $tkId) {
+            $targetTKs->push([
+                'maTK' => $tkId,
+                'url'  => route('admin.baocao_sau_chamdiem.show', $hoSo->MaHoSo),
+            ]);
+        }
+
+        // 2. Trưởng khoa liên quan
+        if ($maKhoa) {
+            $truongKhoaTKs = TaiKhoan::where(function ($q) use ($maKhoa) {
+                $q->where('TenDangNhap', 'like', "TK_{$maKhoa}_%")
+                  ->orWhere('TenDangNhap', 'like', "TK_{$maKhoa}")
+                  ->orWhere(function ($sq) use ($maKhoa) {
+                      $sq->whereHas('giangVien.boMon', fn($bm) => $bm->where('MaKhoa', $maKhoa))
+                         ->whereHas('vaiTro', fn($v) => $v->where('TenVaiTro', 'Trưởng khoa'));
+                  });
+            })->pluck('MaTK');
+
+            foreach ($truongKhoaTKs as $tkId) {
+                $targetTKs->push([
+                    'maTK' => $tkId,
+                    'url'  => route('truongkhoa.baocao_sau_chamdiem.show', $hoSo->MaHoSo),
+                ]);
+            }
+        }
+
+        // 3. Trưởng bộ môn liên quan
+        if ($maBoMon) {
+            $bmCode = str_starts_with($maBoMon, 'BM_') ? substr($maBoMon, 3) : $maBoMon;
+            $truongBoMonTKs = TaiKhoan::where(function ($q) use ($maBoMon, $bmCode) {
+                $q->where('TenDangNhap', 'like', "%_{$bmCode}_%")
+                  ->orWhere('TenDangNhap', 'like', "%_{$bmCode}")
+                  ->orWhere(function ($sq) use ($maBoMon, $bmCode) {
+                      $sq->whereHas('giangVien', fn($gv) => $gv->whereIn('MaBoMon', [$maBoMon, 'BM_' . $bmCode]))
+                         ->whereHas('vaiTro', fn($v) => $v->where('TenVaiTro', 'Trưởng bộ môn'));
+                  });
+            })->pluck('MaTK');
+
+            foreach ($truongBoMonTKs as $tkId) {
+                $targetTKs->push([
+                    'maTK' => $tkId,
+                    'url'  => route('truongbomon.baocao_sau_chamdiem.show', $hoSo->MaHoSo),
+                ]);
+            }
+        }
+
+        // Khử trùng lặp theo maTK và loại bỏ excludeMaTK
+        $uniqueTargets = $targetTKs->unique('maTK')->filter(function ($item) use ($excludeMaTK) {
+            return !empty($item['maTK']) && $item['maTK'] !== $excludeMaTK;
+        });
+
+        foreach ($uniqueTargets as $target) {
+            self::guiDen($target['maTK'], $tieuDe, $noiDung, 'Báo cáo sau bảo vệ', $target['url']);
+        }
+    }
+
+    /**
      * Gửi thông báo đến GVHD của một nhóm (thông qua DangKyDeTai)
      */
     public static function guiDenGVHD(string $maNhom, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null): void
