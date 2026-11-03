@@ -388,10 +388,10 @@
     display: flex;
     align-items: stretch;
     width: 100%;
-    max-width: 160px;
-    height: 32px;
+    max-width: 165px;
+    height: 36px;
     border: 1px solid var(--academic-slate-200);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     background: #ffffff;
     box-sizing: border-box;
@@ -408,12 +408,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    min-width: 28px;
+    width: 32px;
+    min-width: 32px;
     background: var(--academic-slate-100);
     border-right: 1px solid var(--academic-slate-200);
-    color: var(--academic-slate-600);
-    font-size: 0.65rem;
+    color: var(--academic-slate-700);
+    font-size: 0.72rem;
     font-weight: 700;
     font-family: var(--bs-font-monospace);
     user-select: none;
@@ -421,6 +421,7 @@
     box-sizing: border-box;
 }
 .sub-req-input {
+    display: block !important;
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
@@ -429,31 +430,34 @@
     outline: none !important;
     box-shadow: none !important;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.90rem;
     font-weight: 700;
     color: var(--academic-slate-800);
-    padding: 0 2px !important;
+    padding: 0 4px !important;
     margin: 0 !important;
-    line-height: normal !important;
-    font-variant-numeric: tabular-nums;
+    line-height: 1.5 !important;
     box-sizing: border-box;
+    background: transparent !important;
     -webkit-appearance: none !important;
     -moz-appearance: textfield !important;
     appearance: textfield !important;
+}
+.sub-req-input:focus {
+    color: var(--academic-primary);
 }
 .sub-req-max {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 0 6px;
     background: var(--academic-slate-50);
     border-left: 1px solid var(--academic-slate-200);
     color: var(--academic-slate-500);
-    font-size: 0.70rem;
+    font-size: 0.75rem;
     font-family: var(--bs-font-monospace);
     user-select: none;
     white-space: nowrap;
-    min-width: 40px;
+    min-width: 44px;
     box-sizing: border-box;
 }
 
@@ -1082,13 +1086,13 @@ input[type=number],
                                 <td class="student-score-cell align-top pt-3">
                                     {{-- Khung Điểm Tổng TC7 --}}
                                     <div class="mb-2.5">
-                                        <div class="d-flex align-items-center justify-content-between mx-auto mb-1" style="max-width: 160px;">
+                                        <div class="d-flex align-items-center justify-content-between mx-auto mb-1" style="max-width: 165px;">
                                             <span class="fw-bold text-primary" style="font-size: 0.72rem; letter-spacing: 0.4px; text-transform: uppercase;">
                                                 <i class="fa-solid fa-calculator me-1"></i> Tổng TC7
                                             </span>
                                             <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.65rem;">Max {{ number_format($cMax, 1) }}đ</span>
                                         </div>
-                                        <div class="academic-score-group mx-auto" style="border-color: #0072ce; max-width: 160px;" title="{{ $criterion['clo'] }} - Chức năng bài toán (Tối đa {{ number_format($cMax, 2) }}đ)">
+                                        <div class="academic-score-group mx-auto" style="border-color: #0072ce; max-width: 165px;" title="{{ $criterion['clo'] }} - Chức năng bài toán (Tối đa {{ number_format($cMax, 2) }}đ)">
                                             <input type="number" 
                                                    step="0.05" 
                                                    min="0" 
@@ -1110,7 +1114,7 @@ input[type=number],
 
                                     {{-- Các ô chấm điểm từng yêu cầu (Tự động mở/đóng đồng bộ qua sub-req-collapse) --}}
                                     <div class="collapse show sub-req-collapse" id="subReqList_{{ $sv->MaSV }}">
-                                        <div class="d-flex flex-column gap-1.5 mx-auto pt-1" style="max-width: 160px;">
+                                        <div class="d-flex flex-column mx-auto pt-1" style="max-width: 165px; gap: 6px;">
                                             @php $ycIndex = 1; @endphp
                                             @foreach($functionalRequirements as $req)
                                             @php
@@ -1131,7 +1135,7 @@ input[type=number],
                                                        value="{{ number_format($subScore, 2) }}" 
                                                        data-sv="{{ $sv->MaSV }}" 
                                                        data-req-max="{{ $req['max'] }}" 
-                                                       class="sub-req-input sub-req-score sub-req-sv-{{ $sv->MaSV }}" 
+                                                       class="form-control form-control-sm sub-req-input sub-req-score sub-req-sv-{{ $sv->MaSV }}" 
                                                        {{ $isReadOnly ? 'readonly' : '' }}>
                                                 <span class="sub-req-max">
                                                     / {{ number_format($req['max'], 2) }}
