@@ -15,11 +15,35 @@
  function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(key==='work')key='chapters';if(['chapters','requirements'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
  function clock(e){if(e.finished!=null)return e.finished;return Math.max(0,Math.floor((Date.now()-(e.anchor||Date.now()))/1000));}
  function stamp(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
- function title(e){if(e.state?.status==='partial'&&e.state?.errors?.some(x=>x.code==='budget_exhausted'))return 'Lượt phân tích mới đã dừng';if(e.state?.status==='partial'&&e.state?.summary_status==='completed')return 'Tóm tắt đã hoàn thành';if(e.network)return 'Đang kiểm tra kết nối';return {queued:'Đang chờ phân tích',running:'Đang phân tích báo cáo',waiting:'Đang tiếp tục xử lý',completed:'Đã có kết quả xử lý',partial:'Kết quả xử lý một phần',failed:'Không thể hoàn tất phân tích',cancelled:'Đã dừng phân tích'}[e.state?.status]||'Đang tiếp nhận yêu cầu';}
+ function problem(e){
+  const state=e.state||{},status=state.status;
+  if(['completed','cancelled'].includes(status))return '';
+  if(e.denied)return 'Phiên đăng nhập đã hết hạn hoặc không có quyền truy cập. Vui lòng đăng nhập lại.';
+  if(e.network)return 'Không cập nhật được trạng thái do lỗi kết nối. Hệ thống sẽ kiểm tra lại; tác vụ nền có thể vẫn đang chạy.';
+  const errors=Array.isArray(state.errors)?state.errors:[];
+  const labels={request_failed:'Không gửi được yêu cầu phân tích. Vui lòng tải lại trang để kiểm tra trạng thái trước khi thử lại.',rate_limit:'API đang giới hạn lượt gọi hoặc hạn mức sử dụng.',authentication:'API key không hợp lệ hoặc không có quyền sử dụng mô hình. Quản trị viên cần kiểm tra cấu hình.',invalid_request:'API không chấp nhận yêu cầu. Quản trị viên cần kiểm tra cấu hình mô hình và dữ liệu gửi.',input_too_large:'Nội dung gửi AI vượt giới hạn cho phép.',extraction_failed:'Không trích xuất được nội dung văn bản của tài liệu.',worker_error:'Tiến trình xử lý nền gặp lỗi.',budget_exhausted:'Đã chạm giới hạn xử lý của lượt hiện tại.'};
+  const messages=[...new Set(errors.map(x=>labels[x.code]||(status==='waiting'?'Dịch vụ AI gặp lỗi tạm thời.':'Một bước xử lý AI gặp lỗi.')))];
+  if(active(status)&&state.worker_running===false)messages.push('Tiến trình chạy nền hiện chưa hoạt động; cần quản trị viên kiểm tra.');
+  if(!messages.length)return '';
+  if(errors.some(x=>x.code==='rate_limit'&&x.quota==='day'))messages.push('Nhà cung cấp báo đã chạm hạn mức ngày.');
+  if(status==='waiting'&&Number(state.next_retry_at)>0){
+   const retryDate=new Date(Number(state.next_retry_at)*1000);
+   messages.push('Tự thử tiếp lúc '+retryDate.toLocaleTimeString('vi-VN',{hour12:false})+' ('+retryDate.toLocaleDateString('vi-VN')+'). Không cần bấm phân tích lại.');
+  }else if(['partial','failed'].includes(status))messages.push('Lượt này đã dừng; không tự thử lại. Kết quả đã lưu được giữ.');
+  return messages.join(' ');
+ }
+ function renderProblem(container,e){
+  let notice=container.querySelector('[data-ai-processing-problem]');
+  const message=problem(e);
+  if(!notice&&message){notice=document.createElement('p');notice.setAttribute('data-ai-processing-problem','');notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');notice.className='alert alert-warning mt-2 mb-2';container.appendChild(notice);}
+  if(notice){notice.hidden=!message;notice.textContent=message;}
+ }
+ function title(e){if(e.state?.status==='waiting'&&e.state?.errors?.length)return 'Đang tạm chờ — có sự cố cần lưu ý';if(e.state?.status==='partial'&&e.state?.errors?.some(x=>x.code==='budget_exhausted'))return 'Lượt phân tích mới đã dừng';if(e.state?.status==='partial'&&e.state?.summary_status==='completed')return 'Tóm tắt đã hoàn thành';if(e.network)return 'Đang kiểm tra kết nối';return {queued:'Đang chờ phân tích',running:'Đang phân tích báo cáo',waiting:'Đang tiếp tục xử lý',completed:'Đã có kết quả xử lý',partial:'Kết quả xử lý một phần',failed:'Không thể hoàn tất phân tích',cancelled:'Đã dừng phân tích'}[e.state?.status]||'Đang tiếp nhận yêu cầu';}
  function description(e){
   if(e.network)return 'Chưa cập nhật được trạng thái. Hệ thống sẽ kiểm tra lại; báo cáo và kết quả đã lưu được giữ.';
   if(e.denied)return 'Phiên đăng nhập đã thay đổi hoặc bạn không có quyền xem kết quả. Vui lòng đăng nhập lại.';
   const s=e.state?.status,errs=e.state?.errors||[];
+  if(problem(e))return active(s)?'Kết quả đã lưu được giữ. Xem thông báo sự cố bên dưới.':'Lượt xử lý chưa hoàn tất. Xem nguyên nhân và hướng xử lý bên dưới.';
   if(s==='cancelled')return e.state?.message||'Đã dừng tiến trình phân tích. Bạn có thể bấm Phân tích lại bất cứ lúc nào.';
   if(s==='completed')return e.reused?'Đang dùng lại kết quả đã lưu cho báo cáo và yêu cầu hiện tại.':'Kết quả phân tích đã được lưu. Bạn có thể xem nội dung bên dưới.';
   if(s==='partial'&&errs.some(x=>x.code==='budget_exhausted'))return 'Lượt phân tích mới đã dừng ở giới hạn số lần tiếp tục. Kết quả đã lưu vẫn được giữ; chọn Tiếp tục từ tiến độ đã lưu để xử lý phần còn lại.';
@@ -31,6 +55,7 @@
  }
  function detail(e){const p=e.state?.progress||{},s=e.state?.status;if(s==='completed')return 'Đã hoàn tất xử lý và lưu kết quả.';
   const stage=String(p.stage||'');let step=/yêu cầu|dẫn chứng|đối chiếu/iu.test(stage)?'Đang đối chiếu yêu cầu của giảng viên.':/Map|map|extract/.test(stage)?'Đang đọc nội dung báo cáo.':'Đang tổng hợp nội dung báo cáo.';
+  if(s==='waiting'&&problem(e))step='Đã tạm dừng xử lý để chờ thử tiếp.';
   if(s==='queued')step='Yêu cầu đã được lưu, đang chờ đến lượt xử lý.';if(s==='submitting')step='Đang gửi yêu cầu phân tích.';
   return (p.map_total?`Đã đọc ${Math.min(p.map_done||0,p.map_total)}/${p.map_total} phần văn bản. `:'')+step;
  }
@@ -47,6 +72,7 @@
     }
 
     b.querySelector('[data-processing-message]').textContent=description(e);
+    renderProblem(b,e);
     b.querySelector('[data-processing-step]').textContent=active(e.state?.status)?detail(e)+' Thời gian đã chờ: '+stamp(clock(e)):'';
     const open=b.querySelector('[data-open-ai-progress]');if(open){const stopped=['partial','failed'].includes(e.state?.status);open.hidden=!active(e.state?.status)&&!e.network&&!stopped;open.textContent=stopped?'Xem trạng thái / Tiếp tục':'Xem tiến độ';}
     const result=b.querySelector('[data-ai-refresh-result]');if(result)result.hidden=e.state?.status!=='completed'||e.loaded;
@@ -54,6 +80,7 @@
   }
   if(current!==e||!modalNode())return;
   const node=modalNode(),done=e.state?.status==='completed',cancelled=e.state?.status==='cancelled',failed=['partial','failed','cancelled'].includes(e.state?.status)||e.denied;
+  renderProblem(node.querySelector('.modal-body'),e);
   node.querySelector('.modal-title').textContent=title(e);node.querySelector('[data-progress-description]').textContent=description(e);
   node.querySelector('[data-progress-detail]').textContent=cancelled?'Tiến trình phân tích đã được dừng.':(failed?'Các kết quả đã lưu vẫn được giữ để đối chiếu.':detail(e));
   node.querySelector('[data-progress-elapsed]').textContent=stamp(clock(e));
@@ -63,9 +90,10 @@
   const cancelBtn=node.querySelector('[data-progress-cancel]');if(cancelBtn)cancelBtn.hidden=!active(e.state?.status)&&!e.submitting;
   const retry=node.querySelector('[data-progress-retry]');retry.hidden=!failed||!!e.denied;
   retry.textContent=cancelled?'Phân tích lại':'Tiếp tục từ tiến độ đã lưu';
-  const bar=node.querySelector('.progress');bar.hidden=failed||done;bar.setAttribute('aria-valuetext',done?'Hoàn tất xử lý':'Đang xử lý, chưa xác định phần trăm tổng thể');
+  const paused=e.state?.status==='waiting'&&!!problem(e);
+  const bar=node.querySelector('.progress');bar.hidden=failed||done||paused;bar.setAttribute('aria-valuetext',done?'Hoàn tất xử lý':'Đang xử lý, chưa xác định phần trăm tổng thể');
   if(done){bar.setAttribute('aria-valuenow','100');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');}else bar.removeAttribute('aria-valuenow');
-  node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done&&!failed);
+  node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done&&!failed&&!paused);
  }
  function open(e){current=e;const node=modalNode();if(!node)return;if(node.parentElement!==document.body)document.body.appendChild(node);render(e);if(window.bootstrap?.Modal)bootstrap.Modal.getOrCreateInstance(node).show();}
  function accept(e,data){e.state=data;e.network=false;if(!e.reused&&data.queued_at&&data.server_time){e.anchor=Date.now()-Math.max(0,data.server_time-data.queued_at)*1000;}
@@ -137,7 +165,7 @@
   try{const body=new FormData(form);if(resume)body.set('fresh','0');const response=await fetch(form.action,{method:'POST',body,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
    if(!response.ok||response.redirected){if([401,403,419].includes(response.status))e.denied=true;throw Error('submit');}
    const data=await response.json();e.reused=!!data.reused;accept(e,data.state);if(active(e.state.status))poll(e);else{e.loaded=true;await refresh(e);}
-  }catch{e.state={status:'partial'};e.network=false;render(e);}finally{e.submitting=false;render(e);}
+  }catch{e.state={status:'partial',errors:[{code:'request_failed'}]};e.network=false;render(e);}finally{e.submitting=false;render(e);}
  }
  async function cancelJob(element){
   const card=element.closest?.('.ai-teacher-report') || (current ? cards(current)[0] : null);
@@ -172,11 +200,6 @@
  });
  document.addEventListener('click',event=>{
   if(event.target.closest('[data-progress-cancel]')){event.preventDefault();cancelJob(event.target);}
-  if(event.target.closest('[data-progress-retry]')){
-   const card=current ? cards(current)[0] : null;
-   const form=card?.querySelector('[data-teacher-analyze-form]');
-   if(form) submit(form);
-  }
  });
  // Reserve the current panel height during tab layout so scroll containers cannot
  // clamp to zero when Bootstrap briefly hides the old pane before showing the new.

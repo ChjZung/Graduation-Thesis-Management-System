@@ -316,3 +316,6 @@ File bàn giao này đủ để bắt đầu nắm ngữ cảnh. Nếu cần chu
 ## Trạng thái lượt chạy kiểm tra trước khi bàn giao
 
 Lúc 12:39 ngày 03/11/2026, lượt mới của Đợt 224 dừng tạm ở 8/28 gói Map vì lỗi API rate_limit, quota unknown. Worker vẫn hoạt động; Queue hẹn thử tiếp lúc 12:43:40. Đây không phải xác nhận đã hết quota ngày. Bản tóm tắt hoàn thành 28/28 được giữ từ lượt trước, không phải tiến độ lượt mới. Không bấm phân tích mới liên tục; kiểm tra checkpoint và trạng thái retry trước.
+
+## Bổ sung thông báo sự cố cho người dùng
+Giao diện hiển thị cảnh báo vàng ở thẻ trạng thái và cửa sổ tiến độ: giới hạn API, key không hợp lệ, lỗi trích xuất, worker và kết nối. Khi Queue đang chờ, hiển thị giờ/ngày thử tiếp; khi lượt đã dừng, nói rõ không tự thử lại. Không đưa nguyên văn lỗi nội bộ/API key lên UI. Thanh tiến trình trong modal tạm ẩn khi chờ sự cố API. Đã loại bỏ một listener Thử lại bị trùng để giữ đúng chế độ tiếp tục checkpoint. Kiểm thử: node --test tests/Unit/ai_processing_feedback.test.cjs.
