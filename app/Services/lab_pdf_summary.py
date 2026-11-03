@@ -19,6 +19,7 @@ from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
 from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION
 from core.caption_index import extract_captions, section_nodes, VERSION as CAPTION_VERSION
+from ai_runtime.requirement_relevance import VERSION as MATCHER_VERSION
 
 ENGINE_VERSION='pdf-lab-v1.3'
 
@@ -152,12 +153,20 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         teacher.append(dict(req,report_points=points,requirement_id=f'R{index+1:04}',report_relation=match.get('relation','pending'),
             report_explanation=match.get('explanation',''),report_matches=report_items))
     direct=(links or {}).get('_verified_report')
-    if direct is not None:teacher=(links or {}).get('teacher_requirements',[])
+    if direct is not None:
+        from ai_runtime.requirement_output_guard import guard_direct_report
+        from verified_requirement_review import render_teacher_items
+        direct=guard_direct_report(direct)
+        teacher=render_teacher_items(direct)
+    cross_matched = False
     try:
         from ai_runtime.requirement_cross_matcher import cross_match_teacher_requirements
         matched_teacher = cross_match_teacher_requirements(requirements, chapters, completed, caption_index, context)
-        if matched_teacher:
+        if matched_teacher and direct is None and (links or {}).get('status') == 'complete':
+            for req in matched_teacher:
+                req['document_fingerprint'] = requirements.get('fingerprint')
             teacher = matched_teacher
+            cross_matched = True
     except Exception:
         pass
     full=(base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
@@ -187,7 +196,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
         'summary_scope':{'context_hash':hashlib.sha256(json.dumps(context or {},ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
         'validation':{'semantic_audit':False,'quote_matching':True,'quality_rules':'targeted_heuristics'},
         'analysis_metadata':{'pages_total':result['document']['page_count'],'chunks_total':counts['total_chunks'],'chunks_succeeded':counts['analyzed_chunks'],'chunks_failed':counts['total_chunks']-counts['analyzed_chunks']}}
-    if teacher:
+    if cross_matched:
         data['teacher_requirements'] = teacher
         data['teacher_requirements_status'] = 'provided'
         data['requirements_links_status'] = 'completed'
@@ -203,6 +212,17 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
     elif (links or {}).get('not_configured'):
         data['requirements_review']={'status':'not_configured','mode':'verified_v2','items':[]}
         data['teacher_requirements']=[]
+    from ai_runtime.requirement_output_guard import guard_teacher_items
+    data['teacher_requirements'], scope_audit = guard_teacher_items(data['teacher_requirements'], caption_index)
+    data['requirements_review']['presentation_guard'] = scope_audit
+    data['requirements_provenance'] = {
+        'method': 'verified_pdf_review' if direct is not None else ('heuristic_summary' if cross_matched else 'source_links'),
+        'algorithm_version': direct.get('verification_policy_version') if direct is not None else MATCHER_VERSION,
+        'context_hash': data['summary_scope']['context_hash'],
+        'source_hash': data.get('_source_hash'),
+        'created_at': time.time(),
+        'scope_guard_version': MATCHER_VERSION,
+    }
     return {'success':True,'source':'pdf_lab_map_reduce','data':data,'total_pages':analysis['total_pages'],'total_units':analysis['total_pages'],
             'processing_time':round(elapsed,3),'metrics':{'total_pages':analysis['total_pages'],'chunk_count':counts['total_chunks']}}
 

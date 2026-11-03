@@ -21,7 +21,7 @@ class AiSummaryService
         // Each submission keeps its own JSON. The legacy table has ONE snapshot per MaBaoCao.
         \Illuminate\Support\Facades\DB::transaction(function () use ($report, $result, $options) {
             $report = \App\Models\KhoiBaoCaoTienDo::lockForUpdate()->findOrFail($report->MaKhoi);
-            $old = app(AiReportProcessingService::class)->payload($report);
+            $old = app(AiReportProcessingService::class)->storedPayload($report);
             if (isset($options['token']) && ($old['_processing']['token'] ?? '') !== $options['token']) return;
             // Retain an immutable private snapshot before replacing a saved AI generation.
             if (!empty($old['schema_version']) && (!empty($old['document_content']) || !empty($old['chapters']))) {
@@ -43,30 +43,9 @@ class AiSummaryService
             }
             if (isset($old['_processing'])) $merged['_processing'] = $old['_processing'];
 
-            $reviewContext = $report->dotNop?->nguCanhDoiChieuAi() ?? [];
-            if (!empty($reviewContext) && !empty($merged['chapters'])) {
-                $hasSupported = false;
-                foreach ($merged['teacher_requirements'] ?? [] as $req) {
-                    if (($req['report_relation'] ?? '') === 'related_text' || !empty($req['report_points'][0]['source_references'])) {
-                        $hasSupported = true;
-                        break;
-                    }
-                }
-                if (!$hasSupported) {
-                    $matchedTeacher = AiRequirementCrossMatcher::crossMatch($merged, $reviewContext);
-                    if (!empty($matchedTeacher)) {
-                        $merged['teacher_requirements'] = $matchedTeacher;
-                        $merged['teacher_requirements_status'] = 'provided';
-                        $merged['requirements_links_status'] = 'completed';
-                        $merged['requirements_review'] = [
-                            'status' => 'completed',
-                            'mode' => 'verified_v2',
-                            'items' => $matchedTeacher,
-                            'note' => 'Dẫn chứng đối chiếu trực tiếp từ các chương của báo cáo.',
-                        ];
-                    }
-                }
-            }
+            // Retrieval belongs to the background Python pipeline, never the read path.
+            // Preserve a stronger verified result when a heuristic fallback arrives.
+            $merged = AiRequirementResultPolicy::preserveVerified($old, $merged, $result['data']);
 
             $result = $this->formatSummarizeResult(array_merge($result,['data'=>$merged]));
             $result['data'] = $merged;
@@ -472,7 +451,7 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', '_analysis_history'] as $field) {
+                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', 'requirements_provenance', '_analysis_history'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],

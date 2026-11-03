@@ -21,7 +21,7 @@
     @if($briefText)
         <details class="ai-review-disclosure" @if($reviewPending) open @endif><summary>Xem mô tả yêu cầu gốc</summary><div class="mt-2" style="white-space:pre-wrap">{{ $briefText }}</div></details>
     @endif
-    @if($briefStale)<p class="ai-empty">Yêu cầu của đợt đã thay đổi. Kết quả dưới đây thuộc bản trước; chọn Phân tích lại để cập nhật.</p>@endif
+    @if($briefStale)<p class="ai-empty">Yêu cầu của đợt đã thay đổi. Chọn đối chiếu lại để cập nhật; không sử dụng kết quả cũ cho yêu cầu mới.</p>@endif
     @if($reviewPending)<p class="alert alert-info" data-requirements-pending>Đang chờ đối chiếu yêu cầu. Hệ thống xử lý bản tóm tắt trước; dẫn chứng sẽ tự xuất hiện tại đây khi được kiểm chứng. Chưa có kết quả không có nghĩa báo cáo thiếu nội dung.</p>@endif
     @if(($review['status']??'')==='partial')<p class="ai-empty">Đối chiếu đang xử lý hoặc đã dừng một phần. Các mục chưa kiểm chứng chưa có kết luận.</p>@endif
     @if(!$briefText)<p class="ai-empty">Chưa có mô tả yêu cầu để đối chiếu.</p>
@@ -39,33 +39,38 @@
                     <article class="ai-requirement-card" data-requirement-id="{{ $entry['item']['requirement_id']??'' }}">
                         <header class="ai-requirement-question"><h4>{{ $entry['item']['text']??'' }}</h4></header>
                         <div data-requirement-report-links>
+                        @php
+                            $captionReferences=[]; $textReferences=[];
+                            $sourceKey=fn($ref)=>(int)($ref['page']??0).'|'.preg_replace('/\s+/u',' ',trim((string)($ref['quote']??'')));
+                            foreach($entry['points'] as $point) foreach($point['manual_references']??[] as $ref) {
+                                if(!empty($ref['page']) && trim($ref['quote']??'')!=='')$captionReferences[$sourceKey($ref)]=$ref;
+                            }
+                            foreach($entry['points'] as $point) foreach($point['source_references']??[] as $ref) {
+                                $key=$sourceKey($ref);
+                                if(isset($captionReferences[$key]) || ($ref['source_type']??'')==='CAPTION_REFERENCE')$captionReferences[$key]=$ref;
+                                else $textReferences[$key]=$ref;
+                            }
+                        @endphp
                         @if($category==='supported')
-                            @php $findings=[];$references=[];$seen=[]; @endphp
+                            @php $findings=[]; @endphp
                             @foreach($entry['points'] as $point)
                                 @php
                                     if(!in_array($point['explanation']??'',$findings,true))$findings[]=$point['explanation']??'';
-                                    foreach($point['source_references']??[] as $ref){$key=($ref['source_id']??'').'|'.($ref['page']??'').'|'.($ref['start']??'');if(!isset($seen[$key])){$seen[$key]=true;$references[]=$ref;}}
                                 @endphp
                             @endforeach
                             <p>{{ $entry['item']['report_explanation'] ?? implode(' ',array_slice($findings,0,2)) }}</p>
                             @if(collect($entry['points'])->contains(fn($p)=>($p['check_status']??'')==='PARTIAL'))<p class="small text-muted">Có dẫn chứng cho một phần yêu cầu; chưa xác nhận đáp ứng toàn bộ.</p>@endif
-                            @include('partials.ai_lab_sources',['references'=>$references,'referenceContext'=>$entry['item']['text']??''])
-                            @foreach($entry['item']['report_points']??[] as $point)
-                                @foreach($point['manual_references']??[] as $manualRef)
-                                    <div class="mt-2 small">Sơ đồ cần xem trực tiếp — trang PDF {{ $manualRef['page'] }}.
-                                    @include('partials.ai_citation_button',['citationPage'=>$manualRef['page'],'citationQuote'=>$manualRef['quote'],'citationProminent'=>false,'citationContext'=>'Vị trí hình/sơ đồ, chưa xác minh nội dung'])</div>
-                                @endforeach
-                            @endforeach
                         @else
                             <p class="ai-empty">Hệ thống chưa tìm được dẫn chứng phù hợp cho phần này. Giảng viên vui lòng đối chiếu báo cáo gốc; đây không phải kết luận sinh viên chưa thực hiện.</p>
-                            @foreach($entry['points'] as $point)
-                                @foreach($point['manual_references']??[] as $manualRef)
-                                    <div class="ai-citation"><p>Vị trí sơ đồ cần xem trực tiếp — trang PDF {{ $manualRef['page'] }}.</p><q>{{ $manualRef['quote'] }}</q>
-                                    @include('partials.ai_citation_button',['citationPage'=>$manualRef['page'],'citationQuote'=>$manualRef['quote'],'citationProminent'=>false,'citationContext'=>'Vị trí hình/sơ đồ, chưa xác minh nội dung'])</div>
-                                @endforeach
-                            @endforeach
                             @if($citationAvailable)<a href="{{ $pdfUrl }}" target="_blank" rel="noopener">Mở báo cáo gốc</a>@endif
                             @if(collect($entry['points'])->contains(fn($p)=>($p['check_status']??'')==='NEEDS_VISUAL_REVIEW'))<p class="small text-muted">Có mục hình/sơ đồ cần giảng viên xem trực tiếp trong PDF.</p>@endif
+                        @endif
+                        @if($textReferences || $captionReferences)
+                            @php
+                                $unifiedReferences=array_values($textReferences);
+                                foreach($captionReferences as $captionRef)$unifiedReferences[]=array_merge($captionRef,['source_type'=>'CAPTION_REFERENCE']);
+                            @endphp
+                            @include('partials.ai_lab_sources',['references'=>$unifiedReferences,'referenceContext'=>$entry['item']['text']??''])
                         @endif
                         </div>
                     </article>

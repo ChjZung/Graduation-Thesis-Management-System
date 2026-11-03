@@ -1,6 +1,7 @@
 """Cross-match teacher requirements directly with AI-generated chapters, sections, completed work, and diagram captions."""
 import re
 import unicodedata
+from .requirement_relevance import relevant, select_candidate, families
 
 STOP_WORDS = set(
     'va la cua cac nhung mot duoc cho voi trong theo ve co da de khi nay bao cao '
@@ -88,7 +89,7 @@ def flatten_chapters(chapters, parent_titles=None, parent_refs=None):
                 refs.extend(it['source_references'])
 
         # If this node has no references of its own, inherit parent references
-        inherited_refs = list(refs) if refs else list(parent_refs)
+        inherited_refs = []
 
         flat.append({
             'id': ch.get('id', ''),
@@ -97,6 +98,7 @@ def flatten_chapters(chapters, parent_titles=None, parent_refs=None):
             'start_page': ch.get('start_page'),
             'end_page': ch.get('end_page'),
             'summary': summary_text,
+            'observations': ch.get('items', []),
             'source_references': refs,
             'inherited_references': inherited_refs,
             'level': ch.get('level', 1),
@@ -122,12 +124,14 @@ def find_matching_captions(req_tokens, req_text, caption_index):
     for ast in assets:
         raw_text = ast.get('display_text') or ast.get('raw_text') or ''
         sec_title = ast.get('section_title') or ''
-        comb_clean = remove_diacritics(f"{raw_text} {sec_title}")
+        if not relevant(req_text, raw_text):
+            continue
+        comb_clean = remove_diacritics(raw_text)
 
-        cap_tokens = tokenize(f"{raw_text} {sec_title}")
+        cap_tokens = tokenize(raw_text)
         overlap = req_tokens & cap_tokens
 
-        has_phrase = False
+        has_phrase = bool(families(req_text) & families(raw_text))
         if 'erd' in req_clean and ('erd' in comb_clean or 'quan he co so du lieu' in comb_clean):
             has_phrase = True
         elif 'so do lop' in req_clean and ('so do lop' in comb_clean or 'class' in comb_clean):
@@ -150,7 +154,8 @@ def find_matching_captions(req_tokens, req_text, caption_index):
                 'start': (ast.get('source_offsets') or [[0, 0]])[0][0] if ast.get('source_offsets') else 0,
                 'end': (ast.get('source_offsets') or [[0, 0]])[0][1] if ast.get('source_offsets') else 0,
                 'quote_verified': True,
-                'semantic_support': 'SUPPORTED',
+                'semantic_support': 'NEEDS_VISUAL_REVIEW',
+                'source_type': 'CAPTION_REFERENCE',
                 'document_sha256': ast.get('document_sha256', '')
             })
 
@@ -161,7 +166,7 @@ def find_matching_captions(req_tokens, req_text, caption_index):
         if k not in seen:
             seen.add(k)
             unique.append(m)
-    return unique[:6]
+    return unique
 
 
 def calculate_match_score(req_tokens, req_text, candidate, matched_captions=None):
@@ -225,7 +230,7 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
         return []
 
     flat_sections = flatten_chapters(chapters or [])
-    completed_items = completed_work or []
+    completed_items = []  # Match chapter observations, not unrelated document-wide work.
 
     all_candidates = list(flat_sections)
     for c_idx, cw in enumerate(completed_items):
@@ -251,6 +256,12 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
         # Rank candidates
         scored = []
         for cand in all_candidates:
+            cand = select_candidate(req['text'], cand)
+            local_caps = [c for c in matched_captions if cand.get('start_page') and cand.get('end_page') and cand['start_page'] <= c['page'] <= cand['end_page'] and relevant(req['text'], cand.get('title',''))]
+            if not cand['source_references'] and not local_caps:
+                continue
+            if not relevant(req['text'], cand.get('title','')+' '+cand.get('summary','')):
+                continue
             sc = calculate_match_score(req_tokens, req['text'], cand, matched_captions)
             # Require minimum relevance
             if sc >= 10.0:
@@ -260,6 +271,8 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
 
         if scored:
             cand = scored[0][1]
+            # Captions passed the requirement/type gate independently. A matching
+            # ERD must not disappear just because the best prose is on another page.
             title_to_show = cand.get('full_title') or cand.get('title')
 
             # Clean & format page numbers
@@ -289,23 +302,14 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
                         'end_page': mc['end_page'],
                         'quote': mc['quote'],
                         'quote_verified': True,
-                        'semantic_support': 'SUPPORTED'
+                        'semantic_support': 'NEEDS_VISUAL_REVIEW', 'source_type': 'CAPTION_REFERENCE'
                     })
-
-            # Also check other high-ranking candidates to enrich references
-            if len(clean_refs) < 2 and len(scored) > 1:
-                for _, other_cand in scored[1:3]:
-                    for r in (other_cand.get('source_references') or other_cand.get('inherited_references') or []):
-                        key = (r.get('page'), r.get('quote', '')[:50])
-                        if key not in seen_refs:
-                            seen_refs.add(key)
-                            clean_refs.append(r)
 
             summary_sentence = cand.get('summary', '').strip()
             if not summary_sentence:
                 if matched_captions:
                     cap_titles = '; '.join(c['quote'] for c in matched_captions[:2])
-                    summary_sentence = f"Mục thiết kế có các sơ đồ tương ứng: {cap_titles}."
+                    summary_sentence = f"Nhận diện tên hình/bảng liên quan: {cap_titles}. Chỉ đối chiếu tên; giảng viên cần kiểm chứng nội dung trong PDF gốc."
                 else:
                     summary_sentence = f"Nội dung được trình bày tại mục {title_to_show}."
 
@@ -319,7 +323,7 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
                 'relation': 'related_text',
                 'explanation': explanation,
                 'source_references': clean_refs[:12],
-                'check_status': 'SUPPORTED',
+                'check_status': 'NEEDS_VISUAL_REVIEW' if clean_refs and all(r.get('source_type') == 'CAPTION_REFERENCE' for r in clean_refs) else 'PARTIAL',
                 'manual_references': matched_captions
             }
 
@@ -340,7 +344,7 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
         elif matched_captions:
             cap_pages = ", ".join(f"Trang {c['page']}" for c in matched_captions)
             cap_names = "; ".join(c['quote'] for c in matched_captions[:2])
-            explanation = f"Tìm thấy sơ đồ phù hợp tại {cap_pages} ({cap_names}); giảng viên có thể mở trực tiếp trang PDF để xem chi tiết."
+            explanation = f"Nhận diện tên hình/bảng liên quan tại {cap_pages}: {cap_names}. Chưa xác minh nội dung bên trong; giảng viên cần kiểm chứng PDF gốc."
             point = {
                 'title': req['text'],
                 'relation': 'related_text',
@@ -352,10 +356,10 @@ def cross_match_teacher_requirements(requirements_doc, chapters, completed_work=
                         'end_page': matched_captions[0]['end_page'],
                         'quote': matched_captions[0]['quote'],
                         'quote_verified': True,
-                        'semantic_support': 'SUPPORTED'
+                        'semantic_support': 'NEEDS_VISUAL_REVIEW', 'source_type': 'CAPTION_REFERENCE'
                     }
                 ],
-                'check_status': 'SUPPORTED',
+                'check_status': 'NEEDS_VISUAL_REVIEW',
                 'manual_references': matched_captions
             }
             result_teacher.append({

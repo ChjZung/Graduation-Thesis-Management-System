@@ -40,7 +40,8 @@ def render_teacher_items(report):
                     for page in sorted({r['page_number'] for r in e['char_ranges']}):
                         refs.append({'source_id':e['source_id'],'page':page,'end_page':page,'quote':e['quote'],
                             'start':e['char_start'],'end':e['char_end'],'char_ranges':[r for r in e['char_ranges'] if r['page_number']==page],
-                            'quote_verified':True,'semantic_support':e.get('semantic_support','SUPPORTS'),'document_sha256':e['document_sha256']})
+                            'quote_verified':True,'semantic_support':e.get('semantic_support','SUPPORTS'),
+                            'source_type':e.get('source_type','text'),'document_sha256':e['document_sha256']})
             relation='related_text' if refs else ('pending' if check['status'] in ('NOT_PROCESSED','PENDING_VERIFICATION','PROCESSING_ERROR') else 'not_found')
             points.append({'title':check['description'],'relation':relation,'explanation':check.get('finding') if refs else MISSING,
                 'source_references':refs,'check_status':check['status'],

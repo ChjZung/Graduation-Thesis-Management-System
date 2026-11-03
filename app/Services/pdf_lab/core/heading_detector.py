@@ -143,6 +143,16 @@ def detect_headings(document, settings):
 
         # CHECKS FOR SPECIAL / FRONT-MATTER HEADINGS
         if special and not bookmark:
+            # Uppercase text in a table cell is not a document-level heading.
+            # Keep isolated headings and distinctive large headings unchanged.
+            if row['font_size'] <= body_size * 1.08:
+                x0,y0,x1,y1 = row['bbox']
+                column_peers = [other for other in lines_by_page[row['page']]
+                    if other['line_id'] != row['line_id'] and len(other['text'].strip()) > 6
+                    and abs((other['bbox'][1]+other['bbox'][3])/2-(y0+y1)/2) <= min(y1-y0,other['bbox'][3]-other['bbox'][1])*.45
+                    and (other['bbox'][0] > x1+body_size*.5 or other['bbox'][2] < x0-body_size*.5)]
+                if column_peers:
+                    rejected.append('Tên mục nằm cùng hàng với nội dung cột khác, có dấu hiệu là ô bảng, không phải tiêu đề độc lập.')
             if is_abstract_heading(text) or folded(text) in {'loi mo dau', 'loi cam on', 'loi cam doan', 'nhan xet cua giang vien huong dan', 'nhan xet cua giao vien huong dan'}:
                 if current_chapter_num is not None or row['page'] > 20:
                     rejected.append('Mục front-matter (tóm tắt/lời cảm ơn) chỉ xuất hiện ở đầu tài liệu, không xuất hiện trong thân bài/bảng.')

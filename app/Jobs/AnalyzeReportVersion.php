@@ -63,7 +63,8 @@ class AnalyzeReportVersion implements ShouldQueue
             $result = $ai->summarizePdf($processing->path($report),$report->dotNop?->giaiDoan?->ThuTu ?? 1,[
                 'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
                 'review_only'=>$only,
-                'fresh'=>!empty($state['fresh']),
+                // Reset checkpoints once, not on every budget/timeout continuation.
+                'fresh'=>!empty($state['fresh']) && $attempt === 1,
                 'progress_path'=>$processing->progressPath($this->token),
                 'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,

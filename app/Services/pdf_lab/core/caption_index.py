@@ -3,7 +3,7 @@ import hashlib
 import re
 import unicodedata
 
-VERSION = 'caption-text-1'
+VERSION = 'caption-text-2'
 
 def folded(text):
     return ''.join(c for c in unicodedata.normalize('NFD', text.casefold()) if unicodedata.category(c) != 'Mn')
@@ -12,6 +12,14 @@ PATTERN = re.compile(r'^(Hình|Bảng|Figure|Table)\s+(\d+(?:[.\-]\d+)*)(?:\s*[.
 
 def extract_captions(result):
     doc = result['document']; sections = result['sections']; lines = doc['lines']; assets = []; seen = set()
+    page_lines={}
+    for row in lines:page_lines.setdefault(row['page'],[]).append(row)
+    def table_row(row):
+        x0,y0,x1,y1=row['bbox'];middle=(y0+y1)/2
+        return any(other is not row and
+            abs((other['bbox'][1]+other['bbox'][3])/2-middle)<=min(y1-y0,other['bbox'][3]-other['bbox'][1])*.4 and
+            (other['bbox'][0]>x1+2 or x0>other['bbox'][2]+2)
+            for other in page_lines[row['page']])
     for i, line in enumerate(lines):
         text = line['text'].strip(); match = PATTERN.match(text)
         if not match or line.get('running_margin'):
@@ -26,6 +34,7 @@ def extract_captions(result):
         rows = [line]
         for nxt in lines[i+1:i+4]:
             prev = rows[-1]
+            if match[1].casefold() in ('bảng','table') and table_row(nxt):break
             if (nxt['page'] != line['page'] or nxt.get('running_margin') or PATTERN.match(nxt['text'].strip())
                 or nxt['block_id'] != line['block_id'] or nxt['bbox'][1] - prev['bbox'][3] > max(8, line['font_size'])
                 or abs(nxt['font_size'] - line['font_size']) > 1 or nxt['text'].strip().endswith(':')

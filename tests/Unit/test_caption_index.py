@@ -14,6 +14,21 @@ def fixture():
       dict(section_id='child',section_title=texts[3],section_number='3.2.1',start=lines[3]['start'],end=offset,children=[],parent_section_id='parent',section_level=3,kind='section',start_page=1,end_page=1)]
     return dict(document=dict(text=''.join(t+'\n' for t in texts),sha256='test',lines=lines),sections=sections)
 
+
+def test_table_caption_does_not_swallow_adjacent_column_headers():
+    r=fixture();r['sections']=[];r['document']['lines']=[]
+    rows=[('Table 5.3 Database relationships',[100,10,350,24]),
+          ('STT',[20,28,45,42]),('Table name',[100,28,180,42]),('Primary key',[220,28,300,42])]
+    offset=0;text=''
+    for value,box in rows:
+        r['document']['lines'].append(dict(text=value,start=offset,end=offset+len(value)+1,page=1,bbox=box,font_size=12,block_id='same'))
+        text+=value+'\n';offset+=len(value)+1
+    r['document']['text']=text
+    out=extract_captions(r)
+    assert len(out['assets'])==1
+    assert out['assets'][0]['raw_text']=='Table 5.3 Database relationships'
+    assert r['document']['text']==text
+
 def test_caption_index_excludes_index_and_mentions_and_keeps_offsets():
     r=fixture(); original=r['document']['text']; index=extract_captions(r)
     assert len(index['assets'])==2

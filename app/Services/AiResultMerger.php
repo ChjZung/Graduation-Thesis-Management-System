@@ -74,7 +74,7 @@ class AiResultMerger
             $merged['requirements_review'] = $previous;
         }
         // Keep the new brief summary even when a stronger prior document result is retained.
-        foreach (['teacher_requirements','requirements_document','teacher_requirements_status'] as $field) {
+        foreach (['teacher_requirements','requirements_document','teacher_requirements_status','requirements_links_status','requirements_provenance'] as $field) {
             if (array_key_exists($field,$new)) $merged[$field]=$new[$field];
         }
         // The local content audit is independent of an incomplete LLM generation.
@@ -85,6 +85,6 @@ class AiResultMerger
             $merged['content_review']=$audit;
         }
         if (isset($new['_source_hash'])) $merged['_source_hash'] = $new['_source_hash'];
-        return $merged;
+        return AiRequirementResultPolicy::preserveVerified($old, $merged, $new);
     }
 }

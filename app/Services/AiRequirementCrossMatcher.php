@@ -114,7 +114,7 @@ class AiRequirementCrossMatcher
                 }
             }
 
-            $inheritedRefs = $refs ?: $parentRefs;
+            $inheritedRefs = [];
 
             $flat[] = [
                 'id' => $ch['id'] ?? '',
@@ -123,6 +123,7 @@ class AiRequirementCrossMatcher
                 'start_page' => $ch['start_page'] ?? null,
                 'end_page' => $ch['end_page'] ?? null,
                 'summary' => $summaryText,
+                'observations' => $ch['items'] ?? [],
                 'source_references' => $refs,
                 'inherited_references' => $inheritedRefs,
                 'level' => $ch['level'] ?? 1,
@@ -147,11 +148,13 @@ class AiRequirementCrossMatcher
         foreach ($assets as $ast) {
             $rawText = $ast['display_text'] ?? $ast['raw_text'] ?? '';
             $secTitle = $ast['section_title'] ?? '';
-            $combClean = self::removeDiacritics($rawText . ' ' . $secTitle);
-            $capTokens = self::tokenize($rawText . ' ' . $secTitle);
+            if (!AiRequirementRelevance::relevant($reqText,$rawText)) continue;
+            $combClean = self::removeDiacritics($rawText);
+            $capTokens = self::tokenize($rawText);
             $overlap = array_intersect_key($reqTokens, $capTokens);
 
-            $hasPhrase = false;
+            // Match known diagram phrases even when PDF text joins words.
+            $hasPhrase = (bool) array_intersect(AiRequirementRelevance::families($reqText),AiRequirementRelevance::families($rawText));
             if (str_contains($reqClean, 'erd') && (str_contains($combClean, 'erd') || str_contains($combClean, 'quan he co so du lieu'))) {
                 $hasPhrase = true;
             } elseif (str_contains($reqClean, 'so do lop') && (str_contains($combClean, 'so do lop') || str_contains($combClean, 'class'))) {
@@ -175,7 +178,8 @@ class AiRequirementCrossMatcher
                     'start' => ($ast['source_offsets'][0][0] ?? 0),
                     'end' => ($ast['source_offsets'][0][1] ?? 0),
                     'quote_verified' => true,
-                    'semantic_support' => 'SUPPORTED',
+                    'semantic_support' => 'NEEDS_VISUAL_REVIEW',
+                    'source_type' => 'CAPTION_REFERENCE',
                     'document_sha256' => $ast['document_sha256'] ?? '',
                 ];
             }
@@ -190,7 +194,7 @@ class AiRequirementCrossMatcher
                 $unique[] = $m;
             }
         }
-        return array_slice($unique, 0, 6);
+        return $unique;
     }
 
     public static function calculateMatchScore(array $reqTokens, string $reqText, array $candidate, array $matchedCaptions = []): float
@@ -258,7 +262,7 @@ class AiRequirementCrossMatcher
 
         $chapters = $data['chapters'] ?? [];
         $flatSections = self::flattenChapters($chapters);
-        $completedItems = $data['completed_work'] ?? [];
+        $completedItems = [];
         $captionIndex = $data['caption_index'] ?? [];
 
         $allCandidates = $flatSections;
@@ -288,6 +292,10 @@ class AiRequirementCrossMatcher
 
             $scored = [];
             foreach ($allCandidates as $cand) {
+                $cand=AiRequirementRelevance::selectCandidate($req['text'],$cand);
+                $localCaps=array_filter($matchedCaptions,fn($c)=>!empty($cand['start_page']) && !empty($cand['end_page']) && $cand['start_page']<=$c['page'] && $c['page']<=$cand['end_page'] && AiRequirementRelevance::relevant($req['text'],$cand['title']??''));
+                if(!$cand['source_references'] && !$localCaps)continue;
+                if(!AiRequirementRelevance::relevant($req['text'],($cand['title']??'').' '.($cand['summary']??'')))continue;
                 $sc = self::calculateMatchScore($reqTokens, $req['text'], $cand, $matchedCaptions);
                 if ($sc >= 10.0) {
                     $scored[] = [$sc, $cand];
@@ -298,6 +306,7 @@ class AiRequirementCrossMatcher
 
             if ($scored) {
                 $cand = $scored[0][1];
+                // Keep independently relevant captions even when prose is on another page.
                 $titleToShow = $cand['full_title'] ?? $cand['title'];
 
                 $pagesStr = '';
@@ -326,20 +335,8 @@ class AiRequirementCrossMatcher
                             'end_page' => $mc['end_page'],
                             'quote' => $mc['quote'],
                             'quote_verified' => true,
-                            'semantic_support' => 'SUPPORTED',
+                            'semantic_support' => 'NEEDS_VISUAL_REVIEW', 'source_type' => 'CAPTION_REFERENCE',
                         ];
-                    }
-                }
-
-                if (count($cleanRefs) < 2 && count($scored) > 1) {
-                    foreach (array_slice($scored, 1, 2) as [, $otherCand]) {
-                        foreach ($otherCand['source_references'] ?: $otherCand['inherited_references'] ?: [] as $r) {
-                            $k = ($r['page'] ?? '') . ':' . mb_substr($r['quote'] ?? '', 0, 50);
-                            if (!isset($seenRefs[$k])) {
-                                $seenRefs[$k] = true;
-                                $cleanRefs[] = $r;
-                            }
-                        }
                     }
                 }
 
@@ -347,7 +344,7 @@ class AiRequirementCrossMatcher
                 if (!$summarySentence) {
                     if ($matchedCaptions) {
                         $capTitles = implode('; ', array_column(array_slice($matchedCaptions, 0, 2), 'quote'));
-                        $summarySentence = "Mục thiết kế có các sơ đồ tương ứng: {$capTitles}.";
+                        $summarySentence = "Nhận diện tên hình/bảng liên quan: {$capTitles}. Chỉ đối chiếu tên; giảng viên cần kiểm chứng nội dung trong PDF gốc.";
                     } else {
                         $summarySentence = "Nội dung được trình bày tại mục {$titleToShow}.";
                     }
@@ -364,7 +361,7 @@ class AiRequirementCrossMatcher
                     'relation' => 'related_text',
                     'explanation' => $explanation,
                     'source_references' => array_slice($cleanRefs, 0, 12),
-                    'check_status' => 'SUPPORTED',
+                    'check_status' => count(array_filter($cleanRefs,fn($r)=>($r['source_type']??'')!=='CAPTION_REFERENCE')) ? 'PARTIAL' : 'NEEDS_VISUAL_REVIEW',
                     'manual_references' => $matchedCaptions,
                 ];
 
@@ -385,7 +382,7 @@ class AiRequirementCrossMatcher
             } elseif ($matchedCaptions) {
                 $capPages = implode(', ', array_map(fn($c) => "Trang {$c['page']}", $matchedCaptions));
                 $capNames = implode('; ', array_column(array_slice($matchedCaptions, 0, 2), 'quote'));
-                $explanation = "Tìm thấy sơ đồ phù hợp tại {$capPages} ({$capNames}); giảng viên có thể mở trực tiếp trang PDF để xem chi tiết.";
+                $explanation = "Nhận diện tên hình/bảng liên quan tại {$capPages}: {$capNames}. Chưa xác minh nội dung bên trong; giảng viên cần kiểm chứng PDF gốc.";
                 $point = [
                     'title' => $req['text'],
                     'relation' => 'related_text',
@@ -397,10 +394,10 @@ class AiRequirementCrossMatcher
                             'end_page' => $matchedCaptions[0]['end_page'],
                             'quote' => $matchedCaptions[0]['quote'],
                             'quote_verified' => true,
-                            'semantic_support' => 'SUPPORTED',
+                            'semantic_support' => 'NEEDS_VISUAL_REVIEW', 'source_type' => 'CAPTION_REFERENCE',
                         ]
                     ],
-                    'check_status' => 'SUPPORTED',
+                    'check_status' => 'NEEDS_VISUAL_REVIEW',
                     'manual_references' => $matchedCaptions,
                 ];
                 $resultTeacher[] = [

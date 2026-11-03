@@ -115,5 +115,21 @@ class AiTeacherReportUiTest extends TestCase
         $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
         $this->assertCount(1,$xp->query('//*[@data-summary-group="PARENT"]//*[@data-lab-source-references]'));
     }
+    public function test_caption_sources_render_once_and_keep_every_relevant_diagram(): void
+    {
+        $a=['source_id'=>'A','page'=>85,'quote'=>'Hình 4.7 Sơ đồ tuần tự theo dõi tiến độ'];
+        $b=['source_id'=>'B','page'=>86,'quote'=>'Hình 4.8 Sơ đồ tuần tự quản lý hồ sơ bảo vệ'];
+        $point=['relation'=>'related_text','check_status'=>'NEEDS_VISUAL_REVIEW','explanation'=>'Có hai tên sơ đồ liên quan.',
+            'source_references'=>[$a],'manual_references'=>[$a,$b,$b]];
+        $html=$this->renderCard(['requirements_review'=>['mode'=>'verified_v2','status'=>'completed'],
+            'teacher_requirements'=>[['requirement_id'=>'R4','text'=>'4. Theo dõi tiến độ và hồ sơ bảo vệ.','report_points'=>[$point]]]]);
+        $dom=new \DOMDocument;@$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);$xp=new \DOMXPath($dom);
+        $prefix='//*[@data-requirement-id="R4"]';
+        $this->assertCount(2,$xp->query($prefix.'//*[@data-requirement-caption]'));
+        foreach([85,86] as $page)$this->assertCount(1,$xp->query($prefix.'//*[@data-citation-page="'.$page.'"]'));
+        $this->assertCount(1,$xp->query($prefix.'//*[@data-lab-source-references]'));
+        $this->assertCount(2,$xp->query($prefix.'//*[@data-lab-source-references]//*[@data-requirement-caption]'));
+        $this->assertStringContainsString('quản lý hồ sơ bảo vệ',$html);
+    }
 }
 

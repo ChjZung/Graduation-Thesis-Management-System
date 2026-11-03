@@ -546,6 +546,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(RolesAndAccountsSeeder::class);
-        $this->call(TestNhomBaoCaoSeeder::class);
+        // Demo SQL must be invoked explicitly against an isolated test database.
     }
 }

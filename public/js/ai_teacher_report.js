@@ -15,13 +15,14 @@
  function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(key==='work')key='chapters';if(['chapters','requirements'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
  function clock(e){if(e.finished!=null)return e.finished;return Math.max(0,Math.floor((Date.now()-(e.anchor||Date.now()))/1000));}
  function stamp(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
- function title(e){if(e.state?.status==='partial'&&e.state?.summary_status==='completed')return 'Tóm tắt đã hoàn thành';if(e.network)return 'Đang kiểm tra kết nối';return {queued:'Đang chờ phân tích',running:'Đang phân tích báo cáo',waiting:'Đang tiếp tục xử lý',completed:'Đã có kết quả xử lý',partial:'Kết quả xử lý một phần',failed:'Không thể hoàn tất phân tích',cancelled:'Đã dừng phân tích'}[e.state?.status]||'Đang tiếp nhận yêu cầu';}
+ function title(e){if(e.state?.status==='partial'&&e.state?.errors?.some(x=>x.code==='budget_exhausted'))return 'Lượt phân tích mới đã dừng';if(e.state?.status==='partial'&&e.state?.summary_status==='completed')return 'Tóm tắt đã hoàn thành';if(e.network)return 'Đang kiểm tra kết nối';return {queued:'Đang chờ phân tích',running:'Đang phân tích báo cáo',waiting:'Đang tiếp tục xử lý',completed:'Đã có kết quả xử lý',partial:'Kết quả xử lý một phần',failed:'Không thể hoàn tất phân tích',cancelled:'Đã dừng phân tích'}[e.state?.status]||'Đang tiếp nhận yêu cầu';}
  function description(e){
   if(e.network)return 'Chưa cập nhật được trạng thái. Hệ thống sẽ kiểm tra lại; báo cáo và kết quả đã lưu được giữ.';
   if(e.denied)return 'Phiên đăng nhập đã thay đổi hoặc bạn không có quyền xem kết quả. Vui lòng đăng nhập lại.';
   const s=e.state?.status,errs=e.state?.errors||[];
   if(s==='cancelled')return e.state?.message||'Đã dừng tiến trình phân tích. Bạn có thể bấm Phân tích lại bất cứ lúc nào.';
   if(s==='completed')return e.reused?'Đang dùng lại kết quả đã lưu cho báo cáo và yêu cầu hiện tại.':'Kết quả phân tích đã được lưu. Bạn có thể xem nội dung bên dưới.';
+  if(s==='partial'&&errs.some(x=>x.code==='budget_exhausted'))return 'Lượt phân tích mới đã dừng ở giới hạn số lần tiếp tục. Kết quả đã lưu vẫn được giữ; chọn Tiếp tục từ tiến độ đã lưu để xử lý phần còn lại.';
   if(e.state?.worker_running===false)return 'Hệ thống đang chờ tiến trình phân tích hoạt động trở lại. Không cần nộp lại báo cáo.';
   if(s==='partial'&&e.state?.summary_status==='completed')return 'Bạn có thể xem bản tóm tắt và các dẫn chứng đã lưu bên dưới.';
   if(s==='partial'||s==='failed')return 'Một số nội dung chưa được xử lý xong. Kết quả hợp lệ đã được giữ. Bạn có thể thử lại hoặc liên hệ quản trị viên.';
@@ -47,7 +48,7 @@
 
     b.querySelector('[data-processing-message]').textContent=description(e);
     b.querySelector('[data-processing-step]').textContent=active(e.state?.status)?detail(e)+' Thời gian đã chờ: '+stamp(clock(e)):'';
-    const open=b.querySelector('[data-open-ai-progress]');if(open)open.hidden=!active(e.state?.status)&&!e.network;
+    const open=b.querySelector('[data-open-ai-progress]');if(open){const stopped=['partial','failed'].includes(e.state?.status);open.hidden=!active(e.state?.status)&&!e.network&&!stopped;open.textContent=stopped?'Xem trạng thái / Tiếp tục':'Xem tiến độ';}
     const result=b.querySelector('[data-ai-refresh-result]');if(result)result.hidden=e.state?.status!=='completed'||e.loaded;
    });
   }
@@ -60,10 +61,11 @@
   node.querySelector('[data-progress-timing]').hidden=done&&!!e.reused;
   node.querySelector('[data-progress-note]').textContent=done ? (e.reused?'Báo cáo và yêu cầu không thay đổi nên không cần gọi AI lại.':'Bạn có thể xem kết quả hoặc đóng cửa sổ này; kết quả đã được lưu.') : (cancelled ? 'Đã dừng phân tích. Bạn có thể bấm Thử lại để phân tích mới.' : 'Đóng cửa sổ không làm mất kết quả đã lưu. Nếu đang phân tích, tác vụ vẫn tiếp tục.');node.querySelector('[data-progress-view]').hidden=!done;
   const cancelBtn=node.querySelector('[data-progress-cancel]');if(cancelBtn)cancelBtn.hidden=!active(e.state?.status)&&!e.submitting;
-  node.querySelector('[data-progress-retry]').hidden=!failed||!!e.denied;
+  const retry=node.querySelector('[data-progress-retry]');retry.hidden=!failed||!!e.denied;
+  retry.textContent=cancelled?'Phân tích lại':'Tiếp tục từ tiến độ đã lưu';
   const bar=node.querySelector('.progress');bar.hidden=failed||done;bar.setAttribute('aria-valuetext',done?'Hoàn tất xử lý':'Đang xử lý, chưa xác định phần trăm tổng thể');
   if(done){bar.setAttribute('aria-valuenow','100');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');}else bar.removeAttribute('aria-valuenow');
-  node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done);
+  node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done&&!failed);
  }
  function open(e){current=e;const node=modalNode();if(!node)return;if(node.parentElement!==document.body)document.body.appendChild(node);render(e);if(window.bootstrap?.Modal)bootstrap.Modal.getOrCreateInstance(node).show();}
  function accept(e,data){e.state=data;e.network=false;if(!e.reused&&data.queued_at&&data.server_time){e.anchor=Date.now()-Math.max(0,data.server_time-data.queued_at)*1000;}
@@ -129,10 +131,10 @@
     if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);}}
    render(e);
   });}
- async function submit(form){const card=form.closest('.ai-teacher-report'),b=card.querySelector('[data-ai-processing-url]');if(!b)return;
+ async function submit(form,resume=false){const card=form.closest('.ai-teacher-report'),b=card.querySelector('[data-ai-processing-url]');if(!b)return;
   const e=jobs.get(b.dataset.aiProcessingUrl);if(!e||e.submitting||active(e.state?.status))return;
   e.submitting=true;e.loaded=false;e.reused=false;e.finished=null;e.anchor=Date.now();e.state={status:'submitting'};render(e);
-  try{const response=await fetch(form.action,{method:'POST',body:new FormData(form),headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
+  try{const body=new FormData(form);if(resume)body.set('fresh','0');const response=await fetch(form.action,{method:'POST',body,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
    if(!response.ok||response.redirected){if([401,403,419].includes(response.status))e.denied=true;throw Error('submit');}
    const data=await response.json();e.reused=!!data.reused;accept(e,data.state);if(active(e.state.status))poll(e);else{e.loaded=true;await refresh(e);}
   }catch{e.state={status:'partial'};e.network=false;render(e);}finally{e.submitting=false;render(e);}
@@ -206,7 +208,7 @@
   if(event.target.closest('[data-open-ai-progress]')&&e)open(e);
   if(event.target.closest('[data-ai-refresh-result]')&&e){refresh(e);}
   if(event.target.closest('[data-progress-view]')&&current){const entry=current;bootstrap.Modal.getOrCreateInstance(modalNode()).hide();refresh(entry).then(()=>{const c=cards(entry).find(x=>!x.closest('dialog'));if(c){c.querySelector('.ai-details').hidden=false;c.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}});}
-  if(event.target.closest('[data-progress-retry]')&&current){const f=cards(current).find(c=>!c.closest('dialog'))?.querySelector('[data-teacher-analyze-form]');if(f)submit(f);}
+  if(event.target.closest('[data-progress-retry]')&&current){const f=cards(current).find(c=>!c.closest('dialog'))?.querySelector('[data-teacher-analyze-form]');if(f)submit(f,current.state?.status!=='cancelled');}
  });
  setInterval(()=>{for(const e of jobs.values())if(active(e.state?.status)||e.submitting)render(e);},1000);
  modalNode()?.addEventListener('hidden.bs.modal',()=>{if(current&&active(current.state?.status))try{sessionStorage.setItem('huit-ai-dismissed:'+current.url+':'+current.state.queued_at,'1');}catch{}});

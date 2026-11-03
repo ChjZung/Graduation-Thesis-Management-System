@@ -9,6 +9,9 @@ class TestNhomBaoCaoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (!app()->environment('testing') || !config('database.allow_destructive_demo_seed', false)) {
+            throw new \RuntimeException('Demo seed disabled: use an isolated testing database with explicit opt-in.');
+        }
         $path = database_path('seed_data_test_nhom_baocao.sql');
         if (!file_exists($path)) {
             if (isset($this->command)) {

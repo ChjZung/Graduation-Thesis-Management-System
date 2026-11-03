@@ -9,6 +9,9 @@
     $sourceChanged = $pb instanceof \App\Models\KhoiBaoCaoTienDo
         && !app(\App\Services\AiReportProcessingService::class)->sourceMatches($pb, $aiData);
     if ($sourceChanged) $aiData = ['_processing'=>$aiData['_processing'] ?? []];
+    elseif ($pb instanceof \App\Models\KhoiBaoCaoTienDo && !empty($aiData['chapters'])) {
+        $aiData = app(\App\Services\AiReportProcessingService::class)->payload($pb);
+    }
     $structuralSummary = (int) ($aiData['schema_version'] ?? 0) >= 6 && is_array($aiData['chapters'] ?? null);
     $overallSummary = $aiData['overall_summary'] ?? $aiData['tom_tat'] ?? ($pb->TomTatAI ?? 'Chưa có nội dung tóm tắt.');
     $documentContent = $aiData['document_content'] ?? [];
