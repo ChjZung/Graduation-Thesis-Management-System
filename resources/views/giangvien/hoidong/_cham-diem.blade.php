@@ -1940,18 +1940,15 @@ input[type=number],
                                 <div class="card-body p-0 bg-white tab-content" style="min-height: 380px; max-height: 520px; overflow-y: auto;">
                                     {{-- PANE 1: ĐỀ CƯƠNG ĐỀ TÀI ĐÃ DUYỆT (CHẾ ĐỘ XEM ĐỐI CHIẾU CHO THƯ KÝ) --}}
                                     <div class="tab-pane fade p-3" id="pane-decuong" role="tabpanel" aria-labelledby="tab-decuong-btn">
-                                        {{-- Thanh tác vụ nhanh đề cương --}}
+                                        {{-- Thanh tác vụ đề cương --}}
                                         <div class="d-flex align-items-center justify-content-between p-2 mb-3 rounded-2 bg-primary-subtle border border-primary-subtle flex-wrap gap-2">
                                             <div class="small fw-bold text-primary">
-                                                <i class="fa-solid fa-circle-check text-success me-1"></i> Đề Cương Đã Phê Duyệt
+                                                <i class="fa-solid fa-circle-check text-success me-1"></i> Đề Cương Đã Phê Duyệt (Đối chiếu)
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap">
-                                                <button type="button" class="btn btn-xs btn-primary fw-bold px-2 py-1 shadow-sm" onclick="applyOutlineAllToTextarea()" title="Nạp tự động các phân hệ chức năng từ đề cương vào ô soạn thảo">
-                                                    <i class="fa-solid fa-bolt me-1"></i> Nạp vào ô soạn thảo
-                                                </button>
                                                 @if(!empty($dtFileUrl))
-                                                <button type="button" class="btn btn-xs btn-outline-danger fw-semibold px-2 py-1 bg-white" onclick="quickPreviewOutline('{{ $dtFileUrl }}', '{{ $dtFileName }}', '{{ addslashes($activeDeTai->TenDeTai ?? '') }}')" title="Xem trực tiếp tệp PDF gốc">
-                                                    <i class="fa-solid fa-file-pdf me-1"></i> File PDF gốc
+                                                <button type="button" class="btn btn-xs btn-outline-danger fw-semibold px-2 py-1 bg-white shadow-xs" onclick="quickPreviewOutline('{{ $dtFileUrl }}', '{{ $dtFileName }}', '{{ addslashes($activeDeTai->TenDeTai ?? '') }}')" title="Xem trực tiếp tệp PDF gốc">
+                                                    <i class="fa-solid fa-file-pdf me-1"></i> Xem File PDF gốc
                                                 </button>
                                                 @endif
                                             </div>
@@ -1970,13 +1967,10 @@ input[type=number],
                                         {{-- 1. Mục tiêu (nếu có) --}}
                                         @if(!empty($dtMucTieuPlain))
                                         <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="mb-1">
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-bullseye text-danger me-1"></i> 1. Mục tiêu đề tài:
                                                 </label>
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtMucTieuPlain) }}">
-                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
-                                                </button>
                                             </div>
                                             <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtMucTieuCleanHtml !!}</div>
                                         </div>
@@ -1984,30 +1978,20 @@ input[type=number],
 
                                         {{-- 2. Mô tả & Phân hệ chức năng --}}
                                         <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="mb-1">
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-list-check text-primary me-1"></i> 2. Mô tả &amp; Phân hệ chức năng:
                                                 </label>
-                                                @if(!empty($dtMoTaPlain))
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtMoTaPlain) }}">
-                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
-                                                </button>
-                                                @endif
                                             </div>
                                             <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" id="deCuongMoTaBox" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtMoTaCleanHtml ?: '<span class="text-muted">Chưa cập nhật mô tả chi tiết trong đề cương.</span>' !!}</div>
                                         </div>
 
                                         {{-- 3. Yêu cầu bài toán & Kỹ thuật --}}
                                         <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="mb-1">
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-clipboard-check text-success me-1"></i> 3. Yêu cầu bài toán &amp; Kỹ thuật:
                                                 </label>
-                                                @if(!empty($dtYeuCauPlain))
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtYeuCauPlain) }}">
-                                                    <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
-                                                </button>
-                                                @endif
                                             </div>
                                             <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" id="deCuongYeuCauBox" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtYeuCauCleanHtml ?: '<span class="text-muted">Thực hiện đầy đủ theo yêu cầu và hướng dẫn của GVHD.</span>' !!}</div>
                                         </div>
