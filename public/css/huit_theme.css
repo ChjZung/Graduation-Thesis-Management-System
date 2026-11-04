@@ -34,14 +34,17 @@
     --transition:       all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* ── Z-Index Scale Thống Nhất Toàn Hệ Thống ── */
-    --z-content:        1;
-    --z-sticky-sub:     1010;
-    --z-time-machine:   1020;
-    --z-header:         1030;
-    --z-dropdown:       1060;
-    --z-backdrop:       1070;
-    --z-modal:          1080;
-    --z-toast:          1090;
+    --z-content:          1;
+    --z-sticky-sub:       1010;
+    --z-time-machine:     1020;
+    --z-header:           1030;
+    --z-dropdown:         1040;
+    --z-modal-backdrop:   1050;
+    --z-modal:            1055;
+    --z-modal-stacked:    1070;
+    --z-viewer-backdrop:  1085;
+    --z-viewer-modal:     1090;
+    --z-toast:            1100;
 }
 
 /* ── Reset & Base ── */

@@ -1763,11 +1763,24 @@ input[type=number],
 {{-- MODAL CÀI ĐẶT CHỨC NĂNG THEO YÊU CẦU BÀI TOÁN (DÀNH CHO THƯ KÝ HỘI ĐỒNG - YÊU CẦU 3.1 & 3.3) --}}
 @if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
 @php
-    $dtMoTa = $activeDeTai->MoTa ?? ($activeDeTai->NoiDung ?? '');
-    $dtYeuCau = $activeDeTai->YeuCau ?? '';
-    $dtMucTieu = $activeDeTai->MucTieu ?? ($activeDeTai->ban_nhap_data['muc_tieu'] ?? '');
-    $dtPhamVi = $activeDeTai->PhamVi ?? ($activeDeTai->ban_nhap_data['pham_vi'] ?? '');
-    $dtSanPham = $activeDeTai->SanPhamDuKien ?? ($activeDeTai->ban_nhap_data['san_pham'] ?? '');
+    $dtMoTaRaw = $activeDeTai->MoTa ?? ($activeDeTai->NoiDung ?? '');
+    $dtYeuCauRaw = $activeDeTai->YeuCau ?? '';
+    $dtMucTieuRaw = $activeDeTai->MucTieu ?? ($activeDeTai->ban_nhap_data['muc_tieu'] ?? '');
+    $dtPhamViRaw = $activeDeTai->PhamVi ?? ($activeDeTai->ban_nhap_data['pham_vi'] ?? '');
+    $dtSanPhamRaw = $activeDeTai->SanPhamDuKien ?? ($activeDeTai->ban_nhap_data['san_pham'] ?? '');
+
+    $dtMoTaCleanHtml = \App\Helpers\HtmlHelper::renderRichText($dtMoTaRaw);
+    $dtYeuCauCleanHtml = \App\Helpers\HtmlHelper::renderRichText($dtYeuCauRaw);
+    $dtMucTieuCleanHtml = \App\Helpers\HtmlHelper::renderRichText($dtMucTieuRaw);
+    $dtPhamViCleanHtml = \App\Helpers\HtmlHelper::renderRichText($dtPhamViRaw);
+    $dtSanPhamCleanHtml = \App\Helpers\HtmlHelper::renderRichText($dtSanPhamRaw);
+
+    $dtMoTaPlain = \App\Helpers\HtmlHelper::toPlainText($dtMoTaRaw);
+    $dtYeuCauPlain = \App\Helpers\HtmlHelper::toPlainText($dtYeuCauRaw);
+    $dtMucTieuPlain = \App\Helpers\HtmlHelper::toPlainText($dtMucTieuRaw);
+    $dtPhamViPlain = \App\Helpers\HtmlHelper::toPlainText($dtPhamViRaw);
+    $dtSanPhamPlain = \App\Helpers\HtmlHelper::toPlainText($dtSanPhamRaw);
+
     $dtFile = $activeDeTai->FileDeCuong ?? '';
     $dtFileUrl = '';
     $dtFileName = '';
@@ -1786,12 +1799,12 @@ input[type=number],
 
             {{-- Kho dữ liệu đề cương ẩn để nạp nhanh --}}
             <div id="outlineDataStore" class="d-none"
-                 data-mo-ta="{{ e($dtMoTa) }}"
-                 data-noi-dung="{{ e($dtMoTa) }}"
-                 data-yeu-cau="{{ e($dtYeuCau) }}"
-                 data-muc-tieu="{{ e($dtMucTieu) }}"
-                 data-pham-vi="{{ e($dtPhamVi) }}"
-                 data-san-pham="{{ e($dtSanPham) }}"
+                 data-mo-ta="{{ $dtMoTaPlain }}"
+                 data-noi-dung="{{ $dtMoTaPlain }}"
+                 data-yeu-cau="{{ $dtYeuCauPlain }}"
+                 data-muc-tieu="{{ $dtMucTieuPlain }}"
+                 data-pham-vi="{{ $dtPhamViPlain }}"
+                 data-san-pham="{{ $dtSanPhamPlain }}"
                  data-file-de-cuong="{{ e($dtFile) }}"
                  data-file-url="{{ e($dtFileUrl) }}"
                  data-file-name="{{ e($dtFileName) }}"
@@ -1858,18 +1871,15 @@ input[type=number],
                     <div class="row g-3">
                         {{-- Cột Trái: Textarea duy nhất --}}
                         <div class="col-lg-6 col-12">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                                <div class="d-flex align-items-center gap-2">
                                     <label for="textareaChucNang" class="form-label small fw-bold text-dark mb-0">
                                         Soạn thảo nội dung chức năng &amp; yêu cầu:
                                     </label>
-                                    <a href="javascript:void(0)" class="text-danger small ms-2 text-decoration-none fw-semibold" onclick="clearCriteria()">
+                                    <a href="javascript:void(0)" class="text-danger small text-decoration-none fw-semibold" onclick="clearCriteria()">
                                         Xóa hết
                                     </a>
                                 </div>
-                                <span class="text-muted small" style="font-size: 0.72rem;">
-                                    <kbd>Tab</kbd> để thụt dòng làm yêu cầu con &bull; <kbd>Shift+Tab</kbd> bỏ thụt
-                                </span>
                             </div>
 
                             @php
@@ -1882,7 +1892,12 @@ input[type=number],
                                       style="min-height: 380px; font-size: 0.85rem; line-height: 1.6;"
                                       placeholder="{{ $defaultPlaceholder }}">{{ $customChucNang ?? '' }}</textarea>
 
-                            <div id="textareaInlineAlert" class="small text-danger mt-1 d-none"></div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
+                                <div id="textareaInlineAlert" class="small text-danger d-none"></div>
+                                <span class="text-muted small ms-auto" style="font-size: 0.72rem;">
+                                    <kbd>Tab</kbd> để thụt dòng làm yêu cầu con &bull; <kbd>Shift+Tab</kbd> bỏ thụt
+                                </span>
+                            </div>
                         </div>
 
                         {{-- Cột Phải: Khung 2 Tab (Đề Cương Đề Tài & Xem Trước Cấu Trúc Khung Chấm) --}}
@@ -1953,17 +1968,17 @@ input[type=number],
                                         </div>
 
                                         {{-- 1. Mục tiêu (nếu có) --}}
-                                        @if(!empty($dtMucTieu))
+                                        @if(!empty($dtMucTieuPlain))
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-bullseye text-danger me-1"></i> 1. Mục tiêu đề tài:
                                                 </label>
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtMucTieu) }}`)">
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtMucTieuPlain) }}">
                                                     <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
                                                 </button>
                                             </div>
-                                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtMucTieu }}</div>
+                                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtMucTieuCleanHtml !!}</div>
                                         </div>
                                         @endif
 
@@ -1973,13 +1988,13 @@ input[type=number],
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-list-check text-primary me-1"></i> 2. Mô tả &amp; Phân hệ chức năng:
                                                 </label>
-                                                @if(!empty($dtMoTa))
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtMoTa) }}`)">
+                                                @if(!empty($dtMoTaPlain))
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtMoTaPlain) }}">
                                                     <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
                                                 </button>
                                                 @endif
                                             </div>
-                                            <div class="p-2 bg-light rounded border small text-dark" id="deCuongMoTaBox" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtMoTa ?: 'Chưa cập nhật mô tả chi tiết trong đề cương.' }}</div>
+                                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" id="deCuongMoTaBox" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtMoTaCleanHtml ?: '<span class="text-muted">Chưa cập nhật mô tả chi tiết trong đề cương.</span>' !!}</div>
                                         </div>
 
                                         {{-- 3. Yêu cầu bài toán & Kỹ thuật --}}
@@ -1988,28 +2003,28 @@ input[type=number],
                                                 <label class="form-label small fw-bold text-secondary mb-0">
                                                     <i class="fa-solid fa-clipboard-check text-success me-1"></i> 3. Yêu cầu bài toán &amp; Kỹ thuật:
                                                 </label>
-                                                @if(!empty($dtYeuCau))
-                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small" onclick="insertSnippetToTextarea(`{{ addslashes($dtYeuCau) }}`)">
+                                                @if(!empty($dtYeuCauPlain))
+                                                <button type="button" class="btn btn-link btn-xs text-decoration-none p-0 text-primary small btn-insert-snippet" data-snippet="{{ e($dtYeuCauPlain) }}">
                                                     <i class="fa-solid fa-plus me-1"></i> Chèn vào ô nhập
                                                 </button>
                                                 @endif
                                             </div>
-                                            <div class="p-2 bg-light rounded border small text-dark" id="deCuongYeuCauBox" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtYeuCau ?: 'Thực hiện đầy đủ theo yêu cầu và hướng dẫn của GVHD.' }}</div>
+                                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" id="deCuongYeuCauBox" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtYeuCauCleanHtml ?: '<span class="text-muted">Thực hiện đầy đủ theo yêu cầu và hướng dẫn của GVHD.</span>' !!}</div>
                                         </div>
 
                                         {{-- 4. Phạm vi & Sản phẩm dự kiến (nếu có) --}}
-                                        @if(!empty($dtPhamVi) || !empty($dtSanPham))
+                                        @if(!empty($dtPhamViPlain) || !empty($dtSanPhamPlain))
                                         <div class="mb-3">
-                                            @if(!empty($dtPhamVi))
+                                            @if(!empty($dtPhamViPlain))
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold text-secondary mb-1"><i class="fa-solid fa-compass me-1 text-info"></i> Phạm vi nghiên cứu:</label>
-                                                <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtPhamVi }}</div>
+                                                <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtPhamViCleanHtml !!}</div>
                                             </div>
                                             @endif
-                                            @if(!empty($dtSanPham))
+                                            @if(!empty($dtSanPhamPlain))
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold text-secondary mb-1"><i class="fa-solid fa-box-archive me-1 text-warning"></i> Sản phẩm dự kiến:</label>
-                                                <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; font-size: 0.82rem;">{{ $dtSanPham }}</div>
+                                                <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="font-size: 0.82rem; line-height: 1.5;">{!! $dtSanPhamCleanHtml !!}</div>
                                             </div>
                                             @endif
                                         </div>
@@ -2979,10 +2994,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Chèn đoạn văn bản vào vị trí con trỏ của ô soạn thảo
+    // Chèn đoạn văn bản vào vị trí con trỏ của ô soạn thảo (luôn dùng văn bản thuần, không dính thẻ HTML hay &nbsp;)
     window.insertSnippetToTextarea = function(text) {
         if (!textareaChucNang || !text) return;
-        const cleanText = text.trim();
+        let cleanText = String(text);
+        if (/<[a-z][\s\S]*>/i.test(cleanText) || /&([a-zA-Z0-9#]+);/.test(cleanText)) {
+            const temp = document.createElement('div');
+            temp.innerHTML = cleanText;
+            temp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+            temp.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6').forEach(b => b.appendChild(document.createTextNode('\n')));
+            cleanText = temp.textContent || temp.innerText || '';
+        }
+        cleanText = cleanText.replace(/\u00a0/g, ' ').replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        if (!cleanText) return;
+
         const start = textareaChucNang.selectionStart;
         const end = textareaChucNang.selectionEnd;
         const currentVal = textareaChucNang.value;
@@ -2993,6 +3018,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateLivePreview();
         autoSaveDraft();
     };
+
+    // Đăng ký event delegation cho các nút chèn đoạn văn bản
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-insert-snippet');
+        if (btn) {
+            e.preventDefault();
+            const snippet = btn.getAttribute('data-snippet') || '';
+            window.insertSnippetToTextarea(snippet);
+        }
+    });
 
     // Nạp tự động các phân hệ chức năng từ Đề Cương vào ô soạn thảo
     window.applyOutlineAllToTextarea = function() {

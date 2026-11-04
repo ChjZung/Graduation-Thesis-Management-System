@@ -240,5 +240,11 @@ class SecretaryFunctionalCriteriaModalTest extends TestCase
         $this->assertStringContainsString('previewSummaryText', $content);
         $this->assertStringContainsString('footerDraftNotice', $content);
         $this->assertStringContainsString('btnSubmitChucNang', $content);
+
+        // 5. Kiểm tra layout mới: Hàng tiêu đề textarea gọn gàng, gợi ý thụt dòng nằm dưới ô nhập
+        $this->assertStringContainsString('btn-insert-snippet', $content);
+        $this->assertStringContainsString('quickPreviewOutline', $content);
+        $this->assertStringContainsString('modalQuickPreviewDeCuong', $content);
+        $this->assertStringContainsString('viewer-backdrop', $content);
     }
 }

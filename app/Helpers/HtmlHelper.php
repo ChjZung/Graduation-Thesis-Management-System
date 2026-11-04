@@ -89,7 +89,7 @@ class HtmlHelper
 
     /**
      * Render an toàn nội dung Rich Text:
-     * - Tự động giải mã nếu nội dung bị mã hóa thực thể HTML (&lt;p&gt;...).
+     * - Tự động giải mã lặp tối đa 2 lần cho dữ liệu bị mã hóa kép (&amp;amp;, &lt;p&gt;...).
      * - Làm sạch XSS triệt để, giữ lại các thẻ an toàn.
      * - Tự động chuyển đổi xuống dòng cho văn bản thuần nếu không có thẻ HTML.
      */
@@ -101,9 +101,17 @@ class HtmlHelper
 
         $raw = trim($html);
 
-        // Trường hợp nội dung bị mã hóa entity (ví dụ: &lt;p&gt;...)
-        if (preg_match('/&lt;[a-z\/]/i', $raw) || (stripos($raw, '&lt;') !== false && stripos($raw, '<') === false)) {
-            $raw = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Giải mã lặp tối đa 2 lần cho các chuỗi bị mã hóa thực thể HTML hoặc kép (ví dụ: &amp;amp;, &amp;nbsp;, &lt;p&gt;)
+        for ($i = 0; $i < 2; $i++) {
+            if (preg_match('/&([a-zA-Z0-9#]+|amp;[a-zA-Z0-9#]+);/', $raw) || stripos($raw, '&lt;') !== false) {
+                $decoded = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if ($decoded === $raw) {
+                    break;
+                }
+                $raw = $decoded;
+            } else {
+                break;
+            }
         }
 
         return self::clean($raw);
@@ -111,8 +119,9 @@ class HtmlHelper
 
     /**
      * Chuyển đổi mã HTML/Rich Text thành văn bản thuần hoàn chỉnh (dùng cho textarea, export, không giới hạn độ dài):
+     * - Giải mã lặp tối đa 2 lần cho chuỗi bị mã hóa kép.
      * - Giữ nguyên các ký tự ngắt dòng \n từ <p>, <div>, <br>, <li>, v.v.
-     * - Loại bỏ hoàn toàn các thẻ HTML và giải mã các thực thể HTML.
+     * - Loại bỏ hoàn toàn các thẻ HTML và giải mã các thực thể HTML, chuyển &nbsp; thành khoảng trắng.
      * - KHÔNG bị cắt ngắn ký tự.
      */
     public static function toPlainText(?string $html): string
@@ -123,9 +132,17 @@ class HtmlHelper
 
         $content = trim($html);
 
-        // Nếu nội dung bị mã hóa entity, giải mã trước
-        if (preg_match('/&lt;[a-z\/]/i', $content) || (stripos($content, '&lt;') !== false && stripos($content, '<') === false)) {
-            $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Giải mã lặp tối đa 2 lần cho các chuỗi bị mã hóa thực thể HTML hoặc kép
+        for ($i = 0; $i < 2; $i++) {
+            if (preg_match('/&([a-zA-Z0-9#]+|amp;[a-zA-Z0-9#]+);/', $content) || stripos($content, '&lt;') !== false) {
+                $decoded = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if ($decoded === $content) {
+                    break;
+                }
+                $content = $decoded;
+            } else {
+                break;
+            }
         }
 
         // Chuyển đổi ngắt dòng và thẻ khối thành ký tự xuống dòng \n
@@ -135,7 +152,7 @@ class HtmlHelper
         // Bỏ tất cả các thẻ còn lại
         $content = strip_tags($content);
 
-        // Giải mã các entity còn lại
+        // Giải mã các entity còn lại lần nữa nếu có
         $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $content = str_replace(["\xc2\xa0", '&nbsp;'], ' ', $content);
 

@@ -6,32 +6,32 @@
 
 @once('modal_preview_decuong')
 <div class="modal fade" id="modalQuickPreviewDeCuong" tabindex="-1" aria-labelledby="modalQuickPreviewLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 90vh; max-height: 90vh; margin: auto;">
-        <div class="modal-content border-0 shadow-lg" style="height: 90vh; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="modal-dialog modal-xl modal-dialog-centered quick-preview-dialog">
+        <div class="modal-content border-0 shadow-lg quick-preview-content">
             
             <!-- Modal Header -->
-            <div class="modal-header py-3 px-4 text-white" style="background-color: #00529b; flex-shrink: 0;">
+            <div class="modal-header py-2 px-3 px-md-4 text-white quick-preview-header" style="background-color: #00529b;">
                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
-                    <span class="badge bg-white text-primary fw-bold px-2 py-1" id="quickPreviewTypeBadge" style="font-size: 0.8rem;">
+                    <span class="badge bg-white text-primary fw-bold px-2 py-1 flex-shrink-0" id="quickPreviewTypeBadge" style="font-size: 0.8rem;">
                         <i class="fa-solid fa-file me-2"></i> ĐỀ CƯƠNG
                     </span>
-                    <h6 class="modal-title text-truncate fw-bold mb-0 text-white" id="modalQuickPreviewLabel" style="font-size: 1rem;" title="Xem nhanh đề cương">
+                    <h6 class="modal-title text-truncate fw-bold mb-0 text-white" id="modalQuickPreviewLabel" style="font-size: 0.95rem;" title="Xem nhanh đề cương">
                         Xem Nhanh Đề Cương Chi Tiết
                     </h6>
                 </div>
                 <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
                     <a href="#" id="quickPreviewOpenTabBtn" target="_blank" class="btn btn-sm btn-outline-light py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Mở trong tab mới của trình duyệt">
-                        <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> <span class="d-none d-sm-inline">Mở tab mới</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square me-1 me-sm-2"></i> <span class="d-none d-sm-inline">Mở tab mới</span>
                     </a>
                     <a href="#" id="quickPreviewDownloadBtn" download class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-3 rounded-pill d-inline-flex align-items-center" title="Tải file về máy tính">
-                        <i class="fa-solid fa-download me-2"></i> <span class="d-none d-sm-inline">Tải về</span>
+                        <i class="fa-solid fa-download me-1 me-sm-2"></i> <span class="d-none d-sm-inline">Tải về</span>
                     </a>
                     <button type="button" class="btn-close btn-close-white ms-1" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-0 position-relative bg-light" style="flex: 1 1 auto; overflow: hidden; min-height: 0;">
+            <div class="modal-body p-0 position-relative bg-light quick-preview-body">
                 
                 <!-- Loading State Spinner -->
                 <div id="quickPreviewLoading" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white" style="z-index: 20;">
@@ -91,15 +91,15 @@
                             <!-- Pages will be rendered here as HTML5 canvases -->
                         </div>
                         <!-- Fallback iframe container -->
-                        <div id="pdfIframeFallback" class="w-100 h-100 d-none" style="min-height: 500px;">
-                            <iframe id="quickPreviewIframe" src="" style="width: 100%; height: 100%; min-height: 550px; border: none;"></iframe>
+                        <div id="pdfIframeFallback" class="w-100 h-100 d-none" style="min-height: 100%;">
+                            <iframe id="quickPreviewIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
                         </div>
                     </div>
                 </div>
 
                 <!-- Word (.DOCX) Preview Container -->
                 <div id="quickPreviewDocxContainer" class="w-100 h-100 overflow-auto p-3 p-md-4 d-none" style="background: #525659; position: absolute; top:0; left:0; right:0; bottom:0;">
-                    <div class="mx-auto bg-white shadow-lg p-4 p-md-5 my-2" style="max-width: 900px; min-height: 100%; border-radius: 4px;" id="quickPreviewDocxContent">
+                    <div class="mx-auto bg-white shadow-lg p-4 p-md-5 my-2" style="max-width: 900px; min-height: calc(100% - 1rem); border-radius: 4px;" id="quickPreviewDocxContent">
                     </div>
                 </div>
 
@@ -128,17 +128,84 @@
             </div>
 
             <!-- Modal Footer (Small status line) -->
-            <div class="modal-footer py-1 px-3 bg-white border-top d-flex justify-content-between align-items-center" style="flex-shrink: 0;">
-                <div class="small text-muted" id="quickPreviewFooterInfo">
-                    <i class="fa-regular fa-circle-question me-2 text-primary"></i> Nhấn phím <kbd>ESC</kbd> hoặc nút đóng để quay lại màn hình xét duyệt.
+            <div class="modal-footer py-1 px-3 bg-white border-top d-flex justify-content-between align-items-center quick-preview-footer">
+                <div class="small text-muted" id="quickPreviewFooterInfo" style="font-size: 0.78rem;">
+                    <i class="fa-regular fa-circle-question me-1 text-primary"></i> Nhấn phím <kbd>ESC</kbd> hoặc nút đóng để quay lại màn hình xét duyệt.
                 </div>
-                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+/* ── THANG Z-INDEX THỐNG NHẤT CHO DOCUMENT VIEWER & BACKDROP ── */
+#modalQuickPreviewDeCuong {
+    z-index: var(--z-viewer-modal, 1090) !important;
+}
+.modal-backdrop.viewer-backdrop {
+    z-index: var(--z-viewer-backdrop, 1085) !important;
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    opacity: 0.6 !important;
+}
+
+/* ── BỐ CỤC CHUẨN FLEX COLUMN - LOẠI BỎ PHẦN TRẮNG THỪA ── */
+.quick-preview-dialog {
+    max-width: min(1200px, 95vw) !important;
+    width: 95vw !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    margin: auto !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.quick-preview-content {
+    height: 90vh !important;
+    max-height: 90vh !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
+}
+.quick-preview-header {
+    flex-shrink: 0 !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    z-index: 10 !important;
+}
+.quick-preview-body {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+.quick-preview-footer {
+    flex-shrink: 0 !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    z-index: 10 !important;
+    background-color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+    .quick-preview-dialog {
+        max-width: 98vw !important;
+        width: 98vw !important;
+        height: 94vh !important;
+        max-height: 94vh !important;
+        margin: 3vh auto !important;
+    }
+    .quick-preview-content {
+        height: 94vh !important;
+        max-height: 94vh !important;
+    }
+    #quickPreviewDocxContent {
+        padding: 1rem !important;
+        font-size: 11pt !important;
+    }
+}
+
 /* CSS cho hiển thị văn bản Word DOCX chuẩn tài liệu A4 */
 #quickPreviewDocxContent {
     font-family: "Times New Roman", Times, serif;
@@ -309,6 +376,14 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
         return;
     }
 
+    // 1. Lưu lại element kích hoạt để trả focus sau khi đóng
+    window._lastPreviewTriggerElement = document.activeElement;
+
+    // 2. Portal: Luôn append vào document.body để thoát khỏi mọi stacking context của modal cha
+    if (modalEl.parentElement !== document.body || modalEl !== document.body.lastElementChild) {
+        document.body.appendChild(modalEl);
+    }
+
     const titleEl = document.getElementById('modalQuickPreviewLabel');
     const badgeEl = document.getElementById('quickPreviewTypeBadge');
     const openTabBtn = document.getElementById('quickPreviewOpenTabBtn');
@@ -403,6 +478,16 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+
+    // Đồng bộ class và z-index chuẩn cho backdrop mới nhất của viewer
+    setTimeout(function() {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        if (backdrops.length > 0) {
+            const topBackdrop = backdrops[backdrops.length - 1];
+            topBackdrop.classList.add('viewer-backdrop');
+            topBackdrop.style.zIndex = 'var(--z-viewer-backdrop, 1085)';
+        }
+    }, 15);
 
     if (isPdf) {
         badgeEl.className = 'badge bg-danger text-white fw-bold px-2 py-1';
@@ -529,6 +614,28 @@ function quickPreviewOutline(fileUrl, fileName, topicTitle, options = {}) {
 document.addEventListener('DOMContentLoaded', function() {
     const modalEl = document.getElementById('modalQuickPreviewDeCuong');
     if (modalEl) {
+        // Xử lý click ra vùng ngoài dialog (backdrop) chỉ đóng viewer, chặn sự kiện lan ra ngoài
+        modalEl.addEventListener('click', function(e) {
+            if (e.target === modalEl) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const inst = bootstrap.Modal.getInstance(modalEl);
+                if (inst) inst.hide();
+            }
+        });
+
+        // Bắt phím ESC ở capture phase để chỉ đóng viewer, KHÔNG đóng modal tiêu chí bên dưới
+        window.addEventListener('keydown', function(e) {
+            if ((e.key === 'Escape' || e.keyCode === 27) && modalEl.classList.contains('show')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const inst = bootstrap.Modal.getInstance(modalEl);
+                if (inst) inst.hide();
+            }
+        }, true);
+
         modalEl.addEventListener('hidden.bs.modal', function() {
             const pdfIframe = document.getElementById('quickPreviewIframe');
             if (pdfIframe) pdfIframe.src = '';
@@ -537,12 +644,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const pagesContainer = document.getElementById('pdfPagesContainer');
             if (pagesContainer) pagesContainer.innerHTML = '';
             currentPdfDoc = null;
+
+            // Focus trở lại phần tử trước đó
+            if (window._lastPreviewTriggerElement && typeof window._lastPreviewTriggerElement.focus === 'function') {
+                try {
+                    window._lastPreviewTriggerElement.focus();
+                } catch (_) {}
+            }
+            window._lastPreviewTriggerElement = null;
+
+            // Bộ đếm khóa cuộn trang: giữ modal-open và overflow: hidden nếu còn modal khác đang mở
+            setTimeout(function() {
+                const remainingOpenModals = document.querySelectorAll('.modal.show');
+                if (remainingOpenModals.length > 0) {
+                    document.body.classList.add('modal-open');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                }
+            }, 50);
         });
 
         // Tự động căn chỉnh trang khi modal được mở hoàn toàn
         modalEl.addEventListener('shown.bs.modal', function() {
             if (currentPdfDoc) {
                 renderAllPdfPages(currentPdfDoc, currentPdfScale);
+            }
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 0) {
+                const topBackdrop = backdrops[backdrops.length - 1];
+                topBackdrop.classList.add('viewer-backdrop');
+                topBackdrop.style.zIndex = 'var(--z-viewer-backdrop, 1085)';
             }
         });
     }
