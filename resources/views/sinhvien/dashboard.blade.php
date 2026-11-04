@@ -301,7 +301,89 @@
         .business-step-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
     }
     @media (max-width: 575.98px) {
-        .business-step-grid { grid-template-columns: repeat(2, 1fr); }
+        .welcome-banner {
+            padding: 1.15rem 1rem;
+            border-radius: 0.9rem;
+            margin-bottom: 1.25rem;
+        }
+        .welcome-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.35rem;
+        }
+        .welcome-desc {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-bottom: 0.85rem;
+        }
+        .banner-user-info {
+            font-size: 0.75rem !important;
+            gap: 0.5rem !important;
+        }
+        .banner-actions-wrap {
+            width: 100% !important;
+        }
+        .btn-banner-action, 
+        .btn-banner-primary {
+            flex: 1 1 auto;
+            text-align: center;
+            justify-content: center;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+        .kpi-card-box {
+            padding: 0.75rem 0.65rem;
+            border-radius: 0.85rem;
+            gap: 8px;
+        }
+        .kpi-card-box .kpi-icon {
+            width: 34px;
+            height: 34px;
+            font-size: 0.95rem;
+            border-radius: 0.5rem;
+        }
+        .kpi-label {
+            font-size: 0.65rem;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kpi-value {
+            font-size: 1.15rem;
+            margin-bottom: 0.2rem;
+        }
+        .kpi-card-box .badge {
+            font-size: 0.65rem !important;
+            padding: 0.2rem 0.45rem !important;
+            white-space: nowrap;
+        }
+        .business-step-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
+        }
+        .business-step-col {
+            padding: 0.5rem 0.25rem !important;
+        }
+        .step-circle {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 0.75rem !important;
+            margin-bottom: 4px !important;
+        }
+        .step-name-text {
+            font-size: 0.7rem !important;
+            line-height: 1.2 !important;
+        }
+        .step-status-tag {
+            font-size: 0.625rem !important;
+            padding: 1px 5px !important;
+        }
+        .sv-panel-header {
+            padding: 1rem 1.15rem;
+        }
+        .sv-panel-body {
+            padding: 1rem 1.15rem;
+        }
     }
 </style>
 
@@ -341,16 +423,16 @@
                     Chào mừng bạn quay trở lại, <strong>{{ $sinhVien->HoTen }}</strong>! Theo dõi thông tin khóa luận, cập nhật tiến độ thực hiện, nộp báo cáo và quản lý các công việc cần hoàn thành trong học kỳ.
                 </div>
 
-                <div class="d-flex align-items-center gap-3 text-white-50 flex-wrap" style="font-size: 0.8rem;">
-                    <span><i class="fa-solid fa-id-card me-2 text-white"></i>MSSV: <strong class="text-white">{{ $sinhVien->MaSV }}</strong></span>
-                    <span>&bull;</span>
-                    <span><i class="fa-solid fa-chalkboard-user me-2 text-white"></i>Lớp: <strong class="text-white">{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong></span>
-                    <span>&bull;</span>
-                    <span><i class="fa-solid fa-building-columns me-2 text-white"></i>Khoa: <strong class="text-white">{{ $sinhVien->khoa->TenKhoa ?? 'Công nghệ Thông tin' }}</strong></span>
+                <div class="d-flex align-items-center gap-2 gap-sm-3 text-white-50 flex-wrap banner-user-info" style="font-size: 0.8rem;">
+                    <span><i class="fa-solid fa-id-card me-1.5 text-white"></i>MSSV: <strong class="text-white">{{ $sinhVien->MaSV }}</strong></span>
+                    <span class="d-none d-sm-inline">&bull;</span>
+                    <span><i class="fa-solid fa-chalkboard-user me-1.5 text-white"></i>Lớp: <strong class="text-white">{{ $sinhVien->lop->TenLop ?? 'Chưa phân lớp' }}</strong></span>
+                    <span class="d-none d-sm-inline">&bull;</span>
+                    <span><i class="fa-solid fa-building-columns me-1.5 text-white"></i>Khoa: <strong class="text-white">{{ $sinhVien->khoa->TenKhoa ?? 'Công nghệ Thông tin' }}</strong></span>
                 </div>
             </div>
 
-           <div class="col-12 col-xl-4 text-xl-end d-flex flex-wrap gap-2 justify-content-xl-end">
+           <div class="col-12 col-xl-4 text-xl-end d-flex flex-wrap gap-2 justify-content-xl-end banner-actions-wrap">
     @if($deTai)
         <a href="{{ route('sinhvien.baocao.index') }}" class="btn-banner-primary d-inline-flex align-items-center">
             <i class="fa-solid fa-upload me-2 text-primary"></i>Nộp Báo Cáo
@@ -445,87 +527,87 @@
     </div>
     @endif
 
-    {{-- 3. 5 THẺ CHỈ SỐ KPI --}}
-    <div class="row g-3 mb-4">
+    {{-- 3. 5 THẺ CHỈ SỐ KPI (RESPONSIVE 2 CỘT TRÊN MOBILE) --}}
+    <div class="row g-2 g-md-3 mb-4">
         <!-- 1. Đề tài của tôi -->
-        <div class="col-12 col-sm-6 col-lg-4 col-xl">
+        <div class="col-6 col-sm-6 col-lg-4 col-xl">
             <a href="{{ $kpiDeTai['link'] }}" class="kpi-card-box">
-                <div class="overflow-hidden">
-                    <div class="kpi-label">{{ $kpiDeTai['title'] }}</div>
+                <div class="overflow-hidden min-w-0">
+                    <div class="kpi-label text-truncate">{{ $kpiDeTai['title'] }}</div>
                     <div class="kpi-value text-truncate" title="{{ $deTai?->TenDeTai ?? $kpiDeTai['value'] }}">
                         {{ $kpiDeTai['value'] }}
                     </div>
                     <div>
-                        <span class="badge {{ $kpiDeTai['badge_class'] }} rounded-pill py-1 px-3" style="font-size: 0.7rem;">
+                        <span class="badge {{ $kpiDeTai['badge_class'] }} rounded-pill py-1 px-2.5" style="font-size: 0.7rem;">
                             {{ $kpiDeTai['badge'] }}
                         </span>
                     </div>
                 </div>
-                <div class="kpi-icon"><i class="{{ $kpiDeTai['icon'] }}"></i></div>
+                <div class="kpi-icon ms-1"><i class="{{ $kpiDeTai['icon'] }}"></i></div>
             </a>
         </div>
 
         <!-- 2. Tiến độ khóa luận -->
-        <div class="col-12 col-sm-6 col-lg-4 col-xl">
+        <div class="col-6 col-sm-6 col-lg-4 col-xl">
             <a href="{{ $kpiTienDo['link'] }}" class="kpi-card-box">
-                <div class="overflow-hidden">
-                    <div class="kpi-label">{{ $kpiTienDo['title'] }}</div>
+                <div class="overflow-hidden min-w-0">
+                    <div class="kpi-label text-truncate">{{ $kpiTienDo['title'] }}</div>
                     <div class="kpi-value">{{ $kpiTienDo['value'] }}</div>
                     <div>
-                        <span class="badge {{ $kpiTienDo['badge_class'] }} rounded-pill py-1 px-3" style="font-size: 0.7rem;">
+                        <span class="badge {{ $kpiTienDo['badge_class'] }} rounded-pill py-1 px-2.5" style="font-size: 0.7rem;">
                             {{ $kpiTienDo['badge'] }}
                         </span>
                     </div>
                 </div>
-                <div class="kpi-icon"><i class="{{ $kpiTienDo['icon'] }}"></i></div>
+                <div class="kpi-icon ms-1"><i class="{{ $kpiTienDo['icon'] }}"></i></div>
             </a>
         </div>
 
         <!-- 3. Báo cáo tiến độ -->
-        <div class="col-12 col-sm-6 col-lg-4 col-xl">
+        <div class="col-6 col-sm-6 col-lg-4 col-xl">
             <a href="{{ $kpiBaoCao['link'] }}" class="kpi-card-box">
-                <div class="overflow-hidden">
-                    <div class="kpi-label">{{ $kpiBaoCao['title'] }}</div>
+                <div class="overflow-hidden min-w-0">
+                    <div class="kpi-label text-truncate">{{ $kpiBaoCao['title'] }}</div>
                     <div class="kpi-value">{{ $kpiBaoCao['value'] }}</div>
                     <div>
-                        <span class="badge {{ $kpiBaoCao['badge_class'] }} rounded-pill py-1 px-3" style="font-size: 0.7rem;">
+                        <span class="badge {{ $kpiBaoCao['badge_class'] }} rounded-pill py-1 px-2.5" style="font-size: 0.7rem;">
                             {{ $kpiBaoCao['badge'] }}
                         </span>
                     </div>
                 </div>
-                <div class="kpi-icon"><i class="{{ $kpiBaoCao['icon'] }}"></i></div>
+                <div class="kpi-icon ms-1"><i class="{{ $kpiBaoCao['icon'] }}"></i></div>
             </a>
         </div>
 
         <!-- 4. Công việc cần thực hiện -->
-        <div class="col-12 col-sm-6 col-lg-4 col-xl">
+        <div class="col-6 col-sm-6 col-lg-4 col-xl">
             <a href="{{ $kpiCongViec['link'] }}" class="kpi-card-box">
-                <div class="overflow-hidden">
-                    <div class="kpi-label">{{ $kpiCongViec['title'] }}</div>
+                <div class="overflow-hidden min-w-0">
+                    <div class="kpi-label text-truncate">{{ $kpiCongViec['title'] }}</div>
                     <div class="kpi-value">{{ $kpiCongViec['value'] }}</div>
                     <div>
-                        <span class="badge {{ $kpiCongViec['badge_class'] }} rounded-pill py-1 px-3" style="font-size: 0.7rem;">
+                        <span class="badge {{ $kpiCongViec['badge_class'] }} rounded-pill py-1 px-2.5" style="font-size: 0.7rem;">
                             {{ $kpiCongViec['badge'] }}
                         </span>
                     </div>
                 </div>
-                <div class="kpi-icon"><i class="{{ $kpiCongViec['icon'] }}"></i></div>
+                <div class="kpi-icon ms-1"><i class="{{ $kpiCongViec['icon'] }}"></i></div>
             </a>
         </div>
 
         <!-- 5. Thông báo mới -->
-        <div class="col-12 col-sm-6 col-lg-4 col-xl">
+        <div class="col-12 col-sm-12 col-lg-4 col-xl">
             <a href="{{ $kpiThongBao['link'] }}" class="kpi-card-box">
-                <div class="overflow-hidden">
-                    <div class="kpi-label">{{ $kpiThongBao['title'] }}</div>
+                <div class="overflow-hidden min-w-0">
+                    <div class="kpi-label text-truncate">{{ $kpiThongBao['title'] }}</div>
                     <div class="kpi-value">{{ $kpiThongBao['value'] }}</div>
                     <div>
-                        <span class="badge {{ $kpiThongBao['badge_class'] }} rounded-pill py-1 px-3" style="font-size: 0.7rem;">
+                        <span class="badge {{ $kpiThongBao['badge_class'] }} rounded-pill py-1 px-2.5" style="font-size: 0.7rem;">
                             {{ $kpiThongBao['badge'] }}
                         </span>
                     </div>
                 </div>
-                <div class="kpi-icon"><i class="{{ $kpiThongBao['icon'] }}"></i></div>
+                <div class="kpi-icon ms-1"><i class="{{ $kpiThongBao['icon'] }}"></i></div>
             </a>
         </div>
     </div>

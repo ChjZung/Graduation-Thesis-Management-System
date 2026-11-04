@@ -479,8 +479,8 @@
                                     </div>
                                 @endif
                                 @if($log->LyDo)
-                                    <div class="small text-dark fst-italic p-2 bg-white rounded border">
-                                        &ldquo;{!! \App\Helpers\HtmlHelper::clean($log->LyDo) !!}&rdquo;
+                                    <div class="small text-dark p-2 bg-white rounded border mt-1">
+                                        {!! \App\Helpers\HtmlHelper::clean($log->LyDo) !!}
                                     </div>
                                 @endif
                             </div>

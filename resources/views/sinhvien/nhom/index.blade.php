@@ -89,6 +89,22 @@
         color: #ffffff !important;
     }
 
+    @media (max-width: 767.98px) {
+        .workspace-nav-pills {
+            border-radius: 14px !important;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            padding: 6px;
+            scrollbar-width: thin;
+        }
+        .workspace-nav-pills .nav-link {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+    }
+
     /* Tiến độ Timeline / Milestones tăng padding */
     .milestone-step-card {
         background-color: #ffffff;

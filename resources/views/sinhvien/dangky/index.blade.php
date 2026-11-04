@@ -520,7 +520,8 @@
         </div>
 
         <div class="card-body p-0">
-            <div class="table-responsive topic-scroll-container">
+            <!-- Desktop Table View (>= 768px) -->
+            <div class="table-responsive topic-scroll-container d-none d-md-block">
                 <table class="table table-topic align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
@@ -652,6 +653,132 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile Card View (< 768px) -->
+            <div class="d-md-none p-3 d-flex flex-column gap-3">
+                @forelse($detais as $dt)
+                @php
+                    $myGroupRegThis = (isset($dangKyCurrent) && $dangKyCurrent && $dangKyCurrent->MaDeTai === $dt->MaDeTai) ? $dangKyCurrent : null;
+                    $isTakenByOther = isset($deTaiDaDangKys[$dt->MaDeTai]) && (!isset($nhom) || $deTaiDaDangKys[$dt->MaDeTai]->MaNhom !== $nhom->MaNhom);
+                    $hasActiveRegistration = isset($dangKyCurrent) && $dangKyCurrent && in_array($dangKyCurrent->TrangThai, ['Chờ duyệt', 'Đã duyệt']);
+                @endphp
+                <div class="card border rounded-3 p-3 shadow-xs bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge badge-neutral px-2.5 py-1 font-monospace fw-bold" style="font-size: 11px;">
+                            {{ $dt->MaDeTai }}
+                        </span>
+                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 11px;">
+                            <i class="fa-solid fa-users me-1"></i>Chỉ tiêu: {{ $dt->SoLuongSinhVienToiDa }} SV
+                        </span>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.95rem; line-height: 1.4;">
+                        {{ $dt->TenDeTai }}
+                    </h6>
+
+                    <div class="small text-secondary mb-2">
+                        <i class="fa-solid fa-chalkboard-user me-1 text-primary"></i>GVHD: 
+                        <strong>{{ $dt->giangVien->HoTen ?? 'Chưa rõ' }}</strong>
+                        @if($dt->giangVien?->HocVi)
+                            <span class="text-muted">({{ $dt->giangVien->HocVi }})</span>
+                        @endif
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-1.5 align-items-center mb-3">
+                        <span class="badge badge-neutral px-2 py-1" style="font-size: 0.72rem;">
+                            {{ $dt->hocPhanRef->TenHocPhan ?? $dt->HocPhan ?? 'Khóa luận' }}
+                        </span>
+                        @if($dt->LinhVuc)
+                            <span class="badge badge-neutral px-2 py-1" style="font-size: 0.72rem;">{{ $dt->LinhVuc }}</span>
+                        @endif
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-2 border-top">
+                        @if($dt->FileDeCuong)
+                            @php
+                                $dtDcUrl = route('files.decuong.download', $dt->MaDeTai);
+                                $dtDcDownloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
+                                $dtDcName = basename($dt->FileDeCuong);
+                            @endphp
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center justify-content-center flex-grow-1"
+                                    onclick="openTopicOutlineSplitModal(this)"
+                                    data-madetai="{{ $dt->MaDeTai }}"
+                                    data-tendetai="{{ $dt->TenDeTai }}"
+                                    data-gvhd="{{ $dt->giangVien->HoTen ?? 'Chưa rõ' }}"
+                                    data-hocvi="{{ $dt->giangVien->HocVi ?? 'Giảng viên' }}"
+                                    data-bomon="{{ $dt->giangVien->boMon->TenBoMon ?? ($dt->hocPhanRef->boMon->TenBoMon ?? 'Bộ môn CNTT') }}"
+                                    data-email="{{ $dt->giangVien->Email ?? '' }}"
+                                    data-sdt="{{ $dt->giangVien->SoDienThoai ?? '' }}"
+                                    data-hocphan="{{ $dt->hocPhanRef->TenHocPhan ?? $dt->HocPhan ?? 'Khóa luận' }}"
+                                    data-hocky="{{ $dt->hocKy->TenHocKy ?? '' }}"
+                                    data-linhvuc="{{ $dt->LinhVuc ?? '' }}"
+                                    data-chitieu="{{ $dt->SoLuongSinhVienToiDa ?? 3 }}"
+                                    data-mota="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dt->MoTa)) }}"
+                                    data-yeucau="{{ base64_encode(\App\Services\HtmlSanitizerService::cleanDescription($dt->YeuCau)) }}"
+                                    data-fileurl="{{ $dtDcUrl }}"
+                                    data-downloadurl="{{ $dtDcDownloadUrl }}"
+                                    data-filename="{{ $dtDcName }}"
+                                    style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-file-lines me-1 text-primary"></i>Đề cương
+                            </button>
+                        @endif
+
+                        <div class="flex-grow-1">
+                            @if($myGroupRegThis)
+                                @if($myGroupRegThis->TrangThai === 'Từ chối')
+                                    <span class="badge bg-danger rounded-pill px-3 py-2 w-100 text-center" style="font-size: 0.8rem;">
+                                        Đã Từ Chối
+                                    </span>
+                                @else
+                                    <span class="badge bg-primary rounded-pill px-3 py-2 w-100 text-center" style="font-size: 0.8rem;">
+                                        Đã Gán Nhóm
+                                    </span>
+                                @endif
+                            @elseif($isTakenByOther)
+                                <button class="btn btn-sm btn-secondary rounded-pill px-3 py-1.5 text-white w-100" disabled style="font-size: 0.8rem;">
+                                    Đã Có Nhóm
+                                </button>
+                            @elseif(isset($nhom) && $nhom)
+                                @if(isset($regState) && !$regState['can_register'])
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3 py-1.5 text-white w-100" disabled style="font-size: 0.8rem;">
+                                        {{ $regState['label'] }}
+                                    </button>
+                                @elseif($nhom->MaTruongNhom !== $sinhVien->MaSV)
+                                    <span class="text-muted fst-italic small d-block text-center">Chỉ Trưởng nhóm có quyền</span>
+                                @elseif($hasActiveRegistration)
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3 py-1.5 text-white w-100" disabled style="font-size: 0.8rem;">
+                                        Đã Có Đề Tài
+                                    </button>
+                                @elseif($soThanhVien < 3)
+                                    <button class="btn btn-sm btn-secondary rounded-pill px-3 py-1.5 text-white w-100" disabled style="font-size: 0.8rem;">
+                                        Cần 3 TV ({{ $soThanhVien }}/3)
+                                    </button>
+                                @else
+                                    <form action="{{ route('sinhvien.dangky.store') }}" method="POST" class="d-inline m-0 w-100">
+                                        @csrf
+                                        <input type="hidden" name="MaDeTai" value="{{ $dt->MaDeTai }}">
+                                        <button type="submit" class="btn btn-sm {{ isset($regState) && $regState['is_supplementary'] ? 'btn-warning text-dark' : 'btn-theme-register' }} rounded-pill px-3 py-1.5 fw-bold w-100" 
+                                                onclick="return confirm('Bạn có chắc chắn muốn đăng ký đề tài {{ $dt->TenDeTai }} cho nhóm của mình?');" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>{{ isset($regState) && $regState['is_supplementary'] ? 'ĐK Bổ Sung' : 'Đăng Ký' }}
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                <a href="{{ route('sinhvien.nhom.index') }}" class="btn btn-sm btn-outline-secondary text-dark bg-white rounded-pill px-3 py-1.5 fw-semibold w-100 text-center" style="font-size: 0.8rem;">
+                                    Cần tạo nhóm
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="text-center py-5 text-muted" style="font-size: 0.9rem;">
+                    <i class="fa-solid fa-clipboard-question fs-1 text-muted opacity-50 mb-3 d-block me-2"></i>
+                    Hiện tại chưa có đề tài nào phù hợp với bộ lọc được công bố.
+                </div>
+                @endforelse
+            </div>
+        </div>
         </div>
 
         @if($detais->hasPages())

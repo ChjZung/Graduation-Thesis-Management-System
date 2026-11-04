@@ -231,7 +231,6 @@
         font-weight: 700;
         color: #0066B2;
         line-height: 1.35;
-        white-space: nowrap;
     }
 
     .brand-text span {
@@ -433,41 +432,109 @@
         50% { box-shadow: 0 0 0 8px rgba(255, 77, 77, 0); }
     }
 
-    /* RESPONSIVE */
-    @media(max-width: 992px) {
+    /* RESPONSIVE (MOBILE & TABLET) */
+    @media(max-width: 991.98px) {
+        #app {
+            padding: 24px 16px !important;
+            justify-content: center !important;
+        }
         .login-card {
             flex-direction: column;
+            max-width: 480px;
             min-height: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 40, 120, .3);
+            margin: auto !important;
         }
-        .login-left, .login-right {
-            width: 100%;
-        }
+        /* Ẩn panel ảnh trường & liên hệ trên mobile/tablet để tập trung vào form đăng nhập, không chiếm diện tích */
         .login-left {
-            padding: 35px 20px;
-            min-width: 0;
-            box-sizing: border-box;
-        }
-        .login-left .left-inner {
-            padding: 20px 16px;
-            padding-inline: 16px;
-        }
-        .login-left h5,
-        .school-title {
-            font-size: clamp(0.95rem, 3.2vw, 1.4rem);
+            display: none !important;
         }
         .login-right {
-            padding: 40px 30px;
+            width: 100% !important;
+            padding: 34px 26px !important;
+        }
+        .brand-row {
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+        .brand-row img {
+            width: 44px;
+            height: 44px;
+        }
+        .brand-text {
+            white-space: normal !important;
+            font-size: 0.82rem !important;
+            line-height: 1.35;
+        }
+        .brand-text span {
+            font-size: 0.72rem !important;
+            margin-top: 2px;
+        }
+        .login-right h1 {
+            font-size: 1.85rem !important;
+            margin-bottom: 6px !important;
+        }
+        .welcome-sub {
+            font-size: 0.92rem !important;
+            margin-bottom: 22px !important;
+        }
+        .field-group {
+            margin-bottom: 18px !important;
+        }
+        .input-icon-wrap input {
+            height: 50px !important;
+            font-size: 0.95rem !important;
+            border-radius: 10px !important;
+        }
+        .form-meta {
+            margin-bottom: 22px !important;
+            font-size: 0.9rem !important;
+        }
+        .btn-login-huit {
+            height: 50px !important;
+            font-size: 1.05rem !important;
+            border-radius: 10px !important;
         }
     }
 
-    @media(max-width: 576px) {
-        .login-left .left-inner {
-            padding: 20px 12px;
-            padding-inline: 12px;
+    @media(max-width: 575.98px) {
+        #app {
+            padding: 16px 12px !important;
         }
-        .login-left h5,
-        .school-title {
-            font-size: clamp(0.85rem, 4.2vw, 1.15rem);
+        .login-card {
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(0, 40, 120, .25);
+        }
+        .login-right {
+            padding: 26px 18px !important;
+        }
+        .login-right h1 {
+            font-size: 1.65rem !important;
+        }
+        .welcome-sub {
+            font-size: 0.86rem !important;
+            margin-bottom: 18px !important;
+        }
+        .field-group {
+            margin-bottom: 15px !important;
+        }
+        .field-group label {
+            font-size: 0.88rem !important;
+            margin-bottom: 6px !important;
+        }
+        .input-icon-wrap input {
+            height: 46px !important;
+            padding-left: 44px !important;
+            font-size: 0.92rem !important;
+        }
+        .field-icon {
+            left: 14px !important;
+            font-size: 1rem !important;
+        }
+        .btn-login-huit {
+            height: 48px !important;
+            font-size: 0.98rem !important;
         }
     }
 </style>
@@ -649,6 +716,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const paddingLeft = parseFloat(style.paddingLeft) || 0;
         const paddingRight = parseFloat(style.paddingRight) || 0;
         const maxW = parent.clientWidth - paddingLeft - paddingRight;
+        if (maxW <= 0) return;
 
         const minSize = 14; // tối thiểu 14px theo yêu cầu
         let currentSize = parseFloat(window.getComputedStyle(titleEl).fontSize);

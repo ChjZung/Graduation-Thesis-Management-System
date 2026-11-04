@@ -28,6 +28,14 @@
         overflow-y: auto;
     }
 
+    @media (max-width: 991.98px) {
+        .sticky-evaluation-card {
+            position: static !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+        }
+    }
+
     /* Radio Card Customization */
     .evaluation-card-option {
         cursor: pointer;

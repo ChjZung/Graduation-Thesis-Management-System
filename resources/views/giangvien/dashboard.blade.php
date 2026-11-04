@@ -34,6 +34,33 @@
         flex-shrink: 0;
     }
 
+    @media (max-width: 575.98px) {
+        .kpi-card {
+            padding: 0.75rem 0.65rem;
+            border-radius: 0.75rem;
+        }
+        .kpi-card .h2 {
+            font-size: 1.35rem;
+        }
+        .kpi-subtext {
+            font-size: 0.75rem !important;
+        }
+        .kpi-card .text-muted.small {
+            font-size: 0.72rem !important;
+            line-height: 1.25;
+        }
+        .kpi-icon-avatar {
+            width: 34px;
+            height: 34px;
+            font-size: 0.95rem;
+            border-radius: 0.5rem;
+        }
+        .kpi-card .badge {
+            font-size: 0.68rem !important;
+            padding: 0.2rem 0.45rem !important;
+        }
+    }
+
     .card-dashboard {
         border: 1px solid var(--gv-border);
         border-radius: 0.85rem;
@@ -83,35 +110,35 @@
 <!-- Header & Welcome Banner -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
-        <h3 class="fw-bold mb-1 text-dark">
+        <h3 class="fw-bold mb-1 text-dark" style="font-size: clamp(1.2rem, 3.5vw, 1.75rem);">
             <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>Tổng Quan Giảng Viên Hướng Dẫn
         </h3>
         <p class="text-muted small mb-0">Quản lý danh sách nhóm hướng dẫn, tiến độ báo cáo và lịch họp.</p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium d-inline-flex align-items-center">
+    <div class="d-flex flex-wrap gap-2 w-100 w-sm-auto">
+        <a href="{{ route('giangvien.detai.create') }}" class="btn btn-primary rounded-pill px-3 py-2 shadow-sm fw-medium d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0">
             <i class="fa-solid fa-plus me-2"></i> Đề xuất Đề tài mới
         </a>
-        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium d-inline-flex align-items-center">
+        <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0">
             <i class="fa-regular fa-calendar-days me-2"></i> Lịch của tôi
         </a>
     </div>
 </div>
 
-<!-- 4 Stat Cards (Cập nhật giao diện thẻ mượt mà, chuyên nghiệp) -->
-<div class="row g-3 mb-4">
+<!-- 4 Stat Cards (Cập nhật giao diện thẻ mượt mà, chuyên nghiệp - Responsive 2 cột trên di động) -->
+<div class="row g-2 g-md-3 mb-4">
     <!-- Stat 1: Đề tài đảm nhận -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Đề tài đảm nhận</div>
+                <div class="min-w-0">
+                    <div class="text-muted small fw-medium mb-1 text-truncate">Đề tài đảm nhận</div>
                     <div class="h2 fw-bold text-dark mb-1">{{ $soDeTai }}</div>
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
                         Đang mở: {{ $deTaiDangMo }}
                     </span>
                 </div>
-                <div class="kpi-icon-avatar bg-primary-subtle text-primary">
+                <div class="kpi-icon-avatar bg-primary-subtle text-primary ms-1">
                     <i class="fa-solid fa-book-bookmark"></i>
                 </div>
             </div>
@@ -119,21 +146,24 @@
     </div>
 
     <!-- Stat 2: Nhóm HD chính thức -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
-                <div class="w-100 me-2">
-                    <div class="text-muted small fw-medium mb-1">Nhóm HD chính thức</div>
-                    <div class="h2 fw-bold text-dark mb-1">{{ $soNhomHD }} <span class="fs-6 text-muted fw-normal">/ {{ $soNhomToiDa }} nhóm</span></div>
+                <div class="w-100 min-w-0 me-1 me-sm-2">
+                    <div class="text-muted small fw-medium mb-1 text-truncate">Nhóm HD chính thức</div>
+                    <div class="h2 fw-bold text-dark mb-1 d-flex flex-wrap align-items-baseline gap-1">
+                        <span>{{ $soNhomHD }}</span>
+                        <span class="text-muted fw-normal kpi-subtext" style="font-size: 0.82rem;">/ {{ $soNhomToiDa }} nhóm</span>
+                    </div>
                     @php
                         $percentHD = min(100, round(($soNhomHD / max(1, $soNhomToiDa)) * 100));
                     @endphp
                     <div class="progress mt-2" style="height: 6px;">
                         <div class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: {{ $percentHD }}%;"></div>
                     </div>
-                    <div class="text-muted mt-2" style="font-size: 0.78rem;">{{ $percentHD }}% chỉ tiêu phân bổ</div>
+                    <div class="text-muted mt-2" style="font-size: 0.75rem;">{{ $percentHD }}% chỉ tiêu</div>
                 </div>
-                <div class="kpi-icon-avatar bg-info-subtle text-info">
+                <div class="kpi-icon-avatar bg-info-subtle text-info d-none d-sm-flex">
                     <i class="fa-solid fa-users-viewfinder"></i>
                 </div>
             </div>
@@ -141,23 +171,23 @@
     </div>
 
     <!-- Stat 3: Báo cáo chờ đánh giá -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Báo cáo chờ đánh giá</div>
+                <div class="min-w-0">
+                    <div class="text-muted small fw-medium mb-1 text-truncate">Báo cáo chờ đánh giá</div>
                     <div class="h2 fw-bold text-dark mb-1">{{ $soBaoCaoChoDuyet }}</div>
                     @if($soBaoCaoChoDuyet > 0)
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
-                            <i class="fa-solid fa-bell me-2"></i>Cần xử lý
+                            <i class="fa-solid fa-bell me-1"></i>Cần xử lý
                         </span>
                     @else
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="fa-solid fa-check me-2"></i>Đã duyệt hết
+                            <i class="fa-solid fa-check me-1"></i>Đã duyệt hết
                         </span>
                     @endif
                 </div>
-                <div class="kpi-icon-avatar bg-warning-subtle text-warning">
+                <div class="kpi-icon-avatar bg-warning-subtle text-warning ms-1">
                     <i class="fa-solid fa-file-circle-exclamation"></i>
                 </div>
             </div>
@@ -165,23 +195,23 @@
     </div>
 
     <!-- Stat 4: Nhóm rủi ro trễ tiến độ -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Nhóm rủi ro trễ tiến độ</div>
+                <div class="min-w-0">
+                    <div class="text-muted small fw-medium mb-1 text-truncate">Nhóm rủi ro trễ tiến độ</div>
                     <div class="h2 fw-bold text-dark mb-1">{{ $soNhomTreHan }}</div>
                     @if($soNhomTreHan > 0)
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
-                            <i class="fa-solid fa-triangle-exclamation me-2"></i>Cần đôn đốc
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Cần đôn đốc
                         </span>
                     @else
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="fa-solid fa-shield-check me-2"></i>Đúng tiến độ
+                            <i class="fa-solid fa-shield-check me-1"></i>Đúng tiến độ
                         </span>
                     @endif
                 </div>
-                <div class="kpi-icon-avatar bg-danger-subtle text-danger">
+                <div class="kpi-icon-avatar bg-danger-subtle text-danger ms-1">
                     <i class="fa-solid fa-clock-rotate-left"></i>
                 </div>
             </div>

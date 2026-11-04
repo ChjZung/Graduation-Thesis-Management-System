@@ -20,21 +20,51 @@
 }
 .ai-summary { container: report-card / inline-size; min-width: 0; max-width: 100%; }
 @container report-card (max-width: 720px) {
-    .ai-summary .ai-header { flex-direction: column; align-items: stretch; padding: 16px; gap: 14px; }
-    .ai-summary .ai-heading { min-width: 0; width: 100%; }
+    .ai-summary:not(.ai-summary-expanded) > .ai-header,
+    .ai-teacher-report:not(.ai-summary-expanded) > .ai-header { flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; height: auto !important; min-height: 0 !important; padding: 14px !important; gap: 12px !important; }
+    .ai-summary:not(.ai-summary-expanded) > .ai-header > .ai-heading,
+    .ai-teacher-report:not(.ai-summary-expanded) > .ai-header > .ai-heading { flex: 0 0 auto !important; min-width: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; margin: 0 !important; }
     .ai-summary .ai-heading > div:last-child { min-width: 0; }
-    .ai-summary .ai-title { font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
-    .ai-summary .ai-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; gap: 8px; }
-    .ai-summary .ai-actions > form, .ai-summary .ai-actions > button { width: 100%; min-width: 0; }
-    .ai-summary .ai-actions .ai-button { width: 100%; min-height: 44px; white-space: normal !important; font-size: 13px; justify-content: center; }
+    .ai-summary .ai-title { font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions,
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)) !important; width: 100% !important; gap: 8px !important; margin: 0 !important; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-teacher-cancel-form],
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-ai-cancel-form],
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions > form[data-teacher-cancel-form] { grid-column: 1 / -1 !important; width: 100% !important; margin: 0 !important; }
+    .ai-summary .ai-actions > form, .ai-summary .ai-actions > button,
+    .ai-teacher-report .ai-actions > form, .ai-teacher-report .ai-actions > button { width: 100% !important; min-width: 0 !important; margin: 0 !important; }
+    .ai-summary .ai-actions .ai-button,
+    .ai-teacher-report .ai-actions .ai-button { width: 100% !important; min-height: 40px !important; white-space: nowrap !important; font-size: 12.5px !important; padding: 7px 10px !important; justify-content: center !important; }
     .ai-summary .ai-details { padding: 14px; }
+    .ai-summary .ai-verification-cards,
+    .ai-teacher-report .ai-verification-cards { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin: 10px 0 16px !important; }
+    .ai-summary .ai-verification-cards .col-12,
+    .ai-teacher-report .ai-verification-cards .col-12 { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+    .ai-summary .ai-verification-cards .card,
+    .ai-teacher-report .ai-verification-cards .card { border-radius: 10px !important; height: 100% !important; }
+    .ai-summary .ai-verification-cards .card-body,
+    .ai-teacher-report .ai-verification-cards .card-body { padding: 10px !important; display: flex !important; flex-direction: column !important; }
+    .ai-summary .ai-verification-cards .card-body > i,
+    .ai-teacher-report .ai-verification-cards .card-body > i { width: 28px !important; height: 28px !important; border-radius: 8px !important; font-size: 13px !important; margin-bottom: 6px !important; }
+    .ai-summary .ai-verification-cards h4,
+    .ai-teacher-report .ai-verification-cards h4 { font-size: 11.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 0 0 4px !important; min-height: 30px; }
+    .ai-summary .ai-verification-cards strong,
+    .ai-teacher-report .ai-verification-cards strong { font-size: clamp(12px, 3.2vw, 15px) !important; font-weight: 700 !important; line-height: 1.25 !important; margin: 2px 0 4px !important; overflow-wrap: anywhere !important; }
+    .ai-summary .ai-verification-cards p,
+    .ai-teacher-report .ai-verification-cards p { font-size: 10.5px !important; line-height: 1.35 !important; margin: 0 0 4px !important; }
+    .ai-summary .ai-metric-help,
+    .ai-teacher-report .ai-metric-help { margin-top: auto !important; font-size: 11px !important; }
+    .ai-summary .ai-metric-help summary,
+    .ai-teacher-report .ai-metric-help summary { font-size: 10.5px !important; padding: 2px 0 !important; }
+    .ai-summary .ai-metric-action,
+    .ai-teacher-report .ai-metric-action { font-size: 11px !important; margin: 3px 0 0 !important; padding: 2px 0 !important; min-height: unset !important; line-height: 1.35 !important; }
 }
 @container report-card (max-width: 420px) {
-    .ai-summary .ai-header { padding: 12px; }
+    .ai-summary:not(.ai-summary-expanded) > .ai-header { padding: 12px !important; gap: 10px !important; }
     .ai-summary .ai-heading { gap: 10px; }
-    .ai-summary .ai-title { font-size: 16px; }
+    .ai-summary .ai-title { font-size: 15.5px; }
     .ai-summary .ai-icon { width: 36px; height: 36px; flex: 0 0 36px; }
-    .ai-summary .ai-actions .ai-button { padding: 8px; font-size: 12px; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions .ai-button { padding: 6px 8px !important; font-size: 12px !important; }
 }
 :is(.ai-report-submission-page,.report-review-page) .btn { max-width: 100%; white-space: normal !important; overflow-wrap: anywhere; }
 :is(.ai-report-submission-page,.report-review-page) .rte-toolbar { flex-wrap: nowrap !important; overflow-x: auto; overscroll-behavior-x: contain; }
@@ -66,22 +96,58 @@
 .ai-info-icon-button:hover { background: #dbeafe; color: #004a8f; }
 .ai-info-icon-button:focus-visible { outline: 3px solid #1674b8; outline-offset: 2px; }
 @media (max-width: 767.98px) {
-    .ai-summary .ai-header { padding: 14px; gap: 12px; }
-    .ai-summary .ai-heading { flex-basis: 100%; min-width: 0; }
-    .ai-summary .ai-heading > div:last-child { min-width: 0; }
-    .ai-summary .ai-title { font-size: 16px; overflow-wrap: anywhere; }
-    .ai-summary .ai-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; }
-    .ai-summary .ai-actions > form, .ai-summary .ai-actions > button { min-width: 0; width: 100%; }
-    .ai-summary .ai-actions form .ai-button { width: 100%; }
-    .ai-summary .ai-button, .ai-summary summary, [data-ai-coverage-widget] button { min-height: 44px; }
-    .ai-summary .ai-button { white-space: normal; overflow-wrap: anywhere; text-align: center; }
+    .ai-summary:not(.ai-summary-expanded) > .ai-header,
+    .ai-teacher-report:not(.ai-summary-expanded) > .ai-header { display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; height: auto !important; min-height: 0 !important; padding: 14px !important; gap: 12px !important; }
+    .ai-summary:not(.ai-summary-expanded) > .ai-header > .ai-heading,
+    .ai-teacher-report:not(.ai-summary-expanded) > .ai-header > .ai-heading { display: flex !important; flex: 0 0 auto !important; flex-basis: auto !important; min-width: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; margin: 0 !important; gap: 10px !important; }
+    .ai-summary .ai-heading > div:last-child { min-width: 0 !important; flex: 1 1 auto !important; }
+    .ai-summary .ai-title { font-size: 16px !important; font-weight: 700 !important; line-height: 1.4 !important; margin-bottom: 4px !important; overflow-wrap: anywhere !important; }
+    .ai-summary .ai-file { font-size: 12.5px !important; line-height: 1.45 !important; overflow-wrap: anywhere !important; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions,
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)) !important; width: 100% !important; gap: 8px !important; margin: 0 !important; padding: 0 !important; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-teacher-cancel-form],
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-ai-cancel-form],
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions > form[data-teacher-cancel-form] { grid-column: 1 / -1 !important; width: 100% !important; margin: 0 !important; }
+    .ai-summary .ai-actions > form, .ai-summary .ai-actions > button,
+    .ai-teacher-report .ai-actions > form, .ai-teacher-report .ai-actions > button { min-width: 0 !important; width: 100% !important; margin: 0 !important; }
+    .ai-summary .ai-actions form .ai-button,
+    .ai-teacher-report .ai-actions form .ai-button { width: 100% !important; }
+    .ai-summary .ai-button, .ai-summary summary, [data-ai-coverage-widget] button { min-height: 40px; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions .ai-button,
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions .ai-button { width: 100% !important; min-height: 40px !important; height: auto !important; white-space: nowrap !important; overflow-wrap: normal !important; text-align: center !important; font-size: 12.5px !important; padding: 7px 10px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 6px !important; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions .ai-button span,
+    .ai-teacher-report:not(.ai-summary-expanded) .ai-actions .ai-button span { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
     .ai-summary .ai-details { max-height: none; overflow: visible; padding: 12px; }
     .ai-summary-expanded .ai-details { overflow: auto; min-height: 0; }
     .ai-summary .ai-report-tabs { display: flex; flex-wrap: nowrap !important; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
     .ai-summary .ai-report-tabs .nav-link { flex: 0 0 auto; white-space: nowrap; min-height: 44px; font-size: 14px; padding: 10px 12px; }
     .ai-summary .ai-section, .ai-summary .ai-requirement-card { min-width: 0; padding: 12px; }
     .ai-summary .ai-section-title, .ai-summary .ai-requirement-question h4 { overflow-wrap: anywhere; }
-    .ai-summary .ai-processing-status { padding: 12px; overflow-wrap: anywhere; }
+    .ai-summary .ai-verification-cards,
+    .ai-teacher-report .ai-verification-cards { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin: 10px 0 16px !important; }
+    .ai-summary .ai-verification-cards .col-12,
+    .ai-teacher-report .ai-verification-cards .col-12 { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+    .ai-summary .ai-verification-cards .card,
+    .ai-teacher-report .ai-verification-cards .card { border-radius: 10px !important; height: 100% !important; }
+    .ai-summary .ai-verification-cards .card-body,
+    .ai-teacher-report .ai-verification-cards .card-body { padding: 10px !important; display: flex !important; flex-direction: column !important; }
+    .ai-summary .ai-verification-cards .card-body > i,
+    .ai-teacher-report .ai-verification-cards .card-body > i { width: 28px !important; height: 28px !important; border-radius: 8px !important; font-size: 13px !important; margin-bottom: 6px !important; }
+    .ai-summary .ai-verification-cards h4,
+    .ai-teacher-report .ai-verification-cards h4 { font-size: 11.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 0 0 4px !important; min-height: 30px; }
+    .ai-summary .ai-verification-cards strong,
+    .ai-teacher-report .ai-verification-cards strong { font-size: clamp(12px, 3.2vw, 15px) !important; font-weight: 700 !important; line-height: 1.25 !important; margin: 2px 0 4px !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
+    .ai-summary .ai-verification-cards p,
+    .ai-teacher-report .ai-verification-cards p { font-size: 10.5px !important; line-height: 1.35 !important; margin: 0 0 4px !important; }
+    .ai-summary .ai-metric-help,
+    .ai-teacher-report .ai-metric-help { margin-top: auto !important; font-size: 11px !important; }
+    .ai-summary .ai-metric-help summary,
+    .ai-teacher-report .ai-metric-help summary { font-size: 10.5px !important; padding: 2px 0 !important; }
+    .ai-summary .ai-metric-action,
+    .ai-teacher-report .ai-metric-action { font-size: 11px !important; margin: 3px 0 0 !important; padding: 2px 0 !important; min-height: unset !important; line-height: 1.35 !important; }
+    .ai-summary .ai-processing-status,
+    .ai-teacher-report .ai-processing-status { margin: 10px 14px 14px !important; padding: 12px 14px !important; border-radius: 8px !important; overflow-wrap: anywhere; }
+    .ai-processing-status .ai-button { width: 100% !important; min-height: 40px !important; margin-top: 8px !important; font-size: 13px !important; }
     [data-ai-coverage-widget] .callout-title { font-size: 15px; line-height: 1.5; }
     [data-ai-coverage-widget] button { width: 100%; white-space: normal; }
     .ai-report-submission-page input, .ai-report-submission-page textarea, .ai-report-submission-page select, .ai-report-submission-page [contenteditable="true"] { font-size: 16px; max-width: 100%; }

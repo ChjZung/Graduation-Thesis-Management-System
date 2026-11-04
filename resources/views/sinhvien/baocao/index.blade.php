@@ -25,6 +25,19 @@
     .stat-kpi-card.kpi-success { border-left: 4px solid #10b981; }
     .stat-kpi-card.kpi-danger { border-left: 4px solid #ef4444; }
 
+    @media (max-width: 575.98px) {
+        .stat-kpi-card {
+            padding: 10px 12px;
+            border-radius: 10px;
+        }
+        .stat-kpi-card h3 {
+            font-size: 1.25rem !important;
+        }
+        .stat-kpi-card .small {
+            font-size: 0.72rem !important;
+        }
+    }
+
     /* Stepper */
     .plan-stepper-box {
         background: #ffffff;
@@ -259,14 +272,14 @@
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <div class="btn-group btn-group-sm shadow-xs" role="group">
-                <button type="button" class="btn btn-outline-secondary px-3 py-1.5 fw-medium d-inline-flex align-items-center" onclick="toggleAllStages(true)">
-                    <i class="fa-solid fa-angles-down me-2 text-primary"></i>Mở rộng tất cả
-                </button>
-                <button type="button" class="btn btn-outline-secondary px-3 py-1.5 fw-medium d-inline-flex align-items-center" onclick="toggleAllStages(false)">
-                    <i class="fa-solid fa-angles-up me-2 text-secondary"></i>Thu gọn tất cả
-                </button>
-            </div>
+            <button type="button" 
+                    id="btnToggleAllStages" 
+                    class="btn btn-sm btn-outline-secondary px-3 py-1.5 fw-medium rounded-pill shadow-xs d-inline-flex align-items-center" 
+                    onclick="toggleAllStagesSingle()" 
+                    data-all-expanded="false">
+                <i class="fa-solid fa-angles-down me-1.5 text-primary"></i>
+                <span class="btn-toggle-text">Mở rộng tất cả</span>
+            </button>
         </div>
     </div>
 
@@ -611,6 +624,27 @@ function scrollToStage(thuTu) {
     }
 }
 
+function toggleAllStagesSingle() {
+    const btn = document.getElementById('btnToggleAllStages');
+    const isExpanded = btn ? btn.getAttribute('data-all-expanded') === 'true' : false;
+    toggleAllStages(!isExpanded);
+}
+
+function updateToggleAllButton(expanded) {
+    const btn = document.getElementById('btnToggleAllStages');
+    if (!btn) return;
+    btn.setAttribute('data-all-expanded', expanded ? 'true' : 'false');
+    const icon = btn.querySelector('i');
+    const text = btn.querySelector('.btn-toggle-text');
+    if (expanded) {
+        if (icon) icon.className = 'fa-solid fa-angles-up me-1.5 text-secondary';
+        if (text) text.textContent = 'Thu gọn tất cả';
+    } else {
+        if (icon) icon.className = 'fa-solid fa-angles-down me-1.5 text-primary';
+        if (text) text.textContent = 'Mở rộng tất cả';
+    }
+}
+
 function toggleAllStages(expand) {
     document.querySelectorAll('.stage-accordion-collapse').forEach(el => {
         const bsCollapse = bootstrap.Collapse.getOrCreateInstance(el, { toggle: false });
@@ -620,7 +654,26 @@ function toggleAllStages(expand) {
             bsCollapse.hide();
         }
     });
+    updateToggleAllButton(expand);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const stageAccordion = document.getElementById('stageAccordion');
+    if (stageAccordion) {
+        stageAccordion.addEventListener('shown.bs.collapse', function() {
+            const all = document.querySelectorAll('.stage-accordion-collapse');
+            if (all.length && Array.from(all).every(el => el.classList.contains('show'))) {
+                updateToggleAllButton(true);
+            }
+        });
+        stageAccordion.addEventListener('hidden.bs.collapse', function() {
+            const all = document.querySelectorAll('.stage-accordion-collapse');
+            if (all.length && !Array.from(all).every(el => el.classList.contains('show'))) {
+                updateToggleAllButton(false);
+            }
+        });
+    }
+});
 </script>
 @endpush
 

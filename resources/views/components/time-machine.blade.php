@@ -7,6 +7,22 @@
 @endphp
 
 <!-- TIME MACHINE FLOATING WIDGET (TEST CONTROLLER) -->
+<style>
+    @media (max-width: 575.98px) {
+        #time-machine-widget {
+            bottom: 12px !important;
+            right: 10px !important;
+            max-width: calc(100vw - 20px) !important;
+        }
+        #time-machine-widget .btn {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.55rem !important;
+        }
+        #time-machine-widget .btn .fs-6 {
+            font-size: 0.85rem !important;
+        }
+    }
+</style>
 <div id="time-machine-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: var(--z-time-machine, 1020); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
     <!-- Nút Trigger Thu Gọn -->
     <div class="d-flex align-items-center gap-2 p-2 rounded-pill shadow-lg border {{ $isMocked ? 'bg-warning bg-opacity-25 border-warning' : 'bg-white border-primary' }}" style="backdrop-filter: blur(8px);">

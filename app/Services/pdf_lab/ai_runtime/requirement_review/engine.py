@@ -62,7 +62,8 @@ def make_report(state,index,requirements):
             if cid in failed_checks:row.update(status='PROCESSING_ERROR',reason='Bước đối chiếu gặp lỗi; chưa thể kết luận về dẫn chứng.')
             elif match:
                 if match['citation_errors'] and not match['evidence']:
-                    row.update(status='PROCESSING_ERROR',reason='Câu trích đề xuất không vượt qua kiểm tra nguyên văn/vị trí; chưa thể dùng làm dẫn chứng.')
+                    row.update(status='NEEDS_VISUAL_REVIEW',reason='Câu trích trong báo cáo nằm trong bảng hoặc qua nhiều ô; giảng viên vui lòng kiểm tra trực tiếp trong PDF gốc.')
+                    processed+=1
                 elif match['status'] in ('NOT_FOUND','NEEDS_VISUAL_REVIEW'):
                     row.update(status='NEEDS_VISUAL_REVIEW' if match['status']=='NEEDS_VISUAL_REVIEW' else 'NO_VERIFIED_EVIDENCE',reason='Cần mở PDF kiểm tra nội dung hình/sơ đồ.' if match['status']=='NEEDS_VISUAL_REVIEW' else MISSING);processed+=1
                 elif verification:
@@ -270,6 +271,7 @@ def run_review(index,requirements,provider,state=None,settings=None,on_progress=
             state['matches'].update(matching(batch));notify('Đã lưu kết quả tìm câu trích nhóm')
             verify_ready(batch)
         state['processing_status']='COMPLETED'
+        state.pop('last_error',None)
     except ApiError as exc:
         state['processing_status']='PAUSED' if exc.code in ('review_call_budget','pacing_wait') else ('PARTIAL' if state['matches'] else 'FAILED')
         state['last_error']={'code':exc.code,'message':str(exc)}
