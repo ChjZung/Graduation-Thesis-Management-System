@@ -377,10 +377,39 @@ class DeTaiController extends Controller
         }
 
         $request->validate([
-            'FileDeCuong' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'FileDeCuong' => [
+                'required',
+                'file',
+                'max:10240',
+                function ($attribute, $value, $fail) {
+                    if (!$value instanceof \Illuminate\Http\UploadedFile || !$value->isValid()) {
+                        $fail('Vui lòng chọn file đề cương chi tiết hợp lệ.');
+                        return;
+                    }
+                    $allowedExts = ['pdf', 'doc', 'docx'];
+                    $clientExt = strtolower($value->getClientOriginalExtension());
+                    $guessExt = strtolower($value->guessExtension() ?? '');
+                    if (!in_array($clientExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
+                        $fail('File đề cương phải có định dạng .pdf, .doc hoặc .docx.');
+                        return;
+                    }
+                    $blockedMimes = [
+                        'application/x-dosexec',
+                        'application/x-executable',
+                        'application/x-msdownload',
+                        'application/x-php',
+                        'text/x-php',
+                        'application/x-sh',
+                        'text/x-shellscript',
+                    ];
+                    $mime = $value->getMimeType();
+                    if ($mime && in_array($mime, $blockedMimes)) {
+                        $fail('File đề cương không an toàn hoặc không đúng định dạng cho phép.');
+                    }
+                },
+            ],
         ], [
             'FileDeCuong.required' => 'Vui lòng chọn file đề cương chi tiết.',
-            'FileDeCuong.mimes'    => 'File đề cương phải có định dạng .pdf, .doc hoặc .docx.',
             'FileDeCuong.max'      => 'Dung lượng file đề cương tối đa là 10MB.',
         ]);
 
@@ -622,7 +651,36 @@ class DeTaiController extends Controller
             'MoTa'        => 'nullable|string',
             'YeuCau'      => 'nullable|string',
             'LinhVuc'     => 'nullable|string|max:150',
-            'FileDeCuong' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'FileDeCuong' => [
+                'nullable',
+                'file',
+                'max:10240',
+                function ($attribute, $value, $fail) {
+                    if (!$value instanceof \Illuminate\Http\UploadedFile || !$value->isValid()) {
+                        return;
+                    }
+                    $allowedExts = ['pdf', 'doc', 'docx'];
+                    $clientExt = strtolower($value->getClientOriginalExtension());
+                    $guessExt = strtolower($value->guessExtension() ?? '');
+                    if (!in_array($clientExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
+                        $fail('File đề cương phải có định dạng .pdf, .doc hoặc .docx.');
+                        return;
+                    }
+                    $blockedMimes = [
+                        'application/x-dosexec',
+                        'application/x-executable',
+                        'application/x-msdownload',
+                        'application/x-php',
+                        'text/x-php',
+                        'application/x-sh',
+                        'text/x-shellscript',
+                    ];
+                    $mime = $value->getMimeType();
+                    if ($mime && in_array($mime, $blockedMimes)) {
+                        $fail('File đề cương không an toàn hoặc không đúng định dạng cho phép.');
+                    }
+                },
+            ],
         ], [
             'TenDeTai.required'  => 'Vui lòng nhập tên đề tài.',
             'TenDeTai.min'       => 'Tên đề tài phải có tối thiểu 10 ký tự.',

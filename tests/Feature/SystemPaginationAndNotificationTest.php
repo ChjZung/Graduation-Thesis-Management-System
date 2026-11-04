@@ -67,6 +67,7 @@ class SystemPaginationAndNotificationTest extends TestCase
         }
 
         $response = $this->actingAs($user)->get('/giangvien/hoi-dong?tab=chamdiem&hd=HD06');
+        $this->assertTrue(in_array($response->status(), [200, 302]));
         if ($response->status() === 200) {
             $content = $response->getContent();
             $this->assertStringContainsString('sub-req-group', $content);
