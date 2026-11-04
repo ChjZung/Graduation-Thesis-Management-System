@@ -1851,11 +1851,11 @@ input[type=number],
 
                     {{-- Hàng 2 nút mẫu chuẩn (Cử nhân / Kỹ sư) --}}
                     <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" onclick="loadSampleTemplate('KLCN')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLKS' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLKS' ? 'Đề tài này thuộc hệ Kỹ sư, không áp dụng Mẫu Cử nhân' : 'Áp dụng mẫu chuẩn Cử nhân (3.5đ)' }}">
-                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Cử nhân
+                        <button type="button" class="btn btn-sm {{ $loaiKhoaLuan === 'KLCN' ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary' }} fw-bold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLCN')" style="height: 34px; pointer-events: auto;" {{ $loaiKhoaLuan === 'KLKS' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLKS' ? 'Đề tài này thuộc hệ Kỹ sư, không áp dụng Mẫu Cử nhân' : 'Áp dụng nhanh mẫu chuẩn Cử nhân (3.5đ)' }}">
+                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Cử nhân (3.5đ)
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 d-inline-flex align-items-center gap-1 shadow-xs" onclick="loadSampleTemplate('KLKS')" style="height: 34px;" {{ $loaiKhoaLuan === 'KLCN' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLCN' ? 'Đề tài này thuộc hệ Cử nhân, không áp dụng Mẫu Kỹ sư' : 'Áp dụng mẫu chuẩn Kỹ sư (4.0đ)' }}">
-                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Kỹ sư
+                        <button type="button" class="btn btn-sm {{ $loaiKhoaLuan === 'KLKS' ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary' }} fw-bold px-3 d-inline-flex align-items-center gap-1" onclick="loadSampleTemplate('KLKS')" style="height: 34px; pointer-events: auto;" {{ $loaiKhoaLuan === 'KLCN' ? 'disabled' : '' }} title="{{ $loaiKhoaLuan === 'KLCN' ? 'Đề tài này thuộc hệ Cử nhân, không áp dụng Mẫu Kỹ sư' : 'Áp dụng nhanh mẫu chuẩn Kỹ sư (4.0đ)' }}">
+                            <i class="fa-solid fa-file-lines me-1"></i> Mẫu Kỹ sư (4.0đ)
                         </button>
                     </div>
 
@@ -1889,8 +1889,8 @@ input[type=number],
                                       name="TieuChiChucNang"
                                       rows="14"
                                       class="form-control font-monospace border rounded-3 p-3"
-                                      style="min-height: 380px; font-size: 0.85rem; line-height: 1.6;"
-                                      placeholder="{{ $defaultPlaceholder }}">{{ $customChucNang ?? '' }}</textarea>
+                                      style="min-height: 380px; font-size: 0.85rem; line-height: 1.6; pointer-events: auto;"
+                                      placeholder="{{ $defaultPlaceholder }}">{{ trim($customChucNang ?? '') }}</textarea>
 
                             <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
                                 <div id="textareaInlineAlert" class="small text-danger d-none"></div>
@@ -2066,12 +2066,12 @@ input[type=number],
 
                 {{-- Modal Footer --}}
                 <div class="modal-footer bg-light py-2 d-flex justify-content-between align-items-center">
-                    <div class="small text-muted" id="footerDraftNotice" style="font-size: 0.75rem;">
-                        Sẵn sàng lưu.
+                    <div class="small" id="footerDraftNotice" style="font-size: 0.75rem;">
+                        <span class="text-muted"><i class="fa-solid fa-circle-info me-1"></i> Sẵn sàng lưu.</span>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 align-items-center">
                         <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" id="btnSubmitChucNang" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm">
+                        <button type="submit" id="btnSubmitChucNang" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" style="pointer-events: auto;">
                             <i class="fa-solid fa-floppy-disk me-1"></i> Lưu &amp; Cập Nhật
                         </button>
                     </div>
@@ -2767,391 +2767,457 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ── XỬ LÝ SOẠN THẢO VÀ LIVE PREVIEW MODAL CÀI ĐẶT CHỨC NĂNG (DÀNH CHO THƯ KÝ) ──
-    const modalEl = document.getElementById('modalCaiDatChucNang');
-    const textareaChucNang = document.getElementById('textareaChucNang');
-    const previewSummaryText = document.getElementById('previewSummaryText');
-    const previewParsedContainer = document.getElementById('previewParsedContainer');
-    const btnSubmitChucNang = document.getElementById('btnSubmitChucNang');
-    const textareaInlineAlert = document.getElementById('textareaInlineAlert');
-    const footerDraftNotice = document.getElementById('footerDraftNotice');
+    try {
+        const modalEl = document.getElementById('modalCaiDatChucNang');
+        const textareaChucNang = document.getElementById('textareaChucNang');
+        const previewSummaryText = document.getElementById('previewSummaryText');
+        const previewParsedContainer = document.getElementById('previewParsedContainer');
+        const btnSubmitChucNang = document.getElementById('btnSubmitChucNang');
+        const textareaInlineAlert = document.getElementById('textareaInlineAlert');
+        const footerDraftNotice = document.getElementById('footerDraftNotice');
 
-    const activeLoaiKhoaLuan = '{{ $loaiKhoaLuan ?? "KLCN" }}';
-    const targetScoreCap = (activeLoaiKhoaLuan === 'KLKS') ? 4.00 : 3.50;
-    const activeHoSoMa = '{{ $activeHoSo->MaHoSo ?? "" }}';
-    const draftStorageKey = 'kltn_chucnang_draft_' + activeHoSoMa;
+        const activeLoaiKhoaLuan = '{{ $loaiKhoaLuan ?? "KLCN" }}';
+        const targetScoreCap = (activeLoaiKhoaLuan === 'KLKS') ? 4.00 : 3.50;
+        const activeHoSoMa = '{{ $activeHoSo->MaHoSo ?? "" }}';
+        const draftStorageKey = 'kltn_chucnang_draft_' + activeHoSoMa;
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // Phân bổ điểm chính xác theo cent (tổng luôn đúng bằng trần)
-    function distributeScoresExact(target, count) {
-        if (count <= 0) return [];
-        const targetCents = Math.round(target * 100);
-        const baseCents = Math.floor(targetCents / count);
-        const remainder = targetCents % count;
-        const scores = [];
-        for (let i = 0; i < count; i++) {
-            const cents = baseCents + (i < remainder ? 1 : 0);
-            scores.push(parseFloat((cents / 100).toFixed(2)));
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-        return scores;
-    }
 
-    // Tự động nhận diện cấu trúc phân cấp từ văn bản thuần:
-    // - Dòng không thụt lề = Nhóm chức năng (hoặc bắt đầu bằng Chức năng, CN, số La Mã, 1., I.)
-    // - Dòng có thụt lề (Tab hoặc 2+ space) = Yêu cầu con (hoặc bắt đầu bằng -, *, •, a), 1.1)
-    // - Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu (không báo lỗi).
-    function parseTextToGroups(text) {
-        const lines = (text || '').split('\n');
-        const rawGroups = [];
-        let currentGroup = null;
+        // Phân bổ điểm chính xác theo cent (tổng luôn đúng bằng trần)
+        function distributeScoresExact(target, count) {
+            if (count <= 0) return [];
+            const targetCents = Math.round(target * 100);
+            const baseCents = Math.floor(targetCents / count);
+            const remainder = targetCents % count;
+            const scores = [];
+            for (let i = 0; i < count; i++) {
+                const cents = baseCents + (i < remainder ? 1 : 0);
+                scores.push(parseFloat((cents / 100).toFixed(2)));
+            }
+            return scores;
+        }
 
-        lines.forEach(rawLine => {
-            const trimmed = rawLine.trim();
-            if (!trimmed) return;
+        // Tự động nhận diện cấu trúc phân cấp từ văn bản thuần:
+        // - Dòng không thụt lề = Nhóm chức năng (hoặc bắt đầu bằng Chức năng, CN, số La Mã, 1., I.)
+        // - Dòng có thụt lề (Tab hoặc 2+ space) = Yêu cầu con (hoặc bắt đầu bằng -, *, •, a), 1.1)
+        // - Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu (không báo lỗi).
+        function parseTextToGroups(text) {
+            const lines = (text || '').split('\n');
+            const rawGroups = [];
+            let currentGroup = null;
 
-            const isIndented = /^(\t|\s{2,})/.test(rawLine);
-            const isExplicitGroup = /^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/i.test(trimmed);
-            const isExplicitSub = /^([\*\-\•\+]|[a-z]\)|\d+\.\d+)/i.test(trimmed);
+            lines.forEach(rawLine => {
+                const trimmed = rawLine.trim();
+                if (!trimmed) return;
 
-            let isGroup = false;
-            if (isExplicitSub) {
-                isGroup = false;
-            } else if (isExplicitGroup) {
-                isGroup = true;
-            } else if (isIndented) {
-                isGroup = false;
-            } else {
-                isGroup = true;
+                const isIndented = /^(\t|\s{2,})/.test(rawLine);
+                const isExplicitGroup = /^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/i.test(trimmed);
+                const isExplicitSub = /^([\*\-\•\+]|[a-z]\)|\d+\.\d+)/i.test(trimmed);
+
+                let isGroup = false;
+                if (isExplicitSub) {
+                    isGroup = false;
+                } else if (isExplicitGroup) {
+                    isGroup = true;
+                } else if (isIndented) {
+                    isGroup = false;
+                } else {
+                    isGroup = true;
+                }
+
+                if (isGroup) {
+                    const cleanName = trimmed.replace(/^[\+\-\*\•\#\s]+/, '').trim();
+                    currentGroup = {
+                        name: cleanName,
+                        items: []
+                    };
+                    rawGroups.push(currentGroup);
+                } else {
+                    let cleanItem = trimmed
+                        .replace(/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/i, '')
+                        .replace(/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/i, '')
+                        .trim();
+
+                    if (cleanItem) {
+                        if (!currentGroup) {
+                            currentGroup = {
+                                name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
+                                items: []
+                            };
+                            rawGroups.push(currentGroup);
+                        }
+                        currentGroup.items.push(cleanItem);
+                    }
+                }
+            });
+
+            // Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu
+            const finalGroups = [];
+            rawGroups.forEach(g => {
+                if (g.items.length === 0) {
+                    finalGroups.push({
+                        name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
+                        items: [g.name]
+                    });
+                } else {
+                    finalGroups.push(g);
+                }
+            });
+
+            // Gộp các nhóm liền kề có cùng tên
+            const mergedGroups = [];
+            finalGroups.forEach(g => {
+                if (mergedGroups.length > 0 && mergedGroups[mergedGroups.length - 1].name === g.name) {
+                    mergedGroups[mergedGroups.length - 1].items.push(...g.items);
+                } else {
+                    mergedGroups.push({ name: g.name, items: [...g.items] });
+                }
+            });
+
+            let totalReqs = 0;
+            mergedGroups.forEach(g => { totalReqs += g.items.length; });
+
+            return { groups: mergedGroups, totalReqs };
+        }
+
+        // Cập nhật Live Preview khung xem trước
+        function updateLivePreview() {
+            if (!textareaChucNang) return;
+            const text = textareaChucNang.value.trim();
+            const { groups, totalReqs } = parseTextToGroups(text);
+
+            const scores = distributeScoresExact(targetScoreCap, totalReqs);
+            let totalScore = 0;
+            scores.forEach(s => { totalScore += s; });
+            const formattedTotal = totalReqs > 0 ? totalScore.toFixed(2) : '0.00';
+            const avgScore = totalReqs > 0 ? (targetScoreCap / totalReqs).toFixed(2) : '0.00';
+            const targetFormatted = targetScoreCap.toFixed(2);
+
+            if (previewSummaryText) {
+                previewSummaryText.innerHTML = `${totalReqs} yêu cầu &bull; mỗi yêu cầu &asymp; ${avgScore} đ &bull; tổng ${formattedTotal} / ${targetFormatted}đ`;
             }
 
-            if (isGroup) {
-                const cleanName = trimmed.replace(/^[\+\-\*\•\#\s]+/, '').trim();
-                currentGroup = {
-                    name: cleanName,
-                    items: []
-                };
-                rawGroups.push(currentGroup);
-            } else {
-                let cleanItem = trimmed
-                    .replace(/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/i, '')
-                    .replace(/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/i, '')
-                    .trim();
-
-                if (cleanItem) {
-                    if (!currentGroup) {
-                        currentGroup = {
-                            name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
-                            items: []
-                        };
-                        rawGroups.push(currentGroup);
-                    }
-                    currentGroup.items.push(cleanItem);
+            if (btnSubmitChucNang) {
+                btnSubmitChucNang.disabled = (totalReqs === 0);
+                if (totalReqs === 0) {
+                    btnSubmitChucNang.title = 'Vui lòng nhập ít nhất 1 yêu cầu chức năng (hoặc chọn Mẫu Cử nhân / Mẫu Kỹ sư) để lưu.';
+                } else {
+                    btnSubmitChucNang.title = `Sẵn sàng lưu ${totalReqs} yêu cầu (${formattedTotal}đ / ${targetFormatted}đ)`;
                 }
             }
-        });
 
-        // Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu
-        const finalGroups = [];
-        rawGroups.forEach(g => {
-            if (g.items.length === 0) {
-                finalGroups.push({
-                    name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
-                    items: [g.name]
+            if (footerDraftNotice) {
+                if (totalReqs === 0) {
+                    footerDraftNotice.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa có yêu cầu nào (Hãy nhập nội dung hoặc chọn mẫu).</span>`;
+                } else {
+                    footerDraftNotice.innerHTML = `<span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Đã cấu hình ${totalReqs} yêu cầu (${formattedTotal}đ / ${targetFormatted}đ) &bull; Sẵn sàng lưu</span>`;
+                }
+            }
+
+            if (textareaInlineAlert) {
+                if (text.length > 0 && totalReqs === 0) {
+                    textareaInlineAlert.textContent = 'Vui lòng nhập nội dung yêu cầu hợp lệ.';
+                    textareaInlineAlert.classList.remove('d-none');
+                } else {
+                    textareaInlineAlert.textContent = '';
+                    textareaInlineAlert.classList.add('d-none');
+                }
+            }
+
+            if (previewParsedContainer) {
+                if (totalReqs === 0) {
+                    previewParsedContainer.innerHTML = `
+                        <div class="text-center py-4 text-muted small fst-italic">
+                            Chưa có yêu cầu nào.<br>Hãy gõ danh sách bên trái hoặc chọn <strong>[Mẫu Cử nhân]</strong> / <strong>[Mẫu Kỹ sư]</strong>.
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                let scoreIdx = 0;
+                groups.forEach(g => {
+                    html += `
+                    <div class="mb-2 p-2 bg-light rounded border border-light-subtle">
+                        <div class="fw-bold text-dark small mb-1 pb-1 border-bottom d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-folder me-1 text-primary"></i> ${escapeHtml(g.name)}</span>
+                            <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.65rem;">${g.items.length} YC</span>
+                        </div>
+                        <div class="space-y-1">
+                    `;
+                    g.items.forEach(item => {
+                        const s = scores[scoreIdx++] || 0.50;
+                        html += `
+                        <div class="d-flex justify-content-between align-items-center py-1 ps-2 border-bottom border-light" style="font-size: 0.75rem;">
+                            <span class="text-dark text-truncate me-2" title="${escapeHtml(item)}">
+                                &bull; ${escapeHtml(item)}
+                            </span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">
+                                +${s.toFixed(2)}đ
+                            </span>
+                        </div>
+                        `;
+                    });
+                    html += `</div></div>`;
                 });
+                previewParsedContainer.innerHTML = html;
+            }
+        }
+
+        // Tự động lưu nháp vào LocalStorage
+        function autoSaveDraft() {
+            if (!textareaChucNang) return;
+            try {
+                localStorage.setItem(draftStorageKey, textareaChucNang.value);
+                const { totalReqs } = parseTextToGroups(textareaChucNang.value.trim());
+                if (footerDraftNotice && totalReqs > 0) {
+                    const now = new Date();
+                    const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
+                    footerDraftNotice.innerHTML = `<span class="text-success fw-semibold"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Đã lưu nháp lúc ${timeStr} (${totalReqs} yêu cầu)</span>`;
+                }
+            } catch (e) {}
+        }
+
+        // Quản lý lifecycle của modalCaiDatChucNang: chống đè backdrop, tự focus
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function() {
+                // Dọn dẹp backdrop mồ côi nếu còn sót lại từ lần mở trước
+                document.querySelectorAll('.modal-backdrop:not(.viewer-backdrop)').forEach(function(b, idx, arr) {
+                    if (arr.length > 1 && idx < arr.length - 1) {
+                        b.remove();
+                    }
+                });
+
+                // Luôn đảm bảo pointer-events hoạt động trên modal và các nút con
+                modalEl.style.pointerEvents = 'auto';
+                const dialog = modalEl.querySelector('.modal-dialog');
+                if (dialog) dialog.style.pointerEvents = 'auto';
+
+                // Đặt z-index chuẩn cho backdrop (1050), thấp hơn modal (1055)
+                setTimeout(function() {
+                    document.querySelectorAll('.modal-backdrop:not(.viewer-backdrop)').forEach(function(b) {
+                        b.style.zIndex = 'var(--z-modal-backdrop, 1050)';
+                        b.classList.remove('viewer-backdrop');
+                    });
+                }, 10);
+            });
+
+            modalEl.addEventListener('shown.bs.modal', function() {
+                if (textareaChucNang) {
+                    textareaChucNang.focus();
+                }
+                updateLivePreview();
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', function() {
+                setTimeout(function() {
+                    const remainingOpen = document.querySelectorAll('.modal.show');
+                    if (remainingOpen.length === 0) {
+                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('overflow');
+                        document.body.style.removeProperty('padding-right');
+                    }
+                }, 50);
+            });
+        }
+
+        // Chuyển tab hiển thị Đề Cương Đề Tài (Đã Phê Duyệt)
+        window.showOutlineTab = function() {
+            const tabBtn = document.getElementById('tab-decuong-btn');
+            if (tabBtn && window.bootstrap) {
+                const tab = bootstrap.Tab.getOrCreateInstance(tabBtn);
+                tab.show();
+            }
+            const banner = document.getElementById('outlineNoticeBanner');
+            if (banner) {
+                banner.classList.remove('d-none');
+                banner.classList.add('d-flex');
+            }
+        };
+
+        // Toggle chuyển đổi qua lại giữa Đề Cương và Xem Trước
+        window.toggleDeCuongTab = function() {
+            const decuongPane = document.getElementById('pane-decuong');
+            if (decuongPane && decuongPane.classList.contains('active')) {
+                const previewBtn = document.getElementById('tab-preview-btn');
+                if (previewBtn && window.bootstrap) {
+                    bootstrap.Tab.getOrCreateInstance(previewBtn).show();
+                }
             } else {
-                finalGroups.push(g);
+                showOutlineTab();
+            }
+        };
+
+        // Chèn đoạn văn bản vào vị trí con trỏ của ô soạn thảo (luôn dùng văn bản thuần, không dính thẻ HTML hay &nbsp;)
+        window.insertSnippetToTextarea = function(text) {
+            if (!textareaChucNang || !text) return;
+            let cleanText = String(text);
+            if (/<[a-z][\s\S]*>/i.test(cleanText) || /&([a-zA-Z0-9#]+);/.test(cleanText)) {
+                const temp = document.createElement('div');
+                temp.innerHTML = cleanText;
+                temp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+                temp.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6').forEach(b => b.appendChild(document.createTextNode('\n')));
+                cleanText = temp.textContent || temp.innerText || '';
+            }
+            cleanText = cleanText.replace(/\u00a0/g, ' ').replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+            if (!cleanText) return;
+
+            const start = textareaChucNang.selectionStart;
+            const end = textareaChucNang.selectionEnd;
+            const currentVal = textareaChucNang.value;
+            const prefix = (start > 0 && !currentVal.substring(0, start).endsWith('\n')) ? '\n' : '';
+            const suffix = (!currentVal.substring(end).startsWith('\n')) ? '\n' : '';
+            textareaChucNang.value = currentVal.substring(0, start) + prefix + cleanText + suffix + currentVal.substring(end);
+            textareaChucNang.focus();
+            updateLivePreview();
+            autoSaveDraft();
+        };
+
+        // Đăng ký event delegation cho các nút chèn đoạn văn bản
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-insert-snippet');
+            if (btn) {
+                e.preventDefault();
+                const snippet = btn.getAttribute('data-snippet') || '';
+                window.insertSnippetToTextarea(snippet);
             }
         });
 
-        // Gộp các nhóm liền kề có cùng tên
-        const mergedGroups = [];
-        finalGroups.forEach(g => {
-            if (mergedGroups.length > 0 && mergedGroups[mergedGroups.length - 1].name === g.name) {
-                mergedGroups[mergedGroups.length - 1].items.push(...g.items);
-            } else {
-                mergedGroups.push({ name: g.name, items: [...g.items] });
-            }
-        });
+        // Nạp tự động các phân hệ chức năng từ Đề Cương vào ô soạn thảo
+        window.applyOutlineAllToTextarea = function() {
+            const store = document.getElementById('outlineDataStore');
+            if (!store) return;
+            const moTa = store.getAttribute('data-mo-ta') || store.getAttribute('data-noi-dung') || '';
+            const yeuCau = store.getAttribute('data-yeu-cau') || '';
+            const mucTieu = store.getAttribute('data-muc-tieu') || '';
 
-        let totalReqs = 0;
-        mergedGroups.forEach(g => { totalReqs += g.items.length; });
-
-        return { groups: mergedGroups, totalReqs };
-    }
-
-    // Cập nhật Live Preview khung xem trước
-    function updateLivePreview() {
-        if (!textareaChucNang) return;
-        const text = textareaChucNang.value.trim();
-        const { groups, totalReqs } = parseTextToGroups(text);
-
-        const scores = distributeScoresExact(targetScoreCap, totalReqs);
-        let totalScore = 0;
-        scores.forEach(s => { totalScore += s; });
-        const formattedTotal = totalReqs > 0 ? totalScore.toFixed(2) : '0.00';
-        const avgScore = totalReqs > 0 ? (targetScoreCap / totalReqs).toFixed(2) : '0.00';
-        const targetFormatted = targetScoreCap.toFixed(2);
-
-        if (previewSummaryText) {
-            previewSummaryText.innerHTML = `${totalReqs} yêu cầu &bull; mỗi yêu cầu &asymp; ${avgScore} đ &bull; tổng ${formattedTotal} / ${targetFormatted}đ`;
-        }
-
-        if (btnSubmitChucNang) {
-            btnSubmitChucNang.disabled = (totalReqs === 0);
-            btnSubmitChucNang.title = (totalReqs === 0) ? 'Vui lòng nhập ít nhất 1 yêu cầu chức năng.' : '';
-        }
-
-        if (textareaInlineAlert) {
-            if (text.length > 0 && totalReqs === 0) {
-                textareaInlineAlert.textContent = 'Vui lòng nhập nội dung yêu cầu hợp lệ.';
-                textareaInlineAlert.classList.remove('d-none');
-            } else {
-                textareaInlineAlert.textContent = '';
-                textareaInlineAlert.classList.add('d-none');
-            }
-        }
-
-        if (previewParsedContainer) {
-            if (totalReqs === 0) {
-                previewParsedContainer.innerHTML = `
-                    <div class="text-center py-4 text-muted small fst-italic">
-                        Chưa có yêu cầu nào.<br>Hãy gõ danh sách bên trái hoặc chọn <strong>[Mẫu Cử nhân]</strong> / <strong>[Mẫu Kỹ sư]</strong>.
-                    </div>
-                `;
+            const fullSource = `${moTa}\n${yeuCau}\n${mucTieu}`.trim();
+            if (!fullSource) {
+                alert('Chưa tìm thấy nội dung chi tiết trong đề cương của đề tài này.');
                 return;
             }
 
-            let html = '';
-            let scoreIdx = 0;
-            groups.forEach(g => {
-                html += `
-                <div class="mb-2 p-2 bg-light rounded border border-light-subtle">
-                    <div class="fw-bold text-dark small mb-1 pb-1 border-bottom d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-folder me-1 text-primary"></i> ${escapeHtml(g.name)}</span>
-                        <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.65rem;">${g.items.length} YC</span>
-                    </div>
-                    <div class="space-y-1">
-                `;
-                g.items.forEach(item => {
-                    const s = scores[scoreIdx++] || 0.50;
-                    html += `
-                    <div class="d-flex justify-content-between align-items-center py-1 ps-2 border-bottom border-light" style="font-size: 0.75rem;">
-                        <span class="text-dark text-truncate me-2" title="${escapeHtml(item)}">
-                            &bull; ${escapeHtml(item)}
-                        </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">
-                            +${s.toFixed(2)}đ
-                        </span>
-                    </div>
-                    `;
+            const rawLines = fullSource.split('\n');
+            const extracted = [];
+            rawLines.forEach(l => {
+                const t = l.trim().replace(/^[\-\*\+\d\.\)]+/, '').trim();
+                if (t.length > 8 && t.length < 250) {
+                    extracted.push(t);
+                }
+            });
+
+            if (extracted.length === 0) {
+                alert('Không thể nhận diện danh sách chức năng từ đề cương. Đã nạp mẫu theo loại khóa luận.');
+                loadSampleTemplate(activeLoaiKhoaLuan);
+                return;
+            }
+
+            let resultText = '';
+            const chunkSize = Math.max(2, Math.ceil(extracted.length / 3));
+            for (let i = 0; i < extracted.length; i += chunkSize) {
+                const slice = extracted.slice(i, i + chunkSize);
+                const gNum = Math.floor(i / chunkSize) + 1;
+                resultText += `Phân hệ chức năng ${gNum < 10 ? '0' + gNum : gNum}:\n`;
+                slice.forEach(item => {
+                    resultText += `  ${item}\n`;
                 });
-                html += `</div></div>`;
-            });
-            previewParsedContainer.innerHTML = html;
-        }
-    }
-
-    // Tự động lưu nháp vào LocalStorage
-    function autoSaveDraft() {
-        if (!textareaChucNang) return;
-        try {
-            localStorage.setItem(draftStorageKey, textareaChucNang.value);
-            if (footerDraftNotice) {
-                const now = new Date();
-                const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
-                footerDraftNotice.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-success me-1"></i> Đã lưu nháp lúc ${timeStr}`;
             }
-        } catch (e) {}
-    }
 
-    // Chuyển tab hiển thị Đề Cương Đề Tài (Đã Phê Duyệt)
-    window.showOutlineTab = function() {
-        const tabBtn = document.getElementById('tab-decuong-btn');
-        if (tabBtn && window.bootstrap) {
-            const tab = bootstrap.Tab.getOrCreateInstance(tabBtn);
-            tab.show();
-        }
-        const banner = document.getElementById('outlineNoticeBanner');
-        if (banner) {
-            banner.classList.remove('d-none');
-            banner.classList.add('d-flex');
-        }
-    };
-
-    // Toggle chuyển đổi qua lại giữa Đề Cương và Xem Trước
-    window.toggleDeCuongTab = function() {
-        const decuongPane = document.getElementById('pane-decuong');
-        if (decuongPane && decuongPane.classList.contains('active')) {
-            const previewBtn = document.getElementById('tab-preview-btn');
-            if (previewBtn && window.bootstrap) {
-                bootstrap.Tab.getOrCreateInstance(previewBtn).show();
-            }
-        } else {
-            showOutlineTab();
-        }
-    };
-
-    // Chèn đoạn văn bản vào vị trí con trỏ của ô soạn thảo (luôn dùng văn bản thuần, không dính thẻ HTML hay &nbsp;)
-    window.insertSnippetToTextarea = function(text) {
-        if (!textareaChucNang || !text) return;
-        let cleanText = String(text);
-        if (/<[a-z][\s\S]*>/i.test(cleanText) || /&([a-zA-Z0-9#]+);/.test(cleanText)) {
-            const temp = document.createElement('div');
-            temp.innerHTML = cleanText;
-            temp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
-            temp.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6').forEach(b => b.appendChild(document.createTextNode('\n')));
-            cleanText = temp.textContent || temp.innerText || '';
-        }
-        cleanText = cleanText.replace(/\u00a0/g, ' ').replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-        if (!cleanText) return;
-
-        const start = textareaChucNang.selectionStart;
-        const end = textareaChucNang.selectionEnd;
-        const currentVal = textareaChucNang.value;
-        const prefix = (start > 0 && !currentVal.substring(0, start).endsWith('\n')) ? '\n' : '';
-        const suffix = (!currentVal.substring(end).startsWith('\n')) ? '\n' : '';
-        textareaChucNang.value = currentVal.substring(0, start) + prefix + cleanText + suffix + currentVal.substring(end);
-        textareaChucNang.focus();
-        updateLivePreview();
-        autoSaveDraft();
-    };
-
-    // Đăng ký event delegation cho các nút chèn đoạn văn bản
-    document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.btn-insert-snippet');
-        if (btn) {
-            e.preventDefault();
-            const snippet = btn.getAttribute('data-snippet') || '';
-            window.insertSnippetToTextarea(snippet);
-        }
-    });
-
-    // Nạp tự động các phân hệ chức năng từ Đề Cương vào ô soạn thảo
-    window.applyOutlineAllToTextarea = function() {
-        const store = document.getElementById('outlineDataStore');
-        if (!store) return;
-        const moTa = store.getAttribute('data-mo-ta') || store.getAttribute('data-noi-dung') || '';
-        const yeuCau = store.getAttribute('data-yeu-cau') || '';
-        const mucTieu = store.getAttribute('data-muc-tieu') || '';
-
-        const fullSource = `${moTa}\n${yeuCau}\n${mucTieu}`.trim();
-        if (!fullSource) {
-            alert('Chưa tìm thấy nội dung chi tiết trong đề cương của đề tài này.');
-            return;
-        }
-
-        const rawLines = fullSource.split('\n');
-        const extracted = [];
-        rawLines.forEach(l => {
-            const t = l.trim().replace(/^[\-\*\+\d\.\)]+/, '').trim();
-            if (t.length > 8 && t.length < 250) {
-                extracted.push(t);
-            }
-        });
-
-        if (extracted.length === 0) {
-            alert('Không thể nhận diện danh sách chức năng từ đề cương. Đã nạp mẫu theo loại khóa luận.');
-            loadSampleTemplate(activeLoaiKhoaLuan);
-            return;
-        }
-
-        let resultText = '';
-        const chunkSize = Math.max(2, Math.ceil(extracted.length / 3));
-        for (let i = 0; i < extracted.length; i += chunkSize) {
-            const slice = extracted.slice(i, i + chunkSize);
-            const gNum = Math.floor(i / chunkSize) + 1;
-            resultText += `Phân hệ chức năng ${gNum < 10 ? '0' + gNum : gNum}:\n`;
-            slice.forEach(item => {
-                resultText += `  ${item}\n`;
-            });
-        }
-
-        textareaChucNang.value = resultText.trim();
-        updateLivePreview();
-        autoSaveDraft();
-        textareaChucNang.focus();
-    };
-    // Nạp mẫu chuẩn theo loại khóa luận
-    window.loadSampleTemplate = function(loai) {
-        if (loai === 'KLKS') {
-            textareaChucNang.value = "Chức năng cơ bản của ứng dụng:\n  Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền ứng dụng\nCài đặt chức năng nghiệp vụ trên nền tảng Web:\n  Quản trị danh mục và dữ liệu hệ thống\n  Quy trình xử lý nghiệp vụ chính trên Web\n  Báo cáo thống kê số liệu và xuất tệp Excel/PDF\nCài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  Giao diện người dùng Mobile và xác thực sinh trắc học\n  Thao tác tác nghiệp thực địa qua thiết bị di động\n  Nhận thông báo đẩy (Push Notification) tức thời\n  Đồng bộ trạng thái và dữ liệu thời gian thực giữa Web và Mobile";
-        } else {
-            textareaChucNang.value = "Chức năng 01: Quản lý và xử lý đơn hàng tự động\n  Tiếp nhận và phân loại đơn hàng theo trạng thái\n  Tích hợp cổng thanh toán trực tuyến\nChức năng 02: Quản lý danh mục sản phẩm và kho hàng\n  Cập nhật tồn kho theo thời gian thực\n  Báo cáo thống kê doanh thu và hàng tồn kho\nChức năng 03: Phân hệ người dùng và thông báo đẩy\n  Đăng nhập đa kênh và xác thực OTP\n  Gửi thông báo đơn hàng qua Email/Zalo\n  Phân quyền vai trò và nhật ký thao tác hệ thống";
-        }
-        updateLivePreview();
-        autoSaveDraft();
-    };
-
-    // Xóa hết toàn bộ
-    window.clearCriteria = function() {
-        if (confirm('Thầy/Cô có chắc chắn muốn xóa toàn bộ nội dung chức năng đã soạn thảo?')) {
-            textareaChucNang.value = '';
+            textareaChucNang.value = resultText.trim();
             updateLivePreview();
             autoSaveDraft();
-        }
-    };
+            textareaChucNang.focus();
+        };
 
-    // Bắt sự kiện trên Textarea
-    if (textareaChucNang) {
-        // Tab / Shift+Tab để thụt dòng / lùi dòng mà không mất focus
-        textareaChucNang.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                const start = this.selectionStart;
-                const end = this.selectionEnd;
-                const val = this.value;
+        // Nạp mẫu chuẩn theo loại khóa luận
+        window.loadSampleTemplate = function(loai) {
+            if (!textareaChucNang) return;
+            if (loai === 'KLKS') {
+                textareaChucNang.value = "Chức năng cơ bản của ứng dụng:\n  Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền ứng dụng\nCài đặt chức năng nghiệp vụ trên nền tảng Web:\n  Quản trị danh mục và dữ liệu hệ thống\n  Quy trình xử lý nghiệp vụ chính trên Web\n  Báo cáo thống kê số liệu và xuất tệp Excel/PDF\nCài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  Giao diện người dùng Mobile và xác thực sinh trắc học\n  Thao tác tác nghiệp thực địa qua thiết bị di động\n  Nhận thông báo đẩy (Push Notification) tức thời\n  Đồng bộ trạng thái và dữ liệu thời gian thực giữa Web và Mobile";
+            } else {
+                textareaChucNang.value = "Chức năng 01: Quản lý và xử lý đơn hàng tự động\n  Tiếp nhận và phân loại đơn hàng theo trạng thái\n  Tích hợp cổng thanh toán trực tuyến\nChức năng 02: Quản lý danh mục sản phẩm và kho hàng\n  Cập nhật tồn kho theo thời gian thực\n  Báo cáo thống kê doanh thu và hàng tồn kho\nChức năng 03: Phân hệ người dùng và thông báo đẩy\n  Đăng nhập đa kênh và xác thực OTP\n  Gửi thông báo đơn hàng qua Email/Zalo\n  Phân quyền vai trò và nhật ký thao tác hệ thống";
+            }
+            updateLivePreview();
+            autoSaveDraft();
+            textareaChucNang.focus();
+        };
 
-                if (e.shiftKey) {
-                    const beforeStart = val.substring(0, start);
-                    const lineStart = beforeStart.lastIndexOf('\n') + 1;
-                    const currentLine = val.substring(lineStart, end);
-
-                    if (currentLine.startsWith('  ')) {
-                        this.value = val.substring(0, lineStart) + val.substring(lineStart + 2);
-                        this.selectionStart = Math.max(lineStart, start - 2);
-                        this.selectionEnd = Math.max(lineStart, end - 2);
-                    } else if (currentLine.startsWith('\t')) {
-                        this.value = val.substring(0, lineStart) + val.substring(lineStart + 1);
-                        this.selectionStart = Math.max(lineStart, start - 1);
-                        this.selectionEnd = Math.max(lineStart, end - 1);
-                    }
-                } else {
-                    this.value = val.substring(0, start) + '  ' + val.substring(end);
-                    this.selectionStart = this.selectionEnd = start + 2;
-                }
+        // Xóa hết toàn bộ
+        window.clearCriteria = function() {
+            if (!textareaChucNang) return;
+            if (confirm('Thầy/Cô có chắc chắn muốn xóa toàn bộ nội dung chức năng đã soạn thảo?')) {
+                textareaChucNang.value = '';
                 updateLivePreview();
                 autoSaveDraft();
+                textareaChucNang.focus();
             }
-        });
+        };
 
-        textareaChucNang.addEventListener('input', function() {
-            updateLivePreview();
-            autoSaveDraft();
-        });
+        // Bắt sự kiện trên Textarea
+        if (textareaChucNang) {
+            // Tab / Shift+Tab để thụt dòng / lùi dòng mà không mất focus
+            textareaChucNang.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const val = this.value;
 
-        // Phục hồi bản nháp nếu ô trống
-        try {
-            const draft = localStorage.getItem(draftStorageKey);
-            if (!textareaChucNang.value.trim() && draft && draft.trim()) {
-                textareaChucNang.value = draft;
-                if (footerDraftNotice) {
-                    footerDraftNotice.innerHTML = `<i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Đã phục hồi bản nháp gần nhất`;
+                    if (e.shiftKey) {
+                        const beforeStart = val.substring(0, start);
+                        const lineStart = beforeStart.lastIndexOf('\n') + 1;
+                        const currentLine = val.substring(lineStart, end);
+
+                        if (currentLine.startsWith('  ')) {
+                            this.value = val.substring(0, lineStart) + val.substring(lineStart + 2);
+                            this.selectionStart = Math.max(lineStart, start - 2);
+                            this.selectionEnd = Math.max(lineStart, end - 2);
+                        } else if (currentLine.startsWith('\t')) {
+                            this.value = val.substring(0, lineStart) + val.substring(lineStart + 1);
+                            this.selectionStart = Math.max(lineStart, start - 1);
+                            this.selectionEnd = Math.max(lineStart, end - 1);
+                        }
+                    } else {
+                        this.value = val.substring(0, start) + '  ' + val.substring(end);
+                        this.selectionStart = this.selectionEnd = start + 2;
+                    }
+                    updateLivePreview();
+                    autoSaveDraft();
                 }
-            }
-        } catch (e) {}
+            });
 
-        updateLivePreview();
-    }
+            textareaChucNang.addEventListener('input', function() {
+                updateLivePreview();
+                autoSaveDraft();
+            });
 
-    // Khi nộp form: xóa nháp
-    const formCaiDatChucNang = document.getElementById('formCaiDatChucNang');
-    if (formCaiDatChucNang) {
-        formCaiDatChucNang.addEventListener('submit', function() {
-            try { localStorage.removeItem(draftStorageKey); } catch (e) {}
-        });
+            // Phục hồi bản nháp nếu ô trống
+            try {
+                const draft = localStorage.getItem(draftStorageKey);
+                if (!textareaChucNang.value.trim() && draft && draft.trim()) {
+                    textareaChucNang.value = draft;
+                    if (footerDraftNotice) {
+                        footerDraftNotice.innerHTML = `<span class="text-primary fw-semibold"><i class="fa-solid fa-clock-rotate-left me-1"></i> Đã phục hồi bản nháp gần nhất</span>`;
+                    }
+                }
+            } catch (e) {}
+
+            updateLivePreview();
+        }
+
+        // Khi nộp form: xóa nháp
+        const formCaiDatChucNang = document.getElementById('formCaiDatChucNang');
+        if (formCaiDatChucNang) {
+            formCaiDatChucNang.addEventListener('submit', function() {
+                try { localStorage.removeItem(draftStorageKey); } catch (e) {}
+            });
+        }
+    } catch (errModalChucNang) {
+        console.error('Lỗi an toàn khi khởi tạo Modal Cài đặt chức năng:', errModalChucNang);
     }
 
     // =========================================================================

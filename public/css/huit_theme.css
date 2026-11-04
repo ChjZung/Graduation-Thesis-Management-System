@@ -39,8 +39,10 @@
     --z-time-machine:     1020;
     --z-header:           1030;
     --z-dropdown:         1040;
+    --z-backdrop:         1050;
     --z-modal-backdrop:   1050;
     --z-modal:            1055;
+    --z-modal-stacked-backdrop: 1065;
     --z-modal-stacked:    1070;
     --z-viewer-backdrop:  1085;
     --z-viewer-modal:     1090;
@@ -3580,10 +3582,28 @@ label .text-danger {
 
 /* Đảm bảo toàn hệ thống: Modal luôn nổi trên Backdrop mờ, không bao giờ bị đè */
 .modal-backdrop {
-    z-index: var(--z-backdrop, 1070) !important;
+    z-index: var(--z-modal-backdrop, 1050) !important;
 }
 .modal {
-    z-index: var(--z-modal, 1080) !important;
+    z-index: var(--z-modal, 1055) !important;
+    pointer-events: auto !important;
+}
+.modal-dialog {
+    pointer-events: auto !important;
+}
+
+/* Modal thiết lập tiêu chí phiếu chấm của Thư ký */
+#modalCaiDatChucNang {
+    z-index: var(--z-modal, 1055) !important;
+    pointer-events: auto !important;
+}
+#modalCaiDatChucNang .modal-dialog {
+    z-index: calc(var(--z-modal, 1055) + 1) !important;
+    pointer-events: auto !important;
+}
+#modalCaiDatChucNang .modal-content,
+#modalCaiDatChucNang .modal-content * {
+    pointer-events: auto;
 }
 
 /* Hiệu ứng chuyển động mượt cho bảng và card */
