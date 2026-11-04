@@ -56,7 +56,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class GeminiClient:
-    def __init__(self, api_key, model='gemini-2.5-flash', timeout=60, pacer=None):
+    def __init__(self, api_key, model='gemini-2.5-flash', timeout=120, pacer=None):
         if not isinstance(api_key, str) or not api_key.strip():
             raise ApiError('Nhập Gemini API key trong ô ẩn hoặc biến môi trường GEMINI_API_KEY.', 'missing_key')
         model = model.removeprefix('models/')
@@ -80,35 +80,39 @@ class GeminiClient:
         started = time.monotonic()
         event = {'operation': path.split(':')[-1] if ':' in path else 'model_metadata', 'status': 'attempted'}
         self.http_calls.append(event)
-        try:
-            with self._opener.open(request, timeout=self.timeout) as response:
-                raw = response.read(16 * 1024 * 1024 + 1)
-            if len(raw) > 16 * 1024 * 1024:
-                raise ApiError('Phản hồi API quá lớn.', 'response_size')
-            result = json.loads(raw)
-            if not isinstance(result, dict):
-                raise ApiError('API trả phản hồi không hợp lệ.', 'invalid_response')
-            event['status'] = 'ok'
-            return result
-        except urllib.error.HTTPError as exc:
-            messages = {400: 'Request/model không hỗ trợ cấu hình JSON hiện tại. Kiểm tra model và ngân sách.',
-                401: 'API key không hợp lệ.', 403: 'API key chưa có quyền gọi model hoặc bị giới hạn truy cập.',
-                404: 'Không tìm thấy model. Nhập đúng Model ID được cấp trong Google AI Studio.',
-                429: 'Hết hoặc vượt quota/tốc độ. Đã dừng; không tự thử lại để tránh hao lượt.',
-                500: 'Google đang lỗi máy chủ. Kết quả trước đó vẫn được giữ.',
-                503: 'Model đang bận. Chờ rồi bấm tiếp tục.'}
-            event['status'] = exc.code
-            exc.close()
-            raise ApiError(messages.get(exc.code, f'Gemini trả HTTP {exc.code}; đã dừng.'),
-                           'rate_limit' if exc.code == 429 else 'http_error', exc.code) from None
-        except (urllib.error.URLError, TimeoutError, socket.timeout, OSError):
-            event['status'] = 'network_error'
-            raise ApiError('Không kết nối được Gemini hoặc request hết thời gian. Không tự gọi lại; kiểm tra mạng rồi tiếp tục.', 'network_error') from None
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            event['status'] = 'invalid_json'
-            raise ApiError('API trả dữ liệu không phải JSON hợp lệ.', 'invalid_response') from None
-        finally:
-            event['seconds'] = round(time.monotonic() - started, 3)
+        for attempt in range(2):
+            try:
+                with self._opener.open(request, timeout=self.timeout) as response:
+                    raw = response.read(16 * 1024 * 1024 + 1)
+                if len(raw) > 16 * 1024 * 1024:
+                    raise ApiError('Phản hồi API quá lớn.', 'response_size')
+                result = json.loads(raw)
+                if not isinstance(result, dict):
+                    raise ApiError('API trả phản hồi không hợp lệ.', 'invalid_response')
+                event['status'] = 'ok'
+                return result
+            except urllib.error.HTTPError as exc:
+                messages = {400: 'Request/model không hỗ trợ cấu hình JSON hiện tại. Kiểm tra model và ngân sách.',
+                    401: 'API key không hợp lệ.', 403: 'API key chưa có quyền gọi model hoặc bị giới hạn truy cập.',
+                    404: 'Không tìm thấy model. Nhập đúng Model ID được cấp trong Google AI Studio.',
+                    429: 'Hết hoặc vượt quota/tốc độ. Đã dừng; không tự thử lại để tránh hao lượt.',
+                    500: 'Google đang lỗi máy chủ. Kết quả trước đó vẫn được giữ.',
+                    503: 'Model đang bận. Chờ rồi bấm tiếp tục.'}
+                event['status'] = exc.code
+                exc.close()
+                raise ApiError(messages.get(exc.code, f'Gemini trả HTTP {exc.code}; đã dừng.'),
+                               'rate_limit' if exc.code == 429 else 'http_error', exc.code) from None
+            except (urllib.error.URLError, TimeoutError, socket.timeout, OSError):
+                if attempt == 0:
+                    time.sleep(2)
+                    continue
+                event['status'] = 'network_error'
+                raise ApiError('Không kết nối được Gemini hoặc request hết thời gian. Không tự gọi lại; kiểm tra mạng rồi tiếp tục.', 'network_error') from None
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                event['status'] = 'invalid_json'
+                raise ApiError('API trả dữ liệu không phải JSON hợp lệ.', 'invalid_response') from None
+            finally:
+                event['seconds'] = round(time.monotonic() - started, 3)
 
     def model_info(self):
         info = self._request('models/' + self.model)
