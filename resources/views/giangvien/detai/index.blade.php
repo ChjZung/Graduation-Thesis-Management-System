@@ -86,7 +86,7 @@
         <p class="text-muted small mb-0">Theo dõi danh sách đề tài đề xuất, trạng thái kiểm duyệt và phân công nhóm sinh viên.</p>
     </div>
     
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2.5 flex-wrap" style="gap: 10px;">
         @if($deXuatState['is_open'] ?? true)
             <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 shadow-xs fw-medium small d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importDeTaiModal">
                 <i class="fa-solid fa-file-excel me-2"></i> Import Excel
@@ -105,23 +105,31 @@
     </div>
 </div>
 
-<!-- Filter Bar Quản Lý Đề Tài (Đồng bộ tỷ lệ 9 - 3 và nút khối lớn #1e3a8a với Sinh Viên & Giảng Viên) -->
+<!-- Filter Bar Quản Lý Đề Tài (Đồng bộ tỷ lệ 9 - 3 và khoảng cách chuẩn giữa nút & textbox) -->
 <div class="admin-filter-bar mb-4 p-3 bg-white border rounded-3 shadow-sm">
     <form action="{{ route('giangvien.detai.index') }}" method="GET" class="w-100">
-        <div class="row g-3 align-items-center">
+        <div class="row g-3 align-items-stretch">
             <!-- BÊN TRÁI: 9 PHẦN -->
             <div class="col-12 col-xl-9">
-                <div class="d-flex flex-column gap-2">
-                    <!-- Hàng 1: Ô tìm kiếm -->
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light" placeholder="Tìm theo tên đề tài..." value="{{ request('search') }}">
-                        <button class="btn px-4 fw-semibold text-white" type="submit" style="background-color: #1e3a8a;">Tìm</button>
+                <div class="d-flex flex-column gap-3">
+                    <!-- Hàng 1: Ô tìm kiếm và nút Tìm (Khoảng cách chuẩn gap-2, độc lập và bo góc mềm mại) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="input-group flex-grow-1">
+                            <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3" style="border-color: #cbd5e1; height: 40px;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-0 bg-light rounded-end-3" 
+                                   placeholder="Tìm theo tên đề tài..." value="{{ request('search') }}" style="border-color: #cbd5e1; height: 40px;">
+                        </div>
+                        <button class="btn px-4 fw-semibold text-white shadow-xs rounded-3 d-inline-flex align-items-center justify-content-center flex-shrink-0" 
+                                type="submit" style="background-color: #1e3a8a; height: 40px; min-width: 95px;">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>Tìm
+                        </button>
                     </div>
 
-                    <!-- Hàng 2: Các ô lọc dữ liệu -->
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <select name="MaHocKy" class="form-select form-select-sm" style="width: auto; min-width: 170px; flex: 1;" onchange="this.form.submit()">
+                    <!-- Hàng 2: Các ô lọc dữ liệu (Học kỳ, Trạng thái, Nút Xóa lọc) -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center" style="gap: 10px;">
+                        <select name="MaHocKy" class="form-select rounded-3" style="width: auto; min-width: 180px; flex: 1; height: 40px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả học kỳ --</option>
                             @foreach($hocKies as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ request('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>
@@ -130,7 +138,7 @@
                             @endforeach
                         </select>
 
-                        <select name="TrangThai" class="form-select form-select-sm" style="width: auto; min-width: 180px; flex: 1;" onchange="this.form.submit()">
+                        <select name="TrangThai" class="form-select rounded-3" style="width: auto; min-width: 190px; flex: 1; height: 40px;" onchange="this.form.submit()">
                             <option value="">-- Tất cả trạng thái --</option>
                             <optgroup label="Nhóm trạng thái chính">
                                 <option value="da_phe_duyet" {{ in_array(request('TrangThai'), ['da_phe_duyet', 'Đã phê duyệt', 'da_duyet', 'Đã duyệt']) ? 'selected' : '' }}>Đã phê duyệt</option>
@@ -142,7 +150,7 @@
                         </select>
 
                         @if(request()->hasAny(['search', 'MaHocKy', 'TrangThai']))
-                            <a href="{{ route('giangvien.detai.index') }}" class="btn btn-outline-secondary btn-sm text-nowrap d-inline-flex align-items-center">
+                            <a href="{{ route('giangvien.detai.index') }}" class="btn btn-outline-secondary rounded-3 text-nowrap d-inline-flex align-items-center" style="height: 40px;">
                                 <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                             </a>
                         @endif
@@ -150,14 +158,14 @@
                 </div>
             </div>
 
-            <!-- BÊN PHẢI: 3 PHẦN (Nút khối lớn Đề xuất đề tài mới #1e3a8a) -->
-            <div class="col-12 col-xl-3">
+            <!-- BÊN PHẢI: 3 PHẦN (Nút khối lớn Đề xuất đề tài mới #1e3a8a / Đã Hết Hạn Đề Xuất) -->
+            <div class="col-12 col-xl-3 d-flex">
                 @if($deXuatState['is_open'] ?? true)
-                    <a href="{{ route('giangvien.detai.create') }}" class="btn shadow fw-bold rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white text-decoration-none" style="background-color: #1e3a8a; border-color: #1e3a8a; min-height: 82px; padding: 10px 15px;">
+                    <a href="{{ route('giangvien.detai.create') }}" class="btn shadow fw-bold rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white text-decoration-none" style="background-color: #1e3a8a; border-color: #1e3a8a; min-height: 94px; padding: 12px 16px;">
                         <span style="font-size: 0.95rem;"><i class="fa-solid fa-plus-circle me-2"></i>Đề Xuất Đề Tài Mới</span>
                     </a>
                 @else
-                    <div class="btn shadow rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white opacity-75" style="background-color: #475569; min-height: 82px; padding: 10px 15px;">
+                    <div class="btn shadow rounded-3 w-100 d-flex flex-column align-items-center justify-content-center text-white opacity-75" style="background-color: #475569; min-height: 94px; padding: 12px 16px;">
                         <span style="font-size: 0.95rem;"><i class="fa-solid fa-lock me-2"></i>Đã Hết Hạn Đề Xuất</span>
                     </div>
                 @endif

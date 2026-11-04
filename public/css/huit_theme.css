@@ -1693,6 +1693,19 @@ body {
     flex-shrink: 0;
 }
 
+/* Định dạng khoảng cách chuẩn giữa Button và Textbox trong Filter Bar */
+.admin-filter-bar .input-group:has(> .btn) {
+    gap: 8px !important;
+}
+.admin-filter-bar .input-group:has(> .btn) > .form-control {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+}
+.admin-filter-bar .input-group:has(> .btn) > .btn {
+    border-radius: 8px !important;
+    margin-left: 0 !important;
+}
+
 /* Status Pill Tabs */
 .admin-pill-tabs {
     display: flex;
