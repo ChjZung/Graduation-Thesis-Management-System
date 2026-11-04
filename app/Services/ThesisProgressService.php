@@ -671,9 +671,10 @@ class ThesisProgressService
         KhoiBaoCaoTienDo $phienBan,
         string $hanhDong, // 'DAT' hoặc 'YEU_CAU_NOP_LAI'
         string $nhanXet,
-        GiangVien $giangVien
+        GiangVien $giangVien,
+        ?int $phanTramHoanThanh = null
     ): KhoiBaoCaoTienDo {
-        return DB::transaction(function () use ($dotNop, $phienBan, $hanhDong, $nhanXet, $giangVien) {
+        return DB::transaction(function () use ($dotNop, $phienBan, $hanhDong, $nhanXet, $giangVien, $phanTramHoanThanh) {
             $isDat = ($hanhDong === 'DAT');
 
             $phienBan->TrangThai = $isDat ? 'Đạt' : 'Yêu cầu nộp lại';
@@ -681,7 +682,9 @@ class ThesisProgressService
             $phienBan->NguoiNhanXet = $giangVien->HoTen;
             $phienBan->NgayNhanXet = now();
             if ($isDat) {
-                $phienBan->PhanTramHoanThanh = 100;
+                $phienBan->PhanTramHoanThanh = $phanTramHoanThanh ?? 100;
+            } elseif ($phanTramHoanThanh !== null) {
+                $phienBan->PhanTramHoanThanh = $phanTramHoanThanh;
             }
             $phienBan->save();
 
@@ -702,12 +705,13 @@ class ThesisProgressService
 
             // Đồng bộ trạng thái vào bản ghi BaoCaoTienDo cha
             if ($phienBan->MaBaoCao) {
+                $bcPhanTram = $isDat ? ($phanTramHoanThanh ?? 100) : $phienBan->PhanTramHoanThanh;
                 BaoCaoTienDo::where('MaBaoCao', $phienBan->MaBaoCao)->update([
                     'TrangThai' => $isDat ? 'Đạt' : 'Yêu cầu nộp lại',
                     'NhanXet' => $nhanXet,
                     'NguoiXacNhan' => $giangVien->HoTen,
                     'NgayXacNhan' => now(),
-                    'PhanTramHoanThanh' => $isDat ? 100 : $phienBan->PhanTramHoanThanh,
+                    'PhanTramHoanThanh' => $bcPhanTram,
                 ]);
             }
 

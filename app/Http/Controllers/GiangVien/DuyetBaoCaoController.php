@@ -791,6 +791,7 @@ class DuyetBaoCaoController extends Controller
             'MaKhoi' => 'required|string|exists:khoibaocaotiendo,MaKhoi',
             'HanhDong' => 'required|in:DAT,YEU_CAU_NOP_LAI',
             'NhanXet' => 'required|string|min:5',
+            'PhanTramHoanThanh' => 'nullable|integer|between:0,100',
         ], [
             'NhanXet.required' => 'Vui lòng nhập nhận xét chuyên môn.',
             'NhanXet.min' => 'Nhận xét phải có tối thiểu 5 ký tự.',
@@ -805,13 +806,17 @@ class DuyetBaoCaoController extends Controller
         }
 
         $phienBan = KhoiBaoCaoTienDo::where('MaKhoi', $request->MaKhoi)->firstOrFail();
+        $phanTram = $request->filled('PhanTramHoanThanh')
+            ? (int)$request->input('PhanTramHoanThanh')
+            : ($request->HanhDong === 'DAT' ? 100 : null);
 
         $this->progressService->danhGiaPhienBanBaoCao(
             $dotNop,
             $phienBan,
             $request->HanhDong,
             $request->NhanXet,
-            $giangVien
+            $giangVien,
+            $phanTram
         );
 
         $msg = ($request->HanhDong === 'DAT')
