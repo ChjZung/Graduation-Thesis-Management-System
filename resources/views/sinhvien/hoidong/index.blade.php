@@ -164,7 +164,8 @@
                 <span class="badge bg-light text-secondary border font-monospace">{{ $publicThanhViens->count() }} thành viên</span>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
+                <!-- Desktop Table View (>= 768px) -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
                         <thead class="table-light">
                             <tr>
@@ -210,6 +211,42 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card View (< 768px) -->
+                <div class="d-md-none p-3 d-flex flex-column gap-2">
+                    @foreach($publicThanhViens as $pIdx => $ptv)
+                        @php
+                            $normRole = $ptv->short_vai_tro;
+                        @endphp
+                        <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark fs-6">{{ $ptv->giangVien->HoTen ?? $ptv->MaGV }}</div>
+                                <div class="small text-secondary">
+                                    {{ $ptv->giangVien->HocVi ?? 'Thạc sĩ' }} &bull; {{ $ptv->giangVien->boMon->TenBoMon ?? 'Khoa CNTT' }}
+                                </div>
+                            </div>
+                            <div>
+                                @if($normRole === 'Chủ tịch')
+                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold">
+                                        <i class="fa-solid fa-crown me-1"></i> Chủ Tịch
+                                    </span>
+                                @elseif($normRole === 'Thư ký')
+                                    <span class="badge bg-info text-white rounded-pill px-3 py-1 fw-bold">
+                                        <i class="fa-solid fa-pen-nib me-1"></i> Thư Ký
+                                    </span>
+                                @elseif($normRole === 'Phản biện')
+                                    <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold">
+                                        <i class="fa-solid fa-user-check me-1"></i> Phản Biện
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary text-white rounded-pill px-3 py-1 fw-bold">
+                                        Ủy Viên
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>

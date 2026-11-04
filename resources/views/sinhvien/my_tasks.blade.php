@@ -1,4 +1,4 @@
-﻿@extends('layouts.sinhvien')
+@extends('layouts.sinhvien')
 
 @section('page_title', 'Công Việc & Tiến Độ Của Tôi')
 
@@ -162,7 +162,8 @@
             </span>
         </div>
         <div class="p-0">
-            <div class="table-responsive">
+            <!-- Desktop Table View (>= 768px) -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table task-table align-middle">
                     <thead>
                         <tr>
@@ -225,6 +226,56 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (< 768px) -->
+            <div class="d-md-none p-3 d-flex flex-column gap-3">
+                @forelse($taskList as $idx => $task)
+                <div class="card border rounded-3 p-3 shadow-xs bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge badge-neutral rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            {{ $task['moc']->LoaiGiaiDoan }}
+                        </span>
+                        <span class="badge {{ $task['badge_class'] }} rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            {{ $task['status_label'] }}
+                        </span>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.925rem; line-height: 1.4;">
+                        {{ $task['moc']->TenMoc }}
+                    </h6>
+
+                    <div class="small text-secondary mb-2">
+                        <div class="mb-1"><i class="fa-regular fa-calendar me-1.5 text-primary"></i>Từ: {{ date('d/m/Y', strtotime($task['moc']->NgayBatDau)) }}</div>
+                        <div class="text-danger fw-semibold"><i class="fa-regular fa-clock me-1.5"></i>Đến: {{ date('d/m/Y', strtotime($task['moc']->NgayKetThuc)) }}</div>
+                    </div>
+
+                    @if($task['warning'])
+                        <div class="text-danger small fw-semibold mb-2">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ $task['warning'] }}
+                        </div>
+                    @endif
+
+                    @if(str_contains($task['moc']->LoaiGiaiDoan, 'BAO_CAO_TIEN_DO'))
+                        <div class="pt-2 border-top">
+                            <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-sm btn-cyan rounded-pill px-3 py-1.5 w-100 d-inline-flex align-items-center justify-content-center">
+                                <i class="fa-solid fa-upload me-2"></i>Nộp báo cáo
+                            </a>
+                        </div>
+                    @elseif($task['moc']->LoaiGiaiDoan === 'DAO_VAN')
+                        <div class="pt-2 border-top">
+                            <a href="{{ route('sinhvien.hosoBaoVe.index') }}" class="btn btn-sm btn-outline-cyan rounded-pill px-3 py-1.5 w-100 d-inline-flex align-items-center justify-content-center">
+                                <i class="fa-solid fa-file-shield me-2"></i>Nộp Turnitin
+                            </a>
+                        </div>
+                    @endif
+                </div>
+                @empty
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-regular fa-calendar-xmark fa-2x mb-2 d-block opacity-50 me-2"></i>
+                    <span style="font-size: 0.85rem;">Chưa có mốc thời gian kế hoạch nào được ghi nhận.</span>
+                </div>
+                @endforelse
             </div>
         </div>
     </div>

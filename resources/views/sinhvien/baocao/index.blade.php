@@ -25,6 +25,19 @@
     .stat-kpi-card.kpi-success { border-left: 4px solid #10b981; }
     .stat-kpi-card.kpi-danger { border-left: 4px solid #ef4444; }
 
+    @media (max-width: 575.98px) {
+        .stat-kpi-card {
+            padding: 10px 12px;
+            border-radius: 10px;
+        }
+        .stat-kpi-card h3 {
+            font-size: 1.25rem !important;
+        }
+        .stat-kpi-card .small {
+            font-size: 0.72rem !important;
+        }
+    }
+
     /* Stepper */
     .plan-stepper-box {
         background: #ffffff;
