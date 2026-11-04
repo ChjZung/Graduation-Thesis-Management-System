@@ -2325,47 +2325,39 @@ input[type=number],
                         <div class="card border-0 shadow-sm rounded-3 mb-4">
                             <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-table text-primary fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Bảng Ví Dụ Minh Họa Chuẩn Nghiệp Vụ (3 Giảng Viên)</h6>
+                                <h6 class="fw-bold text-dark mb-0">Bảng Thống Kê Điểm Trung Bình Chuẩn Đầu Ra CLO</h6>
                             </div>
                             <div class="card-body p-4 bg-white">
                                 <p class="small text-muted mb-3">
-                                    Minh họa cách tổng hợp điểm CLO từ 3 phiếu chấm độc lập của 3 giảng viên Hội đồng:
+                                    Thống kê CLO được tính toán và thể hiện theo <strong>Điểm trung bình của CLO</strong> từ cả 3 giảng viên Hội đồng:
                                 </p>
                                 <div class="table-responsive mb-3">
                                     <table class="table table-bordered table-sm align-middle text-center mb-0">
                                         <thead class="table-light small">
                                             <tr>
                                                 <th class="text-start ps-3">Chuẩn đầu ra (CLO)</th>
-                                                <th style="width: 120px;">GV1 (Chủ tịch)</th>
-                                                <th style="width: 120px;">GV2 (Thư ký)</th>
-                                                <th style="width: 120px;">GV3 (Phản biện)</th>
-                                                <th style="width: 150px; background-color: #d9e1f2;">Điểm Trung Bình CLO</th>
-                                                <th style="width: 130px;">Đánh giá kết quả</th>
+                                                <th style="width: 170px; background-color: #d9e1f2;">Điểm Trung Bình CLO</th>
+                                                <th style="width: 150px;">Ngưỡng Đạt</th>
+                                                <th style="width: 150px;">Đánh giá kết quả</th>
                                             </tr>
                                         </thead>
                                         <tbody class="small font-monospace">
                                             <tr>
                                                 <td class="text-start ps-3 fw-bold font-sans-serif">CLO1 (Khảo sát &amp; Đặc tả bài toán)</td>
-                                                <td>8.0</td>
-                                                <td>7.0</td>
-                                                <td>9.0</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.00</td>
+                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
                                                 <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                             <tr>
                                                 <td class="text-start ps-3 fw-bold font-sans-serif">CLO2 (Thiết kế hệ thống &amp; Giao diện)</td>
-                                                <td>7.0</td>
-                                                <td>8.0</td>
-                                                <td>9.0</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.00</td>
+                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
                                                 <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                             <tr>
                                                 <td class="text-start ps-3 fw-bold font-sans-serif">CLO3 (Cài đặt &amp; Phát triển chức năng)</td>
-                                                <td>6.0</td>
-                                                <td>7.0</td>
-                                                <td>8.0</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">7.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">7.00</td>
+                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
                                                 <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                         </tbody>
@@ -2460,27 +2452,25 @@ input[type=number],
                             </div>
                         </div>
 
-                        <!-- Khung 1: BẢNG SO SÁNH CLO CỦA CẢ 3 GIẢNG VIÊN VÀ ĐIỂM TRUNG BÌNH HỘI ĐỒNG -->
+                        <!-- Khung 1: BẢNG THỐNG KÊ ĐIỂM TRUNG BÌNH CHUẨN ĐẦU RA (CLO) HỘI ĐỒNG -->
                         <div class="card border-0 shadow-sm rounded-3 mb-3">
                             <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <h6 class="fw-bold text-dark mb-0 small">
-                                    <i class="fa-solid fa-users-line text-success me-1.5"></i> BẢNG SO SÁNH CLO CỦA CẢ 3 GIẢNG VIÊN &amp; ĐIỂM TRUNG BÌNH CHÍNH THỨC
+                                    <i class="fa-solid fa-award text-success me-1.5"></i> BẢNG THỐNG KÊ ĐIỂM TRUNG BÌNH CHUẨN ĐẦU RA (CLO) HỘI ĐỒNG
                                 </h6>
-                                <span class="badge bg-primary-subtle text-primary small">Công thức: Điểm CLO TB = (GV1 + GV2 + GV3) / 3</span>
+                                <span class="badge bg-primary-subtle text-primary small">Điểm CLO TB = Trung bình cộng từ 3 Giảng viên</span>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.82rem;">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width: 70px;">CLO</th>
-                                                <th class="text-start ps-3" style="min-width: 170px;">Chuẩn Đầu Ra &bull; PLO</th>
-                                                <th style="width: 80px;" id="thGv1Role">GV1</th>
-                                                <th style="width: 80px;" id="thGv2Role">GV2</th>
-                                                <th style="width: 80px;" id="thGv3Role">GV3</th>
-                                                <th style="width: 105px; background-color: #d9e1f2;">Điểm TB CLO</th>
-                                                <th class="text-start ps-2" style="min-width: 220px;">Công Thức Thay Số Cụ Thể</th>
-                                                <th style="width: 85px;">Đánh Giá</th>
+                                                <th style="width: 80px;">CLO</th>
+                                                <th class="text-start ps-3" style="min-width: 200px;">Chuẩn Đầu Ra &bull; PLO</th>
+                                                <th style="width: 140px; background-color: #d9e1f2;">Điểm TB CLO</th>
+                                                <th style="width: 120px;">Ngưỡng Đạt</th>
+                                                <th class="text-start ps-2" style="min-width: 250px;">Công Thức Tổng Hợp</th>
+                                                <th style="width: 100px;">Đánh Giá</th>
                                             </tr>
                                         </thead>
                                         <tbody id="formulaClo3GvTableBody">
@@ -3337,17 +3327,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 elBadges.innerHTML = passBadge;
             }
 
-            // 1.5. Render Bảng So Sánh CLO Của Cả 3 Giảng Viên & Điểm Trung Bình
+            // 1.5. Render Bảng Thống Kê Điểm Trung Bình CLO
             const tbody3Gv = document.getElementById('formulaClo3GvTableBody');
             if (tbody3Gv && councilCloData.cloGroups) {
-                const sortedEx = councilCloData.sortedMembers || (student.examiners || []);
-                const thGv1 = document.getElementById('thGv1Role');
-                const thGv2 = document.getElementById('thGv2Role');
-                const thGv3 = document.getElementById('thGv3Role');
-                if (thGv1 && sortedEx[0]) thGv1.innerHTML = `GV1<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[0].hoTen || sortedEx[0].giang_vien?.HoTen || 'Chủ tịch'}</span>`;
-                if (thGv2 && sortedEx[1]) thGv2.innerHTML = `GV2<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[1].hoTen || sortedEx[1].giang_vien?.HoTen || 'Thư ký'}</span>`;
-                if (thGv3 && sortedEx[2]) thGv3.innerHTML = `GV3<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[2].hoTen || sortedEx[2].giang_vien?.HoTen || 'Phản biện'}</span>`;
-
                 let html3Gv = '';
                 Object.keys(councilCloData.cloGroups).forEach(code => {
                     const g = councilCloData.cloGroups[code];
@@ -3361,12 +3343,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     html3Gv += `
                         <tr>
-                            <td><span class="badge bg-primary-subtle text-primary font-monospace fw-bold">${code}</span></td>
+                            <td><span class="badge bg-primary-subtle text-primary font-monospace fw-bold fs-7">${code}</span></td>
                             <td class="text-start ps-3"><span class="fw-semibold text-dark">${g.name || code}</span> <span class="text-muted small">(${g.plo || ''})</span></td>
-                            <td class="font-monospace fw-semibold">${gv1}</td>
-                            <td class="font-monospace fw-semibold">${gv2}</td>
-                            <td class="font-monospace fw-semibold">${gv3}</td>
                             <td class="fw-bold fs-6 font-monospace text-primary" style="background-color: #ebf1f5;">${avg}</td>
+                            <td class="small text-muted">&ge; 4.00 / 10.0</td>
                             <td class="text-start ps-2 font-monospace text-secondary small">${formulaStr}</td>
                             <td>
                                 <span class="badge ${isPass ? 'bg-success' : 'bg-danger'} text-white px-2 py-1 fs-7">

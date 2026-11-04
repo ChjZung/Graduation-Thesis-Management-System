@@ -239,7 +239,7 @@
                 $sysNow = \App\Models\HoiDong::getSystemNow();
                 $hasStart = !empty($hoiDong->ThoiGianBatDauSuaDiem);
                 $hasEnd = !empty($hoiDong->ThoiGianKetThucSuaDiem);
-                $isPub = ($hoiDong->TrangThaiDiem === 'Đã công bố');
+                $isPub = ($hoiDong->hoSoBaoVes->isNotEmpty() && $hoiDong->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'])));
                 $isUnlocked = (bool)$hoiDong->TrangThaiMoKhoaSuaDiem;
 
                 if ($isPub && !$isUnlocked) {

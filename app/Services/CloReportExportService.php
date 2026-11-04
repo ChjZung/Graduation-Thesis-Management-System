@@ -56,15 +56,15 @@ class CloReportExportService
             ->setSubject('Báo cáo Chuẩn đầu ra Khóa luận tốt nghiệp - Tổng hợp 3 Giảng viên')
             ->setDescription('Được tạo tự động từ Hệ thống Quản lý Khóa luận Tốt nghiệp HUIT');
 
-        // Sheet 1: Bảng tổng hợp so sánh CLO của cả 3 Giảng viên và Điểm trung bình (Yêu cầu nghiệp vụ 3)
+        // Sheet 1: Mẫu chuẩn 5B_CĐR_CLO - Thống kê Chuẩn đầu ra CLO theo Điểm trung bình của CLO (Yêu cầu chính)
         $sheet1 = $spreadsheet->getActiveSheet();
-        $sheet1->setTitle('TongHop_3GV_CLO');
-        $this->buildThreeExaminersComparisonSheet($sheet1, $hoiDong, $loaiKhoaLuan, $studentsList, $cloGroups, $sortedMembers);
+        $sheet1->setTitle('5B_CĐR_CLO');
+        $this->buildMasterCloSheet($sheet1, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $cloGroups);
 
-        // Sheet 2: Mẫu chuẩn 5B_CĐR_CLO (Master Sheet chính thức)
+        // Sheet 2: Bảng đối chiếu chi tiết 3 Giảng viên (TongHop_3GV_CLO)
         $sheet2 = $spreadsheet->createSheet();
-        $sheet2->setTitle('5B_CĐR_CLO');
-        $this->buildMasterCloSheet($sheet2, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $cloGroups);
+        $sheet2->setTitle('TongHop_3GV_CLO');
+        $this->buildThreeExaminersComparisonSheet($sheet2, $hoiDong, $loaiKhoaLuan, $studentsList, $cloGroups, $sortedMembers);
 
         // Sheet 3: Chi tiết từng Giám khảo & Tiêu chí (03C Sheet)
         $sheet3 = $spreadsheet->createSheet();

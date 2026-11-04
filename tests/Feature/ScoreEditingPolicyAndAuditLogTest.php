@@ -497,4 +497,39 @@ class ScoreEditingPolicyAndAuditLogTest extends TestCase
         $this->assertEquals(3, $cloData['completed_examiners']);
         $this->assertTrue($cloData['is_official']);
     }
+
+    /**
+     * Nghiệp vụ: Hội đồng đã công bố quyết định thành lập (TrangThaiCongBo = 'Đã công bố')
+     * nhưng Trưởng khoa CHƯA xác nhận công bố điểm (TrangThaiKetQua = 'ChuaDuPhieu' / 'DuPhieu')
+     * -> Giảng viên VẪN ĐƯỢC PHÉP CHỈNH SỬA ĐIỂM trong thời hạn cho phép.
+     */
+    public function test_lecturer_can_edit_scores_when_council_is_announced_but_grades_are_not_yet_published(): void
+    {
+        [$hoiDong, $gvs, $sv, $hoSo, $hocKy, $maDeTai] = $this->createMockData();
+        $gv1 = $gvs[0];
+
+        // Hội đồng đã công bố quyết định thành lập nhưng CHƯA công bố điểm
+        $hoiDong->update(['TrangThaiCongBo' => 'Đã công bố']);
+        $hoSo->update(['TrangThaiKetQua' => 'DuPhieu']);
+
+        PhieuChamDiem::create([
+            'MaPhieuChamDiem' => 'PCD_' . mt_rand(100000, 999999),
+            'MaHoiDong'       => $hoiDong->MaHoiDong,
+            'MaHoSo'          => $hoSo->MaHoSo,
+            'MaDeTai'         => $maDeTai,
+            'MaHocKy'         => $hocKy->MaHocKy,
+            'MaGV'            => $gv1->MaGV,
+            'MaSV'            => $sv->MaSV,
+            'LoaiKhoaLuan'    => 'KLCN',
+            'Diem'            => 7.5,
+            'ChiTietDiem'     => [],
+            'NhanXet'         => 'Nhận xét ban đầu',
+            'TrangThai'       => 'Đã hoàn thành',
+        ]);
+
+        $reason = '';
+        $canEdit = $hoiDong->canEditScore($gv1, $hoSo, $reason);
+
+        $this->assertTrue($canEdit, "Giảng viên phải được phép sửa điểm khi Trưởng khoa chưa xác nhận công bố kết quả điểm (Lý do bị từ chối: {$reason}).");
+    }
 }

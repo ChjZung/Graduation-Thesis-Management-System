@@ -467,11 +467,12 @@ class HoiDong extends Model
         // 2. Kiểm tra CÔNG BỐ ĐIỂM CHÍNH THỨC (Yêu cầu 3)
         // Khi quản trị viên công bố điểm chính thức, hệ thống tự động khóa quyền chỉnh sửa điểm của cả 3 giảng viên.
         // Sau khi công bố, giảng viên không được phép thay đổi bất kỳ điểm nào trừ khi Quản trị viên mở khóa (TrangThaiMoKhoaSuaDiem = true).
+        // LƯU Ý: TrangThaiCongBo là trạng thái công bố thành lập Hội đồng, KHÔNG PHẢI công bố điểm!
+        // Chỉ coi là đã công bố điểm khi Trưởng khoa đã xác nhận công bố kết quả điểm bảo vệ cho đề tài này.
         $isCongBoDiem = false;
-        if ($this->TrangThaiCongBo === 'Đã công bố') {
-            $isCongBoDiem = true;
-        }
         if ($hoSo && in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'])) {
+            $isCongBoDiem = true;
+        } elseif (!$hoSo && $this->relationLoaded('hoSoBaoVes') && $this->hoSoBaoVes->isNotEmpty() && $this->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']))) {
             $isCongBoDiem = true;
         }
 
