@@ -36,6 +36,28 @@
     .ai-summary .ai-actions .ai-button,
     .ai-teacher-report .ai-actions .ai-button { width: 100% !important; min-height: 40px !important; white-space: nowrap !important; font-size: 12.5px !important; padding: 7px 10px !important; justify-content: center !important; }
     .ai-summary .ai-details { padding: 14px; }
+    .ai-summary .ai-verification-cards,
+    .ai-teacher-report .ai-verification-cards { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin: 10px 0 16px !important; }
+    .ai-summary .ai-verification-cards .col-12,
+    .ai-teacher-report .ai-verification-cards .col-12 { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+    .ai-summary .ai-verification-cards .card,
+    .ai-teacher-report .ai-verification-cards .card { border-radius: 10px !important; height: 100% !important; }
+    .ai-summary .ai-verification-cards .card-body,
+    .ai-teacher-report .ai-verification-cards .card-body { padding: 10px !important; display: flex !important; flex-direction: column !important; }
+    .ai-summary .ai-verification-cards .card-body > i,
+    .ai-teacher-report .ai-verification-cards .card-body > i { width: 28px !important; height: 28px !important; border-radius: 8px !important; font-size: 13px !important; margin-bottom: 6px !important; }
+    .ai-summary .ai-verification-cards h4,
+    .ai-teacher-report .ai-verification-cards h4 { font-size: 11.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 0 0 4px !important; min-height: 30px; }
+    .ai-summary .ai-verification-cards strong,
+    .ai-teacher-report .ai-verification-cards strong { font-size: clamp(12px, 3.2vw, 15px) !important; font-weight: 700 !important; line-height: 1.25 !important; margin: 2px 0 4px !important; overflow-wrap: anywhere !important; }
+    .ai-summary .ai-verification-cards p,
+    .ai-teacher-report .ai-verification-cards p { font-size: 10.5px !important; line-height: 1.35 !important; margin: 0 0 4px !important; }
+    .ai-summary .ai-metric-help,
+    .ai-teacher-report .ai-metric-help { margin-top: auto !important; font-size: 11px !important; }
+    .ai-summary .ai-metric-help summary,
+    .ai-teacher-report .ai-metric-help summary { font-size: 10.5px !important; padding: 2px 0 !important; }
+    .ai-summary .ai-metric-action,
+    .ai-teacher-report .ai-metric-action { font-size: 11px !important; margin: 3px 0 0 !important; padding: 2px 0 !important; min-height: unset !important; line-height: 1.35 !important; }
 }
 @container report-card (max-width: 420px) {
     .ai-summary:not(.ai-summary-expanded) > .ai-header { padding: 12px !important; gap: 10px !important; }
@@ -101,6 +123,28 @@
     .ai-summary .ai-report-tabs .nav-link { flex: 0 0 auto; white-space: nowrap; min-height: 44px; font-size: 14px; padding: 10px 12px; }
     .ai-summary .ai-section, .ai-summary .ai-requirement-card { min-width: 0; padding: 12px; }
     .ai-summary .ai-section-title, .ai-summary .ai-requirement-question h4 { overflow-wrap: anywhere; }
+    .ai-summary .ai-verification-cards,
+    .ai-teacher-report .ai-verification-cards { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin: 10px 0 16px !important; }
+    .ai-summary .ai-verification-cards .col-12,
+    .ai-teacher-report .ai-verification-cards .col-12 { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+    .ai-summary .ai-verification-cards .card,
+    .ai-teacher-report .ai-verification-cards .card { border-radius: 10px !important; height: 100% !important; }
+    .ai-summary .ai-verification-cards .card-body,
+    .ai-teacher-report .ai-verification-cards .card-body { padding: 10px !important; display: flex !important; flex-direction: column !important; }
+    .ai-summary .ai-verification-cards .card-body > i,
+    .ai-teacher-report .ai-verification-cards .card-body > i { width: 28px !important; height: 28px !important; border-radius: 8px !important; font-size: 13px !important; margin-bottom: 6px !important; }
+    .ai-summary .ai-verification-cards h4,
+    .ai-teacher-report .ai-verification-cards h4 { font-size: 11.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 0 0 4px !important; min-height: 30px; }
+    .ai-summary .ai-verification-cards strong,
+    .ai-teacher-report .ai-verification-cards strong { font-size: clamp(12px, 3.2vw, 15px) !important; font-weight: 700 !important; line-height: 1.25 !important; margin: 2px 0 4px !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
+    .ai-summary .ai-verification-cards p,
+    .ai-teacher-report .ai-verification-cards p { font-size: 10.5px !important; line-height: 1.35 !important; margin: 0 0 4px !important; }
+    .ai-summary .ai-metric-help,
+    .ai-teacher-report .ai-metric-help { margin-top: auto !important; font-size: 11px !important; }
+    .ai-summary .ai-metric-help summary,
+    .ai-teacher-report .ai-metric-help summary { font-size: 10.5px !important; padding: 2px 0 !important; }
+    .ai-summary .ai-metric-action,
+    .ai-teacher-report .ai-metric-action { font-size: 11px !important; margin: 3px 0 0 !important; padding: 2px 0 !important; min-height: unset !important; line-height: 1.35 !important; }
     .ai-summary .ai-processing-status,
     .ai-teacher-report .ai-processing-status { margin: 10px 14px 14px !important; padding: 12px 14px !important; border-radius: 8px !important; overflow-wrap: anywhere; }
     .ai-processing-status .ai-button { width: 100% !important; min-height: 40px !important; margin-top: 8px !important; font-size: 13px !important; }
