@@ -264,7 +264,7 @@ class GradeCalculationService
             $trangThai = 'Đã đủ phiếu hợp lệ';
         }
 
-        return KetQuaSinhVien::updateOrCreate(
+        $kq = KetQuaSinhVien::updateOrCreate(
             ['MaSV' => $maSV, 'MaHocKy' => $maHocKy],
             [
                 'MaKetQua'      => $maKetQua,
@@ -279,6 +279,20 @@ class GradeCalculationService
                 'NgayCham'      => now()->toDateString(),
             ]
         );
+
+        // Tự động tính toán và cập nhật chuẩn đầu ra CLO từ 3 giảng viên vào KetQuaSinhVien
+        try {
+            $hoiDong = HoiDong::find($maHoiDong);
+            if ($hoiDong) {
+                $cloSvc = app(CloCalculationService::class);
+                $cloResult = $cloSvc->calculateStudentClo($hoiDong, $maSV, $loaiKhoaLuan);
+                $cloSvc->saveStudentCloToDatabase($maSV, $maHoiDong, $maHocKy, $cloResult);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Không thể tự động tính CLO cho sinh viên {$maSV}: " . $e->getMessage());
+        }
+
+        return $kq;
     }
 
     /**

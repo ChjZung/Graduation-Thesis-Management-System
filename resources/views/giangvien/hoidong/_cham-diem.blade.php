@@ -2244,91 +2244,100 @@ input[type=number],
                             <div class="card-body p-4 bg-white rounded-3">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                     <span class="badge bg-success-subtle text-success fw-bold px-3 py-1.5 fs-7">
-                                        <i class="fa-solid fa-chart-line me-1"></i> CÔNG THỨC QUY ĐỔI CHUẨN ĐẦU RA (CLO)
+                                        <i class="fa-solid fa-chart-line me-1"></i> CÔNG THỨC CHUẨN ĐẦU RA (CLO) TỔNG HỢP 3 GIẢNG VIÊN
                                     </span>
-                                    <span class="small text-muted">Thang điểm chuẩn 10.0 &bull; Áp dụng theo trọng số điểm tối đa</span>
+                                    <span class="small text-muted">Thang điểm 10.0 &bull; Tính trung bình từ cả 3 phiếu chấm độc lập</span>
                                 </div>
                                 <div class="p-3 bg-light rounded-3 text-center my-3 border font-monospace">
                                     <div class="fs-3 fw-bold text-success mb-1">
-                                        D<sub>CLO</sub> = <span class="d-inline-block text-center align-middle" style="line-height: 1.1;"><span class="border-bottom border-dark border-2 pb-1 d-block">&sum; D<sub>TB,i</sub></span><span class="pt-1 d-block">&sum; D<sub>max,i</sub></span></span> &times; 10
+                                        Điểm CLO Trung Bình = <span class="d-inline-block text-center align-middle" style="line-height: 1.1;"><span class="border-bottom border-dark border-2 pb-1 d-block">Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3</span><span class="pt-1 d-block">3</span></span>
                                     </div>
                                     <div class="small text-muted mt-2 fst-italic">
-                                        (Điểm chuẩn đầu ra CLO = [Tổng điểm TB hội đồng các tiêu chí thuộc CLO] / [Tổng điểm tối đa các tiêu chí thuộc CLO] &times; 10)
+                                        (Mỗi giảng viên chấm độc lập &bull; Điểm CLO trung bình của cả 3 giảng viên là dữ liệu chính thức duy nhất dùng để đánh giá và xuất báo cáo)
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mt-2">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">D<sub>TB,i</sub></div>
-                                            <div class="small text-muted">Điểm trung bình hội đồng của tiêu chí thứ <em>i</em> thuộc nhóm chuẩn đầu ra đó.</div>
+                                            <div class="fw-bold text-dark mb-1">Điểm CLO(GV<sub>j</sub>)</div>
+                                            <div class="small text-muted">Mỗi giảng viên thực hiện chấm điểm CLO độc lập theo thang 10: <code>(Tổng điểm GV chấm / Tổng điểm tối đa CLO) &times; 10</code>.</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">D<sub>max,i</sub></div>
-                                            <div class="small text-muted">Điểm tối đa của tiêu chí thứ <em>i</em> theo quy định chuẩn trong Rubric chấm điểm.</div>
+                                            <div class="fw-bold text-dark mb-1">3 Phiếu Hợp Lệ</div>
+                                            <div class="small text-muted">Bắt buộc phải có đủ điểm từ GV1 (Chủ tịch), GV2 (Thư ký) và GV3 (Phản biện / Ủy viên). Không lấy điểm riêng lẻ của 1 giảng viên để thay thế.</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">D<sub>CLO</sub> &amp; Ngưỡng Đạt</div>
-                                            <div class="small text-muted">Điểm CLO quy đổi về thang 10. Điểm &ge; <strong>4.00</strong>: <span class="badge bg-success text-white">ĐẠT</span> &bull; Điểm &lt; <strong>4.00</strong>: <span class="badge bg-danger text-white">CHƯA ĐẠT</span>.</div>
+                                            <div class="fw-bold text-dark mb-1">Điểm CLO Trung Bình</div>
+                                            <div class="small text-muted">Kết quả trung bình cộng của 3 giảng viên được tự động lưu vào hệ thống và là nguồn dữ liệu chính thức duy nhất.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
+                                            <div class="fw-bold text-dark mb-1">Ngưỡng Đạt CLO</div>
+                                            <div class="small text-muted">Điểm CLO TB &ge; <strong>4.00</strong>: <span class="badge bg-success text-white">ĐẠT</span> &bull; Điểm CLO TB &lt; <strong>4.00</strong>: <span class="badge bg-danger text-white">CHƯA ĐẠT</span>.</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Ví dụ minh họa nhóm CLO3 (từ đề tài chuẩn) -->
+                        <!-- Bảng đối chiếu minh họa theo đúng quy định -->
                         <div class="card border-0 shadow-sm rounded-3 mb-4">
                             <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-table text-primary fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Ví Dụ Minh Họa Nhóm CLO Có Nhiều Tiêu Chí Thành Phần</h6>
+                                <h6 class="fw-bold text-dark mb-0">Bảng Ví Dụ Minh Họa Chuẩn Nghiệp Vụ (3 Giảng Viên)</h6>
                             </div>
                             <div class="card-body p-4 bg-white">
                                 <p class="small text-muted mb-3">
-                                    Xét một chuẩn đầu ra (ví dụ <strong>CLO3 &bull; Cài đặt chức năng đáp ứng yêu cầu thực tế</strong>) gồm 3 tiêu chí thành phần:
+                                    Minh họa cách tổng hợp điểm CLO từ 3 phiếu chấm độc lập của 3 giảng viên Hội đồng:
                                 </p>
                                 <div class="table-responsive mb-3">
                                     <table class="table table-bordered table-sm align-middle text-center mb-0">
                                         <thead class="table-light small">
                                             <tr>
-                                                <th class="text-start ps-3">Tiêu chí thành phần</th>
-                                                <th style="width: 150px;">Điểm tối đa (D<sub>max</sub>)</th>
-                                                <th style="width: 180px;">Điểm TB Hội đồng (D<sub>TB</sub>)</th>
+                                                <th class="text-start ps-3">Chuẩn đầu ra (CLO)</th>
+                                                <th style="width: 120px;">GV1 (Chủ tịch)</th>
+                                                <th style="width: 120px;">GV2 (Thư ký)</th>
+                                                <th style="width: 120px;">GV3 (Phản biện)</th>
+                                                <th style="width: 150px; background-color: #d9e1f2;">Điểm Trung Bình CLO</th>
+                                                <th style="width: 130px;">Đánh giá kết quả</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="small">
+                                        <tbody class="small font-monospace">
                                             <tr>
-                                                <td class="text-start ps-3">Tiêu chí 1: Xây dựng chức năng cơ bản</td>
-                                                <td>2.00</td>
-                                                <td class="fw-semibold text-primary">1.50</td>
+                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO1 (Khảo sát &amp; Đặc tả bài toán)</td>
+                                                <td>8.0</td>
+                                                <td>7.0</td>
+                                                <td>9.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.0</td>
+                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                             <tr>
-                                                <td class="text-start ps-3">Tiêu chí 2: Cài đặt chức năng nghiệp vụ web</td>
-                                                <td>1.50</td>
-                                                <td class="fw-semibold text-primary">1.20</td>
+                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO2 (Thiết kế hệ thống &amp; Giao diện)</td>
+                                                <td>7.0</td>
+                                                <td>8.0</td>
+                                                <td>9.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.0</td>
+                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                             <tr>
-                                                <td class="text-start ps-3">Tiêu chí 3: Cài đặt chức năng nền tảng phụ trợ</td>
-                                                <td>0.50</td>
-                                                <td class="fw-semibold text-primary">0.40</td>
-                                            </tr>
-                                            <tr class="table-light fw-bold">
-                                                <td class="text-start ps-3">TỔNG CỘNG (&sum;)</td>
-                                                <td>4.00</td>
-                                                <td class="text-primary">3.10</td>
+                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO3 (Cài đặt &amp; Phát triển chức năng)</td>
+                                                <td>6.0</td>
+                                                <td>7.0</td>
+                                                <td>8.0</td>
+                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">7.0</td>
+                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-
-                                <div class="p-3 bg-success-subtle text-success-emphasis rounded-3 border border-success-subtle font-monospace text-center fs-6 mb-2">
-                                    D<sub>CLO3</sub> = (3.10 / 4.00) &times; 10 = <strong>7.75</strong> / 10.0
-                                </div>
-                                <div class="text-center small">
-                                    Kết quả đánh giá: Điểm CLO3 = <strong>7.75/10.0</strong> &ge; 4.00 &implies; <span class="badge bg-success text-white px-2 py-1">ĐẠT CHUẨN ĐẦU RA CLO3</span>
+                                <div class="p-2.5 bg-success-subtle text-success-emphasis rounded-3 border border-success-subtle font-monospace text-center small">
+                                    Công thức: <strong>Điểm CLO trung bình = (Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3) / 3</strong>
                                 </div>
                             </div>
                         </div>
@@ -2416,7 +2425,38 @@ input[type=number],
                             </div>
                         </div>
 
-                        <!-- Khung 1: Bảng Điểm Trung Bình Từng Tiêu Chí -->
+                        <!-- Khung 1: BẢNG SO SÁNH CLO CỦA CẢ 3 GIẢNG VIÊN VÀ ĐIỂM TRUNG BÌNH HỘI ĐỒNG -->
+                        <div class="card border-0 shadow-sm rounded-3 mb-3">
+                            <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <h6 class="fw-bold text-dark mb-0 small">
+                                    <i class="fa-solid fa-users-line text-success me-1.5"></i> BẢNG SO SÁNH CLO CỦA CẢ 3 GIẢNG VIÊN &amp; ĐIỂM TRUNG BÌNH CHÍNH THỨC
+                                </h6>
+                                <span class="badge bg-primary-subtle text-primary small">Công thức: Điểm CLO TB = (GV1 + GV2 + GV3) / 3</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.82rem;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 70px;">CLO</th>
+                                                <th class="text-start ps-3" style="min-width: 170px;">Chuẩn Đầu Ra &bull; PLO</th>
+                                                <th style="width: 80px;" id="thGv1Role">GV1</th>
+                                                <th style="width: 80px;" id="thGv2Role">GV2</th>
+                                                <th style="width: 80px;" id="thGv3Role">GV3</th>
+                                                <th style="width: 105px; background-color: #d9e1f2;">Điểm TB CLO</th>
+                                                <th class="text-start ps-2" style="min-width: 220px;">Công Thức Thay Số Cụ Thể</th>
+                                                <th style="width: 85px;">Đánh Giá</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="formulaClo3GvTableBody">
+                                            {{-- Render động từ JS --}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Khung 2: Bảng Điểm Trung Bình Từng Tiêu Chí -->
                         <div class="card border-0 shadow-sm rounded-3 mb-3">
                             <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <h6 class="fw-bold text-dark mb-0 small">
@@ -2445,7 +2485,7 @@ input[type=number],
                             </div>
                         </div>
 
-                        <!-- Khung 2: Các Thẻ Chuẩn Đầu Ra CLO -->
+                        <!-- Khung 3: Các Thẻ Chuẩn Đầu Ra CLO Chi Tiết -->
                         <div class="card border-0 shadow-sm rounded-3">
                             <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <h6 class="fw-bold text-dark mb-0 small">
@@ -2466,10 +2506,17 @@ input[type=number],
 
             <!-- Modal Footer -->
             <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between align-items-center">
-                <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}" 
-                   class="btn btn-sm btn-success fw-bold px-3 shadow-xs text-white">
-                    <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo Tổng Hợp CLO (.xlsx)
-                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}" 
+                       class="btn btn-sm btn-success fw-bold px-3 shadow-xs text-white">
+                        <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo CLO (Excel)
+                    </a>
+                    <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan, 'format' => 'pdf']) }}" 
+                       target="_blank"
+                       class="btn btn-sm btn-outline-danger fw-bold px-3 shadow-xs">
+                        <i class="fa-solid fa-file-pdf me-1.5"></i> Xuất Báo Cáo CLO 3 GV (PDF)
+                    </a>
+                </div>
                 <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
@@ -3246,6 +3293,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> ĐẠT TẤT CẢ CHUẨN ĐẦU RA (CLO)</span>`
                     : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5"><i class="fa-solid fa-circle-xmark me-1"></i> CHƯA ĐẠT CHUẨN ĐẦU RA</span>`;
                 elBadges.innerHTML = passBadge;
+            }
+
+            // 1.5. Render Bảng So Sánh CLO Của Cả 3 Giảng Viên & Điểm Trung Bình
+            const tbody3Gv = document.getElementById('formulaClo3GvTableBody');
+            if (tbody3Gv && councilCloData.cloGroups) {
+                const sortedEx = councilCloData.sortedMembers || (student.examiners || []);
+                const thGv1 = document.getElementById('thGv1Role');
+                const thGv2 = document.getElementById('thGv2Role');
+                const thGv3 = document.getElementById('thGv3Role');
+                if (thGv1 && sortedEx[0]) thGv1.innerHTML = `GV1<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[0].hoTen || sortedEx[0].giang_vien?.HoTen || 'Chủ tịch'}</span>`;
+                if (thGv2 && sortedEx[1]) thGv2.innerHTML = `GV2<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[1].hoTen || sortedEx[1].giang_vien?.HoTen || 'Thư ký'}</span>`;
+                if (thGv3 && sortedEx[2]) thGv3.innerHTML = `GV3<br/><span style="font-size:0.68rem; font-weight:normal;" class="text-truncate d-block">${sortedEx[2].hoTen || sortedEx[2].giang_vien?.HoTen || 'Phản biện'}</span>`;
+
+                let html3Gv = '';
+                Object.keys(councilCloData.cloGroups).forEach(code => {
+                    const g = councilCloData.cloGroups[code];
+                    const cloData = student.cloScores[code] || {};
+                    const gv1 = (cloData.gv1 !== null && cloData.gv1 !== undefined) ? Number(cloData.gv1).toFixed(2) : '-';
+                    const gv2 = (cloData.gv2 !== null && cloData.gv2 !== undefined) ? Number(cloData.gv2).toFixed(2) : '-';
+                    const gv3 = (cloData.gv3 !== null && cloData.gv3 !== undefined) ? Number(cloData.gv3).toFixed(2) : '-';
+                    const avg = Number(cloData.score || 0).toFixed(2);
+                    const isPass = cloData.passed;
+                    const formulaStr = cloData.formula || `(${gv1} + ${gv2} + ${gv3}) / 3 = ${avg}`;
+
+                    html3Gv += `
+                        <tr>
+                            <td><span class="badge bg-primary-subtle text-primary font-monospace fw-bold">${code}</span></td>
+                            <td class="text-start ps-3"><span class="fw-semibold text-dark">${g.name || code}</span> <span class="text-muted small">(${g.plo || ''})</span></td>
+                            <td class="font-monospace fw-semibold">${gv1}</td>
+                            <td class="font-monospace fw-semibold">${gv2}</td>
+                            <td class="font-monospace fw-semibold">${gv3}</td>
+                            <td class="fw-bold fs-6 font-monospace text-primary" style="background-color: #ebf1f5;">${avg}</td>
+                            <td class="text-start ps-2 font-monospace text-secondary small">${formulaStr}</td>
+                            <td>
+                                <span class="badge ${isPass ? 'bg-success' : 'bg-danger'} text-white px-2 py-1 fs-7">
+                                    ${isPass ? 'ĐẠT' : 'CHƯA ĐẠT'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody3Gv.innerHTML = html3Gv;
             }
 
             // 2. Render Bảng Điểm Trung Bình Tiêu Chí (D_TB)

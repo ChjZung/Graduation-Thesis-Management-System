@@ -873,6 +873,7 @@ class ChamDiemController extends Controller
 
     /**
      * Xuất Báo cáo Tổng hợp Chuẩn Đầu Ra (CLO) theo mẫu biểu chính thức của Khoa CNTT
+     * Hỗ trợ định dạng Excel (.xlsx) và PDF (.pdf), chuẩn hóa theo quy trình 3 Giảng viên.
      */
     public function xuatBaoCaoClo(Request $request)
     {
@@ -901,10 +902,31 @@ class ChamDiemController extends Controller
             $loaiKhoaLuan = $firstHoSo?->xacDinhLoaiKhoaLuan() ?? 'KLCN';
         }
 
-        $exportService = app(\App\Services\CloReportExportService::class);
-        $spreadsheet = $exportService->export($hoiDong, $loaiKhoaLuan);
+        $cloService = app(\App\Services\CloCalculationService::class);
+        $checkDuPhieu = $cloService->kiemTraDu3PhieuCham($hoiDong);
+
+        // Ràng buộc: Chỉ cho phép xuất báo cáo chính thức khi đã có đủ 3 phiếu chấm hợp lệ
+        if (!$checkDuPhieu['du_3_phieu'] && !$request->has('force')) {
+            return redirect()->back()->with('error', $checkDuPhieu['message']);
+        }
 
         $safeHd = preg_replace('/[^A-Za-z0-9_-]/', '_', $hoiDong->MaHoiDong);
+        $isPdf = ($request->get('format') === 'pdf' || $request->get('dinh_dang') === 'pdf');
+
+        if ($isPdf) {
+            $councilData = $cloService->calculateCouncilClo($hoiDong, $loaiKhoaLuan);
+            $pdf = Pdf::loadView('pdf.bao_cao_clo_3gv', array_merge($councilData, [
+                'hoiDong'      => $hoiDong,
+                'loaiKhoaLuan' => $loaiKhoaLuan,
+                'isOfficial'   => $checkDuPhieu['du_3_phieu'],
+            ]))->setPaper('a4', 'landscape');
+
+            $filename = "BaoCao_TongHop_CLO_{$safeHd}_{$loaiKhoaLuan}.pdf";
+            return $pdf->stream($filename);
+        }
+
+        $exportService = app(\App\Services\CloReportExportService::class);
+        $spreadsheet = $exportService->export($hoiDong, $loaiKhoaLuan, $request->has('force'));
         $filename = "BaoCao_TongHop_CLO_{$safeHd}_{$loaiKhoaLuan}.xlsx";
 
         return response()->streamDownload(function () use ($spreadsheet) {
@@ -918,6 +940,7 @@ class ChamDiemController extends Controller
 
     /**
      * Chuẩn bị dữ liệu tính toán Hội đồng và Chuẩn đầu ra CLO phục vụ Modal Công thức và Tính toán thời gian thực
+     * Sử dụng CloCalculationService thống nhất chuẩn hóa theo 3 Giảng viên.
      */
     public static function prepareCouncilCloData(?HoiDong $activeHoiDong, string $loaiKhoaLuan, array $rubric): array
     {
@@ -925,149 +948,19 @@ class ChamDiemController extends Controller
             return [
                 'students' => [],
                 'cloGroups' => [],
-                'rubric' => $rubric,
+                'rubric' => array_map(fn($c) => [
+                    'id' => $c['id'],
+                    'stt' => $c['stt'],
+                    'noi_dung' => strtok($c['noi_dung'], "\n"),
+                    'clo' => $c['clo'],
+                    'max' => (float)$c['max'],
+                    'is_bonus' => !empty($c['is_bonus']),
+                ], $rubric),
+                'sortedMembers' => collect(),
+                'checkDuPhieu' => ['du_3_phieu' => false, 'message' => 'Chưa chọn hội đồng.'],
             ];
         }
 
-        // Gom nhóm CLO động từ Rubric
-        $cloGroups = [];
-        $criteriaMap = [];
-        foreach ($rubric as $crit) {
-            $criteriaMap[$crit['id']] = $crit;
-            if (!empty($crit['is_bonus'])) continue;
-            $baseClo = preg_replace('/(\.[0-9]+)$/', '', $crit['clo']);
-            if (!isset($cloGroups[$baseClo])) {
-                $cloGroups[$baseClo] = [
-                    'clo' => $baseClo,
-                    'name' => "Chuẩn đầu ra {$baseClo}",
-                    'criteria' => [],
-                    'max_sum' => 0.0,
-                ];
-            }
-            $cloGroups[$baseClo]['criteria'][] = [
-                'id' => $crit['id'],
-                'stt' => $crit['stt'],
-                'noi_dung' => strtok($crit['noi_dung'], "\n"),
-                'clo' => $crit['clo'],
-                'max' => (float)$crit['max'],
-            ];
-            $cloGroups[$baseClo]['max_sum'] += (float)$crit['max'];
-        }
-        ksort($cloGroups);
-
-        $phieuChams = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)->get();
-        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
-        $sortedMembers = $activeHoiDong->thanhViens->sortBy(fn($tv) => $roleOrder[$tv->VaiTro] ?? 5);
-
-        $students = [];
-        foreach ($activeHoiDong->hoSoBaoVes as $hoSo) {
-            $nhom = $hoSo->nhom;
-            $deTai = $nhom?->deTai;
-            foreach ($nhom?->thanhViens ?? [] as $tvn) {
-                $sv = $tvn->sinhVien;
-                if (!$sv) continue;
-
-                $svPhieus = $phieuChams->where('MaSV', $sv->MaSV);
-                $completedPhieus = $svPhieus->where('TrangThai', 'Đã hoàn thành');
-                $validPhieus = $completedPhieus->isNotEmpty() ? $completedPhieus : $svPhieus;
-
-                $examiners = [];
-                foreach ($sortedMembers as $tv) {
-                    $p = $svPhieus->firstWhere('MaGV', $tv->MaGV);
-                    $examiners[] = [
-                        'maGV' => $tv->MaGV,
-                        'hoTen' => $tv->giangVien?->HoTen ?? $tv->MaGV,
-                        'vaiTro' => $tv->VaiTro ?? 'Thành viên',
-                        'trangThai' => $p?->TrangThai ?? 'Chưa chấm',
-                        'diem' => $p ? (float)$p->Diem : null,
-                        'chiTietDiem' => $p ? (is_array($p->ChiTietDiem) ? $p->ChiTietDiem : json_decode($p->ChiTietDiem, true) ?? []) : [],
-                    ];
-                }
-
-                $critAverages = [];
-                $critFormulas = [];
-                foreach ($rubric as $crit) {
-                    $cId = $crit['id'];
-                    $scores = [];
-                    foreach ($validPhieus as $p) {
-                        $cd = is_array($p->ChiTietDiem) ? $p->ChiTietDiem : json_decode($p->ChiTietDiem, true);
-                        if (isset($cd[$cId]) && is_numeric($cd[$cId])) {
-                            $scores[] = (float)$cd[$cId];
-                        }
-                    }
-                    $avg = !empty($scores) ? round(array_sum($scores) / count($scores), 2) : 0.0;
-                    $critAverages[$cId] = $avg;
-                    $critFormulas[$cId] = !empty($scores) 
-                        ? "(" . implode(' + ', array_map(fn($v) => number_format($v, 2), $scores)) . ") / " . count($scores) . " = " . number_format($avg, 2)
-                        : "Chưa có điểm giám khảo";
-                }
-
-                $cloScores = [];
-                $allPassed = true;
-                foreach ($cloGroups as $code => $g) {
-                    $sumTb = 0.0;
-                    $tbParts = [];
-                    $maxParts = [];
-                    foreach ($g['criteria'] as $c) {
-                        $tbVal = $critAverages[$c['id']] ?? 0.0;
-                        $sumTb += $tbVal;
-                        $tbParts[] = number_format($tbVal, 2);
-                        $maxParts[] = number_format($c['max'], 2);
-                    }
-                    $dClo = $g['max_sum'] > 0 ? round(($sumTb / $g['max_sum']) * 10, 2) : 0.0;
-                    $isPass = ($dClo >= 4.0);
-                    if (!$isPass) $allPassed = false;
-
-                    $formulaString = "(" . implode(' + ', $tbParts) . ") / (" . implode(' + ', $maxParts) . ") * 10 = (" . number_format($sumTb, 2) . " / " . number_format($g['max_sum'], 2) . ") * 10 = " . number_format($dClo, 2);
-
-                    $cloScores[$code] = [
-                        'score' => $dClo,
-                        'sum_tb' => round($sumTb, 2),
-                        'max_sum' => $g['max_sum'],
-                        'passed' => $isPass,
-                        'formula' => $formulaString,
-                        'criteria_breakdown' => array_map(fn($c) => [
-                            'id' => $c['id'],
-                            'stt' => $c['stt'],
-                            'clo' => $c['clo'],
-                            'noi_dung' => $c['noi_dung'],
-                            'max' => $c['max'],
-                            'score' => $critAverages[$c['id']] ?? 0.0,
-                        ], $g['criteria']),
-                    ];
-                }
-
-                $sumCrit = array_sum(array_filter($critAverages, fn($k) => empty($criteriaMap[$k]['is_bonus']), ARRAY_FILTER_USE_KEY));
-                $bonusScore = $critAverages['tc13'] ?? 0.0;
-                $finalScore = min(10.0, round($sumCrit + $bonusScore, 2));
-
-                $students[] = [
-                    'maSV' => $sv->MaSV,
-                    'hoTen' => $sv->HoTen,
-                    'lop' => $sv->lop?->TenLop ?? 'N/A',
-                    'tenDeTai' => $deTai?->TenDeTai ?? 'Chưa cập nhật',
-                    'maHoSo' => $hoSo->MaHoSo,
-                    'examiners' => $examiners,
-                    'critAverages' => $critAverages,
-                    'critFormulas' => $critFormulas,
-                    'cloScores' => $cloScores,
-                    'allPassed' => $allPassed,
-                    'finalScore' => $finalScore,
-                ];
-            }
-        }
-
-        return [
-            'students' => $students,
-            'cloGroups' => $cloGroups,
-            'rubric' => array_map(fn($c) => [
-                'id' => $c['id'],
-                'stt' => $c['stt'],
-                'noi_dung' => strtok($c['noi_dung'], "\n"),
-                'clo' => $c['clo'],
-                'max' => (float)$c['max'],
-                'is_bonus' => !empty($c['is_bonus']),
-            ], $rubric),
-        ];
+        return app(\App\Services\CloCalculationService::class)->calculateCouncilClo($activeHoiDong, $loaiKhoaLuan);
     }
 }

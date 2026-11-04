@@ -21,6 +21,7 @@ class KetQuaSinhVien extends Model
         'DiemTongKet',
         'KetQua',
         'LoaiKhoaLuan',
+        'DiemCLO',
         'NhanXetChung',
         'NgayCham',
         'MaSV',
@@ -51,6 +52,7 @@ class KetQuaSinhVien extends Model
             'NgayXacNhan' => 'datetime',
             'NgayCongBo' => 'datetime',
             'LichSuDieuChinh' => 'array',
+            'DiemCLO' => 'array',
         ];
     }
 

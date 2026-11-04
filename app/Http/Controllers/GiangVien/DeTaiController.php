@@ -387,9 +387,11 @@ class DeTaiController extends Controller
                         return;
                     }
                     $allowedExts = ['pdf', 'doc', 'docx'];
-                    $clientExt = strtolower($value->getClientOriginalExtension());
+                    $origName = $value->getClientOriginalName();
+                    $clientExt = strtolower($value->getClientOriginalExtension() ?: '');
+                    $pathExt = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
                     $guessExt = strtolower($value->guessExtension() ?? '');
-                    if (!in_array($clientExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
+                    if (!in_array($clientExt, $allowedExts) && !in_array($pathExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
                         $fail('File đề cương phải có định dạng .pdf, .doc hoặc .docx.');
                         return;
                     }
@@ -660,9 +662,11 @@ class DeTaiController extends Controller
                         return;
                     }
                     $allowedExts = ['pdf', 'doc', 'docx'];
-                    $clientExt = strtolower($value->getClientOriginalExtension());
+                    $origName = $value->getClientOriginalName();
+                    $clientExt = strtolower($value->getClientOriginalExtension() ?: '');
+                    $pathExt = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
                     $guessExt = strtolower($value->guessExtension() ?? '');
-                    if (!in_array($clientExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
+                    if (!in_array($clientExt, $allowedExts) && !in_array($pathExt, $allowedExts) && !in_array($guessExt, $allowedExts)) {
                         $fail('File đề cương phải có định dạng .pdf, .doc hoặc .docx.');
                         return;
                     }

@@ -15,170 +15,83 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class CloReportExportService
 {
+    protected CloCalculationService $cloCalculationService;
+
+    public function __construct(CloCalculationService $cloCalculationService)
+    {
+        $this->cloCalculationService = $cloCalculationService;
+    }
+
     /**
      * Xuất file Excel báo cáo tổng hợp chuẩn đầu ra (CLO) cho toàn bộ sinh viên trong Hội đồng
      * theo đúng mẫu biểu của Khoa CNTT - ĐH Công Thương TP.HCM (HUIT).
+     *
+     * @param HoiDong $hoiDong
+     * @param string $loaiKhoaLuan
+     * @param bool $force Xuất ngay cả khi chưa đủ 3 phiếu (mặc định false: bắt buộc đủ 3 phiếu hợp lệ)
+     * @return Spreadsheet
+     * @throws \InvalidArgumentException Khi chưa đủ 3 phiếu chấm hợp lệ mà không bật cờ force
      */
-    public function export(HoiDong $hoiDong, string $loaiKhoaLuan = 'KLCN'): Spreadsheet
+    public function export(HoiDong $hoiDong, string $loaiKhoaLuan = 'KLCN', bool $force = false): Spreadsheet
     {
-        // 1. Tải toàn bộ dữ liệu Hội đồng, Hồ sơ bảo vệ, Đề tài, Sinh viên, Phiếu chấm
-        $hoiDong->loadMissing([
-            'thanhViens.giangVien',
-            'hoSoBaoVes.nhom.thanhViens.sinhVien.lop.nganh',
-            'hoSoBaoVes.nhom.deTai.giangVien',
-            'hoSoBaoVes.nhom.deTai.hocPhan',
-            'hoSoBaoVes.nhom.deTai.nganh',
-            'hocKy',
-            'khoa',
-        ]);
-
-        $phieuChams = PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong)->get();
-
-        // 2. Lấy cấu hình Rubric theo loại khóa luận
-        $customChucNang = $hoiDong->hoSoBaoVes->first()?->TieuChiChucNang;
-        $rubric = ($loaiKhoaLuan === 'KLKS') 
-            ? PhieuChamDiem::getRubricKLKS($customChucNang) 
-            : PhieuChamDiem::getRubricKLCN($customChucNang);
-
-        // 3. Gom nhóm CLO động từ Rubric (Không hardcode)
-        $cloGroups = [];
-        $criteriaMap = [];
-        foreach ($rubric as $crit) {
-            $criteriaMap[$crit['id']] = $crit;
-            if (!empty($crit['is_bonus'])) {
-                continue; // Điểm khuyến khích không tính vào chuẩn đầu ra 100% bắt buộc
-            }
-            $baseClo = preg_replace('/(\.[0-9]+)$/', '', $crit['clo']);
-            if (!isset($cloGroups[$baseClo])) {
-                $cloGroups[$baseClo] = [
-                    'clo' => $baseClo,
-                    'criteria' => [],
-                    'max_sum' => 0.0,
-                    'plo' => $this->getPloMapping($baseClo),
-                ];
-            }
-            $cloGroups[$baseClo]['criteria'][] = $crit;
-            $cloGroups[$baseClo]['max_sum'] += (float)$crit['max'];
-        }
-        ksort($cloGroups);
-
-        // 4. Lấy danh sách thành viên Hội đồng sắp xếp theo vai trò
-        $roleOrder = ['Chủ tịch' => 1, 'Thư ký' => 2, 'Phản biện' => 3, 'Ủy viên' => 4];
-        $sortedMembers = $hoiDong->thanhViens->sortBy(fn($tv) => $roleOrder[$tv->VaiTro] ?? 5);
-
-        // 5. Gom toàn bộ danh sách sinh viên trong hội đồng (không phân trang, không giới hạn 5 dòng)
-        $studentsList = [];
-        $stt = 1;
-        foreach ($hoiDong->hoSoBaoVes as $hoSo) {
-            $nhom = $hoSo->nhom;
-            $deTai = $nhom?->deTai;
-            $thanhViensNhom = $nhom?->thanhViens ?? collect();
-
-            foreach ($thanhViensNhom as $tvn) {
-                $sv = $tvn->sinhVien;
-                if (!$sv) continue;
-
-                // Tách họ và tên chuẩn tiếng Việt
-                $hoTenParts = preg_split('/\s+/', trim($sv->HoTen ?? ''));
-                $ten = !empty($hoTenParts) ? array_pop($hoTenParts) : '';
-                $ho = implode(' ', $hoTenParts);
-
-                // Lấy các phiếu chấm của sinh viên này
-                $svPhieus = $phieuChams->where('MaSV', $sv->MaSV);
-                $completedPhieus = $svPhieus->where('TrangThai', 'Đã hoàn thành');
-                $validPhieus = $completedPhieus->isNotEmpty() ? $completedPhieus : $svPhieus;
-
-                // Tính điểm trung bình từng tiêu chí
-                $critAverages = [];
-                $critGkScores = [];
-                foreach ($rubric as $crit) {
-                    $cId = $crit['id'];
-                    $scores = [];
-                    foreach ($sortedMembers as $tv) {
-                        $p = $svPhieus->firstWhere('MaGV', $tv->MaGV);
-                        $cd = $p ? (is_array($p->ChiTietDiem) ? $p->ChiTietDiem : json_decode($p->ChiTietDiem, true)) : [];
-                        $scoreVal = (isset($cd[$cId]) && is_numeric($cd[$cId])) ? (float)$cd[$cId] : null;
-                        $critGkScores[$tv->MaGV][$cId] = $scoreVal;
-                        if ($scoreVal !== null && ($p?->TrangThai === 'Đã hoàn thành' || $completedPhieus->isEmpty())) {
-                            $scores[] = $scoreVal;
-                        }
-                    }
-                    $critAverages[$cId] = !empty($scores) ? round(array_sum($scores) / count($scores), 2) : 0.0;
-                }
-
-                // Tính điểm từng CLO theo công thức: D_CLO = (Tổng D_TB,i / Tổng D_max,i) * 10
-                $cloScores = [];
-                $allCloPassed = true;
-                foreach ($cloGroups as $code => $g) {
-                    $sumTb = 0.0;
-                    foreach ($g['criteria'] as $c) {
-                        $sumTb += $critAverages[$c['id']] ?? 0.0;
-                    }
-                    $dClo = $g['max_sum'] > 0 ? round(($sumTb / $g['max_sum']) * 10, 2) : 0.0;
-                    $isPass = ($dClo >= 4.0);
-                    if (!$isPass) {
-                        $allCloPassed = false;
-                    }
-                    $cloScores[$code] = [
-                        'score' => $dClo,
-                        'sum_tb' => round($sumTb, 2),
-                        'max_sum' => $g['max_sum'],
-                        'passed' => $isPass,
-                    ];
-                }
-
-                // Điểm tổng kết
-                $sumCrit = array_sum(array_filter($critAverages, fn($k) => empty($criteriaMap[$k]['is_bonus']), ARRAY_FILTER_USE_KEY));
-                $bonusScore = $critAverages['tc13'] ?? 0.0;
-                $finalScore = min(10.0, round($sumCrit + $bonusScore, 2));
-
-                $studentsList[] = [
-                    'stt'            => $stt++,
-                    'maSV'           => $sv->MaSV,
-                    'ho'             => $ho,
-                    'ten'            => $ten,
-                    'hoTen'          => $sv->HoTen,
-                    'lop'            => $sv->lop?->TenLop ?? 'N/A',
-                    'nganh'          => $sv->lop?->nganh?->TenNganh ?? $deTai?->nganh?->TenNganh ?? 'Công nghệ Thông tin',
-                    'tenDeTai'       => $deTai?->TenDeTai ?? 'Chưa cập nhật',
-                    'maHoSo'         => $hoSo->MaHoSo,
-                    'critAverages'   => $critAverages,
-                    'critGkScores'   => $critGkScores,
-                    'cloScores'      => $cloScores,
-                    'allCloPassed'   => $allCloPassed,
-                    'finalScore'     => $finalScore,
-                ];
-            }
+        // 1. Kiểm tra ràng buộc điều kiện đủ 3 phiếu chấm điểm từ 3 giảng viên Hội đồng
+        $checkDuPhieu = $this->cloCalculationService->kiemTraDu3PhieuCham($hoiDong);
+        if (!$force && !$checkDuPhieu['du_3_phieu']) {
+            throw new \InvalidArgumentException($checkDuPhieu['message']);
         }
 
-        // 6. Khởi tạo Spreadsheet
+        // 2. Tính toán tổng hợp CLO toàn bộ sinh viên từ CloCalculationService
+        $councilData = $this->cloCalculationService->calculateCouncilClo($hoiDong, $loaiKhoaLuan);
+
+        $studentsList = $councilData['students'];
+        $cloGroups = $councilData['cloGroups'];
+        $sortedMembers = $councilData['sortedMembers'];
+        $rubric = $councilData['rubric'];
+
+        // 3. Khởi tạo Spreadsheet
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getProperties()
             ->setCreator('Trường Đại học Công Thương TP.HCM (HUIT)')
             ->setTitle('Báo cáo đánh giá chuẩn đầu ra CLO Hội đồng ' . $hoiDong->MaHoiDong)
-            ->setSubject('Báo cáo Chuẩn đầu ra Khóa luận tốt nghiệp')
+            ->setSubject('Báo cáo Chuẩn đầu ra Khóa luận tốt nghiệp - Tổng hợp 3 Giảng viên')
             ->setDescription('Được tạo tự động từ Hệ thống Quản lý Khóa luận Tốt nghiệp HUIT');
 
-        // Tạo Sheet 1: Tổng Hợp CĐR CLO (Master Sheet)
+        // Sheet 1: Bảng tổng hợp so sánh CLO của cả 3 Giảng viên và Điểm trung bình (Yêu cầu nghiệp vụ 3)
         $sheet1 = $spreadsheet->getActiveSheet();
-        $sheet1->setTitle('5B_CĐR_CLO');
-        $this->buildMasterCloSheet($sheet1, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $cloGroups);
+        $sheet1->setTitle('TongHop_3GV_CLO');
+        $this->buildThreeExaminersComparisonSheet($sheet1, $hoiDong, $loaiKhoaLuan, $studentsList, $cloGroups, $sortedMembers);
 
-        // Tạo Sheet 2: Chi tiết từng Giám khảo & Tiêu chí (03C Sheet)
+        // Sheet 2: Mẫu chuẩn 5B_CĐR_CLO (Master Sheet chính thức)
         $sheet2 = $spreadsheet->createSheet();
-        $sheet2->setTitle('03C_CLO_ĐCK');
-        $this->buildExaminerDetailSheet($sheet2, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $sortedMembers);
+        $sheet2->setTitle('5B_CĐR_CLO');
+        $this->buildMasterCloSheet($sheet2, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $cloGroups);
+
+        // Sheet 3: Chi tiết từng Giám khảo & Tiêu chí (03C Sheet)
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('03C_CLO_ĐCK');
+        $this->buildExaminerDetailSheet($sheet3, $hoiDong, $loaiKhoaLuan, $studentsList, $rubric, $sortedMembers);
 
         $spreadsheet->setActiveSheetIndex(0);
         return $spreadsheet;
     }
 
     /**
-     * Xây dựng Sheet 1: Mẫu chuẩn 5B_CĐR_CLO
+     * Xây dựng Sheet 1: BẢNG TỔNG HỢP SO SÁNH CLO CỦA CẢ 3 GIẢNG VIÊN VÀ ĐIỂM TRUNG BÌNH HỘI ĐỒNG
+     * Thể hiện đầy đủ:
+     * - Điểm CLO của Giảng viên 1 (Chủ tịch)
+     * - Điểm CLO của Giảng viên 2 (Thư ký)
+     * - Điểm CLO của Giảng viên 3 (Phản biện / Ủy viên)
+     * - Điểm CLO trung bình của cả 3 giảng viên: D_CLO,TB = (GV1 + GV2 + GV3) / 3
+     * - Tỷ lệ đạt CLO và Kết quả đánh giá CLO cuối cùng
      */
-    private function buildMasterCloSheet($sheet, HoiDong $hoiDong, string $loaiKhoaLuan, array $studentsList, array $rubric, array $cloGroups): void
-    {
-        // Metadata
+    private function buildThreeExaminersComparisonSheet(
+        $sheet,
+        HoiDong $hoiDong,
+        string $loaiKhoaLuan,
+        array $studentsList,
+        array $cloGroups,
+        $sortedMembers
+    ): void {
         $firstStudent = $studentsList[0] ?? null;
         $firstHoSo = $hoiDong->hoSoBaoVes->first();
         $firstDeTai = $firstHoSo?->nhom?->deTai;
@@ -189,7 +102,297 @@ class CloReportExportService
         $tenHocKy = $hoiDong->hocKy?->TenHocKy ?? 'Học kỳ 1';
         $namHoc = $hoiDong->hocKy?->NamHoc ?? '2026-2027';
 
-        // Page setup
+        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+        $sheet->getPageSetup()->setFitToPage(true);
+        $sheet->getPageSetup()->setFitToWidth(1);
+        $sheet->getPageSetup()->setFitToHeight(0);
+
+        // Header Block
+        $sheet->setCellValue('A1', 'BỘ CÔNG THƯƠNG');
+        $sheet->setCellValue('A2', 'TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH');
+        $sheet->setCellValue('A3', 'KHOA CÔNG NGHỆ THÔNG TIN');
+
+        $sheet->setCellValue('F2', 'BÁO CÁO TỔNG HỢP 3 GIẢNG VIÊN');
+        $sheet->getStyle('F2')->getFont()->setItalic(true)->setSize(10);
+
+        $sheet->setCellValue('A5', 'BẢNG TỔNG HỢP SO SÁNH ĐIỂM CLO CỦA CẢ 3 GIẢNG VIÊN VÀ ĐIỂM TRUNG BÌNH HỘI ĐỒNG');
+        $sheet->setCellValue('A6', mb_strtoupper($tenHocPhan, 'UTF-8') . " — {$tenHocKy} ({$namHoc}) &bull; HỘI ĐỒNG: {$hoiDong->TenHoiDong} ({$hoiDong->MaHoiDong})");
+
+        $sheet->mergeCells('A5:P5');
+        $sheet->mergeCells('A6:P6');
+        $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('002060'));
+        $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(11);
+        $sheet->getStyle('A5:A6')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Metadata row
+        $sheet->setCellValue('A7', "Ngành: {$tenNganh} | Mã học phần: {$maHocPhan} | Số tín chỉ: {$soTinChi}");
+        $memberInfo = $sortedMembers->map(fn($m, $i) => "GV" . ($i + 1) . ": " . ($m->giangVien?->HoTen ?? $m->MaGV) . " (" . $m->VaiTro . ")")->implode('  |  ');
+        $sheet->setCellValue('A8', "Thành viên Hội đồng: {$memberInfo}");
+
+        $sheet->getStyle('A1:A3')->getFont()->setBold(true)->setSize(10);
+        $sheet->getStyle('A7:A8')->getFont()->setItalic(true)->setSize(9.5);
+
+        // Table Header: Start row 10
+        // Base cols: A: STT, B: Mã SV, C: Họ và Tên, D: Lớp, E: Tên Đề Tài
+        $headerRow1 = 10;
+        $headerRow2 = 11;
+
+        $sheet->mergeCells("A{$headerRow1}:A{$headerRow2}"); $sheet->setCellValue("A{$headerRow1}", "STT");
+        $sheet->mergeCells("B{$headerRow1}:B{$headerRow2}"); $sheet->setCellValue("B{$headerRow1}", "Mã SV");
+        $sheet->mergeCells("C{$headerRow1}:C{$headerRow2}"); $sheet->setCellValue("C{$headerRow1}", "Họ và Tên");
+        $sheet->mergeCells("D{$headerRow1}:D{$headerRow2}"); $sheet->setCellValue("D{$headerRow1}", "Lớp");
+        $sheet->mergeCells("E{$headerRow1}:E{$headerRow2}"); $sheet->setCellValue("E{$headerRow1}", "Tên Đề Tài");
+
+        $curCol = 6; // Column F
+        foreach ($cloGroups as $code => $g) {
+            $colStartStr = Coordinate::stringFromColumnIndex($curCol);
+            $colEndStr = Coordinate::stringFromColumnIndex($curCol + 3);
+
+            // Row 1: Merged CLO header
+            $sheet->mergeCells("{$colStartStr}{$headerRow1}:{$colEndStr}{$headerRow1}");
+            $sheet->setCellValue("{$colStartStr}{$headerRow1}", "{$code} ({$g['plo']})");
+
+            // Row 2: Sub-columns: GV1, GV2, GV3, ĐIỂM TB
+            $c1 = Coordinate::stringFromColumnIndex($curCol++);
+            $c2 = Coordinate::stringFromColumnIndex($curCol++);
+            $c3 = Coordinate::stringFromColumnIndex($curCol++);
+            $c4 = Coordinate::stringFromColumnIndex($curCol++);
+
+            $sheet->setCellValue("{$c1}{$headerRow2}", "GV1");
+            $sheet->setCellValue("{$c2}{$headerRow2}", "GV2");
+            $sheet->setCellValue("{$c3}{$headerRow2}", "GV3");
+            $sheet->setCellValue("{$c4}{$headerRow2}", "ĐIỂM TB");
+        }
+
+        // Summary columns
+        $colRateStr = Coordinate::stringFromColumnIndex($curCol++);
+        $sheet->mergeCells("{$colRateStr}{$headerRow1}:{$colRateStr}{$headerRow2}");
+        $sheet->setCellValue("{$colRateStr}{$headerRow1}", "Tỷ lệ\nđạt CLO");
+
+        $colStatusStr = Coordinate::stringFromColumnIndex($curCol++);
+        $sheet->mergeCells("{$colStatusStr}{$headerRow1}:{$colStatusStr}{$headerRow2}");
+        $sheet->setCellValue("{$colStatusStr}{$headerRow1}", "Đánh giá\nCĐR CLO");
+
+        $colGpaStr = Coordinate::stringFromColumnIndex($curCol++);
+        $sheet->mergeCells("{$colGpaStr}{$headerRow1}:{$colGpaStr}{$headerRow2}");
+        $sheet->setCellValue("{$colGpaStr}{$headerRow1}", "Điểm TB\nHội Đồng");
+
+        $lastColStr = Coordinate::stringFromColumnIndex($curCol - 1);
+
+        // Styling header
+        $headerRange = "A{$headerRow1}:{$lastColStr}{$headerRow2}";
+        $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(9.5);
+        $sheet->getStyle($headerRange)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+            ->setVertical(Alignment::VERTICAL_CENTER)
+            ->setWrapText(true);
+        $sheet->getStyle($headerRange)->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('C6D9F1'); // Header Theme Blue
+
+        // Data Rows
+        $currentRow = $headerRow2 + 1;
+        $dataStartRow = $currentRow;
+
+        foreach ($studentsList as $stu) {
+            $sheet->setCellValue("A{$currentRow}", $stu['stt']);
+            $sheet->setCellValueExplicit("B{$currentRow}", $stu['maSV'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue("C{$currentRow}", $stu['hoTen']);
+            $sheet->setCellValue("D{$currentRow}", $stu['lop']);
+            $sheet->setCellValue("E{$currentRow}", $stu['tenDeTai']);
+
+            $colIdx = 6;
+            foreach ($cloGroups as $code => $g) {
+                $cloObj = $stu['cloScores'][$code] ?? [];
+                $gv1 = $cloObj['gv1'] ?? null;
+                $gv2 = $cloObj['gv2'] ?? null;
+                $gv3 = $cloObj['gv3'] ?? null;
+                $avg = $cloObj['score'] ?? 0.0;
+
+                $c1 = Coordinate::stringFromColumnIndex($colIdx++);
+                $c2 = Coordinate::stringFromColumnIndex($colIdx++);
+                $c3 = Coordinate::stringFromColumnIndex($colIdx++);
+                $c4 = Coordinate::stringFromColumnIndex($colIdx++);
+
+                $sheet->setCellValue("{$c1}{$currentRow}", $gv1 !== null ? $gv1 : '-');
+                $sheet->setCellValue("{$c2}{$currentRow}", $gv2 !== null ? $gv2 : '-');
+                $sheet->setCellValue("{$c3}{$currentRow}", $gv3 !== null ? $gv3 : '-');
+                $sheet->setCellValue("{$c4}{$currentRow}", $avg);
+
+                // Highlight TB column
+                $sheet->getStyle("{$c4}{$currentRow}")->getFont()->setBold(true);
+                $sheet->getStyle("{$c4}{$currentRow}")->getFill()
+                    ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBF1F5');
+            }
+
+            // Summary
+            $cRate = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$cRate}{$currentRow}", ($stu['clo_pass_rate'] ?? 0.0) . '%');
+
+            $cStat = Coordinate::stringFromColumnIndex($colIdx++);
+            $isPass = $stu['all_clo_passed'] ?? false;
+            $sheet->setCellValue("{$cStat}{$currentRow}", $isPass ? 'Đạt' : 'Chưa đạt');
+            $sheet->getStyle("{$cStat}{$currentRow}")->getFont()->setBold(true);
+            if ($isPass) {
+                $sheet->getStyle("{$cStat}{$currentRow}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('006100'));
+            } else {
+                $sheet->getStyle("{$cStat}{$currentRow}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('9C0006'));
+            }
+
+            $cGpa = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$cGpa}{$currentRow}", $stu['finalScore']);
+            $sheet->getStyle("{$cGpa}{$currentRow}")->getFont()->setBold(true);
+
+            // Alignments & formats
+            $sheet->getStyle("A{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("B{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("D{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("E{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("F{$currentRow}:{$lastColStr}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("{$cRate}{$currentRow}:{$cStat}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $currentRow++;
+        }
+
+        $dataEndRow = $currentRow - 1;
+
+        // Borders
+        if ($dataEndRow >= $dataStartRow) {
+            $sheet->getStyle("A{$headerRow1}:{$lastColStr}{$dataEndRow}")->getBorders()->getAllBorders()
+                ->setBorderStyle(Border::BORDER_THIN)
+                ->getColor()->setRGB('D0D7DE');
+            $sheet->getStyle("A{$headerRow1}:{$lastColStr}{$dataEndRow}")->getBorders()->getOutline()
+                ->setBorderStyle(Border::BORDER_MEDIUM)
+                ->getColor()->setRGB('002060');
+        }
+
+        // Summary row
+        if ($dataEndRow >= $dataStartRow) {
+            $sheet->mergeCells("A{$currentRow}:E{$currentRow}");
+            $sheet->setCellValue("A{$currentRow}", "ĐIỂM TRUNG BÌNH TOÀN HỘI ĐỒNG:");
+            $sheet->getStyle("A{$currentRow}")->getFont()->setBold(true);
+            $sheet->getStyle("A{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            $colIdx = 6;
+            foreach ($cloGroups as $code => $g) {
+                for ($k = 0; $k < 4; $k++) {
+                    $cStr = Coordinate::stringFromColumnIndex($colIdx++);
+                    $sheet->setCellValue("{$cStr}{$currentRow}", "=AVERAGE({$cStr}{$dataStartRow}:{$cStr}{$dataEndRow})");
+                    $sheet->getStyle("{$cStr}{$currentRow}")->getNumberFormat()->setFormatCode('0.00');
+                    $sheet->getStyle("{$cStr}{$currentRow}")->getFont()->setBold(true);
+                    $sheet->getStyle("{$cStr}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                }
+            }
+
+            // Summary pass rate
+            $cRate = Coordinate::stringFromColumnIndex($colIdx++);
+            $totalCount = count($studentsList);
+            $passCount = count(array_filter($studentsList, fn($s) => !empty($s['all_clo_passed'])));
+            $rate = ($totalCount > 0) ? round(($passCount / $totalCount) * 100, 1) : 0;
+            $sheet->setCellValue("{$cRate}{$currentRow}", "{$rate}%");
+            $sheet->getStyle("{$cRate}{$currentRow}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cRate}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $cStat = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$cStat}{$currentRow}", "Đạt {$passCount}/{$totalCount}");
+            $sheet->getStyle("{$cStat}{$currentRow}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cStat}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $cGpa = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$cGpa}{$currentRow}", "=AVERAGE({$cGpa}{$dataStartRow}:{$cGpa}{$dataEndRow})");
+            $sheet->getStyle("{$cGpa}{$currentRow}")->getNumberFormat()->setFormatCode('0.00');
+            $sheet->getStyle("{$cGpa}{$currentRow}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cGpa}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            $sheet->getStyle("A{$currentRow}:{$lastColStr}{$currentRow}")->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E9EDF4');
+            $sheet->getStyle("A{$currentRow}:{$lastColStr}{$currentRow}")->getBorders()->getAllBorders()
+                ->setBorderStyle(Border::BORDER_THIN);
+
+            $currentRow += 2;
+        }
+
+        // Formula Note
+        $sheet->setCellValue("A{$currentRow}", "Ghi chú: Điểm CLO Trung Bình = (Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3) / 3. Chuẩn đầu ra Đạt khi Điểm CLO TB >= 4.00 (thang 10).");
+        $sheet->getStyle("A{$currentRow}")->getFont()->setItalic(true)->setSize(9);
+
+        // Signatures of all 3 Lecturers
+        $currentRow += 2;
+        $dateStr = "TP. Hồ Chí Minh, ngày " . date('d') . " tháng " . date('m') . " năm " . date('Y');
+        $sheet->setCellValue("A{$currentRow}", $dateStr);
+        $sheet->getStyle("A{$currentRow}")->getFont()->setItalic(true)->setSize(9.5);
+
+        $currentRow++;
+        $sigRowTitle = $currentRow;
+        $sigRowSign = $currentRow + 1;
+        $sigRowName = $currentRow + 4;
+
+        // Position signatures across columns
+        $gv1 = $sortedMembers->get(0);
+        $gv2 = $sortedMembers->get(1);
+        $gv3 = $sortedMembers->get(2);
+
+        // GV1 (Chủ tịch) - Trái / Giữa
+        $sheet->setCellValue("B{$sigRowTitle}", "CHỦ TỊCH HỘI ĐỒNG");
+        $sheet->setCellValue("B{$sigRowSign}", "(Ký và ghi rõ họ tên)");
+        $sheet->setCellValue("B{$sigRowName}", $gv1?->giangVien?->HoTen ?? $gv1?->MaGV ?? '');
+        $sheet->getStyle("B{$sigRowTitle}:B{$sigRowName}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B{$sigRowTitle}")->getFont()->setBold(true);
+        $sheet->getStyle("B{$sigRowSign}")->getFont()->setItalic(true)->setSize(9);
+        $sheet->getStyle("B{$sigRowName}")->getFont()->setBold(true);
+
+        // GV2 (Thư ký) - Ở giữa
+        $midCol = Coordinate::stringFromColumnIndex(intval($curCol / 2));
+        $sheet->setCellValue("{$midCol}{$sigRowTitle}", "THƯ KÝ HỘI ĐỒNG");
+        $sheet->setCellValue("{$midCol}{$sigRowSign}", "(Ký và ghi rõ họ tên)");
+        $sheet->setCellValue("{$midCol}{$sigRowName}", $gv2?->giangVien?->HoTen ?? $gv2?->MaGV ?? '');
+        $sheet->getStyle("{$midCol}{$sigRowTitle}:{$midCol}{$sigRowName}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("{$midCol}{$sigRowTitle}")->getFont()->setBold(true);
+        $sheet->getStyle("{$midCol}{$sigRowSign}")->getFont()->setItalic(true)->setSize(9);
+        $sheet->getStyle("{$midCol}{$sigRowName}")->getFont()->setBold(true);
+
+        // GV3 (Phản biện / Ủy viên) - Bên phải
+        $rightCol = Coordinate::stringFromColumnIndex(max(1, $curCol - 3));
+        $role3 = $gv3?->VaiTro ?? 'PHẢN BIỆN / ỦY VIÊN';
+        $sheet->setCellValue("{$rightCol}{$sigRowTitle}", mb_strtoupper($role3, 'UTF-8'));
+        $sheet->setCellValue("{$rightCol}{$sigRowSign}", "(Ký và ghi rõ họ tên)");
+        $sheet->setCellValue("{$rightCol}{$sigRowName}", $gv3?->giangVien?->HoTen ?? $gv3?->MaGV ?? '');
+        $sheet->getStyle("{$rightCol}{$sigRowTitle}:{$rightCol}{$sigRowName}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("{$rightCol}{$sigRowTitle}")->getFont()->setBold(true);
+        $sheet->getStyle("{$rightCol}{$sigRowSign}")->getFont()->setItalic(true)->setSize(9);
+        $sheet->getStyle("{$rightCol}{$sigRowName}")->getFont()->setBold(true);
+
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(14);
+        $sheet->getColumnDimension('C')->setWidth(22);
+        $sheet->getColumnDimension('D')->setWidth(13);
+        $sheet->getColumnDimension('E')->setWidth(32);
+        for ($c = 6; $c <= Coordinate::columnIndexFromString($lastColStr); $c++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setWidth(10);
+        }
+
+        $sheet->getStyle('A1:' . $lastColStr . ($sigRowName + 2))->getFont()->setName('Times New Roman');
+        $sheet->freezePane('F' . ($headerRow2 + 1));
+    }
+
+    /**
+     * Xây dựng Sheet 2: Mẫu chuẩn 5B_CĐR_CLO (Sử dụng đúng điểm trung bình của 3 giảng viên)
+     */
+    private function buildMasterCloSheet($sheet, HoiDong $hoiDong, string $loaiKhoaLuan, array $studentsList, array $rubric, array $cloGroups): void
+    {
+        $firstStudent = $studentsList[0] ?? null;
+        $firstHoSo = $hoiDong->hoSoBaoVes->first();
+        $firstDeTai = $firstHoSo?->nhom?->deTai;
+        $tenHocPhan = ($loaiKhoaLuan === 'KLKS') ? 'Khóa luận kỹ sư' : 'Khóa luận cử nhân';
+        $maHocPhan = $firstDeTai?->hocPhan?->MaHocPhan ?? ($loaiKhoaLuan === 'KLKS' ? 'HP_KLKS' : '0101102008');
+        $soTinChi = $firstDeTai?->hocPhan?->SoTinChi ?? 4;
+        $tenNganh = $firstStudent['nganh'] ?? 'Công nghệ thông tin';
+        $tenHocKy = $hoiDong->hocKy?->TenHocKy ?? 'Học kỳ 1';
+        $namHoc = $hoiDong->hocKy?->NamHoc ?? '2026-2027';
+
         $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
         $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
         $sheet->getPageSetup()->setFitToPage(true);
@@ -213,7 +416,6 @@ class CloReportExportService
         $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('A5:A6')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Metadata rows
         $sheet->setCellValue('A7', "Ngành đào tạo: {$tenNganh}");
         $sheet->setCellValue('E7', "Mã học phần: {$maHocPhan} | Số tín chỉ: {$soTinChi}");
         $sheet->setCellValue('I7', "Hội đồng: {$hoiDong->TenHoiDong} ({$hoiDong->MaHoiDong})");
@@ -221,39 +423,17 @@ class CloReportExportService
         $sheet->getStyle('A1:A3')->getFont()->setBold(true)->setSize(10);
         $sheet->getStyle('A7:I7')->getFont()->setItalic(true)->setSize(10);
 
-        // Table Header Setup
-        // Row 9: CLO Header Group
-        // Row 10: PLO Codes
-        // Row 11: CLO Codes
-        // Row 12: Column labels (STT, Mã SV, Họ, Tên, Lớp, Tên đề tài, ...)
         $startRow = 9;
 
         // Base Columns:
-        // A: STT
-        // B: Mã SV
-        // C: Họ
-        // D: Tên
-        // E: Lớp
-        // F: Tên đề tài
-        $sheet->mergeCells("A{$startRow}:A" . ($startRow + 2));
-        $sheet->setCellValue("A{$startRow}", "STT");
+        $sheet->mergeCells("A{$startRow}:A" . ($startRow + 2)); $sheet->setCellValue("A{$startRow}", "STT");
+        $sheet->mergeCells("B{$startRow}:B" . ($startRow + 2)); $sheet->setCellValue("B{$startRow}", "Mã SV");
+        $sheet->mergeCells("C{$startRow}:C" . ($startRow + 2)); $sheet->setCellValue("C{$startRow}", "Họ");
+        $sheet->mergeCells("D{$startRow}:D" . ($startRow + 2)); $sheet->setCellValue("D{$startRow}", "Tên");
+        $sheet->mergeCells("E{$startRow}:E" . ($startRow + 2)); $sheet->setCellValue("E{$startRow}", "Lớp");
+        $sheet->mergeCells("F{$startRow}:F" . ($startRow + 2)); $sheet->setCellValue("F{$startRow}", "Tên Đề Tài");
 
-        $sheet->mergeCells("B{$startRow}:B" . ($startRow + 2));
-        $sheet->setCellValue("B{$startRow}", "Mã SV");
-
-        $sheet->mergeCells("C{$startRow}:C" . ($startRow + 2));
-        $sheet->setCellValue("C{$startRow}", "Họ");
-
-        $sheet->mergeCells("D{$startRow}:D" . ($startRow + 2));
-        $sheet->setCellValue("D{$startRow}", "Tên");
-
-        $sheet->mergeCells("E{$startRow}:E" . ($startRow + 2));
-        $sheet->setCellValue("E{$startRow}", "Lớp");
-
-        $sheet->mergeCells("F{$startRow}:F" . ($startRow + 2));
-        $sheet->setCellValue("F{$startRow}", "Tên Đề Tài");
-
-        // CLO Dynamic Columns
+        // CLO Dynamic Columns: Chứa Điểm CLO trung bình của cả 3 giảng viên
         $cloColIndex = 7; // G
         $cloCount = count($cloGroups);
         $lastCloColIndex = $cloColIndex + $cloCount - 1;
@@ -261,16 +441,13 @@ class CloReportExportService
         $startCloColStr = Coordinate::stringFromColumnIndex($cloColIndex);
         $endCloColStr = Coordinate::stringFromColumnIndex($lastCloColIndex);
 
-        // Group Header: Điểm trung bình CLO (Thang điểm 10)
         $sheet->mergeCells("{$startCloColStr}{$startRow}:{$endCloColStr}{$startRow}");
-        $sheet->setCellValue("{$startCloColStr}{$startRow}", "ĐIỂM TRUNG BÌNH CLO (THANG 10)");
+        $sheet->setCellValue("{$startCloColStr}{$startRow}", "ĐIỂM TRUNG BÌNH CLO TỪ 3 GIẢNG VIÊN (THANG 10)");
 
         $curCol = $cloColIndex;
         foreach ($cloGroups as $code => $g) {
             $colStr = Coordinate::stringFromColumnIndex($curCol);
-            // Row 10: PLO
             $sheet->setCellValue("{$colStr}" . ($startRow + 1), $g['plo']);
-            // Row 11: CLO Name
             $sheet->setCellValue("{$colStr}" . ($startRow + 2), "{$code}(*)");
             $curCol++;
         }
@@ -295,7 +472,7 @@ class CloReportExportService
             ->setWrapText(true);
         $sheet->getStyle($headerRange)->getFill()
             ->setFillType(Fill::FILL_SOLID)
-            ->getStartColor()->setRGB('BDD7EE'); // Soft Academic Blue
+            ->getStartColor()->setRGB('BDD7EE');
 
         // Data Rows
         $currentRow = $startRow + 3;
@@ -312,6 +489,7 @@ class CloReportExportService
             $colIdx = 7;
             foreach ($cloGroups as $code => $g) {
                 $cStr = Coordinate::stringFromColumnIndex($colIdx);
+                // Lấy đúng điểm trung bình của 3 giảng viên
                 $cloScore = $stu['cloScores'][$code]['score'] ?? 0.0;
                 $sheet->setCellValue("{$cStr}{$currentRow}", $cloScore);
                 $colIdx++;
@@ -319,7 +497,8 @@ class CloReportExportService
 
             // Kết quả đạt CĐR
             $rColStr = Coordinate::stringFromColumnIndex($colIdx++);
-            $sheet->setCellValue("{$rColStr}{$currentRow}", $stu['allCloPassed'] ? 'Đạt' : 'Chưa đạt');
+            $isPass = !empty($stu['all_clo_passed']);
+            $sheet->setCellValue("{$rColStr}{$currentRow}", $isPass ? 'Đạt' : 'Chưa đạt');
 
             // Điểm tổng kết
             $gColStr = Coordinate::stringFromColumnIndex($colIdx++);
@@ -333,13 +512,12 @@ class CloReportExportService
             $sheet->getStyle("E{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-            // Number formatting for CLO and GPA columns
             $cloRange = "{$startCloColStr}{$currentRow}:{$endCloColStr}{$currentRow}";
             $sheet->getStyle($cloRange)->getNumberFormat()->setFormatCode('0.00');
             $sheet->getStyle($cloRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
             $sheet->getStyle("{$rColStr}{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            if ($stu['allCloPassed']) {
+            if ($isPass) {
                 $sheet->getStyle("{$rColStr}{$currentRow}")->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('006100'));
             } else {
                 $sheet->getStyle("{$rColStr}{$currentRow}")->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('9C0006'));
@@ -354,7 +532,7 @@ class CloReportExportService
 
         $dataEndRow = $currentRow - 1;
 
-        // Borders across all data
+        // Borders
         if ($dataEndRow >= $dataStartRow) {
             $sheet->getStyle("A{$startRow}:{$lastColStr}{$dataEndRow}")->getBorders()->getAllBorders()
                 ->setBorderStyle(Border::BORDER_THIN)
@@ -384,7 +562,7 @@ class CloReportExportService
             // Tỷ lệ Đạt
             $rColStr = Coordinate::stringFromColumnIndex($colIdx++);
             $totalCount = count($studentsList);
-            $passCount = count(array_filter($studentsList, fn($s) => $s['allCloPassed']));
+            $passCount = count(array_filter($studentsList, fn($s) => !empty($s['all_clo_passed'])));
             $passRate = $totalCount > 0 ? round(($passCount / $totalCount) * 100, 1) : 0;
             $sheet->setCellValue("{$rColStr}{$currentRow}", "Đạt {$passCount}/{$totalCount} ({$passRate}%)");
             $sheet->getStyle("{$rColStr}{$currentRow}")->getFont()->setBold(true);
@@ -406,7 +584,7 @@ class CloReportExportService
         }
 
         // Signatures Block
-        $sheet->setCellValue("A{$currentRow}", "Ghi chú: Chuẩn đầu ra Đạt khi điểm tổng hợp CLO >= 4.00 (theo quy chế đào tạo theo hệ thống tín chỉ).");
+        $sheet->setCellValue("A{$currentRow}", "Ghi chú: Điểm CLO tính từ trung bình 3 Giảng viên. Chuẩn đầu ra Đạt khi điểm tổng hợp CLO >= 4.00 (theo quy chế đào tạo).");
         $sheet->getStyle("A{$currentRow}")->getFont()->setItalic(true)->setSize(9);
 
         $dateStr = "TP. Hồ Chí Minh, ngày " . date('d') . " tháng " . date('m') . " năm " . date('Y');
@@ -429,15 +607,12 @@ class CloReportExportService
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setWidth(12);
         }
 
-        // Set Times New Roman everywhere
         $sheet->getStyle('A1:' . $lastColStr . ($currentRow + 5))->getFont()->setName('Times New Roman');
-
-        // Freeze panes below headers
         $sheet->freezePane('G' . ($startRow + 3));
     }
 
     /**
-     * Xây dựng Sheet 2: Chi tiết từng Tiêu chí và Điểm 3 Giám khảo (Mẫu 03C)
+     * Xây dựng Sheet 3: Chi tiết từng Tiêu chí và Điểm 3 Giám khảo (Mẫu 03C)
      */
     private function buildExaminerDetailSheet($sheet, HoiDong $hoiDong, string $loaiKhoaLuan, array $studentsList, array $rubric, $sortedMembers): void
     {
@@ -455,7 +630,6 @@ class CloReportExportService
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10);
 
         // Table Header: Row 4 to 7
-        // A: STT, B: Mã SV, C: Họ, D: Tên, E: Lớp
         $sheet->mergeCells('A4:A7'); $sheet->setCellValue('A4', 'STT');
         $sheet->mergeCells('B4:B7'); $sheet->setCellValue('B4', 'Mã SV');
         $sheet->mergeCells('C4:C7'); $sheet->setCellValue('C4', 'Họ và');
@@ -465,15 +639,11 @@ class CloReportExportService
         $colIdx = 6;
         foreach ($rubric as $crit) {
             $colStr = Coordinate::stringFromColumnIndex($colIdx);
-            // Row 4: Criterion description / label
             $firstLine = strtok($crit['noi_dung'], "\n");
             $sheet->setCellValue("{$colStr}4", "TC{$crit['stt']}: " . mb_substr($firstLine, 0, 35) . '...');
-            // Row 5: PLO
             $baseClo = preg_replace('/(\.[0-9]+)$/', '', $crit['clo']);
-            $sheet->setCellValue("{$colStr}5", $this->getPloMapping($baseClo));
-            // Row 6: CLO code
+            $sheet->setCellValue("{$colStr}5", $this->cloCalculationService->getPloMapping($baseClo));
             $sheet->setCellValue("{$colStr}6", $crit['clo'] . '(*)');
-            // Row 7: Max score
             $sheet->setCellValue("{$colStr}7", number_format($crit['max'], 2));
 
             $colIdx++;
@@ -499,15 +669,14 @@ class CloReportExportService
 
         $lastColStr = Coordinate::stringFromColumnIndex($colIdx - 1);
 
-        // Header styles
-        $headerRange = "A4:{$lastColStr}7";
-        $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(10);
-        $sheet->getStyle($headerRange)->getAlignment()
+        $sheet->getStyle("A4:{$lastColStr}7")->getFont()->setBold(true)->setSize(9);
+        $sheet->getStyle("A4:{$lastColStr}7")->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
-        $sheet->getStyle($headerRange)->getFill()
-            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('BDD7EE');
+        $sheet->getStyle("A4:{$lastColStr}7")->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('D9E1F2');
 
         // Data Rows
         $currentRow = 8;
@@ -522,36 +691,35 @@ class CloReportExportService
 
             $colIdx = 6;
             foreach ($rubric as $crit) {
-                $colStr = Coordinate::stringFromColumnIndex($colIdx);
-                $critScore = $stu['critAverages'][$crit['id']] ?? 0.0;
-                $sheet->setCellValue("{$colStr}{$currentRow}", $critScore);
+                $cStr = Coordinate::stringFromColumnIndex($colIdx);
+                $critAvg = $stu['critAverages'][$crit['id']] ?? 0.0;
+                $sheet->setCellValue("{$cStr}{$currentRow}", $critAvg);
                 $colIdx++;
             }
 
-            // Total Score
-            $sheet->setCellValue("{$totalColStr}{$currentRow}", $stu['finalScore']);
-            // Topic
-            $sheet->setCellValue("{$topicColStr}{$currentRow}", $stu['tenDeTai']);
+            // Final score
+            $tStr = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$tStr}{$currentRow}", $stu['finalScore']);
 
-            // Examiner marks
-            foreach ($sortedMembers as $tv) {
-                $gkColStr = Coordinate::stringFromColumnIndex($colIdx++);
-                $gkPhieu = PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong)
-                    ->where('MaGV', $tv->MaGV)
-                    ->where('MaSV', $stu['maSV'])
-                    ->first();
-                $gkScore = $gkPhieu ? (float)$gkPhieu->Diem : null;
-                $sheet->setCellValue("{$gkColStr}{$currentRow}", $gkScore !== null ? number_format($gkScore, 2) : '-');
+            // Topic name
+            $tpStr = Coordinate::stringFromColumnIndex($colIdx++);
+            $sheet->setCellValue("{$tpStr}{$currentRow}", $stu['tenDeTai']);
+
+            // Individual examiner criterion scores
+            foreach ($sortedMembers as $idx => $tv) {
+                $gkStr = Coordinate::stringFromColumnIndex($colIdx++);
+                $exData = $stu['examinerData']['GV' . ($idx + 1)] ?? null;
+                $sheet->setCellValue("{$gkStr}{$currentRow}", $exData['diemTong'] ?? '-');
             }
 
-            // Alignments & formats
-            $sheet->getStyle("A{$currentRow}:E{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("C{$currentRow}:D{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-
-            $critRange = Coordinate::stringFromColumnIndex(6) . "{$currentRow}:{$totalColStr}{$currentRow}";
-            $sheet->getStyle($critRange)->getNumberFormat()->setFormatCode('0.00');
-            $sheet->getStyle($critRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet->getStyle("{$totalColStr}{$currentRow}")->getFont()->setBold(true);
+            // Alignments
+            $sheet->getStyle("A{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("B{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("D{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("E{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("F{$currentRow}:" . Coordinate::stringFromColumnIndex(5 + count($rubric) + 1) . "{$currentRow}")
+                ->getNumberFormat()->setFormatCode('0.00');
 
             $currentRow++;
         }
@@ -565,34 +733,16 @@ class CloReportExportService
         }
 
         // Auto widths
-        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('A')->setWidth(5);
         $sheet->getColumnDimension('B')->setWidth(14);
-        $sheet->getColumnDimension('C')->setWidth(16);
+        $sheet->getColumnDimension('C')->setWidth(18);
         $sheet->getColumnDimension('D')->setWidth(10);
         $sheet->getColumnDimension('E')->setWidth(12);
         for ($c = 6; $c <= Coordinate::columnIndexFromString($lastColStr); $c++) {
-            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setWidth(13);
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setWidth(12);
         }
-        $sheet->getColumnDimension($topicColStr)->setWidth(35);
 
         $sheet->getStyle('A1:' . $lastColStr . ($currentRow + 2))->getFont()->setName('Times New Roman');
         $sheet->freezePane('F8');
-    }
-
-    /**
-     * Ánh xạ chuẩn đầu ra CTĐT (PLO) từ chuẩn đầu ra học phần (CLO)
-     * Dựa theo Ma trận chuẩn đầu ra CTĐT ngành Công nghệ thông tin - HUIT
-     */
-    private function getPloMapping(string $baseClo): string
-    {
-        return match ($baseClo) {
-            'CLO1' => 'PLO1',
-            'CLO2' => 'PLO3',
-            'CLO3' => 'PLO4',
-            'CLO4' => 'PLO6',
-            'CLO5' => 'PLO10',
-            'CLO6' => 'PLO12',
-            default => 'PLO1',
-        };
     }
 }
