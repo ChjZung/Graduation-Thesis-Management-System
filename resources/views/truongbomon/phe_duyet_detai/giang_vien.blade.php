@@ -135,7 +135,8 @@
             </span>
         </div>
 
-        <div class="table-responsive">
+        <!-- Desktop / Tablet Table View (md trở lên) -->
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
@@ -224,6 +225,68 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Card View (< md) -->
+        <div class="d-md-none p-2 p-sm-3 bg-light rounded-bottom-3">
+            @forelse($detais as $idx => $dt)
+            @php
+                $statusClass = 'badge-status-choduyet';
+                $statusLabel = 'Chờ duyệt';
+                $iconStatus = 'fa-clock';
+
+                if (in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt'])) {
+                    $statusClass = 'badge-status-choduyet';
+                    $statusLabel = 'Chờ duyệt';
+                    $iconStatus = 'fa-clock';
+                } elseif (in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương'])) {
+                    $statusClass = 'badge-status-yeucausua';
+                    $statusLabel = 'Yêu cầu chỉnh sửa';
+                    $iconStatus = 'fa-pen-ruler';
+                } elseif (in_array($dt->TrangThai, ['Chờ duyệt cấp Khoa', 'Đã phê duyệt', 'Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành'])) {
+                    $statusClass = 'badge-status-daduyet';
+                    $statusLabel = 'Đã phê duyệt';
+                    $iconStatus = 'fa-circle-check';
+                } elseif (in_array($dt->TrangThai, ['Từ chối', 'Không đạt phản biện'])) {
+                    $statusClass = 'badge-status-tuchoi';
+                    $statusLabel = 'Từ chối';
+                    $iconStatus = 'fa-ban';
+                }
+                $isPending = in_array($dt->TrangThai, ['Chờ duyệt cấp Bộ môn', 'Chờ duyệt']);
+            @endphp
+            <div class="card mb-3 border rounded-3 shadow-xs {{ $isPending ? 'border-warning border-opacity-75 bg-warning-subtle bg-opacity-10' : 'bg-white' }}">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <span class="badge-code">{{ $dt->MaDeTai }}</span>
+                        <span class="badge rounded-pill fw-semibold px-2 py-1 small {{ $statusClass }}">
+                            <i class="fa-solid {{ $iconStatus }} me-1"></i> {{ $statusLabel }}
+                        </span>
+                    </div>
+
+                    <a href="{{ route('truongbomon.phe_duyet_detai.show', ['maDeTai' => $dt->MaDeTai, 'hocKy' => $selectedHocKy]) }}" 
+                       class="fw-bold text-dark text-decoration-none hover-primary d-block mb-2 fs-6">
+                        {{ $dt->TenDeTai }}
+                    </a>
+
+                    <div class="small text-muted mb-2">
+                        <div class="mb-1"><i class="fa-solid fa-graduation-cap text-secondary me-2"></i>{{ $dt->hocPhanRef->TenHocPhan ?? ($dt->HocPhan ?? 'Khóa luận tốt nghiệp') }}</div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span><i class="fa-solid fa-tag me-1 text-primary"></i>{{ $dt->LinhVuc ?? 'CNTT' }}</span>
+                            <span><i class="fa-solid fa-calendar me-1 text-muted"></i>{{ $dt->NgayDeXuat ? \Carbon\Carbon::parse($dt->NgayDeXuat)->format('d/m/Y') : '—' }}</span>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('truongbomon.phe_duyet_detai.show', ['maDeTai' => $dt->MaDeTai, 'hocKy' => $selectedHocKy]) }}" 
+                       class="btn btn-outline-primary btn-sm w-100 rounded-2 fw-semibold d-inline-flex align-items-center justify-content-center py-2">
+                        <i class="fa-solid fa-eye me-2"></i> Xem chi tiết
+                    </a>
+                </div>
+            </div>
+            @empty
+            <div class="text-center py-4 text-muted small">
+                Giảng viên chưa đề xuất đề tài nào trong học kỳ này.
+            </div>
+            @endforelse
         </div>
 
         <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
