@@ -158,7 +158,8 @@
             </span>
         </div>
 
-        <div class="table-responsive">
+        <!-- Desktop / Tablet Table View (md trở lên) -->
+        <div class="table-responsive d-none d-md-block">
             <table class="table admin-table table-hover align-middle mb-0">
                 <thead>
                     <tr>
@@ -278,6 +279,93 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Card View (< md) -->
+        <div class="d-md-none p-2 p-sm-3 bg-light rounded-bottom-3">
+            @forelse($detais as $idx => $dt)
+            @php
+                $isTkPending = $dt->TrangThai === 'Chờ duyệt cấp Khoa';
+                $isTkApproved = in_array($dt->TrangThai, ['Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành']) || !empty($dt->NgayDuyetKhoa);
+                $isTkEdit = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương']) && !empty($dt->NgayDuyetBM);
+                $isTkRejected = in_array($dt->TrangThai, ['Từ chối', 'Không đạt phản biện']) && !empty($dt->NgayDuyetBM);
+                $gvStat = $chiTieuStats[$dt->MaGV] ?? null;
+            @endphp
+            <div class="card mb-3 border rounded-3 shadow-xs {{ $isTkPending ? 'border-warning border-opacity-75 bg-warning-subtle bg-opacity-10' : 'bg-white' }}">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <span class="badge-code">{{ $dt->MaDeTai }}</span>
+                        <div>
+                            @if($isTkPending)
+                                <span class="badge bg-danger text-white fw-bold rounded-pill px-2 py-1 small">
+                                    <i class="fa-solid fa-clock me-1"></i>Chờ duyệt Khoa
+                                </span>
+                            @elseif($isTkApproved)
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                    <i class="fa-solid fa-circle-check me-1"></i>TK đã duyệt
+                                </span>
+                            @elseif($isTkEdit)
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                                    <i class="fa-solid fa-pen-ruler me-1"></i>Yêu cầu sửa
+                                </span>
+                            @elseif($isTkRejected)
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
+                                    <i class="fa-solid fa-ban me-1"></i>Từ chối
+                                </span>
+                            @else
+                                <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">
+                                    Chờ bước BM
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <a href="{{ route('truongkhoa.duyet_detai.show', ['id' => $dt->MaDeTai, 'return_url' => url()->full()]) }}" 
+                       class="fw-bold text-dark text-decoration-none hover-primary d-block mb-2 fs-6">
+                        {{ $dt->TenDeTai }}
+                    </a>
+
+                    <div class="bg-light p-2 rounded-2 mb-2 small">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted"><i class="fa-solid fa-chalkboard-user me-1 text-primary"></i>GVHD:</span>
+                            <strong class="text-dark">{{ $dt->giangVien?->HoTen ?? 'Chưa phân công' }}</strong>
+                        </div>
+                        @if($dt->LinhVuc)
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted"><i class="fa-solid fa-tag me-1 text-secondary"></i>Lĩnh vực:</span>
+                            <span>{{ $dt->LinhVuc }}</span>
+                        </div>
+                        @endif
+                        @if($gvStat)
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted"><i class="fa-solid fa-chart-simple me-1 text-info"></i>Chỉ tiêu GV:</span>
+                            <span class="fw-semibold">{{ $gvStat['label'] }} ({{ $gvStat['tinh_trang'] === 'vuot_chi_tieu' ? 'Vượt' : ($gvStat['tinh_trang'] === 'het_chi_tieu' ? 'Hết' : 'Còn') }})</span>
+                        </div>
+                        @endif
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted"><i class="fa-solid fa-check me-1 text-success"></i>TBM duyệt:</span>
+                            <span class="text-success fw-semibold">{{ $dt->NgayDuyetBM ? \Carbon\Carbon::parse($dt->NgayDuyetBM)->format('d/m/Y') : 'Đã duyệt' }}</span>
+                        </div>
+                    </div>
+
+                    @if($dt->TrangThai === 'Chờ duyệt cấp Khoa')
+                        <a href="{{ route('truongkhoa.duyet_detai.show', ['id' => $dt->MaDeTai, 'return_url' => url()->full()]) }}" 
+                           class="btn btn-primary btn-sm w-100 rounded-2 fw-semibold d-inline-flex align-items-center justify-content-center py-2 shadow-xs">
+                            <i class="fa-solid fa-stamp me-2"></i> Xem &amp; Duyệt Đề Tài
+                        </a>
+                    @else
+                        <a href="{{ route('truongkhoa.duyet_detai.show', ['id' => $dt->MaDeTai, 'return_url' => url()->full()]) }}" 
+                           class="btn btn-outline-primary btn-sm w-100 rounded-2 fw-semibold d-inline-flex align-items-center justify-content-center py-2">
+                            <i class="fa-solid fa-eye me-2"></i> Xem Chi Tiết
+                        </a>
+                    @endif
+                </div>
+            </div>
+            @empty
+            <div class="text-center py-4 text-muted small">
+                Không tìm thấy đề tài nào phù hợp với bộ lọc hiện tại.
+            </div>
+            @endforelse
         </div>
 
         @if($detais->hasPages())
