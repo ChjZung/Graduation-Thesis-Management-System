@@ -345,6 +345,11 @@ class KetQuaController extends Controller
         // Kiểm tra điều kiện công bố cho Hội đồng này
         $chkHd = $this->gradeService->kiemTraDieuKienCongBoHoiDong($id);
 
+        // Lịch sử kiểm toán chỉnh sửa điểm của hội đồng (Immutable Audit Log)
+        $lichSuSuaDiems = \App\Models\LichSuChinhSuaDiem::where('MaHoiDong', $id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('truongkhoa.ketqua.show_hoidong', compact(
             'khoa',
             'hoiDong',
@@ -353,7 +358,8 @@ class KetQuaController extends Controller
             'allPhieuChams',
             'rubricKLCN',
             'rubricKLKS',
-            'chkHd'
+            'chkHd',
+            'lichSuSuaDiems'
         ));
     }
 

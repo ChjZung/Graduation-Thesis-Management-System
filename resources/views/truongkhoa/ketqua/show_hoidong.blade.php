@@ -63,7 +63,17 @@
                 Hội Đồng: {{ $hoiDong->TenHoiDong }}
             </h4>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalLichSuSuaDiem">
+                <i class="fa-solid fa-receipt me-1 text-primary"></i> Lịch Sử Sửa Điểm ({{ $lichSuSuaDiems->count() }})
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalCauHinhSuaDiem">
+                <i class="fa-regular fa-clock me-1"></i> Hạn Sửa Điểm
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-semibold shadow-xs text-dark" data-bs-toggle="modal" data-bs-target="#modalMoKhoaSuaDiem">
+                <i class="fa-solid fa-lock-open me-1 text-danger"></i> Mở Khóa Sai Sót
+            </button>
+
             @php
                 $allPublished = $hoiDong->hoSoBaoVes->isNotEmpty() && $hoiDong->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh', 'CoYeuCauChinhSua']));
             @endphp
@@ -647,5 +657,187 @@
             </div>
         </div>
     @endforeach
+
+    <!-- Modal Cấu hình thời hạn chỉnh sửa điểm -->
+    <div class="modal fade" id="modalCauHinhSuaDiem" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header py-3 bg-light">
+                    <h5 class="modal-title fw-bold text-dark">
+                        <i class="fa-regular fa-clock me-2 text-primary"></i> Thiết Lập Thời Hạn Chỉnh Sửa Điểm
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('truongkhoa.hoidong.cauhinh_suadiem', $hoiDong->MaHoiDong) }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <p class="small text-muted mb-3">
+                            <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+                            Giảng viên chỉ được phép chỉnh sửa điểm trong khoảng thời gian này. Khi hết hạn, hệ thống sẽ <strong>tự động khóa chức năng sửa điểm</strong> của cả 3 giảng viên.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">Thời Gian Bắt Đầu Cho Phép Sửa:</label>
+                            <input type="datetime-local" name="ThoiGianBatDauSuaDiem" class="form-control"
+                                   value="{{ $hoiDong->ThoiGianBatDauSuaDiem ? $hoiDong->ThoiGianBatDauSuaDiem->format('Y-m-d\TH:i') : '' }}">
+                            <div class="form-text small text-muted">Bỏ trống nếu cho phép sửa ngay.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">Thời Gian Kết Thúc (Hạn Chót):</label>
+                            <input type="datetime-local" name="ThoiGianKetThucSuaDiem" class="form-control"
+                                   value="{{ $hoiDong->ThoiGianKetThucSuaDiem ? $hoiDong->ThoiGianKetThucSuaDiem->format('Y-m-d\TH:i') : '' }}">
+                            <div class="form-text small text-muted">Sau thời điểm này, chức năng sửa điểm sẽ tự động bị khóa hoàn toàn.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 bg-light">
+                        <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Lưu Cấu Hình Thời Hạn</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mở khóa sửa điểm xử lý sai sót -->
+    <div class="modal fade" id="modalMoKhoaSuaDiem" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header py-3 bg-light">
+                    <h5 class="modal-title fw-bold text-danger">
+                        <i class="fa-solid fa-lock-open me-2"></i> Mở Khóa Sửa Điểm (Xử Lý Sai Sót)
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('truongkhoa.ketqua.mokhoaphieu') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="MaHoiDong" value="{{ $hoiDong->MaHoiDong }}">
+                    <div class="modal-body p-4">
+                        <div class="alert alert-warning border-warning-subtle small mb-3">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            <strong>Lưu ý nghiệp vụ:</strong> Chỉ mở khóa khi có sai sót cần đính chính. Theo quy định, <strong>bắt buộc phải ghi nhận rõ lý do mở khóa</strong> và hành động này sẽ được ghi vết vào Lịch sử kiểm toán không thể xóa.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">
+                                Lý Do Mở Khóa <span class="text-danger">*</span> (Tối thiểu 5 ký tự):
+                            </label>
+                            <textarea name="ly_do" class="form-control" rows="3" required minlength="5"
+                                      placeholder="Nhập lý do cụ thể vì sao mở khóa sửa điểm (VD: Giám khảo chấm nhầm điểm tiêu chí 3 của SV Nguyễn Văn A, cần chỉnh sửa lại theo biên bản...)">{{ old('ly_do', $hoiDong->LyDoMoKhoaSuaDiem) }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">Gia Hạn Chót Sửa Mới (Tùy chọn):</label>
+                            <input type="datetime-local" name="han_sua_moi" class="form-control"
+                                   value="{{ $hoiDong->ThoiGianKetThucSuaDiem ? $hoiDong->ThoiGianKetThucSuaDiem->format('Y-m-d\TH:i') : '' }}">
+                            <div class="form-text small text-muted">Thời hạn mới để giảng viên hoàn tất sửa điểm trước khi tự động khóa lại.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 bg-light">
+                        <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold shadow-xs">
+                            <i class="fa-solid fa-unlock me-1"></i> Xác Nhận Mở Khóa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lịch sử chỉnh sửa điểm (Audit Log) -->
+    <div class="modal fade" id="modalLichSuSuaDiem" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header py-3 bg-light border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-primary fs-5"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark fs-6 mb-0">
+                                Lịch Sử Chỉnh Sửa Điểm &amp; Kiểm Toán (Audit Log) — {{ $hoiDong->TenHoiDong }}
+                            </h5>
+                            <div class="small text-muted">Dữ liệu bất biến, ghi vết mọi thay đổi điểm tiêu chí/CLO và hành động mở khóa.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if($lichSuSuaDiems->isEmpty())
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-receipt fa-3x mb-3 text-secondary opacity-50"></i>
+                            <h6>Chưa có lịch sử chỉnh sửa điểm nào được ghi nhận cho Hội đồng này.</h6>
+                        </div>
+                    @else
+                        <div class="table-responsive rounded-3 border">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center" style="width: 45px;">STT</th>
+                                        <th style="min-width: 150px;">Giảng Viên Thực Hiện</th>
+                                        <th style="min-width: 110px;">Sinh Viên</th>
+                                        <th style="min-width: 130px;">CLO / Tiêu Chí</th>
+                                        <th class="text-center" style="width: 90px;">Điểm Cũ</th>
+                                        <th class="text-center" style="width: 90px;">Điểm Mới</th>
+                                        <th style="min-width: 140px;">Thời Gian</th>
+                                        <th style="min-width: 200px;">Ghi Chú / Lý Do</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($lichSuSuaDiems as $idx => $ls)
+                                        <tr>
+                                            <td class="text-center text-muted">{{ $idx + 1 }}</td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ $ls->NguoiThucHien }}</div>
+                                                <div class="small text-muted font-monospace">{{ $ls->MaGV }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark border font-monospace">{{ $ls->MaSV }}</span>
+                                            </td>
+                                            <td>
+                                                @if($ls->MaCLO === 'UNLOCK')
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
+                                                        <i class="fa-solid fa-lock-open me-1"></i> MỞ KHÓA SỬA ĐIỂM
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill me-1">
+                                                        {{ $ls->MaCLO ?? 'CLO' }}
+                                                    </span>
+                                                    <span class="small text-secondary">{{ Str::limit($ls->TenTieuChi ?? $ls->MaTieuChi, 35) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center font-monospace">
+                                                @if(!is_null($ls->DiemCu))
+                                                    <span class="text-muted text-decoration-line-through">{{ number_format($ls->DiemCu, 2) }}</span>
+                                                @else
+                                                    <span class="text-muted">&mdash;</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center font-monospace">
+                                                @if(!is_null($ls->DiemMoi))
+                                                    <span class="fw-bold text-success">{{ number_format($ls->DiemMoi, 2) }}</span>
+                                                @else
+                                                    <span class="text-muted">&mdash;</span>
+                                                @endif
+                                            </td>
+                                            <td class="small text-muted">
+                                                <div>{{ $ls->ThoiGian ? \Carbon\Carbon::parse($ls->ThoiGian)->format('d/m/Y') : ($ls->created_at ? $ls->created_at->format('d/m/Y') : '') }}</div>
+                                                <div class="fw-bold text-dark">{{ $ls->ThoiGian ? \Carbon\Carbon::parse($ls->ThoiGian)->format('H:i:s') : ($ls->created_at ? $ls->created_at->format('H:i:s') : '') }}</div>
+                                            </td>
+                                            <td class="small" style="overflow-wrap: anywhere; word-break: break-word;">
+                                                <div class="{{ $ls->MaCLO === 'UNLOCK' ? 'text-danger fw-semibold' : 'text-secondary' }}">
+                                                    {{ $ls->LyDo ?? 'Cập nhật điểm phiếu chấm' }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer py-2 bg-light">
+                    <span class="small text-muted me-auto">
+                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Báo cáo kiểm toán bất biến &bull; Không cho phép sửa xóa dữ liệu lịch sử
+                    </span>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

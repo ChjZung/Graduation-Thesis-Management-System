@@ -541,7 +541,12 @@ class HoiDongController extends Controller
         $facultyCouncilStats = $assignmentService->getFacultyCouncilStatsBySemester($hoiDong->MaHocKy ?? '', $hoiDong->MaHoiDong);
         $tenHocKyHoiDong = $hoiDong->hocKy?->TenDayDu ?? ($hoiDong->MaHocKy ?? 'học kỳ');
 
-        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa', 'assignedGvhdMaGVs', 'councilMemberMaGVs', 'conflictingScheduleMap', 'facultyCouncilStats', 'tenHocKyHoiDong'));
+        // Lịch sử kiểm toán chỉnh sửa điểm của hội đồng (Immutable Audit Log)
+        $lichSuSuaDiems = \App\Models\LichSuChinhSuaDiem::where('MaHoiDong', $hoiDong->MaHoiDong)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('truongkhoa.hoidong.show', compact('hoiDong', 'giangViens', 'nhomDuDieuKien', 'khoa', 'assignedGvhdMaGVs', 'councilMemberMaGVs', 'conflictingScheduleMap', 'facultyCouncilStats', 'tenHocKyHoiDong', 'lichSuSuaDiems'));
     }
 
     /**
