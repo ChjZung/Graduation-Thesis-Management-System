@@ -65,6 +65,7 @@ class KetQuaController extends Controller
         // Kết quả điểm của sinh viên hiện tại
         $ketQua = KetQuaSinhVien::with('hocKy')
             ->where('MaSV', $sinhVien->MaSV)
+            ->where('MaHoSo', $hoSo?->MaHoSo)
             ->latest()
             ->first();
 
@@ -129,7 +130,7 @@ class KetQuaController extends Controller
         $memberIds = $nhom ? $nhom->thanhViens->pluck('MaSV')->toArray() : [];
         $allKetQuaNhom = collect();
         if (!empty($memberIds)) {
-            $rawKqNhom = KetQuaSinhVien::whereIn('MaSV', $memberIds)->get()->keyBy('MaSV');
+            $rawKqNhom = KetQuaSinhVien::whereIn('MaSV', $memberIds)->where('MaHoSo', $hoSo?->MaHoSo)->get()->keyBy('MaSV');
             foreach ($rawKqNhom as $k => $itemKq) {
                 if ($trangThaiHienThi !== 'da_cong_bo') {
                     $itemKq->DiemTongKet = null;
@@ -141,7 +142,15 @@ class KetQuaController extends Controller
             }
         }
 
+        $outcomes = [];
+        if ($trangThaiHienThi === 'da_cong_bo' && $hoSo) {
+            foreach ($allKetQuaNhom as $id => $result) {
+                $outcomes[$id] = app(\App\Services\StudentOutcomeService::class)->evaluate($result, $hoSo);
+            }
+        }
+
         return view('sinhvien.ketqua.index', compact(
+            'outcomes',
             'sinhVien',
             'nhom',
             'hoSo',
@@ -324,7 +333,14 @@ class KetQuaController extends Controller
         }
 
         DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien, $user) {
-            $lanChinhSuaHienTai = BaoCaoSauBaoVe::where('MaHoSo', $hoSo->MaHoSo)->count() + 1;
+            // Lock the parent even when no submission exists yet, preventing double-click races.
+            $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
+            if (BaoCaoSauBaoVe::where('MaHoSo', $hoSo->MaHoSo)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'FileBaoCaoChinhSua' => 'Nhóm đã nộp báo cáo hoàn thiện. Mỗi hồ sơ chỉ được nộp một lần.',
+                ]);
+            }
+            $lanChinhSuaHienTai = 1;
             $subFolder = "hoso/{$hoSo->MaNhom}/bao_cao_sau_bao_ve/lan_{$lanChinhSuaHienTai}";
 
             // 1. Tệp báo cáo chỉnh sửa (lưu tên file an toàn chống path traversal)
@@ -387,7 +403,7 @@ class KetQuaController extends Controller
                 ThongBaoService::gui(
                     $nguoiKiemTra,
                     'Sinh viên đã nộp lại báo cáo hoàn thiện sau bảo vệ',
-                    "Sinh viên {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp Báo cáo hoàn thiện sau bảo vệ (Lần {$lanChinhSuaHienTai}). Kính mời Thầy/Cô kiểm tra và đánh giá.",
+                    "Sinh viên {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp báo cáo hoàn thiện sau bảo vệ. Thầy/Cô có thể xem và tải tệp; không cần đánh giá thêm.",
                     'Báo cáo sau bảo vệ'
                 );
             }
@@ -410,7 +426,7 @@ class KetQuaController extends Controller
         });
 
         return redirect()->route('sinhvien.ketqua.hoanthien')
-            ->with('success', 'Nộp báo cáo hoàn thiện thành công! Hồ sơ đã được chuyển đến Giảng viên phụ trách để kiểm tra và xác nhận.');
+            ->with('success', 'Nộp báo cáo hoàn thiện thành công! Giảng viên hướng dẫn và Trưởng khoa có thể xem, tải tệp đã nộp.');
     }
 
     /**

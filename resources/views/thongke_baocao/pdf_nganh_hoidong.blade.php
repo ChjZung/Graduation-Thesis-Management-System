@@ -126,12 +126,6 @@
         Thời điểm xuất báo cáo: <strong>{{ $thoiDiemXuat->format('d/m/Y H:i') }}</strong>
     </div>
 
-    @if($canhBaoChuaHoanTat)
-    <div style="background-color: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 4px 8px; font-size: 7.5pt; margin-bottom: 8px; border-radius: 3px;">
-        <strong>Cảnh báo:</strong> {{ $canhBaoChuaHoanTat }} Các đề tài chưa hoàn tất không tính vào phân bố điểm và tỷ lệ Đạt/Không đạt.
-    </div>
-    @endif
-
     <!-- Bảng Ma Trận Tổng Hợp Hội Đồng -->
     <table class="data-table">
         <thead>

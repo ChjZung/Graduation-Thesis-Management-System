@@ -9,6 +9,38 @@ use Carbon\Carbon;
 
 class HoiDongPdfService
 {
+    public static function batchFilename(\Illuminate\Support\Collection $councils): string
+    {
+        $first = $councils->first();
+        return 'Quyet_dinh_va_danh_sach_hoi_dong_'.\Illuminate\Support\Str::slug($first->MaKhoa.' '.$first->MaHocKy.' '.$first->DotBaoVe, '_')
+            .'_'.now()->format('Ymd_His').'_'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(6)).'.pdf';
+    }
+
+    public static function generateBatchPdf(\Illuminate\Support\Collection $councils)
+    {
+        if ($councils->isEmpty()) throw new \InvalidArgumentException('Không có hội đồng để xuất PDF.');
+        $items = $councils->sortBy('TenHoiDong', SORT_NATURAL)->values()->map(function ($council) {
+            $data = self::prepareData($council);
+            // Batch decisions must not invent official metadata from generic fallbacks.
+            $data['soQuyetDinh'] = trim((string) $council->SoQuyetDinh) ?: '[Chưa nhập số quyết định]';
+            $data['nguoiKy'] = trim((string) $council->NguoiKy) ?: '[Chưa cấu hình người ký]';
+            $data['chucVuNguoiKy'] = trim((string) $council->ChucVuNguoiKy) ?: '[Chưa cấu hình chức vụ]';
+            $data['ngayBanHanh'] = $council->NgayBanHanh ? Carbon::parse($council->NgayBanHanh) : null;
+            $data['ngayBaoVe'] = $council->NgayBaoVe ? Carbon::parse($council->NgayBaoVe) : ($council->ThoiGianBatDau ? Carbon::parse($council->ThoiGianBatDau) : null);
+            $data['nganh'] = $council->nganh;
+            return $data;
+        });
+        return Pdf::loadView('pdf.quyet_dinh_hoi_dong_toan_dot', ['items' => $items, 'first' => $items->first()])
+            ->setPaper('a4', 'portrait')->setOptions(['defaultFont' => 'DejaVu Serif', 'isRemoteEnabled' => false]);
+    }
+
+    public static function saveBatchPdfToStorage(\Illuminate\Support\Collection $councils): string
+    {
+        $path = 'quyet_dinh_hoi_dong/'.self::batchFilename($councils);
+        if (!Storage::disk('public')->put($path, self::generateBatchPdf($councils)->output())) throw new \RuntimeException('Không thể lưu PDF công bố hội đồng.');
+        return 'storage/'.$path;
+    }
+
     /**
      * Tạo dữ liệu chuẩn hóa cho mẫu PDF Quyết định & Phụ lục Hội đồng
      */

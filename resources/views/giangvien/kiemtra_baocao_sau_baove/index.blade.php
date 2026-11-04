@@ -33,7 +33,7 @@
             <a href="{{ route('giangvien.kiemtra_baocao_sau_baove.index', ['status' => 'cho_kiem_tra']) }}" class="text-decoration-none">
                 <div class="card border-0 shadow-sm h-100 rounded-3" style="border-left: 4px solid #ffc107 !important;">
                     <div class="card-body">
-                        <div class="text-muted small fw-semibold text-uppercase">Đã Nộp - Chờ Kiểm Tra</div>
+                        <div class="text-muted small fw-semibold text-uppercase">Đã Nộp - Đã nộp</div>
                         <h3 class="fw-bold my-1 text-warning">{{ $counts['cho_kiem_tra'] }}</h3>
                         <div class="small text-muted">Cần đánh giá bản nộp mới</div>
                     </div>
@@ -78,7 +78,7 @@
                 <div class="col-md-3">
                     <select name="status" class="form-select">
                         <option value="">-- Tất cả trạng thái --</option>
-                        <option value="cho_kiem_tra" {{ request('status') === 'cho_kiem_tra' ? 'selected' : '' }}>Đã nộp — Chờ kiểm tra</option>
+                        <option value="cho_kiem_tra" {{ request('status') === 'cho_kiem_tra' ? 'selected' : '' }}>Đã nộp — Đã nộp</option>
                         <option value="yeu_cau_sua" {{ request('status') === 'yeu_cau_sua' ? 'selected' : '' }}>Yêu cầu sửa lại</option>
                         <option value="da_hoan_thanh" {{ request('status') === 'da_hoan_thanh' ? 'selected' : '' }}>Đã xác nhận hoàn thành</option>
                     </select>

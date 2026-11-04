@@ -34,6 +34,8 @@ Route::post('/password/reset-request', [\App\Http\Controllers\Auth\QuenMatKhauCo
 
 // Thiết lập mật khẩu lần đầu (Onboarding cho tài khoản INITIAL)
 Route::middleware(['auth'])->group(function () {
+    Route::get('/bao-cao-clo', [\App\Http\Controllers\CloRoundReportController::class, 'index'])->name('clo.reports.index');
+    Route::get('/bao-cao-clo/export', [\App\Http\Controllers\CloRoundReportController::class, 'export'])->name('clo.reports.export');
     Route::get('/setup-password', [\App\Http\Controllers\Auth\PasswordSetupController::class, 'showSetupForm'])->name('password.setup');
     Route::post('/setup-password', [\App\Http\Controllers\Auth\PasswordSetupController::class, 'setupPassword'])->name('password.setup.post');
 });
@@ -86,6 +88,8 @@ Route::middleware(['auth'])->group(function () {
     // Secure Document & File Download Endpoints (Bảo vệ file riêng tư theo Policy)
     Route::get('/files/baocao/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCao'])->name('files.baocao.download');
     Route::get('/files/hoso/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadHoSo'])->name('files.hoso.download');
+    Route::get('/files/hoso/{id}/document', [\App\Http\Controllers\FileDownloadController::class, 'downloadHoSoDocument'])->name('files.hoso.document');
+    Route::get('/files/thongbao/{id}/tep/{filename}', [\App\Http\Controllers\FileDownloadController::class, 'downloadNotificationAttachment'])->name('files.thongbao.attachment');
     Route::get('/files/decuong/{id}', [\App\Http\Controllers\FileDownloadController::class, 'downloadDeCuong'])->name('files.decuong.download');
     Route::get('/files/bao-cao-sau-bao-ve/{id}/pdf', [\App\Http\Controllers\FileDownloadController::class, 'viewBaoCaoSauBaoVe'])->name('baocao_sau_baove.pdf');
     Route::get('/files/bao-cao-sau-bao-ve/{id}/download', [\App\Http\Controllers\FileDownloadController::class, 'downloadBaoCaoSauBaoVe'])->name('baocao_sau_baove.download');
@@ -542,9 +546,12 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::get('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'index'])->name('truongkhoa.hoidong.index');
     Route::get('/hoi-dong/create', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'create'])->name('truongkhoa.hoidong.create');
     Route::post('/hoi-dong', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'store'])->name('truongkhoa.hoidong.store');
+    Route::get('/hoi-dong/xem-truoc-quyet-dinh', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewDecision'])->name('truongkhoa.hoidong.previewDecision');
+    Route::get('/hoi-dong/quyet-dinh-xem-truoc/{token}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewDecisionPdf'])->whereUuid('token')->name('truongkhoa.hoidong.previewDecisionPdf');
     Route::get('/hoi-dong/{id}', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'show'])->name('truongkhoa.hoidong.show');
     Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewPdf'])->name('truongkhoa.hoidong.previewPdf');
     Route::get('/hoi-dong/{id}/download-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'downloadPdf'])->name('truongkhoa.hoidong.downloadPdf');
+    Route::post('/hoi-dong/cong-bo-toan-dot', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'congBoToanDot'])->name('truongkhoa.hoidong.congBoToanDot');
     Route::post('/hoi-dong/{id}/cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'congBo'])->name('truongkhoa.hoidong.congBo');
     Route::post('/hoi-dong/{id}/cau-hinh-sua-diem', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'cauHinhSuaDiem'])->name('truongkhoa.hoidong.cauhinh_suadiem');
     Route::post('/hoi-dong/{id}/update-quyet-dinh', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateQuyetDinh'])->name('truongkhoa.hoidong.updateQuyetDinh');

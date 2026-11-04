@@ -4,6 +4,42 @@
 
 @push('styles')
 <style>
+    #pane-dudk .semester-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem 1.5rem;
+    }
+    #pane-dudk .semester-controls-info {
+        flex: 1 1 30rem;
+        min-width: 0;
+    }
+    #pane-dudk .semester-controls-info select {
+        width: 20rem;
+        max-width: 100%;
+    }
+    #pane-dudk .semester-actions {
+        display: flex;
+        flex: 0 1 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .75rem;
+        min-width: 0;
+    }
+    #pane-dudk .semester-actions > *,
+    #pane-dudk .semester-actions .btn {
+        margin: 0;
+        max-width: 100%;
+    }
+    #pane-dudk .semester-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: normal;
+    }
+    #pane-dudk .semester-actions .btn i {
+        flex-shrink: 0;
+    }
     .btn-outline-primary {
         transition: all 0.2s ease-in-out;
     }
@@ -361,13 +397,13 @@
         <!-- Controls Header Tab 2 -->
         <div class="card border-0 shadow-sm mb-4 rounded-3 bg-white">
             <div class="card-body p-3">
-                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-                    <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="semester-controls">
+                    <div class="semester-controls-info d-flex flex-wrap align-items-center gap-3">
                         <div>
                             <label class="form-label small fw-bold text-muted mb-1">Học Kỳ Xét Duyệt &amp; Quản Lý</label>
                             <form method="GET" action="{{ route('sinhvien.index') }}" id="formChonHocKy">
                                 <input type="hidden" name="tab" value="du_dieu_kien">
-                                <select name="MaHocKy" class="form-select form-select-sm rounded-pill fw-bold" style="min-width: 320px;" onchange="this.form.submit()">
+                                <select name="MaHocKy" class="form-select form-select-sm rounded-pill fw-bold" onchange="this.form.submit()">
                                     @foreach($hocKys as $hk)
                                         <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
                                             {{ $hk->TenHocKy }}
@@ -383,6 +419,7 @@
                         </div>
                     </div>
 
+                    <div class="semester-actions">
                         <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalThemSVVaoKy">
                             <i class="fa-solid fa-user-plus me-2"></i> Thêm sinh viên
                         </button>

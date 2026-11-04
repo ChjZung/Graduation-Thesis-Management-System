@@ -241,6 +241,63 @@
     border-bottom: none;
 }
 
+
+/* Nội dung bên trái theo phiếu Word; không áp dụng cho điểm tối đa/ô nhập điểm. */
+.academic-grading-table th.rubric-paper-heading {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #111;
+    border-right: 1px solid #cbd5e1;
+}
+
+.academic-grading-table td.rubric-paper-content,
+.academic-grading-table td.rubric-paper-index,
+.academic-grading-table td.rubric-paper-clo {
+    font-family: "Times New Roman", Times, serif;
+    color: #111;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    background: #fff;
+}
+.academic-grading-table td.rubric-paper-content {
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.rubric-paper-content > div:not(.rubric-paper-actions),
+.rubric-paper-content .rubric-paper-group { margin-bottom: .35rem; }
+.rubric-paper-content .rubric-paper-title { font-weight: 700; }
+.rubric-paper-content .rubric-paper-line { margin-top: .3rem; }
+.rubric-paper-content .rubric-paper-subline { padding-left: 1.2rem; margin-top: .15rem; }
+.rubric-paper-content .rubric-paper-group { padding-left: .7rem; }
+.rubric-paper-content > .small,
+.rubric-paper-content > div[style] {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    color: #111 !important;
+}
+.rubric-paper-index .criteria-index,
+.rubric-paper-clo > .badge {
+    font: 400 1rem "Times New Roman", Times, serif !important;
+    background: none !important;
+    color: #111 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    min-width: 0;
+    height: auto;
+}
+.rubric-paper-content .rubric-paper-actions,
+.rubric-paper-content > .d-flex:last-child {
+    margin-top: .65rem;
+    padding-top: .35rem;
+    font-family: var(--bs-body-font-family, sans-serif);
+    font-size: .75rem;
+}
+.rubric-paper-context { color: #64748b; font-size: .75rem; }
+
 /* Student Columns */
 .student-col-header {
     background: #ffffff !important;
@@ -501,8 +558,8 @@ input[type=number],
 </style>
 @endpush
 
-@php 
-    $councilsList = $gradingHoiDongs ?? collect(); 
+@php
+    $councilsList = $gradingHoiDongs ?? collect();
     $allCouncils = $allHoiDongs ?? $hoiDongs ?? collect();
 @endphp
 
@@ -540,7 +597,7 @@ input[type=number],
                             </div>
                             <div class="small text-muted mt-1">
                                 <i class="fa-regular fa-clock text-primary me-1"></i>
-                                Thời gian mở chấm: 
+                                Thời gian mở chấm:
                                 <strong class="text-primary">{{ $sapDienRaGanNhat->thoi_diem_bat_dau?->format('H:i \n\g\à\y d/m/Y') }}</strong>
                                 @if($sapDienRaGanNhat->dem_nguoc_bat_dau)
                                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill ms-2">
@@ -586,6 +643,7 @@ input[type=number],
         $canEditScoreCurrent = $activeHoiDong ? $activeHoiDong->canEditScore($giangVien, $activeHoSo, $reasonCantEdit) : false;
         $isEditingAllowed = $daKhoaPhieu && $canEditScoreCurrent;
         $isReadOnly = (!$daKhoaPhieu && !$canGradeCurrent) || ($daKhoaPhieu && !$isEditingAllowed);
+        $secretaryLocked = $activeHoSo?->gradingHasStarted() ?? false;
     @endphp
 
     <!-- Header Section -->
@@ -601,27 +659,27 @@ input[type=number],
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <!-- Toggle chọn mẫu KLCN hoặc KLKS -->
             <div class="btn-group btn-group-sm shadow-xs rounded-pill overflow-hidden border bg-white" role="group">
-                <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLCN']) }}" 
+                <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLCN']) }}"
                    class="btn {{ !$isKLKS ? 'btn-primary fw-bold' : 'btn-light text-secondary' }} px-3 py-1.5">
                     <i class="fa-solid fa-graduation-cap me-1.5"></i> Mẫu Cử Nhân (KLCN)
                 </a>
-                <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLKS']) }}" 
+                <a href="{{ route('giangvien.hoidong.index', ['tab' => 'chamdiem', 'hd' => $activeHoiDong->MaHoiDong, 'hoso' => $activeHoSo?->MaHoSo, 'loai' => 'KLKS']) }}"
                    class="btn {{ $isKLKS ? 'btn-primary fw-bold' : 'btn-light text-secondary' }} px-3 py-1.5">
                     <i class="fa-solid fa-microchip me-1.5"></i> Mẫu Kỹ Sư (KLKS)
                 </a>
             </div>
 
             <!-- Nút Xem Công Thức Tính Điểm Hội Đồng & CLO -->
-            <button type="button" 
-                    class="btn btn-sm btn-outline-primary fw-semibold d-inline-flex align-items-center px-3 shadow-xs" 
-                    data-bs-toggle="modal" 
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary fw-semibold d-inline-flex align-items-center px-3 shadow-xs"
+                    data-bs-toggle="modal"
                     data-bs-target="#modalCongThucTinhDiem"
                     title="Xem chi tiết công thức tính điểm Hội đồng và Chuẩn đầu ra CLO">
                 <i class="fa-solid fa-calculator me-1.5 text-primary"></i> Công Thức Tính Điểm
             </button>
 
             <!-- Nút Xuất Báo Cáo Tổng Hợp CLO (Excel) -->
-            <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}" 
+            <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}"
                class="btn btn-sm btn-success fw-semibold d-inline-flex align-items-center px-3 shadow-xs text-white"
                title="Xuất Báo cáo Excel tổng hợp kết quả chuẩn đầu ra (CLO) toàn Hội đồng theo mẫu chuẩn Khoa CNTT">
                 <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo Tổng Hợp CLO
@@ -630,15 +688,15 @@ input[type=number],
             <!-- In & Xuất Phiếu Chuẩn Khoa CNTT -->
             <div class="btn-group btn-group-sm shadow-xs" role="group">
                 @if($coThongTinChucNang)
-                    <a href="{{ route('giangvien.chamdiem.xuatPdf', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}" 
-                       target="_blank" 
+                    <a href="{{ route('giangvien.chamdiem.xuatPdf', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'MaHoSo' => $activeHoSo->MaHoSo]) }}"
+                       target="_blank"
                        class="btn btn-outline-danger fw-semibold d-inline-flex align-items-center px-3"
                        title="Mở và in phiếu điểm PDF chuẩn mẫu của Khoa">
                         <i class="fa-solid fa-print me-1.5"></i> In Phiếu (PDF)
                     </a>
                 @else
-                    <button type="button" 
-                            onclick="alertChuaCoChucNang()" 
+                    <button type="button"
+                            onclick="alertChuaCoChucNang()"
                             class="btn btn-outline-secondary text-muted fw-semibold d-inline-flex align-items-center px-3"
                             title="Chưa thể in phiếu do chưa có cấu hình mục 6">
                         <i class="fa-solid fa-print me-1.5"></i> In Phiếu <span class="badge bg-warning text-dark ms-1.5" style="font-size: 0.65rem;">Chưa có mục 6</span>
@@ -702,7 +760,7 @@ input[type=number],
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}">
+                        <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}">
                             <i class="fa-solid fa-file-excel text-success me-2.5 fs-5"></i>
                             <div>
                                 <div class="fw-bold">Xuất Báo Cáo Tổng Hợp CLO (.xlsx)</div>
@@ -747,7 +805,7 @@ input[type=number],
                         @endif
                     </div>
                     <span class="small text-secondary d-block mt-1">
-                        Phiếu điểm đã từng xác nhận khóa. Thầy/Cô <strong>được phép chỉnh sửa lại điểm số các tiêu chí</strong> trong thời hạn này. 
+                        Phiếu điểm đã từng xác nhận khóa. Thầy/Cô <strong>được phép chỉnh sửa lại điểm số các tiêu chí</strong> trong thời hạn này.
                         <em>Theo quy chế: Nhận xét đánh giá được cố định, không được thay đổi. Sau khi lưu, hệ thống sẽ tự động tính lại điểm CLO trung bình của cả 3 giảng viên và lưu vết kiểm toán.</em>
                     </span>
                 </div>
@@ -914,7 +972,7 @@ input[type=number],
                         <i class="fa-solid fa-book-open me-1.5"></i> Xem Đề Cương Đã Duyệt
                     </button>
                     @if($activeHoiDong && $activeHoSo && ($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin()))))
-                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1.5 d-inline-flex align-items-center shadow-xs" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.78rem; background: #fff8e6; border-color: #f59e0b;">
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1.5 d-inline-flex align-items-center shadow-xs" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" @disabled($secretaryLocked) title="{{ $secretaryLocked ? 'Đã bắt đầu chấm điểm; thông tin và tiêu chí không thể thay đổi' : 'Thiết lập phiếu chấm' }}" style="font-size: 0.78rem; background: #fff8e6; border-color: #f59e0b;">
                         <i class="fa-solid fa-pen-to-square text-warning-emphasis me-1.5"></i> Chuẩn Bị Phiếu &amp; Tiêu Chí Chức Năng (Thư Ký)
                     </button>
                     @elseif($isChuTich)
@@ -943,9 +1001,9 @@ input[type=number],
                 <table class="academic-grading-table align-middle">
                     <thead>
                         <tr>
-                            <th rowspan="2" class="text-center" style="width: 52px;">STT</th>
-                            <th rowspan="2" class="text-start" style="min-width: 360px;">NỘI DUNG ĐÁNH GIÁ</th>
-                            <th rowspan="2" class="text-center" style="width: 85px;">CLO</th>
+                            <th rowspan="2" class="text-center rubric-paper-heading" style="width: 52px;">STT</th>
+                            <th rowspan="2" class="text-start rubric-paper-heading" style="min-width: 360px;">Nội dung</th>
+                            <th rowspan="2" class="text-center rubric-paper-heading" style="width: 85px;">CLO</th>
                             <th rowspan="2" class="text-center" style="width: 110px;">ĐIỂM TỐI ĐA</th>
                             <th colspan="{{ max(1, $sinhViens->count()) }}" class="text-center py-2" style="background: var(--academic-slate-100); border-left: 1px solid var(--academic-slate-200);">
                                 <span class="d-inline-flex align-items-center gap-1.5 text-primary fw-bold" style="letter-spacing: 0.5px;">
@@ -977,80 +1035,50 @@ input[type=number],
                             $lines = explode("\n", $cNormalized);
                         @endphp
                         <tr class="{{ $isBonus ? 'table-warning-subtle' : '' }}">
-                            <td class="text-center align-middle">
+                            <td class="text-center align-middle rubric-paper-index">
                                 <div class="criteria-index {{ $isBonus ? 'bg-warning text-dark' : '' }} mx-auto">
                                     {{ $criterion['stt'] }}
                                 </div>
                             </td>
-                            <td class="align-top py-3">
+                            <td class="align-top py-3 rubric-paper-content">
                                 @if($cId === 'tc7')
-                                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">
-                                            <i class="fa-solid fa-laptop-code text-primary me-2"></i>Xây dựng các chức năng cơ bản &amp; Cài đặt chức năng theo yêu cầu bài toán
-                                        </div>
-                                        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center" data-bs-toggle="collapse" data-bs-target=".sub-req-collapse" aria-expanded="true" style="font-size: 0.75rem;">
-                                            <i class="fa-solid fa-sliders me-1.5"></i> <span class="collapse-toggle-label">Chi tiết 8 yêu cầu chức năng</span>
-                                        </button>
-                                    </div>
+                                    @if($loaiKhoaLuan === 'KLKS')
+                                        <div class="rubric-paper-title">Xây dựng ứng dụng:</div>
+                                        <div class="rubric-paper-line">– Xây dựng các chức năng cơ bản của ứng dụng:</div>
+                                        <div class="rubric-paper-subline">+ Đăng nhập, đăng xuất, đổi mật khẩu;</div>
+                                        <div class="rubric-paper-subline">+ Phân quyền ứng dụng (...)</div>
+                                    @else
+                                        <div class="rubric-paper-title">Xây dựng các chức năng cơ bản của ứng dụng: đăng nhập, đăng xuất, backup &amp; restore,…</div>
+                                        <div class="rubric-paper-line rubric-paper-title">Cài đặt chức năng theo yêu cầu của bài toán</div>
+                                    @endif
 
-                                    <!-- Tóm tắt 2 phân hệ chức năng chính -->
-                                    <div class="p-2.5 rounded-3 border bg-light-subtle mb-2">
-                                        <div class="d-flex align-items-center justify-content-between mb-1">
-                                            <span class="fw-semibold text-dark small">
-                                                <span class="badge bg-secondary text-white font-monospace me-1">CB</span> 1. Chức năng cơ bản ứng dụng:
-                                            </span>
-                                            <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">0.50 điểm</span>
-                                        </div>
-                                        <div class="text-secondary small ps-3">
-                                            &bull; Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền, backup &amp; restore,...
-                                        </div>
-                                    </div>
-
-                                    <!-- Chi tiết chức năng theo đề tài (Có thể thu gọn / mở rộng) -->
                                     <div class="collapse show sub-req-collapse" id="collapseCriterion7Details">
-                                        <div class="p-3 rounded-3 border bg-white mb-2">
-                                            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
-                                                <span class="fw-bold text-primary small">
-                                                    <i class="fa-solid fa-layer-group me-1.5"></i> 2. Chức năng theo yêu cầu bài toán:
-                                                </span>
-                                                <span class="badge bg-primary text-white" style="font-size: 0.7rem;">{{ $loaiKhoaLuan === 'KLKS' ? 'Tối đa 4.00đ' : 'Tối đa 3.50đ' }}</span>
-                                            </div>
-
-                                            @if(!empty($functionalRequirements))
-                                                @php
-                                                    $groupedReqs = collect($functionalRequirements)->groupBy('group');
-                                                    $ycCounter = 1;
-                                                @endphp
-                                                <div class="d-flex flex-column gap-2">
-                                                    @foreach($groupedReqs as $groupName => $reqItems)
-                                                        @if($groupName !== 'Chức năng cơ bản')
-                                                        <div class="p-2 rounded-2 bg-light-subtle border">
-                                                            <div class="fw-bold text-dark mb-1" style="font-size: 0.8rem;">
-                                                                &bull; {{ $groupName }}:
-                                                            </div>
-                                                            @foreach($reqItems as $r)
-                                                            @if($r['id'] !== 'tc7_co_ban')
-                                                            <div class="ps-2 py-0.5 d-flex align-items-baseline gap-1.5" style="font-size: 0.78rem;">
-                                                                <span class="badge bg-primary text-white font-monospace" style="font-size: 0.65rem; min-width: 32px;">YC{{ $ycCounter++ }}</span>
-                                                                <span class="text-dark">{{ $r['label'] }}</span>
-                                                                <span class="text-muted ms-auto text-nowrap font-monospace" style="font-size: 0.7rem;">({{ number_format((float)($r['max'] ?? 0.5), 2) }}đ)</span>
-                                                            </div>
-                                                            @endif
-                                                            @endforeach
-                                                        </div>
-                                                        @endif
+                                        @if(!empty($functionalRequirements))
+                                            @php
+                                                $groupedReqs = collect($functionalRequirements)->where('id', '!=', 'tc7_co_ban')->groupBy('group');
+                                                $ycCounter = 1;
+                                            @endphp
+                                            @foreach($groupedReqs as $groupName => $reqItems)
+                                                <div class="rubric-paper-group">
+                                                    <div class="rubric-paper-line rubric-paper-title">{{ $groupName }}:</div>
+                                                    @foreach($reqItems as $r)
+                                                        <div class="rubric-paper-subline">– Yêu cầu {{ $ycCounter++ }}: {{ $r['label'] }}</div>
                                                     @endforeach
                                                 </div>
-                                            @endif
-                                        </div>
+                                            @endforeach
+                                        @endif
                                     </div>
-
+                                    <div class="rubric-paper-actions">
+                                        <button type="button" class="btn btn-link btn-sm p-0" data-bs-toggle="collapse" data-bs-target=".sub-req-collapse" aria-expanded="true">
+                                            <span class="collapse-toggle-label">Thu gọn yêu cầu chức năng</span>
+                                        </button>
+                                    </div>
                                     <div class="d-flex align-items-center justify-content-between mt-2 flex-wrap gap-1">
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-lock me-1"></i> Cấu hình riêng cho Đề tài: {{ Str::limit($activeDeTai->TenDeTai ?? '', 45) }}
+                                        <span class="rubric-paper-context">
+                                            Đề tài: {{ Str::limit($activeDeTai->TenDeTai ?? '', 45) }}
                                         </span>
                                         @if($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin())))
-                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold text-primary" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" style="font-size: 0.75rem;">
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold text-primary" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" @disabled($secretaryLocked) title="{{ $secretaryLocked ? 'Đã bắt đầu chấm điểm; thông tin và tiêu chí không thể thay đổi' : 'Thiết lập phiếu chấm' }}" style="font-size: 0.75rem;">
                                             <i class="fa-solid fa-pen-to-square me-1"></i> Thiết lập tiêu chí (Thư ký)
                                         </button>
                                         @endif
@@ -1064,23 +1092,19 @@ input[type=number],
                                             $isBullet = str_starts_with($trimmed, '-');
                                         @endphp
                                         @if($isSubSubBullet)
-                                            <div class="ps-4 text-secondary small py-0.5" style="line-height: 1.45;">&bull; {{ trim(substr($trimmed, 1)) }}</div>
+                                            <div class="ps-4 text-secondary small py-0.5" style="line-height: 1.45;">– {{ trim(substr($trimmed, 1)) }}</div>
                                         @elseif($isSubBullet)
-                                            <div class="ps-3 text-secondary small fw-semibold py-0.5" style="line-height: 1.45;">&bull; {{ trim(substr($trimmed, 1)) }}</div>
+                                            <div class="ps-3 text-secondary small fw-semibold py-0.5" style="line-height: 1.45;">– {{ trim(substr($trimmed, 1)) }}</div>
                                         @elseif($isBullet)
-                                            <div class="ps-2 text-dark small py-0.5" style="line-height: 1.45;">&bull; {{ trim(substr($trimmed, 1)) }}</div>
+                                            <div class="ps-2 text-dark small py-0.5" style="line-height: 1.45;">– {{ trim(substr($trimmed, 1)) }}</div>
                                         @else
                                             <div class="{{ $lIdx === 0 ? 'fw-bold text-dark mb-1' : 'text-dark small py-0.5' }}" style="line-height: 1.45; font-size: {{ $lIdx === 0 ? '0.92rem' : '0.85rem' }};">{{ $trimmed }}</div>
                                         @endif
                                     @endforeach
-                                    @if($isBonus)
-                                        <div class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1.5 px-2.5 py-1" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-star me-1"></i> Điểm cộng khuyến khích (NCKH / Bài báo)
-                                        </div>
-                                    @endif
+
                                 @endif
                             </td>
-                            <td class="text-center align-middle py-3">
+                            <td class="text-center align-middle py-3 rubric-paper-clo">
                                 <span class="badge rounded-pill bg-light text-dark border px-2.5 py-1.5 font-monospace" style="font-size: 0.75rem; font-weight: 600;">{{ $criterion['clo'] }}</span>
                             </td>
                             <td class="text-center align-middle py-3" style="width: 110px;">
@@ -1115,17 +1139,17 @@ input[type=number],
                                             <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.65rem;">Max {{ number_format($cMax, 1) }}đ</span>
                                         </div>
                                         <div class="academic-score-group mx-auto" style="border-color: #0072ce; max-width: 165px;" title="{{ $criterion['clo'] }} - Chức năng bài toán (Tối đa {{ number_format($cMax, 2) }}đ)">
-                                            <input type="number" 
-                                                   step="0.05" 
-                                                   min="0" 
-                                                   max="{{ $cMax }}" 
-                                                   name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $cId }}]" 
-                                                   id="input_tc7_{{ $sv->MaSV }}" 
-                                                   data-max="{{ $cMax }}" 
-                                                   data-sv="{{ $sv->MaSV }}" 
-                                                   data-bonus="0" 
-                                                   class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} academic-score-input" 
-                                                   value="{{ number_format((float)$oldScore, 2) }}" 
+                                            <input type="number"
+                                                   step="0.05"
+                                                   min="0"
+                                                   max="{{ $cMax }}"
+                                                   name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $cId }}]"
+                                                   id="input_tc7_{{ $sv->MaSV }}"
+                                                   data-max="{{ $cMax }}"
+                                                   data-sv="{{ $sv->MaSV }}"
+                                                   data-bonus="0"
+                                                   class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} academic-score-input"
+                                                   value="{{ number_format((float)$oldScore, 2) }}"
                                                    {{ $isReadOnly ? 'readonly' : '' }}
                                                    required>
                                             <span class="academic-score-addon bg-primary-subtle text-primary fw-bold" title="Điểm tối đa TC7">
@@ -1149,15 +1173,15 @@ input[type=number],
                                                 <span class="sub-req-tag">
                                                     {{ $codeTag }}
                                                 </span>
-                                                <input type="number" 
-                                                       step="0.05" 
-                                                       min="0" 
-                                                       max="{{ $req['max'] }}" 
-                                                       name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $subKey }}]" 
-                                                       value="{{ number_format($subScore, 2) }}" 
-                                                       data-sv="{{ $sv->MaSV }}" 
-                                                       data-req-max="{{ $req['max'] }}" 
-                                                       class="form-control form-control-sm sub-req-input sub-req-score sub-req-sv-{{ $sv->MaSV }}" 
+                                                <input type="number"
+                                                       step="0.05"
+                                                       min="0"
+                                                       max="{{ $req['max'] }}"
+                                                       name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $subKey }}]"
+                                                       value="{{ number_format($subScore, 2) }}"
+                                                       data-sv="{{ $sv->MaSV }}"
+                                                       data-req-max="{{ $req['max'] }}"
+                                                       class="form-control form-control-sm sub-req-input sub-req-score sub-req-sv-{{ $sv->MaSV }}"
                                                        {{ $isReadOnly ? 'readonly' : '' }}>
                                                 <span class="sub-req-max">
                                                     / {{ number_format($req['max'], 2) }}
@@ -1170,16 +1194,16 @@ input[type=number],
                             @else
                                 <td class="student-score-cell align-middle">
                                     <div class="academic-score-group mx-auto" title="{{ $criterion['clo'] }} (Tối đa {{ number_format($cMax, 2) }}đ)">
-                                        <input type="number" 
-                                               step="0.05" 
-                                               min="0" 
-                                               max="{{ $cMax }}" 
-                                               name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $cId }}]" 
-                                               data-max="{{ $cMax }}" 
-                                               data-sv="{{ $sv->MaSV }}" 
-                                               data-bonus="{{ $isBonus ? '1' : '0' }}" 
-                                               class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} academic-score-input" 
-                                               value="{{ number_format((float)$oldScore, 2) }}" 
+                                        <input type="number"
+                                               step="0.05"
+                                               min="0"
+                                               max="{{ $cMax }}"
+                                               name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $cId }}]"
+                                               data-max="{{ $cMax }}"
+                                               data-sv="{{ $sv->MaSV }}"
+                                               data-bonus="{{ $isBonus ? '1' : '0' }}"
+                                               class="form-control form-control-sm text-center fw-bold text-primary score-criterion score-sv-{{ $sv->MaSV }} academic-score-input"
+                                               value="{{ number_format((float)$oldScore, 2) }}"
                                                {{ $isReadOnly ? 'readonly' : '' }}
                                                required>
                                         <span class="academic-score-addon {{ $isBonus ? 'bg-warning-subtle text-warning-emphasis' : '' }}" title="Điểm tối đa của tiêu chí ({{ $criterion['clo'] }})">
@@ -1332,8 +1356,8 @@ input[type=number],
             </div>
         </div>
 
-        @php 
-            $coThongTinChucNang = !empty(trim($activeHoSo?->TieuChiChucNang ?? '')); 
+        @php
+            $coThongTinChucNang = !empty(trim($activeHoSo?->TieuChiChucNang ?? ''));
         @endphp
 
         <!-- Action Buttons Bar -->
@@ -1342,11 +1366,17 @@ input[type=number],
                 <div class="d-flex align-items-center text-success fw-bold">
                     <span class="p-2 rounded-circle bg-success-subtle me-2.5"><i class="fa-solid fa-lock text-success"></i></span>
                     <div>
-                        <div class="text-success-emphasis">Phiếu chấm đã khóa bảo toàn vẹn dữ liệu</div>
+                        <div class="text-success-emphasis">Phiếu chấm đã xác nhận</div>
                         <div class="text-muted small fw-normal">Dữ liệu đã chuyển sang bảng tổng hợp điểm sơ bộ của Hội đồng</div>
                     </div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap align-items-center">
+                    @if($isEditingAllowed)
+                        <button type="button" class="btn btn-outline-primary" data-score-edit onclick="beginScoreEdit()">Chỉnh sửa phiếu chấm điểm</button>
+                        <button type="button" class="btn btn-primary" data-score-save disabled onclick="submitChamDiem('luu_nhap')">Lưu phiếu chấm điểm</button>
+                    @else
+                        <span class="small text-muted">{{ $reasonCantEdit }}</span>
+                    @endif
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center justify-content-center fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalXemTruoc">
                         <i class="fa-solid fa-eye me-2"></i> Xem Lại Phiếu Chấm Gốc
                     </button>
@@ -1383,8 +1413,9 @@ input[type=number],
             @else
                 <div class="d-flex gap-2 flex-wrap">
                     @if(!$isEditingAllowed)
+                        <button type="button" class="btn btn-outline-primary" onclick="document.querySelector('#formChamDiem .score-criterion:not([type=hidden])')?.focus()">Chỉnh sửa phiếu chấm điểm</button>
                         <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center fw-semibold" onclick="submitChamDiem('luu_nhap')">
-                            <i class="fa-regular fa-floppy-disk me-2"></i> Lưu Nháp Điểm
+                            <i class="fa-regular fa-floppy-disk me-2"></i> Lưu phiếu chấm điểm
                         </button>
                     @endif
                     <button type="button" class="btn btn-outline-primary rounded-pill px-4 d-inline-flex align-items-center fw-semibold" data-bs-toggle="modal" data-bs-target="#modalXemTruoc">
@@ -1441,7 +1472,7 @@ input[type=number],
             <div class="modal-body grading-preview-body">
                 {{-- Khung Trang Giấy A4 Mô Phỏng Chính Xác Bản Word Mẫu --}}
                 <div class="mx-auto bg-white p-4 p-md-5 border shadow-sm rounded-1 print-paper-a4" id="printPaperA4" style="max-width: 900px; font-family: 'Times New Roman', Times, serif; color: #000; line-height: 1.45;">
-                    
+
                     {{-- Header mẫu Word: Logo & Tên Trường / Khoa --}}
                     <div class="row align-items-center mb-3 pb-2 border-bottom">
                         <div class="col-8">
@@ -1478,8 +1509,8 @@ input[type=number],
                         @if(isset($sinhViens) && $sinhViens->isNotEmpty())
                             @foreach($sinhViens as $idx => $sv)
                             <div class="ps-4">
-                                {{ $idx + 1 }}. Mã SV: <strong>{{ $sv->MaSV }}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                                Họ tên: <strong>{{ $sv->HoTen }}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                                {{ $idx + 1 }}. Mã SV: <strong>{{ $sv->MaSV }}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                Họ tên: <strong>{{ $sv->HoTen }}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 Lớp: <strong>{{ $sv->lop?->TenLop ?? ($sv->MaLop ?? '') }}</strong>
                             </div>
                             @endforeach
@@ -1668,7 +1699,11 @@ input[type=number],
                             <i class="fa-solid fa-file-word me-1"></i> Xuất Word
                         </button>
                     @endif
-                    @if(!$daKhoaPhieu)
+                    @if($daKhoaPhieu && $isEditingAllowed)
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-score-edit onclick="beginScoreEdit()">Chỉnh sửa phiếu chấm điểm</button>
+                        <button type="button" class="btn btn-sm btn-primary" data-score-save disabled onclick="submitChamDiem('luu_nhap')">Lưu phiếu chấm điểm</button>
+                    @elseif(!$daKhoaPhieu && $canGradeCurrent)
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="submitChamDiem('luu_nhap')">Lưu phiếu chấm điểm</button>
                         <button type="button" class="btn btn-sm btn-success" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
                             <i class="fa-solid fa-lock me-1"></i> Xác Nhận Khóa Điểm
                         </button>
@@ -1716,7 +1751,7 @@ input[type=number],
                             <strong>Nhóm thực hiện:</strong> <span class="text-dark" style="overflow-wrap: anywhere; word-break: break-word;">Nhóm {{ $activeNhom?->MaNhom }} ({{ $sinhViens->count() }} SV)</span>
                         </div>
                         <div style="min-width: 0; overflow-wrap: anywhere; word-break: break-word;">
-                            <strong>Trạng thái chuẩn bị phiếu:</strong> 
+                            <strong>Trạng thái chuẩn bị phiếu:</strong>
                             @if(($activeHoSo->TrangThaiChuanBiPhieu ?? '') === 'DaChuanBi')
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">Đã chuẩn bị phiếu</span>
                             @else
@@ -1786,7 +1821,7 @@ input[type=number],
             <div class="modal-footer bg-white border-top py-2 d-flex justify-content-between align-items-center flex-shrink-0" style="min-width: 0;">
                 <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
                 @if($isThuKy || (Auth::user() && (Auth::user()->isTruongKhoa() || Auth::user()->isGiaoVu() || Auth::user()->isAdmin())))
-                    <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang">
+                    <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalCaiDatChucNang" @disabled($secretaryLocked) title="{{ $secretaryLocked ? 'Đã bắt đầu chấm điểm; thông tin và tiêu chí không thể thay đổi' : 'Thiết lập phiếu chấm' }}">
                         <i class="fa-solid fa-pen-ruler me-1"></i> Bắt Đầu Chuẩn Bị Phiếu Chấm Từ Đề Cương Này
                     </button>
                 @endif
@@ -2149,7 +2184,7 @@ input[type=number],
             <!-- Modal Body -->
             <div class="modal-body p-4 bg-light-subtle">
                 <div class="tab-content" id="formulaModalTabContent">
-                    
+
                     {{-- ── TAB 1: PHẦN A ── --}}
                     <div class="tab-pane fade show active" id="tab-phana" role="tabpanel" aria-labelledby="tab-phana-btn">
                         <div class="card border-0 shadow-sm rounded-3 mb-4">
@@ -2532,11 +2567,11 @@ input[type=number],
             <!-- Modal Footer -->
             <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan]) }}" 
+                    <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}"
                        class="btn btn-sm btn-success fw-bold px-3 shadow-xs text-white">
                         <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo CLO (Excel)
                     </a>
-                    <a href="{{ route('giangvien.chamdiem.xuatBaoCaoClo', ['MaHoiDong' => $activeHoiDong->MaHoiDong, 'loai' => $loaiKhoaLuan, 'format' => 'pdf']) }}" 
+                    <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan, 'format' => 'pdf']) }}"
                        target="_blank"
                        class="btn btn-sm btn-outline-danger fw-bold px-3 shadow-xs">
                         <i class="fa-solid fa-file-pdf me-1.5"></i> Xuất Báo Cáo CLO 3 GV (PDF)
@@ -2559,10 +2594,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleLabel = document.querySelector('.collapse-toggle-label');
     if (tc7Collapse && toggleLabel) {
         tc7Collapse.addEventListener('hidden.bs.collapse', function () {
-            toggleLabel.textContent = 'Mở rộng 8 yêu cầu chức năng';
+            toggleLabel.textContent = 'Mở rộng yêu cầu chức năng';
         });
         tc7Collapse.addEventListener('shown.bs.collapse', function () {
-            toggleLabel.textContent = 'Thu gọn 8 yêu cầu chức năng';
+            toggleLabel.textContent = 'Thu gọn yêu cầu chức năng';
         });
     }
 
@@ -2739,6 +2774,21 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateScores();
     };
 
+    window.beginScoreEdit = function() {
+        @if($isEditingAllowed)
+        document.querySelectorAll('#formChamDiem .score-criterion, #formChamDiem .sub-req-score').forEach(input => {
+            input.readOnly = input.dataset.scoreOriginalReadonly === '1';
+        });
+        document.querySelectorAll('[data-score-save]').forEach(button => button.disabled = false);
+        document.querySelectorAll('[data-score-edit]').forEach(button => button.disabled = true);
+        @endif
+    };
+    @if($isEditingAllowed)
+    document.querySelectorAll('#formChamDiem .score-criterion, #formChamDiem .sub-req-score').forEach(input => {
+        input.dataset.scoreOriginalReadonly = input.readOnly ? '1' : '0';
+        input.readOnly = true;
+    });
+    @endif
     window.submitChamDiem = function(actionType) {
         const form = document.getElementById('formChamDiem');
         document.getElementById('inputActionType').value = actionType;
@@ -2799,7 +2849,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('input[id^="inputTotalScore_"]').forEach(el => {
                     if (parseFloat(el.value) === 0) hasZero = true;
                 });
-                let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN KHÓA ĐIỂM cho phiếu chấm điểm này?\n\nSau khi khóa điểm, phiếu sẽ được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm Hội đồng. Việc sửa đổi sau này phải thông qua Trưởng khoa.';
+                let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN phiếu chấm điểm này?\n\nĐiểm được chuyển sang bảng tổng hợp. Thầy/Cô vẫn có thể chỉnh sửa phiếu của mình trước khi kết quả được công bố.';
                 if (hasZero) {
                     msg = 'Lưu ý: Có sinh viên đang có tổng điểm là 0.00 (chưa chấm hoặc chấm 0 điểm).\n\n' + msg;
                 }
@@ -3321,7 +3371,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (elExCount) elExCount.textContent = `${displayExaminersCount} Giám khảo tham gia`;
 
             if (elBadges) {
-                const passBadge = student.allPassed 
+                const passBadge = student.allPassed
                     ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> ĐẠT TẤT CẢ CHUẨN ĐẦU RA (CLO)</span>`
                     : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5"><i class="fa-solid fa-circle-xmark me-1"></i> CHƯA ĐẠT CHUẨN ĐẦU RA</span>`;
                 elBadges.innerHTML = passBadge;

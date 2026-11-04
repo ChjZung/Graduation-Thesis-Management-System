@@ -129,6 +129,13 @@
                 @endforeach
             </select>
 
+            <select name="DotBaoVe" class="form-select" style="min-width: 160px; flex: 1;" onchange="this.form.submit()" aria-label="Đợt bảo vệ">
+                <option value="">-- Chọn đợt bảo vệ --</option>
+                @foreach($dotBaoVes as $dot)
+                    <option value="{{ $dot }}" {{ request('DotBaoVe') === $dot ? 'selected' : '' }}>{{ $dot }}</option>
+                @endforeach
+            </select>
+
             <select name="TrangThaiCongBo" class="form-select" style="min-width: 170px; flex: 1;" onchange="this.form.submit()">
                 <option value="">-- Trạng thái công bố --</option>
                 <option value="Đã công bố" {{ request('TrangThaiCongBo') === 'Đã công bố' ? 'selected' : '' }}>Đã công bố</option>
@@ -143,12 +150,32 @@
                 <option value="Đã kết thúc" {{ request('TrangThai') === 'Đã kết thúc' ? 'selected' : '' }}>Đã kết thúc</option>
             </select>
 
-            @if(request('search') || request('TrangThai') || request('TrangThaiCongBo') || request('MaHocKy'))
+            @if(request('search') || request('TrangThai') || request('TrangThaiCongBo') || request('MaHocKy') || request('DotBaoVe'))
                 <a href="{{ route('truongkhoa.hoidong.index') }}" class="btn btn-outline-secondary px-3 d-inline-flex align-items-center">
                     <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                 </a>
             @endif
         </form>
+    </div>
+
+    <div class="card border border-primary-subtle rounded-3 bg-white p-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <div class="fw-bold text-primary">Quyết định chung của đợt hội đồng</div>
+                @if(request()->filled(['MaHocKy', 'DotBaoVe']))
+                    <div class="small text-secondary mt-1">{{ $pendingPublicationCount }} hội đồng chưa công bố · {{ $hocKys->firstWhere('MaHocKy', request('MaHocKy'))?->TenDayDu }} · {{ request('DotBaoVe') }}</div>
+                    <div class="small text-muted mt-1">Quyết định gồm đầy đủ {{ $decisionCouncilCount }} hội đồng trong học kỳ và đợt này, kể cả ở các trang khác.</div>
+                    @if(!$decisionCouncilCount)<div class="small text-warning mt-1">Đợt đã chọn chưa có hội đồng để xem hoặc công bố quyết định.</div>@endif
+                @else
+                    <div class="small text-secondary mt-1">Tạo đủ các hội đồng, sau đó chọn học kỳ và đợt bảo vệ ở bộ lọc phía trên để xem trước quyết định chung và công bố.</div>
+                @endif
+            </div>
+            @if($decisionCouncilCount > 0)
+                <a class="btn btn-primary btn-lg fw-semibold text-wrap" href="{{ route('truongkhoa.hoidong.previewDecision', ['MaHocKy' => request('MaHocKy'), 'DotBaoVe' => request('DotBaoVe')]) }}">Xem trước quyết định</a>
+            @else
+                <button type="button" class="btn btn-primary btn-lg" disabled>Xem trước quyết định</button>
+            @endif
+        </div>
     </div>
 
     <!-- Danh Sách Hội Đồng Header -->
@@ -283,22 +310,8 @@
                         </div>
 
                         <div class="d-flex align-items-center gap-1.5">
-                            @if($hd->TrangThaiCongBo !== 'Đã công bố')
-                                <form action="{{ route('truongkhoa.hoidong.congBo', $hd->MaHoiDong) }}" method="POST" class="d-inline m-0 p-0" onsubmit="return handleConfirmAction(this, 'Xác nhận công bố chính thức Hội đồng {{ addslashes($hd->TenHoiDong) }}? Văn bản PDF sẽ được ban hành và gửi thông báo tới các bên liên quan.');">
-                                    @csrf
-                                    <button type="submit" class="btn-card-icon text-success" title="Công bố chính thức Hội đồng">
-                                        <i class="fa-solid fa-bullhorn text-success"></i>
-                                    </button>
-                                </form>
-                            @endif
 
-                            <a href="{{ route('truongkhoa.hoidong.previewPdf', $hd->MaHoiDong) }}" target="_blank" class="btn-card-icon" title="Xem trước PDF Quyết định">
-                                <i class="fa-solid fa-file-pdf text-danger"></i>
-                            </a>
 
-                            <a href="{{ route('truongkhoa.hoidong.downloadPdf', $hd->MaHoiDong) }}" class="btn-card-icon" title="Tải file PDF Quyết định">
-                                <i class="fa-solid fa-download text-primary"></i>
-                            </a>
 
                             <form action="{{ route('truongkhoa.hoidong.destroy', $hd->MaHoiDong) }}" method="POST" class="d-inline m-0 p-0 form-delete-hoidong" onsubmit="return handleConfirmDelete(this, 'Bạn có chắc chắn muốn xóa Hội đồng {{ addslashes($hd->TenHoiDong) }}? Các đề tài sẽ được giải phóng trở về trạng thái đủ điều kiện bảo vệ.');">
                                 @csrf
@@ -342,7 +355,34 @@
 
 </div>
 
+<div class="modal fade" id="councilDecisionPreviewModal" tabindex="-1" aria-label="Xem trước quyết định hội đồng" data-preview-url="{{ route('truongkhoa.hoidong.previewDecision') }}">
+    <div class="modal-dialog council-decision-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title">Xem trước quyết định hội đồng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-0 d-flex flex-column" data-decision-preview-body></div>
+        </div>
+    </div>
+</div>
+<style>
+#councilDecisionPreviewModal .modal-dialog { width: 94vw !important; max-width: 1800px !important; height: 94dvh; margin: 3dvh auto !important; }
+#councilDecisionPreviewModal .modal-content { display: flex; flex-direction: column; height: 100%; max-height: none; border-radius: 12px !important; }
+#councilDecisionPreviewModal .modal-header { flex: 0 0 auto; }
+#councilDecisionPreviewModal .modal-body { flex: 1 1 0; min-height: 0; max-height: none !important; overflow: hidden; padding: 0 !important; }
+#councilDecisionPreviewModal .decision-preview-content { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; height: 100%; margin: 0; padding: 12px !important; overflow: hidden; }
+#councilDecisionPreviewModal .decision-preview-toolbar, #councilDecisionPreviewModal .alert { flex: 0 0 auto; }
+#councilDecisionPreviewModal .alert { padding: 8px 12px; margin-bottom: 10px; }
+#councilDecisionPreviewModal iframe { display: block; width: 100%; flex: 1 1 0 !important; height: 0 !important; min-height: 0 !important; max-height: none !important; }
+@media (max-width: 767.98px) {
+    #councilDecisionPreviewModal .modal-dialog { width: calc(100% - 12px) !important; height: calc(100dvh - 12px); margin: 6px auto !important; }
+    #councilDecisionPreviewModal .decision-preview-content { padding: 8px !important; }
+    #councilDecisionPreviewModal .decision-preview-toolbar { max-height: 32dvh; overflow-y: auto; }
+}
+</style>
 @push('scripts')
+<script src="{{ asset('js/council_decision_preview.js') }}?v={{ filemtime(public_path('js/council_decision_preview.js')) }}" defer></script>
 <script>
 function handleConfirmDelete(form, message) {
     if (confirm(message)) {

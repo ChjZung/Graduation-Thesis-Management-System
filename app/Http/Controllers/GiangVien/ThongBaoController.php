@@ -41,22 +41,16 @@ class ThongBaoController extends Controller
                 });
             })->get();
 
-        $tab = $request->input('tab', 'da_gui'); // 'da_gui' hoặc 'nhan_duoc'
+        $tab = $request->input('tab', 'nhan_duoc'); // 'da_gui' hoặc 'nhan_duoc'
 
-        if ($tab === 'da_gui') {
-            $query = ThongBao::where('MaGV', $gv->MaGV)->orderBy('created_at', 'desc');
-        } else {
-            $query = ThongBao::where(function($q) use ($user) {
-                $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', ''])
-                  ->orWhereNull('DoiTuongNhan')
-                  ->orWhere('DoiTuongNhan', $user->MaTK)
-                  ->orWhere('DoiTuongNhan', 'like', "%{$user->MaTK}%")
-                  ->orWhere('MaThongBao', 'like', 'TB_KH_%')
-                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
-            })->where(function($q) use ($gv) {
-                $q->whereNull('MaGV')->orWhere('MaGV', '!=', $gv->MaGV);
-            })->orderBy('created_at', 'desc');
-        }
+        $receivedQuery = ThongBao::where(function ($q) use ($user) {
+            $q->whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể GV và SV', ''])
+                ->orWhereNull('DoiTuongNhan')->orWhere('DoiTuongNhan', $user->MaTK)
+                ->orWhere('DoiTuongNhan', 'like', "%{$user->MaTK}%")
+                ->orWhere('MaThongBao', 'like', 'TB_KH_%')->orWhere('MaThongBao', 'like', 'TB_DK_%');
+        })->where(fn ($q) => $q->whereNull('MaGV')->orWhere('MaGV', '!=', $gv->MaGV))
+            ->whereIn('TrangThai', ['Đã phát hành', 'ĐÃ GỬI', 'Đã gửi', 'da_gui', 'ACTIVE', 'Đã tạo', 'DaPhatHanh']);
+        $query = ($tab === 'da_gui' ? ThongBao::where('MaGV', $gv->MaGV) : clone $receivedQuery)->orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $s = trim($request->search);
@@ -71,11 +65,12 @@ class ThongBaoController extends Controller
             $query->where('LoaiThongBao', $request->LoaiThongBao);
         }
 
+        $query->attachmentFilter($request->input('attachment'));
         $thongbaos = $query->paginate(5)->withQueryString();
 
         $stats = [
             'da_gui'      => ThongBao::where('MaGV', $gv->MaGV)->count(),
-            'nhan_duoc'   => ThongBao::whereIn('DoiTuongNhan', ['Giảng viên', 'Tất cả', 'Toàn thể'])->count(),
+            'nhan_duoc'   => (clone $receivedQuery)->count(),
             'tong_so_nhom'=> $nhoms->count(),
         ];
 
@@ -226,18 +221,8 @@ class ThongBaoController extends Controller
         $curUser = Auth::user();
         $readIds = \App\Services\ThongBaoService::markAsRead($curUser?->MaTK, $id);
 
-        $fileUrl = $thongBao->FileDinhKem;
-        if (!empty($fileUrl)) {
-            $fileUrl = ltrim($fileUrl, '/');
-            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = 'storage/' . $fileUrl;
-            }
-            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = null;
-            }
-        } else {
-            $fileUrl = null;
-        }
+        $attachment = \App\Services\NotificationAttachmentService::resolve($thongBao);
+        $fileUrl = $attachment['url'] ?? null;
 
         $fileType = 'other';
         if (!empty($fileUrl)) {
@@ -277,9 +262,9 @@ class ThongBaoController extends Controller
 
         // Preview cho các file Excel đính kèm khác
         $excelRows = [];
-        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && file_exists(public_path($fileUrl))) {
+        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && !empty($attachment['absolute'])) {
             try {
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(public_path($fileUrl));
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($attachment['absolute']);
                 $sheet = $spreadsheet->getActiveSheet();
                 $excelRows = array_slice($sheet->toArray(null, true, true, false), 0, 50);
             } catch (\Throwable $e) {

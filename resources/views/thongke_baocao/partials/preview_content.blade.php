@@ -82,13 +82,6 @@
     </div>
 
     {{-- Cảnh báo chưa đủ điểm / Chưa hoàn tất chấm điểm --}}
-    @if(!empty($data['canhBaoChuaHoanTat']))
-        <div class="p-2 mb-3 bg-warning-subtle text-warning-emphasis border border-warning rounded small text-center">
-            <i class="fa-solid fa-triangle-exclamation me-1"></i>
-            {{ $data['canhBaoChuaHoanTat'] }} Các sinh viên này chưa tính vào tỷ lệ Đạt/Không đạt.
-        </div>
-    @endif
-
     {{-- Thẻ KPI Tóm tắt --}}
     @if($config['show_kpi'] ?? true)
         <div class="p-2 mb-3 border bg-light" style="font-size: 0.76rem;">
@@ -345,7 +338,7 @@
                                 <td class="fw-bold text-danger">{{ number_format($sv['diemTongKet'], 2) }}</td>
                                 <td class="fw-bold text-danger">{{ $sv['diemChu'] ?? 'F' }}</td>
                                 <td>{{ $sv['xepLoai'] ?? 'Kém' }}</td>
-                                <td class="text-danger fw-semibold">Chưa đạt (Điểm &lt; 4.0)</td>
+                                <td class="text-danger fw-semibold">Chưa đạt (điểm hoặc CLO)</td>
                             </tr>
                         @empty
                             <tr>
@@ -682,7 +675,7 @@
                     <tbody>
                         @forelse($data['danhSachHoiDong'] as $idx => $hdData)
                             <tr>
-                                <td>{{ $idx + 1 }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td class="fw-semibold">{{ $hdData['hoiDong']->MaHoiDong ?? '-' }}</td>
                                 <td class="text-start fw-bold">{{ $hdData['hoiDong']->TenHoiDong ?? '-' }}</td>
                                 <td>{{ $hdData['hoiDong']->nganh?->TenNganh ?? 'Chung' }}</td>
@@ -729,7 +722,7 @@
                     <tbody>
                         @forelse($data['statsTheoBoMon'] as $idx => $stBm)
                             <tr>
-                                <td>{{ $idx + 1 }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td class="fw-semibold">{{ $stBm['maBoMon'] ?? '-' }}</td>
                                 <td class="text-start fw-bold">{{ $stBm['tenBoMon'] ?? '-' }}</td>
                                 <td>{{ $stBm['soDeTai'] ?? 0 }}</td>
@@ -774,7 +767,7 @@
                     <tbody>
                         @forelse($data['statsTheoHocPhan'] as $idx => $stHp)
                             <tr>
-                                <td>{{ $idx + 1 }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td class="fw-semibold">{{ $stHp['maHocPhan'] ?? '-' }}</td>
                                 <td class="text-start fw-bold">{{ $stHp['tenHocPhan'] ?? '-' }}</td>
                                 <td>{{ $stHp['soTinChi'] ?? 10 }}</td>
@@ -826,13 +819,13 @@
                             </tr>
                             <tr>
                                 <td>3</td>
-                                <td class="text-start">Sinh viên đạt (&ge; 4.0)</td>
+                                <td class="text-start">Sinh viên đạt (điểm và tất cả CLO)</td>
                                 <td class="fw-semibold text-success">{{ number_format($data['kpi']['tongSVDat'] ?? 0) }}</td>
                                 <td class="text-success fw-bold">{{ number_format($data['kpi']['tyLeDat'] ?? 0, 1) }}%</td>
                             </tr>
                             <tr>
                                 <td>4</td>
-                                <td class="text-start">Sinh viên chưa đạt (&lt; 4.0)</td>
+                                <td class="text-start">Sinh viên chưa đạt (điểm hoặc CLO)</td>
                                 <td class="fw-semibold text-danger">{{ number_format($data['kpi']['tongSVChuaDat'] ?? 0) }}</td>
                                 <td class="text-danger">{{ (($data['kpi']['tongSVDat'] ?? 0) + ($data['kpi']['tongSVChuaDat'] ?? 0)) > 0 ? number_format((($data['kpi']['tongSVChuaDat'] ?? 0) / (($data['kpi']['tongSVDat'] ?? 0) + ($data['kpi']['tongSVChuaDat'] ?? 0))) * 100, 1) : 0 }}%</td>
                             </tr>

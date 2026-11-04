@@ -133,6 +133,43 @@
     max-width: 800px;
     min-height: 750px;
 }
+/* Screen preview fills the viewport; print dimensions remain independent. */
+@media screen {
+    #modalPreviewReport .modal-dialog {
+        width: calc(100% - 24px) !important;
+        max-width: none !important;
+        height: calc(100dvh - 24px);
+        margin: 12px auto !important;
+    }
+    #modalPreviewReport .modal-content { height: 100%; max-height: 100%; }
+    #modalPreviewReport .modal-body {
+        min-height: 0 !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: clamp(8px, 1.2vw, 20px) !important;
+    }
+    #modalPreviewReport .a4-preview-paper {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        padding: clamp(8px, 1.4vw, 24px) !important;
+    }
+    #modalPreviewReport .table-responsive { overflow: visible; }
+    #modalPreviewReport table { width: 100% !important; min-width: 0 !important; table-layout: fixed; }
+    #modalPreviewReport th, #modalPreviewReport td {
+        min-width: 0 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        padding: clamp(3px, .5vw, 9px);
+    }
+    #modalPreviewReport .modal-header .text-muted { color: rgba(255,255,255,.8) !important; }
+    #modalPreviewReport #modalHeaderMauTitle { color: #ffffff !important; }
+    @media (max-width: 575.98px) {
+        #modalPreviewReport .modal-dialog { width: 100% !important; height: 100dvh; margin: 0 !important; }
+        #modalPreviewReport .modal-content { border-radius: 0 !important; }
+        #modalPreviewReport table { font-size: .62rem; }
+    }
+}
 @media print {
     @page {
         margin: 8mm 8mm 10mm 8mm;

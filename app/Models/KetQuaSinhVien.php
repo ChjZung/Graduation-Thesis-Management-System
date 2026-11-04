@@ -40,6 +40,11 @@ class KetQuaSinhVien extends Model
 
     public $timestamps = true;
 
+    public function daXacNhanKetQua(): bool
+    {
+        return $this->NgayXacNhan !== null || in_array($this->TrangThai, ['Đã xác nhận', 'Đã công bố'], true);
+    }
+
     protected function casts(): array
     {
         return [

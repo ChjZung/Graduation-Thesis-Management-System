@@ -40,7 +40,7 @@ class ChamDiemController extends Controller
             ->get();
 
         // CHỈ cho phép hiển thị các Hội đồng đủ điều kiện chấm điểm (Đang diễn ra hoặc Đã kết thúc còn trong hạn)
-        $gradingHoiDongs = $allHoiDongs->filter(fn($hd) => $hd->isWithinGradingWindow($now))->values();
+        $gradingHoiDongs = $allHoiDongs->filter(fn($hd) => $hd->canGrade($giangVien))->values();
 
         // Tìm hội đồng sắp diễn ra gần nhất để hỗ trợ hiển thị gợi ý thông minh
         $sapDienRaGanNhat = $allHoiDongs->filter(fn($hd) => $hd->trang_thai_thoi_gian === 'SapDienRa')
@@ -238,6 +238,7 @@ class ChamDiemController extends Controller
 
         $hoiDong = HoiDong::with('thanhViens')->findOrFail($request->MaHoiDong);
         $hoSo = HoSoBaoVe::with(['nhom.deTai', 'nhom.thanhViens'])->findOrFail($request->MaHoSo);
+        abort_unless($hoiDong->thanhViens->contains('MaGV', $giangVien->MaGV), 403, 'Bạn không thuộc Hội đồng bảo vệ này và không có quyền chấm điểm.');
 
         // BẢO VỆ CHẶN CHẤM ĐIỂM / LƯU NHÁP KHI HỘI ĐỒNG CHƯA ĐẾN GIỜ (Yêu cầu C)
         $reason = '';
@@ -271,7 +272,7 @@ class ChamDiemController extends Controller
             ->first();
 
         $isEditingCompleted = ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành');
-        if ($isEditingCompleted && !$request->has('unlock_token')) {
+        if ($isEditingCompleted) {
             $editReason = '';
             if (!$hoiDong->canEditScore($giangVien, $hoSo, $editReason)) {
                 $errMsg = $editReason ?: 'Phiếu chấm điểm này đã được Xác nhận khóa điểm. Thời hạn chỉnh sửa điểm đã kết thúc hoặc điểm đã được công bố chính thức.';
@@ -311,6 +312,11 @@ class ChamDiemController extends Controller
         }
 
         DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu, $existingPhieu, $isEditingCompleted) {
+            $lockedHoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
+            $lockedCouncil = HoiDong::with('thanhViens')->findOrFail($request->MaHoiDong);
+            $reason = '';
+            abort_unless($lockedCouncil->canGrade($giangVien, $lockedHoSo, $reason), 403, $reason);
+            abort_if($lockedHoSo->TieuChiChucNang !== $hoSo->TieuChiChucNang, 409, 'Tiêu chí vừa thay đổi. Vui lòng tải lại phiếu trước khi lưu.');
             foreach ($request->diems as $key => $diemData) {
                 // HTML field names use numeric student IDs as array keys, not row indexes.
                 $studentKey = (string) $key;
@@ -324,6 +330,9 @@ class ChamDiemController extends Controller
                     abort(403, "Sinh viên [{$maSV}] không thuộc nhóm bảo vệ của hồ sơ này.");
                 }
 
+                $existingStudentPhieu = PhieuChamDiem::where('MaHoiDong', $request->MaHoiDong)
+                    ->where('MaHoSo', $hoSo->MaHoSo)->where('MaGV', $giangVien->MaGV)->where('MaSV', $maSV)->lockForUpdate()->first();
+                $mustBeComplete = $isFinal || $existingStudentPhieu?->TrangThai === 'Đã hoàn thành';
                 $rawChiTiet = isset($diemData['ChiTietDiem'])
                     ? (is_array($diemData['ChiTietDiem']) ? $diemData['ChiTietDiem'] : json_decode($diemData['ChiTietDiem'], true))
                     : [];
@@ -337,7 +346,7 @@ class ChamDiemController extends Controller
                     $isBonus = !empty($criterion['is_bonus']);
                     $val = isset($rawChiTiet[$cId]) ? floatval($rawChiTiet[$cId]) : null;
 
-                    if ($isFinal && $val === null && !$isBonus) {
+                    if ($mustBeComplete && $val === null && !$isBonus) {
                         abort(422, "Tiêu chí '{$criterion['noi_dung']}' của sinh viên [{$maSV}] chưa được chấm điểm.");
                     }
 
@@ -382,13 +391,6 @@ class ChamDiemController extends Controller
 
                 // Tổng điểm tối đa của toàn phiếu là 10.0
                 $diemSo = round(min(10.0, $tongDiemCoBan + $diemKhuyenKhich), 2);
-
-                // Tìm phiếu đã lưu trước đó của sinh viên này
-                $existingStudentPhieu = PhieuChamDiem::where('MaHoiDong', $request->MaHoiDong)
-                    ->where('MaHoSo', $hoSo->MaHoSo)
-                    ->where('MaGV', $giangVien->MaGV)
-                    ->where('MaSV', $maSV)
-                    ->first();
 
                 // Yêu cầu 1: Quyền chỉnh sửa
                 // Mỗi giảng viên chỉ được chỉnh sửa điểm trong phiếu chấm của chính mình.
@@ -445,15 +447,17 @@ class ChamDiemController extends Controller
                 }
 
                 // Tạo mã phiếu chấm duy nhất
-                $hashId = substr(md5($request->MaHoiDong . '_' . $giangVien->MaGV . '_' . $maSV), 0, 8);
-                $maPhieu = 'PCD_' . strtoupper($hashId);
+                $hashId = substr(md5($request->MaHoiDong . '_' . $hoSo->MaHoSo . '_' . $giangVien->MaGV . '_' . $maSV), 0, 8);
+                $maPhieu = $existingStudentPhieu?->MaPhieuChamDiem ?? ('PCD_' . strtoupper($hashId));
+                $keepConfirmed = $existingStudentPhieu?->TrangThai === 'Đã hoàn thành';
 
-                $chuKyToSave = $request->chu_ky ?? $existingStudentPhieu?->ChuKy ?? $existingPhieu?->ChuKy ?? $giangVien->ChuKy;
+                $chuKyToSave = $request->filled('chu_ky') ? $request->chu_ky : ($existingStudentPhieu?->ChuKy ?? $existingPhieu?->ChuKy ?? $giangVien->ChuKy);
                 $ngayKyToSave = !empty($chuKyToSave) ? ($existingStudentPhieu?->NgayKy ?? $existingPhieu?->NgayKy ?? now()) : null;
 
                 PhieuChamDiem::updateOrCreate(
                     [
                         'MaHoiDong' => $request->MaHoiDong,
+                        'MaHoSo' => $hoSo->MaHoSo,
                         'MaGV'      => $giangVien->MaGV,
                         'MaSV'      => $maSV,
                     ],
@@ -464,8 +468,8 @@ class ChamDiemController extends Controller
                         'LoaiKhoaLuan'    => $request->LoaiKhoaLuan,
                         'ChiTietDiem'     => $validatedChiTiet,
                         'NhanXet'         => $nhanXet,
-                        'TrangThai'       => $trangThaiPhieu,
-                        'NgayXacNhan'     => $isFinal ? now() : null,
+                        'TrangThai'       => $keepConfirmed ? 'Đã hoàn thành' : $trangThaiPhieu,
+                        'NgayXacNhan'     => $keepConfirmed ? $existingStudentPhieu->NgayXacNhan : ($isFinal ? now() : null),
                         'ChuKy'           => $chuKyToSave,
                         'NgayKy'          => $ngayKyToSave,
                         'MaDeTai'         => $maDeTai,
@@ -569,13 +573,19 @@ class ChamDiemController extends Controller
         $loaiKhoaLuan = $hoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
         $maxCap = PhieuChamDiem::getMaxDiemChucNang($loaiKhoaLuan);
 
-        // Chuẩn hóa và lưu nội dung tiêu chí chức năng
-        $rawText = trim($request->TieuChiChucNang ?? '');
-        $hoSo->TieuChiChucNang = $rawText;
-        $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
-        $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
-        $hoSo->NgayChuanBiPhieu = now();
-        $hoSo->save();
+        // Serialize preparation with score saving on the same dossier.
+        DB::transaction(function () use ($hoSo, $request, $giangVien) {
+            $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
+            abort_if($hoSo->gradingHasStarted(), 409, 'Đã có giảng viên lưu điểm. Không thể thay đổi thông tin hoặc tiêu chí phiếu chấm.');
+            // Chuẩn hóa và lưu nội dung tiêu chí chức năng
+            $rawText = trim($request->TieuChiChucNang ?? '');
+            $hoSo->TieuChiChucNang = $rawText;
+            $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
+            $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
+            $hoSo->NgayChuanBiPhieu = now();
+            $hoSo->save();
+        });
+        $hoSo->refresh();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -585,7 +595,7 @@ class ChamDiemController extends Controller
                     'TieuChiChucNang' => $hoSo->TieuChiChucNang,
                     'loaiKhoaLuan'    => $loaiKhoaLuan,
                     'maxCap'          => $maxCap,
-                    'requirements'    => PhieuChamDiem::parseFunctionalRequirements($rawText, $loaiKhoaLuan),
+                    'requirements'    => PhieuChamDiem::parseFunctionalRequirements($hoSo->TieuChiChucNang, $loaiKhoaLuan),
                 ],
             ]);
         }
@@ -684,17 +694,22 @@ class ChamDiemController extends Controller
         $isManager = $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin();
 
         if (!$isThuKy && !$isManager) {
-            return redirect()->back()->with('error', 'Chỉ Thư ký Hội đồng mới có quyền chuẩn bị phiếu chấm cho đề tài này.');
+            abort(403, 'Chỉ Thư ký Hội đồng mới có quyền chuẩn bị phiếu chấm cho đề tài này.');
         }
 
         $hoSo = HoSoBaoVe::findOrFail($request->MaHoSo);
-        $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
-        $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
-        $hoSo->NgayChuanBiPhieu = now();
-        if (empty($hoSo->TieuChiChucNang)) {
-            $hoSo->TieuChiChucNang = "1. Xây dựng và kiểm thử hoàn chỉnh các chức năng nghiệp vụ theo đề cương được duyệt.\n2. Thiết kế và tối ưu cơ sở dữ liệu, đảm bảo toàn vẹn và an toàn dữ liệu.\n3. Đóng gói sản phẩm, thực nghiệm và hoàn thiện báo cáo.";
-        }
-        $hoSo->save();
+        abort_unless($hoSo->MaHoiDong === $request->MaHoiDong, 403, 'Hồ sơ không thuộc hội đồng.');
+        DB::transaction(function () use ($hoSo, $giangVien) {
+            $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
+            abort_if($hoSo->gradingHasStarted(), 409, 'Đã có giảng viên lưu điểm. Không thể thay đổi thông tin hoặc tiêu chí phiếu chấm.');
+            $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
+            $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
+            $hoSo->NgayChuanBiPhieu = now();
+            if (empty($hoSo->TieuChiChucNang)) {
+                $hoSo->TieuChiChucNang = "1. Xây dựng và kiểm thử hoàn chỉnh các chức năng nghiệp vụ theo đề cương được duyệt.\n2. Thiết kế và tối ưu cơ sở dữ liệu, đảm bảo toàn vẹn và an toàn dữ liệu.\n3. Đóng gói sản phẩm, thực nghiệm và hoàn thiện báo cáo.";
+            }
+            $hoSo->save();
+        });
 
         return redirect()->route('giangvien.hoidong.index', [
             'tab'  => 'chamdiem',
@@ -958,65 +973,7 @@ class ChamDiemController extends Controller
      */
     public function xuatBaoCaoClo(Request $request)
     {
-        $request->validate([
-            'MaHoiDong' => 'required|exists:HoiDong,MaHoiDong',
-        ]);
-
-        $user = Auth::user();
-        $giangVien = GiangVien::getLoggedInGiangVien($user);
-        if (!$giangVien) {
-            abort(403, 'Không tìm thấy thông tin giảng viên.');
-        }
-
-        $hoiDong = HoiDong::with(['thanhViens.giangVien', 'hoSoBaoVes.nhom.deTai'])->findOrFail($request->MaHoiDong);
-
-        // Kiểm tra quyền truy cập: thành viên hội đồng hoặc ban chủ nhiệm khoa / bộ môn / admin
-        $isMember = $hoiDong->thanhViens->contains('MaGV', $giangVien->MaGV);
-        $roleId = $user->vaiTro?->MaVaiTro ?? '';
-        if (!$isMember && !in_array($roleId, ['VT01', 'VT02', 'VT03'])) {
-            abort(403, 'Bạn không có quyền truy cập hoặc xuất báo cáo của Hội đồng này.');
-        }
-
-        $loaiKhoaLuan = $request->query('loai', null);
-        if (!$loaiKhoaLuan) {
-            $firstHoSo = $hoiDong->hoSoBaoVes->first();
-            $loaiKhoaLuan = $firstHoSo?->xacDinhLoaiKhoaLuan() ?? 'KLCN';
-        }
-
-        $cloService = app(\App\Services\CloCalculationService::class);
-        $checkDuPhieu = $cloService->kiemTraDu3PhieuCham($hoiDong);
-
-        // Ràng buộc: Chỉ cho phép xuất báo cáo chính thức khi đã có đủ 3 phiếu chấm hợp lệ
-        if (!$checkDuPhieu['du_3_phieu'] && !$request->has('force')) {
-            return redirect()->back()->with('error', $checkDuPhieu['message']);
-        }
-
-        $safeHd = preg_replace('/[^A-Za-z0-9_-]/', '_', $hoiDong->MaHoiDong);
-        $isPdf = ($request->get('format') === 'pdf' || $request->get('dinh_dang') === 'pdf');
-
-        if ($isPdf) {
-            $councilData = $cloService->calculateCouncilClo($hoiDong, $loaiKhoaLuan);
-            $pdf = Pdf::loadView('pdf.bao_cao_clo_3gv', array_merge($councilData, [
-                'hoiDong'      => $hoiDong,
-                'loaiKhoaLuan' => $loaiKhoaLuan,
-                'isOfficial'   => $checkDuPhieu['du_3_phieu'],
-            ]))->setPaper('a4', 'landscape');
-
-            $filename = "BaoCao_TongHop_CLO_{$safeHd}_{$loaiKhoaLuan}.pdf";
-            return $pdf->stream($filename);
-        }
-
-        $exportService = app(\App\Services\CloReportExportService::class);
-        $spreadsheet = $exportService->export($hoiDong, $loaiKhoaLuan, $request->has('force'));
-        $filename = "BaoCao_TongHop_CLO_{$safeHd}_{$loaiKhoaLuan}.xlsx";
-
-        return response()->streamDownload(function () use ($spreadsheet) {
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $writer->save('php://output');
-        }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Cache-Control' => 'max-age=0',
-        ]);
+        return redirect()->route('clo.reports.index', ['loai' => $request->query('loai', 'KLCN'), 'format' => $request->query('format', 'xlsx')]);
     }
 
     /**

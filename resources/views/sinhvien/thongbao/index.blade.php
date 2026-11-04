@@ -175,7 +175,7 @@
                         </div>
                     </div>
                     <div class="col-12 col-lg-auto d-flex gap-2">
-                        @if(request()->anyFilled(['search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
+                        @if(request()->anyFilled(['attachment', 'search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
                             <a href="{{ route('sinhvien.thongbao.index') }}" class="btn btn-light border text-danger px-3 py-2 shadow-xs d-flex align-items-center gap-1" title="Xóa toàn bộ bộ lọc">
                                 <i class="fa-solid fa-rotate-left me-2"></i> Đặt lại
                             </a>
@@ -186,7 +186,8 @@
                 <!-- Hàng 2: Các Dropdown Lọc Dàn Đều (Giống mẫu ảnh) -->
                 <div class="row g-2">
                     <div class="col-6 col-md-4 col-lg">
-                        <select name="LoaiThongBao" class="form-select form-select-sm py-2 shadow-none" onchange="this.form.submit()">
+                        <div class="mb-2">@include('partials.notification_attachment_filter')</div>
+                    <select name="LoaiThongBao" class="form-select form-select-sm py-2 shadow-none" onchange="this.form.submit()">
                             <option value="">-- Tất cả phân loại --</option>
                             <option value="Kế hoạch" {{ request('LoaiThongBao') == 'Kế hoạch' ? 'selected' : '' }}>Kế hoạch khóa luận</option>
                             <option value="Hệ thống" {{ request('LoaiThongBao') == 'Hệ thống' ? 'selected' : '' }}>Hệ thống &amp; Kỹ thuật</option>
@@ -287,16 +288,7 @@
                                                 {{ $tb->TieuDe }}
                                             </a>
 
-                                            @if($tb->FileDinhKem)
-                                                @php
-                                                    $ext = strtolower(pathinfo($tb->FileDinhKem, PATHINFO_EXTENSION));
-                                                    $isXlsx = in_array($ext, ['xlsx', 'xls', 'csv']);
-                                                @endphp
-                                                <a href="{{ route('sinhvien.thongbao.show', $tb->MaThongBao) }}" class="badge {{ $isXlsx ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' }} rounded-pill px-2 py-1 ms-1 text-decoration-none small" style="font-size: 0.72rem;">
-                                                    <i class="fa-solid {{ $isXlsx ? 'fa-file-excel' : 'fa-file-pdf' }} me-2"></i>
-                                                    {{ $isXlsx ? 'Bảng tính Excel' : 'Công văn PDF' }}
-                                                </a>
-                                            @endif
+                                            @include('partials.notification_attachment_badge', ['attachmentShowUrl' => route('sinhvien.thongbao.show', $tb->MaThongBao)])
 
                                             @php
                                                 $shortContent = trim(preg_replace('/\s+/', ' ', strip_tags($tb->NoiDung ?? '')));
@@ -451,7 +443,7 @@
                                         </div>
                                         <h6 class="fw-bold text-dark mb-1">Không Tìm Thấy Thông Báo Nào</h6>
                                         <p class="text-muted small mb-3">Hiện tại chưa có thông báo nào phù hợp với điều kiện tìm kiếm hoặc phân quyền của bạn.</p>
-                                        @if(request()->anyFilled(['search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
+                                        @if(request()->anyFilled(['attachment', 'search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
                                             <a href="{{ route('sinhvien.thongbao.index') }}" class="btn btn-sm rounded-3 px-3 fw-semibold btn-student-primary d-inline-flex align-items-center">
                                                 <i class="fa-solid fa-rotate-left me-2"></i> Xóa Bộ Lọc Để Xem Toàn Bộ
                                             </a>

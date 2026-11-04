@@ -71,6 +71,7 @@ class ThongBaoController extends Controller
             'target_all_count'     => $targetAllCount,
         ];
 
+        $query->attachmentFilter($request->input('attachment'));
         $thongbaos = $query->paginate(5)->withQueryString();
 
         $thongbaos->getCollection()->transform(function($tb) use ($readIds) {
@@ -147,18 +148,8 @@ class ThongBaoController extends Controller
         $user = Auth::user();
         $readIds = \App\Services\ThongBaoService::markAsRead($user?->MaTK, $id);
 
-        $fileUrl = $thongBao->FileDinhKem;
-        if (!empty($fileUrl)) {
-            $fileUrl = ltrim($fileUrl, '/');
-            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = 'storage/' . $fileUrl;
-            }
-            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = null;
-            }
-        } else {
-            $fileUrl = null;
-        }
+        $attachment = \App\Services\NotificationAttachmentService::resolve($thongBao);
+        $fileUrl = $attachment['url'] ?? null;
 
         $fileType = 'other';
         if (!empty($fileUrl)) {
@@ -198,9 +189,9 @@ class ThongBaoController extends Controller
 
         // Preview cho các file Excel đính kèm khác
         $excelRows = [];
-        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && file_exists(public_path($fileUrl))) {
+        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && !empty($attachment['absolute'])) {
             try {
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(public_path($fileUrl));
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($attachment['absolute']);
                 $sheet = $spreadsheet->getActiveSheet();
                 $excelRows = array_slice($sheet->toArray(null, true, true, false), 0, 50);
             } catch (\Throwable $e) {

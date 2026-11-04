@@ -110,7 +110,7 @@
             <!-- 3. ĐÁNH GIÁ & TIẾN ĐỘ -->
             <div class="sidebar-menu-group">
                 @php
-                    $isGvDanhGia = request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*') || request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*') || request()->routeIs('giangvien.hoidong.*');
+                    $isGvDanhGia = request()->routeIs('clo.reports.*') || request()->routeIs('giangvien.baocao.*') || request()->routeIs('giangvien.chamdiem.*') || request()->routeIs('giangvien.xacnhan_baove.*') || request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*') || request()->routeIs('giangvien.hoidong.*');
                 @endphp
                 <button class="menu-parent-btn {{ $isGvDanhGia ? 'active-parent' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sub-gv-danhgia" aria-expanded="{{ $isGvDanhGia ? 'true' : 'false' }}">
                     <span class="parent-icon-title">
@@ -151,11 +151,7 @@
             <!-- Topbar / Breadcrumb Bar -->
             <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
                 <div class="d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
-                    <button type="button" class="btn-sidebar-toggle d-lg-none me-2 p-1 text-primary border-0 bg-transparent flex-shrink-0" id="btnToggleSidebar" aria-label="Menu" title="Mở danh mục điều hướng">
-                        <i class="fa-solid fa-bars fs-5"></i>
-                    </button>
                     <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap">
-                        <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 13px;"></i>
                         <a href="{{ route('giangvien.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
                         <span class="separator flex-shrink-0">&gt;</span>
                         <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>
@@ -256,5 +252,6 @@
 
 @stack('scripts')
 @include('components.time-machine')
+@include('clo_reports.export_modal')
 </body>
 </html>

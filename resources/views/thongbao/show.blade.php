@@ -338,6 +338,9 @@
     </div>
 
     {{-- KIỂM TRA THÔNG BÁO CÓ FILE ĐÍNH KÈM HOẶC BẢNG DỮ LIỆU CHÍNH THỨC HAY KHÔNG --}}
+    @if($thongBao->FileDinhKem && empty($fileUrl))
+        <div class="alert alert-warning">Tệp đính kèm đã được ghi nhận nhưng hiện không còn trên máy chủ. Vui lòng liên hệ người phát hành để bổ sung lại.</div>
+    @endif
     @if(!empty($fileUrl) || (isset($officialListData) && !empty($officialListData['isOfficial'])))
     {{-- GIAO DIỆN SONG SONG 2 BÊN (SPLIT VIEW): 1 BÊN CÔNG VĂN - 1 BÊN THÔNG TIN THÔNG BÁO --}}
     <div class="row g-3">
@@ -390,8 +393,8 @@
                             <a href="{{ asset($fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 d-inline-flex align-items-center" style="font-size: 0.78rem;" title="Mở trong cửa sổ riêng">
                                 <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> Mở tab mới
                             </a>
-                            <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success text-white rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;" title="Xuất file Excel về máy">
-                                <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel (.{{ strtoupper(pathinfo($fileUrl, PATHINFO_EXTENSION)) }})
+                            <a href="{{ asset($fileUrl) }}{{ str_contains($fileUrl, '?') ? '&' : '?' }}download=1" download class="btn btn-sm btn-success text-white rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;" title="Tải tệp đính kèm">
+                                <i class="fa-solid fa-download me-2"></i> Tải {{ strtoupper(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION)) }}
                             </a>
                         @endif
                         <button type="button" class="btn btn-sm btn-outline-light rounded-circle p-1" style="width: 32px; height: 32px;" onclick="toggleDocFullscreen()" title="Toàn màn hình">
@@ -767,7 +770,7 @@
                                                 <input type="text" id="excelSearchInput" class="form-control form-control-sm border-start-0 ps-0" placeholder="Tìm MSSV, họ tên..." onkeyup="filterExcelTable()">
                                             </div>
                                         @endif
-                                        <a href="{{ asset($fileUrl) }}" download class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold text-white shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;">
+                                        <a href="{{ asset($fileUrl) }}{{ str_contains($fileUrl, '?') ? '&' : '?' }}download=1" download class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold text-white shadow-sm d-inline-flex align-items-center" style="font-size: 0.78rem;">
                                             <i class="fa-solid fa-file-excel me-2"></i> Tải File Excel (.xlsx)
                                         </a>
                                     </div>

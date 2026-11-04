@@ -410,11 +410,12 @@ class CloCalculationService
     /**
      * Tính toán và tổng hợp dữ liệu CLO toàn bộ sinh viên trong Hội đồng phục vụ Báo cáo & Hiển thị
      */
-    public function calculateCouncilClo(HoiDong $hoiDong, ?string $loaiKhoaLuan = null): array
+    public function calculateCouncilClo(HoiDong $hoiDong, ?string $loaiKhoaLuan = null, bool $persist = true): array
     {
         $hoiDong->loadMissing([
             'thanhViens.giangVien',
             'hoSoBaoVes.nhom.thanhViens.sinhVien.lop.nganh',
+            'hoSoBaoVes.nhom.thanhViens.sinhVien.nganh',
             'hoSoBaoVes.nhom.deTai.giangVien',
             'hoSoBaoVes.nhom.deTai.hocPhan',
             'hocKy',
@@ -432,7 +433,9 @@ class CloCalculationService
 
         $cloGroups = $this->getCloGroupsFromRubric($rubric);
         $sortedMembers = $this->getSortedExaminers($hoiDong);
-        $allPhieuChams = PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong)->get();
+        $phieuQuery = PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong);
+        if (!$persist) $phieuQuery->where('TrangThai', 'Đã hoàn thành');
+        $allPhieuChams = $phieuQuery->get();
 
         $checkDuPhieu = $this->kiemTraDu3PhieuCham($hoiDong);
 
@@ -472,7 +475,7 @@ class CloCalculationService
                 // Lưu kết quả CLO vào DB nếu đã có dữ liệu hợp lệ
                 $hocKy = $hoiDong->hocKy ?? HocKy::where('TrangThai', true)->first();
                 $maHocKy = $hocKy?->MaHocKy ?? 'HK_DEF';
-                $this->saveStudentCloToDatabase($sv->MaSV, $hoiDong->MaHoiDong, $maHocKy, $cloResult);
+                if ($persist) $this->saveStudentCloToDatabase($sv->MaSV, $hoiDong->MaHoiDong, $maHocKy, $cloResult);
 
                 $students[] = [
                     'stt'                 => $stt++,
@@ -481,7 +484,8 @@ class CloCalculationService
                     'ten'                 => $ten,
                     'hoTen'               => $sv->HoTen,
                     'lop'                 => $sv->lop?->TenLop ?? 'N/A',
-                    'nganh'               => $sv->lop?->nganh?->TenNganh ?? $deTai?->nganh?->TenNganh ?? 'Công nghệ thông tin',
+                    'maNganh'             => CloRoundReportService::studentMajor($sv),
+                    'nganh'               => $sv->nganh?->TenNganh ?? $sv->lop?->nganh?->TenNganh ?? 'Chưa xác định ngành',
                     'tenDeTai'            => $deTai?->TenDeTai ?? 'Chưa cập nhật',
                     'maHoSo'              => $hoSo->MaHoSo,
                     'is_official'         => $cloResult['is_official'],

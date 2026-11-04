@@ -188,10 +188,7 @@
                             default          => 'bg-secondary'
                         };
 
-                        // Tìm báo cáo đang thực hiện để tạo link duyệt trực tiếp
-                        $bcCurrent = $nhom->baoCaos->where('LanBaoCao', $nhom->current_stage ?? 1)->first() 
-                                    ?? $nhom->baoCaos->sortByDesc('LanBaoCao')->first();
-                        $targetUrl = $bcCurrent ? route('giangvien.baocao.show', $bcCurrent->MaBaoCao) : route('giangvien.baocao.index');
+                        $targetUrl = route('giangvien.baocao.index', ['nhom' => $nhom->MaNhom]);
                     @endphp
                     <tr>
                         {{-- 1. Mã nhóm --}}

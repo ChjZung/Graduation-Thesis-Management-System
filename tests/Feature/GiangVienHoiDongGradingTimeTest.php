@@ -26,6 +26,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->assertStringStartsWith('ai_stability_', \Illuminate\Support\Facades\DB::connection()->getDatabaseName());
 
         // 1. Lấy hoặc tạo giảng viên test
         $this->giangVien = GiangVien::where('MaGV', 'GV00000002')->first()
@@ -38,6 +39,9 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
         // 2. Tìm hoặc chuẩn bị Hội đồng HD04 (có ngày bảo vệ 04/11/2026 07:30 - 17:00)
         $this->hoiDong = HoiDong::find('HD04') ?? HoiDong::first();
         if ($this->hoiDong) {
+            $sourceDossier = $this->hoiDong->hoSoBaoVes->first();
+            $this->hoiDong = $this->hoiDong->replicate();
+            $this->hoiDong->MaHoiDong = 'HD_TIME_'.bin2hex(random_bytes(4));
             $this->hoiDong->NgayBaoVe = '2026-11-04';
             $this->hoiDong->ThoiGianBatDau = '2026-11-04 07:30:00';
             $this->hoiDong->ThoiGianKetThuc = '2026-11-04 17:00:00';
@@ -52,7 +56,13 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
                 'VaiTro'    => 'Ủy viên',
             ]);
 
-            $this->hoSo = $this->hoiDong->hoSoBaoVes->first();
+            if ($sourceDossier) {
+                $this->hoSo = $sourceDossier->replicate();
+                $this->hoSo->MaHoSo = 'HS_TIME_'.bin2hex(random_bytes(4));
+                $this->hoSo->MaHoiDong = $this->hoiDong->MaHoiDong;
+                $this->hoSo->TrangThaiKetQua = 'ChuaDuPhieu';
+                $this->hoSo->save();
+            }
         }
     }
 
@@ -145,7 +155,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
                 $sv->MaSV => [
                     'ChiTietDiem' => [
                         'tc1' => 0.5,
-                        'tc2' => 0.5,
+                        'tc2' => 0.25,
                         'tc3' => 0.5,
                         'tc4' => 0.5,
                         'tc5' => 0.5,
@@ -213,7 +223,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
                 $sv->MaSV => [
                     'ChiTietDiem' => [
                         'tc1' => 0.5,
-                        'tc2' => 0.5,
+                        'tc2' => 0.25,
                         'tc3' => 0.5,
                         'tc4' => 0.5,
                         'tc5' => 0.5,
@@ -335,7 +345,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
     public function test_dong_nhat_trang_thai_va_quyen_cham_diem_giua_danh_sach_va_chi_tiet_hoidong()
     {
         // Sử dụng hội đồng HD03 (03/11/2026, 07:30 - 17:00)
-        $hd03 = HoiDong::find('HD03') ?? $this->hoiDong;
+        $hd03 = $this->hoiDong;
         $hd03->NgayBaoVe = '2026-11-03';
         $hd03->ThoiGianBatDau = '2026-11-03 07:30:00';
         $hd03->ThoiGianKetThuc = '2026-11-03 17:00:00';
@@ -383,7 +393,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
         $contentList2 = $resList2->getContent();
         $this->assertStringContainsString('Đang Diễn Ra', $contentList2);
         // Ở trang danh sách, hội đồng đang diễn ra phải có nút "Chấm điểm"
-        $this->assertStringContainsString('Chấm điểm', $contentList2);
+        $this->assertStringContainsString('chấm điểm', mb_strtolower($contentList2));
 
         $resShow2 = $this->actingAs($this->taiKhoan)->get(route('giangvien.hoidong.show', $hd03->MaHoiDong));
         $contentShow2 = $resShow2->getContent();

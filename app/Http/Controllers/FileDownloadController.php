@@ -18,6 +18,109 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileDownloadController extends Controller
 {
+    public function downloadNotificationAttachment(Request $request, string $id, string $filename)
+    {
+        $notice = \App\Models\ThongBao::findOrFail($id);
+        abort_unless(Gate::forUser($request->user())->allows('view', $notice), 403);
+        $attachment = \App\Services\NotificationAttachmentService::resolve($notice);
+        abort_unless($attachment && !$attachment['missing'], 404, 'Tệp đính kèm không còn trên máy chủ.');
+        if (!$attachment['absolute']) return redirect()->away($attachment['url']);
+        $stream = @fopen($attachment['absolute'], 'rb');
+        abort_if($stream === false, 404, 'Không thể đọc tệp đính kèm.');
+        $extension = strtolower(pathinfo($attachment['name'], PATHINFO_EXTENSION));
+        $mime = match ($extension) {
+            'pdf' => 'application/pdf',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls' => 'application/vnd.ms-excel',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'png' => 'image/png', 'jpg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp',
+            default => 'application/octet-stream',
+        };
+        return response()->streamDownload(function () use ($stream) {
+            try { fpassthru($stream); } finally { fclose($stream); }
+        }, $attachment['name'], ['Content-Type' => $mime, 'Content-Length' => (string) fstat($stream)['size'],
+            'X-Content-Type-Options' => 'nosniff', 'X-Frame-Options' => 'SAMEORIGIN', 'Cache-Control' => 'private, no-cache'],
+            !$request->boolean('download') && in_array($extension, ['pdf', 'png', 'jpg', 'jpeg', 'webp']) ? 'inline' : 'attachment');
+    }
+
+    /** Serve documents selected from an authorized dossier, never a request path. */
+    public function downloadHoSoDocument(Request $request, string $id)
+    {
+        $hoSo = HoSoBaoVe::with('phienBanMoiNhat')->findOrFail($id);
+        abort_unless(Gate::forUser($request->user())->allows('view', $hoSo), 403, 'Bạn không có quyền xem tài liệu của hồ sơ này.');
+
+        $type = $request->query('document', 'report');
+        $name = null;
+        switch ($type) {
+            case 'supplement':
+                $request->validate(['index' => 'required|integer|min:0']);
+                $item = ($hoSo->LienKetKhac ?? [])[(int) $request->query('index')] ?? null;
+                abort_unless(is_array($item) && !empty($item['file_path']), 404, 'Không tìm thấy tệp bổ sung trong hồ sơ.');
+                $path = $item['file_path'];
+                $name = $item['ten_file'] ?? null;
+                break;
+            case 'version':
+                $request->validate(['version' => 'required|integer|min:1']);
+                $version = $hoSo->phienBans()->whereKey($request->query('version'))->firstOrFail();
+                $path = $version->DuongDanBaoCao;
+                $name = $version->TenFileBaoCao;
+                break;
+            case 'turnitin':
+                $path = $hoSo->MinhChungDaoVan;
+                $name = $hoSo->phienBans()->first()?->TenFileTurnitin;
+                break;
+            case 'report':
+                $path = $hoSo->ToanVanKhoaLuan;
+                $name = $hoSo->phienBans()->first()?->TenFileBaoCao;
+                break;
+            default:
+                abort(404, 'Loại tài liệu không hợp lệ.');
+        }
+
+        $path = ltrim(str_replace('\\', '/', (string) $path), '/');
+        $path = preg_replace('#^(?:storage/|public/)#', '', $path);
+        $prefix = 'hoso/'.$hoSo->MaNhom.'/';
+        abort_unless(str_starts_with($path, $prefix) && !preg_match('#(?:^|/)\.{1,2}(?:/|$)|[\x00-\x1f:]#', $path), 404, 'Đường dẫn tài liệu không hợp lệ.');
+
+        $root = realpath(Storage::disk('public')->path($prefix));
+        $storageRoot = realpath(Storage::disk('public')->path(''));
+        $absolute = realpath(Storage::disk('public')->path($path));
+        abort_unless($storageRoot && $root && $absolute && str_starts_with($root, $storageRoot.DIRECTORY_SEPARATOR) && str_starts_with($absolute, $root.DIRECTORY_SEPARATOR) && is_file($absolute), 404, 'Tệp không còn trên máy chủ. Vui lòng yêu cầu nhóm sinh viên nộp lại.');
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $name = basename(str_replace('\\', '/', $name ?: $path));
+        $name = preg_replace('/[\x00-\x1f\x7f]/u', '', $name);
+        if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== $extension) {
+            $name = pathinfo($name, PATHINFO_FILENAME).'.'.$extension;
+        }
+        $mime = match ($extension) {
+            'pdf' => 'application/pdf',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'doc' => 'application/msword',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            default => 'application/octet-stream',
+        };
+        // Opening the file is the actual read check. On some Windows volumes
+        // is_readable()/SplFileInfo ACL checks report false despite a valid read.
+        $stream = @fopen($absolute, 'rb');
+        abort_if($stream === false, 404, 'Không thể đọc tài liệu. Vui lòng liên hệ quản trị viên.');
+        $inline = $extension === 'pdf' && !$request->boolean('download');
+        return response()->streamDownload(function () use ($stream) {
+            try {
+                fpassthru($stream);
+            } finally {
+                fclose($stream);
+            }
+        }, $name, [
+            'Content-Type' => $mime,
+            'Content-Length' => (string) fstat($stream)['size'],
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Cache-Control' => 'private, no-cache, must-revalidate',
+        ], $inline ? 'inline' : 'attachment');
+    }
+
     /**
      * Tải file báo cáo tiến độ (Bảo vệ theo BaoCaoPolicy)
      */

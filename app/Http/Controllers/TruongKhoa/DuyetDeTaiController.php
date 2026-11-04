@@ -98,7 +98,6 @@ class DuyetDeTaiController extends Controller
         $deTaiStats = DB::table('DeTai')
             ->select(
                 DB::raw("COUNT(*) as tong_detai"),
-                DB::raw("SUM(CASE WHEN TrangThai = 'Chờ duyệt cấp Khoa' THEN 1 ELSE 0 END) as cho_duyet_khoa"),
                 DB::raw("SUM(CASE WHEN TrangThai IN ('Trưởng khoa đã duyệt', 'Trưởng khoa đã duyệt - Chờ nộp đề cương', 'Đã công bố', 'Đã đăng ký', 'Hoàn thành') THEN 1 ELSE 0 END) as da_duyet"),
                 DB::raw("SUM(CASE WHEN TrangThai IN ('Yêu cầu chỉnh sửa', 'Yêu cầu chỉnh sửa đề cương', 'Từ chối', 'Không đạt phản biện') THEN 1 ELSE 0 END) as can_xem_xet_detai"),
                 DB::raw("COUNT(DISTINCT MaGV) as so_gv_de_xuat")
@@ -120,7 +119,7 @@ class DuyetDeTaiController extends Controller
         }
 
         $summaryKPIs = [
-            'cho_duyet_khoa'            => (int)($deTaiStats->cho_duyet_khoa ?? 0),
+            'cho_duyet_khoa'            => DeTai::pendingDeanApproval($maKhoa, (string) $selectedHocKy)->count(),
             'tong_bo_mon'               => $boMons->count(),
             'so_gv_de_xuat'             => (int)($deTaiStats->so_gv_de_xuat ?? 0),
             'so_detai_da_duyet'         => (int)($deTaiStats->da_duyet ?? 0),

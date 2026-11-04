@@ -169,6 +169,9 @@
         $deTai = $item['deTai'];
         $duPhieu = $item['duPhieu'];
         $loaiKL = $item['loaiKhoaLuan'] ?? 'KLCN';
+        $ketQuas = $hoSo->ketQuaSinhViens->keyBy('MaSV');
+        $daXacNhan = $nhom && $nhom->thanhViens->isNotEmpty()
+            && $nhom->thanhViens->every(fn($tv) => $ketQuas->get($tv->MaSV)?->daXacNhanKetQua() === true);
 
         // Kiểm tra xem đề tài có độ lệch lớn không
         $coLechLon = collect($item['chiTietSinhVien'])->contains('canhBaoLech', true);
@@ -213,27 +216,27 @@
                             <i class="fa-regular fa-bell me-1"></i> Nhắc Nhở
                         </button>
                     </form>
-                    @elseif(!$dtDaCongBo)
-                    <form action="{{ route('truongkhoa.ketqua.congbo_detai') }}" method="POST" class="d-inline" onsubmit="return confirm('Trưởng khoa có chắc muốn CÔNG BỐ KẾT QUẢ chính thức cho đề tài này?');">
-                        @csrf
-                        <input type="hidden" name="MaHoSo" value="{{ $hoSo->MaHoSo }}">
-                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                            <i class="fa-solid fa-bullhorn me-1"></i> Công Bố Đề Tài
-                        </button>
-                    </form>
-                    @else
+                    @elseif($dtDaCongBo)
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalThuHoiDt_{{ $hoSo->MaHoSo }}">
                         <i class="fa-solid fa-undo me-1"></i> Thu Hồi Điểm
                     </button>
                     @endif
 
+                    @if($daXacNhan)
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled aria-disabled="true">
+                        <i class="fa-solid fa-check me-1"></i> Đã Xác Nhận Kết Quả
+                    </button>
+                    @else
                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalXacNhan_{{ $hoSo->MaHoSo }}">
                         <i class="fa-solid fa-signature me-1"></i> Xác Nhận Kết Quả
                     </button>
+                    @endif
 
+                    @unless($hoSo->baoCaoSauBaoVes()->exists())
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalYeuCauSua_{{ $hoSo->MaHoSo }}">
                         <i class="fa-solid fa-file-pen me-1"></i> Yêu Cầu Chỉnh Sửa
                     </button>
+                    @endunless
                 </div>
             </div>
 
@@ -394,7 +397,7 @@
     {{-- MODAL XÁC NHẬN KẾT QUẢ CHO ĐỀ TÀI NÀY --}}
     <div class="modal fade" id="modalXacNhan_{{ $hoSo->MaHoSo }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <form action="{{ route('truongkhoa.ketqua.xacnhan') }}" method="POST">
+            <form action="{{ route('truongkhoa.ketqua.xacnhan') }}" method="POST" onsubmit="if(this.dataset.submitting) return false; this.dataset.submitting = '1'; const button = this.querySelector('button[type=submit]'); button.disabled = true; button.textContent = 'Đang xác nhận…';">
                 @csrf
                 <input type="hidden" name="MaHoSo" value="{{ $hoSo->MaHoSo }}">
 

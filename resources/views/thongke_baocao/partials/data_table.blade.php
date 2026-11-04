@@ -29,13 +29,6 @@
     </div>
 
     <!-- Alert Cảnh báo đề tài chưa đủ điểm -->
-    @if(!empty($data['canhBaoChuaHoanTat']))
-        <div class="alert alert-warning border-0 border-start border-4 border-warning rounded-0 m-0 py-2.5 px-4 d-flex align-items-center gap-2 small">
-            <i class="fa-solid fa-triangle-exclamation text-warning fs-6"></i>
-            <div>{{ $data['canhBaoChuaHoanTat'] }} Các sinh viên này được gắn nhãn <strong>'Chưa có kết quả'</strong> và tách riêng không tính vào tỷ lệ Đạt/Không đạt.</div>
-        </div>
-    @endif
-
     <div class="card-body p-0">
         @if(empty($data['danhSachTatCaSV']) && empty($data['danhSachHoiDong']))
             <!-- Trạng thái trống -->
@@ -237,7 +230,7 @@
                                         <td class="small">{{ $sv['tenHoiDong'] }}</td>
                                         <td class="text-center fw-bold text-danger fs-6">{{ number_format($sv['diemTongKet'], 2) }}</td>
                                         <td class="text-center fw-bold text-danger">{{ $sv['diemChu'] }}</td>
-                                        <td class="small text-danger">Điểm tổng kết &lt; 4.0 (Điểm F) - Chưa đạt chuẩn KLTN</td>
+                                        <td class="small text-danger">Điểm tổng kết dưới ngưỡng hoặc có CLO chưa đạt</td>
                                     </tr>
                                 @empty
                                     <tr>

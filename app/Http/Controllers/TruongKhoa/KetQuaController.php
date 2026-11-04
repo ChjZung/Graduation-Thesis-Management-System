@@ -377,13 +377,16 @@ class KetQuaController extends Controller
         $user = Auth::user();
         $nguoiXacNhan = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
 
-        $this->gradeService->xacNhanKetQua(
+        $confirmed = $this->gradeService->xacNhanKetQua(
             $request->MaHoSo,
             $nguoiXacNhan,
             $request->dieu_chinh_diem,
             $request->ghi_chu
         );
 
+        if (!$confirmed) {
+            return redirect()->back()->with('info', 'Kết quả đã được xác nhận trước đó hoặc chưa có kết quả cần xác nhận.');
+        }
         return redirect()->back()->with('success', 'Đã xác nhận kết quả bảo vệ của nhóm thành công! Điểm chính thức đã được chốt và lưu vết kiểm toán.');
     }
 
@@ -760,6 +763,7 @@ class KetQuaController extends Controller
 
         $hoSo = HoSoBaoVe::with(['nhom.deTai.giangVien', 'hoiDong'])->findOrFail($request->MaHoSo);
 
+        abort_if($hoSo->baoCaoSauBaoVes()->exists(), 403, 'Báo cáo hoàn thiện đã nộp chỉ được xem và tải xuống; không yêu cầu chỉnh sửa thêm.');
         $hoSo->YeuCauChinhSuaSauBaoVe = $request->YeuCauChinhSuaSauBaoVe;
         $hoSo->HanNopBaoCaoSauBaoVe = $request->HanNopBaoCaoSauBaoVe;
         $hoSo->NguoiKiemTraChinhSua = $request->NguoiKiemTraChinhSua;

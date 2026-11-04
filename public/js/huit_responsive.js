@@ -18,27 +18,10 @@
             document.body.appendChild(backdrop);
         }
 
-        // 2. Tìm hoặc tự động chèn nút Hamburger Toggle trên Topbar
-        let toggleBtn = document.getElementById('btnToggleSidebar');
-        if (!toggleBtn) {
-            const topBar = document.querySelector('.admin-top-bar');
-            if (topBar) {
-                const breadcrumb = topBar.querySelector('.admin-breadcrumb');
-                toggleBtn = document.createElement('button');
-                toggleBtn.type = 'button';
-                toggleBtn.id = 'btnToggleSidebar';
-                toggleBtn.className = 'btn-sidebar-toggle d-lg-none me-2 p-1 text-primary border-0 bg-transparent flex-shrink-0';
-                toggleBtn.setAttribute('aria-label', 'Menu');
-                toggleBtn.setAttribute('title', 'Mở danh mục điều hướng');
-                toggleBtn.innerHTML = '<i class="fa-solid fa-bars fs-5"></i>';
-
-                if (breadcrumb && breadcrumb.parentNode) {
-                    breadcrumb.parentNode.insertBefore(toggleBtn, breadcrumb);
-                } else {
-                    topBar.prepend(toggleBtn);
-                }
-            }
-        }
+        // 2. Loại bỏ hoàn toàn nút Hamburger Toggle trên Topbar
+        document.querySelectorAll('#btnToggleSidebar, .btn-sidebar-toggle').forEach(function (btn) {
+            btn.remove();
+        });
 
         // 3. Xử lý đóng / mở Sidebar trên Mobile/Tablet
         function openSidebar() {
@@ -51,18 +34,6 @@
             sidebar.classList.remove('show');
             backdrop.classList.remove('show');
             document.body.classList.remove('sidebar-mobile-open');
-        }
-
-        if (toggleBtn) {
-            toggleBtn.onclick = function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (sidebar.classList.contains('show')) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
-                }
-            };
         }
 
         backdrop.onclick = closeSidebar;

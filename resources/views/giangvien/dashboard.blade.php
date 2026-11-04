@@ -75,19 +75,6 @@
         padding: 1rem 1.25rem;
     }
 
-    /* Nút Review AI nổi bật */
-    .btn-ai-review {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        color: #ffffff !important;
-        border: none;
-        transition: opacity 0.2s ease;
-    }
-
-    .btn-ai-review:hover {
-        opacity: 0.9;
-        color: #ffffff;
-    }
-
     /* CSS Bảng */
     .table-modern tbody tr {
         transition: background-color 0.15s ease;
@@ -295,7 +282,6 @@
                         @php
                             $soBaoCaoDat = $nhom->baoCaos->where('TrangThai', 'Đạt')->count();
                             $percentTienDo = min(100, round(($soBaoCaoDat / 5) * 100));
-                            $lastBaoCao = $nhom->baoCaos->first();
                             $truongNhomSV = $nhom->thanhViens->firstWhere('VaiTro', 'Trưởng nhóm')?->sinhVien 
                                 ?? $nhom->thanhViens->first()?->sinhVien;
                         @endphp
@@ -333,19 +319,9 @@
                                 </div>
                             </td>
                             <td class="text-end pe-3">
-                                <div class="btn-group">
-                                    @if($lastBaoCao)
-                                        <a href="{{ route('giangvien.baocao.show', $lastBaoCao->MaBaoCao) }}" 
-                                           class="btn btn-sm btn-ai-review rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm">
-                                            <i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>
-                                            <span class="small fw-bold">Review (AI)</span>
-                                        </a>
-                                    @else
-                                        <a href="{{ route('giangvien.baocao.index') }}" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center">
-                                            <i class="fa-regular fa-eye me-2"></i>Chi tiết
-                                        </a>
-                                    @endif
-                                </div>
+                                <a href="{{ route('giangvien.baocao.index', ['nhom' => $nhom->MaNhom]) }}" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center">
+                                    <i class="fa-regular fa-eye me-2"></i>Chi tiết
+                                </a>
                             </td>
                         </tr>
                         @empty

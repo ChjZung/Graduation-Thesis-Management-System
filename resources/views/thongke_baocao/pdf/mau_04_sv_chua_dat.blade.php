@@ -4,7 +4,7 @@
 @section('pdf_title', 'BÁO CÁO DANH SÁCH SINH VIÊN CHƯA ĐẠT KHÓA LUẬN TỐT NGHIỆP')
 
 @section('pdf_subtitle')
-    Học kỳ: <strong>{{ $hocKy->TenHocKy ?? 'N/A' }}</strong> &bull; Tiêu chuẩn: <strong>Điểm &lt; 4.0 hoặc Điểm chữ F</strong>
+    Học kỳ: <strong>{{ $hocKy->TenHocKy ?? 'N/A' }}</strong> &bull; Tiêu chuẩn: <strong>Điểm &lt; 4.0 hoặc có CLO chưa đạt</strong>
 @endsection
 
 @section('pdf_content')

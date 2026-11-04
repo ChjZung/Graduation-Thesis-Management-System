@@ -132,11 +132,7 @@
             <!-- Topbar / Breadcrumb Bar -->
             <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
                 <div class="d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
-                    <button type="button" class="btn-sidebar-toggle d-lg-none me-2 p-1 text-primary border-0 bg-transparent flex-shrink-0" id="btnToggleSidebar" aria-label="Menu" title="Mở danh mục điều hướng">
-                        <i class="fa-solid fa-bars fs-5"></i>
-                    </button>
                     <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap">
-                        <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 0.75rem;"></i>
                         <a href="{{ route('sinhvien.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
                         <span class="separator flex-shrink-0">&gt;</span>
                         <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>

@@ -49,12 +49,13 @@ class ThongBaoController extends Controller
             // Admin và Giáo vụ quản lý các thông báo công khai / chính thức của hệ thống (Trường, Khoa, Kế hoạch, Bộ môn, GV, SV)
             // Loại bỏ các thông báo cá nhân nội bộ (mời nhóm của SV, kết quả duyệt đề tài của GV) khỏi bảng quản lý của Admin
             $query->whereNotIn('LoaiThongBao', ['Nhóm', 'Đề tài'])
-                  ->where(function($q) {
+                  ->where(function($q) use ($user) {
                       $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
                         ->orWhereNull('DoiTuongNhan')
                         ->orWhere('DoiTuongNhan', '')
                         ->orWhere('MaThongBao', 'like', 'TB_KH_%')
-                        ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+                        ->orWhere('MaThongBao', 'like', 'TB_DK_%')
+                        ->orWhere('DoiTuongNhan', $user->MaTK);
                   });
         }
 
@@ -134,6 +135,7 @@ class ThongBaoController extends Controller
             }
         }
 
+        $query->attachmentFilter($request->input('attachment'));
         $thongbaos = $query->paginate(5)->withQueryString();
 
         // Thống kê tổng quan dựa trên phạm vi được xem
@@ -147,12 +149,13 @@ class ThongBaoController extends Controller
                 if ($user->MaGV) $q->orWhere('DoiTuongNhan', $user->MaGV);
             });
         } else {
-            $baseScopeQuery->where(function($q) {
+            $baseScopeQuery->where(function($q) use ($user) {
                 $q->whereIn('DoiTuongNhan', ['Tất cả', 'Toàn thể', 'Toàn trường', 'Toàn thể sinh viên', 'Toàn thể GV và SV', 'Sinh viên', 'Giảng viên', 'Admin', 'Giáo vụ'])
                   ->orWhereNull('DoiTuongNhan')
                   ->orWhere('DoiTuongNhan', '')
                   ->orWhere('MaThongBao', 'like', 'TB_KH_%')
-                  ->orWhere('MaThongBao', 'like', 'TB_DK_%');
+                  ->orWhere('MaThongBao', 'like', 'TB_DK_%')
+                  ->orWhere('DoiTuongNhan', $user->MaTK);
             });
         }
 
@@ -272,18 +275,8 @@ class ThongBaoController extends Controller
         $readIds = \App\Services\ThongBaoService::markAsRead($curMaTK, $id);
 
         // 1. Tự động kiểm tra file công văn đính kèm
-        $fileUrl = $thongBao->FileDinhKem;
-        if (!empty($fileUrl)) {
-            $fileUrl = ltrim($fileUrl, '/');
-            if (!str_starts_with($fileUrl, 'storage/') && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = 'storage/' . $fileUrl;
-            }
-            if (!file_exists(public_path($fileUrl)) && !str_starts_with($fileUrl, 'http')) {
-                $fileUrl = null;
-            }
-        } else {
-            $fileUrl = null;
-        }
+        $attachment = \App\Services\NotificationAttachmentService::resolve($thongBao);
+        $fileUrl = $attachment['url'] ?? null;
 
         // 2. Tự động kiểm tra và sinh file Excel danh sách nếu là thông báo công bố sinh viên đủ điều kiện (TB_DK_*)
         if (str_starts_with($thongBao->MaThongBao, 'TB_DK_') && (empty($fileUrl) || !file_exists(public_path($fileUrl)))) {
@@ -341,9 +334,9 @@ class ThongBaoController extends Controller
 
         // Preview cho các file Excel đính kèm khác
         $excelRows = [];
-        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && file_exists(public_path($fileUrl))) {
+        if ($fileType === 'excel' && $duDieuKienList->isEmpty() && !empty($fileUrl) && !empty($attachment['absolute'])) {
             try {
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(public_path($fileUrl));
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($attachment['absolute']);
                 $sheet = $spreadsheet->getActiveSheet();
                 $excelRows = array_slice($sheet->toArray(null, true, true, false), 0, 50);
             } catch (\Throwable $e) {

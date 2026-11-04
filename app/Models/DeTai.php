@@ -56,6 +56,14 @@ class DeTai extends Model
 
     public $timestamps = true;
 
+    public function scopePendingDeanApproval(\Illuminate\Database\Eloquent\Builder $query, string $maKhoa, string $maHocKy): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('MaHocKy', $maHocKy)
+            ->where('TrangThai', 'Chờ duyệt cấp Khoa')
+            ->whereNotNull('NgayDuyetBM')
+            ->whereHas('giangVien.boMon', fn ($q) => $q->where('MaKhoa', $maKhoa));
+    }
+
     public function coTepDeCuong(): bool
     {
         // FileDeCuong là bản nộp hiện tại; tài liệu lịch sử/bản nháp không thay thế nó.

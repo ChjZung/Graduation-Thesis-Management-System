@@ -171,7 +171,8 @@
                         <!-- Hàng 2: Các ô lọc dữ liệu (Select) -->
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             <!-- Bộ lọc Loại Thông Báo -->
-                            <select name="LoaiThongBao" class="form-select form-select-sm" style="width: auto; min-width: 140px; flex: 1;" onchange="this.form.submit()">
+                            <div class="mb-2">@include('partials.notification_attachment_filter')</div>
+                    <select name="LoaiThongBao" class="form-select form-select-sm" style="width: auto; min-width: 140px; flex: 1;" onchange="this.form.submit()">
                                 <option value="">-- Tất cả phân loại --</option>
                                 <option value="Kế hoạch" {{ request('LoaiThongBao') == 'Kế hoạch' ? 'selected' : '' }}>Kế hoạch khóa luận</option>
                                 <option value="Hệ thống" {{ request('LoaiThongBao') == 'Hệ thống' ? 'selected' : '' }}>Hệ thống &amp; Kỹ thuật</option>
@@ -215,7 +216,7 @@
                             </select>
 
                             <!-- Nút Xóa lọc -->
-                            @if(request()->anyFilled(['search', 'LoaiThongBao', 'TrangThai', 'DoiTuongNhan', 'NguoiTao', 'is_read', 'tu_ngay', 'den_ngay']))
+                            @if(request()->anyFilled(['attachment', 'search', 'LoaiThongBao', 'TrangThai', 'DoiTuongNhan', 'NguoiTao', 'is_read', 'tu_ngay', 'den_ngay']))
                                 <a href="{{ route('thongbao.index') }}" class="btn btn-outline-secondary btn-sm text-nowrap d-inline-flex align-items-center">
                                     <i class="fa-solid fa-xmark me-2"></i>Xóa lọc
                                 </a>
@@ -295,16 +296,7 @@
                                                 {{ $tb->TieuDe }}
                                             </a>
 
-                                            @if($tb->FileDinhKem)
-                                                @php
-                                                    $ext = strtolower(pathinfo($tb->FileDinhKem, PATHINFO_EXTENSION));
-                                                    $isXlsx = in_array($ext, ['xlsx', 'xls', 'csv']);
-                                                @endphp
-                                                <a href="{{ route('thongbao.show', $tb->MaThongBao) }}" class="badge {{ $isXlsx ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' }} rounded-pill px-2 py-1 ms-1 text-decoration-none small" style="font-size: 0.72rem;">
-                                                    <i class="fa-solid {{ $isXlsx ? 'fa-file-excel' : 'fa-file-pdf' }} me-2"></i>
-                                                    {{ $isXlsx ? 'Bảng tính Excel' : 'Công văn PDF' }}
-                                                </a>
-                                            @endif
+                                            @include('partials.notification_attachment_badge', ['attachmentShowUrl' => route('thongbao.show', $tb->MaThongBao)])
 
                                             <!-- Trích yếu 1-2 dòng ngắn gọn -->
                                             @php
@@ -463,7 +455,7 @@
                                         </div>
                                         <h6 class="fw-bold text-dark mb-1">Không Tìm Thấy Thông Báo Nào</h6>
                                         <p class="text-muted small mb-3">Hiện tại chưa có thông báo nào phù hợp với điều kiện tìm kiếm hoặc phân quyền của bạn.</p>
-                                        @if(request()->anyFilled(['search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
+                                        @if(request()->anyFilled(['attachment', 'search', 'LoaiThongBao', 'TrangThai', 'is_read', 'DoiTuongNhan', 'NguoiTao', 'tu_ngay', 'den_ngay']))
                                             <a href="{{ route('thongbao.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold d-inline-flex align-items-center">
                                                 <i class="fa-solid fa-rotate-left me-2"></i> Xóa Bộ Lọc Để Xem Toàn Bộ
                                             </a>

@@ -23,7 +23,7 @@
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <a href="{{ route('admin.hoidong.exportReport', request()->query()) }}" class="btn btn-outline-success shadow-xs fw-semibold d-inline-flex align-items-center rounded-pill px-3">
-                <i class="fa-solid fa-file-excel me-2"></i> Xuất Báo Cáo (Excel/CSV)
+                <i class="fa-solid fa-file-excel me-2"></i> Xuất báo cáo Excel
             </a>
         </div>
     </div>

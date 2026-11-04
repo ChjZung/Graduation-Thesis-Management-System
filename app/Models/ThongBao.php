@@ -29,6 +29,16 @@ class ThongBao extends Model
 
     public $timestamps = true;
 
+    public function scopeAttachmentFilter(\Illuminate\Database\Eloquent\Builder $query, mixed $filter): \Illuminate\Database\Eloquent\Builder
+    {
+        if ($filter === 'with') {
+            $query->whereNotNull('FileDinhKem')->whereRaw("TRIM(FileDinhKem) <> ''");
+        } elseif ($filter === 'without') {
+            $query->where(fn ($q) => $q->whereNull('FileDinhKem')->orWhereRaw("TRIM(FileDinhKem) = ''"));
+        }
+        return $query;
+    }
+
     public function giaoVu()
     {
         return $this->belongsTo(GiaoVu::class, 'MaGVu', 'MaGVu');

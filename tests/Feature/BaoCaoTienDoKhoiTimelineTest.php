@@ -374,11 +374,8 @@ class BaoCaoTienDoKhoiTimelineTest extends TestCase
         $respSV->assertSee('Nhận xét khối 1 của thầy');
         $respSV->assertSee('file_lan_2.pdf');
 
-        // 2. Kiểm tra view Giảng viên
+        // 2. Legacy Review links now lead to the current group progress page.
         $respGV = $this->actingAs($this->userGV)->get(route('giangvien.baocao.show', $baoCao->MaBaoCao));
-        $respGV->assertStatus(200);
-        $respGV->assertSee('Lịch Sử Các Khối Nộp Bài');
-        $respGV->assertSee('file_lan_1.pdf');
-        $respGV->assertSee('file_lan_2.pdf');
+        $respGV->assertRedirect(route('giangvien.baocao.index', ['nhom' => $this->nhom->MaNhom]));
     }
 }

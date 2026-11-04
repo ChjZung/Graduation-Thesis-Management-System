@@ -280,29 +280,27 @@ class CalendarController extends Controller
                 ];
 
                 // Phân bổ vào đúng hàng đối tượng thực hiện
-                $matched = false;
+                $targetShifts = [];
                 if (str_contains($doiTuong, 'sinh viên') || str_contains($doiTuong, 'nhóm trưởng')) {
-                    $shiftEvents['SINH_VIEN'][] = $item;
-                    $matched = true;
+                    $targetShifts[] = 'SINH_VIEN';
                 }
                 if (str_contains($doiTuong, 'gvhd') || str_contains($doiTuong, 'giảng viên')) {
-                    if ($role === 'SINH_VIEN') {
-                        $shiftEvents['SINH_VIEN'][] = $item;
-                    } else {
-                        $shiftEvents['GIANG_VIEN'][] = $item;
-                    }
-                    $matched = true;
+                    $targetShifts[] = $role === 'SINH_VIEN' ? 'SINH_VIEN' : 'GIANG_VIEN';
                 }
                 if (str_contains($doiTuong, 'khoa') || str_contains($doiTuong, 'giáo vụ') || str_contains($doiTuong, 'hội đồng')) {
-                    $shiftEvents['KHOA_HDS'][] = $item;
-                    $matched = true;
+                    $targetShifts[] = 'KHOA_HDS';
                 }
-                if (!$matched) {
+                if (!$targetShifts) {
                     if (str_contains($titleLower, 'hội đồng') || str_contains($titleLower, 'vpk') || str_contains($titleLower, 'khoa')) {
-                        $shiftEvents['KHOA_HDS'][] = $item;
+                        $targetShifts[] = 'KHOA_HDS';
                     } else {
-                        $shiftEvents['SINH_VIEN'][] = $item;
+                        $targetShifts[] = 'SINH_VIEN';
                     }
+                }
+                // A shared SV/GVHD milestone maps to the same student row twice.
+                // Deduplicate destinations, not events: distinct milestones must survive.
+                foreach (array_unique($targetShifts) as $targetShift) {
+                    $shiftEvents[$targetShift][] = $item;
                 }
             }
         }

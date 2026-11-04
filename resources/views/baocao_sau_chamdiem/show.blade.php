@@ -105,7 +105,7 @@
         <div class="flex-grow-1">
             <div class="fw-bold text-dark">Chế độ xem chỉ đọc dành cho {{ $scope['roleTitle'] }}</div>
             <div class="small text-muted">
-                Thẩm quyền kiểm tra, thẩm định và duyệt báo cáo hoàn thiện thuộc về Giảng viên hướng dẫn / Giảng viên được Hội đồng phân công kiểm tra.
+                Báo cáo hoàn thiện được lưu để Giảng viên hướng dẫn và Trưởng khoa xem, tải tệp; không đánh giá thêm.
             </div>
         </div>
         <span class="badge bg-primary text-white px-3 py-2 rounded-pill font-monospace">READ-ONLY</span>
@@ -133,7 +133,7 @@
             @elseif($hoSo->TrangThaiChinhSuaSauBaoVe === 'DaNop')
                 <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
                     <i class="fa-solid fa-clock"></i>
-                    <span>Đã Nộp Bản Mới (Chờ GVHD Kiểm Tra)</span>
+                    <span>Đã nộp báo cáo hoàn thiện</span>
                 </span>
             @elseif($hoSo->TrangThaiChinhSuaSauBaoVe === 'YeuCauSuaTiep')
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
@@ -209,7 +209,7 @@
                     </strong>
                 </div>
                 <div class="col-md-6">
-                    <span>Người được phân công kiểm tra, thẩm định:</span>
+                    <span>Người theo dõi báo cáo:</span>
                     <strong class="text-dark ms-1">{{ $hoSo->NguoiKiemTraChinhSua ?? 'Giảng viên hướng dẫn' }}</strong>
                 </div>
             </div>
@@ -285,44 +285,7 @@
                 </div>
             </div>
 
-            <!-- Ý Kiến Đánh Giá Của Giảng Viên Kiểm Tra -->
-            <div class="mt-4 pt-3 border-top">
-                <h6 class="fw-bold text-dark mb-3">
-                    <i class="fa-solid fa-comments text-primary me-2"></i>Ý Kiến Đánh Giá &amp; Kết Quả Của Giảng Viên Kiểm Tra:
-                </h6>
-                <div class="p-3 rounded-3 bg-light border">
-                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                        <div>
-                            <span class="small text-muted">Kết luận thẩm định:</span>
-                            @if($latestBaoCao->TrangThai === 'Đạt')
-                                <span class="badge bg-success text-white rounded-pill px-3 py-1 ms-1 fw-bold">
-                                    <i class="fa-solid fa-circle-check me-1"></i> ĐẠT YÊU CẦU (Đã hoàn thành lưu trữ)
-                                </span>
-                            @elseif($latestBaoCao->TrangThai === 'Yêu cầu sửa tiếp')
-                                <span class="badge bg-danger text-white rounded-pill px-3 py-1 ms-1 fw-bold">
-                                    <i class="fa-solid fa-rotate me-1"></i> CHƯA ĐẠT (Yêu cầu nhóm chỉnh sửa tiếp)
-                                </span>
-                            @else
-                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 ms-1 fw-bold">
-                                    <i class="fa-solid fa-clock me-1"></i> ĐANG CHỜ KIỂM TRA
-                                </span>
-                            @endif
-                        </div>
-                        @if($latestBaoCao->NgayKiemTra)
-                        <div class="small text-muted">
-                            <i class="fa-regular fa-clock me-1"></i> Đã thẩm định lúc: <strong>{{ \Carbon\Carbon::parse($latestBaoCao->NgayKiemTra)->format('d/m/Y H:i') }}</strong>
-                            &bull; Người đánh giá: <strong>{{ $latestBaoCao->NguoiKiemTra ?? $hoSo->nhom->deTai->giangVien->HoTen ?? 'GVHD' }}</strong>
-                        </div>
-                        @endif
-                    </div>
-                    <div class="small text-dark mt-2" style="line-height: 1.6;">
-                        <strong>Nhận xét:</strong>
-                        <div class="mt-1 text-secondary rich-comment-box">
-                            {!! \App\Helpers\HtmlHelper::renderRichText($latestBaoCao->NhanXetGV ?: 'Chưa có ý kiến nhận xét của Giảng viên.') !!}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="alert alert-info mt-4 mb-0" role="status">Báo cáo hoàn thiện đã nộp. Giảng viên hướng dẫn và Trưởng khoa chỉ xem, tải tệp; không đánh giá hoặc yêu cầu nộp lại.</div>
         </div>
     </div>
     @endif

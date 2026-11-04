@@ -29,14 +29,17 @@
             $sidebarKhoa = $sidebarGv->boMon->khoa;
         }
         $sidebarMaKhoa = $sidebarKhoa ? $sidebarKhoa->MaKhoa : 'CNTT';
-        $countChoDuyetKhoa = \App\Models\DeTai::whereHas('giangVien.boMon', fn($q) => $q->where('MaKhoa', $sidebarMaKhoa))
-            ->where('TrangThai', 'Chờ duyệt cấp Khoa')
-            ->count();
+        $sidebarHocKy = $selectedHocKy ?? request()->input('MaHocKy', request()->input('hocKy'));
+        if ($sidebarHocKy === null) {
+            $sidebarHocKy = \App\Models\HocKy::where('TrangThai', 'Đang diễn ra')->orderByDesc('MaHocKy')->value('MaHocKy')
+                ?? \App\Models\HocKy::orderByDesc('MaHocKy')->value('MaHocKy') ?? '';
+        }
+        $countChoDuyetKhoa = \App\Models\DeTai::pendingDeanApproval($sidebarMaKhoa, (string) $sidebarHocKy)->count();
 
         $isTkTongQuan = request()->routeIs('truongkhoa.dashboard') || request()->routeIs('thongbao.*');
         $isPheDuyetTkActive = request()->routeIs('truongkhoa.duyet_detai.*') || request()->routeIs('truongkhoa.bomon.*') || request()->routeIs('truongkhoa.phe_duyet_detai.*') || request()->routeIs('truongkhoa.thongke.*');
         $isTkDeTai = $isPheDuyetTkActive || request()->routeIs('truongkhoa.theodoi.*');
-        $isTkKeHoach = request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*') || request()->routeIs('truongkhoa.baocao_sau_chamdiem.*') || request()->routeIs('truongkhoa.thongke_baocao.*');
+        $isTkKeHoach = request()->routeIs('clo.reports.*') || request()->routeIs('truongkhoa.kehoach.*') || request()->routeIs('truongkhoa.ketqua.*') || request()->routeIs('truongkhoa.baocao_sau_chamdiem.*') || request()->routeIs('truongkhoa.thongke_baocao.*');
 
         $tkMenuGroups = [
             [
@@ -65,7 +68,7 @@
                 'items' => [
                     [
                         'title' => 'Phê duyệt đề tài',
-                        'url' => route('truongkhoa.duyet_detai.index'),
+                        'url' => route('truongkhoa.duyet_detai.index', ['MaHocKy' => $sidebarHocKy]),
                         'active' => $isPheDuyetTkActive,
                         'badge_count' => $countChoDuyetKhoa,
                         'badge_class' => 'bg-danger',
@@ -143,11 +146,7 @@
             <!-- Topbar / Breadcrumb Bar -->
             <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
                 <div class="d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
-                    <button type="button" class="btn-sidebar-toggle d-lg-none me-2 p-1 text-primary border-0 bg-transparent flex-shrink-0" id="btnToggleSidebar" aria-label="Menu" title="Mở danh mục điều hướng">
-                        <i class="fa-solid fa-bars fs-5"></i>
-                    </button>
                     <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap">
-                        <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 0.75rem;"></i>
                         <a href="{{ route('truongkhoa.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
                         <span class="separator flex-shrink-0">&gt;</span>
                         <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>
@@ -304,5 +303,6 @@
 
 @stack('scripts')
 @include('components.time-machine')
+@include('clo_reports.export_modal')
 </body>
 </html>

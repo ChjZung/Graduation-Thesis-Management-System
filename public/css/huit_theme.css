@@ -145,19 +145,28 @@ body {
 
 /* Role badge */
 #sidebar .role-badge {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px 7px;
-    margin: 0 14px 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 20px;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 8px 16px;
+    margin: 18px auto 10px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 24px;
     font-size: 13px !important;
     font-weight: 600;
+    line-height: 1.4;
     color: var(--columbia-blue);
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
+#sidebar .role-badge > i { margin: 0 !important; flex-shrink: 0; }
+
 
 /* Nav list */
 #sidebar ul.components {
@@ -2454,8 +2463,8 @@ small, .small, .text-muted, .badge, .badge-code, .kpi-label, .kpi-subtext,
 }
 
 #sidebar .role-badge {
-    text-align: left !important;
-    justify-content: flex-start !important;
+    text-align: center !important;
+    justify-content: center !important;
 }
 
 #sidebar .menu-parent-btn,
@@ -4842,12 +4851,18 @@ html, body {
     flex: 1 1 auto;
 }
 
-/* 2. SIDEBAR DI ĐỘNG & NÚT MENU HAMBURGER (< 992px - TABLET & MOBILE) */
+/* 2. SIDEBAR DI ĐỘNG & NÚT MENU HAMBURGER (ẨN HOÀN TOÀN THEO YÊU CẦU) */
+#btnToggleSidebar,
 .btn-sidebar-toggle {
-    display: none;
-    cursor: pointer;
-    line-height: 1;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
 @media (max-width: 991.98px) {
@@ -4879,21 +4894,10 @@ html, body {
         margin-left: 0 !important;
     }
 
+    #btnToggleSidebar,
     .btn-sidebar-toggle {
-        display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        background: rgba(0, 114, 206, 0.1) !important;
-        color: #0072ce !important;
-        font-size: 1.1rem;
-    }
-    .btn-sidebar-toggle:hover,
-    .btn-sidebar-toggle:focus {
-        background: #0072ce !important;
-        color: #ffffff !important;
+        display: none !important;
+        visibility: hidden !important;
     }
 
     .sidebar-backdrop {

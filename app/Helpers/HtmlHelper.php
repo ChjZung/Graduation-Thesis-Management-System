@@ -35,10 +35,12 @@ class HtmlHelper
             foreach ($paragraphs as $p) {
                 $trimmed = trim($p);
                 if ($trimmed !== '') {
-                    $formatted .= '<p>' . nl2br(e($trimmed)) . '</p>';
+                    // Rich-text entities may also occur in legacy text without tags.
+                    // Preserve that encoding instead of adding another &amp; layer.
+                    $formatted .= '<p>' . nl2br(e($trimmed, false)) . '</p>';
                 }
             }
-            return $formatted ?: nl2br(e($raw));
+            return $formatted ?: nl2br(e($raw, false));
         }
 
         // 3. Loại bỏ các thẻ nguy hiểm và nội dung bên trong chúng (script, iframe, style, applet, object...)

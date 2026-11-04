@@ -10,6 +10,18 @@ class HoSoBaoVe extends Model
 {
     use HasFactory;
 
+    public function hasPublishedResults(): bool
+    {
+        return in_array($this->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'], true)
+            || KetQuaSinhVien::where('MaHoSo', $this->MaHoSo)->where('TrangThai', 'Đã công bố')->exists();
+    }
+
+    public function gradingHasStarted(): bool
+    {
+        return PhieuChamDiem::where('MaHoiDong', $this->MaHoiDong)->where('MaHoSo', $this->MaHoSo)
+            ->where(fn ($q) => $q->whereNotNull('Diem')->orWhereNotNull('ChiTietDiem')->orWhere('TrangThai', 'Đã hoàn thành'))->exists();
+    }
+
     protected $table = 'HoSoBaoVe';
     protected $primaryKey = 'MaHoSo';
     public $incrementing = false;

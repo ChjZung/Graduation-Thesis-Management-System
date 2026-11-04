@@ -161,10 +161,10 @@
                     </div>
                     @if($hoSo->ToanVanKhoaLuan)
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'report']) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
                                 <i class="fa-solid fa-maximize me-1"></i> Phóng To Màn Hình
                             </button>
-                            <a href="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}" download class="btn btn-sm btn-danger rounded-pill px-3">
+                            <a href="{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'report', 'download' => 1]) }}" download class="btn btn-sm btn-danger rounded-pill px-3">
                                 <i class="fa-solid fa-download me-1"></i> Tải Về PDF
                             </a>
                         </div>
@@ -190,10 +190,10 @@
 
                         <!-- Embedded PDF Viewer -->
                         <div class="border rounded-3 overflow-hidden bg-light" style="height: 520px;">
-                            <iframe src="{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}#toolbar=1" width="100%" height="100%" style="border: none;">
+                            <iframe src="{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'report']) }}#toolbar=1" width="100%" height="100%" style="border: none;">
                                 <div class="p-4 text-center">
                                     <p class="text-muted">Trình duyệt không hỗ trợ xem trước tệp PDF trực tiếp.</p>
-                                    <button type="button" class="btn btn-primary rounded-pill" onclick="openPdfModal('{{ asset('storage/' . $hoSo->ToanVanKhoaLuan) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
+                                    <button type="button" class="btn btn-primary rounded-pill" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'report']) }}', 'Báo Cáo Khóa Luận Toàn Văn')">
                                         Xem Báo Cáo Trên Màn Hình
                                     </button>
                                 </div>
@@ -327,7 +327,7 @@
                         <h6 class="fw-bold text-dark mb-0">Kết Quả Kiểm Tra Đạo Văn (Turnitin)</h6>
                     </div>
                     @if($hoSo->MinhChungDaoVan)
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openPdfModal('{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}', 'Minh Chứng Kết Quả Turnitin (PDF)')">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'turnitin']) }}', 'Minh Chứng Kết Quả Turnitin (PDF)')">
                             <i class="fa-solid fa-file-shield me-1"></i> Xem Báo Cáo Turnitin
                         </button>
                     @endif
@@ -367,7 +367,7 @@
                                         <i class="fa-solid fa-file-pdf text-danger me-2"></i>
                                         {{ $hoSo->phienBans->first()?->TenFileTurnitin ?: 'Minh chứng Turnitin.pdf' }}
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-link text-primary p-0 ms-2 text-decoration-none fw-semibold" onclick="openPdfModal('{{ asset('storage/' . $hoSo->MinhChungDaoVan) }}', 'Minh Chứng Kết Quả Turnitin')">
+                                    <button type="button" class="btn btn-sm btn-link text-primary p-0 ms-2 text-decoration-none fw-semibold" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'turnitin']) }}', 'Minh Chứng Kết Quả Turnitin')">
                                         Xem file
                                     </button>
                                 </div>
@@ -388,7 +388,7 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">
-                            @foreach($hoSo->LienKetKhac as $lk)
+                            @foreach($hoSo->LienKetKhac as $lkIndex => $lk)
                                 @php
                                     $isLkFile = ($lk['loai'] ?? '') === 'file' || !empty($lk['file_path']);
                                     $fileExt = $isLkFile ? strtolower(pathinfo($lk['ten_file'] ?? $lk['file_path'], PATHINFO_EXTENSION)) : '';
@@ -427,11 +427,11 @@
                                         </div>
                                         @if($isLkFile && !empty($lk['file_path']))
                                             @if($fileExt === 'pdf')
-                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 flex-shrink-0" onclick="openPdfModal('{{ asset('storage/' . $lk['file_path']) }}', '{{ addslashes($lk['tieu_de'] ?? 'Tài liệu PDF') }}')">
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 flex-shrink-0" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'supplement', 'index' => $lkIndex]) }}', '{{ addslashes($lk['tieu_de'] ?? 'Tài liệu PDF') }}')">
                                                     <i class="fa-solid fa-eye me-1"></i> Xem file
                                                 </button>
                                             @else
-                                                <a href="{{ asset('storage/' . $lk['file_path']) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3 flex-shrink-0" title="Tải xuống tệp đính kèm">
+                                                <a href="{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'supplement', 'index' => $lkIndex]) }}" download class="btn btn-sm btn-outline-success rounded-pill px-3 flex-shrink-0" title="Tải xuống tệp đính kèm">
                                                     <i class="fa-solid fa-download me-1"></i> Tải file
                                                 </a>
                                             @endif
@@ -477,7 +477,7 @@
                                                 </span>
                                                 @if($pb->DuongDanBaoCao)
                                                     <div class="mt-1">
-                                                        <button type="button" class="btn btn-link text-danger p-0 text-start small text-decoration-none" onclick="openPdfModal('{{ asset('storage/' . $pb->DuongDanBaoCao) }}', 'Báo Cáo Khóa Luận - Phiên Bản v{{ $pb->PhienBan }}')">
+                                                        <button type="button" class="btn btn-link text-danger p-0 text-start small text-decoration-none" onclick="openPdfModal('{{ route('files.hoso.document', ['id' => $hoSo->MaHoSo, 'document' => 'version', 'version' => $pb->id]) }}', 'Báo Cáo Khóa Luận - Phiên Bản v{{ $pb->PhienBan }}')">
                                                             <i class="fa-solid fa-file-pdf me-1"></i>Xem PDF
                                                         </button>
                                                     </div>

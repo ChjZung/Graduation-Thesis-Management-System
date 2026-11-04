@@ -71,7 +71,7 @@
                 Báo Cáo Hoàn Thiện Sau Chấm Điểm &amp; Bảo Vệ
             </h4>
             <div class="text-muted small">
-                Theo dõi quá trình sinh viên tiếp thu ý kiến của Hội đồng, nộp lại báo cáo hoàn thiện và kết quả thẩm định của GVHD.
+                Xem và tải báo cáo hoàn thiện sinh viên đã nộp sau bảo vệ.
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -98,7 +98,7 @@
             <a href="{{ route($scope['routePrefix'] . '.index', array_merge(request()->except('status', 'page'), ['status' => 'da_nop'])) }}" class="text-decoration-none">
                 <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #0dcaf0 !important;">
                     <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Chờ Kiểm Tra</div>
+                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Đã nộp</div>
                         <h3 class="fw-bold my-1 text-info">{{ $counts['cho_kiem_tra'] }}</h3>
                         <div class="small text-muted" style="font-size: 0.75rem;">Đã nộp bản mới</div>
                     </div>
@@ -222,7 +222,7 @@
             <div class="col-6 col-md-4 col-xl-3 min-w-0">
                 <select name="status" class="form-select text-truncate w-100" title="Trạng thái hoàn thiện">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="da_nop" {{ in_array(request('status'), ['da_nop', 'cho_kiem_tra']) ? 'selected' : '' }}>Đã nộp, chờ kiểm tra</option>
+                    <option value="da_nop" {{ in_array(request('status'), ['da_nop', 'cho_kiem_tra']) ? 'selected' : '' }}>Đã nộp báo cáo hoàn thiện</option>
                     <option value="dat" {{ in_array(request('status'), ['dat', 'da_hoan_thanh']) ? 'selected' : '' }}>Đạt (Đã hoàn thành)</option>
                     <option value="chua_dat" {{ in_array(request('status'), ['chua_dat', 'yeu_cau_sua']) ? 'selected' : '' }}>Chưa đạt (Yêu cầu sửa)</option>
                     <option value="chua_nop" {{ request('status') === 'chua_nop' ? 'selected' : '' }}>Chưa nộp</option>
@@ -343,7 +343,7 @@
                                         </span>
                                     @elseif($hs->TrangThaiChinhSuaSauBaoVe === 'DaNop')
                                         <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2 py-1 fw-bold">
-                                            <i class="fa-solid fa-clock me-1"></i> Chờ kiểm tra
+                                            <i class="fa-solid fa-clock me-1"></i> Đã nộp
                                         </span>
                                     @elseif($hs->TrangThaiChinhSuaSauBaoVe === 'YeuCauSuaTiep')
                                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 fw-bold">

@@ -29,8 +29,159 @@ class ScoreEditingPolicyAndAuditLogTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->assertStringStartsWith('ai_stability_', \Illuminate\Support\Facades\DB::connection()->getDatabaseName());
         $this->cloService = app(CloCalculationService::class);
         $this->gradeService = app(GradeCalculationService::class);
+    }
+
+    public function test_result_confirmation_cannot_be_repeated_or_overwrite_published_results(): void
+    {
+        [$council, $teachers, $student, $dossier, $semester] = $this->createMockData();
+        $result = KetQuaSinhVien::create([
+            'MaKetQua' => 'KQ_ONCE_'.bin2hex(random_bytes(4)), 'MaSV' => $student->MaSV,
+            'MaHoSo' => $dossier->MaHoSo, 'MaHocKy' => $semester->MaHocKy,
+            'DiemHoiDongTB' => 8, 'DiemTongKet' => 8, 'TrangThai' => 'Đã đủ phiếu hợp lệ',
+        ]);
+        $this->assertTrue($this->gradeService->xacNhanKetQua($dossier->MaHoSo, 'Trưởng khoa', [$student->MaSV => 8.5], 'Chốt điểm'));
+        $snapshot = $result->fresh()->getAttributes();
+        $this->assertTrue($result->fresh()->daXacNhanKetQua());
+        $this->assertFalse($this->gradeService->xacNhanKetQua($dossier->MaHoSo, 'Người bấm lại', [$student->MaSV => 2], 'Ghi đè'));
+        $this->assertSame($snapshot, $result->fresh()->getAttributes());
+        $user = TaiKhoan::whereHas('vaiTro', fn($q) => $q->where('TenVaiTro', 'Trưởng khoa'))->firstOrFail();
+        $user->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => false]);
+        $this->actingAs($user)->post(route('truongkhoa.ketqua.xacnhan'), [
+            'MaHoSo' => $dossier->MaHoSo, 'dieu_chinh_diem' => [$student->MaSV => 1], 'ghi_chu' => 'Bấm lặp qua HTTP',
+        ])->assertRedirect()->assertSessionHas('info');
+        $this->assertSame($snapshot, $result->fresh()->getAttributes());
+        $page = $this->get(route('truongkhoa.ketqua.hoidong', $council->MaHoiDong));
+        $page->assertOk()->assertSee('Đã Xác Nhận Kết Quả')->assertDontSee('data-bs-target="#modalXacNhan_'.$dossier->MaHoSo.'"', false)
+            ->assertDontSee('Công Bố Đề Tài');
+        $dossier->update(['TrangThaiKetQua' => 'DaCongBo']);
+        $result->refresh()->update(['TrangThai' => 'Đã công bố']);
+        $snapshot = $result->fresh()->getAttributes();
+        $this->assertFalse($this->gradeService->xacNhanKetQua($dossier->MaHoSo, 'Bấm lại sau công bố'));
+        $this->assertSame('DaCongBo', $dossier->fresh()->TrangThaiKetQua);
+        $this->assertSame($snapshot, $result->fresh()->getAttributes());
+    }
+
+    public function test_all_three_members_can_save_confirmed_ballots_without_losing_signature(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester,$topic]=$this->createMockData();
+        $council->update(['TrangThaiCongBo'=>'Đã công bố', 'ThoiGianKetThucSuaDiem'=>now()->subDay()]);
+        $dossier->update(['TrangThaiChuanBiPhieu'=>'DaChuanBi','TieuChiChucNang'=>'+ Chức năng 1: Quản lý\n* Yêu cầu 1: Đăng nhập']);
+        $scores=collect(PhieuChamDiem::getRubricKLCN())->mapWithKeys(fn($c)=>[$c['id']=>round($c['max']*.8,2)])->all();
+        foreach($teachers as $teacher){
+            $ballot=PhieuChamDiem::create(['MaPhieuChamDiem'=>'PCD_'.bin2hex(random_bytes(5)),
+                'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'MaDeTai'=>$topic,'MaHocKy'=>$semester->MaHocKy,
+                'MaGV'=>$teacher->MaGV,'MaSV'=>$student->MaSV,'LoaiKhoaLuan'=>'KLCN','TrangThai'=>'Đã hoàn thành',
+                'Diem'=>8,'ChiTietDiem'=>$scores,'ChuKy'=>'retained-signature','NgayKy'=>now()->subHour(),'NgayXacNhan'=>now()->subHour()]);
+            $confirmedAt=$ballot->NgayXacNhan->toDateTimeString();
+            $this->actingAs($teacher->taiKhoan)->post(route('giangvien.chamdiem.store'),[
+                'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'LoaiKhoaLuan'=>'KLCN','action_type'=>'luu_nhap',
+                'diems'=>[$student->MaSV=>['ChiTietDiem'=>$scores]],'chu_ky'=>'',
+            ])->assertSessionHas('success');
+            $ballot->refresh();
+            $this->assertSame('Đã hoàn thành',$ballot->TrangThai);
+            $this->assertSame('retained-signature',$ballot->ChuKy);
+            $this->assertSame($confirmedAt,$ballot->NgayXacNhan->toDateTimeString());
+            $this->get(route('giangvien.hoidong.index',['tab'=>'chamdiem','hd'=>$council->MaHoiDong,'hoso'=>$dossier->MaHoSo]))
+                ->assertOk()->assertSee('Chỉnh sửa phiếu chấm điểm')->assertSee('Lưu phiếu chấm điểm')
+                ->assertSee('data-score-edit',false)->assertSee('data-score-save',false);
+        }
+    }
+
+    public function test_secretary_configuration_locks_after_a_saved_draft_only_for_that_dossier(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester,$topic]=$this->createMockData();
+        $payload=['MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'TieuChiChucNang'=>'+ Chức năng 1: Đăng nhập\n* Yêu cầu 1: Xác thực'];
+        $this->actingAs($teachers[1]->taiKhoan)->postJson(route('giangvien.chamdiem.capNhatChucNang'),$payload)->assertOk();
+        $criteria=$dossier->fresh()->TieuChiChucNang;
+        PhieuChamDiem::create(['MaPhieuChamDiem'=>'PCD_'.bin2hex(random_bytes(5)),
+            'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'MaDeTai'=>$topic,'MaHocKy'=>$semester->MaHocKy,
+            'MaGV'=>$teachers[0]->MaGV,'MaSV'=>$student->MaSV,'LoaiKhoaLuan'=>'KLCN','TrangThai'=>'Lưu nháp','Diem'=>0,'ChiTietDiem'=>[]]);
+        $payload['TieuChiChucNang']='Must not change';
+        $this->postJson(route('giangvien.chamdiem.capNhatChucNang'),$payload)->assertStatus(409);
+        $this->postJson(route('giangvien.chamdiem.chuanBiPhieu'),$payload)->assertStatus(409);
+        $this->assertSame($criteria,$dossier->fresh()->TieuChiChucNang);
+        $reason='';$this->assertTrue($council->canGrade($teachers[0],$dossier,$reason),$reason);
+        $other=$dossier->replicate();$other->MaHoSo='HS_SCOPE_'.bin2hex(random_bytes(4));$other->save();
+        $this->assertFalse($other->gradingHasStarted());
+        $payload['MaHoSo']=$other->MaHoSo;
+        $this->postJson(route('giangvien.chamdiem.capNhatChucNang'),$payload)->assertOk();
+        $payload['MaHoiDong']=HoiDong::where('MaHoiDong','!=',$council->MaHoiDong)->value('MaHoiDong');
+        $this->postJson(route('giangvien.chamdiem.chuanBiPhieu'),$payload)->assertStatus(403);
+    }
+
+    public function test_published_result_record_blocks_draft_writes_even_with_fake_unlock_token(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester,$topic]=$this->createMockData();
+        KetQuaSinhVien::create(['MaKetQua'=>'KQ_TEST_'.bin2hex(random_bytes(4)), 'MaSV'=>$student->MaSV,
+            'MaHoSo'=>$dossier->MaHoSo,'MaHocKy'=>$semester->MaHocKy,'TrangThai'=>'Đã công bố','DiemTongKet'=>8,'DiemChinhThuc'=>8]);
+        $this->actingAs($teachers[0]->taiKhoan)->postJson(route('giangvien.chamdiem.store'),[
+            'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'LoaiKhoaLuan'=>'KLCN',
+            'action_type'=>'luu_nhap','unlock_token'=>'forged','diems'=>[$student->MaSV=>['ChiTietDiem'=>[]]],
+        ])->assertForbidden();
+        $this->assertSame(0,PhieuChamDiem::where('MaHoSo',$dossier->MaHoSo)->count());
+    }
+
+    public function test_edit_permission_never_opens_before_council_start(): void
+    {
+        [$council,$teachers,$student,$dossier]=$this->createMockData();
+        $council->update(['NgayBaoVe'=>now()->addDays(2),'ThoiGianBatDau'=>now()->addDays(2),'ThoiGianKetThuc'=>now()->addDays(2)->addHour(),
+            'ThoiGianKetThucSuaDiem'=>now()->addDays(5),'TrangThaiMoKhoaSuaDiem'=>true]);
+        $reason='';$this->assertFalse($council->canEditScore($teachers[0],$dossier,$reason));
+        $this->assertStringContainsString('chưa đến',$reason);
+    }
+
+    public function test_saved_draft_remains_editable_after_deadline_but_new_ballot_does_not(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester,$topic]=$this->createMockData();
+        $council->update(['NgayBaoVe'=>now()->subDays(10),'ThoiGianBatDau'=>now()->subDays(10)->setTime(8,0),
+            'ThoiGianKetThuc'=>now()->subDays(10)->setTime(17,0),'ThoiGianKetThucSuaDiem'=>now()->subDay()]);
+        PhieuChamDiem::create(['MaPhieuChamDiem'=>'PCD_'.bin2hex(random_bytes(5)),
+            'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'MaDeTai'=>$topic,'MaHocKy'=>$semester->MaHocKy,
+            'MaGV'=>$teachers[0]->MaGV,'MaSV'=>$student->MaSV,'LoaiKhoaLuan'=>'KLCN','TrangThai'=>'Lưu nháp','Diem'=>8,'ChiTietDiem'=>[]]);
+        $reason='';$this->assertTrue($council->canGrade($teachers[0],$dossier,$reason),$reason);
+        $this->assertFalse($council->canGrade($teachers[1],$dossier,$reason));
+    }
+
+    public function test_recalculation_preserves_a_published_result_snapshot(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester]=$this->createMockData();
+        $result=KetQuaSinhVien::create(['MaKetQua'=>'KQ_TEST_'.bin2hex(random_bytes(4)), 'MaSV'=>$student->MaSV,
+            'MaHoSo'=>$dossier->MaHoSo,'MaHocKy'=>$semester->MaHocKy,'TrangThai'=>'Đã công bố','DiemTongKet'=>8,'DiemChinhThuc'=>8]);
+        $before=$result->refresh()->getAttributes();
+        $this->gradeService->tongHopKetQuaHoiDong($council->MaHoiDong);
+        $this->assertSame($before,$result->fresh()->getAttributes());
+    }
+
+    public function test_admin_report_filters_and_pdf_export_use_the_same_completed_result_data(): void
+    {
+        [$council,$teachers,$student,$dossier,$semester,$topic]=$this->createMockData();
+        $service=app(\App\Services\ThongKeService::class);
+        $filters=['MaHocKy'=>$semester->MaHocKy,'MaHoiDong'=>$council->MaHoiDong,'mau_bao_cao'=>'mau_01','ket_qua'=>'ChuaXong'];
+        $scope=['role'=>'admin','maKhoa'=>null];
+        $this->assertCount(1,$service->thongKeTongHop($filters,$scope)['danhSachTatCaSV']);
+        foreach($teachers as $teacher){
+            PhieuChamDiem::create(['MaPhieuChamDiem'=>'PCD_'.bin2hex(random_bytes(5)),
+                'MaHoiDong'=>$council->MaHoiDong,'MaHoSo'=>$dossier->MaHoSo,'MaDeTai'=>$topic,'MaHocKy'=>$semester->MaHocKy,
+                'MaGV'=>$teacher->MaGV,'MaSV'=>$student->MaSV,'LoaiKhoaLuan'=>'KLCN','TrangThai'=>'Đã hoàn thành','Diem'=>8,'ChiTietDiem'=>[]]);
+        }
+        $this->gradeService->tongHopKetQuaHoiDong($council->MaHoiDong);
+        $this->assertCount(0,$service->thongKeTongHop($filters,$scope)['danhSachTatCaSV']);
+        $filters['ket_qua']='Dat';
+        $this->assertCount(1,$service->thongKeTongHop($filters,$scope)['danhSachTatCaSV']);
+        $adminRole=\App\Models\VaiTro::firstOrCreate(['TenVaiTro'=>'Admin'],['MaVaiTro'=>'VT_RPT_AD']);
+        $admin=$teachers[0]->taiKhoan->replicate();
+        $admin->MaTK='TK_RPT_'.bin2hex(random_bytes(4));$admin->TenDangNhap=$admin->MaTK;
+        $admin->MaGV=null;$admin->MaVaiTro=$adminRole->MaVaiTro;$admin->save();
+        $response=$this->actingAs($admin)->get(route('admin.thongke_baocao.index',$filters));
+        $response->assertOk();
+        $this->assertCount(1,$response->viewData('data')['danhSachTatCaSV']);
+        $this->getJson(route('admin.thongke_baocao.preview_report',$filters))->assertOk()->assertJsonPath('soSV',1);
+        $pdf=$this->get(route('admin.thongke_baocao.export_pdf',$filters));
+        $pdf->assertOk();
+        $this->assertStringStartsWith('%PDF',$pdf->getContent());
     }
 
     protected function createMockData(): array
@@ -190,7 +341,7 @@ class ScoreEditingPolicyAndAuditLogTest extends TestCase
     /**
      * Yêu cầu 2: Hết thời hạn chỉnh sửa -> Tự động khóa và hiển thị thông báo
      */
-    public function test_cannot_edit_when_editing_window_has_expired(): void
+    public function test_confirmed_ballot_can_be_saved_after_edit_window_before_publication(): void
     {
         [$hoiDong, $gvs, $sv, $hoSo, $hocKy, $maDeTai] = $this->createMockData();
         $gv1 = $gvs[0];
@@ -230,19 +381,17 @@ class ScoreEditingPolicyAndAuditLogTest extends TestCase
             'MaHoiDong'    => $hoiDong->MaHoiDong,
             'MaHoSo'       => $hoSo->MaHoSo,
             'LoaiKhoaLuan' => 'KLCN',
-            'action_type'  => 'xac_nhan_hoan_thanh',
+            'action_type'  => 'luu_nhap',
             'diems'        => [
                 $sv->MaSV => [
                     'MaSV'        => $sv->MaSV,
-                    'ChiTietDiem' => [],
+                    'ChiTietDiem' => collect(PhieuChamDiem::getRubricKLCN())->mapWithKeys(fn ($c) => [$c['id'] => round($c['max'] * .8, 2)])->all(),
                 ],
             ],
         ]);
 
-        // Phải bị chặn với lỗi hết thời hạn chỉnh sửa điểm
-        $response->assertSessionHas('error');
-        $errorMessage = session('error');
-        $this->assertStringContainsString('hết thời hạn chỉnh sửa điểm', $errorMessage);
+        $response->assertSessionHas('success');
+        $this->assertSame('Đã hoàn thành', PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong)->where('MaGV', $gv1->MaGV)->firstOrFail()->TrangThai);
     }
 
     /**

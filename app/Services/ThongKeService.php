@@ -192,7 +192,7 @@ class ThongKeService
                 'moTa'          => 'Danh sách sinh viên đủ điều kiện công nhận đạt khóa luận tốt nghiệp theo chuẩn quy chế.',
                 'loaiBaoCao'    => 'Danh sách sinh viên đạt',
                 'thongTinChinh' => [
-                    'Toàn bộ sinh viên có điểm tổng kết ≥ 4.0',
+                    'Sinh viên có điểm tổng kết ≥ 4.0 và đạt tất cả CLO',
                     'Điểm hệ 10, quy đổi hệ 4 và điểm chữ',
                     'Xếp loại học lực tốt nghiệp chính thức'
                 ],
@@ -207,7 +207,7 @@ class ThongKeService
                 'moTa'          => 'Danh sách sinh viên có điểm số dưới 4.0 (F) hoặc chưa đạt yêu cầu cần xử lý bảo vệ lại.',
                 'loaiBaoCao'    => 'Danh sách chưa đạt',
                 'thongTinChinh' => [
-                    'Sinh viên có điểm tổng kết < 4.0 (Điểm F)',
+                    'Sinh viên có điểm tổng kết < 4.0 hoặc có CLO chưa đạt',
                     'Thông tin đề tài, GV hướng dẫn & Hội đồng',
                     'Ghi chú tình trạng & phương án xử lý'
                 ],
@@ -586,6 +586,16 @@ class ThongKeService
                         $gradeData = self::quyDoiDiem(null);
                     }
 
+                    $outcome = ['passed' => null, 'failed_clos' => []];
+                    if ($isDuPhieu) {
+                        $hs->setRelation('hoiDong', $hd);
+                        $scoreResult = new KetQuaSinhVien(['MaSV' => $sv->MaSV, 'DiemChinhThuc' => $finalScore]);
+                        $outcome = app(StudentOutcomeService::class)->evaluate($scoreResult, $hs, $phieusCuaHoSo);
+                        $gradeData['isDat'] = $outcome['passed'] === true;
+                        $gradeData['ketQua'] = $outcome['passed'] === null ? 'Chưa đủ dữ liệu CLO' : ($gradeData['isDat'] ? 'Đạt' : 'Không đạt');
+                    }
+                    $isStudentComplete = $isDuPhieu && $outcome['passed'] !== null;
+
                     $maNgSV = $sv->lop?->MaNganh ?? $sv->MaNganh ?? $hd->MaNganh ?? 'CHUNG';
                     $tenNgSV = $sv->lop?->nganh?->TenNganh ?? $hd->nganh?->TenNganh ?? 'Chung';
                     $maBMSV = $deTai?->giangVien?->MaBoMon ?? $hd->khoa?->MaKhoa ?? 'BM';
@@ -631,8 +641,9 @@ class ThongKeService
                         'diemChu'           => $isDuPhieu ? $gradeData['diemChu'] : null,
                         'xepLoai'           => $gradeData['xepLoai'],
                         'ketQua'            => $gradeData['ketQua'],
-                        'isDat'             => $isDuPhieu ? $gradeData['isDat'] : false,
-                        'isDuPhieu'         => $isDuPhieu,
+                        'isDat'             => $isStudentComplete && $gradeData['isDat'],
+                        'isDuPhieu'         => $isStudentComplete,
+                        'failedClos'        => $outcome['failed_clos'],
                     ];
 
                     $sinhViensData[] = $svItem;

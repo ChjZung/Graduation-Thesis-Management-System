@@ -171,12 +171,6 @@
     </div>
     @endif
 
-    @if(!empty($canhBaoChuaHoanTat))
-    <div style="background-color: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 4px 8px; font-size: 7.5pt; margin-bottom: 8px; border-radius: 3px;">
-        <strong>Lưu ý:</strong> {{ $canhBaoChuaHoanTat }}
-    </div>
-    @endif
-
     <!-- Danh Sách Theo Từng Ngành -->
     @php $sttGlobal = 1; @endphp
     @foreach($danhSachNganh as $ngData)

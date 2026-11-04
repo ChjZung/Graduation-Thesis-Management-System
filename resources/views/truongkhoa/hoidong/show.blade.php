@@ -35,25 +35,7 @@
                 <i class="fa-solid fa-arrow-left me-2"></i> Danh Sách
             </a>
 
-            <!-- Nút xem trước PDF -->
-            <a href="{{ route('truongkhoa.hoidong.previewPdf', $hoiDong->MaHoiDong) }}" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-xs d-inline-flex align-items-center">
-                <i class="fa-solid fa-file-pdf me-2"></i> Xem Văn Bản (PDF)
-            </a>
 
-            <!-- Nút tải PDF -->
-            <a href="{{ route('truongkhoa.hoidong.downloadPdf', $hoiDong->MaHoiDong) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-xs d-inline-flex align-items-center">
-                <i class="fa-solid fa-download me-2"></i> Tải PDF
-            </a>
-
-            <!-- Nút Công bố -->
-            @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
-                <form action="{{ route('truongkhoa.hoidong.congBo', $hoiDong->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('Xác nhận công bố chính thức Hội đồng này? Văn bản PDF sẽ được ban hành và thông báo gửi đến Giáo vụ, Giảng viên và Sinh viên.');">
-                    @csrf
-                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-xs fw-bold d-inline-flex align-items-center">
-                        <i class="fa-solid fa-bullhorn me-2"></i> Công Bố Chính Thức
-                    </button>
-                </form>
-            @endif
         </div>
     </div>
 
@@ -79,10 +61,10 @@
                         <p class="text-muted small mb-0 lh-base">
                             @if($hoiDong->TrangThaiCongBo === 'Đã công bố')
                                 Hội đồng đã công bố chính thức vào lúc <strong>{{ $hoiDong->NgayCongBo ? \Carbon\Carbon::parse($hoiDong->NgayCongBo)->format('H:i \n\gà\y d/m/Y') : 'vừa qua' }}</strong> bởi <strong>{{ $hoiDong->NguoiCongBo ?? 'Trưởng khoa' }}</strong>.
-                                Hệ thống đã phát hành văn bản Quyết định PDF kèm 02 Phụ lục, đồng thời phát thông báo toàn hệ thống đến Giáo vụ, Giảng viên Hội đồng và Sinh viên tham gia.
+                                Tệp PDF đã phát hành được lưu trong thông báo công bố tương ứng.
                             @else
                                 Hiện tại Hội đồng đang ở chế độ <strong>dự thảo (chưa công bố)</strong> gồm <strong>{{ $hoiDong->thanhViens->count() }} thành viên</strong> và <strong>{{ $hoiDong->hoSoBaoVes->count() }} nhóm đề tài</strong>.
-                                Vui lòng kiểm tra kỹ danh sách thành viên và đề tài bảo vệ bên dưới, sau đó bấm nút <strong>"CÔNG BỐ DANH SÁCH &amp; QUYẾT ĐỊNH"</strong> để chính thức ban hành văn bản và phát thông báo.
+                                Vui lòng kiểm tra kỹ danh sách thành viên và đề tài bảo vệ bên dưới, sau khi tạo đủ hội đồng, chọn <strong>"Xem trước quyết định"</strong> trên danh sách, xem trước quyết định rồi công bố toàn bộ hội đồng cùng học kỳ và đợt bảo vệ.
                             @endif
                         </p>
                     </div>
@@ -90,20 +72,9 @@
 
                 <div class="d-flex align-items-center gap-2 flex-wrap flex-shrink-0">
                     <a href="{{ route('truongkhoa.hoidong.previewPdf', $hoiDong->MaHoiDong) }}" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold shadow-xs">
-                        <i class="fa-solid fa-file-pdf me-1"></i> Xem Quyết Định (PDF)
-                    </a>
-                    <a href="{{ route('truongkhoa.hoidong.downloadPdf', $hoiDong->MaHoiDong) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold shadow-xs">
-                        <i class="fa-solid fa-download me-1"></i> Tải PDF
+                        <i class="fa-solid fa-file-pdf me-1"></i> Xem quyết định chung của đợt
                     </a>
 
-                    @if($hoiDong->TrangThaiCongBo !== 'Đã công bố')
-                        <form action="{{ route('truongkhoa.hoidong.congBo', $hoiDong->MaHoiDong) }}" method="POST" class="d-inline" onsubmit="return confirm('XÁC NHẬN CÔNG BỐ CHÍNH THỨC HỘI ĐỒNG NÀY?\n\nHệ thống sẽ phát hành Quyết định thành lập Hội đồng và danh sách sinh viên bảo vệ, đồng thời tự động gửi thông báo đến Giáo vụ, Giảng viên và Sinh viên.');">
-                            @csrf
-                            <button type="submit" class="btn btn-success rounded-pill px-3 py-2 fw-bold shadow-sm d-inline-flex align-items-center">
-                                <i class="fa-solid fa-bullhorn me-2"></i> CÔNG BỐ DANH SÁCH &amp; QUYẾT ĐỊNH
-                            </button>
-                        </form>
-                    @endif
                 </div>
             </div>
         </div>

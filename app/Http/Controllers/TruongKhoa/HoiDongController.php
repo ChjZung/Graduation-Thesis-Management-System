@@ -94,13 +94,23 @@ class HoiDongController extends Controller
         }
 
         if ($request->filled('DotBaoVe')) {
-            $query->where('DotBaoVe', 'like', "%{$request->DotBaoVe}%");
+            $query->where('DotBaoVe', $request->DotBaoVe);
         }
 
         $hoiDongs = $query->paginate(5)->withQueryString();
         $hocKys = HocKy::orderBy('created_at', 'desc')->get();
+        $publicationQuery = HoiDong::where('MaKhoa', $maKhoa);
+        if ($request->filled('MaHocKy')) {
+            $publicationQuery->where('MaHocKy', $request->MaHocKy);
+        }
+        $dotBaoVes = (clone $publicationQuery)->whereNotNull('DotBaoVe')->distinct()->orderBy('DotBaoVe')->pluck('DotBaoVe');
+        $pendingPublicationCount = $request->filled(['MaHocKy', 'DotBaoVe'])
+            ? (clone $publicationQuery)->where('DotBaoVe', $request->DotBaoVe)->where('TrangThaiCongBo', 'Chưa công bố')->count()
+            : 0;
+        $decisionCouncilCount = $request->filled(['MaHocKy', 'DotBaoVe'])
+            ? (clone $publicationQuery)->where('DotBaoVe', $request->DotBaoVe)->count() : 0;
 
-        return view('truongkhoa.hoidong.index', compact('hoiDongs', 'khoa', 'hocKys'));
+        return view('truongkhoa.hoidong.index', compact('hoiDongs', 'khoa', 'hocKys', 'dotBaoVes', 'pendingPublicationCount', 'decisionCouncilCount'));
     }
 
     /**
@@ -378,9 +388,8 @@ class HoiDongController extends Controller
 
         $khoa = $this->getKhoa();
         $hoiDongMoi = null;
-        $isCongBoNgay = $request->boolean('cong_bo_ngay');
 
-        DB::transaction(function () use ($request, $khoa, &$hoiDongMoi, $isCongBoNgay) {
+        DB::transaction(function () use ($request, $khoa, &$hoiDongMoi) {
             $maHoiDong = IdGenerator::nextHoiDong();
 
             $hoiDongMoi = HoiDong::create([
@@ -447,15 +456,8 @@ class HoiDongController extends Controller
             }
         });
 
-        // Nếu người dùng chọn Công bố ngay
-        if ($isCongBoNgay && $hoiDongMoi) {
-            $this->executeCongBo($hoiDongMoi);
-            return redirect()->route('truongkhoa.hoidong.show', $hoiDongMoi->MaHoiDong)
-                ->with('success', "Thành lập và Công bố chính thức Hội đồng {$hoiDongMoi->TenHoiDong} thành công!");
-        }
-
         return redirect()->route('truongkhoa.hoidong.show', $hoiDongMoi->MaHoiDong)
-            ->with('success', "Trưởng khoa đã thành lập Hội đồng {$hoiDongMoi->TenHoiDong} thành công! Bạn có thể xem trước văn bản và thực hiện công bố chính thức.");
+            ->with('success', "Đã tạo và lưu Hội đồng {$hoiDongMoi->TenHoiDong} (chưa công bố). Sau khi tạo đủ hội đồng, hãy công bố toàn đợt tại trang Quản lý hội đồng.");
     }
 
     /**
@@ -555,8 +557,8 @@ class HoiDongController extends Controller
     public function previewPdf($id)
     {
         $hoiDong = HoiDong::findOrFail($id);
-        $pdf = HoiDongPdfService::generatePdf($hoiDong);
-        return $pdf->stream("Quyet_Dinh_Hoi_Dong_{$hoiDong->MaHoiDong}.pdf");
+        abort_unless($hoiDong->MaKhoa === $this->publicationFaculty()->MaKhoa, 403);
+        return redirect()->route('truongkhoa.hoidong.previewDecision', ['MaHocKy' => $hoiDong->MaHocKy, 'DotBaoVe' => $hoiDong->DotBaoVe]);
     }
 
     /**
@@ -564,96 +566,130 @@ class HoiDongController extends Controller
      */
     public function downloadPdf($id)
     {
-        $hoiDong = HoiDong::findOrFail($id);
-        $pdf = HoiDongPdfService::generatePdf($hoiDong);
-        return $pdf->download("Quyet_Dinh_Hoi_Dong_{$hoiDong->MaHoiDong}.pdf");
+        return $this->previewPdf($id);
     }
 
     /**
      * Công bố chính thức Hội đồng bảo vệ
      */
-    public function congBo($id)
+    private function publicationFaculty(): Khoa
     {
-        $hoiDong = HoiDong::with(['thanhViens', 'hoSoBaoVes'])->findOrFail($id);
-
-        if ($hoiDong->thanhViens->count() < 3) {
-            return redirect()->back()->with('error', 'Hội đồng cần tối thiểu 3 thành viên (Chủ tịch, Thư ký, Phản biện) trước khi công bố.');
+        $user = Auth::user();
+        if ($user && preg_match('/^TK_([A-Z0-9]+)_/i', $user->TenDangNhap, $matches)) {
+            $faculty = Khoa::find($matches[1]);
+            if ($faculty) return $faculty;
         }
-
-        if ($hoiDong->hoSoBaoVes->isEmpty()) {
-            return redirect()->back()->with('error', 'Hội đồng chưa có đề tài/nhóm sinh viên nào. Vui lòng phân công đề tài trước khi công bố.');
-        }
-
-        $this->executeCongBo($hoiDong);
-
-        return redirect()->back()->with('success', "Đã công bố chính thức Hội đồng bảo vệ {$hoiDong->TenHoiDong}! Hệ thống đã tạo văn bản PDF và phát thông báo đến Giáo vụ, Giảng viên và Sinh viên liên quan.");
+        $faculty = GiangVien::getLoggedInGiangVien($user)?->boMon?->khoa;
+        abort_unless($faculty, 403, 'Bạn chưa được phân công phụ trách khoa.');
+        return $faculty;
     }
 
-    /**
-     * Logic phát hành công bố & phân phối thông báo
-     */
-    private function executeCongBo(HoiDong $hoiDong)
+    // Old open tabs must not publish an individual council anymore.
+    public function congBo($id)
     {
-        // 1. Tạo và lưu file PDF văn bản quyết định hợp nhất
-        $filePath = HoiDongPdfService::savePdfToStorage($hoiDong);
+        $faculty = $this->publicationFaculty();
+        $council = HoiDong::findOrFail($id);
+        abort_unless($council->MaKhoa === $faculty->MaKhoa, 403);
+        return redirect()->route('truongkhoa.hoidong.index', ['MaHocKy' => $council->MaHocKy, 'DotBaoVe' => $council->DotBaoVe])
+            ->with('info', 'Vui lòng công bố toàn bộ hội đồng theo học kỳ và đợt bảo vệ sau khi đã tạo đủ hội đồng.');
+    }
 
-        // 2. Cập nhật trạng thái công bố
-        $hoiDong->update([
-            'TrangThaiCongBo' => 'Đã công bố',
-            'NgayCongBo'      => now(),
-            'NguoiCongBo'     => Auth::user()->TenDangNhap ?? 'Trưởng khoa',
-            'FileQuyetDinh'   => $filePath,
-        ]);
-
-        $hoiDong->loadMissing([
-            'thanhViens.giangVien.taiKhoan',
-            'hoSoBaoVes.nhom.deTai.giangVien.taiKhoan',
-            'hoSoBaoVes.nhom.thanhVienNhoms.sinhVien.taiKhoan',
-        ]);
-
-        $tieuDe = "Thông báo công bố Hội đồng bảo vệ khóa luận: {$hoiDong->TenHoiDong}";
-        $ngayBvFormatted = $hoiDong->NgayBaoVe ? Carbon::parse($hoiDong->NgayBaoVe)->format('d/m/Y') : ($hoiDong->ThoiGianBatDau ? Carbon::parse($hoiDong->ThoiGianBatDau)->format('d/m/Y') : 'Xem chi tiết');
-        $gioBvFormatted = $hoiDong->ThoiGianBatDau ? Carbon::parse($hoiDong->ThoiGianBatDau)->format('H:i') : '07:30';
-
-        // 3. Thông báo cho Giảng viên thành viên Hội đồng
-        foreach ($hoiDong->thanhViens as $tv) {
-            $maTK = $tv->giangVien?->MaTK ?? $tv->giangVien?->taiKhoan?->MaTK;
-            if ($maTK) {
-                $noiDung = "Kính gửi Thầy/Cô {$tv->giangVien->HoTen},\n\nKhoa đã công bố Quyết định thành lập Hội đồng bảo vệ khóa luận tốt nghiệp.\nThầy/Cô được phân công tham gia: {$hoiDong->TenHoiDong} với vai trò {$tv->VaiTro}.\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}\n\nKính đề nghị Thầy/Cô sắp xếp thời gian tham gia đúng giờ.";
-                ThongBaoService::guiDen($maTK, $tieuDe, $noiDung, 'Hội đồng', asset($filePath));
+    public function previewDecision(Request $request)
+    {
+        $request->validate(['MaHocKy' => 'required|string|exists:HocKy,MaHocKy', 'DotBaoVe' => 'required|string|max:100']);
+        $faculty = $this->publicationFaculty();
+        $scope = ['MaHocKy' => $request->MaHocKy, 'DotBaoVe' => $request->DotBaoVe];
+        $service = app(\App\Services\CouncilDecisionScopeService::class);
+        $councils = $service->councils($faculty->MaKhoa, $scope['MaHocKy'], $scope['DotBaoVe']);
+        if ($councils->isEmpty()) return redirect()->route('truongkhoa.hoidong.index', $scope)->with('error', 'Đợt đã chọn chưa có hội đồng. Không thể xem hoặc công bố quyết định rỗng.');
+        $token = (string) \Illuminate\Support\Str::uuid();
+        $privatePath = 'council_decision_previews/'.$token.'.pdf';
+        try {
+            $fingerprint = $service->fingerprint($councils);
+            $bytes = HoiDongPdfService::generateBatchPdf($councils)->output();
+            if (!\Illuminate\Support\Facades\Storage::disk('local')->put($privatePath, $bytes)) throw new \RuntimeException('Không thể lưu bản xem trước.');
+            $preview = $scope + ['actor' => Auth::user()->MaTK, 'faculty' => $faculty->MaKhoa, 'fingerprint' => $fingerprint,
+                'path' => $privatePath, 'sha256' => hash('sha256', $bytes), 'filename' => HoiDongPdfService::batchFilename($councils), 'created' => now()->timestamp];
+            $previews = $request->session()->get('council_decision_previews', []);
+            while (count($previews) >= 5) {
+                $oldKey = array_key_first($previews);
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($previews[$oldKey]['path']);
+                unset($previews[$oldKey]);
             }
+            $previews[$token] = $preview;
+            $request->session()->put('council_decision_previews', $previews);
+        } catch (\Throwable $exception) {
+            report($exception);
+            return redirect()->route('truongkhoa.hoidong.index', $scope)->with('error', 'Không tạo được PDF xem trước. Chưa công bố hoặc gửi thông báo. Vui lòng thử lại.');
         }
+        $issues = $service->issues($councils);
+        $pendingCount = $councils->where('TrangThaiCongBo', 'Chưa công bố')->count();
+        return view($request->boolean('popup') ? 'truongkhoa.hoidong._preview_decision' : 'truongkhoa.hoidong.preview_decision', compact('scope', 'faculty', 'councils', 'issues', 'pendingCount', 'token'));
+    }
 
-        // 4. Thông báo cho Giảng viên hướng dẫn & Sinh viên
-        foreach ($hoiDong->hoSoBaoVes as $hoSo) {
-            $nhom = $hoSo->nhom;
-            $deTai = $nhom?->deTai;
+    private function decisionPreview(Request $request, string $token): array
+    {
+        $preview = $request->session()->get('council_decision_previews.'.$token);
+        abort_unless($preview && $preview['actor'] === Auth::user()->MaTK && $preview['faculty'] === $this->publicationFaculty()->MaKhoa, 404, 'Không tìm thấy bản xem trước của tài khoản này.');
+        abort_if(now()->timestamp - $preview['created'] > 3600, 410, 'Bản xem trước đã hết hạn. Vui lòng xem trước lại.');
+        return $preview;
+    }
 
-            // GVHD
-            $gvhdTK = $deTai?->giangVien?->MaTK ?? $deTai?->giangVien?->taiKhoan?->MaTK;
-            if ($gvhdTK) {
-                $noiDungGVHD = "Kính gửi Thầy/Cô {$deTai->giangVien->HoTen},\n\nĐề tài '{$deTai->TenDeTai}' (Nhóm: {$nhom->MaNhom}) do Thầy/Cô hướng dẫn đã được xếp lịch bảo vệ tại: {$hoiDong->TenHoiDong}.\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}.";
-                ThongBaoService::guiDen($gvhdTK, $tieuDe, $noiDungGVHD, 'Hội đồng', asset($filePath));
-            }
+    public function previewDecisionPdf(Request $request, string $token)
+    {
+        $preview = $this->decisionPreview($request, $token);
+        abort_unless(\Illuminate\Support\Facades\Storage::disk('local')->exists($preview['path']), 404, 'Bản xem trước không còn tồn tại.');
+        $bytes = \Illuminate\Support\Facades\Storage::disk('local')->get($preview['path']);
+        return response($bytes, 200, ['Content-Type' => 'application/pdf', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
+            'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="'.$preview['filename'].'"']);
+    }
 
-            // Sinh viên trong nhóm
-            if ($nhom && $nhom->thanhVienNhoms) {
-                foreach ($nhom->thanhVienNhoms as $tvn) {
-                    $svTK = $tvn->sinhVien?->MaTK ?? $tvn->sinhVien?->taiKhoan?->MaTK;
-                    if ($svTK) {
-                        $noiDungSV = "Chào bạn {$tvn->sinhVien->HoTen},\n\nKhoa đã công bố chính thức Lịch bảo vệ Khóa luận tốt nghiệp của nhóm bạn ({$nhom->MaNhom}) cho đề tài '{$deTai->TenDeTai}'.\n- Hội đồng: {$hoiDong->TenHoiDong}\n- Thời gian: {$gioBvFormatted} ngày {$ngayBvFormatted}\n- Địa điểm: {$hoiDong->DiaDiem}\n\nChúc bạn chuẩn bị chu đáo và bảo vệ thành công!";
-                        ThongBaoService::guiDen($svTK, $tieuDe, $noiDungSV, 'Hội đồng', asset($filePath));
-                    }
+    public function congBoToanDot(Request $request)
+    {
+        $request->validate(['MaHocKy' => 'required|string|exists:HocKy,MaHocKy', 'DotBaoVe' => 'required|string|max:100', 'preview_token' => 'required|uuid']);
+        $faculty = $this->publicationFaculty();
+        $scope = ['MaHocKy' => $request->MaHocKy, 'DotBaoVe' => $request->DotBaoVe];
+        $preview = $this->decisionPreview($request, $request->preview_token);
+        abort_unless($preview['MaHocKy'] === $scope['MaHocKy'] && $preview['DotBaoVe'] === $scope['DotBaoVe'], 422, 'Bản xem trước không thuộc đợt được yêu cầu.');
+        $publicPath = null;
+        try {
+            $notice = DB::transaction(function () use ($faculty, $scope, $preview, &$publicPath) {
+                Khoa::whereKey($faculty->MaKhoa)->lockForUpdate()->firstOrFail();
+                $service = app(\App\Services\CouncilDecisionScopeService::class);
+                $councils = $service->councils($faculty->MaKhoa, $scope['MaHocKy'], $scope['DotBaoVe'], true);
+                if ($councils->isNotEmpty() && !$councils->contains(fn ($council) => $council->TrangThaiCongBo !== 'Đã công bố')) return null;
+                $issues = $service->issues($councils);
+                if ($issues) throw \Illuminate\Validation\ValidationException::withMessages(['cong_bo' => $issues]);
+                if (!hash_equals($preview['fingerprint'], $service->fingerprint($councils))) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['cong_bo' => 'Dữ liệu hội đồng đã thay đổi sau khi xem trước. Vui lòng mở lại bản xem trước trước khi công bố.']);
                 }
-            }
+                $bytes = \Illuminate\Support\Facades\Storage::disk('local')->get($preview['path']);
+                if (!hash_equals($preview['sha256'], hash('sha256', $bytes))) throw new \RuntimeException('PDF xem trước không còn nguyên vẹn.');
+                $publicPath = 'quyet_dinh_hoi_dong/'.$preview['filename'];
+                if (!\Illuminate\Support\Facades\Storage::disk('public')->put($publicPath, $bytes)) throw new \RuntimeException('Không thể lưu PDF công bố.');
+                $filePath = 'storage/'.$publicPath;
+                $at = now();
+                foreach ($councils as $council) $council->update(['TrangThaiCongBo' => 'Đã công bố', 'NgayCongBo' => $at, 'NguoiCongBo' => Auth::user()->TenDangNhap, 'FileQuyetDinh' => $filePath]);
+                $semester = $councils->first()->hocKy?->TenDayDu ?? $scope['MaHocKy'];
+                $actor = GiangVien::getLoggedInGiangVien(Auth::user())?->HoTen ?? Auth::user()->TenDangNhap;
+                // One broadcast record is visible to every account through the existing inbox scope.
+                // No per-account fan-out or queue is necessary, regardless of account count.
+                return \App\Models\ThongBao::create([
+                    'MaThongBao' => 'TB_QD_'.substr(hash('sha256', $preview['path']), 0, 14),
+                    'TieuDe' => "Công bố quyết định hội đồng bảo vệ – {$scope['DotBaoVe']} – {$semester}",
+                    'NoiDung' => "{$faculty->TenKhoa} công bố quyết định chung cho {$councils->count()} hội đồng thuộc {$scope['DotBaoVe']}, {$semester}.\nNgười công bố: {$actor}. Thời điểm: ".$at->format('H:i d/m/Y').".\nPDF đính kèm gồm quyết định, thành viên các hội đồng và danh sách sinh viên bảo vệ. Phạm vi nhận: toàn bộ tài khoản hệ thống.",
+                    'LoaiThongBao' => 'Hội đồng', 'DoiTuongNhan' => 'Toàn trường', 'TrangThai' => 'Đã phát hành', 'NgayTao' => $at, 'FileDinhKem' => $filePath,
+                ]);
+            });
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            return redirect()->route('truongkhoa.hoidong.index', $scope)->withErrors($exception->errors());
+        } catch (\Throwable $exception) {
+            if ($publicPath) \Illuminate\Support\Facades\Storage::disk('public')->delete($publicPath);
+            report($exception);
+            return redirect()->route('truongkhoa.hoidong.index', $scope)->with('error', 'Không thể hoàn tất công bố. Chưa gửi thông báo; trạng thái đã được hoàn tác. Vui lòng xem trước và thử lại.');
         }
-
-        // 5. Thông báo cho Giáo vụ / Admin
-        $giaoVus = TaiKhoan::whereHas('vaiTro', fn($q) => $q->whereIn('TenVaiTro', ['Admin', 'Giáo vụ']))->get();
-        foreach ($giaoVus as $gvu) {
-            $noiDungGVu = "Trưởng khoa đã ban hành và công bố Hội đồng bảo vệ khóa luận: {$hoiDong->TenHoiDong} (Số QĐ: {$hoiDong->SoQuyetDinh}).\nVăn bản quyết định đã được số hóa và sẵn sàng tra cứu, xuất báo cáo.";
-            ThongBaoService::guiDen($gvu->MaTK, $tieuDe, $noiDungGVu, 'Hội đồng', asset($filePath));
-        }
+        if (!$notice) return redirect()->route('truongkhoa.hoidong.index', $scope)->with('info', 'Đợt này đã công bố. Không tạo thêm thông báo.');
+        return redirect()->route('thongbao.show', $notice->MaThongBao)->with('success', 'Đã công bố quyết định và thông báo đến toàn bộ tài khoản hệ thống.');
     }
 
     /**

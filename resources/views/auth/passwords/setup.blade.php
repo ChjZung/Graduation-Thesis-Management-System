@@ -75,6 +75,10 @@
         display: inline-block;
         flex-shrink: 0;
     }
+    /* The shared theme forces SVG display with !important; keep the inactive eye hidden. */
+    #formSetupPassword .toggle-password .eye-icon.d-none {
+        display: none !important;
+    }
     .toggle-password i {
         font-size: 16px;
         line-height: 1;
@@ -164,7 +168,7 @@
                         </label>
                         <div class="input-icon-wrap">
                             <input type="password" id="new_password" name="new_password" class="form-control password-input" required placeholder="Nhập mật khẩu mới..." autocomplete="new-password">
-                            <button type="button" class="toggle-password" data-target="new_password" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
+                            <button type="button" class="toggle-password" data-target="new_password" aria-controls="new_password" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
                                 <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -213,7 +217,7 @@
                         </label>
                         <div class="input-icon-wrap">
                             <input type="password" id="new_password_confirmation" name="new_password_confirmation" class="form-control password-input" required placeholder="Nhập lại mật khẩu mới..." autocomplete="new-password">
-                            <button type="button" class="toggle-password" data-target="new_password_confirmation" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
+                            <button type="button" class="toggle-password" data-target="new_password_confirmation" aria-controls="new_password_confirmation" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
                                 <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -241,7 +245,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ── 1. TOGGLE PASSWORD VISIBILITY ──
-    document.querySelectorAll('.toggle-password').forEach(btn => {
+    document.querySelectorAll('#formSetupPassword .toggle-password').forEach(btn => {
         btn.addEventListener('click', function () {
             const targetId = this.getAttribute('data-target');
             const input = document.getElementById(targetId);

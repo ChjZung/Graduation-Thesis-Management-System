@@ -118,65 +118,19 @@ class DuyetBaoCaoController extends Controller
             abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
         }
 
-        $baoCao = BaoCaoTienDo::with([
-            'deTai.giangVien',
-            'tomTatBaoCao',
-            'khoiBaoCaos',
-        ])->findOrFail($id);
+        $baoCao = BaoCaoTienDo::with('deTai')->findOrFail($id);
 
         if (!$baoCao->deTai || $baoCao->deTai->MaGV !== $giangVien->MaGV) {
             abort(403, 'Bạn không phải Giảng viên hướng dẫn của đề tài này.');
         }
 
-        $phieuDangKy = PhieuDangKy::with([
-            'nhom.thanhViens.sinhVien',
-        ])->where('MaDeTai', $baoCao->MaDeTai)
-          ->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])
-          ->first();
+        // Compatibility for saved links: the retired Review page no longer renders
+        // or starts AI work. Keep authorization before redirecting to current progress.
+        $maNhom = PhieuDangKy::where('MaDeTai', $baoCao->MaDeTai)
+            ->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])
+            ->value('MaNhom');
 
-        $nhom = $phieuDangKy?->nhom;
-        $deTai = $baoCao->deTai;
-        $truongNhom = $nhom?->thanhViens->firstWhere('VaiTro', 'Nhóm trưởng')?->sinhVien 
-            ?? $nhom?->thanhViens->firstWhere('VaiTro', 'Trưởng nhóm')?->sinhVien
-            ?? $nhom?->thanhViens->first()?->sinhVien;
-
-        $thanhViens = $nhom?->thanhViens ?? collect();
-
-        // Tự động sinh tóm tắt AI cho giảng viên xem trực tiếp ngay khi mở trang
-        $latestKhoi = $baoCao->khoiMoiNhat ?? $baoCao->khoiBaoCaos->last();
-        if ($latestKhoi) {
-            $this->ensureAiSummaryForKhoi($latestKhoi, $baoCao);
-            $baoCao->refresh();
-        } elseif (!$baoCao->tomTatBaoCao) {
-            $this->ensureAiSummaryForBaoCao($baoCao);
-            $baoCao->refresh();
-        }
-        $tomTat = $baoCao->tomTatBaoCao;
-
-        // Lấy tất cả 6 mốc của đề tài này để hiển thị trên lộ trình 6 giai đoạn
-        $allBaoCaos = BaoCaoTienDo::where('MaDeTai', $baoCao->MaDeTai)
-            ->with('khoiBaoCaos')
-            ->orderBy('LanBaoCao')
-            ->get()
-            ->keyBy('LanBaoCao');
-
-        // Kiểm tra xem Mốc tiếp theo đã nộp chưa để khóa kết quả
-        $lanTiepTheo = $baoCao->LanBaoCao + 1;
-        $daNopMocSau = BaoCaoTienDo::where('MaDeTai', $baoCao->MaDeTai)
-            ->where('LanBaoCao', $lanTiepTheo)
-            ->exists();
-
-        return view('giangvien.baocao.show', compact(
-            'giangVien',
-            'baoCao',
-            'nhom',
-            'deTai',
-            'truongNhom',
-            'thanhViens',
-            'tomTat',
-            'allBaoCaos',
-            'daNopMocSau'
-        ));
+        return redirect()->route('giangvien.baocao.index', $maNhom ? ['nhom' => $maNhom] : []);
     }
 
     public function storeNhanXet(Request $request, $maBaoCao)

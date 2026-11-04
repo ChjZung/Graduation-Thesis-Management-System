@@ -318,5 +318,39 @@ class SinhVienHoanThienBaoCaoTest extends TestCase
         $this->assertEquals('DaNop', $hoSoFresh->TrangThaiChinhSuaSauBaoVe);
         $this->assertEquals('DaNopChinhSua', $hoSoFresh->TrangThaiKetQua);
         $this->assertNotNull($hoSoFresh->FileBanChinhSua);
+
+        $before = $hoSoFresh->getAttributes();
+        $fileCount = count(Storage::disk('public')->allFiles());
+        $this->actingAs($this->userSvA)->post(route('sinhvien.ketqua.nopBaoCaoChinhSua'), [
+            'MaHoSo' => $this->hoSoA->MaHoSo,
+            'FileBaoCaoChinhSua' => UploadedFile::fake()->create('bao_cao_v2.pdf', 20, 'application/pdf'),
+            'TomTatChinhSua' => 'Thử nộp lần hai',
+        ])->assertSessionHasErrors('FileBaoCaoChinhSua');
+        $this->assertSame(1, BaoCaoSauBaoVe::where('MaHoSo', $this->hoSoA->MaHoSo)->count());
+        $this->assertSame($before, $this->hoSoA->fresh()->getAttributes());
+        $this->assertSame($fileCount, count(Storage::disk('public')->allFiles()));
+        $this->get(route('sinhvien.ketqua.hoanthien'))->assertOk()
+            ->assertSee('Mỗi hồ sơ chỉ được nộp một lần.')
+            ->assertDontSee('action="'.route('sinhvien.ketqua.nopBaoCaoChinhSua').'"', false)
+            ->assertSee('bao_cao_v1.pdf');
+
+        $teacher = GiangVien::whereHas('taiKhoan')->firstOrFail();
+        $this->hoSoA->update(['NguoiKiemTraChinhSua' => $teacher->MaGV]);
+        $teacherUser = $teacher->taiKhoan;
+        $teacherUser->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => false]);
+        $record = BaoCaoSauBaoVe::where('MaHoSo', $this->hoSoA->MaHoSo)->firstOrFail();
+        $snapshot = $record->getAttributes();
+        $this->actingAs($teacherUser)->get(route('giangvien.kiemtra_baocao_sau_baove.show', $this->hoSoA->MaHoSo))
+            ->assertOk()->assertSee('chỉ xem và tải tệp')->assertDontSee('name="NhanXetGV"', false);
+        $this->post(route('giangvien.kiemtra_baocao_sau_baove.danhgia', $this->hoSoA->MaHoSo), [
+            'HanhDong' => 'dat', 'NhanXetGV' => 'Thử đánh giá',
+        ])->assertForbidden();
+        $this->assertSame($snapshot, $record->fresh()->getAttributes());
+        $dean = TaiKhoan::whereHas('vaiTro', fn($q) => $q->where('TenVaiTro', 'Trưởng khoa'))->firstOrFail();
+        $dean->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => false]);
+        $this->actingAs($dean)->post(route('truongkhoa.ketqua.yeucauchinhsua'), [
+            'MaHoSo' => $this->hoSoA->MaHoSo, 'YeuCauChinhSuaSauBaoVe' => 'Yêu cầu thêm',
+            'HanNopBaoCaoSauBaoVe' => now()->addDays(3)->toDateTimeString(), 'NguoiKiemTraChinhSua' => $teacher->MaGV,
+        ])->assertForbidden();
     }
 }

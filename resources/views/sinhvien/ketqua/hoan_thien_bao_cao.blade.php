@@ -135,7 +135,7 @@
                         </span>
                     @elseif($trangThaiSua === 'DaNop')
                         <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3 py-2 fw-semibold fs-6">
-                            <i class="fa-solid fa-hourglass-half me-1"></i> Đã Nộp — Chờ Giảng Viên Kiểm Tra
+                            <i class="fa-solid fa-hourglass-half me-1"></i> Đã nộp báo cáo hoàn thiện
                         </span>
                     @elseif($trangThaiSua === 'YeuCauSuaTiep')
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold fs-6">
@@ -328,7 +328,13 @@
             @endif
 
             <!-- Form nộp -->
-            <form action="{{ route('sinhvien.ketqua.nopBaoCaoChinhSua') }}" method="POST" enctype="multipart/form-data">
+            @if($lichSuNop->isNotEmpty())
+                <div class="alert alert-info mb-0" role="status">
+                    <i class="fa-solid fa-circle-check me-2"></i>Nhóm đã nộp báo cáo hoàn thiện. Mỗi hồ sơ chỉ được nộp một lần. Bạn có thể xem tệp đã nộp bên dưới.
+                </div>
+            @else
+            <p class="small text-muted">Mỗi hồ sơ chỉ được nộp báo cáo hoàn thiện một lần. Vui lòng kiểm tra đầy đủ các tệp trước khi gửi.</p>
+            <form action="{{ route('sinhvien.ketqua.nopBaoCaoChinhSua') }}" method="POST" enctype="multipart/form-data" onsubmit="if(this.dataset.submitting) return false; this.dataset.submitting = '1'; const button = this.querySelector('button[type=submit]'); button.disabled = true; button.textContent = 'Đang nộp báo cáo…';">
                 @csrf
                 <input type="hidden" name="MaHoSo" value="{{ $hoSo->MaHoSo }}">
 
@@ -400,6 +406,7 @@
                     </div>
                 </div>
             </form>
+            @endif
         </div>
     </div>
 
@@ -482,7 +489,7 @@
                                     @else
                                         <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 badge-check d-inline-flex align-items-center text-nowrap" style="gap: 5px;">
                                             <i class="fa-solid fa-hourglass-half icon-check" style="font-size: 0.85em;"></i>
-                                            <span>Chờ duyệt</span>
+                                            <span>Đã nộp</span>
                                         </span>
                                     @endif
                                 </td>

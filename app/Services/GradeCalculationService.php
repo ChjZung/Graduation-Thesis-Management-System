@@ -190,6 +190,7 @@ class GradeCalculationService
         foreach ($tienDo['danhSachHoSo'] as $item) {
             $hoSo = $item['hoSo'];
             $duPhieu = $item['duPhieu'];
+            if ($hoSo->hasPublishedResults()) continue;
 
             // Cập nhật trạng thái kết quả của hồ sơ bảo vệ
             if ($hoSo->TrangThaiKetQua !== 'DaCongBo' && $hoSo->TrangThaiKetQua !== 'DaHoanThanh') {
@@ -233,6 +234,7 @@ class GradeCalculationService
         $existing = KetQuaSinhVien::where('MaSV', $maSV)
             ->where('MaHocKy', $maHocKy)
             ->first();
+        if ($existing?->TrangThai === 'Đã công bố' || $hoSo->hasPublishedResults()) return $existing;
 
         // Nếu chưa có phiếu nào hoàn thành
         if ($validDiems->isEmpty()) {
@@ -304,16 +306,18 @@ class GradeCalculationService
         string $nguoiXacNhan,
         ?array $dieuChinhDiem = null,
         ?string $ghiChu = null
-    ): void {
-        $hoSo = HoSoBaoVe::with('nhom.thanhViens')->findOrFail($maHoSo);
-
-        DB::transaction(function () use ($hoSo, $nguoiXacNhan, $dieuChinhDiem, $ghiChu) {
+    ): bool {
+        return DB::transaction(function () use ($maHoSo, $nguoiXacNhan, $dieuChinhDiem, $ghiChu) {
+            // Serialize confirmations of the same dossier, including simultaneous requests.
+            $hoSo = HoSoBaoVe::with('nhom.thanhViens')->lockForUpdate()->findOrFail($maHoSo);
+            $changed = false;
             foreach ($hoSo->nhom->thanhViens as $tv) {
                 $kq = KetQuaSinhVien::where('MaSV', $tv->MaSV)
                     ->where('MaHoSo', $hoSo->MaHoSo)
+                    ->lockForUpdate()
                     ->first();
 
-                if (!$kq) continue;
+                if (!$kq || $kq->daXacNhanKetQua()) continue;
 
                 $diemGoc = $kq->DiemHoiDongTB ?? 0.0;
                 $diemMoi = isset($dieuChinhDiem[$tv->MaSV]) ? floatval($dieuChinhDiem[$tv->MaSV]) : $diemGoc;
@@ -340,10 +344,14 @@ class GradeCalculationService
                 $kq->GhiChuDieuChinh = $ghiChu;
                 $kq->LichSuDieuChinh = $lichSu;
                 $kq->save();
+                $changed = true;
             }
 
-            $hoSo->TrangThaiKetQua = 'ChoCongBo';
-            $hoSo->save();
+            if ($changed && !in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'], true)) {
+                $hoSo->TrangThaiKetQua = 'ChoCongBo';
+                $hoSo->save();
+            }
+            return $changed;
         });
     }
 
@@ -598,6 +606,9 @@ class GradeCalculationService
         $snapshot = [];
 
         DB::transaction(function () use ($hoSo, $nguoiCongBo, $maTK, &$snapshot) {
+            // Use the same dossier lock as score saving so publication cannot race
+            // a lecturer's last edit and leave a published result with new scores.
+            $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
             $maHocKy = $hoSo->hoiDong?->MaHocKy ?? (HocKy::where('TrangThai', true)->value('MaHocKy') ?? 'HK_CURRENT');
 
             // Cập nhật điểm cho từng sinh viên

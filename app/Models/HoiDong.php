@@ -301,12 +301,7 @@ class HoiDong extends Model
             return true;
         }
 
-        // 3. Đã kết thúc:
-        // Đã công bố kết quả chính thức toàn hội đồng -> Khóa chấm
-        if ($this->TrangThaiCongBo === 'Đã công bố') {
-            return false;
-        }
-
+        // 3. Đã kết thúc: công bố quyết định hội đồng không phải công bố điểm.
         // Cho phép nếu còn trong hạn chấm (mặc định 7 ngày sau kết thúc)
         $deadline = $this->han_cham_diem;
         if ($deadline && $now->lte($deadline)) {
@@ -370,15 +365,25 @@ class HoiDong extends Model
             return false;
         }
 
-        // Đã kết thúc: Kiểm tra công bố và hạn 7 ngày
+        // Existing saved ballots may be edited until result publication.
+        if ($hoSo && $giangVien && PhieuChamDiem::where('MaHoiDong', $this->MaHoiDong)
+            ->where('MaHoSo', $hoSo->MaHoSo)->where('MaGV', $giangVien->MaGV)
+            ->whereIn('TrangThai', ['Lưu nháp', 'Đã hoàn thành'])->exists()) {
+            return $this->canEditScore($giangVien, $hoSo, $reason);
+        }
+        if ($hoSo && $hoSo->hasPublishedResults() && !$this->TrangThaiMoKhoaSuaDiem) {
+            $reason = 'Kết quả của hồ sơ đã công bố. Không thể lưu hoặc chỉnh sửa điểm.';
+            return false;
+        }
+        // Đã kết thúc: kiểm tra hạn nhập phiếu mới, không dùng công bố quyết định hội đồng.
         if ($tt === 'DaKetThuc') {
-            if ($this->TrangThaiCongBo === 'Đã công bố') {
-                $reason = 'Hội đồng đã công bố kết quả chính thức. Bảng điểm đã được khóa.';
-                return false;
-            }
-
             $deadline = $this->han_cham_diem;
-            if ($deadline && $now->gt($deadline)) {
+            $hasEditableBallot = !$hoSo && $giangVien && $this->hoSoBaoVes()->get()->contains(function ($candidate) use ($giangVien) {
+                return PhieuChamDiem::where('MaHoiDong', $this->MaHoiDong)->where('MaHoSo', $candidate->MaHoSo)
+                    ->where('MaGV', $giangVien->MaGV)->whereIn('TrangThai', ['Lưu nháp', 'Đã hoàn thành'])->exists()
+                    && $this->canEditScore($giangVien, $candidate);
+            });
+            if ($deadline && $now->gt($deadline) && !$hasEditableBallot) {
                 $reason = "Đã quá thời hạn chấm điểm Hội đồng (Hạn chót: {$deadline->format('d/m/Y H:i')}).";
                 return false;
             }
@@ -394,7 +399,7 @@ class HoiDong extends Model
             }
 
             // Nếu đề tài đã công bố điểm sau khi kết thúc
-            if ($tt === 'DaKetThuc' && in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'DaHoanThanh'])) {
+            if ($hoSo->hasPublishedResults() && !$this->TrangThaiMoKhoaSuaDiem) {
                 $reason = 'Kết quả bảo vệ của đề tài này đã được công bố chính thức.';
                 return false;
             }
@@ -421,8 +426,8 @@ class HoiDong extends Model
     /**
      * Kiểm tra quyền chỉnh sửa điểm của Giảng viên hội đồng theo quy chế nghiêm ngặt:
      * 1. Quyền chỉnh sửa: Mỗi GV chỉ được sửa điểm trong phiếu của chính mình.
-     * 2. Thời hạn chỉnh sửa: Chỉ được sửa trong khoảng ThoiGianBatDauSuaDiem - ThoiGianKetThucSuaDiem.
-     *    Khi hết hạn, tự động khóa chức năng sửa điểm và hiển thị thông báo.
+     * 2. Phiếu đã lưu được chỉnh sửa từ khi mở chấm đến trước công bố kết quả.
+     *    Phiếu mới và luồng mở khóa đặc biệt tiếp tục tuân thủ thời hạn tương ứng.
      * 3. Khi công bố điểm: Khi đã công bố điểm chính thức, tự động khóa quyền sửa điểm của cả 3 GV.
      *    Chỉ Quản trị viên/Trưởng khoa được mở khóa khi xử lý sai sót và phải ghi nhận lý do.
      */
@@ -470,7 +475,7 @@ class HoiDong extends Model
         // LƯU Ý: TrangThaiCongBo là trạng thái công bố thành lập Hội đồng, KHÔNG PHẢI công bố điểm!
         // Chỉ coi là đã công bố điểm khi Trưởng khoa đã xác nhận công bố kết quả điểm bảo vệ cho đề tài này.
         $isCongBoDiem = false;
-        if ($hoSo && in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'])) {
+        if ($hoSo && $hoSo->hasPublishedResults()) {
             $isCongBoDiem = true;
         } elseif (!$hoSo && $this->relationLoaded('hoSoBaoVes') && $this->hoSoBaoVes->isNotEmpty() && $this->hoSoBaoVes->every(fn($h) => in_array($h->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh']))) {
             $isCongBoDiem = true;
@@ -481,7 +486,20 @@ class HoiDong extends Model
             return false;
         }
 
-        // 3. Kiểm tra THỜI HẠN CHỈNH SỬA ĐIỂM (Yêu cầu 2)
+        if ($hoSo && $hoSo->MaHoiDong !== $this->MaHoiDong) {
+            $reason = 'Hồ sơ bảo vệ không thuộc Hội đồng bảo vệ này.';
+            return false;
+        }
+        if ($this->trang_thai_thoi_gian === 'SapDienRa') {
+            $reason = 'Hội đồng chưa đến thời gian chấm điểm.';
+            return false;
+        }
+        if ($hoSo && !$isCongBoDiem && $giangVien && PhieuChamDiem::where('MaHoiDong', $this->MaHoiDong)
+            ->where('MaHoSo', $hoSo->MaHoSo)->where('MaGV', $giangVien->MaGV)
+            ->whereIn('TrangThai', ['Lưu nháp', 'Đã hoàn thành'])->exists()) {
+            return true;
+        }
+        // 3. Giữ thời hạn cho các trường hợp còn lại và quy trình mở khóa đặc biệt.
         // Quản trị viên thiết lập thời gian bắt đầu và kết thúc chỉnh sửa điểm.
         if ($this->ThoiGianBatDauSuaDiem && $now->lt($this->ThoiGianBatDauSuaDiem) && !$this->TrangThaiMoKhoaSuaDiem) {
             $reason = 'Chưa đến thời hạn chỉnh sửa điểm cho Hội đồng này (Bắt đầu từ: ' . $this->ThoiGianBatDauSuaDiem->format('d/m/Y H:i') . ').';

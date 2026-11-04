@@ -11,10 +11,12 @@
     }
 
     $xepLoai = ($isDaCongBo && $diem !== null) ? ($ketQua?->KetQua ?? \App\Models\KetQuaSinhVien::xepLoai($diem)) : 'Chưa có';
+    $outcome = $outcomes[$sinhVien->MaSV] ?? ['passed' => null, 'label' => 'Chưa đủ dữ liệu CLO', 'failed_clos' => []];
     
     $cardBgColor = match(true) {
         !$isDaCongBo && $trangThaiHienThi === 'chua_cong_bo' => '#0f766e', // Xanh Teal trang trọng chờ công bố
         !$isDaCongBo                                       => '#475569', // Xám Slate chưa có điểm
+        $outcome['passed'] === false                        => '#991b1b',
         $diem >= 8.5                                       => '#00529b', // Xanh Navy HUIT
         $diem >= 7.0                                       => '#0d9488', // Xanh Ngọc
         $diem >= 5.0                                       => '#b45309', // Hổ phách
@@ -114,6 +116,12 @@
                             <span class="badge bg-white text-dark rounded-pill px-4 py-2 fw-bold" style="font-size: 14px; letter-spacing: 0.3px;">
                                 {{ $xepLoai }}
                             </span>
+                        </div>
+
+                        <div class="fw-bold mb-3">{{ $outcome['label'] }}
+                            @if($outcome['failed_clos'])
+                                <div class="small mt-1">CLO chưa đạt: {{ implode(', ', $outcome['failed_clos']) }}</div>
+                            @endif
                         </div>
 
                         <div class="p-3 rounded-3 bg-white bg-opacity-10 text-white w-100" style="font-size: 13.5px;">
@@ -369,11 +377,13 @@
                                         <td class="text-center">
                                             @if($isDaCongBo && $xepLoaiSv)
                                                 @php
-                                                    $isDat = ($diemSv >= 5.0);
+                                                    $svOutcome = $outcomes[$tvn->MaSV] ?? ['passed' => null, 'label' => 'Chưa đủ dữ liệu CLO', 'failed_clos' => []];
+                                                    $isDat = $svOutcome['passed'];
                                                 @endphp
-                                                <span class="badge {{ $isDat ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' }} rounded-pill px-2 py-1 fw-bold" style="font-size: 11px;">
-                                                    {{ $isDat ? 'Đạt' : 'Không đạt' }}
+                                                <span class="badge {{ $isDat === null ? 'bg-secondary-subtle text-secondary' : ($isDat ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }} rounded-pill px-2 py-1 fw-bold" style="font-size: 11px;">
+                                                    {{ $svOutcome['label'] }}
                                                 </span>
+                                                @if($svOutcome['failed_clos'])<div class="small text-danger mt-1">CLO chưa đạt: {{ implode(', ', $svOutcome['failed_clos']) }}</div>@endif
                                             @else
                                                 <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1" style="font-size: 11px;">
                                                     Chờ công bố

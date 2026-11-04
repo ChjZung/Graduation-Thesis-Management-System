@@ -1,10 +1,3 @@
-@if(!empty($dataDot['canhBaoChuaHoanTat']))
-    <div class="alert alert-warning border rounded-3 mb-3 py-2 px-3 d-flex align-items-center gap-2 small">
-        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
-        <div>{{ $dataDot['canhBaoChuaHoanTat'] }} (Gắn nhãn <strong>Chưa có kết quả</strong>, tách riêng khỏi tỷ lệ Đạt).</div>
-    </div>
-@endif
-
 @if(!empty($dataDot))
     <div class="mb-3 text-muted small">
         Đợt: <strong class="text-dark">{{ $dataDot['hocKy']->TenHocKy ?? 'N/A' }}</strong> &bull; 

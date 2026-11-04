@@ -302,6 +302,7 @@
                                             data-manganh="{{ $maNganhHs }}"
                                             data-tennganh="{{ $tenNganhHs }}"
                                             data-gvhd="{{ $gvhd?->HoTen }}"
+                                            data-gvhd-id="{{ $dt?->MaGV }}"
                                             data-bomon="{{ $tenBM }}"
                                             data-mabomon="{{ $gvhd?->MaBoMon ?? '' }}"
                                             data-sosv="{{ $soSV }}"
@@ -324,11 +325,17 @@
                                                     <span class="badge bg-primary-subtle text-primary border" title="Ngành đào tạo của nhóm">
                                                         <i class="fa-solid fa-graduation-cap me-1"></i>{{ $tenNganhHs }}
                                                     </span>
-                                                    <span>• {{ $soSV }} Sinh viên:</span>
-                                                    @foreach($sinhViens as $tv)
-                                                        <span class="text-dark fw-semibold">{{ $tv->sinhVien?->HoTen }} ({{ $tv->sinhVien?->MaSV }})</span>
-                                                        @if(!$loop->last) , @endif
-                                                    @endforeach
+                                                </div>
+                                                <div data-student-list class="small mt-2">
+                                                    <div class="text-muted mb-2">{{ $soSV }} sinh viên</div>
+                                                    <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+                                                        @foreach($sinhViens as $tv)
+                                                            <li>
+                                                                <div class="text-dark fw-semibold text-break">{{ $tv->sinhVien?->HoTen }}</div>
+                                                                <div class="text-muted">MSSV: {{ $tv->sinhVien?->MaSV }}</div>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
                                                 </div>
                                             </td>
                                             <td>
@@ -379,7 +386,7 @@
                                         <i class="fa-solid fa-users me-2"></i>3. Phân Công Thành Viên Hội Đồng Chấm Khóa Luận
                                     </h5>
                                     <div class="text-muted small mt-1">
-                                        Không bắt buộc giảng viên cùng Bộ môn với đề tài. Danh sách lựa chọn mở rộng toàn Khoa.
+                                        Không bắt buộc giảng viên cùng Bộ môn với đề tài. Danh sách lựa chọn mở rộng toàn Khoa. GVHD của các đề tài đã chọn không được tham gia hội đồng và sẽ bị khóa lựa chọn.
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
@@ -584,28 +591,15 @@
                                     <table class="table table-sm table-hover align-middle mb-0" id="pvTableDeTai">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width: 8%;">STT</th>
-                                                <th style="width: 12%;">Mã Nhóm</th>
-                                                <th style="width: 40%;">Tên Đề Tài Khóa Luận</th>
-                                                <th style="width: 25%;">Sinh Viên Bảo Vệ</th>
+                                                <th style="width: 5%;">STT</th>
+                                                <th style="width: 15%;">Mã Nhóm</th>
+                                                <th style="width: 30%;">Tên Đề Tài Khóa Luận</th>
+                                                <th style="width: 35%;">Sinh Viên Bảo Vệ</th>
                                                 <th style="width: 15%;">GVHD</th>
                                             </tr>
                                         </thead>
                                         <tbody id="pvTbodyDeTai"></tbody>
                                     </table>
-                                </div>
-                            </div>
-
-                            <!-- Khối xác nhận & Tùy chọn công bố -->
-                            <div class="card border border-success-subtle bg-success-subtle p-3 rounded-3 mb-4">
-                                <div class="form-check form-switch fs-6">
-                                    <input class="form-check-input" type="checkbox" name="cong_bo_ngay" id="checkCongBoNgay" value="1" checked>
-                                    <label class="form-check-label fw-bold text-success-emphasis" for="checkCongBoNgay">
-                                        <i class="fa-solid fa-bullhorn me-1"></i> Công bố chính thức ngay sau khi lưu
-                                    </label>
-                                </div>
-                                <div class="small text-muted ps-4 mt-1">
-                                    Hệ thống sẽ ngay lập tức tạo tệp PDF Quyết định kèm 2 Phụ lục, lưu trữ số hóa và phát thông báo lịch bảo vệ tới Giáo vụ, Giảng viên Hội đồng và Sinh viên các nhóm.
                                 </div>
                             </div>
 
@@ -617,7 +611,7 @@
                                 </button>
                                 <div class="d-flex gap-2">
                                     <button type="submit" id="btnSubmitWizard" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-xs">
-                                        <i class="fa-solid fa-stamp me-2"></i> Ký Duyệt &amp; Ban Hành Quyết Định
+                                        <i class="fa-solid fa-floppy-disk me-2"></i> Tạo &amp; Lưu Hội Đồng
                                     </button>
                                 </div>
                             </div>
@@ -946,6 +940,7 @@
 
         document.getElementById('soDeTaiChonCount').textContent = checkedItems.length;
         document.getElementById('soSinhVienChonCount').textContent = totalSV;
+        validateFacultySelection();
     }
 
     // Chọn tất cả / Bỏ chọn tất cả đề tài
@@ -1221,9 +1216,25 @@
         validateFacultySelection();
     });
 
+    // Dùng mã giảng viên, tránh bỏ sót hoặc nhầm người khi tên trùng/khác cách ghi học vị.
+    function getSelectedAdvisorMap() {
+        const advisors = new Map();
+        document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
+            const row = cb.closest('tr');
+            const id = row?.getAttribute('data-gvhd-id')?.trim();
+            if (id) advisors.set(id, { tendt: row.getAttribute('data-tendetai') || '' });
+        });
+        return advisors;
+    }
+
     // Đồng bộ trạng thái vô hiệu hóa option đã chọn và cảnh báo trùng lặp / trùng lịch
     function syncFacultySelectionState() {
         const selects = Array.from(document.querySelectorAll('.select-faculty'));
+        const advisors = getSelectedAdvisorMap();
+        // Quay lại bước 2 thêm đề tài: bỏ ngay lựa chọn thành viên vừa trở thành GVHD.
+        selects.forEach(sel => {
+            if (advisors.has(sel.value?.trim())) sel.value = '';
+        });
         // Map: MaGV -> Array<{ select, roleName, rawText }>
         const chosenMap = new Map();
 
@@ -1267,6 +1278,13 @@
                 const baseText = opt.getAttribute('data-raw-text');
                 const soHd = opt.getAttribute('data-so-hoidong') || '0';
                 const countTag = `[${soHd} HĐ]`;
+
+                // Khóa mọi vai trò nếu giảng viên hướng dẫn bất kỳ đề tài nào đang chọn.
+                if (advisors.has(optVal)) {
+                    opt.disabled = true;
+                    opt.textContent = `${baseText} — ${countTag} (GVHD của đề tài đã chọn)`;
+                    return;
+                }
 
                 // Option đang được chọn ở CHÍNH select này: tuyệt đối KHÔNG disabled để form submit đầy đủ
                 if (optVal === currentVal) {
@@ -1359,24 +1377,16 @@
         const hasConflictOrDuplicate = syncFacultySelectionState();
 
         // 2. Lấy danh sách GVHD của các đề tài đã chọn ở bước 2
-        const selectedDeTaiGVHDs = [];
-        document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
-            const row = cb.closest('tr');
-            if (row) {
-                const gvhd = row.getAttribute('data-gvhd');
-                const tendt = row.getAttribute('data-tendetai');
-                if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
-            }
-        });
+        const selectedDeTaiGVHDs = getSelectedAdvisorMap();
 
         // 3. Kiểm tra vi phạm quy chế đào tạo: GVHD chấm nhóm do mình hướng dẫn
         let gvhdConflicts = [];
         document.querySelectorAll('.select-faculty').forEach(sel => {
             if (!sel.value) return;
             const opt = sel.options[sel.selectedIndex];
-            const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
+            const maGV = sel.value.trim();
             const role = getSelectRoleName(sel);
-            const match = selectedDeTaiGVHDs.find(item => item.gvhd && tenGV && item.gvhd === tenGV);
+            const match = selectedDeTaiGVHDs.get(maGV);
             if (match) {
                 gvhdConflicts.push(`Giảng viên <strong>${opt?.getAttribute('data-hoten') || opt?.text}</strong> (${role}) đang là GVHD của đề tài: <em>"${match.tendt}"</em>.`);
                 sel.classList.add('is-invalid', 'border-warning');
@@ -1481,17 +1491,18 @@
                 const gvhd = row.getAttribute('data-gvhd');
 
                 // Lấy danh sách SV
-                const svContainer = row.querySelector('.text-muted.small');
-                const svText = svContainer ? svContainer.innerHTML : '';
+                const svContainer = row.querySelector('[data-student-list]');
 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="text-center">${sttDT++}</td>
-                    <td class="font-monospace fw-bold text-primary">Nhóm ${manhom}</td>
-                    <td class="fw-bold">${tendt}</td>
-                    <td>${svText}</td>
-                    <td class="fw-semibold">${gvhd}</td>
-                `;
+                [sttDT++, `Nhóm ${manhom}`, tendt, '', gvhd].forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.className = 'p-3 align-top text-break';
+                    cell.textContent = value ?? '';
+                    if (index === 0) cell.classList.add('text-center');
+                    if (index === 1 || index === 2 || index === 4) cell.classList.add('fw-semibold');
+                    if (index === 3 && svContainer) cell.appendChild(svContainer.cloneNode(true));
+                    tr.appendChild(cell);
+                });
                 tbodyDT.appendChild(tr);
             }
         });
@@ -1541,22 +1552,14 @@
             }
         });
 
-        const selectedDeTaiGVHDs = [];
-        document.querySelectorAll('.check-item-detai:checked').forEach(cb => {
-            const row = cb.closest('tr');
-            if (row) {
-                const gvhd = row.getAttribute('data-gvhd');
-                const tendt = row.getAttribute('data-tendetai');
-                if (gvhd) selectedDeTaiGVHDs.push({ gvhd: gvhd.trim().toLowerCase(), raw: gvhd, tendt });
-            }
-        });
+        const selectedDeTaiGVHDs = getSelectedAdvisorMap();
 
         document.querySelectorAll('.select-faculty').forEach(sel => {
             if (!sel.value) return;
             const opt = sel.options[sel.selectedIndex];
-            const tenGV = (opt?.getAttribute('data-hoten') || '').trim().toLowerCase();
+            const maGV = sel.value.trim();
             const role = getSelectRoleName(sel);
-            const match = selectedDeTaiGVHDs.find(item => item.gvhd && tenGV && item.gvhd === tenGV);
+            const match = selectedDeTaiGVHDs.get(maGV);
             if (match) {
                 previewErrors.push(`Giảng viên <strong>${opt?.getAttribute('data-hoten') || opt?.text}</strong> (${role}) đang là GVHD của đề tài: <em>"${match.tendt}"</em>.`);
             }
@@ -1601,7 +1604,7 @@
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.classList.add('disabled', 'opacity-50');
-                submitBtn.title = 'Vui lòng xử lý vi phạm phân công thành viên trước khi ký duyệt';
+                submitBtn.title = 'Vui lòng xử lý vi phạm phân công thành viên trước khi lưu hội đồng';
             }
         } else {
             if (conflictBox) {

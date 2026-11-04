@@ -71,18 +71,20 @@
                     </div>
                 </div>
                 <div class="col-6 col-md-4">
+                    <div class="mb-2">@include('partials.notification_attachment_filter')</div>
                     <select name="LoaiThongBao" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">-- Tất cả loại thông báo --</option>
                         <option value="Nhắc nhở" {{ request('LoaiThongBao') == 'Nhắc nhở' ? 'selected' : '' }}>Nhắc nhở tiến độ</option>
                         <option value="Lịch hẹn" {{ request('LoaiThongBao') == 'Lịch hẹn' ? 'selected' : '' }}>Lịch hẹn hướng dẫn</option>
                         <option value="Góp ý đề tài" {{ request('LoaiThongBao') == 'Góp ý đề tài' ? 'selected' : '' }}>Góp ý đề tài</option>
                         <option value="Kế hoạch" {{ request('LoaiThongBao') == 'Kế hoạch' ? 'selected' : '' }}>Kế hoạch</option>
+                        <option value="Hội đồng" {{ request('LoaiThongBao') == 'Hội đồng' ? 'selected' : '' }}>Hội đồng bảo vệ</option>
                         <option value="Hệ thống" {{ request('LoaiThongBao') == 'Hệ thống' ? 'selected' : '' }}>Hệ thống</option>
                     </select>
                 </div>
                 <div class="col-6 col-md-2 d-flex gap-1">
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 align-items-center">Lọc</button>
-                    @if(request()->anyFilled(['search', 'LoaiThongBao']))
+                    @if(request()->anyFilled(['attachment', 'search', 'LoaiThongBao']))
                         <a href="{{ route('giangvien.thongbao.index', ['tab' => $tab]) }}" class="btn btn-sm btn-light border" title="Xóa lọc">
                             <i class="fa-solid fa-rotate-left"></i>
                         </a>
@@ -118,11 +120,7 @@
                                 <div class="text-muted small text-truncate" style="max-width: 380px;">
                                     {{ Str::limit(strip_tags($tb->NoiDung), 80) }}
                                 </div>
-                                @if($tb->FileDinhKem)
-                                    <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-paperclip me-2"></i>Có tệp đính kèm
-                                    </span>
-                                @endif
+                                @include('partials.notification_attachment_badge', ['attachmentShowUrl' => route('giangvien.thongbao.show', $tb->MaThongBao)])
                             </td>
                             <td>
                                 @php

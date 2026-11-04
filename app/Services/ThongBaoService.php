@@ -44,7 +44,7 @@ class ThongBaoService
     /**
      * Gửi thông báo đến một tài khoản cụ thể
      */
-    public static function guiDen(string $maTK, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null): void
+    public static function guiDen(string $maTK, string $tieuDe, string $noiDung, string $loai = 'Hệ thống', ?string $duongDan = null, ?string $fileDinhKem = null): void
     {
         $maTB = 'TB_' . Str::upper(Str::random(7));
         while (ThongBao::where('MaThongBao', $maTB)->exists()) {
@@ -60,6 +60,7 @@ class ThongBaoService
             'DoiTuongNhan' => $maTK,
             'NgayTao'      => now(),
             'TrangThai'    => 'Đã phát hành',
+            'FileDinhKem'  => $fileDinhKem,
         ]);
 
         // Tạo bản ghi người nhận nếu bảng tồn tại

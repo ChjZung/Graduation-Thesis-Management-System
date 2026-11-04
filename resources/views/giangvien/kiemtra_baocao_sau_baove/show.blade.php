@@ -1,6 +1,6 @@
 @extends('layouts.giangvien')
 
-@section('page_title', 'Đánh Giá Báo Cáo Chỉnh Sửa — ' . ($hoSo->nhom->TenNhom ?? $hoSo->MaHoSo))
+@section('page_title', 'Xem Báo Cáo Hoàn Thiện — ' . ($hoSo->nhom->TenNhom ?? $hoSo->MaHoSo))
 
 @push('styles')
 <style>
@@ -104,7 +104,7 @@
             </div>
             <h4 class="fw-bold mb-0" style="color: var(--huit-blue-dark);">
                 <i class="fa-solid fa-file-signature me-2 text-primary"></i>
-                Kiểm Tra &amp; Đánh Giá Báo Cáo Hoàn Thiện Sau Bảo Vệ
+                Xem Báo Cáo Hoàn Thiện Sau Bảo Vệ
             </h4>
         </div>
         <div>
@@ -240,58 +240,7 @@
         </div>
     </div>
 
-    <!-- Khối 3: Form Đánh Giá & Xác Nhận Báo Cáo Chỉnh Sửa -->
-    <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-        <div class="card-header bg-white border-bottom py-3">
-            <span class="fw-bold text-dark">
-                <i class="fa-solid fa-gavel text-primary me-2"></i>Ý Kiến Đánh Giá &amp; Xác Nhận Của Giảng Viên Kiểm Tra
-            </span>
-        </div>
-        <div class="card-body p-4">
-            <form action="{{ route('giangvien.kiemtra_baocao_sau_baove.danhgia', $hoSo->MaHoSo) }}" method="POST">
-                @csrf
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-dark">Kết quả đánh giá bản chỉnh sửa <span class="text-danger">*</span>:</label>
-                    <div class="d-flex gap-4 p-3 bg-light rounded-3 border">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="HanhDong" id="actionDat" value="dat" {{ $latestBaoCao->TrangThai === 'Đạt' ? 'checked' : '' }} required onchange="toggleHanNop(this.value)">
-                            <label class="form-check-label fw-bold text-success" for="actionDat">
-                                <i class="fa-solid fa-circle-check me-1"></i> ĐẠT YÊU CẦU (Xác nhận hoàn thành lưu trữ Khoa)
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="HanhDong" id="actionSuaTiep" value="yeu_cau_sua_tiep" {{ $latestBaoCao->TrangThai === 'Yêu cầu sửa tiếp' ? 'checked' : '' }} onchange="toggleHanNop(this.value)">
-                            <label class="form-check-label fw-bold text-danger" for="actionSuaTiep">
-                                <i class="fa-solid fa-rotate me-1"></i> CHƯA ĐẠT (Yêu cầu nhóm chỉnh sửa tiếp)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3" id="groupHanNopMoi" style="display: none;">
-                    <label class="form-label small fw-bold text-dark">Gia hạn thời hạn nộp lại mới (nếu yêu cầu sửa tiếp):</label>
-                    <input type="datetime-local" name="HanNopMoi" class="form-control" style="max-width: 320px;"
-                           value="{{ now()->addDays(3)->format('Y-m-d\T17:00') }}">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-dark">Ý kiến nhận xét chi tiết của Giảng viên <span class="text-danger">*</span>:</label>
-                    <textarea name="NhanXetGV" rows="4" class="form-control" required
-                        placeholder="Nhận xét cụ thể các điểm đã đạt hoặc các điểm nhóm cần tiếp tục chỉnh sửa, bổ sung...">{{ old('NhanXetGV', \App\Helpers\HtmlHelper::toPlainText($latestBaoCao->NhanXetGV ?? 'Báo cáo toàn văn đã được chỉnh sửa đúng theo ý kiến góp ý của Hội đồng bảo vệ. Hình thức và nội dung đạt chuẩn quy định lưu trữ Khoa.')) }}</textarea>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                    <span class="small text-muted">
-                        <i class="fa-solid fa-shield me-1"></i> Sau khi duyệt Đạt, trạng thái hồ sơ sẽ chuyển sang 'Đã hoàn thành' và phát thông báo đến Trưởng khoa cùng nhóm sinh viên.
-                    </span>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" style="background: #0072ce; border-color: #0072ce;">
-                        <i class="fa-solid fa-floppy-disk me-2"></i> Lưu &amp; Xác Nhận Đánh Giá
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div class="alert alert-info" role="status">Báo cáo hoàn thiện đã nộp. Giảng viên chỉ xem và tải tệp, không nhận xét hoặc đánh giá thêm.</div>
     @endif
 
     <!-- Khối 4: Toàn Bộ Lịch Sử Các Lần Nộp Lại Báo Cáo -->
