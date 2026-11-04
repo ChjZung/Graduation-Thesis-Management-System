@@ -12,7 +12,7 @@ class Them3SVVa1GVCNPMSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now();
-        $defaultPassword = Hash::make('123456');
+        $defaultPassword = Hash::make('Huit@2026');
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
@@ -32,10 +32,11 @@ class Them3SVVa1GVCNPMSeeder extends Seeder
                 'MaGV'              => $maGV,
                 'TrangThai'         => 1,
                 'SoLanDangNhapSai'  => 0,
-                'BatBuocDoiMatKhau' => 0,
-                'TrangThaiMatKhau'  => 'ACTIVE',
-                'LanDangNhapDau'    => $now,
-                'NgayDoiMatKhau'    => $now,
+                'BatBuocDoiMatKhau' => 1,
+                'TrangThaiMatKhau'  => 'INITIAL',
+                'LanDangNhapDau'    => null,
+                'NgayDoiMatKhau'    => null,
+                'LanDangNhapCuoi'   => null,
                 'updated_at'        => $now,
                 'created_at'        => $now,
             ]
@@ -99,10 +100,11 @@ class Them3SVVa1GVCNPMSeeder extends Seeder
                     'MaGV'              => null,
                     'TrangThai'         => 1,
                     'SoLanDangNhapSai'  => 0,
-                    'BatBuocDoiMatKhau' => 0,
-                    'TrangThaiMatKhau'  => 'ACTIVE',
-                    'LanDangNhapDau'    => $now,
-                    'NgayDoiMatKhau'    => $now,
+                    'BatBuocDoiMatKhau' => 1,
+                    'TrangThaiMatKhau'  => 'INITIAL',
+                    'LanDangNhapDau'    => null,
+                    'NgayDoiMatKhau'    => null,
+                    'LanDangNhapCuoi'   => null,
                     'updated_at'        => $now,
                     'created_at'        => $now,
                 ]
@@ -152,8 +154,8 @@ class Them3SVVa1GVCNPMSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         if (isset($this->command)) {
-            $this->command->info("Đã tạo thành công 1 Giảng viên ({$maGV} - {$tenGV}) thuộc Bộ môn CNPM.");
-            $this->command->info("Đã tạo thành công 3 Sinh viên (2001210076, 2001210077, 2001210078) thuộc Ngành CNTT.");
+            $this->command->info("Đã tạo thành công 1 Giảng viên ({$maGV} - {$tenGV}) thuộc Bộ môn CNPM với mật khẩu mặc định Huit@2026 (yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên).");
+            $this->command->info("Đã tạo thành công 3 Sinh viên (2001210076, 2001210077, 2001210078) thuộc Ngành CNTT với mật khẩu mặc định Huit@2026 (yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên).");
         }
     }
 }
