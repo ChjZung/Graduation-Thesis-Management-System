@@ -231,7 +231,8 @@
                 <p class="small text-muted mb-0">Thử thay đổi học kỳ, giảng viên hoặc từ khóa tìm kiếm.</p>
             </div>
         @else
-            <div class="table-responsive">
+            <!-- Desktop / Tablet Table View (md trở lên) -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-academic table-hover align-middle mb-0">
                     <thead>
                         <tr>
@@ -581,6 +582,172 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (< md) -->
+            <div class="d-md-none p-2 p-sm-3 bg-light rounded-bottom-4">
+                @foreach($detais as $dt)
+                    @php
+                        $pb = $dt->phanCongPhanBiens->firstWhere('VaiTro', 'Phản biện đề cương');
+                        $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
+                        $canApproveDC = ($dt->coTepDeCuong() && $pb && $pb->KetQua === 'Đạt' && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua);
+                        $pcStatusBadge = match($dt->TrangThai) {
+                            'Trưởng khoa đã duyệt - Chờ nộp đề cương' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                            'Đã nộp đề cương - Chờ phân công PB' => 'bg-info-subtle text-info-emphasis border border-info-subtle',
+                            'Đang phản biện đề cương' => 'bg-info-subtle text-info border border-info-subtle',
+                            'Đã cập nhật đề cương - Chờ phản biện lại' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                            'Đã phản biện - Chờ TBM duyệt đề cương', 'Đã phản biện - Chờ duyệt BM' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                            'Đã công bố' => 'bg-success-subtle text-success border border-success-subtle',
+                            'Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa' => 'bg-warning-subtle text-warning border border-warning-subtle',
+                            'Không đạt phản biện', 'Từ chối' => 'bg-danger-subtle text-danger border border-danger-subtle',
+                            default => 'bg-light text-muted border',
+                        };
+                    @endphp
+                    <div class="card mb-3 border rounded-3 shadow-xs bg-white">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <span class="badge-code">{{ $dt->MaDeTai }}</span>
+                                <span class="badge {{ $pcStatusBadge }} px-2 py-1 small rounded-pill text-truncate" style="max-width: 175px;">
+                                    {{ !$dt->coTepDeCuong() ? 'Chưa có đề cương' : ($dt->daDuyetDeCuong() ? 'Đã duyệt đề cương' : ($dt->TrangThai === 'Đã công bố' ? 'Đã nộp ĐC' : $dt->TrangThai)) }}
+                                </span>
+                            </div>
+
+                            <div class="fw-bold text-dark fs-6 mb-2" style="line-height: 1.4;">
+                                {{ $dt->TenDeTai }}
+                            </div>
+
+                            <div class="small text-muted mb-2 d-flex flex-wrap gap-2 align-items-center">
+                                <span><i class="fa-solid fa-graduation-cap me-1 text-primary"></i>{{ $dt->nganh->TenNganh ?? 'Chung' }}</span>
+                                <span>&bull;</span>
+                                <span><i class="fa-regular fa-calendar me-1"></i>{{ $dt->hocKy->TenHocKy ?? $dt->MaHocKy }}</span>
+                                @if($dt->LinhVuc)
+                                    <span class="badge bg-light text-secondary border rounded-pill">{{ $dt->LinhVuc }}</span>
+                                @endif
+                            </div>
+
+                            <div class="bg-light p-2 rounded-2 mb-3 small">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted"><i class="fa-solid fa-user-tie me-1 text-secondary"></i>GV Đề xuất:</span>
+                                    <strong class="text-dark">{{ $dt->giangVien->HoTen ?? 'N/A' }}</strong>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted"><i class="fa-solid fa-user-check me-1 text-primary"></i>GV Phản biện:</span>
+                                    <div>
+                                        @if($pb)
+                                            <strong class="text-dark">{{ $pb->giangVien->HoTen ?? 'N/A' }}</strong>
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary border">Chưa phân công</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if($pb)
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted"><i class="fa-solid fa-clipboard-check me-1 text-info"></i>Kết quả PB:</span>
+                                    <div>
+                                        @if($pb->KetQua === 'Đạt')
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-check me-1"></i>Đạt</span>
+                                        @elseif($pb->KetQua === 'Đã nộp lại' || $pb->TrangThai === 'Đã nộp lại đề cương' || $dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại')
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-rotate me-1"></i>Đã nộp lại</span>
+                                        @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fa-solid fa-pen me-1"></i>Cần sửa</span>
+                                        @elseif($pb->KetQua === 'Không đạt')
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fa-solid fa-xmark me-1"></i>Không đạt</span>
+                                        @else
+                                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa-solid fa-clock me-1"></i>Đang thẩm định</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted"><i class="fa-solid fa-file-lines me-1 text-secondary"></i>Đề cương:</span>
+                                    <div>
+                                        @if($dt->coTepDeCuong())
+                                            @php
+                                                $filePath = route('files.decuong.download', $dt->MaDeTai);
+                                                $downloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
+                                                $fileName = basename($dt->FileDeCuong);
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 small fw-semibold"
+                                                    onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
+                                                <i class="fa-solid fa-eye me-1"></i>Xem tệp
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">Chưa có</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-2">
+                                @if($canApproveDC)
+                                    <button type="button" class="btn btn-sm btn-success w-100 rounded-2 py-2 fw-bold d-inline-flex align-items-center justify-content-center shadow-xs"
+                                            data-bs-toggle="modal" data-bs-target="#modalDuyetDeCuong{{ $dt->MaDeTai }}">
+                                        <i class="fa-solid fa-bullhorn me-2"></i>Duyệt Đề Cương & Công Bố
+                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-warning flex-grow-1 rounded-2 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>Yêu cầu sửa
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-2 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
+                                            <i class="fa-solid fa-user-pen me-1"></i>Đổi PB
+                                        </button>
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-2 py-2 px-3">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                    </div>
+                                @elseif($isDangYeuCauSua)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-2 p-2 text-center">
+                                        <i class="fa-solid fa-lock me-1"></i> Khóa duyệt (Chờ GV sửa đề cương)
+                                    </span>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-2 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
+                                            <i class="fa-solid fa-user-pen me-1"></i>Đổi PB
+                                        </button>
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-2 py-2 text-center">
+                                            <i class="fa-solid fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                    </div>
+                                @elseif($pb && $pb->KetQua === 'Yêu cầu chỉnh sửa' && $dt->TrangThai !== 'Đã công bố')
+                                    <button type="button" class="btn btn-sm btn-warning text-dark w-100 rounded-2 py-2 fw-bold d-inline-flex align-items-center justify-content-center shadow-xs"
+                                            data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}">
+                                        <i class="fa-solid fa-pen-to-square me-2"></i>Yêu cầu chỉnh sửa đề cương
+                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-2 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
+                                            <i class="fa-solid fa-user-pen me-1"></i>Đổi PB
+                                        </button>
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-2 py-2 text-center">
+                                            <i class="fa-solid fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                    </div>
+                                @else
+                                    <div class="d-flex gap-2">
+                                        @if($dt->coTepDeCuong() && !$dt->khoaNopDeCuong())
+                                            <button type="button" class="btn btn-sm {{ $pb ? 'btn-outline-secondary' : 'btn-primary' }} flex-grow-1 rounded-2 py-2 fw-semibold"
+                                                    data-bs-toggle="modal" data-bs-target="#modalPhanCongPB{{ $dt->MaDeTai }}">
+                                                <i class="fa-solid {{ $pb ? 'fa-user-pen' : 'fa-user-plus' }} me-2"></i>{{ $pb ? 'Đổi PB' : 'Phân công' }}
+                                            </button>
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-light border text-muted flex-grow-1 rounded-2 py-2" disabled>
+                                                <i class="fa-solid fa-clock me-2"></i>Chờ nộp ĐC
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary rounded-2 py-2 px-3" title="Xem chi tiết">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
             <!-- Pagination -->

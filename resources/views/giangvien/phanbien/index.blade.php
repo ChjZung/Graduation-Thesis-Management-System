@@ -156,7 +156,8 @@
                     </div>
                 </div>
             @else
-                <div class="table-responsive">
+                <!-- Desktop / Tablet Table View (md trở lên) -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-custom mb-0">
                         <thead>
                             <tr>
@@ -261,6 +262,109 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card View (< md) -->
+                <div class="d-md-none p-2 p-sm-3 bg-light rounded-bottom-4">
+                    @foreach($phanCongs as $pc)
+                        @php
+                            $isNopLai = $pc->KetQua === 'Đã nộp lại' 
+                                || $pc->TrangThai === 'Đã nộp lại đề cương' 
+                                || ($pc->deTai && $pc->deTai->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại');
+                        @endphp
+                        <div class="card mb-3 border rounded-3 shadow-xs bg-white">
+                            <div class="card-body p-3">
+                                <!-- Top bar: MaDeTai and Status badge -->
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <div>
+                                        <span class="badge bg-light text-dark fw-bold border px-2 py-1 font-monospace">
+                                            {{ $pc->MaDeTai }}
+                                        </span>
+                                        <div class="small text-muted mt-1" style="font-size: 0.76rem;">{{ $pc->deTai->hocKy->TenHocKy ?? '' }}</div>
+                                    </div>
+                                    <div>
+                                        @if($pc->KetQua === 'Đạt')
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold small">
+                                                <i class="fa-solid fa-circle-check me-1"></i>Đạt
+                                            </span>
+                                        @elseif($isNopLai)
+                                            <span class="badge bg-primary text-white rounded-pill px-2 py-1 fw-semibold small">
+                                                <i class="fa-solid fa-rotate me-1"></i>Đã nộp lại (Chờ chấm)
+                                            </span>
+                                        @elseif($pc->KetQua === 'Yêu cầu chỉnh sửa')
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-semibold small">
+                                                <i class="fa-solid fa-pen me-1"></i>Cần sửa
+                                            </span>
+                                        @elseif($pc->KetQua === 'Không đạt')
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
+                                                <i class="fa-solid fa-circle-xmark me-1"></i>Không đạt
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small fw-bold">
+                                                <i class="fa-solid fa-clock me-1"></i>Chưa đánh giá
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Topic Name -->
+                                <div class="fw-bold text-dark fs-6 mb-2" style="line-height: 1.4;">
+                                    {{ $pc->deTai->TenDeTai ?? 'N/A' }}
+                                </div>
+
+                                <div class="small text-muted mb-2 d-flex flex-wrap gap-2 align-items-center">
+                                    <span><i class="fa-solid fa-tag me-1 text-primary"></i>{{ $pc->deTai->nganh->TenNganh ?? 'Toàn ngành' }}</span>
+                                    <span>&bull;</span>
+                                    <span class="badge bg-light text-muted border rounded-pill">{{ $pc->deTai->HocPhan ?? 'Khóa luận cử nhân' }}</span>
+                                </div>
+
+                                <!-- Details Box -->
+                                <div class="bg-light p-2 rounded-2 mb-3 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted"><i class="fa-solid fa-chalkboard-user me-1 text-secondary"></i>GV Đề xuất:</span>
+                                        <strong class="text-dark">{{ $pc->deTai->giangVien->HoTen ?? 'N/A' }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted"><i class="fa-solid fa-calendar-days me-1 text-muted"></i>Ngày phân công:</span>
+                                        <span>{{ $pc->NgayPhanCong ? \Carbon\Carbon::parse($pc->NgayPhanCong)->format('d/m/Y') : 'N/A' }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted"><i class="fa-solid fa-file-lines me-1 text-primary"></i>Đề cương:</span>
+                                        <div>
+                                            @if($pc->deTai && $pc->deTai->FileDeCuong)
+                                                @php
+                                                    $filePath = route('files.decuong.download', $pc->deTai->MaDeTai);
+                                                    $downloadUrl = route('files.decuong.download', ['id' => $pc->deTai->MaDeTai, 'download' => 1]);
+                                                    $fileName = basename($pc->deTai->FileDeCuong);
+                                                @endphp
+                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 small fw-semibold"
+                                                        onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($pc->deTai->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
+                                                    <i class="fa-solid fa-eye me-1"></i>Xem tệp
+                                                </button>
+                                            @else
+                                                <span class="text-muted small">Chưa có tệp</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                @if($isNopLai)
+                                    <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-primary btn-sm w-100 rounded-pill py-2 shadow-xs fw-bold d-inline-flex align-items-center justify-content-center">
+                                        <i class="fa-solid fa-rotate me-2"></i> Chấm Phản Biện Lại Đề Cương
+                                    </a>
+                                @elseif($pc->KetQua)
+                                    <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-outline-secondary btn-sm w-100 rounded-pill py-2 fw-medium d-inline-flex align-items-center justify-content-center">
+                                        <i class="fa-solid fa-eye me-2"></i> Xem Lại Đánh Giá
+                                    </a>
+                                @else
+                                    <a href="{{ route('giangvien.phanbien.show', $pc->MaPhanCong) }}" class="btn btn-primary btn-sm w-100 rounded-pill py-2 shadow-xs fw-bold d-inline-flex align-items-center justify-content-center">
+                                        <i class="fa-solid fa-pen-to-square me-2"></i> Đánh Giá Phản Biện
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
 
                 @if($phanCongs->hasPages())

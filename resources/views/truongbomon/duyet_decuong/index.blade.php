@@ -133,7 +133,8 @@
                     <h6>Không có đề tài nào phù hợp với bộ lọc hiện tại.</h6>
                 </div>
             @else
-                <div class="table-responsive">
+                <!-- Desktop / Tablet Table View (md trở lên) -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
@@ -391,6 +392,132 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card View (< md) -->
+                <div class="d-md-none p-2 p-sm-3 bg-light rounded-bottom-4">
+                    @foreach($detais as $dt)
+                        @php
+                            $pb = $dt->phanCongPhanBiens->where('VaiTro', 'Phản biện đề cương')->first();
+                            $isNopLai = $pb && ($pb->KetQua === 'Đã nộp lại' || $pb->TrangThai === 'Đã nộp lại đề cương' || $dt->TrangThai === 'Đã cập nhật đề cương - Chờ phản biện lại');
+                            $isDangYeuCauSua = in_array($dt->TrangThai, ['Yêu cầu chỉnh sửa đề cương', 'Yêu cầu chỉnh sửa']);
+                            $canApproveDC = ($dt->coTepDeCuong() && $pb && $pb->KetQua === 'Đạt' && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua);
+                        @endphp
+                        <div class="card mb-3 border rounded-3 shadow-xs bg-white">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <span class="badge bg-light text-dark fw-bold border px-2 py-1 font-monospace">{{ $dt->MaDeTai }}</span>
+                                    <div>
+                                        @if(!$dt->coTepDeCuong())
+                                            <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 small">Chưa có tệp</span>
+                                        @elseif($dt->daDuyetDeCuong())
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-bold">
+                                                <i class="fa-solid fa-check me-1"></i>Đã duyệt ĐC
+                                            </span>
+                                        @elseif($dt->TrangThai === 'Đã phản biện - Chờ duyệt BM' || $dt->TrangThai === 'Đã phản biện - Chờ TBM duyệt đề cương')
+                                            <span class="badge bg-success text-white rounded-pill px-2 py-1 small fw-bold">
+                                                <i class="fa-solid fa-circle-check me-1"></i>Chờ TBM duyệt
+                                            </span>
+                                        @elseif($isNopLai)
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">
+                                                <i class="fa-solid fa-rotate me-1"></i>Đã nộp lại ĐC
+                                            </span>
+                                        @elseif($isDangYeuCauSua)
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                                                <i class="fa-solid fa-wrench me-1"></i>Yêu cầu sửa
+                                            </span>
+                                        @else
+                                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">{{ $dt->TrangThai }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="fw-bold text-dark fs-6 mb-2" style="line-height: 1.4;">
+                                    {{ $dt->TenDeTai }}
+                                </div>
+
+                                <div class="small text-muted mb-2 d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="badge bg-primary-subtle text-primary border">{{ $dt->HocPhan ?? 'KLTN' }}</span>
+                                    @if($dt->nganh)
+                                        <span>&bull;</span>
+                                        <span>{{ $dt->nganh->TenNganh }}</span>
+                                    @endif
+                                </div>
+
+                                <div class="bg-light p-2 rounded-2 mb-3 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted"><i class="fa-solid fa-chalkboard-user me-1 text-secondary"></i>GV Đề xuất:</span>
+                                        <strong class="text-dark">{{ $dt->giangVien->HoTen ?? 'N/A' }}</strong>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted"><i class="fa-solid fa-user-check me-1 text-primary"></i>GVPB & Kết quả:</span>
+                                        <div>
+                                            @if($pb)
+                                                <span class="fw-bold text-dark">{{ $pb->giangVien->HoTen ?? 'N/A' }}</span>
+                                                @if($pb->KetQua === 'Đạt')
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Đạt</span>
+                                                @elseif($pb->KetQua === 'Yêu cầu chỉnh sửa')
+                                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-1">Cần sửa</span>
+                                                @elseif($pb->KetQua === 'Không đạt')
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">K.Đạt</span>
+                                                @else
+                                                    <span class="badge bg-info-subtle text-info border border-info-subtle ms-1">Đang chấm</span>
+                                                @endif
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary border">Chưa PB</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted"><i class="fa-solid fa-file-lines me-1 text-secondary"></i>Tệp đề cương:</span>
+                                        <div>
+                                            @if($dt->coTepDeCuong())
+                                                @php
+                                                    $filePath = route('files.decuong.download', $dt->MaDeTai);
+                                                    $downloadUrl = route('files.decuong.download', ['id' => $dt->MaDeTai, 'download' => 1]);
+                                                    $fileName = basename($dt->FileDeCuong);
+                                                @endphp
+                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0 small fw-semibold"
+                                                        onclick="quickPreviewOutline('{{ $filePath }}', '{{ $fileName }}', '{{ addslashes($dt->TenDeTai) }}', { downloadUrl: '{{ $downloadUrl }}' })">
+                                                    <i class="fa-solid fa-eye me-1"></i>Xem tệp
+                                                </button>
+                                            @else
+                                                <span class="text-danger small">Chưa có</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex flex-column gap-2">
+                                    @if($canApproveDC)
+                                        <button type="button" class="btn btn-sm btn-success w-100 rounded-2 py-2 fw-bold d-inline-flex align-items-center justify-content-center shadow-xs"
+                                                data-bs-toggle="modal" data-bs-target="#modalDuyetDC{{ $dt->MaDeTai }}">
+                                            <i class="fa-solid fa-bullhorn me-2"></i>Duyệt Đề Cương & Công Bố
+                                        </button>
+                                    @elseif($isDangYeuCauSua)
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-2 p-2 text-center">
+                                            <i class="fa-solid fa-lock me-1"></i> Khóa duyệt (Chờ GV sửa ĐC)
+                                        </span>
+                                    @endif
+
+                                    <div class="d-flex gap-2">
+                                        @if($dt->coTepDeCuong() && !$dt->khoaNopDeCuong() && !$isDangYeuCauSua)
+                                            <button type="button" class="btn btn-sm btn-outline-warning flex-grow-1 rounded-2 py-2 fw-semibold"
+                                                    data-bs-toggle="modal" data-bs-target="#modalYeuCauSuaDC{{ $dt->MaDeTai }}">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i>Sửa ĐC
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('truongbomon.duyet_detai.show', $dt->MaDeTai) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-2 py-2 text-center">
+                                            <i class="fa-solid fa-circle-info me-1"></i>Chi tiết đề tài
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
 
                 @if($detais->hasPages())
