@@ -511,14 +511,14 @@
                                 @endif
                             </div>
 
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-secondary px-2.5 py-1 fw-medium" onclick="toggleAllStagesGV('{{ $nhom->MaNhom }}', true)">
-                                    <i class="fa-solid fa-angles-down me-1 text-primary"></i>Mở tất cả
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary px-2.5 py-1 fw-medium" onclick="toggleAllStagesGV('{{ $nhom->MaNhom }}', false)">
-                                    <i class="fa-solid fa-angles-up me-1 text-secondary"></i>Thu gọn
-                                </button>
-                            </div>
+                            <button type="button" 
+                                    id="btnToggleAllStagesGV_{{ $nhom->MaNhom }}" 
+                                    class="btn btn-sm btn-outline-secondary px-2.5 py-1 fw-medium rounded-pill shadow-xs d-inline-flex align-items-center" 
+                                    onclick="toggleAllStagesGVSingle('{{ $nhom->MaNhom }}')" 
+                                    data-all-expanded="false">
+                                <i class="fa-solid fa-angles-down me-1 text-primary"></i>
+                                <span class="btn-toggle-text">Mở tất cả</span>
+                            </button>
                         </div>
 
                         {{-- Thanh tiến trình Stepper 6 giai đoạn --}}
@@ -1557,6 +1557,12 @@ window.scrollToStageGV = function(maNhom, thuTu) {
     }
 };
 
+window.toggleAllStagesGVSingle = function(maNhom) {
+    const btn = document.getElementById(`btnToggleAllStagesGV_${maNhom}`);
+    const isExpanded = btn ? btn.getAttribute('data-all-expanded') === 'true' : false;
+    window.toggleAllStagesGV(maNhom, !isExpanded);
+};
+
 window.toggleAllStagesGV = function(maNhom, expand) {
     document.querySelectorAll(`.stage-accordion-collapse-gv-${maNhom}`).forEach(el => {
         const bsCollapse = bootstrap.Collapse.getOrCreateInstance(el, { toggle: false });
@@ -1566,6 +1572,19 @@ window.toggleAllStagesGV = function(maNhom, expand) {
             bsCollapse.hide();
         }
     });
+    const btn = document.getElementById(`btnToggleAllStagesGV_${maNhom}`);
+    if (btn) {
+        btn.setAttribute('data-all-expanded', expand ? 'true' : 'false');
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('.btn-toggle-text');
+        if (expand) {
+            if (icon) icon.className = 'fa-solid fa-angles-up me-1 text-secondary';
+            if (text) text.textContent = 'Thu gọn';
+        } else {
+            if (icon) icon.className = 'fa-solid fa-angles-down me-1 text-primary';
+            if (text) text.textContent = 'Mở tất cả';
+        }
+    }
 };
 
 // Khởi tạo trang khi tải xong
