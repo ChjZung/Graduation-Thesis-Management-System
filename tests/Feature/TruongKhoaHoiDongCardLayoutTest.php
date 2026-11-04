@@ -137,4 +137,22 @@ class TruongKhoaHoiDongCardLayoutTest extends TestCase
         $this->assertStringContainsString('btn-card-icon-delete', $content);
         $this->assertStringContainsString('handleConfirmAction', $content);
     }
+
+    public function test_truongkhoa_hoidong_show_renders_without_undefined_badge_style_error()
+    {
+        if (!$this->userTruongKhoa) {
+            $this->markTestSkipped('Không tìm thấy tài khoản Trưởng khoa.');
+        }
+
+        $hd = HoiDong::first();
+        if (!$hd) {
+            $this->markTestSkipped('Không có dữ liệu Hội đồng để test.');
+        }
+
+        $response = $this->actingAs($this->userTruongKhoa)
+            ->get(route('truongkhoa.hoidong.show', $hd->MaHoiDong));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Undefined variable $badgeStyle');
+    }
 }

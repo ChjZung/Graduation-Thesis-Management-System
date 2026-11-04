@@ -331,7 +331,7 @@
                                                                 </div>
                                                                 <div class="col-6">
                                                                     <span class="text-muted d-block">Vai trò trong Hội đồng:</span>
-                                                                    <span class="badge {{ $badgeStyle }} rounded-pill px-2 py-1">{{ $tv->VaiTro }}</span>
+                                                                    <span class="badge {{ $tv->badge_class }} rounded-pill px-2 py-1">{{ $tv->VaiTro }}</span>
                                                                 </div>
                                                                 <div class="col-6 mt-2">
                                                                     <span class="text-muted d-block">Trạng thái công tác:</span>
