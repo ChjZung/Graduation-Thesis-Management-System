@@ -270,7 +270,7 @@ class ThongBaoController extends Controller
                     'total' => $duDieuKienList->count(),
                     'eligible' => $duDieuKienList->where('TrangThai', 'Đủ điều kiện')->count(),
                     'ineligible' => $duDieuKienList->where('TrangThai', '!=', 'Đủ điều kiện')->count(),
-                    'tenHocKy' => "{$hocKy->TenHocKy} ({$hocKy->NamHoc})",
+                    'tenHocKy' => $hocKy->TenDayDu,
                 ];
             }
         }

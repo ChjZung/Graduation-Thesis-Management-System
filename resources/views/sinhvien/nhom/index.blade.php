@@ -1696,7 +1696,7 @@
                                         </li>
                                         <li class="list-group-item px-3 py-2 d-flex justify-content-between align-items-center bg-transparent border-bottom">
                                             <span class="text-muted"><i class="fa-regular fa-calendar text-secondary me-2"></i>Học kỳ thực hiện:</span>
-                                            <strong class="text-dark">{{ $hkCur->TenHocKy ?? 'Học kỳ hiện tại' }} {{ $hkCur?->NamHoc ? '(' . $hkCur->NamHoc . ')' : '' }}</strong>
+                                            <strong class="text-dark">{{ $hkCur?->TenDayDu ?? 'Học kỳ hiện tại' }}</strong>
                                         </li>
                                         <li class="list-group-item px-3 py-2 d-flex justify-content-between align-items-center bg-transparent border-bottom">
                                             <span class="text-muted"><i class="fa-solid fa-calendar-plus text-primary me-2"></i>Ngày bắt đầu học phần:</span>

@@ -1095,7 +1095,7 @@
                         <select name="MaHocKy" class="form-select fw-bold" required>
                             @foreach($hocKys as $hk)
                                 <option value="{{ $hk->MaHocKy }}" {{ $selectedHocKy == $hk->MaHocKy ? 'selected' : '' }}>
-                                    {{ $hk->TenHocKy }}
+                                    {{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}
                                 </option>
                             @endforeach
                         </select>

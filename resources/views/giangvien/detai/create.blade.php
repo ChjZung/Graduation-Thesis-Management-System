@@ -43,7 +43,7 @@
                             <select name="MaHocKy" id="MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror" required>
                                 <option value="">-- Chọn học kỳ --</option>
                                 @foreach($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
+                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy') == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}</option>
                                 @endforeach
                             </select>
                             @error('MaHocKy')

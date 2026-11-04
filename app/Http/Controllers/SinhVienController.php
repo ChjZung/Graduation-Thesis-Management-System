@@ -645,7 +645,7 @@ class SinhVienController extends Controller
 
         $maHocKy = $request->MaHocKy;
         $hocKy = \App\Models\HocKy::find($maHocKy);
-        $tenHocKy = $hocKy ? "{$hocKy->TenHocKy} ({$hocKy->NamHoc})" : $maHocKy;
+        $tenHocKy = $hocKy ? $hocKy->TenDayDu : $maHocKy;
 
         // 1. Cập nhật ghi chú đã công bố nếu chưa có
         \App\Models\DanhSachSVDuDieuKien::where('MaHocKy', $maHocKy)
@@ -702,7 +702,7 @@ class SinhVienController extends Controller
     public function generateDuDieuKienExcelFile(string $maHocKy): ?string
     {
         $hocKy = \App\Models\HocKy::find($maHocKy);
-        $tenHocKy = $hocKy ? "{$hocKy->TenHocKy} ({$hocKy->NamHoc})" : $maHocKy;
+        $tenHocKy = $hocKy ? $hocKy->TenDayDu : $maHocKy;
         $shortHk = preg_replace('/[^A-Za-z0-9]/', '', $maHocKy);
 
         $ds = \App\Models\DanhSachSVDuDieuKien::select('DanhSachSVDuDieuKien.*')

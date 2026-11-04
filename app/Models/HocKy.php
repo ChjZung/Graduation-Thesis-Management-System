@@ -39,7 +39,22 @@ class HocKy extends Model
 
     public function getTenDayDuAttribute(): string
     {
-        return $this->TenHocKy . ($this->NamHoc ? ' (' . $this->NamHoc . ')' : '');
+        $tenHk = trim($this->TenHocKy ?? '');
+        $namHoc = trim($this->NamHoc ?? '');
+
+        if (empty($namHoc)) {
+            return $tenHk;
+        }
+
+        // Tránh lặp lại niên khóa nếu trong TenHocKy đã có chứa Năm học (hỗ trợ cả dấu gạch nối -, –, — và khoảng trắng)
+        $normTen = preg_replace('/[–—\s]/u', '-', $tenHk);
+        $normNam = preg_replace('/[–—\s]/u', '-', $namHoc);
+
+        if (!empty($normNam) && str_contains($normTen, $normNam)) {
+            return $tenHk;
+        }
+
+        return $tenHk !== '' ? "{$tenHk} ({$namHoc})" : $namHoc;
     }
 
     /**

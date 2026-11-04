@@ -130,7 +130,7 @@
                             <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
                             <select name="MaHocKy" id="MaHocKy" class="form-select @error('MaHocKy') is-invalid @enderror" required>
                                 @foreach($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy', $banNhap['MaHocKy'] ?? $detai->MaHocKy) == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }}</option>
+                                <option value="{{ $hk->MaHocKy }}" {{ old('MaHocKy', $banNhap['MaHocKy'] ?? $detai->MaHocKy) == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}</option>
                                 @endforeach
                             </select>
                             @error('MaHocKy')

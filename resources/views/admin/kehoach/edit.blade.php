@@ -50,7 +50,7 @@
                             <label for="MaHocKy" class="form-label fw-bold">Học Kỳ Áp Dụng <span class="text-danger">*</span></label>
                             <select name="MaHocKy" id="MaHocKy" class="form-select" required>
                                 @foreach($hocKies as $hk)
-                                <option value="{{ $hk->MaHocKy }}" {{ $keHoach->MaHocKy == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenHocKy }} (Năm học: {{ $hk->NamHoc }})</option>
+                                <option value="{{ $hk->MaHocKy }}" {{ $keHoach->MaHocKy == $hk->MaHocKy ? 'selected' : '' }}>{{ $hk->TenDayDu }}</option>
                                 @endforeach
                             </select>
                         </div>

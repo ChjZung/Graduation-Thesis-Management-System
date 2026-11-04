@@ -2,7 +2,7 @@
     <div class="d-flex align-items-center gap-2 flex-wrap small">
         <span class="badge bg-primary text-uppercase">{{ $mauBaoCao ?? 'MAU_01' }}</span>
         <span class="text-muted">|</span>
-        <span class="fw-semibold">{{ $data['hocKy']->TenHocKy ?? 'Học kỳ' }} ({{ $data['hocKy']->NamHoc ?? 'N/A' }})</span>
+        <span class="fw-semibold">{{ $data['hocKy']->TenDayDu ?? 'Học kỳ' }}</span>
         @if(!empty($data['filters']['DotBaoVe']))
             <span>&bull; Đợt: <strong>{{ $data['filters']['DotBaoVe'] }}</strong></span>
         @endif

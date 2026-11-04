@@ -36,7 +36,7 @@
                         <option value="all" class="text-dark" {{ $selectedHocKy === 'all' ? 'selected' : '' }}>-- Tất cả học kỳ --</option>
                         @foreach($hocKys as $hk)
                             <option value="{{ $hk->MaHocKy }}" class="text-dark" {{ $selectedHocKy === $hk->MaHocKy ? 'selected' : '' }}>
-                                {{ $hk->TenHocKy }} ({{ $hk->NamHoc }})
+                                {{ $hk->TenDayDu }}
                             </option>
                         @endforeach
                     </select>

@@ -142,9 +142,9 @@ saveDualFormat('04_Lop_Mau', $headersLop, $dataLop, $outputDir);
 // 5. Học kỳ: Các học kỳ phục vụ xét KLTN
 $headersHocKy = ['MaHocKy', 'TenHocKy', 'NamHoc', 'NgayBatDau', 'NgayKetThuc', 'TrangThai'];
 $dataHocKy = [
-    ['HK2425_1', 'Học kỳ 1 (2024-2025)', '2024-2025', '2024-09-01', '2025-01-15', 'Đã kết thúc'],
-    ['HK2425_2', 'Học kỳ 2 (2024-2025)', '2024-2025', '2025-02-15', '2025-06-30', 'Đang diễn ra'],
-    ['HK2526_1', 'Học kỳ 1 (2025-2026)', '2025-2026', '2025-09-01', '2026-01-15', 'Chưa bắt đầu'],
+    ['HK2425_1', 'Học kỳ 1', '2024-2025', '2024-09-01', '2025-01-15', 'Đã kết thúc'],
+    ['HK2425_2', 'Học kỳ 2', '2024-2025', '2025-02-15', '2025-06-30', 'Đang diễn ra'],
+    ['HK2526_1', 'Học kỳ 1', '2025-2026', '2025-09-01', '2026-01-15', 'Chưa bắt đầu'],
 ];
 saveDualFormat('05_HocKy_Mau', $headersHocKy, $dataHocKy, $outputDir);
 

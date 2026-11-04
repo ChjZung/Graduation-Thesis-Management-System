@@ -110,7 +110,7 @@
                                     <select name="MaHocKy" id="MaHocKy" class="form-select" required onchange="onSemesterChange(this.value)">
                                         @foreach($hocKys as $hk)
                                         <option value="{{ $hk->MaHocKy }}" {{ $selectedMaHocKy == $hk->MaHocKy ? 'selected' : '' }} data-namhoc="{{ $hk->NamHoc }}" data-tendaydu="{{ $hk->TenDayDu }}">
-                                            {{ $hk->TenDayDu }} {{ $hk->TrangThai === 'Đang diễn ra' ? '(Hiện tại)' : '' }}
+                                            {{ $hk->TenDayDu }} {{ ($hocKyHienTai && $hk->MaHocKy === $hocKyHienTai->MaHocKy) ? '(Hiện tại)' : '' }}
                                         </option>
                                         @endforeach
                                     </select>
