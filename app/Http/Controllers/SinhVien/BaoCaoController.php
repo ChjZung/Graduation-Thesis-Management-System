@@ -916,10 +916,9 @@ class BaoCaoController extends Controller
         $phienBans = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->versionsForRound($dotNop, $nhom) : $dotNop->khoiBaoCaos;
         $latestPhienBan = $phienBans->first();
         $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV) || (mb_stripos($thanhVien->VaiTro, 'trưởng') !== false);
-        $reportMilestoneProgress = $nhom ? app(\App\Services\ReportMilestoneProgressService::class)->forGroup($nhom, $dotNop->deTai) : null;
 
         return view('sinhvien.baocao.show_dot', compact(
-            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader', 'reportMilestoneProgress'
+            'sinhVien', 'nhom', 'dotNop', 'phienBans', 'latestPhienBan', 'isLeader'
         ));
     }
 }

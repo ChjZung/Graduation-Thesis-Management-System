@@ -18,13 +18,6 @@
                     <span class="report-round-stage">{{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}</span>
                     @php $tt = $dotNop->getTrangThaiHienThi(); @endphp
                     <span class="badge {{ $tt['badge'] }} report-round-state">{{ $tt['label'] }}</span>
-                    @php
-                        $milestonePct = isset($reportMilestoneProgress['percentage']) ? $reportMilestoneProgress['percentage'] : ($nhom->progress_percent ?? 0);
-                    @endphp
-                    <span class="badge bg-white text-primary border rounded-pill px-3 py-1.5 shadow-xs d-inline-flex align-items-center" style="gap: 5px;">
-                        <i class="fa-solid fa-chart-line text-primary"></i>
-                        <span>Tiến độ hoàn thành: <strong>{{ number_format($milestonePct, 0) }}%</strong></span>
-                    </span>
                 </div>
                 <h1>{{ $dotNop->TenDotNop }}</h1>
                     @php
@@ -147,15 +140,7 @@
                                                 <i class="fa-regular fa-clock me-1 text-primary"></i>Nộp lúc: <strong>{{ \Carbon\Carbon::parse($pb->NgayNop)->format('H:i d/m/Y') }}</strong>
                                             </div>
                                         </div>
-                                        <div class="flex-shrink-0 text-nowrap d-flex align-items-center gap-2 flex-wrap">
-                                            @php
-                                                $pbPct = $pb->PhanTramHoanThanh ?? ($pb->TrangThai === 'Đạt' ? 100 : ($pb->TomTatJson['completion_percentage'] ?? ($pb->TomTatJson['data']['completion_percentage'] ?? null)));
-                                            @endphp
-                                            <span class="badge bg-white text-primary border rounded-pill px-3 py-2 fw-bold shadow-xs d-inline-flex align-items-center" style="gap: 6px;">
-                                                <i class="fa-solid fa-chart-pie text-primary"></i>
-                                                <span>Tiến độ: <strong class="text-primary">{{ $pbPct !== null ? $pbPct . '%' : 'Chưa đánh giá' }}</strong></span>
-                                            </span>
-
+                                        <div class="flex-shrink-0 text-nowrap">
                                             @if($pb->TrangThai === 'Đạt')
                                                 <span class="badge bg-success rounded-pill px-3 py-2 fw-bold shadow-sm badge-check d-inline-flex align-items-center" style="gap: 6px;">
                                                     <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>

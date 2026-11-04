@@ -49,10 +49,6 @@
             <div><dt>Giảng viên hướng dẫn</dt><dd>{{ $reportAdvisor->HoTen ?? 'Chưa có thông tin giảng viên' }}</dd></div>
             <div><dt>Giai đoạn / Đợt nộp</dt><dd>{{ $reportPhase }} · {{ $reportRound }}</dd></div>
             <div><dt>Thời điểm phân tích</dt><dd>{{ $generatedAt ?? 'Chưa có kết quả đã lưu' }}</dd></div>
-            @php
-                $aiReportPct = $pb->PhanTramHoanThanh ?? ($pb->TrangThai === 'Đạt' ? 100 : ($aiData['completion_percentage'] ?? null));
-            @endphp
-            <div><dt>Tiến độ hoàn thành</dt><dd><strong class="text-primary">{{ $aiReportPct !== null ? $aiReportPct . '%' : 'Chờ GVHD đánh giá' }}</strong></dd></div>
         </dl>
         <h3 class="ai-subheading">Thông tin kiểm chứng kết quả AI</h3>
         <div class="ai-result-notice ai-result-notice-inline">

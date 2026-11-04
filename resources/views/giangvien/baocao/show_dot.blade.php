@@ -21,13 +21,6 @@
                     <span class="report-round-stage">{{ $dotNop->giaiDoan->TenGiaiDoan ?? 'Giai đoạn khóa luận' }}</span>
                     <span class="badge report-round-state {{ $roundStateClass }}">{{ $roundLabels[$dotNop->TrangThai]??$dotNop->TrangThai }}</span>
                     <span class="report-round-stage">{{ $phienBans->count() }} phiên bản đã nộp</span>
-                    @php
-                        $milestonePct = isset($reportMilestoneProgress['percentage']) ? $reportMilestoneProgress['percentage'] : ($nhom->progress_percent ?? 0);
-                    @endphp
-                    <span class="badge bg-white text-primary border rounded-pill px-3 py-1.5 shadow-xs d-inline-flex align-items-center" style="gap: 5px;">
-                        <i class="fa-solid fa-chart-line text-primary"></i>
-                        <span>Tiến độ hoàn thành: <strong>{{ number_format($milestonePct, 0) }}%</strong></span>
-                    </span>
                 </div>
                 <h1>{{ $dotNop->TenDotNop }}</h1>
                 <div class="report-round-meta">
@@ -117,15 +110,7 @@
                                         <i class="fa-regular fa-clock me-2"></i>Thời gian nộp: <strong>{{ \Carbon\Carbon::parse($pb->NgayNop)->format('H:i d/m/Y') }}</strong>
                                     </div>
                                 </div>
-                                <div class="flex-shrink-0 text-nowrap d-flex align-items-center gap-2 flex-wrap">
-                                    @php
-                                        $pbPct = $pb->PhanTramHoanThanh ?? ($pb->TrangThai === 'Đạt' ? 100 : ($pb->TomTatJson['completion_percentage'] ?? ($pb->TomTatJson['data']['completion_percentage'] ?? null)));
-                                    @endphp
-                                    <span class="badge bg-white text-primary border rounded-pill px-3 py-2 fw-bold shadow-xs d-inline-flex align-items-center" style="gap: 6px;">
-                                        <i class="fa-solid fa-chart-pie text-primary"></i>
-                                        <span>Tiến độ: <strong class="text-primary">{{ $pbPct !== null ? $pbPct . '%' : 'Chưa đánh giá' }}</strong></span>
-                                    </span>
-
+                                <div class="flex-shrink-0 text-nowrap">
                                     @if($pb->TrangThai === 'Đạt')
                                         <span class="badge bg-success rounded-pill px-3 py-2 fw-bold badge-check d-inline-flex align-items-center" style="gap: 6px;">
                                             <i class="fa-solid fa-check icon-check" style="font-size: 0.85em;"></i>
@@ -204,33 +189,12 @@
         {{-- CỘT PHẢI: KHUNG ĐÁNH GIÁ CHUYÊN MÔN CỦA GIẢNG VIÊN --}}
         <div class="col-12 col-lg-5 min-w-0 max-w-full">
             <div class="card border-0 shadow-sm rounded-4 bg-white p-4 transition-all min-w-0 max-w-full" style="border: 1px solid #e2e8f0 !important; height: auto !important; max-height: none !important; overflow: visible !important;">
-                @php
-                    $latestPct = $latestPhienBan->PhanTramHoanThanh ?? ($latestPhienBan->TrangThai === 'Đạt' ? 100 : ($latestPhienBan->TomTatJson['completion_percentage'] ?? ($latestPhienBan->TomTatJson['data']['completion_percentage'] ?? null)));
-                    $overallPct = isset($reportMilestoneProgress['percentage']) ? $reportMilestoneProgress['percentage'] : ($nhom->progress_percent ?? 0);
-                @endphp
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-1 flex-wrap">
-                    <h6 class="fw-bold text-dark mb-0 min-w-0 text-truncate" title="Đánh Giá & Nhận Xét Chuyên Môn">
-                        <i class="fa-solid fa-pen-clip text-primary me-2 flex-shrink-0"></i>Đánh giá &amp; nhận xét
-                    </h6>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold">
-                        Tiến độ: {{ $latestPct !== null ? $latestPct . '%' : 'Chưa đánh giá' }}
-                    </span>
-                </div>
+                <h6 class="fw-bold text-dark mb-1 min-w-0 text-truncate" title="Đánh Giá & Nhận Xét Chuyên Môn">
+                    <i class="fa-solid fa-pen-clip text-primary me-2 flex-shrink-0"></i>Đánh giá &amp; nhận xét
+                </h6>
                 <span class="teacher-review-target small mb-3 d-block text-break break-words">
                     Đánh giá cho phiên bản nộp mới nhất: <strong>v{{ $latestPhienBan->LanNop ?? 1 }}</strong>
                 </span>
-
-                {{-- Thẻ hiển thị tổng quan % hoàn thành --}}
-                <div class="p-3 mb-3 rounded-3 bg-light border d-flex align-items-center justify-content-between gap-2">
-                    <div>
-                        <span class="text-muted small fw-medium d-block">Tiến độ phiên bản v{{ $latestPhienBan->LanNop ?? 1 }}</span>
-                        <span class="fs-5 fw-bold text-primary">{{ $latestPct !== null ? $latestPct . '%' : '100% (sau khi duyệt)' }}</span>
-                    </div>
-                    <div class="text-end border-start ps-3">
-                        <span class="text-muted small fw-medium d-block">Tiến độ toàn đề tài</span>
-                        <span class="fs-5 fw-bold text-success">{{ number_format($overallPct, 0) }}%</span>
-                    </div>
-                </div>
 
                 <form method="POST" action="{{ route('giangvien.tiendo.dot_nop.danh_gia', $dotNop->MaDotNop) }}">
                     @csrf
@@ -256,19 +220,6 @@
                             • <strong>Xác nhận Đạt:</strong> Đợt nộp được hoàn thành.<br>
                             • <strong>Yêu cầu nộp lại:</strong> Sinh viên sẽ tạo phiên bản mới (v{{ ($latestPhienBan->LanNop ?? 1) + 1 }}) theo nhận xét của bạn.
                         </div>
-                    </div>
-
-                    {{-- % Hoàn thành đợt nộp --}}
-                    <div class="mb-3" id="groupPhanTramHoanThanh" style="{{ ($latestPhienBan->TrangThai ?? '') === 'Đạt' ? '' : 'display: none;' }}">
-                        <label class="form-label fw-bold small text-dark" for="inputPhanTram">
-                            Tiến độ hoàn thành phiên bản (%):
-                        </label>
-                        <div class="input-group input-group-sm" style="max-width: 160px;">
-                            <input type="number" name="PhanTramHoanThanh" id="inputPhanTram" class="form-control fw-bold text-primary" 
-                                   value="{{ old('PhanTramHoanThanh', $latestPhienBan->PhanTramHoanThanh ?? 100) }}" min="1" max="100">
-                            <span class="input-group-text bg-light fw-bold">%</span>
-                        </div>
-                        <div class="form-text small mt-1" style="font-size: 11px;">Mặc định 100% khi xác nhận Đạt đợt nộp này.</div>
                     </div>
 
                     {{-- Nhận xét chuyên môn --}}
@@ -446,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!radioDat || !radioNopLai || !labelDat || !labelNopLai) return;
 
     function syncRadioVisuals() {
-        const phanTramGroup = document.getElementById('groupPhanTramHoanThanh');
         if (radioDat.checked) {
             labelDat.classList.add('is-selected');
             labelDat.classList.remove('is-unselected');
@@ -455,8 +405,6 @@ document.addEventListener('DOMContentLoaded', function () {
             labelNopLai.classList.remove('is-selected');
             labelNopLai.classList.add('is-unselected');
             labelNopLai.setAttribute('aria-checked', 'false');
-
-            if (phanTramGroup) phanTramGroup.style.display = 'block';
         } else if (radioNopLai.checked) {
             labelNopLai.classList.add('is-selected');
             labelNopLai.classList.remove('is-unselected');
@@ -465,8 +413,6 @@ document.addEventListener('DOMContentLoaded', function () {
             labelDat.classList.remove('is-selected');
             labelDat.classList.add('is-unselected');
             labelDat.setAttribute('aria-checked', 'false');
-
-            if (phanTramGroup) phanTramGroup.style.display = 'none';
         } else {
             labelDat.classList.remove('is-selected');
             labelDat.classList.remove('is-unselected');
