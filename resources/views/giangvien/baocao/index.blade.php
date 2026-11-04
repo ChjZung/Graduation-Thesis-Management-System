@@ -59,6 +59,23 @@
     .stat-card-kpi.border-l-success { border-left: 4px solid #10b981; }
     .stat-card-kpi.border-l-danger  { border-left: 4px solid #ef4444; }
 
+    @media (max-width: 575.98px) {
+        .stat-card-kpi {
+            padding: 0.75rem 0.65rem;
+            border-radius: 0.75rem;
+        }
+        .stat-card-kpi h3 {
+            font-size: 1.35rem;
+        }
+        .stat-card-kpi .small {
+            font-size: 0.72rem !important;
+            line-height: 1.25;
+        }
+        .stat-card-kpi .fs-2 {
+            font-size: 1.35rem !important;
+        }
+    }
+
     .group-selector-container {
         max-height: 750px;
         overflow-y: auto;
@@ -211,7 +228,7 @@
     <!-- PAGE HEADER -->
     <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-4 gap-3">
         <div>
-            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2" style="font-size: clamp(1.15rem, 3.5vw, 1.5rem);">
                 <i class="fa-solid fa-list-check text-primary me-2"></i>
                 <span>Quản Lý Giai Đoạn &amp; Đợt Nộp Báo Cáo Khóa Luận</span>
             </h4>
@@ -219,61 +236,61 @@
                 Thiết lập kế hoạch theo dõi tiến độ chi tiết theo từng đề tài, tạo các đợt nộp và nhận xét theo từng phiên bản (version).
             </p>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('giangvien.my_tasks') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center">
+        <div class="d-flex align-items-center gap-2 w-100 w-md-auto flex-wrap">
+            <a href="{{ route('giangvien.my_tasks') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center justify-content-center flex-grow-1 flex-md-grow-0">
                 <i class="fa-solid fa-table-list me-2 text-primary"></i> Bảng Công Việc
             </a>
-            <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center">
+            <a href="{{ route('giangvien.calendar') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 shadow-sm fw-medium small d-inline-flex align-items-center justify-content-center flex-grow-1 flex-md-grow-0">
                 <i class="fa-regular fa-calendar-days me-2 text-primary"></i> Lịch Công Việc
             </a>
         </div>
     </div>
 
-    <!-- 4 THẺ KPI THỐNG KÊ (ĐỒNG BỘ 4 CỘT) -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-sm-6">
+    <!-- 4 THẺ KPI THỐNG KÊ (ĐỒNG BỘ 4 CỘT - RESPONSIVE 2 CỘT MOBILE) -->
+    <div class="row g-2 g-md-3 mb-4">
+        <div class="col-6 col-sm-6 col-xl-3">
             <div class="stat-card-kpi border-l-primary d-flex justify-content-between align-items-center h-100">
-                <div>
-                    <span class="text-muted small fw-medium d-block mb-1">Tổng Số Nhóm Hướng Dẫn</span>
+                <div class="min-w-0">
+                    <span class="text-muted small fw-medium d-block mb-1 text-truncate">Tổng Nhóm Hướng Dẫn</span>
                     <h3 class="fw-bold text-primary mb-0">{{ $tongSoNhom }}</h3>
                 </div>
-                <div class="text-primary fs-2 opacity-25">
+                <div class="text-primary fs-2 opacity-25 ms-1">
                     <i class="fa-solid fa-users"></i>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-6 col-sm-6 col-xl-3">
             <div class="stat-card-kpi border-l-warning d-flex justify-content-between align-items-center h-100">
-                <div>
-                    <span class="text-muted small fw-medium d-block mb-1">Báo Cáo Chờ Nhận Xét</span>
+                <div class="min-w-0">
+                    <span class="text-muted small fw-medium d-block mb-1 text-truncate">Báo Cáo Chờ Nhận Xét</span>
                     <h3 class="fw-bold text-warning mb-0">{{ $baocaoChoDuyet }}</h3>
                 </div>
-                <div class="text-warning fs-2 opacity-25">
+                <div class="text-warning fs-2 opacity-25 ms-1">
                     <i class="fa-solid fa-hourglass-half"></i>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-6 col-sm-6 col-xl-3">
             <div class="stat-card-kpi border-l-success d-flex justify-content-between align-items-center h-100">
-                <div>
-                    <span class="text-muted small fw-medium d-block mb-1">Đợt Báo Cáo Đã Đạt</span>
+                <div class="min-w-0">
+                    <span class="text-muted small fw-medium d-block mb-1 text-truncate">Đợt Báo Cáo Đã Đạt</span>
                     <h3 class="fw-bold text-success mb-0">{{ $baocaoDaDat }}</h3>
                 </div>
-                <div class="text-success fs-2 opacity-25">
+                <div class="text-success fs-2 opacity-25 ms-1">
                     <i class="fa-solid fa-circle-check"></i>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-6 col-sm-6 col-xl-3">
             <div class="stat-card-kpi border-l-danger d-flex justify-content-between align-items-center h-100">
-                <div>
-                    <span class="text-muted small fw-medium d-block mb-1">Nhóm Cần Nhắc Nhở</span>
+                <div class="min-w-0">
+                    <span class="text-muted small fw-medium d-block mb-1 text-truncate">Nhóm Cần Nhắc Nhở</span>
                     <h3 class="fw-bold text-danger mb-0">{{ $nhomCanNhacNho }}</h3>
                 </div>
-                <div class="text-danger fs-2 opacity-25">
+                <div class="text-danger fs-2 opacity-25 ms-1">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
             </div>
@@ -383,9 +400,9 @@
                  data-group-id="{{ $nhom->MaNhom }}">
                 
                 {{-- Header nhóm bên phải --}}
-                <div class="bg-white border-bottom p-4">
+                <div class="bg-white border-bottom p-3 p-md-4">
                     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
-                        <div>
+                        <div class="min-w-0 flex-grow-1">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <span class="badge bg-primary text-white fw-bold px-3 py-1 font-monospace" style="font-size: 11px;">
                                     {{ $nhom->MaNhom }}
@@ -400,35 +417,37 @@
                         </div>
 
                         {{-- Các nút thao tác thêm giai đoạn / đợt nộp & mở cổng bảo vệ --}}
-                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <div class="d-flex flex-column align-items-stretch align-items-sm-end gap-1 w-100 w-sm-auto">
                             @if($deTai)
-                                @if($daMoCongBaoVe)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center" style="font-size: 12px;">
-                                        <i class="fa-solid fa-circle-check me-1.5"></i> Đã mở cổng nộp bảo vệ
-                                    </span>
-                                    <form method="POST" action="{{ route('giangvien.tiendo.nhom.thu_hoi_bao_ve', $nhom->MaNhom) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ của nhóm {{ $nhom->TenNhom }} không?');">
-                                        @csrf
-                                        <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" title="Thu hồi xác nhận nếu cần nhóm bổ sung/chỉnh sửa tiến độ">
-                                            <i class="fa-solid fa-rotate-left me-1"></i> Thu hồi
+                                <div class="d-flex align-items-center gap-2 flex-wrap w-100 w-sm-auto justify-content-start justify-content-sm-end">
+                                    @if($daMoCongBaoVe)
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center" style="font-size: 12px;">
+                                            <i class="fa-solid fa-circle-check me-1.5"></i> Đã mở cổng nộp bảo vệ
+                                        </span>
+                                        <form method="POST" action="{{ route('giangvien.tiendo.nhom.thu_hoi_bao_ve', $nhom->MaNhom) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi xác nhận mở cổng nộp hồ sơ bảo vệ của nhóm {{ $nhom->TenNhom }} không?');">
+                                            @csrf
+                                            <input type="hidden" name="nhom" value="{{ $nhom->MaNhom }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" title="Thu hồi xác nhận nếu cần nhóm bổ sung/chỉnh sửa tiến độ">
+                                                <i class="fa-solid fa-rotate-left me-1"></i> Thu hồi
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0" 
+                                                data-bs-toggle="modal" data-bs-target="#modalChoPhepBaoVe{{ $nhom->MaNhom }}"
+                                                @disabled(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
+                                                title="{{ ($nhom->report_milestone_progress['can_open_defense_submission'] ?? false) ? 'Tất cả đợt báo cáo đã được xác nhận Đạt' : 'Cần xác nhận Đạt phiên bản mới nhất của tất cả đợt báo cáo trong các giai đoạn' }}">
+                                            <i class="fa-solid fa-graduation-cap me-2"></i>Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ
                                         </button>
-                                    </form>
-                                @else
-                                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm d-inline-flex align-items-center" 
-                                            data-bs-toggle="modal" data-bs-target="#modalChoPhepBaoVe{{ $nhom->MaNhom }}"
-                                            @disabled(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
-                                            title="{{ ($nhom->report_milestone_progress['can_open_defense_submission'] ?? false) ? 'Tất cả đợt báo cáo đã được xác nhận Đạt' : 'Cần xác nhận Đạt phiên bản mới nhất của tất cả đợt báo cáo trong các giai đoạn' }}">
-                                        <i class="fa-solid fa-graduation-cap me-2"></i>Xác Nhận Cho Nộp Hồ Sơ Bảo Vệ
-                                    </button>
-                                    @if(!($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
-                                        <small class="text-muted w-100 text-end">Chỉ mở sau khi tất cả đợt báo cáo được xác nhận Đạt.</small>
                                     @endif
-                                @endif
 
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center" 
-                                        onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}', '{{ $nhom->MaNhom }}')">
-                                    <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn
-                                </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0" 
+                                            onclick="openAddGiaiDoanModal('{{ $deTai->MaDeTai }}', '{{ $nhom->MaNhom }}')">
+                                        <i class="fa-solid fa-plus me-2"></i>Thêm Giai Đoạn
+                                    </button>
+                                </div>
+                                @if(!$daMoCongBaoVe && !($nhom->report_milestone_progress['can_open_defense_submission'] ?? false))
+                                    <small class="text-muted text-start text-sm-end" style="font-size: 11px;">Chỉ mở sau khi tất cả đợt báo cáo được xác nhận Đạt.</small>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -448,10 +467,10 @@
                 </div>
 
                 {{-- Thân: Danh sách các Giai đoạn thực hiện do GVHD thiết lập --}}
-                <div class="p-4 flex-grow-1 overflow-auto d-flex flex-column gap-3" style="max-height: 720px;">
+                <div class="p-3 p-md-4 flex-grow-1 overflow-auto d-flex flex-column gap-3" style="max-height: 720px;">
                     @if($giaiDoans->isEmpty())
-                        <div class="text-center py-5 bg-light rounded-4 border border-dashed">
-                            <i class="fa-solid fa-diagram-project fa-3x text-muted opacity-50 mb-3 d-block"></i>
+                        <div class="text-center py-4 py-md-5 px-3 bg-light rounded-4 border border-dashed my-auto">
+                            <i class="fa-solid fa-diagram-project fa-2x fa-md-3x text-muted opacity-50 mb-3 d-block"></i>
                             <h6 class="fw-bold text-dark mb-1">Chưa thiết lập lộ trình giai đoạn cho đề tài này</h6>
                             <p class="text-muted small mb-3">Thêm giai đoạn phù hợp với đề tài, sau đó thiết lập các đợt nộp và yêu cầu báo cáo cho từng giai đoạn.</p>
                             @if($deTai)

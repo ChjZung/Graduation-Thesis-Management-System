@@ -1128,6 +1128,27 @@ body {
     font-weight: 600;
 }
 
+@media (max-width: 767.98px) {
+    .huit-footer .footer-top {
+        padding: 24px 0 16px;
+    }
+    .huit-footer .footer-logo {
+        width: 44px;
+        height: 44px;
+    }
+    .huit-footer .footer-brand-name {
+        font-size: 0.95rem;
+    }
+    .huit-footer .footer-desc {
+        font-size: 0.82rem;
+        margin-bottom: 12px;
+    }
+    .huit-footer .footer-contact-item {
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+}
+
 /* ═══════════════════════════════════════════════
    ANIMATIONS & MICRO-INTERACTIONS
 ═══════════════════════════════════════════════ */
