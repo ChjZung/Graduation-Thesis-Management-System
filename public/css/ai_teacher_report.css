@@ -11,7 +11,19 @@
 .ai-requirement-card {margin-bottom:16px;padding:16px;border:1px solid var(--border-color);border-radius:var(--radius-sm,8px);}.ai-requirement-question {padding:12px;background:var(--alice-blue);border-radius:6px;margin-bottom:14px;}.ai-requirement-question h4,.ai-requirement-card h5 {font-size:14px;font-weight:700;}.ai-requirement-question blockquote {margin:8px 0 0;white-space:pre-wrap;}.ai-requirement-answer {margin:12px 0;}.ai-requirement-point {margin-top:12px;padding:12px;border:1px solid var(--bs-border-color);border-radius:6px;}.ai-requirement-point h6 {font-size:13px;}
 .ai-progress-modal {z-index:2000;}.ai-progress-modal .modal-content {border:0;border-radius:var(--radius-md,12px);box-shadow:var(--shadow-lg);}.ai-progress-modal .modal-header {background:var(--alice-blue);color:var(--huit-navy);}.ai-progress-modal .progress {height:8px;}.ai-progress-modal [data-progress-elapsed] {font-variant-numeric:tabular-nums;font-weight:700;}.ai-progress-modal .modal-title {font-size:17px;}.ai-progress-modal .modal-body {line-height:1.7;}.ai-progress-modal .progress-bar {width:100%;background-color:var(--huit-blue);}
 .ai-teacher-report .ai-processing-status {margin:12px 20px;padding:12px 14px;}.ai-teacher-report .ai-processing-status p {margin:4px 0;}.ai-teacher-report .ai-processing-status button {margin-top:8px;}
-@media(max-width:767px){.ai-report-tabs .nav-link {flex:0 0 auto;text-align:left;border-radius:6px;border:1px solid var(--border-color);}.ai-report-context {grid-template-columns:1fr!important;}.ai-teacher-report .ai-header {padding:14px;}.ai-teacher-report .ai-actions {width:100%;}.ai-teacher-report .ai-actions button {font-size:12px;}.ai-teacher-report .ai-details {padding:14px;}.ai-requirement-card {padding:12px;}}
+@media(max-width:767px){
+    .ai-report-tabs .nav-link {flex:0 0 auto;text-align:left;border-radius:6px;border:1px solid var(--border-color);}
+    .ai-report-context {grid-template-columns:1fr!important;}
+    .ai-teacher-report .ai-header {padding:14px;flex-direction:column;align-items:stretch;justify-content:flex-start;height:auto;min-height:0;gap:12px;}
+    .ai-teacher-report .ai-heading {flex:0 0 auto;width:100%;height:auto;min-height:0;margin:0;}
+    .ai-teacher-report .ai-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px;margin:0;}
+    .ai-teacher-report .ai-actions > form[data-teacher-cancel-form] {grid-column:1/-1;width:100%;margin:0;}
+    .ai-teacher-report .ai-actions > form, .ai-teacher-report .ai-actions > button {width:100%;min-width:0;margin:0;}
+    .ai-teacher-report .ai-actions .ai-button {width:100%;min-height:40px;font-size:12.5px;padding:7px 10px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
+    .ai-teacher-report .ai-processing-status {margin:10px 14px;padding:12px;}
+    .ai-teacher-report .ai-details {padding:14px;}
+    .ai-requirement-card {padding:12px;}
+}
 @media(prefers-reduced-motion:reduce){.ai-report-tabs .nav-link,.ai-report-tab-content>.fade {transition:none!important;}.ai-progress-modal .progress-bar-animated,.ai-teacher-report [data-processing-title]::before {animation:none!important;}}
 
 .ai-teacher-report [hidden],.ai-progress-modal [hidden]{display:none!important;}

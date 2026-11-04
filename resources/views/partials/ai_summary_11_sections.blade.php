@@ -211,12 +211,16 @@
     .ai-summary .ai-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @container (max-width: 440px) {
-    .ai-summary .ai-header, .ai-summary .ai-details { padding: 16px; }
+    .ai-summary:not(.ai-summary-expanded) .ai-header { padding: 14px; flex-direction: column; align-items: stretch; justify-content: flex-start; height: auto; min-height: 0; gap: 12px; }
+    .ai-summary:not(.ai-summary-expanded) .ai-heading { flex: 0 0 auto; width: 100%; height: auto; min-height: 0; margin: 0; }
+    .ai-summary .ai-details { padding: 14px; }
     .ai-summary .ai-stats { padding: 12px 16px; gap: 8px; }
     .ai-summary .ai-stat { padding: 10px; gap: 8px; }
     .ai-summary .ai-stat-value { font-size: 14px; }
-    .ai-summary .ai-actions { width: 100%; }
-    .ai-summary .ai-actions > .ai-button { flex: 1; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 8px; margin: 0; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form, .ai-summary:not(.ai-summary-expanded) .ai-actions > button, .ai-summary:not(.ai-summary-expanded) .ai-actions > .ai-button { width: 100%; min-width: 0; margin: 0; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-teacher-cancel-form], .ai-summary:not(.ai-summary-expanded) .ai-actions > form[data-ai-cancel-form] { grid-column: 1 / -1; width: 100%; margin: 0; }
+    .ai-summary:not(.ai-summary-expanded) .ai-actions .ai-button { width: 100%; min-height: 40px; padding: 7px 10px; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; }
     .ai-summary .ai-section { padding: 12px; }
     .ai-summary .ai-link { flex-wrap: wrap; }
     .ai-summary .ai-link-info { flex-basis: 100%; }
