@@ -276,22 +276,21 @@
                         </div>
                         <div class="col-md-5">
                             <label class="form-label-huit">Tên Học Kỳ <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <select id="selectTenHocKy" class="form-select form-select-huit" style="max-width: 140px;" onchange="syncTenHocKy(this.value)">
-                                    <option value="Học kỳ 1" selected>Học kỳ 1</option>
-                                    <option value="Học kỳ 2">Học kỳ 2</option>
-                                    <option value="Học kỳ 3">Học kỳ 3</option>
-                                    <option value="Học kỳ hè">Học kỳ hè</option>
-                                    <option value="custom">Khác...</option>
-                                </select>
-                                <input type="text" name="TenHocKy" id="inputTenHocKy" class="form-control form-control-huit" 
-                                       value="Học kỳ 1" placeholder="Học kỳ 1" required>
+                            <input type="text" name="TenHocKy" id="inputTenHocKy" class="form-control form-control-huit" 
+                                   value="Học kỳ 1" placeholder="Học kỳ 1" required>
+                            <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                                <span class="small text-muted me-1 fw-medium" style="font-size: 0.78rem;">Chọn nhanh:</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="syncTenHocKy('Học kỳ 1')">Học kỳ 1</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="syncTenHocKy('Học kỳ 2')">Học kỳ 2</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="syncTenHocKy('Học kỳ 3')">Học kỳ 3</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="syncTenHocKy('Học kỳ hè')">Học kỳ hè</button>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-huit">Năm Học <span class="text-danger">*</span></label>
                             <input type="text" name="NamHoc" id="inputNamHoc" class="form-control form-control-huit" 
                                    value="{{ $suggestedNamHoc ?? '2026-2027' }}" placeholder="2026-2027" required>
+                            <div class="form-text text-muted small mt-1">Định dạng: <code>YYYY-YYYY</code></div>
                         </div>
                     </div>
                     <div class="row g-4 mb-4">
@@ -335,10 +334,8 @@
 <script>
     function syncTenHocKy(val) {
         const txtInput = document.getElementById('inputTenHocKy');
-        if (val !== 'custom') {
+        if (txtInput) {
             txtInput.value = val;
-        } else {
-            txtInput.value = '';
             txtInput.focus();
         }
         recalcMaHocKy();
