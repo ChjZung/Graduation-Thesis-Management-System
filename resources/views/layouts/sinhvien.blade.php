@@ -131,13 +131,18 @@
 
             <!-- Topbar / Breadcrumb Bar -->
             <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
-                <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
-                    <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 0.75rem;"></i>
-                    <a href="{{ route('sinhvien.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
-                    <span class="separator flex-shrink-0">&gt;</span>
-                    <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>
-                    <span class="separator flex-shrink-0">&gt;</span>
-                    <span class="current-page text-truncate min-w-0" title="@yield('page_title', 'Sinh Viên')">@yield('page_title', 'Sinh Viên')</span>
+                <div class="d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
+                    <button type="button" class="btn-sidebar-toggle d-lg-none me-2 p-1 text-primary border-0 bg-transparent flex-shrink-0" id="btnToggleSidebar" aria-label="Menu" title="Mở danh mục điều hướng">
+                        <i class="fa-solid fa-bars fs-5"></i>
+                    </button>
+                    <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap">
+                        <i class="fa-solid fa-angle-right me-2 flex-shrink-0" style="color: #64748b; font-size: 0.75rem;"></i>
+                        <a href="{{ route('sinhvien.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
+                        <span class="separator flex-shrink-0">&gt;</span>
+                        <span class="flex-shrink-0 text-nowrap">Khóa luận tốt nghiệp</span>
+                        <span class="separator flex-shrink-0">&gt;</span>
+                        <span class="current-page text-truncate min-w-0" title="@yield('page_title', 'Sinh Viên')">@yield('page_title', 'Sinh Viên')</span>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 gap-md-3 flex-shrink-0 position-relative">
                     <!-- Notification Bell Dropdown Unified -->
@@ -208,6 +213,7 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/huit_responsive.js') }}"></script>
 
 <script>
     // Auto-hide success alerts after 5s & safely move modals to document.body
