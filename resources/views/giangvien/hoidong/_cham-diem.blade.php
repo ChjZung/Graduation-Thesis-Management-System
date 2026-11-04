@@ -581,8 +581,11 @@ input[type=number],
         $tenBieuMau = $isKLKS ? 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN KỸ SƯ' : 'PHIẾU CHẤM ĐIỂM KHÓA LUẬN CỬ NHÂN';
         $coThongTinChucNang = !empty(trim($activeHoSo?->TieuChiChucNang ?? ''));
         $reasonCantGrade = '';
+        $reasonCantEdit = '';
         $canGradeCurrent = $activeHoiDong ? $activeHoiDong->canGrade($giangVien, $activeHoSo, $reasonCantGrade) : false;
-        $isReadOnly = $daKhoaPhieu || !$canGradeCurrent;
+        $canEditScoreCurrent = $activeHoiDong ? $activeHoiDong->canEditScore($giangVien, $activeHoSo, $reasonCantEdit) : false;
+        $isEditingAllowed = $daKhoaPhieu && $canEditScoreCurrent;
+        $isReadOnly = (!$daKhoaPhieu && !$canGradeCurrent) || ($daKhoaPhieu && !$isEditingAllowed);
     @endphp
 
     <!-- Header Section -->
@@ -731,16 +734,35 @@ input[type=number],
     @endif
 
     @if($daKhoaPhieu)
-    <div class="alert alert-success border-success-subtle rounded-3 shadow-xs py-3 px-4 mb-3 d-flex align-items-center gap-3">
-        <i class="fa-solid fa-circle-check fs-4 text-success flex-shrink-0"></i>
-        <div>
-            <strong class="d-block text-success-emphasis">Phiếu chấm điểm đã được XÁC NHẬN KHÓA ĐIỂM</strong>
-            <span class="small text-secondary">
-                Thời điểm xác nhận: <strong>{{ \Carbon\Carbon::parse($phieuCu->NgayXacNhan ?? $phieuCu->updated_at)->format('d/m/Y H:i') }}</strong>. 
-                Dữ liệu đã được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm sơ bộ của Hội đồng.
-            </span>
-        </div>
-    </div>
+        @if($isEditingAllowed)
+            <div class="alert alert-info border-info-subtle rounded-3 shadow-xs py-3 px-4 mb-3 d-flex align-items-center gap-3">
+                <i class="fa-solid fa-pen-to-square fs-3 text-info-emphasis flex-shrink-0"></i>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <strong class="text-info-emphasis fs-6"><i class="fa-solid fa-clock-rotate-left me-1.5"></i>Đang trong thời hạn cho phép chỉnh sửa điểm</strong>
+                        @if($activeHoiDong->ThoiGianKetThucSuaDiem)
+                            <span class="badge bg-info text-dark px-2.5 py-1.5 rounded-pill fw-semibold">
+                                <i class="fa-regular fa-clock me-1"></i>Hạn chót: {{ $activeHoiDong->ThoiGianKetThucSuaDiem->format('d/m/Y H:i') }}
+                            </span>
+                        @endif
+                    </div>
+                    <span class="small text-secondary d-block mt-1">
+                        Phiếu điểm đã từng xác nhận khóa. Thầy/Cô <strong>được phép chỉnh sửa lại điểm số các tiêu chí</strong> trong thời hạn này. 
+                        <em>Theo quy chế: Nhận xét đánh giá được cố định, không được thay đổi. Sau khi lưu, hệ thống sẽ tự động tính lại điểm CLO trung bình của cả 3 giảng viên và lưu vết kiểm toán.</em>
+                    </span>
+                </div>
+            </div>
+        @else
+            <div class="alert alert-danger border-danger-subtle rounded-3 shadow-xs py-3 px-4 mb-3 d-flex align-items-center gap-3">
+                <i class="fa-solid fa-lock fs-3 text-danger flex-shrink-0"></i>
+                <div>
+                    <strong class="d-block text-danger">Phiếu chấm điểm đã khóa — Chức năng sửa điểm đã bị khóa tự động</strong>
+                    <span class="small text-secondary">
+                        {{ $reasonCantEdit ?: 'Hội đồng đã hết thời hạn chỉnh sửa điểm hoặc điểm đã được công bố chính thức. Thầy/Cô không được phép thay đổi điểm số trừ khi Quản trị viên/Trưởng khoa mở khóa giải quyết sai sót.' }}
+                    </span>
+                </div>
+            </div>
+        @endif
     @endif
 
     @if(!$canGradeCurrent && !$daKhoaPhieu)
@@ -1237,8 +1259,13 @@ input[type=number],
                                 </span>
                             </label>
                             <textarea name="diems[{{ $sv->MaSV }}][NhanXet]" rows="3" class="form-control rounded-3 border-secondary-subtle" style="font-size: 0.88rem; transition: all 0.15s ease;"
-                                {{ $isReadOnly ? 'readonly' : '' }}
+                                {{ ($isReadOnly || $isEditingAllowed) ? 'readonly' : '' }}
                                 placeholder="Nhập nhận xét về mức độ đóng góp, tính chủ động, khả năng trả lời phản biện của sinh viên...">{{ $daChamSV?->NhanXet ?? '' }}</textarea>
+                            @if($isEditingAllowed)
+                                <div class="text-muted small mt-1" style="font-size: 0.76rem;">
+                                    <i class="fa-solid fa-lock text-secondary me-1"></i>Nhận xét đánh giá đã được cố định theo quy chế và không được phép thay đổi.
+                                </div>
+                            @endif
                         </div>
                         @endforeach
 
@@ -1336,8 +1363,8 @@ input[type=number],
                 <div class="d-flex align-items-center text-warning-emphasis fw-bold">
                     <span class="p-2 rounded-circle bg-warning-subtle me-2.5"><i class="fa-solid fa-lock text-warning-emphasis"></i></span>
                     <div>
-                        <div class="text-warning-emphasis">Chế độ xem: Chưa đến thời gian hoặc không được phép chấm điểm</div>
-                        <div class="text-muted small fw-normal">{{ $reasonCantGrade }}</div>
+                        <div class="text-warning-emphasis fw-bold">Chế độ xem: Điểm số đã bị khóa hoặc không được phép sửa</div>
+                        <div class="text-muted small fw-normal">{{ $reasonCantEdit ?: $reasonCantGrade }}</div>
                     </div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
@@ -1355,9 +1382,11 @@ input[type=number],
                 </div>
             @else
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center fw-semibold" onclick="submitChamDiem('luu_nhap')">
-                        <i class="fa-regular fa-floppy-disk me-2"></i> Lưu Nháp Điểm
-                    </button>
+                    @if(!$isEditingAllowed)
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center fw-semibold" onclick="submitChamDiem('luu_nhap')">
+                            <i class="fa-regular fa-floppy-disk me-2"></i> Lưu Nháp Điểm
+                        </button>
+                    @endif
                     <button type="button" class="btn btn-outline-primary rounded-pill px-4 d-inline-flex align-items-center fw-semibold" data-bs-toggle="modal" data-bs-target="#modalXemTruoc">
                         <i class="fa-solid fa-eye me-2"></i> Xem Trước Phiếu Chấm
                     </button>
@@ -1378,9 +1407,15 @@ input[type=number],
                     @endif
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')" style="background: var(--academic-primary); border-color: var(--academic-primary);">
-                        <i class="fa-solid fa-lock me-2"></i> Xác Nhận Khóa Điểm
-                    </button>
+                    @if($isEditingAllowed)
+                        <button type="button" class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center text-dark" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
+                            <i class="fa-solid fa-pen-to-square me-2"></i> Lưu &amp; Cập Nhật Điểm Đã Sửa
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')" style="background: var(--academic-primary); border-color: var(--academic-primary);">
+                            <i class="fa-solid fa-lock me-2"></i> Xác Nhận Khóa Điểm
+                        </button>
+                    @endif
                 </div>
             @endif
         </div>
@@ -2764,17 +2799,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (actionType === 'xac_nhan_hoan_thanh') {
-            let hasZero = false;
-            document.querySelectorAll('input[id^="inputTotalScore_"]').forEach(el => {
-                if (parseFloat(el.value) === 0) hasZero = true;
-            });
-            let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN KHÓA ĐIỂM cho phiếu chấm điểm này?\n\nSau khi khóa điểm, phiếu sẽ được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm Hội đồng. Việc sửa đổi sau này phải thông qua Trưởng khoa.';
-            if (hasZero) {
-                msg = 'Lưu ý: Có sinh viên đang có tổng điểm là 0.00 (chưa chấm hoặc chấm 0 điểm).\n\n' + msg;
-            }
-            if (!confirm(msg)) {
-                return;
-            }
+            @if($isEditingAllowed)
+                let msg = 'Thầy/Cô có chắc chắn muốn LƯU & CẬP NHẬT ĐIỂM ĐÃ SỬA cho phiếu chấm điểm này?\n\nĐiểm mới sẽ được cập nhật và hệ thống sẽ tự động tính lại điểm CLO trung bình của cả 3 giảng viên.';
+                if (!confirm(msg)) {
+                    return;
+                }
+            @else
+                let hasZero = false;
+                document.querySelectorAll('input[id^="inputTotalScore_"]').forEach(el => {
+                    if (parseFloat(el.value) === 0) hasZero = true;
+                });
+                let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN KHÓA ĐIỂM cho phiếu chấm điểm này?\n\nSau khi khóa điểm, phiếu sẽ được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm Hội đồng. Việc sửa đổi sau này phải thông qua Trưởng khoa.';
+                if (hasZero) {
+                    msg = 'Lưu ý: Có sinh viên đang có tổng điểm là 0.00 (chưa chấm hoặc chấm 0 điểm).\n\n' + msg;
+                }
+                if (!confirm(msg)) {
+                    return;
+                }
+            @endif
         }
         form.submit();
     };

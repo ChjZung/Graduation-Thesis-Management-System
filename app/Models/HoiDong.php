@@ -37,6 +37,10 @@ class HoiDong extends Model
         'TrangThaiCongBo',
         'NgayCongBo',
         'NguoiCongBo',
+        'ThoiGianBatDauSuaDiem',
+        'ThoiGianKetThucSuaDiem',
+        'TrangThaiMoKhoaSuaDiem',
+        'LyDoMoKhoaSuaDiem',
     ];
 
     public $timestamps = true;
@@ -49,6 +53,9 @@ class HoiDong extends Model
             'NgayBaoVe' => 'date',
             'NgayBanHanh' => 'date',
             'NgayCongBo' => 'datetime',
+            'ThoiGianBatDauSuaDiem' => 'datetime',
+            'ThoiGianKetThucSuaDiem' => 'datetime',
+            'TrangThaiMoKhoaSuaDiem' => 'boolean',
         ];
     }
 
@@ -399,13 +406,122 @@ class HoiDong extends Model
                     ->where('MaGV', $giangVien->MaGV)
                     ->first();
                 if ($phieu && $phieu->TrangThai === 'Đã hoàn thành') {
-                    $reason = 'Phiếu chấm điểm của Thầy/Cô đã được xác nhận và khóa.';
-                    return false;
+                    // Kiểm tra xem giảng viên có còn quyền chỉnh sửa điểm trong thời hạn hay không
+                    if (!$this->canEditScore($giangVien, $hoSo, $editReason)) {
+                        $reason = $editReason ?: 'Phiếu chấm điểm của Thầy/Cô đã được xác nhận và khóa.';
+                        return false;
+                    }
                 }
             }
         }
 
         return true;
+    }
+
+    /**
+     * Kiểm tra quyền chỉnh sửa điểm của Giảng viên hội đồng theo quy chế nghiêm ngặt:
+     * 1. Quyền chỉnh sửa: Mỗi GV chỉ được sửa điểm trong phiếu của chính mình.
+     * 2. Thời hạn chỉnh sửa: Chỉ được sửa trong khoảng ThoiGianBatDauSuaDiem - ThoiGianKetThucSuaDiem.
+     *    Khi hết hạn, tự động khóa chức năng sửa điểm và hiển thị thông báo.
+     * 3. Khi công bố điểm: Khi đã công bố điểm chính thức, tự động khóa quyền sửa điểm của cả 3 GV.
+     *    Chỉ Quản trị viên/Trưởng khoa được mở khóa khi xử lý sai sót và phải ghi nhận lý do.
+     */
+    public function canEditScore($userOrGiangVien, ?HoSoBaoVe $hoSo = null, ?string &$reason = null): bool
+    {
+        $now = self::getSystemNow();
+
+        $user = null;
+        $giangVien = null;
+
+        if (is_string($userOrGiangVien)) {
+            $giangVien = \App\Models\GiangVien::find($userOrGiangVien);
+            $user = $giangVien?->taiKhoan;
+        } elseif ($userOrGiangVien instanceof \App\Models\TaiKhoan) {
+            $user = $userOrGiangVien;
+            $giangVien = \App\Models\GiangVien::getLoggedInGiangVien($user);
+        } elseif ($userOrGiangVien instanceof \App\Models\GiangVien) {
+            $giangVien = $userOrGiangVien;
+            $user = $giangVien->taiKhoan;
+        }
+
+        $isManager = false;
+        if ($user) {
+            $isManager = (method_exists($user, 'isAdmin') && $user->isAdmin()) 
+                      || (method_exists($user, 'isTruongKhoa') && $user->isTruongKhoa());
+        }
+
+        // 1. Kiểm tra thành viên hội đồng
+        if (!$isManager) {
+            if (!$giangVien) {
+                $reason = 'Không tìm thấy hồ sơ giảng viên của tài khoản này.';
+                return false;
+            }
+
+            $isMember = $this->thanhViens->contains(fn($tv) => $tv->MaGV === $giangVien->MaGV);
+            if (!$isMember) {
+                $reason = 'Thầy/Cô không thuộc Hội đồng bảo vệ này nên không có quyền chỉnh sửa điểm.';
+                return false;
+            }
+        }
+
+        // 2. Kiểm tra CÔNG BỐ ĐIỂM CHÍNH THỨC (Yêu cầu 3)
+        // Khi quản trị viên công bố điểm chính thức, hệ thống tự động khóa quyền chỉnh sửa điểm của cả 3 giảng viên.
+        // Sau khi công bố, giảng viên không được phép thay đổi bất kỳ điểm nào trừ khi Quản trị viên mở khóa (TrangThaiMoKhoaSuaDiem = true).
+        $isCongBoDiem = false;
+        if ($this->TrangThaiCongBo === 'Đã công bố') {
+            $isCongBoDiem = true;
+        }
+        if ($hoSo && in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaHoanThanh'])) {
+            $isCongBoDiem = true;
+        }
+
+        if ($isCongBoDiem && !$this->TrangThaiMoKhoaSuaDiem) {
+            $reason = 'Điểm chính thức đã được Quản trị viên/Trưởng khoa công bố. Toàn bộ điểm số đã bị khóa và không được phép chỉnh sửa.';
+            return false;
+        }
+
+        // 3. Kiểm tra THỜI HẠN CHỈNH SỬA ĐIỂM (Yêu cầu 2)
+        // Quản trị viên thiết lập thời gian bắt đầu và kết thúc chỉnh sửa điểm.
+        if ($this->ThoiGianBatDauSuaDiem && $now->lt($this->ThoiGianBatDauSuaDiem) && !$this->TrangThaiMoKhoaSuaDiem) {
+            $reason = 'Chưa đến thời hạn chỉnh sửa điểm cho Hội đồng này (Bắt đầu từ: ' . $this->ThoiGianBatDauSuaDiem->format('d/m/Y H:i') . ').';
+            return false;
+        }
+
+        if ($this->ThoiGianKetThucSuaDiem && $now->gt($this->ThoiGianKetThucSuaDiem) && !$this->TrangThaiMoKhoaSuaDiem) {
+            $reason = 'Đã hết thời hạn chỉnh sửa điểm cho Hội đồng này (Thời hạn kết thúc: ' . $this->ThoiGianKetThucSuaDiem->format('d/m/Y H:i') . '). Hệ thống đã tự động khóa chức năng sửa điểm.';
+            return false;
+        }
+
+        // Fallback thời hạn: Nếu chưa thiết lập thời hạn sửa điểm riêng:
+        // Nếu Hội đồng chưa diễn ra:
+        if (!$this->ThoiGianKetThucSuaDiem && $this->trang_thai_thoi_gian === 'SapDienRa' && !$this->TrangThaiMoKhoaSuaDiem) {
+            $start = $this->thoi_diem_bat_dau;
+            $openTime = $start ? $start->format('H:i \n\g\à\y d/m/Y') : 'thời gian quy định';
+            $reason = "Hội đồng chưa đến thời gian chấm điểm / sửa điểm. Mở từ {$openTime}.";
+            return false;
+        }
+
+        // Nếu Hội đồng đã kết thúc và quá hạn chấm điểm mặc định:
+        if (!$this->ThoiGianKetThucSuaDiem && $this->trang_thai_thoi_gian === 'DaKetThuc' && !$this->TrangThaiMoKhoaSuaDiem) {
+            $deadline = $this->han_cham_diem;
+            if ($deadline && $now->gt($deadline)) {
+                $reason = "Đã hết thời hạn chỉnh sửa điểm theo quy chế Hội đồng (Hạn chót: {$deadline->format('d/m/Y H:i')}). Hệ thống đã khóa chức năng sửa điểm.";
+                return false;
+            }
+        }
+
+        // 4. Kiểm tra hồ sơ bảo vệ
+        if ($hoSo && $hoSo->MaHoiDong !== $this->MaHoiDong) {
+            $reason = 'Hồ sơ bảo vệ không thuộc Hội đồng bảo vệ này.';
+            return false;
+        }
+
+        return true;
+    }
+
+    public function lichSuChinhSuaDiems()
+    {
+        return $this->hasMany(LichSuChinhSuaDiem::class, 'MaHoiDong', 'MaHoiDong');
     }
 
     /**

@@ -118,6 +118,11 @@ class PhieuChamDiem extends Model
         return $this->belongsTo(HocKy::class, 'MaHocKy', 'MaHocKy');
     }
 
+    public function lichSuChinhSuaDiems()
+    {
+        return $this->hasMany(LichSuChinhSuaDiem::class, 'MaPhieuChamDiem', 'MaPhieuChamDiem');
+    }
+
     /**
      * Bảng Tiêu chí chấm điểm Khóa luận Cử nhân (KLCN - Hướng ứng dụng)
      * Trích xuất nguyên bản từ biểu mẫu chính thức Khoa CNTT - ĐH Công Thương TP.HCM

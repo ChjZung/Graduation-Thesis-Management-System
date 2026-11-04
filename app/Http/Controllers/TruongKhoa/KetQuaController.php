@@ -12,6 +12,7 @@ use App\Models\HoSoBaoVe;
 use App\Models\PhieuChamDiem;
 use App\Models\KetQuaSinhVien;
 use App\Models\LichSuCongBoKetQua;
+use App\Models\LichSuChinhSuaDiem;
 use App\Services\GradeCalculationService;
 use App\Services\ThongBaoService;
 use Illuminate\Http\Request;
@@ -550,6 +551,86 @@ class KetQuaController extends Controller
     public function congBoKetQua(Request $request)
     {
         return $this->congBoHoiDong($request);
+    }
+
+    /**
+     * Mở khóa chức năng sửa điểm khi có sai sót (Quản trị viên / Trưởng khoa)
+     * Bắt buộc phải có lý do mở khóa và ghi nhận vào lịch sử kiểm toán.
+     */
+    public function moKhoaPhieu(Request $request)
+    {
+        $request->validate([
+            'MaHoiDong'   => 'required|exists:HoiDong,MaHoiDong',
+            'ly_do'       => 'required|string|min:5|max:1000',
+            'han_sua_moi' => 'nullable|date',
+        ], [
+            'ly_do.required' => 'Vui lòng cung cấp lý do mở khóa chức năng chỉnh sửa điểm.',
+            'ly_do.min'      => 'Lý do mở khóa cần tối thiểu 5 ký tự.',
+        ]);
+
+        $user = Auth::user();
+        $nguoiThucHien = $user->HoTen ?? ($user->TenDangNhap ?? 'Trưởng khoa');
+
+        $hoiDong = HoiDong::with(['thanhViens.giangVien'])->findOrFail($request->MaHoiDong);
+        $hoiDong->TrangThaiMoKhoaSuaDiem = true;
+        $hoiDong->LyDoMoKhoaSuaDiem = $request->ly_do;
+        if ($request->filled('han_sua_moi')) {
+            $hoiDong->ThoiGianKetThucSuaDiem = \Carbon\Carbon::parse($request->han_sua_moi);
+        }
+        $hoiDong->save();
+
+        // Ghi Audit Log mở khóa
+        LichSuChinhSuaDiem::create([
+            'MaPhieuChamDiem' => 'UNLOCK_' . $hoiDong->MaHoiDong,
+            'MaHoiDong'       => $hoiDong->MaHoiDong,
+            'MaHoSo'          => $request->MaHoSo ?? null,
+            'MaSV'            => 'ALL',
+            'MaGV'            => $request->MaGV ?? 'ALL',
+            'NguoiThucHien'   => $nguoiThucHien,
+            'MaCLO'           => 'UNLOCK',
+            'TenTieuChi'      => 'Mở khóa quyền chỉnh sửa điểm',
+            'DiemCu'          => null,
+            'DiemMoi'         => null,
+            'DiemTongCu'      => null,
+            'DiemTongMoi'     => null,
+            'ChiTietThayDoi'  => [
+                'han_sua_moi' => $request->han_sua_moi ?? null,
+                'ly_do'       => $request->ly_do,
+            ],
+            'LyDo'            => $request->ly_do,
+            'ThoiGian'        => now(),
+        ]);
+
+        // Cập nhật GhiChuMoKhoa trên các phiếu nếu có chỉ định
+        $phieuQuery = PhieuChamDiem::where('MaHoiDong', $hoiDong->MaHoiDong);
+        if ($request->filled('MaHoSo')) {
+            $phieuQuery->where('MaHoSo', $request->MaHoSo);
+        }
+        if ($request->filled('MaGV')) {
+            $phieuQuery->where('MaGV', $request->MaGV);
+        }
+        $phieuQuery->update([
+            'GhiChuMoKhoa' => $request->ly_do,
+        ]);
+
+        // Thông báo đến các giảng viên Hội đồng
+        foreach ($hoiDong->thanhViens as $tv) {
+            ThongBaoService::gui(
+                $tv->MaGV,
+                'Mở khóa chỉnh sửa điểm Hội đồng',
+                "Trưởng khoa đã mở khóa quyền chỉnh sửa điểm cho Hội đồng {$hoiDong->TenHoiDong}. Lý do: {$request->ly_do}",
+                'Hội đồng'
+            );
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã mở khóa chức năng chỉnh sửa điểm cho Hội đồng thành công!',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Đã mở khóa chức năng chỉnh sửa điểm cho Hội đồng thành công!');
     }
 
     /**

@@ -676,6 +676,33 @@ class HoiDongController extends Controller
     }
 
     /**
+     * Thiết lập thời hạn chỉnh sửa điểm cho Hội đồng (Quản trị viên / Trưởng khoa)
+     */
+    public function cauHinhSuaDiem(Request $request, $id)
+    {
+        $request->validate([
+            'ThoiGianBatDauSuaDiem'  => 'nullable|date',
+            'ThoiGianKetThucSuaDiem' => 'nullable|date|after_or_equal:ThoiGianBatDauSuaDiem',
+        ], [
+            'ThoiGianKetThucSuaDiem.after_or_equal' => 'Thời gian kết thúc sửa điểm phải sau hoặc bằng thời gian bắt đầu.',
+        ]);
+
+        $hoiDong = HoiDong::findOrFail($id);
+        $hoiDong->ThoiGianBatDauSuaDiem = $request->filled('ThoiGianBatDauSuaDiem') ? \Carbon\Carbon::parse($request->ThoiGianBatDauSuaDiem) : null;
+        $hoiDong->ThoiGianKetThucSuaDiem = $request->filled('ThoiGianKetThucSuaDiem') ? \Carbon\Carbon::parse($request->ThoiGianKetThucSuaDiem) : null;
+        $hoiDong->save();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật cấu hình thời hạn chỉnh sửa điểm cho Hội đồng.',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Đã cập nhật cấu hình thời hạn chỉnh sửa điểm cho Hội đồng.');
+    }
+
+    /**
      * Cập nhật trạng thái diễn ra của Hội đồng
      */
     public function updateTrangThai(Request $request, $id)

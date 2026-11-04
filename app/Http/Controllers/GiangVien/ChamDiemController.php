@@ -10,6 +10,7 @@ use App\Models\GiangVien;
 use App\Models\ThanhVienHoiDong;
 use App\Models\HoSoBaoVe;
 use App\Models\HocKy;
+use App\Models\LichSuChinhSuaDiem;
 use App\Services\GradeCalculationService;
 use App\Services\ThongBaoService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -94,6 +95,8 @@ class ChamDiemController extends Controller
         $diemDaCham = collect();
         $daKhoaPhieu = false;
         $phieuCu = null;
+        $canEditScore = false;
+        $editReason = '';
 
         if ($activeHoiDong && $activeHoSo) {
             $phieuRecords = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)
@@ -106,6 +109,8 @@ class ChamDiemController extends Controller
             if ($phieuCu && $phieuCu->TrangThai === 'Đã hoàn thành') {
                 $daKhoaPhieu = true;
             }
+
+            $canEditScore = $activeHoiDong->canEditScore($giangVien, $activeHoSo, $editReason);
         }
 
         $daKyTen = !empty($phieuCu?->ChuKy);
@@ -169,6 +174,8 @@ class ChamDiemController extends Controller
             'canhBaoChuaXacDinhLoai'   => $canhBaoChuaXacDinhLoai,
             'diemDaCham'               => $diemDaCham,
             'daKhoaPhieu'              => $daKhoaPhieu,
+            'canEditScore'             => $canEditScore,
+            'editReason'               => $editReason,
             'daKyTen'                  => $daKyTen,
             'chuKyHienTai'             => $chuKyHienTai,
             'ngayKy'                   => $ngayKy,
@@ -263,8 +270,19 @@ class ChamDiemController extends Controller
             ->where('MaGV', $giangVien->MaGV)
             ->first();
 
-        if ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành' && !$request->has('unlock_token')) {
-            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Xác nhận khóa điểm để bảo toàn vẹn dữ liệu.');
+        $isEditingCompleted = ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành');
+        if ($isEditingCompleted && !$request->has('unlock_token')) {
+            $editReason = '';
+            if (!$hoiDong->canEditScore($giangVien, $hoSo, $editReason)) {
+                $errMsg = $editReason ?: 'Phiếu chấm điểm này đã được Xác nhận khóa điểm. Thời hạn chỉnh sửa điểm đã kết thúc hoặc điểm đã được công bố chính thức.';
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errMsg,
+                    ], 403);
+                }
+                return redirect()->back()->with('error', $errMsg);
+            }
         }
 
         $isFinal = ($request->action_type === 'xac_nhan_hoan_thanh');
@@ -281,7 +299,7 @@ class ChamDiemController extends Controller
         $validStudentIds = $hoSo->nhom?->thanhViens->pluck('MaSV')->toArray() ?? [];
 
         $deTai = $hoSo->nhom?->deTai;
-        $maDeTai = $deTai?->MaDeTai ?? ($hoSo->MaDeTai ?? 'DT_CHUA_RO');
+        $maDeTai = $hoSo->MaDeTai ?? $hoSo->nhom?->MaDeTai ?? $deTai?->MaDeTai ?? \App\Models\DeTai::value('MaDeTai');
 
         $activeHocKy = HocKy::where('TrangThai', true)->first() ?? HocKy::latest()->first();
         $maHocKy = $hoSo->MaHocKy ?? ($activeHocKy?->MaHocKy ?? 'HK_DEF');
@@ -292,7 +310,7 @@ class ChamDiemController extends Controller
             $hoSo->save();
         }
 
-        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu, $existingPhieu) {
+        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu, $existingPhieu, $isEditingCompleted) {
             foreach ($request->diems as $key => $diemData) {
                 // HTML field names use numeric student IDs as array keys, not row indexes.
                 $studentKey = (string) $key;
@@ -365,14 +383,73 @@ class ChamDiemController extends Controller
                 // Tổng điểm tối đa của toàn phiếu là 10.0
                 $diemSo = round(min(10.0, $tongDiemCoBan + $diemKhuyenKhich), 2);
 
-                $nhanXet = $diemData['NhanXet'] ?? null;
+                // Tìm phiếu đã lưu trước đó của sinh viên này
+                $existingStudentPhieu = PhieuChamDiem::where('MaHoiDong', $request->MaHoiDong)
+                    ->where('MaHoSo', $hoSo->MaHoSo)
+                    ->where('MaGV', $giangVien->MaGV)
+                    ->where('MaSV', $maSV)
+                    ->first();
+
+                // Yêu cầu 1: Quyền chỉnh sửa
+                // Mỗi giảng viên chỉ được chỉnh sửa điểm trong phiếu chấm của chính mình.
+                // Không cho phép chỉnh sửa nhận xét, nội dung đánh giá, thông tin giảng viên hoặc bất kỳ trường dữ liệu nào khác.
+                // Nếu là chỉnh sửa phiếu đã có: giữ nguyên nhận xét ban đầu, không cho phép thay đổi nhận xét.
+                $nhanXet = ($existingStudentPhieu && !empty($existingStudentPhieu->NhanXet))
+                    ? $existingStudentPhieu->NhanXet
+                    : ($diemData['NhanXet'] ?? null);
+
+                // Yêu cầu 5: Lịch sử chỉnh sửa
+                // Lưu lại: Giảng viên thực hiện, CLO được chỉnh sửa, Điểm cũ, Điểm mới, Thời gian chỉnh sửa.
+                // Không cho phép xóa lịch sử chỉnh sửa.
+                if ($existingStudentPhieu) {
+                    $oldChiTiet = $existingStudentPhieu->ChiTietDiem ?? [];
+                    if (is_string($oldChiTiet)) {
+                        $oldChiTiet = json_decode($oldChiTiet, true) ?? [];
+                    }
+                    $oldDiemTong = (float)($existingStudentPhieu->Diem ?? 0.0);
+
+                    foreach ($validatedChiTiet as $cId => $newVal) {
+                        $oldVal = isset($oldChiTiet[$cId]) ? (float)$oldChiTiet[$cId] : null;
+                        $newValFloat = (float)$newVal;
+
+                        // Tiêu chí có sự thay đổi điểm
+                        if ($oldVal !== null && abs($oldVal - $newValFloat) > 0.0001) {
+                            $crit = $rubricMap[$cId] ?? null;
+                            $cloCode = $crit['clo'] ?? ($crit['ma_clo'] ?? 'CLO');
+                            $tenTieuChi = $crit['noi_dung'] ?? $cId;
+
+                            LichSuChinhSuaDiem::create([
+                                'MaPhieuChamDiem' => $existingStudentPhieu->MaPhieuChamDiem,
+                                'MaHoiDong'       => $request->MaHoiDong,
+                                'MaHoSo'          => $hoSo->MaHoSo,
+                                'MaSV'            => $maSV,
+                                'MaGV'            => $giangVien->MaGV,
+                                'NguoiThucHien'   => ($giangVien->HoTen ?? $giangVien->MaGV) . " ({$giangVien->MaGV})",
+                                'MaCLO'           => $cloCode,
+                                'TenTieuChi'      => $tenTieuChi,
+                                'DiemCu'          => $oldVal,
+                                'DiemMoi'         => $newValFloat,
+                                'DiemTongCu'      => $oldDiemTong,
+                                'DiemTongMoi'     => $diemSo,
+                                'ChiTietThayDoi'  => [
+                                    'tieu_chi_id' => $cId,
+                                    'clo'         => $cloCode,
+                                    'diem_cu'     => $oldVal,
+                                    'diem_moi'    => $newValFloat,
+                                ],
+                                'LyDo'            => $request->ly_do_sua ?? 'Giảng viên cập nhật điểm tiêu chí trong thời hạn quy định',
+                                'ThoiGian'        => now(),
+                            ]);
+                        }
+                    }
+                }
 
                 // Tạo mã phiếu chấm duy nhất
                 $hashId = substr(md5($request->MaHoiDong . '_' . $giangVien->MaGV . '_' . $maSV), 0, 8);
                 $maPhieu = 'PCD_' . strtoupper($hashId);
 
-                $chuKyToSave = $request->chu_ky ?? $existingPhieu?->ChuKy ?? $giangVien->ChuKy;
-                $ngayKyToSave = !empty($chuKyToSave) ? ($existingPhieu?->NgayKy ?? now()) : null;
+                $chuKyToSave = $request->chu_ky ?? $existingStudentPhieu?->ChuKy ?? $existingPhieu?->ChuKy ?? $giangVien->ChuKy;
+                $ngayKyToSave = !empty($chuKyToSave) ? ($existingStudentPhieu?->NgayKy ?? $existingPhieu?->NgayKy ?? now()) : null;
 
                 PhieuChamDiem::updateOrCreate(
                     [
@@ -429,9 +506,13 @@ class ChamDiemController extends Controller
             }
         }
 
-        $msg = $isFinal
-            ? 'Đã Xác nhận khóa điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
-            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận khóa điểm.';
+        if ($isEditingCompleted) {
+            $msg = 'Đã cập nhật chỉnh sửa điểm số thành công! Điểm CLO trung bình của cả 3 giảng viên đã được tự động tính toán lại và đồng bộ vào báo cáo.';
+        } else {
+            $msg = $isFinal
+                ? 'Đã Xác nhận khóa điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
+                : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận khóa điểm.';
+        }
 
         return redirect()->route('giangvien.hoidong.index', [
             'tab'  => 'chamdiem',

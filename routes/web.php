@@ -546,6 +546,7 @@ Route::middleware(['auth', 'role:Trưởng khoa'])->prefix('truongkhoa')->group(
     Route::get('/hoi-dong/{id}/preview-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'previewPdf'])->name('truongkhoa.hoidong.previewPdf');
     Route::get('/hoi-dong/{id}/download-pdf', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'downloadPdf'])->name('truongkhoa.hoidong.downloadPdf');
     Route::post('/hoi-dong/{id}/cong-bo', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'congBo'])->name('truongkhoa.hoidong.congBo');
+    Route::post('/hoi-dong/{id}/cau-hinh-sua-diem', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'cauHinhSuaDiem'])->name('truongkhoa.hoidong.cauhinh_suadiem');
     Route::post('/hoi-dong/{id}/update-quyet-dinh', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateQuyetDinh'])->name('truongkhoa.hoidong.updateQuyetDinh');
     Route::post('/hoi-dong/{id}/trang-thai', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'updateTrangThai'])->name('truongkhoa.hoidong.updateTrangThai');
     Route::post('/hoi-dong/{id}/phan-cong-nhom', [\App\Http\Controllers\TruongKhoa\HoiDongController::class, 'phanCongNhom'])->name('truongkhoa.hoidong.phanCongNhom');
