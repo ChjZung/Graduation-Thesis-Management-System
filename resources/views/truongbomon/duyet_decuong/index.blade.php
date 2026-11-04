@@ -319,8 +319,8 @@
                                                     @if($pb->NhanXet)
                                                     <div class="mb-3">
                                                         <label class="form-label text-muted small fw-bold">Nhận xét của Giảng viên phản biện:</label>
-                                                        <div class="p-2 bg-light rounded border small fst-italic text-secondary">
-                                                            "{!! \App\Helpers\HtmlHelper::clean($pb->NhanXet) !!}"
+                                                        <div class="p-2 bg-light rounded border small text-secondary">
+                                                            {!! \App\Helpers\HtmlHelper::clean($pb->NhanXet) !!}
                                                         </div>
                                                     </div>
                                                     @endif
