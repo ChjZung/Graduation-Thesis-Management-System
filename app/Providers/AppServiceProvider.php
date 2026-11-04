@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Mime\MimeTypes;
+use App\Services\OfficeDocumentMimeTypeGuesser;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,5 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Pagination\Paginator::useBootstrapFive();
+
+        // Đảm bảo các định dạng tài liệu Office (.docx, .xlsx, .pptx, .pdf, .doc) luôn được nhận diện MIME chuẩn xác
+        // giải quyết triệt để lỗi PHP finfo trả về application/octet-stream trên môi trường Windows/XAMPP
+        MimeTypes::getDefault()->registerGuesser(new OfficeDocumentMimeTypeGuesser());
     }
 }
