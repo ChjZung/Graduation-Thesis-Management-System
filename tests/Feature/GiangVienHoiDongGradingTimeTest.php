@@ -201,7 +201,7 @@ class GiangVienHoiDongGradingTimeTest extends TestCase
             'hd'  => $this->hoiDong->MaHoiDong,
         ]));
         $resView->assertStatus(200);
-        $this->assertStringContainsString('Xác Nhận &amp; Khóa Phiếu Chấm', $resView->getContent());
+        $this->assertStringContainsString('Xác Nhận Khóa Điểm', $resView->getContent());
 
         // Lưu nháp điểm thành công
         $payload = [

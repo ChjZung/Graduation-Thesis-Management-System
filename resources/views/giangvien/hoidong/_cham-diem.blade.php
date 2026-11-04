@@ -734,9 +734,9 @@ input[type=number],
     <div class="alert alert-success border-success-subtle rounded-3 shadow-xs py-3 px-4 mb-3 d-flex align-items-center gap-3">
         <i class="fa-solid fa-circle-check fs-4 text-success flex-shrink-0"></i>
         <div>
-            <strong class="d-block text-success-emphasis">Phiếu chấm điểm đã được KÝ XÁC NHẬN &amp; KHÓA</strong>
+            <strong class="d-block text-success-emphasis">Phiếu chấm điểm đã được XÁC NHẬN KHÓA ĐIỂM</strong>
             <span class="small text-secondary">
-                Thời điểm ký: <strong>{{ \Carbon\Carbon::parse($phieuCu->NgayXacNhan ?? $phieuCu->updated_at)->format('d/m/Y H:i') }}</strong>. 
+                Thời điểm xác nhận: <strong>{{ \Carbon\Carbon::parse($phieuCu->NgayXacNhan ?? $phieuCu->updated_at)->format('d/m/Y H:i') }}</strong>. 
                 Dữ liệu đã được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm sơ bộ của Hội đồng.
             </span>
         </div>
@@ -1244,7 +1244,7 @@ input[type=number],
 
                         <div class="d-flex align-items-center gap-2 p-2.5 rounded-3 bg-light text-muted small mt-2">
                             <i class="fa-solid fa-circle-info text-primary fs-6"></i>
-                            <span style="font-size: 0.78rem;">Điểm của Thầy/Cô sau khi Ký xác nhận sẽ được tổng hợp tự động vào bảng điểm trung bình Hội đồng.</span>
+                            <span style="font-size: 0.78rem;">Điểm của Thầy/Cô sau khi Xác nhận khóa điểm sẽ được tổng hợp tự động vào bảng điểm trung bình Hội đồng.</span>
                         </div>
                     </div>
                 </div>
@@ -1297,7 +1297,7 @@ input[type=number],
                                 <i class="fa-solid fa-triangle-exclamation me-1.5"></i> Quy Chế Điểm Khóa Luận (HUIT):
                             </div>
                             <div class="text-secondary" style="font-size: 0.78rem; line-height: 1.45;">
-                                Điểm cuối cùng của sinh viên được tính bằng <strong>100% điểm trung bình do Hội đồng bảo vệ chấm</strong>. Các phiếu chấm chỉ được tính khi đã Ký xác nhận &amp; Khóa.
+                                Điểm cuối cùng của sinh viên được tính bằng <strong>100% điểm trung bình do Hội đồng bảo vệ chấm</strong>. Các phiếu chấm chỉ được tính khi đã Xác nhận khóa điểm.
                             </div>
                         </div>
                     </div>
@@ -1379,7 +1379,7 @@ input[type=number],
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center" id="btnXacNhanKhoa" onclick="submitChamDiem('xac_nhan_hoan_thanh')" style="background: var(--academic-primary); border-color: var(--academic-primary);">
-                        <i class="fa-solid fa-lock me-2"></i> Ký Xác Nhận &amp; Khóa Phiếu
+                        <i class="fa-solid fa-lock me-2"></i> Xác Nhận Khóa Điểm
                     </button>
                 </div>
             @endif
@@ -1635,7 +1635,7 @@ input[type=number],
                     @endif
                     @if(!$daKhoaPhieu)
                         <button type="button" class="btn btn-sm btn-success" onclick="submitChamDiem('xac_nhan_hoan_thanh')">
-                            <i class="fa-solid fa-lock me-1"></i> Xác nhận &amp; khóa phiếu
+                            <i class="fa-solid fa-lock me-1"></i> Xác Nhận Khóa Điểm
                         </button>
                     @endif
                 </div>
@@ -2213,7 +2213,7 @@ input[type=number],
                                         <div class="d-flex gap-2">
                                             <i class="fa-solid fa-circle-check text-success mt-1"></i>
                                             <div class="small">
-                                                <strong>Phiếu lưu nháp:</strong> Phiếu đang ở trạng thái "Lưu nháp" chỉ có hiệu lực với riêng giám khảo đó, không tham gia tính điểm trung bình chính thức của Hội đồng cho đến khi nhấn "Xác nhận &amp; Khóa phiếu".
+                                                <strong>Phiếu lưu nháp:</strong> Phiếu đang ở trạng thái "Lưu nháp" chỉ có hiệu lực với riêng giám khảo đó, không tham gia tính điểm trung bình chính thức của Hội đồng cho đến khi nhấn "Xác nhận khóa điểm".
                                             </div>
                                         </div>
                                     </div>
@@ -2721,7 +2721,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('input[id^="inputTotalScore_"]').forEach(el => {
                 if (parseFloat(el.value) === 0) hasZero = true;
             });
-            let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN & KHÓA phiếu chấm điểm này?\n\nSau khi khóa, phiếu sẽ được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm Hội đồng. Việc sửa đổi sau này phải thông qua Trưởng khoa.';
+            let msg = 'Thầy/Cô có chắc chắn muốn XÁC NHẬN KHÓA ĐIỂM cho phiếu chấm điểm này?\n\nSau khi khóa điểm, phiếu sẽ được bảo đảm toàn vẹn và chuyển sang bảng tổng hợp điểm Hội đồng. Việc sửa đổi sau này phải thông qua Trưởng khoa.';
             if (hasZero) {
                 msg = 'Lưu ý: Có sinh viên đang có tổng điểm là 0.00 (chưa chấm hoặc chấm 0 điểm).\n\n' + msg;
             }

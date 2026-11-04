@@ -157,7 +157,7 @@
                         @elseif($isChuTich)
                             <i class="fa-solid fa-circle-info text-warning me-1"></i> <strong>Quy định vai trò Chủ tịch:</strong> Điều hành quá trình báo cáo, mở câu hỏi chất vấn và kết luận kết quả bảo vệ của từng nhóm đề tài.
                         @else
-                            <i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Quy định thành viên:</strong> Chấm điểm các tiêu chí (Hình thức báo cáo, Thuyết trình, Trả lời câu hỏi, Cài đặt chức năng), nhận xét và khóa phiếu điểm.
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Quy định thành viên:</strong> Chấm điểm các tiêu chí (Hình thức báo cáo, Thuyết trình, Trả lời câu hỏi, Cài đặt chức năng), nhận xét và xác nhận khóa điểm.
                         @endif
                     </div>
                 </div>

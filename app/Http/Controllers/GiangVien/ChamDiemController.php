@@ -264,7 +264,7 @@ class ChamDiemController extends Controller
             ->first();
 
         if ($existingPhieu && $existingPhieu->TrangThai === 'Đã hoàn thành' && !$request->has('unlock_token')) {
-            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Ký xác nhận & Khóa để bảo toàn vẹn dữ liệu.');
+            return redirect()->back()->with('error', 'Phiếu chấm điểm này đã được Xác nhận khóa điểm để bảo toàn vẹn dữ liệu.');
         }
 
         $isFinal = ($request->action_type === 'xac_nhan_hoan_thanh');
@@ -430,8 +430,8 @@ class ChamDiemController extends Controller
         }
 
         $msg = $isFinal
-            ? 'Đã Xác nhận & Khóa phiếu chấm điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
-            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận hoàn thành.';
+            ? 'Đã Xác nhận khóa điểm thành công! Điểm số đã được ghi nhận vào hệ thống.'
+            : 'Đã lưu bản nháp phiếu chấm điểm thành công! Thầy/Cô có thể tiếp tục chỉnh sửa trước khi Xác nhận khóa điểm.';
 
         return redirect()->route('giangvien.hoidong.index', [
             'tab'  => 'chamdiem',
