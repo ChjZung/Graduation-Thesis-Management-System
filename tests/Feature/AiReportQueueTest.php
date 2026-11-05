@@ -128,6 +128,26 @@ class AiReportQueueTest extends TestCase
         $this->assertSame('sync',config('queue.default')); // Dedicated connection overrides the HTTP default.
     }
 
+    public function test_mock_business_time_does_not_delay_ai_queue_and_is_restored(): void
+    {
+        $report = $this->report();
+        foreach (['2035-11-11 14:59:00', '2020-01-01 08:00:00'] as $mockTime) {
+            \Carbon\Carbon::setTestNow($mockTime);
+            try {
+                $before = time();
+                app(AiReportProcessingService::class)->enqueue($report, false, true);
+                $job = DB::table('jobs')->where('queue', 'ai-reports')->orderByDesc('id')->first();
+                $this->assertGreaterThanOrEqual($before, $job->available_at);
+                $this->assertLessThanOrEqual(time(), $job->available_at);
+                $this->assertGreaterThanOrEqual($before, $job->created_at);
+                $this->assertSame($mockTime, \Carbon\Carbon::now()->format('Y-m-d H:i:s'));
+                app(AiReportProcessingService::class)->updateState($report->MaKhoi, $report->fresh()->TomTatJson['_processing']['token'], ['status'=>'partial']);
+            } finally {
+                \Carbon\Carbon::setTestNow(null);
+            }
+        }
+    }
+
     public function test_transaction_rollback_removes_pending_state_and_job_together(): void
     {
         $report=$this->report();

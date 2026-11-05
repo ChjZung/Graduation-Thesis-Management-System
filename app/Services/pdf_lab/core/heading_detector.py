@@ -45,11 +45,54 @@ def toc_entry(text):
                 and re.search(r'[^\W\d_]', re.split(r'\.{3,}|…{2,}', text)[0], re.UNICODE))
 
 
+def chapter_structure_references(lines, body_size, outline, use_outline):
+    """Reject chapter previews only in an explicit report-structure introduction.
+
+    Require a later, more prominent matching chapter heading. A repeated title
+    alone is not enough: real chapters with ordinary fonts must remain valid.
+    Work on source line IDs; do not alter text, offsets or bounding boxes.
+    """
+    def compact(text):
+        return re.sub(r'[\W_]+', '', folded(text))
+
+    labels = {'bocucbaocao', 'bocuccuabaocao', 'bocucdetai', 'bocuccuadetai',
+              'cautrucbaocao', 'cautruccuabaocao', 'cautrucluanvan',
+              'cautruckhoaluan', 'reportstructure', 'reportorganization',
+              'thesisstructure', 'thesisorganization'}
+    chapters = []
+    for index, row in enumerate(lines):
+        match = CHAPTER.match(row['text'].strip())
+        if match and match.group(2) and not row['running_margin'] and not toc_entry(row['text']):
+            chapters.append((index, row, (match.group(1).casefold(), compact(match.group(2)))))
+    references, in_structure = set(), False
+    by_index = {index: (row, key) for index, row, key in chapters}
+    for index, row in enumerate(lines):
+        label = re.sub(r'^\d+[.)]?\s*', '', folded(row['text']))
+        if compact(label) in labels:
+            in_structure = True
+            continue
+        if not in_structure or index not in by_index:
+            continue
+        current, key = by_index[index]
+        prominent = (current['font_size'] > body_size * 1.12 or
+                     (use_outline and (folded(current['text']), current['page']) in outline))
+        if prominent:
+            in_structure = False
+            continue
+        if any(later_index > index and later_key == key and
+               (later['font_size'] > current['font_size'] * 1.1 or
+                (use_outline and (folded(later['text']), later['page']) in outline))
+               for later_index, later, later_key in chapters):
+            references.add(current['line_id'])
+    return references
+
+
 def detect_headings(document, settings):
     lines = document['lines']
     sizes = [r['font_size'] for r in lines if len(r['text']) > 65]
     body_size = statistics.median(sizes or [r['font_size'] for r in lines] or [12])
     outline = {(folded(title.strip()), page): level for level, title, page in document['outline']}
+    structure_references = chapter_structure_references(lines, body_size, outline, settings.use_outline)
     lines_by_page = defaultdict(list)
     for row in lines:
         lines_by_page[row['page']].append(row)
@@ -81,6 +124,8 @@ def detect_headings(document, settings):
         level = 1 if chapter or special else len(number.split('.')) + (1 if in_introduction else 0) if numbered else 2 if single and in_introduction else bookmark or 2
         kind = 'chapter' if chapter else 'section' if numbered or single else 'special' if special else 'outline' if bookmark else 'typographic'
         score, signals, rejected = 0., [], []
+        if row['line_id'] in structure_references:
+            rejected.append('Tên chương trong phần giới thiệu bố cục báo cáo; có tiêu đề chương thật rõ hơn ở phía sau.')
         if chapter:
             score += 4; signals.append('chapter_number')
         elif numbered:

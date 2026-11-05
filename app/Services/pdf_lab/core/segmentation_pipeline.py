@@ -9,7 +9,7 @@ from .token_chunker import chunk_sections, LexicalCounter
 from .validators import validate
 from .section_analysis import annotate_sections
 
-VERSION = '1.3.0'
+VERSION = '1.3.1'
 
 
 def segment_pdf(source, settings=None, on_progress=None, extracted=None):

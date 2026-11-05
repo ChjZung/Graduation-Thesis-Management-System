@@ -123,7 +123,11 @@ class AiReportProcessingService
                 'attempts'=>0, 'updated_at'=>time(), 'queued_at'=>time(), 'message'=>'Đã lưu bài nộp. AI đang chờ xử lý nền.', 'errors'=>[]];
             $data['_processing'] = $state;
             $locked->update(['TomTatJson'=>$data]);
-            AnalyzeReportVersion::dispatch($locked->MaKhoi,$state['token'])->onConnection('ai')->onQueue('ai-reports');
+            // Business mock time must not schedule infrastructure jobs days into
+            // the future (or expire their reservation early). Restore it after insertion.
+            \Carbon\Carbon::withTestNow(null, function () use ($locked, $state) {
+                AnalyzeReportVersion::dispatch($locked->MaKhoi,$state['token'])->onConnection('ai')->onQueue('ai-reports');
+            });
             return $state;
         });
     }
