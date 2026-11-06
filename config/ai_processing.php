@@ -9,6 +9,8 @@ return [
     'lite_rpm' => (int) env('GEMINI_LITE_SAFE_RPM', 12),
     'tpm' => (int) env('GEMINI_SAFE_TPM', 200000),
     'max_passes' => 20,
+    // Application backoff only; provider Retry-After/quota deadlines still win.
+    'max_transient_retry_seconds' => 120,
     'pipeline_version' => 'pdf-lab-v1.9.1-review-output-guard',
     'pdf_engine' => 'pdf_lab',
     'lab' => [

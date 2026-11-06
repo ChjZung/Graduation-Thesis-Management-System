@@ -12,6 +12,28 @@ use Tests\TestCase;
 
 class AiPdfProviderOutageTest extends TestCase
 {
+    public function test_transient_backoff_never_exceeds_two_minutes_after_many_passes(): void
+    {
+        $processing = new AiReportProcessingService;
+        foreach ([['code'=>'connection_error'], ['code'=>'timeout'], ['code'=>'service_unavailable','http_status'=>503]] as $error) {
+            $before=time();
+            $state=$processing->retryState(['analysis'=>['status'=>'partial'], 'processing_errors'=>[$error]], false, 15);
+            self::assertSame('waiting', $state['status']);
+            self::assertLessThanOrEqual(time()+120, $state['next_retry_at']);
+            self::assertGreaterThanOrEqual($before, $state['next_retry_at']);
+        }
+        self::assertSame([60,120,120], (new AnalyzeReportVersion('fixture','token'))->backoff());
+    }
+
+    public function test_explicit_provider_deadline_still_wins_over_two_minute_backoff(): void
+    {
+        $expiry=time()+900;
+        $state=(new AiReportProcessingService)->retryState(['processing_errors'=>[[
+            'code'=>'service_unavailable','http_status'=>503,'cooldown_until'=>$expiry,
+        ]]], false, 10);
+        self::assertSame($expiry, $state['next_retry_at']);
+    }
+
     public function test_both_unavailable_wait_until_existing_deadline_and_stop_at_cap(): void
     {
         $expiry = time() + 1085;

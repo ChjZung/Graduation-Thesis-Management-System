@@ -363,6 +363,10 @@ class AiReportProcessingService
         if (array_filter($errors, fn ($error) => ($error['http_status'] ?? null) === 503)) {
             $delay += random_int(0, max(1, intdiv($delay, 5)));
         }
+        // Resume the same token/checkpoint, rather than creating a fresh analysis.
+        // Counted passes include normal budget continuations, so using that count
+        // for unbounded backoff used to penalize large, otherwise healthy PDFs.
+        $delay = min($delay, max(1, min(120, (int) config('ai_processing.max_transient_retry_seconds', 120))));
         foreach ($errors as $error) $delay = max($delay, self::retryDelay($error, $now));
         $quota = array_filter($errors,fn ($e) => ($e['code'] ?? '') === 'rate_limit');
         $daily = array_filter($quota,fn ($e) => ($e['quota'] ?? '') === 'day');

@@ -122,7 +122,7 @@ class AnalyzeReportVersion implements ShouldQueue
         } finally { $lock->release(); }
     }
 
-    public function backoff(): array { return [60,120,300]; }
+    public function backoff(): array { return [60,120,120]; }
 
     public function failed(?\Throwable $error): void
     {
