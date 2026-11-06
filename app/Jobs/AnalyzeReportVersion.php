@@ -113,6 +113,18 @@ class AnalyzeReportVersion implements ShouldQueue
                 $this->release(max(1,$next['next_retry_at']-time()));
             }
         } catch (\Throwable $error) {
+            $sourceErrors = [
+                'report_file_missing' => 'Không tìm thấy tệp gốc của phiên bản này. Cần khôi phục đúng tệp trước khi tiếp tục.',
+                'report_format_unsupported' => 'Tệp gốc không thuộc định dạng PDF hoặc DOCX được hỗ trợ.',
+            ];
+            $sourceCode = $error->getMessage();
+            if ($error instanceof \RuntimeException && isset($sourceErrors[$sourceCode])) {
+                $processing->updateState($this->reportId, $this->token, [
+                    'status'=>'partial', 'next_retry_at'=>null, 'message'=>$sourceErrors[$sourceCode],
+                    'errors'=>[['stage'=>'source','code'=>$sourceCode,'message'=>$sourceErrors[$sourceCode]]],
+                ]);
+                return;
+            }
             $delays = $this->backoff();
             $delay = $delays[min(count($delays)-1, max(0, $this->attempts()-1))];
             if (!$processing->updateState($this->reportId,$this->token,['status'=>'waiting','next_retry_at'=>time()+$delay,

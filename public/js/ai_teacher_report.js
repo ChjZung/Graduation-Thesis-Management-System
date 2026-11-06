@@ -18,6 +18,7 @@
  function problem(e){
   const state=e.state||{},status=state.status;
   if(['completed','cancelled'].includes(status))return '';
+  if(e.cancelError)return e.cancelError;
   if(e.denied)return 'Phiên đăng nhập đã hết hạn hoặc không có quyền truy cập. Vui lòng đăng nhập lại.';
   if(e.network)return 'Không cập nhật được trạng thái do lỗi kết nối. Hệ thống sẽ kiểm tra lại; tác vụ nền có thể vẫn đang chạy.';
   const errors=Array.isArray(state.errors)?state.errors:[];
@@ -25,6 +26,8 @@
   if(status==='running'&&errors.length&&errors.every(x=>x.stage==='process'&&x.code==='timeout'))return '';
   if(status==='waiting'&&errors.length&&errors.every(x=>x.code==='budget_exhausted'))return '';
   const labels={provider_cooldown:'Gemini tạm bận (HTTP 503). Các phần đã xử lý được giữ lại.',service_unavailable:'Dịch vụ AI tạm thời chưa xử lý được yêu cầu.',timeout:'Lượt xử lý nền đã hết thời gian. Các bước đã lưu được giữ để tiếp tục; không cần phân tích lại từ đầu.',output_validation:'Bản tóm tắt AI chưa đạt yêu cầu kiểm tra nội dung hoặc độ dài. Phần đọc đã lưu được giữ; có thể tiếp tục để tạo lại riêng đầu ra lỗi.',request_failed:'Không gửi được yêu cầu phân tích. Vui lòng tải lại trang để kiểm tra trạng thái trước khi thử lại.',rate_limit:'API đang giới hạn lượt gọi hoặc hạn mức sử dụng.',authentication:'API key không hợp lệ hoặc không có quyền sử dụng mô hình. Quản trị viên cần kiểm tra cấu hình.',invalid_request:'API không chấp nhận yêu cầu. Quản trị viên cần kiểm tra cấu hình mô hình và dữ liệu gửi.',input_too_large:'Nội dung gửi AI vượt giới hạn cho phép.',extraction_failed:'Không trích xuất được nội dung văn bản của tài liệu.',worker_error:'Tiến trình xử lý nền gặp lỗi.',budget_exhausted:'Đã chạm giới hạn xử lý của lượt hiện tại.'};
+  const sourceIssue=errors.find(x=>x.stage==='source'&&x.message);
+  if(sourceIssue)return sourceIssue.message;
   const messages=[...new Set(errors.map(x=>((x.engine_code||'').startsWith('reader_')&&x.engine_code!=='reader_model_limit'&&x.engine_code!=='reader_input_limit'&&x.code!=='budget_exhausted'?labels.output_validation:labels[x.code])||(status==='waiting'?'Dịch vụ AI gặp lỗi tạm thời.':'Một bước xử lý AI gặp lỗi.')))];
   if(active(status)&&state.worker_running===false)messages.push('Tiến trình chạy nền hiện chưa hoạt động; cần quản trị viên kiểm tra.');
   if(errors.some(x=>x.primary_http_status===503 && x.cooldown_cached && String(x.model||'').startsWith('groq:')))
@@ -151,7 +154,7 @@
   node.querySelector('.progress-bar').classList.toggle('progress-bar-animated',!done&&!failed&&!paused);
  }
  function open(e){current=e;const node=modalNode();if(!node)return;if(node.parentElement!==document.body)document.body.appendChild(node);render(e);if(window.bootstrap?.Modal)bootstrap.Modal.getOrCreateInstance(node).show();}
- function accept(e,data){e.state=data;e.network=false;if(!e.reused&&data.queued_at&&data.server_time){e.anchor=Date.now()-Math.max(0,data.server_time-data.queued_at)*1000;}
+ function accept(e,data){e.state=data;e.network=false;if(!active(data.status))e.cancelError='';if(!e.reused&&data.queued_at&&data.server_time){e.anchor=Date.now()-Math.max(0,data.server_time-data.queued_at)*1000;}
   if(active(data.status))e.finished=null;else e.finished=clock(e);render(e);
  }
  function schedule(e,ms){clearTimeout(e.timer);if(!e.denied&&active(e.state?.status))e.timer=setTimeout(()=>poll(e),ms);}
@@ -280,14 +283,14 @@
   const b=card?.querySelector('[data-ai-processing-url]');
   const e=b ? jobs.get(b.dataset.aiProcessingUrl) : current;
   if(e?.cancelling)return;
-  if(e){ clearTimeout(e.timer); e.cancelling=true; e.cancelRevision=(e.cancelRevision||0)+1; }
+  if(e){ clearTimeout(e.timer); e.cancelError=''; e.cancelling=true; e.cancelRevision=(e.cancelRevision||0)+1; }
   try{
    const response=await fetch(actionUrl,{
     method:'POST',
     headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrfToken},
     credentials:'same-origin',body:pause?new URLSearchParams({pause:'1'}):undefined
    });
-   if(!response.ok)throw Error('cancel');
+   if(!response.ok||response.redirected)throw Error([401,403,419].includes(response.status)||response.redirected?'cancel_auth':'cancel');
    {
     const data=await response.json();
     if(e){
@@ -296,7 +299,10 @@
     }
    }
   }catch(err){
-   if(e){e.network=true;render(e);}
+   if(e){
+    e.cancelError=err.message==='cancel_auth'?'Chưa dừng được phân tích. Hãy đăng nhập lại và thử lại.':'Chưa xác nhận được lệnh dừng. Hệ thống sẽ kiểm tra lại trạng thái.';
+    render(e);
+   }
   }finally{
    if(e){e.cancelling=false;schedule(e,1000);}
   }

@@ -290,33 +290,36 @@ class ChamDiemController extends Controller
         $trangThaiPhieu = $isFinal ? 'Đã hoàn thành' : 'Lưu nháp';
 
         // Lấy rubric tương ứng
+        $expectedType = $hoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
+        abort_unless($request->LoaiKhoaLuan === $expectedType, 422, 'Mẫu phiếu chấm không khớp với loại khóa luận của hồ sơ.');
         $customChucNang = $hoSo->TieuChiChucNang;
         $rubric = ($request->LoaiKhoaLuan === 'KLKS') 
             ? PhieuChamDiem::getRubricKLKS($customChucNang) 
             : PhieuChamDiem::getRubricKLCN($customChucNang);
         $rubricMap = collect($rubric)->keyBy('id');
+        $functionalMaxima = collect(PhieuChamDiem::parseFunctionalRequirements($customChucNang, $request->LoaiKhoaLuan))
+            ->pluck('max', 'id');
 
         // Danh sách sinh viên hợp lệ của nhóm
-        $validStudentIds = $hoSo->nhom?->thanhViens->pluck('MaSV')->toArray() ?? [];
+        $validStudentIds = $hoSo->nhom?->thanhViens->where('TrangThai', 'da_tham_gia')->pluck('MaSV')->toArray() ?? [];
+        $registrations = $hoSo->nhom?->phieuDangKys()->with('deTai')
+            ->whereIn('TrangThai', ['Đã duyệt', 'da_duyet'])->limit(2)->get();
+        $deTai = $registrations?->count() === 1 ? $registrations->first()->deTai : null;
+        abort_unless($deTai && (!$hoSo->MaDeTai || $hoSo->MaDeTai === $deTai->MaDeTai), 422, 'Hồ sơ không khớp đề tài đã duyệt của nhóm.');
+        $maDeTai = $deTai->MaDeTai;
+        $maHocKy = $hoSo->MaHocKy ?? $hoSo->nhom->MaHocKy ?? $deTai->MaHocKy;
+        abort_unless($maHocKy && (!$deTai->MaHocKy || $maHocKy === $deTai->MaHocKy), 422, 'Hồ sơ không khớp học kỳ của đề tài.');
 
-        $deTai = $hoSo->nhom?->deTai;
-        $maDeTai = $hoSo->MaDeTai ?? $hoSo->nhom?->MaDeTai ?? $deTai?->MaDeTai ?? \App\Models\DeTai::value('MaDeTai');
-
-        $activeHocKy = HocKy::where('TrangThai', true)->first() ?? HocKy::latest()->first();
-        $maHocKy = $hoSo->MaHocKy ?? ($activeHocKy?->MaHocKy ?? 'HK_DEF');
-
-        // Cập nhật LoaiKhoaLuan cho HoSoBaoVe nếu chưa có
-        if (empty($hoSo->LoaiKhoaLuan)) {
-            $hoSo->LoaiKhoaLuan = $request->LoaiKhoaLuan;
-            $hoSo->save();
-        }
-
-        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $isFinal, $trangThaiPhieu, $existingPhieu, $isEditingCompleted) {
+        DB::transaction(function () use ($request, $giangVien, $hoSo, $maDeTai, $maHocKy, $validStudentIds, $rubricMap, $functionalMaxima, $isFinal, $trangThaiPhieu, $existingPhieu, $isEditingCompleted) {
             $lockedHoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
             $lockedCouncil = HoiDong::with('thanhViens')->findOrFail($request->MaHoiDong);
             $reason = '';
             abort_unless($lockedCouncil->canGrade($giangVien, $lockedHoSo, $reason), 403, $reason);
             abort_if($lockedHoSo->TieuChiChucNang !== $hoSo->TieuChiChucNang, 409, 'Tiêu chí vừa thay đổi. Vui lòng tải lại phiếu trước khi lưu.');
+            if (!$lockedHoSo->LoaiKhoaLuan) {
+                $lockedHoSo->LoaiKhoaLuan = $request->LoaiKhoaLuan;
+                $lockedHoSo->save();
+            }
             foreach ($request->diems as $key => $diemData) {
                 // HTML field names use numeric student IDs as array keys, not row indexes.
                 $studentKey = (string) $key;
@@ -337,7 +340,21 @@ class ChamDiemController extends Controller
                     ? (is_array($diemData['ChiTietDiem']) ? $diemData['ChiTietDiem'] : json_decode($diemData['ChiTietDiem'], true))
                     : [];
 
-                $validatedChiTiet = [];
+                abort_unless(is_array($rawChiTiet), 422, 'Dữ liệu điểm chi tiết không hợp lệ.');
+                $functionalCents = [];
+                foreach ($rawChiTiet as $key => $value) {
+                    if (!str_starts_with((string) $key, 'tc7_') || $value === null || $value === '') continue;
+                    abort_unless($functionalMaxima->has($key) && is_scalar($value)
+                        && preg_match('/^\d+(?:[.,]\d{1,2})?$/', (string) $value), 422, "Điểm thành phần [$key] không hợp lệ.");
+                    $cents = (int) round((float) str_replace(',', '.', (string) $value) * 100);
+                    abort_if($cents > (int) round($functionalMaxima[$key] * 100), 422, "Điểm thành phần [$key] vượt điểm tối đa.");
+                    $functionalCents[$key] = $cents;
+                }
+                if ($functionalCents) {
+                    abort_if($mustBeComplete && count($functionalCents) !== $functionalMaxima->count(), 422, 'Cần chấm đủ các yêu cầu trước khi chốt.');
+                    $rawChiTiet['tc7'] = array_sum($functionalCents) / 100;
+                }
+                $validatedChiTiet = array_map(fn ($cents) => $cents / 100, $functionalCents);
                 $tongDiemCoBan = 0.0;
                 $diemKhuyenKhich = 0.0;
 
@@ -367,17 +384,6 @@ class ChamDiemController extends Controller
                         }
                     } else {
                         $validatedChiTiet[$cId] = 0.0;
-                    }
-                }
-
-                // Lưu thêm và validate các điểm chi tiết của từng yêu cầu chức năng (tc7_*)
-                foreach ($rawChiTiet as $subKey => $subVal) {
-                    if (str_starts_with($subKey, 'tc7_')) {
-                        $subFloat = floatval($subVal);
-                        if ($subFloat < 0) {
-                            abort(422, "Điểm thành phần [{$subKey}] của sinh viên [{$maSV}] không được là số âm ({$subFloat}đ).");
-                        }
-                        $validatedChiTiet[$subKey] = round($subFloat, 2);
                     }
                 }
 
@@ -467,6 +473,8 @@ class ChamDiemController extends Controller
                         'DiemKhuyenKhich' => $diemKhuyenKhich,
                         'LoaiKhoaLuan'    => $request->LoaiKhoaLuan,
                         'ChiTietDiem'     => $validatedChiTiet,
+                        'PhienBanTieuChi'  => $existingStudentPhieu?->PhienBanTieuChi ?? $lockedHoSo->PhienBanTieuChi,
+                        'TieuChiSnapshot'  => $existingStudentPhieu?->TieuChiSnapshot ?? $lockedHoSo->TieuChiChucNang,
                         'NhanXet'         => $nhanXet,
                         'TrangThai'       => $keepConfirmed ? 'Đã hoàn thành' : $trangThaiPhieu,
                         'NgayXacNhan'     => $keepConfirmed ? $existingStudentPhieu->NgayXacNhan : ($isFinal ? now() : null),
@@ -573,12 +581,21 @@ class ChamDiemController extends Controller
         $loaiKhoaLuan = $hoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
         $maxCap = PhieuChamDiem::getMaxDiemChucNang($loaiKhoaLuan);
 
+        try {
+            PhieuChamDiem::parseFunctionalRequirements($request->TieuChiChucNang, $loaiKhoaLuan);
+        } catch (\InvalidArgumentException $error) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['TieuChiChucNang'=>$error->getMessage()]);
+        }
+
         // Serialize preparation with score saving on the same dossier.
         DB::transaction(function () use ($hoSo, $request, $giangVien) {
             $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
             abort_if($hoSo->gradingHasStarted(), 409, 'Đã có giảng viên lưu điểm. Không thể thay đổi thông tin hoặc tiêu chí phiếu chấm.');
             // Chuẩn hóa và lưu nội dung tiêu chí chức năng
             $rawText = trim($request->TieuChiChucNang ?? '');
+            if ($hoSo->TieuChiChucNang !== $rawText) {
+                $hoSo->PhienBanTieuChi = (int) $hoSo->PhienBanTieuChi + 1;
+            }
             $hoSo->TieuChiChucNang = $rawText;
             $hoSo->TrangThaiChuanBiPhieu = 'DaChuanBi';
             $hoSo->NguoiChuanBiPhieu = $giangVien->MaGV;
@@ -794,6 +811,9 @@ class ChamDiemController extends Controller
 
         $activeHoiDong = HoiDong::with(['thanhViens.giangVien', 'khoa'])->findOrFail($request->MaHoiDong);
         $activeHoSo = HoSoBaoVe::with(['nhom.thanhViens.sinhVien.lop', 'nhom.deTai.giangVien'])->findOrFail($request->MaHoSo);
+        abort_unless($activeHoSo->MaHoiDong === $activeHoiDong->MaHoiDong
+            && ($activeHoiDong->thanhViens->contains('MaGV', $giangVien->MaGV)
+                || $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin()), 403);
 
         // Chỉ cho phép xuất phiếu khi đã có thông tin chi tiết mục 6 (Cài đặt chức năng theo yêu cầu bài toán)
         if (empty(trim($activeHoSo->TieuChiChucNang ?? ''))) {
@@ -808,7 +828,7 @@ class ChamDiemController extends Controller
         $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
         $gvhdHoTen = $activeDeTai?->giangVien?->HoTen ?? 'Chưa phân công';
 
-        $loaiKhoaLuan = $activeHoSo->LoaiKhoaLuan ?? 'KLCN';
+        $loaiKhoaLuan = $activeHoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
         $customChucNang = $activeHoSo->TieuChiChucNang;
 
         $rubric = ($loaiKhoaLuan === 'KLKS') 
@@ -882,6 +902,9 @@ class ChamDiemController extends Controller
 
         $activeHoiDong = HoiDong::with(['thanhViens.giangVien', 'khoa'])->findOrFail($request->MaHoiDong);
         $activeHoSo = HoSoBaoVe::with(['nhom.thanhViens.sinhVien.lop', 'nhom.deTai.giangVien'])->findOrFail($request->MaHoSo);
+        abort_unless($activeHoSo->MaHoiDong === $activeHoiDong->MaHoiDong
+            && ($activeHoiDong->thanhViens->contains('MaGV', $giangVien->MaGV)
+                || $user->isTruongKhoa() || $user->isGiaoVu() || $user->isAdmin()), 403);
 
         // Chỉ cho phép xuất phiếu khi đã có thông tin chi tiết mục 6 (Cài đặt chức năng theo yêu cầu bài toán)
         if (empty(trim($activeHoSo->TieuChiChucNang ?? ''))) {
@@ -896,7 +919,7 @@ class ChamDiemController extends Controller
         $vaiTroGV = $tvRecord?->VaiTro ?? 'Thành viên Hội đồng';
         $gvhdHoTen = $activeDeTai?->giangVien?->HoTen ?? 'Chưa phân công';
 
-        $loaiKhoaLuan = $activeHoSo->LoaiKhoaLuan ?? 'KLCN';
+        $loaiKhoaLuan = $activeHoSo->xacDinhLoaiKhoaLuan() ?? 'KLCN';
         $customChucNang = $activeHoSo->TieuChiChucNang;
 
         $diemDaCham = PhieuChamDiem::where('MaHoiDong', $activeHoiDong->MaHoiDong)

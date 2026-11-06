@@ -182,7 +182,7 @@ class AiReportProcessingService
 
             $state = [
                 'token' => (string) Str::uuid(),
-                'fingerprint' => $this->fingerprint($locked),
+                'fingerprint' => $current['fingerprint'] ?? null,
                 'status' => $pause ? 'paused' : 'cancelled',
                 'last_progress' => $lastProgress,
                 'history' => $pause ? array_slice(array_merge($current['history'] ?? [], [

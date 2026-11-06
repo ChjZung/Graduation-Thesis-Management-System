@@ -14,15 +14,24 @@
             const round = form.querySelector('[name="DotBaoVe"]');
             const council = form.querySelector('[name="MaHoiDong"]');
             const button = form.querySelector('[type="submit"]');
+            const previewButton = form.querySelector('[data-clo-preview]');
+            const format = form.elements.format;
             function updateSummary() {
-                button.disabled = !semester.value || !major.value;
+                if (previewButton) previewButton.disabled = !semester.value || !major.value;
+                const school = format.value === 'xlsx_school';
+                const needsCouncil = school && form.dataset.councilMember === '1';
+                button.disabled = !semester.value || !major.value || (needsCouncil && !council.value);
+                if (needsCouncil && semester.value && major.value && !council.value) {
+                    form.querySelector('[data-scope-summary]').textContent = 'Chọn hội đồng bạn tham gia.';
+                    return;
+                }
                 form.querySelector('[data-scope-summary]').textContent = button.disabled
                     ? 'Chọn học kỳ và ngành đào tạo trước.'
                     : 'Phạm vi xuất: ' + (council.value ? council.selectedOptions[0].textContent
                         : round.value ? 'Toàn ngành trong ' + round.value : 'Toàn ngành trong học kỳ đã chọn') + '.';
             }
             function updateCouncils(initial = false) {
-                const previous = initial ? form.dataset.selectedCouncil : council.value;
+                const previous = initial ? form.dataset.selectedCouncil : council.value || form.dataset.selectedCouncil;
                 council.replaceChildren(new Option('Không chọn hội đồng riêng', ''));
                 const rows = options.filter(o => o.semester === semester.value && o.major === major.value && (!round.value || o.round === round.value) && o.council);
                 const seen = new Set();
@@ -47,13 +56,21 @@
             major.addEventListener('change', () => update());
             round.addEventListener('change', () => updateCouncils());
             council.addEventListener('change', updateSummary);
+            format.addEventListener('change', updateSummary);
+            if (!major.value && form.dataset.selectedCouncil) {
+                const choices = [...new Set(options.filter(o => o.semester === semester.value && o.council === form.dataset.selectedCouncil).map(o => o.major))];
+                if (choices.length === 1) major.value = choices[0];
+            }
             update(true);
             form.addEventListener('submit', async event => {
                 event.preventDefault();
-                if (!form.reportValidity() || button.disabled) return;
-                const oldLabel = button.textContent;
+                const preview = previewButton && event.submitter === previewButton;
+                if (!form.reportValidity() || (preview ? previewButton.disabled : button.disabled)) return;
+                const trigger = event.submitter || button;
+                const oldLabel = trigger.textContent;
                 button.disabled = true;
-                button.textContent = 'Đang xuất báo cáo…';
+                if (previewButton) previewButton.disabled = true;
+                trigger.textContent = preview ? 'Đang tải báo cáo…' : 'Đang xuất báo cáo…';
                 const notice = document.createElement('div');
                 notice.className = 'col-12';
                 notice.setAttribute('role', 'status');
@@ -63,10 +80,19 @@
                 try {
                     const url = new URL(form.action, location.href);
                     url.search = new URLSearchParams(new FormData(form)).toString();
+                    if (preview) url.searchParams.set('format', 'preview');
                     const response = await fetch(url, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
                     if (!response.ok) {
                         const detail = await response.json().catch(() => ({}));
                         throw new Error(Object.values(detail.errors || {}).flat().join(' ') || detail.message || 'Không xuất được báo cáo. Vui lòng thử lại.');
+                    }
+                    if (preview) {
+                        const html = await response.text();
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+                        const report = doc.querySelector('[data-weighted-report]');
+                        if (!report) throw new Error('Không tải được dữ liệu báo cáo.');
+                        notice.replaceChildren(report);
+                        return;
                     }
                     const blob = await response.blob();
                     if (!/application\/(pdf|vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet)/i.test(blob.type)) throw new Error('Phiên đăng nhập có thể đã hết hạn. Vui lòng tải lại trang.');
@@ -84,7 +110,7 @@
                     notice.setAttribute('role', 'alert');
                     notice.textContent = error.message;
                 } finally {
-                    button.textContent = oldLabel;
+                    trigger.textContent = oldLabel;
                     updateSummary();
                 }
             });
@@ -126,7 +152,7 @@
         const current = new URL(location.href);
         if (current.searchParams.get('clo_export') === '1') {
             const url = new URL(selectionUrl);
-            ['MaHocKy', 'MaNganh', 'DotBaoVe', 'MaHoiDong', 'loai', 'format'].forEach(key => {
+            ['MaHocKy', 'MaNganh', 'DotBaoVe', 'MaHoiDong', 'MaHocPhan', 'MaLop', 'MaSV', 'loai', 'format'].forEach(key => {
                 if (current.searchParams.has(key)) url.searchParams.set(key, current.searchParams.get(key));
             });
             current.searchParams.delete('clo_export');
