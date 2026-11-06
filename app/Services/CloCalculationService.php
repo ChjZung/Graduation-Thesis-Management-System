@@ -11,6 +11,50 @@ use Illuminate\Support\Collection;
 
 class CloCalculationService
 {
+    public static function auditSchoolScores(array $examiners, bool $engineer): array
+    {
+        $judges = array_map(fn ($key) => $examiners[$key] ?? [], ['GV1', 'GV2', 'GV3']);
+        $criteria = [];
+        $clo = [];
+        $judgeTotals = [0, 0, 0];
+        foreach (CloSchoolWorkbook::criteria($engineer) as [$label, $code, $plo, $max, $items]) {
+            $scores = [];
+            foreach ($judges as $i => $judge) {
+                $scores[$i] = !empty($judge['isFinal']) ? CloSchoolWorkbook::score($judge['chiTietDiem'] ?? [], $items) : null;
+                $judgeTotals[$i] = $judgeTotals[$i] === null || $scores[$i] === null ? null : $judgeTotals[$i] + $scores[$i];
+            }
+            $average = in_array(null, $scores, true) ? null : array_sum($scores) / 3;
+            $weight = $max / 10;
+            $normalized = $average === null ? null : $average * 10 / $max;
+            $weighted = $normalized === null ? null : $normalized * $weight;
+            $group = 'CLO'.(int) $code;
+            $clo[$group] ??= ['weight' => 0, 'weighted' => 0, 'plo' => $plo];
+            $clo[$group]['weight'] += $weight;
+            $subtotal = $clo[$group]['weighted'];
+            $clo[$group]['weighted'] = $weighted === null || $subtotal === null ? null : $subtotal + $weighted;
+            $criteria[] = compact('label', 'code', 'max', 'scores', 'average', 'weight', 'normalized', 'weighted');
+        }
+        ksort($clo);
+        foreach ($clo as &$group) {
+            $group['score'] = $group['weighted'] === null ? null : $group['weighted'] / $group['weight'];
+        }
+        unset($group);
+        if ($engineer) {
+            foreach ($judgeTotals as $i => &$total) {
+                $bonus = $judges[$i]['chiTietDiem']['tc14'] ?? null;
+                if ($total !== null) {
+                    $total = min(10, $total + (is_numeric($bonus) && $bonus >= 0 && $bonus <= 1 ? (float) $bonus : 0));
+                }
+            }
+            unset($total);
+        }
+        $complete = count($examiners) === 3 && !in_array(null, $judgeTotals, true);
+        $final = $complete ? array_sum($judgeTotals) / 3 : null;
+        $passed = $complete ? min(array_column($clo, 'score')) >= self::PASSING_THRESHOLD : null;
+
+        return compact('criteria', 'clo', 'judgeTotals', 'complete', 'final', 'passed');
+    }
+
     /**
      * Ngưỡng đạt chuẩn đầu ra CLO theo quy định Khoa CNTT - HUIT (thang điểm 10.0)
      */
@@ -272,70 +316,40 @@ class CloCalculationService
         }
         unset($ex);
 
-        // BƯỚC 2: TÍNH ĐIỂM TRUNG BÌNH CLO TỪ CẢ 3 GIẢNG VIÊN
-        // Công thức: Điểm CLO trung bình = (Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3) / 3
-        $cloScores = [];
-        $allPassed = true;
+        $audit = self::auditSchoolScores($examinerData, $loaiKhoaLuan === 'KLKS');
+        $isOfficial = $audit['complete'];
+        $allPassed = $audit['passed'] === true;
         $passedCount = 0;
-        $totalCloCount = count($cloGroups);
-
-        foreach ($cloGroups as $code => $g) {
+        $cloScores = [];
+        $totalCloCount = count($audit['clo']);
+        foreach ($audit['clo'] as $code => $group) {
+            $value = $group['score'];
+            $pass = $value !== null && $value >= self::PASSING_THRESHOLD;
+            $passedCount += (int) $pass;
             $gvScores = [];
-            $gvScoreValues = [];
-            $formulaParts = [];
-
-            foreach (['GV1', 'GV2', 'GV3'] as $gvLabel) {
-                $ex = $examinerData[$gvLabel] ?? null;
-                $scObj = $ex ? ($ex['cloScores'][$code] ?? null) : null;
-                $val = ($scObj !== null && isset($scObj['score'])) ? (float)$scObj['score'] : null;
-
-                $gvScores[$gvLabel] = [
-                    'hoTen'   => $ex['hoTen'] ?? $gvLabel,
-                    'vaiTro'  => $ex['vaiTro'] ?? '',
-                    'isFinal' => $ex['isFinal'] ?? false,
-                    'score'   => $val,
+            foreach (['GV1', 'GV2', 'GV3'] as $label) {
+                $examiner = $examinerData[$label] ?? [];
+                $gvScores[$label] = [
+                    'hoTen' => $examiner['hoTen'] ?? $label,
+                    'vaiTro' => $examiner['vaiTro'] ?? '',
+                    'isFinal' => $examiner['isFinal'] ?? false,
+                    'score' => $examiner['cloScores'][$code]['score'] ?? null,
                 ];
-
-                if ($val !== null && ($ex['isFinal'] || !$isOfficial)) {
-                    $gvScoreValues[] = $val;
-                    $formulaParts[] = number_format($val, 2);
-                }
             }
-
-            // Tính điểm trung bình CLO theo 3 giảng viên
-            if ($isOfficial) {
-                // Đủ 3 phiếu: Chia chính xác cho 3
-                $avgClo = !empty($gvScoreValues) ? round(array_sum($gvScoreValues) / 3, 2) : 0.0;
-                $formula = "(" . implode(' + ', $formulaParts) . ") / 3 = " . number_format($avgClo, 2);
-            } else {
-                // Chưa đủ 3 phiếu: Thông báo rõ ràng và hiển thị điểm sơ bộ
-                $cnt = count($gvScoreValues);
-                $avgClo = ($cnt > 0) ? round(array_sum($gvScoreValues) / $cnt, 2) : 0.0;
-                $formula = ($cnt > 0)
-                    ? "(" . implode(' + ', $formulaParts) . ") / {$cnt} = " . number_format($avgClo, 2) . " (Sơ bộ - Chưa đủ 3 phiếu)"
-                    : "Chưa đủ dữ liệu chấm điểm từ 3 giảng viên";
-            }
-
-            $isPass = ($avgClo >= self::PASSING_THRESHOLD);
-            if ($isPass) {
-                $passedCount++;
-            } else {
-                $allPassed = false;
-            }
-
             $cloScores[$code] = [
-                'clo'         => $code,
-                'name'        => $g['name'],
-                'plo'         => $g['plo'],
-                'max_sum'     => $g['max_sum'],
-                'gv1'         => $gvScores['GV1']['score'] ?? null,
-                'gv2'         => $gvScores['GV2']['score'] ?? null,
-                'gv3'         => $gvScores['GV3']['score'] ?? null,
-                'gvScores'    => $gvScores,
-                'score'       => $avgClo, // ĐIỂM TRUNG BÌNH CỦA CẢ 3 GIẢNG VIÊN (DỮ LIỆU CHÍNH THỨC)
-                'passed'      => $isPass,
-                'status'      => $isPass ? 'Đạt' : 'Chưa đạt',
-                'formula'     => $formula,
+                'clo' => $code,
+                'name' => $cloGroups[$code]['name'],
+                'plo' => $group['plo'],
+                'max_sum' => $group['weight'] * 10,
+                'gv1' => $gvScores['GV1']['score'],
+                'gv2' => $gvScores['GV2']['score'],
+                'gv3' => $gvScores['GV3']['score'],
+                'gvScores' => $gvScores,
+                'score' => $value,
+                'passed' => $pass,
+                'status' => $value === null ? 'Chưa đủ dữ liệu' : ($pass ? 'Đạt' : 'Chưa đạt'),
+                'formula' => $value === null ? 'Chưa đủ dữ liệu'
+                    : sprintf('%.6g / %.6g = %.2f', $group['weighted'], $group['weight'], $value),
             ];
         }
 
@@ -362,6 +376,7 @@ class CloCalculationService
             'is_official'          => $isOfficial,
             'completed_examiners'  => $completedCount,
             'examinerData'         => $examinerData,
+            'audit'                => $audit,
             'examiners'            => $examinersList,
             'critAverages'         => $critAverages,
             'critFormulas'         => $critFormulas,
@@ -465,12 +480,7 @@ class CloCalculationService
                 $ten = !empty($hoTenParts) ? array_pop($hoTenParts) : '';
                 $ho = implode(' ', $hoTenParts);
 
-                // Điểm trung bình hội đồng (GPA)
-                $svPhieus = $allPhieuChams->where('MaSV', $sv->MaSV);
-                $compPhieus = $svPhieus->where('TrangThai', 'Đã hoàn thành');
-                $valPhieus = $compPhieus->isNotEmpty() ? $compPhieus : $svPhieus;
-                $finalScore = $valPhieus->isNotEmpty() ? round((float)$valPhieus->avg('Diem'), 2) : 0.0;
-                if ($finalScore > 10.0) $finalScore = 10.0;
+                $finalScore = $cloResult['audit']['final'];
 
                 // Lưu kết quả CLO vào DB nếu đã có dữ liệu hợp lệ
                 $hocKy = $hoiDong->hocKy ?? HocKy::where('TrangThai', true)->first();
@@ -491,6 +501,7 @@ class CloCalculationService
                     'is_official'         => $cloResult['is_official'],
                     'completed_examiners' => $cloResult['completed_examiners'],
                     'examinerData'        => $cloResult['examinerData'],
+                    'audit'               => $cloResult['audit'],
                     'examiners'           => $cloResult['examiners'],
                     'critAverages'        => $cloResult['critAverages'],
                     'critFormulas'        => $cloResult['critFormulas'],
@@ -498,7 +509,7 @@ class CloCalculationService
                     'allPassed'           => $cloResult['all_clo_passed'],
                     'allCloPassed'        => $cloResult['all_clo_passed'],
                     'all_clo_passed'      => $cloResult['all_clo_passed'],
-                    'status_label'        => $cloResult['all_clo_passed'] ? 'Đạt' : 'Chưa đạt',
+                    'status_label'        => !$cloResult['is_official'] ? 'Chưa đủ dữ liệu' : ($cloResult['all_clo_passed'] ? 'Đạt' : 'Chưa đạt'),
                     'clo_pass_rate'       => $cloResult['clo_pass_rate'],
                     'finalScore'          => $finalScore,
                     'summary_for_db'      => $cloResult['summary_for_db'],

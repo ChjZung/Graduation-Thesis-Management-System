@@ -315,6 +315,11 @@
     @include('thongke_baocao.partials.filter_bar')
 
     <!-- ═══ 2. BỘ CHỌN BIỂU MẪU BÁO CÁO (10 MẪU CHUẨN) ═══ -->
+    <div class="mb-3">
+        <a class="btn btn-outline-success" href="{{ route('clo.reports.index', ['format' => 'xlsx_school', 'loai' => 'KLCN'] + request()->only(['MaHocKy', 'MaNganh', 'DotBaoVe', 'MaHoiDong', 'MaHocPhan'])) }}">
+            <i class="fa-solid fa-file-excel me-1" aria-hidden="true"></i> Xem và xuất báo cáo CĐR/CLO
+        </a>
+    </div>
     @include('thongke_baocao.partials.template_selector')
 
     <!-- ═══ 3. 10 THẺ CHỈ SỐ KPI TỔNG HỢP ═══ -->

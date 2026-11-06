@@ -45,7 +45,7 @@ class CloRoundReportService
 
     public function councils(string $semester, ?string $round, string $major, ?string $councilId = null)
     {
-        return HoiDong::with(['hocKy', 'khoa', 'thanhViens.giangVien', 'hoSoBaoVes.nhom.deTai.hocPhan',
+        return HoiDong::with(['hocKy', 'khoa', 'thanhViens.giangVien', 'hoSoBaoVes.nhom.deTai.hocPhan', 'hoSoBaoVes.nhom.deTai.giangVien',
             'hoSoBaoVes.nhom.thanhViens.sinhVien.lop.nganh', 'hoSoBaoVes.nhom.thanhViens.sinhVien.nganh'])
             ->where('MaHocKy', $semester)
             ->when(filled($round), fn ($q) => $q->where('DotBaoVe', $round))
@@ -54,7 +54,7 @@ class CloRoundReportService
             ->orderBy('MaHoiDong')->get();
     }
 
-    public function prepare(TaiKhoan $user, string $semester, ?string $round, string $major, string $kind, ?string $councilId = null): array
+    public function prepare(TaiKhoan $user, string $semester, ?string $round, string $major, string $kind, ?string $councilId = null, array $filters = [], bool $preview = false): array
     {
         $nganh = $this->allowedMajors($user)->where('MaNganh', $major)->first();
         abort_unless($nganh, 403, 'Không có quyền xuất báo cáo ngành này.');
@@ -75,10 +75,12 @@ class CloRoundReportService
         $service = app(CloCalculationService::class);
         $results = []; $students = [];
         foreach ($councils as $council) {
-            $dossiers = $council->hoSoBaoVes->filter(function ($hs) use ($major) {
+            $dossiers = $council->hoSoBaoVes->filter(function ($hs) use ($major, $filters) {
                 $group = $hs->nhom;
-                if (!$group) return false;
-                $members = $group->thanhViens->filter(fn ($member) => self::studentMajor($member->sinhVien) === $major)->values();
+                if (!$group || (filled($filters['MaHocPhan'] ?? null) && $group->deTai?->MaHocPhan !== $filters['MaHocPhan'])) return false;
+                $members = $group->thanhViens->filter(fn ($member) => self::studentMajor($member->sinhVien) === $major
+                    && (blank($filters['MaLop'] ?? null) || $member->sinhVien?->MaLop === $filters['MaLop'])
+                    && (blank($filters['MaSV'] ?? null) || $member->sinhVien?->MaSV === $filters['MaSV']))->values();
                 if ($members->isEmpty()) return false;
                 // Mixed-major groups: only selected students enter completeness checks and every export sheet.
                 $group->setRelation('thanhViens', $members);
@@ -92,12 +94,13 @@ class CloRoundReportService
             if ($dossiers->isEmpty()) continue;
             $council->setRelation('hoSoBaoVes', $dossiers);
             $check = $service->kiemTraDu3PhieuCham($council);
-            if (!$check['du_3_phieu']) throw ValidationException::withMessages(['report' => $council->TenHoiDong.': '.$check['message']]);
+            if (!$preview && !$check['du_3_phieu']) throw ValidationException::withMessages(['report' => $council->TenHoiDong.': '.$check['message']]);
             $data = $service->calculateCouncilClo($council, $kind, false);
             foreach ($data['students'] as $student) {
-                if (!$student['is_official']) throw ValidationException::withMessages(['report' => $council->TenHoiDong.': cần đúng 3 giám khảo có phiếu chấm hoàn thành để xuất CLO chính thức.']);
+                if (!$preview && !$student['is_official']) throw ValidationException::withMessages(['report' => $council->TenHoiDong.': cần đúng 3 giám khảo có phiếu chấm hoàn thành để xuất CLO chính thức.']);
                 if (isset($students[$student['maSV']])) throw ValidationException::withMessages(['report' => "Sinh viên {$student['maSV']} xuất hiện ở nhiều hội đồng. Cần kiểm tra phân công trước khi xuất."]);
                 $student['maHoiDong'] = $council->MaHoiDong;
+                $student['tenHoiDong'] = $council->TenHoiDong;
                 $students[$student['maSV']] = $student;
             }
             $results[] = $data;

@@ -21,6 +21,8 @@ class PhieuChamDiem extends Model
         'NgayCham',
         'NhanXet',
         'ChiTietDiem',
+        'PhienBanTieuChi',
+        'TieuChiSnapshot',
         'MaDeTai',
         'MaHoiDong',
         'MaGV',
@@ -72,6 +74,52 @@ class PhieuChamDiem extends Model
             $scores[] = round($cents / 100, 2);
         }
         return $scores;
+    }
+
+    private static function functionalScores(float $cap, array $items, bool $strict = false): array
+    {
+        $manual = array_column($items, 'manual');
+        $automatic = count(array_filter($manual, fn ($score) => $score === null));
+        if (!$strict && $automatic === count($items)) return self::distributeScores($cap, $automatic);
+
+        $remaining = (int) round($cap * 100) - array_sum($manual);
+        if ($remaining < $automatic || $remaining > $automatic * 50) {
+            throw new \InvalidArgumentException('Tổng điểm phải bằng trần của mẫu. Các dòng chưa đặt điểm cần còn đủ từ 0,01 đến 0,50 điểm mỗi dòng.');
+        }
+        $step = ($remaining % 5 === 0 && $remaining >= $automatic * 5) ? 5 : 1;
+        $scores = self::distributeScores($remaining / (100 * $step), $automatic);
+        $index = 0;
+        return array_map(function ($score) use ($scores, $step, &$index) {
+            return $score !== null ? $score / 100 : round($scores[$index++] * $step, 2);
+        }, $manual);
+    }
+
+    private static function groupedFunctionalScores(float $cap, array $items): array
+    {
+        $buckets = [];
+        $remaining = (int) round($cap * 100);
+        foreach ($items as $index => $item) {
+            $key = $item['group_cap'] === null ? 'automatic' : $item['group_index'];
+            $buckets[$key][$index] = $item;
+        }
+        if (!$buckets || array_keys($buckets) === ['automatic']) return self::functionalScores($cap, $items);
+
+        $scores = [];
+        foreach ($buckets as $key => $bucket) {
+            if ($key === 'automatic') continue;
+            $groupCap = reset($bucket)['group_cap'];
+            $remaining -= $groupCap;
+            $scores += array_combine(array_keys($bucket), self::functionalScores($groupCap / 100, array_values($bucket), true));
+        }
+        if ($remaining < 0 || ($remaining > 0 && !isset($buckets['automatic']))) {
+            throw new \InvalidArgumentException('Tổng điểm các chức năng lớn phải khớp với trần của mẫu.');
+        }
+        if (isset($buckets['automatic'])) {
+            $bucket = $buckets['automatic'];
+            $scores += array_combine(array_keys($bucket), self::functionalScores($remaining / 100, array_values($bucket), true));
+        }
+        ksort($scores);
+        return array_values($scores);
     }
 
     public $timestamps = true;
@@ -392,6 +440,33 @@ class PhieuChamDiem extends Model
                 $trimmed = trim($rawLine);
                 if ($trimmed === '') continue;
 
+                $manualCents = null;
+                if (preg_match('/\s*\[điểm\s*:\s*([^\]]*)\]\s*$/iu', $trimmed, $scoreMatch)) {
+                    if (!preg_match('/^\d{1,2}(?:[.,]\d{1,2})?$/', trim($scoreMatch[1]))) {
+                        throw new \InvalidArgumentException('Điểm yêu cầu phải có dạng [điểm: 0,25].');
+                    }
+                    $manualCents = (int) round((float) str_replace(',', '.', trim($scoreMatch[1])) * 100);
+                    if ($manualCents < 1 || $manualCents > 50) {
+                        throw new \InvalidArgumentException('Điểm mỗi yêu cầu phải từ 0,01 đến 0,50.');
+                    }
+                    $trimmed = trim(substr($trimmed, 0, -strlen($scoreMatch[0])));
+                    if ($trimmed === '') throw new \InvalidArgumentException('Điểm phải đặt sau nội dung yêu cầu.');
+                } elseif (preg_match('/\[điểm\s*:/iu', $trimmed)) {
+                    throw new \InvalidArgumentException('Điểm yêu cầu phải đặt cuối dòng theo dạng [điểm: 0,25].');
+                }
+
+                $groupCap = $groupClo = null;
+                if (preg_match('/\s*\[nhóm\s*:\s*(\d{1,2}(?:[.,]\d{1,2})?)?\s*\|\s*(CLO\d+(?:\.\d+)?)\s*\]\s*$/iu', $trimmed, $groupMatch)) {
+                    $groupCap = $groupMatch[1] === '' ? null : (int) round((float) str_replace(',', '.', $groupMatch[1]) * 100);
+                    if ($groupCap !== null && ($groupCap < 1 || $groupCap > (int) round($targetScore * 100))) {
+                        throw new \InvalidArgumentException('Điểm chức năng lớn phải dương và trong trần mẫu.');
+                    }
+                    $groupClo = strtoupper($groupMatch[2]);
+                    $trimmed = trim(substr($trimmed, 0, -strlen($groupMatch[0])));
+                } elseif (preg_match('/\[nhóm\s*:/iu', $trimmed)) {
+                    throw new \InvalidArgumentException('Nhập thông tin nhóm theo dạng [nhóm: 0,75 | CLO3].');
+                }
+
                 // Kiểm tra thụt lề
                 $isIndented = (bool) preg_match('/^(\t|\s{2,})/', $rawLine);
                 $isExplicitGroup = (bool) preg_match('/^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/iu', $trimmed);
@@ -414,9 +489,11 @@ class PhieuChamDiem extends Model
                     $groups[] = [
                         'name'  => $cleanName,
                         'items' => [],
+                        'manual' => $manualCents, 'cap'=>$groupCap, 'clo'=>$groupClo,
                     ];
                     $currentGroupKey = array_key_last($groups);
                 } else {
+                    if ($groupClo !== null) throw new \InvalidArgumentException('CLO và điểm nhóm chỉ đặt ở chức năng lớn.');
                     $cleanItem = trim(preg_replace('/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/iu', '', $trimmed));
                     $cleanItem = trim(preg_replace('/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/iu', '', $cleanItem));
 
@@ -429,28 +506,34 @@ class PhieuChamDiem extends Model
                             ];
                             $currentGroupKey = array_key_last($groups);
                         }
-                        $groups[$currentGroupKey]['items'][] = $cleanItem;
+                        $groups[$currentGroupKey]['items'][] = ['label'=>$cleanItem, 'manual'=>$manualCents];
                     }
                 }
             }
 
             // Nhóm không có yêu cầu con thì tự coi nhóm đó là một yêu cầu
             $parsedItems = [];
-            foreach ($groups as $g) {
+            foreach ($groups as $groupIndex => $g) {
                 $grpName = $g['name'];
                 if (empty($g['items'])) {
                     $parsedItems[] = [
                         'group'     => $isKLKS ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
                         'label'     => $grpName,
                         'is_co_ban' => (stripos($grpName, 'cơ bản') !== false),
+                        'manual'    => $g['manual'] ?? null,
+                            'group_index'=>$groupIndex, 'group_cap'=>$g['cap'] ?? null, 'clo'=>$g['clo'] ?? 'CLO3',
                     ];
                 } else {
-                    foreach ($g['items'] as $label) {
+                    if (isset($g['manual'])) throw new \InvalidArgumentException('Đặt điểm ở từng yêu cầu con, sau nội dung yêu cầu.');
+                    foreach ($g['items'] as $entry) {
+                        $label = $entry['label'];
                         $isCoBan = (stripos($grpName, 'cơ bản') !== false || (stripos($label, 'cơ bản') !== false && stripos($label, 'đăng nhập') !== false));
                         $parsedItems[] = [
                             'group'     => $grpName,
                             'label'     => $label,
                             'is_co_ban' => $isCoBan,
+                            'manual'    => $entry['manual'],
+                            'group_index'=>$groupIndex, 'group_cap'=>$g['cap'] ?? null, 'clo'=>$g['clo'] ?? 'CLO3',
                         ];
                     }
                 }
@@ -459,13 +542,13 @@ class PhieuChamDiem extends Model
             if (!empty($parsedItems)) {
                 if ($isKLKS) {
                     // KLKS: Tổng toàn bộ yêu cầu = 4.00đ
-                    $scores = self::distributeScores($targetScore, count($parsedItems));
+                    $scores = self::groupedFunctionalScores($targetScore, $parsedItems);
                     $reqIndex = 1;
                     foreach ($parsedItems as $idx => $item) {
                         $requirements[] = [
                             'id'        => 'tc7_yc_' . $reqIndex,
                             'group'     => $item['group'],
-                            'label'     => $item['label'],
+                            'label'     => $item['label'], 'clo'=>$item['clo'],
                             'max'       => $scores[$idx] ?? 0.50,
                             'is_co_ban' => $item['is_co_ban'],
                         ];
@@ -478,6 +561,9 @@ class PhieuChamDiem extends Model
 
                     foreach ($parsedItems as $item) {
                         if ($item['is_co_ban'] && !$coBanItem) {
+                            if ($item['manual'] !== null && $item['manual'] !== 50) {
+                                throw new \InvalidArgumentException('Mục chức năng cơ bản của mẫu Cử nhân có mức cố định 0,50 điểm.');
+                            }
                             $coBanItem = $item;
                         } else {
                             $problemItems[] = $item;
@@ -493,13 +579,13 @@ class PhieuChamDiem extends Model
                         'is_co_ban' => true,
                     ];
 
-                    $scores = self::distributeScores($targetScore, count($problemItems));
+                    $scores = self::groupedFunctionalScores($targetScore, $problemItems);
                     $reqIndex = 1;
                     foreach ($problemItems as $idx => $item) {
                         $requirements[] = [
                             'id'        => 'tc7_yc_' . $reqIndex,
                             'group'     => $item['group'],
-                            'label'     => $item['label'],
+                            'label'     => $item['label'], 'clo'=>$item['clo'],
                             'max'       => $scores[$idx] ?? 0.50,
                             'is_co_ban' => false,
                         ];

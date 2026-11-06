@@ -1,5 +1,15 @@
 @push('styles')
 <style>
+    #rubricSampleDialog { width: min(38rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); }
+    #rubricSampleDialog::backdrop { background: rgba(15, 23, 42, .35); }
+    @media (prefers-reduced-motion: no-preference) {
+        #rubricSampleDialog[open] { animation: rubric-sample-in .16s ease-out; }
+        @keyframes rubric-sample-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    }
+
 @media print {
     /* 1. Ẩn hoàn toàn tất cả thành phần giao diện web */
     body, html {
@@ -679,10 +689,10 @@ input[type=number],
             </button>
 
             <!-- Nút Xuất Báo Cáo Tổng Hợp CLO (Excel) -->
-            <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}"
+            <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan, 'format' => 'xlsx_school', 'MaHoiDong' => $activeHoiDong?->MaHoiDong, 'MaHocKy' => $activeHoiDong?->MaHocKy]) }}"
                class="btn btn-sm btn-success fw-semibold d-inline-flex align-items-center px-3 shadow-xs text-white"
                title="Xuất Báo cáo Excel tổng hợp kết quả chuẩn đầu ra (CLO) toàn Hội đồng theo mẫu chuẩn Khoa CNTT">
-                <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo Tổng Hợp CLO
+                <i class="fa-solid fa-file-excel me-1.5"></i> Xuất báo cáo tổng hợp CĐR/CLO
             </a>
 
             <!-- In & Xuất Phiếu Chuẩn Khoa CNTT -->
@@ -760,7 +770,7 @@ input[type=number],
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}">
+                        <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan, 'format' => 'xlsx_school', 'MaHoiDong' => $activeHoiDong?->MaHoiDong, 'MaHocKy' => $activeHoiDong?->MaHocKy]) }}">
                             <i class="fa-solid fa-file-excel text-success me-2.5 fs-5"></i>
                             <div>
                                 <div class="fw-bold">Xuất Báo Cáo Tổng Hợp CLO (.xlsx)</div>
@@ -1160,6 +1170,9 @@ input[type=number],
 
                                     {{-- Các ô chấm điểm từng yêu cầu (Tự động mở/đóng đồng bộ qua sub-req-collapse) --}}
                                     <div class="collapse show sub-req-collapse" id="subReqList_{{ $sv->MaSV }}">
+                                        <p class="small text-muted mb-1" id="remainingFunctional_{{ $sv->MaSV }}" aria-live="polite">
+                                            Còn {{ number_format(max(0, $cMax - (float) ($svChiTiet['tc7'] ?? 0)), 2, ',', '.') }} điểm
+                                        </p>
                                         <div class="d-flex flex-column mx-auto pt-1" style="max-width: 165px; gap: 6px;">
                                             @php $ycIndex = 1; @endphp
                                             @foreach($functionalRequirements as $req)
@@ -1171,10 +1184,10 @@ input[type=number],
                                             @endphp
                                             <div class="sub-req-group" title="{{ $isCB ? 'Chức năng cơ bản' : $req['label'] }} (Tối đa {{ number_format($req['max'], 2) }}đ)">
                                                 <span class="sub-req-tag">
-                                                    {{ $codeTag }}
+                                                    {{ $codeTag }} · {{ $req['clo'] ?? 'CLO3' }}
                                                 </span>
                                                 <input type="number"
-                                                       step="0.05"
+                                                       step="0.01"
                                                        min="0"
                                                        max="{{ $req['max'] }}"
                                                        name="diems[{{ $sv->MaSV }}][ChiTietDiem][{{ $subKey }}]"
@@ -1780,23 +1793,23 @@ input[type=number],
                     <div class="space-y-3" style="min-width: 0;">
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">1. Mục tiêu đề tài:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->MucTieu ?: ($activeDeTai?->ban_nhap_data['muc_tieu'] ?? 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.') }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{!! \App\Helpers\HtmlHelper::renderRichText($activeDeTai?->MucTieu ?: ($activeDeTai?->ban_nhap_data['muc_tieu'] ?? 'Thực hiện đầy đủ các mục tiêu trong đề cương được phê duyệt bởi Bộ môn.')) !!}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">2. Phạm vi thực hiện:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->PhamVi ?: ($activeDeTai?->ban_nhap_data['pham_vi'] ?? 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.') }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{!! \App\Helpers\HtmlHelper::renderRichText($activeDeTai?->PhamVi ?: ($activeDeTai?->ban_nhap_data['pham_vi'] ?? 'Phạm vi nghiên cứu, thiết kế và phát triển đồ án tốt nghiệp.')) !!}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">3. Mô tả &amp; Nội dung nghiên cứu:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->NoiDung ?: ($activeDeTai?->MoTa ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.') }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{!! \App\Helpers\HtmlHelper::renderRichText($activeDeTai?->NoiDung ?: ($activeDeTai?->MoTa ?: 'Khảo sát hiện trạng, phân tích yêu cầu nghiệp vụ, thiết kế kiến trúc hệ thống, cài đặt chức năng và thử nghiệm thực tế.')) !!}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">4. Yêu cầu bài toán &amp; Kỹ thuật:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->YeuCau ?: 'Thực hiện đầy đủ các yêu cầu theo phân công và hướng dẫn của cán bộ hướng dẫn.' }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{!! \App\Helpers\HtmlHelper::renderRichText($activeDeTai?->YeuCau ?: 'Thực hiện đầy đủ các yêu cầu theo phân công và hướng dẫn của cán bộ hướng dẫn.') !!}</div>
                         </div>
                         <div class="mb-3" style="min-width: 0;">
                             <label class="form-label small fw-bold text-secondary mb-1">5. Sản phẩm dự kiến:</label>
-                            <div class="p-2 bg-light rounded border small text-dark" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{{ $activeDeTai?->SanPhamDuKien ?: ($activeDeTai?->ban_nhap_data['san_pham'] ?? 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.') }}</div>
+                            <div class="p-2 bg-light rounded border small text-dark de-cuong-html-box" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0;">{!! \App\Helpers\HtmlHelper::renderRichText($activeDeTai?->SanPhamDuKien ?: ($activeDeTai?->ban_nhap_data['san_pham'] ?? 'Báo cáo toàn văn khóa luận, phần mềm ứng dụng hoàn chỉnh, tài liệu hướng dẫn kỹ thuật.')) !!}</div>
                         </div>
                         @if(!empty($activeDeTai?->FileDeCuong))
                         @php
@@ -1860,7 +1873,7 @@ input[type=number],
     }
 @endphp
 <div class="modal fade" id="modalCaiDatChucNang" tabindex="-1" aria-labelledby="modalCaiDatChucNangLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: min(1280px, 96vw);">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: min(1500px, 97vw);">
         <form id="formCaiDatChucNang" action="{{ route('giangvien.chamdiem.capNhatChucNang') }}" method="POST">
             @csrf
             <input type="hidden" name="MaHoiDong" value="{{ $activeHoiDong->MaHoiDong }}">
@@ -1938,9 +1951,29 @@ input[type=number],
                         <button type="button" class="btn-close btn-close-sm" onclick="document.getElementById('outlineNoticeBanner').classList.remove('d-flex'); document.getElementById('outlineNoticeBanner').classList.add('d-none');" aria-label="Close"></button>
                     </div>
 
-                    <div class="row g-3">
-                        {{-- Cột Trái: Textarea duy nhất --}}
-                        <div class="col-lg-6 col-12">
+                    <div class="row g-4 align-items-start">
+                        <div class="col-xl-5 col-12">
+                            @php
+                                $defaultPlaceholder = "Chức năng cơ bản\n  • Đăng nhập, đăng xuất, quản trị người dùng và phân quyền [điểm: 0,50]\n\n1. Nền tảng Web [nhóm: 2,50 | CLO3]\n  • Quản lý danh mục sinh viên, cố vấn và lớp học [điểm: 0,25]\n  • Quản lý thông báo và phản hồi [điểm: 0,25]\n  • Quản lý điểm rèn luyện và công tác xã hội [điểm: 0,25]\n  • Quản lý hoạt động, phong trào [điểm: 0,25]\n  • Quản lý họp lớp và xuất biên bản [điểm: 0,25]\n  • Theo dõi học tập và cảnh báo bỏ học [điểm: 0,50]\n  • Xử lý ý kiến đối thoại [điểm: 0,25]\n  • Thống kê, báo cáo học vụ [điểm: 0,50]\n\n2. Nền tảng Mobile [nhóm: 1,00 | CLO3]\n  • Tra cứu sinh viên [điểm: 0,25]\n  • Quản lý thông báo và nhắc lịch [điểm: 0,25]\n  • Họp lớp và điểm danh di động [điểm: 0,25]\n  • Gửi và theo dõi ý kiến đối thoại [điểm: 0,25]";
+                            @endphp
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                <button type="button" id="openRubricSample" class="btn btn-sm btn-outline-primary" aria-haspopup="dialog">
+                                    <i class="fa-regular fa-clipboard me-1" aria-hidden="true"></i>Mẫu nhập
+                                </button>
+                                <span id="rubricSampleStatus" class="small text-success" role="status"></span>
+                            </div>
+                            <dialog id="rubricSampleDialog" class="border-0 rounded-3 shadow p-3 p-sm-4" aria-labelledby="rubricSampleTitle">
+                                <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
+                                    <h3 id="rubricSampleTitle" class="h6 fw-bold mb-0">Mẫu nhập phiếu chấm</h3>
+                                    <button type="button" id="closeRubricSample" class="btn-close" aria-label="Đóng"></button>
+                                </div>
+                                <label for="rubricSampleText" class="form-label small text-muted">Sao chép mẫu rồi dán vào ô soạn thảo.</label>
+                                <textarea id="rubricSampleText" class="form-control form-control-sm font-monospace" rows="8" readonly>{{ $defaultPlaceholder }}</textarea>
+                                <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mt-3">
+                                    <span id="rubricSampleCopyHint" class="small text-muted" role="status"></span>
+                                    <button type="button" id="copyRubricSample" class="btn btn-sm btn-primary">Sao chép &amp; đóng</button>
+                                </div>
+                            </dialog>
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                                 <div class="d-flex align-items-center gap-2">
                                     <label for="textareaChucNang" class="form-label small fw-bold text-dark mb-0">
@@ -1952,9 +1985,32 @@ input[type=number],
                                 </div>
                             </div>
 
-                            @php
-                                $defaultPlaceholder = "Chức năng 1: Quản lý đơn hàng\n  Tiếp nhận đơn hàng\n  Thanh toán trực tuyến\nChức năng 2: Quản lý sản phẩm\n  Cập nhật tồn kho";
-                            @endphp
+                            <div class="btn-group btn-group-sm mb-2" aria-label="Cấu trúc nội dung phiếu">
+                                <button type="button" class="btn btn-outline-secondary" data-rubric-insert="group">1. Chức năng lớn</button>
+                                <button type="button" class="btn btn-outline-secondary" data-rubric-insert="item">• Yêu cầu con</button>
+                            </div>
+                            <details class="border rounded-3 bg-light p-2 mb-3">
+                                <summary class="small fw-semibold">Nhập nhanh chức năng</summary>
+                                <div class="row g-2 mt-1">
+                                    <label class="col-12 small">Tên chức năng lớn
+                                        <input type="text" id="quickRubricTitle" class="form-control form-control-sm" maxlength="500">
+                                    </label>
+                                    <label class="col-6 small">Điểm tối đa
+                                        <input type="text" id="quickRubricCap" class="form-control form-control-sm" inputmode="decimal" placeholder="Tự chia">
+                                    </label>
+                                    <label class="col-6 small">CLO
+                                        <input type="text" id="quickRubricClo" class="form-control form-control-sm" value="CLO3">
+                                    </label>
+                                    <label class="col-12 small">Yêu cầu con (không bắt buộc)
+                                        <textarea id="quickRubricChildren" class="form-control form-control-sm" rows="2"
+                                            placeholder="Mỗi dòng một yêu cầu, ví dụ Quản lý sinh viên | 0,25"></textarea>
+                                    </label>
+                                    <div class="col-12 d-flex gap-2 align-items-center">
+                                        <button type="button" id="quickRubricAdd" class="btn btn-sm btn-outline-primary">+ Thêm chức năng</button>
+                                        <span id="quickRubricError" role="alert" class="small text-danger"></span>
+                                    </div>
+                                </div>
+                            </details>
                             <textarea id="textareaChucNang"
                                       name="TieuChiChucNang"
                                       rows="14"
@@ -1970,8 +2026,7 @@ input[type=number],
                             </div>
                         </div>
 
-                        {{-- Cột Phải: Khung 2 Tab (Đề Cương Đề Tài & Xem Trước Cấu Trúc Khung Chấm) --}}
-                        <div class="col-lg-6 col-12">
+                        <div class="col-xl-7 col-12">
                             <div class="card h-100 border rounded-3 bg-light-subtle shadow-sm">
                                 <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                                     <ul class="nav nav-pills card-header-pills gap-1" id="pillsRightTab" role="tablist">
@@ -2003,7 +2058,7 @@ input[type=number],
                                         </li>
                                     </ul>
                                     <span id="previewSummaryText" class="small fw-semibold text-primary" style="font-size: 0.75rem;">
-                                        0 yêu cầu &bull; mỗi yêu cầu &asymp; 0.00 đ &bull; tổng 0.00 / {{ $loaiKhoaLuan === 'KLKS' ? '4.00' : '3.50' }}đ
+                                        0 yêu cầu &bull; Tổng TC7 0,00 / 4,00đ
                                     </span>
                                 </div>
 
@@ -2185,271 +2240,27 @@ input[type=number],
             <div class="modal-body p-4 bg-light-subtle">
                 <div class="tab-content" id="formulaModalTabContent">
 
-                    {{-- ── TAB 1: PHẦN A ── --}}
                     <div class="tab-pane fade show active" id="tab-phana" role="tabpanel" aria-labelledby="tab-phana-btn">
-                        <div class="card border-0 shadow-sm rounded-3 mb-4">
-                            <div class="card-body p-4 bg-white rounded-3">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                    <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1.5 fs-7">
-                                        <i class="fa-solid fa-square-root-variable me-1"></i> CÔNG THỨC TOÁN HỌC CHUẨN
-                                    </span>
-                                    <span class="small text-muted">Quy định đào tạo theo hệ thống tín chỉ &bull; Khoa CNTT</span>
-                                </div>
-                                <div class="p-3 bg-light rounded-3 text-center my-3 border font-monospace">
-                                    <div class="fs-3 fw-bold text-primary mb-1">
-                                        D<sub>TB</sub> = <span class="d-inline-block text-center align-middle" style="line-height: 1.1;"><span class="border-bottom border-dark border-2 pb-1 d-block">D<sub>1</sub> + D<sub>2</sub> + &hellip; + D<sub>n</sub></span><span class="pt-1 d-block">n</span></span>
-                                    </div>
-                                    <div class="small text-muted mt-2 fst-italic">
-                                        (Điểm trung bình hội đồng của tiêu chí = Tổng điểm các giám khảo hợp lệ chia cho số giám khảo hợp lệ)
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mt-2">
-                                    <div class="col-md-4">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">D<sub>1</sub>, D<sub>2</sub>, &hellip;, D<sub>n</sub></div>
-                                            <div class="small text-muted">Điểm số của từng giám khảo đã hoàn thành chấm điểm hợp lệ cho tiêu chí (phiếu ở trạng thái "Đã hoàn thành").</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">n</div>
-                                            <div class="small text-muted">Số giám khảo đã hoàn thành chấm điểm hợp lệ (n &ge; 1). Giám khảo chưa chấm <strong>không</strong> tính thành điểm 0.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">D<sub>TB</sub></div>
-                                            <div class="small text-muted">Điểm trung bình hội đồng của tiêu chí, được làm tròn chính xác theo nguyên tắc số học đến <strong>2 chữ số thập phân</strong>.</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Ví dụ minh họa phần A -->
-                        <div class="card border-0 shadow-sm rounded-3 mb-4">
-                            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-warning fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Ví Dụ Minh Họa Cụ Thể</h6>
-                            </div>
-                            <div class="card-body p-4 bg-white">
-                                <p class="small text-muted mb-3">
-                                    Giả sử một tiêu chí có điểm chấm của 3 thành viên Hội đồng ghi nhận như sau:
-                                </p>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-sm-4">
-                                        <div class="p-3 border rounded text-center bg-light">
-                                            <div class="small text-secondary mb-1">Giám khảo 1 (Chủ tịch)</div>
-                                            <div class="fw-bold text-primary fs-4">8.00</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <div class="p-3 border rounded text-center bg-light">
-                                            <div class="small text-secondary mb-1">Giám khảo 2 (Thư ký)</div>
-                                            <div class="fw-bold text-primary fs-4">7.50</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <div class="p-3 border rounded text-center bg-light">
-                                            <div class="small text-secondary mb-1">Giám khảo 3 (Phản biện)</div>
-                                            <div class="fw-bold text-primary fs-4">9.00</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="p-3 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary-subtle font-monospace text-center fs-6">
-                                    D<sub>TB</sub> = (8.00 + 7.50 + 9.00) / 3 = 24.50 / 3 = <strong>8.17</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 4 Quy tắc bắt buộc -->
-                        <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-shield-halved text-primary fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Nguyên Tắc Xử Lý Nghiệp Vụ Chấm Điểm Hội Đồng</h6>
-                            </div>
-                            <div class="card-body p-4 bg-white">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="d-flex gap-2">
-                                            <i class="fa-solid fa-circle-check text-success mt-1"></i>
-                                            <div class="small">
-                                                <strong>Không tính điểm 0 cho giám khảo chưa chấm:</strong> Nếu một giám khảo chưa chấm điểm hoặc chưa nộp phiếu, hệ thống tự động loại giám khảo đó khỏi mẫu số <em>n</em> để không kéo tụt điểm của sinh viên một cách oan uổng.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex gap-2">
-                                            <i class="fa-solid fa-circle-check text-success mt-1"></i>
-                                            <div class="small">
-                                                <strong>Phiếu lưu nháp:</strong> Phiếu đang ở trạng thái "Lưu nháp" chỉ có hiệu lực với riêng giám khảo đó, không tham gia tính điểm trung bình chính thức của Hội đồng cho đến khi nhấn "Xác nhận khóa điểm".
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex gap-2">
-                                            <i class="fa-solid fa-circle-check text-success mt-1"></i>
-                                            <div class="small">
-                                                <strong>Quy tắc làm tròn:</strong> Mọi điểm số trung bình tiêu chí và điểm trung bình hội đồng đều được làm tròn <strong>2 chữ số thập phân</strong> theo chuẩn số học (round half up).
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex gap-2">
-                                            <i class="fa-solid fa-triangle-exclamation text-warning mt-1"></i>
-                                            <div class="small">
-                                                <strong>Cảnh báo độ lệch điểm:</strong> Khi độ lệch điểm tổng giữa 2 giám khảo bất kỳ lớn hơn <strong>1.50 điểm</strong>, hệ thống tự động hiển thị cảnh báo để Chủ tịch và các thành viên hội đồng hội ý thống nhất trước khi công bố.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="card card-body border-0 shadow-sm">
+                            <h6 class="fw-bold">Điểm từng tiêu chí và điểm học phần</h6>
+                            <ol class="mb-0">
+                                <li class="mb-2"><strong>Điểm trung bình tiêu chí</strong> = (điểm GK1 + GK2 + GK3) / 3.</li>
+                                <li class="mb-2"><strong>Điểm quy đổi thang 10</strong> = điểm trung bình tiêu chí × 10 / điểm tối đa tiêu chí.</li>
+                                @if($isKLKS)
+                                    <li class="mb-2"><strong>Điểm từng giám khảo</strong> = tổng điểm các tiêu chí cộng điểm khuyến khích, tối đa 10. Điểm học phần là trung bình của ba giám khảo.</li>
+                                @else
+                                    <li class="mb-2"><strong>Điểm học phần</strong> = tổng điểm trung bình các tiêu chí trong mẫu báo cáo Cử nhân.</li>
+                                @endif
+                                <li>Cần đủ ba phiếu hoàn tất và đủ điểm từng tiêu chí. Điểm 0 là điểm hợp lệ. Hiển thị hai chữ số thập phân và giữ nguyên độ chính xác khi tính.</li>
+                            </ol>
                         </div>
                     </div>
-
-                    {{-- ── TAB 2: PHẦN B ── --}}
                     <div class="tab-pane fade" id="tab-phanb" role="tabpanel" aria-labelledby="tab-phanb-btn">
-                        <div class="card border-0 shadow-sm rounded-3 mb-4">
-                            <div class="card-body p-4 bg-white rounded-3">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                    <span class="badge bg-success-subtle text-success fw-bold px-3 py-1.5 fs-7">
-                                        <i class="fa-solid fa-chart-line me-1"></i> CÔNG THỨC CHUẨN ĐẦU RA (CLO) TỔNG HỢP 3 GIẢNG VIÊN
-                                    </span>
-                                    <span class="small text-muted">Thang điểm 10.0 &bull; Tính trung bình từ cả 3 phiếu chấm độc lập</span>
-                                </div>
-                                <div class="p-3 bg-light rounded-3 text-center my-3 border font-monospace">
-                                    <div class="fs-3 fw-bold text-success mb-1">
-                                        Điểm CLO Trung Bình = <span class="d-inline-block text-center align-middle" style="line-height: 1.1;"><span class="border-bottom border-dark border-2 pb-1 d-block">Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3</span><span class="pt-1 d-block">3</span></span>
-                                    </div>
-                                    <div class="small text-muted mt-2 fst-italic">
-                                        (Mỗi giảng viên chấm độc lập &bull; Điểm CLO trung bình của cả 3 giảng viên là dữ liệu chính thức duy nhất dùng để đánh giá và xuất báo cáo)
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mt-2">
-                                    <div class="col-md-3">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">Điểm CLO(GV<sub>j</sub>)</div>
-                                            <div class="small text-muted">Mỗi giảng viên thực hiện chấm điểm CLO độc lập theo thang 10: <code>(Tổng điểm GV chấm / Tổng điểm tối đa CLO) &times; 10</code>.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">3 Phiếu Hợp Lệ</div>
-                                            <div class="small text-muted">Bắt buộc phải có đủ điểm từ GV1 (Chủ tịch), GV2 (Thư ký) và GV3 (Phản biện / Ủy viên). Không lấy điểm riêng lẻ của 1 giảng viên để thay thế.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">Điểm CLO Trung Bình</div>
-                                            <div class="small text-muted">Kết quả trung bình cộng của 3 giảng viên được tự động lưu vào hệ thống và là nguồn dữ liệu chính thức duy nhất.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="p-3 bg-light-subtle rounded-3 border h-100">
-                                            <div class="fw-bold text-dark mb-1">Ngưỡng Đạt CLO</div>
-                                            <div class="small text-muted">Điểm CLO TB &ge; <strong>4.00</strong>: <span class="badge bg-success text-white">ĐẠT</span> &bull; Điểm CLO TB &lt; <strong>4.00</strong>: <span class="badge bg-danger text-white">CHƯA ĐẠT</span>.</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bảng đối chiếu minh họa theo đúng quy định -->
-                        <div class="card border-0 shadow-sm rounded-3 mb-4">
-                            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-table text-primary fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Bảng Thống Kê Điểm Trung Bình Chuẩn Đầu Ra CLO</h6>
-                            </div>
-                            <div class="card-body p-4 bg-white">
-                                <p class="small text-muted mb-3">
-                                    Thống kê CLO được tính toán và thể hiện theo <strong>Điểm trung bình của CLO</strong> từ cả 3 giảng viên Hội đồng:
-                                </p>
-                                <div class="table-responsive mb-3">
-                                    <table class="table table-bordered table-sm align-middle text-center mb-0">
-                                        <thead class="table-light small">
-                                            <tr>
-                                                <th class="text-start ps-3">Chuẩn đầu ra (CLO)</th>
-                                                <th style="width: 170px; background-color: #d9e1f2;">Điểm Trung Bình CLO</th>
-                                                <th style="width: 150px;">Ngưỡng Đạt</th>
-                                                <th style="width: 150px;">Đánh giá kết quả</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="small font-monospace">
-                                            <tr>
-                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO1 (Khảo sát &amp; Đặc tả bài toán)</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.00</td>
-                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
-                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO2 (Thiết kế hệ thống &amp; Giao diện)</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">8.00</td>
-                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
-                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-start ps-3 fw-bold font-sans-serif">CLO3 (Cài đặt &amp; Phát triển chức năng)</td>
-                                                <td class="fw-bold text-success fs-6" style="background-color: #ebf1f5;">7.00</td>
-                                                <td class="text-muted font-sans-serif">&ge; 4.00 / 10.0</td>
-                                                <td><span class="badge bg-success px-2 py-1">ĐẠT CĐR</span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="p-2.5 bg-success-subtle text-success-emphasis rounded-3 border border-success-subtle font-monospace text-center small">
-                                    Công thức: <strong>Điểm CLO trung bình = (Điểm CLO GV1 + Điểm CLO GV2 + Điểm CLO GV3) / 3</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cấu trúc các CLO của Khoa CNTT -->
-                        <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-list-check text-info fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Cấu Trúc Các Chuẩn Đầu Ra (CLO) Cốt Lõi Khóa Luận Tốt Nghiệp</h6>
-                            </div>
-                            <div class="card-body p-3 bg-white">
-                                <div class="row g-2 small">
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO1 (PLO1)</div>
-                                            <div class="text-secondary small">Xác định, khảo sát nghiệp vụ và phân tích đặc tả bài toán.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO2 (PLO3)</div>
-                                            <div class="text-secondary small">Thiết kế giải pháp, kiến trúc hệ thống và giao diện người dùng.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO3 (PLO4)</div>
-                                            <div class="text-secondary small">Cài đặt và phát triển các chức năng theo đúng yêu cầu bài toán.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO4 (PLO6)</div>
-                                            <div class="text-secondary small">Thử nghiệm, kiểm thử lỗi và triển khai ứng dụng thực tế.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO5 (PLO10)</div>
-                                            <div class="text-secondary small">Trình bày báo cáo, định dạng quyển khóa luận và slide thuyết trình.</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2.5 border rounded bg-light-subtle h-100">
-                                            <div class="fw-bold text-primary">CLO6 (PLO12)</div>
-                                            <div class="text-secondary small">Lập kế hoạch, phân công công việc, tác phong và đạo đức nghề nghiệp.</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="card card-body border-0 shadow-sm">
+                            <h6 class="fw-bold">Điểm CLO theo trọng số</h6>
+                            <p>Trọng số tiêu chí = điểm tối đa tiêu chí / 10.</p>
+                            <p><strong>Điểm CLO</strong> = tổng (điểm quy đổi × trọng số tiêu chí) / tổng trọng số các tiêu chí thuộc CLO.</p>
+                            <p class="mb-0">Chuẩn đầu ra học phần đạt khi đủ điểm và tất cả CLO đạt ít nhất {{ number_format(\App\Services\CloCalculationService::PASSING_THRESHOLD, 2, ',', '.') }} / 10.</p>
                         </div>
                     </div>
 
@@ -2493,7 +2304,7 @@ input[type=number],
                                 <h6 class="fw-bold text-dark mb-0 small">
                                     <i class="fa-solid fa-award text-success me-1.5"></i> BẢNG THỐNG KÊ ĐIỂM TRUNG BÌNH CHUẨN ĐẦU RA (CLO) HỘI ĐỒNG
                                 </h6>
-                                <span class="badge bg-primary-subtle text-primary small">Điểm CLO TB = Trung bình cộng từ 3 Giảng viên</span>
+                                <span class="badge bg-primary-subtle text-primary small">Điểm CLO theo trọng số các tiêu chí</span>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -2535,27 +2346,13 @@ input[type=number],
                                                 <th style="width: 80px;">Tối Đa</th>
                                                 <th class="text-start ps-2" style="min-width: 250px;">Công Thức Thay Số Cụ Thể (D<sub>1</sub> + D<sub>2</sub> + &hellip;)</th>
                                                 <th style="width: 100px;">D<sub>TB</sub> Tiêu Chí</th>
+                                                <th>Trọng số</th><th>Quy đổi thang 10</th><th>Điểm có trọng số</th>
                                             </tr>
                                         </thead>
                                         <tbody id="formulaCriteriaTableBody">
                                             {{-- Render động từ JS --}}
                                         </tbody>
                                     </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Khung 3: Các Thẻ Chuẩn Đầu Ra CLO Chi Tiết -->
-                        <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                <h6 class="fw-bold text-dark mb-0 small">
-                                    <i class="fa-solid fa-award text-success me-1.5"></i> KẾT QUẢ ĐÁNH GIÁ CHUẨN ĐẦU RA CLO THEO DỮ LIỆU THỰC TẾ
-                                </h6>
-                                <span class="small text-muted">Ngưỡng đạt: D<sub>CLO</sub> &ge; 4.00 / 10.0</span>
-                            </div>
-                            <div class="card-body p-3 bg-white">
-                                <div class="row g-3" id="formulaCloCardsContainer">
-                                    {{-- Render động các thẻ CLO từ JS --}}
                                 </div>
                             </div>
                         </div>
@@ -2567,7 +2364,7 @@ input[type=number],
             <!-- Modal Footer -->
             <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan]) }}"
+                    <a href="{{ route('clo.reports.index', ['loai' => $loaiKhoaLuan, 'format' => 'xlsx_school', 'MaHoiDong' => $activeHoiDong?->MaHoiDong, 'MaHocKy' => $activeHoiDong?->MaHocKy]) }}"
                        class="btn btn-sm btn-success fw-bold px-3 shadow-xs text-white">
                         <i class="fa-solid fa-file-excel me-1.5"></i> Xuất Báo Cáo CLO (Excel)
                     </a>
@@ -2722,21 +2519,26 @@ document.addEventListener('DOMContentLoaded', function() {
     subReqInputs.forEach(input => {
         input.addEventListener('input', function() {
             const svId = this.getAttribute('data-sv');
-            let totalSub = 0;
+            let totalSubCents = 0;
+            let maxSubCents = 0;
             document.querySelectorAll(`.sub-req-sv-${svId}`).forEach(sub => {
-                let v = parseFloat(sub.value) || 0;
-                const maxV = parseFloat(sub.getAttribute('data-req-max')) || 0.5;
-                if (v > maxV) { v = maxV; sub.value = maxV.toFixed(2); }
-                if (v < 0) { v = 0; sub.value = '0.00'; }
-                totalSub += v;
+                const max = Math.round(Number(sub.dataset.reqMax) * 100);
+                const score = Math.round((sub.valueAsNumber || 0) * 100);
+                const invalid = sub.validity.badInput || sub.validity.stepMismatch || score < 0 || score > max;
+                sub.setCustomValidity(invalid ? 'Điểm phải từ 0 đến ' + (max / 100).toFixed(2) + '.' : '');
+                sub.classList.toggle('is-invalid', invalid);
+                maxSubCents += max;
+                if (!invalid) totalSubCents += score;
             });
 
             // Cập nhật vào ô Tổng TC7 của sinh viên
             const tc7Input = document.getElementById(`input_tc7_${svId}`);
             if (tc7Input) {
                 const maxTc7 = parseFloat(tc7Input.getAttribute('data-max')) || 4.0;
-                tc7Input.value = Math.min(totalSub, maxTc7).toFixed(2);
+                tc7Input.value = Math.min(totalSubCents / 100, maxTc7).toFixed(2);
             }
+            const remaining = document.getElementById('remainingFunctional_' + svId);
+            if (remaining) remaining.textContent = 'Còn ' + ((maxSubCents - totalSubCents) / 100).toFixed(2) + ' điểm';
             calculateScores();
         });
     });
@@ -2921,10 +2723,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const lines = (text || '').split('\n');
             const rawGroups = [];
             let currentGroup = null;
+            let scoreError = '';
 
-            lines.forEach(rawLine => {
-                const trimmed = rawLine.trim();
+            lines.forEach((rawLine, lineIndex) => {
+                let trimmed = rawLine.trim();
                 if (!trimmed) return;
+                const score = trimmed.match(/\s*\[điểm\s*:\s*([^\]]*)\]\s*$/iu);
+                let manual = null;
+                if (score) {
+                    const value = score[1].trim();
+                    manual = Math.round(Number(value.replace(',', '.')) * 100);
+                    if (!/^\d{1,2}(?:[.,]\d{1,2})?$/.test(value) || manual < 1 || manual > 50) {
+                        scoreError = 'Điểm mỗi yêu cầu phải có dạng [điểm: 0,25], từ 0,01 đến 0,50.';
+                    }
+                    trimmed = trimmed.slice(0, -score[0].length).trim();
+                    if (!trimmed) scoreError = 'Điểm phải đặt sau nội dung yêu cầu.';
+                } else if (/\[điểm\s*:/iu.test(trimmed)) {
+                    scoreError = 'Đặt điểm ở cuối dòng theo dạng [điểm: 0,25].';
+                }
+
+                let cap = null;
+                let clo = null;
+                const header = trimmed.match(/\s*\[nhóm\s*:\s*(\d{1,2}(?:[.,]\d{1,2})?)?\s*\|\s*(CLO\d+(?:\.\d+)?)\s*\]\s*$/iu);
+                if (header) {
+                    cap = header[1] ? Math.round(Number(header[1].replace(',', '.')) * 100) : null;
+                    clo = header[2].toUpperCase();
+                    if (cap !== null && (cap < 1 || cap > Math.round(targetScoreCap * 100))) scoreError = 'Điểm chức năng lớn vượt trần mẫu.';
+                    trimmed = trimmed.slice(0, -header[0].length).trim();
+                } else if (/\[nhóm\s*:/iu.test(trimmed)) {
+                    scoreError = 'Nhập điểm chức năng lớn và CLO hợp lệ.';
+                }
 
                 const isIndented = /^(\t|\s{2,})/.test(rawLine);
                 const isExplicitGroup = /^(Chức năng|CN|Module|Phần|\d+\.|\b[IVXLCDM]+\.)/i.test(trimmed);
@@ -2945,10 +2773,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const cleanName = trimmed.replace(/^[\+\-\*\•\#\s]+/, '').trim();
                     currentGroup = {
                         name: cleanName,
-                        items: []
+                        items: [],
+                        manual, lineIndex, cap, clo
                     };
                     rawGroups.push(currentGroup);
                 } else {
+                    if (clo) scoreError = 'CLO chỉ đặt ở chức năng lớn.';
                     let cleanItem = trimmed
                         .replace(/^([\*\-\•\+\#\s]+|[a-z]\)\s*|\d+\.\d+\s*|Yêu cầu\s*\d*:?\s*)/i, '')
                         .replace(/\s*[\(\[]\s*[\d\.\,]+\s*(?:đ|điểm|pts?)\s*[\)\]]$/i, '')
@@ -2962,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             };
                             rawGroups.push(currentGroup);
                         }
-                        currentGroup.items.push(cleanItem);
+                        currentGroup.items.push({ label: cleanItem, manual, lineIndex });
                     }
                 }
             });
@@ -2973,52 +2803,228 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (g.items.length === 0) {
                     finalGroups.push({
                         name: (activeLoaiKhoaLuan === 'KLKS') ? 'Chức năng nghiệp vụ' : 'Chức năng bài toán',
-                        items: [g.name]
+                        cap: g.cap, clo: g.clo, lineIndex: g.lineIndex,
+                        items: [{label: g.name, manual: g.manual ?? null, basic: /cơ bản/iu.test(g.name), lineIndex: g.lineIndex, standalone: true}]
                     });
                 } else {
+                    if (g.manual != null) scoreError = 'Đặt điểm ở từng yêu cầu con, sau nội dung yêu cầu.';
+                    g.items.forEach(item => {
+                        item.basic = /cơ bản/iu.test(g.name) || (/cơ bản/iu.test(item.label) && /đăng nhập/iu.test(item.label));
+                    });
                     finalGroups.push(g);
                 }
             });
 
-            // Gộp các nhóm liền kề có cùng tên
-            const mergedGroups = [];
-            finalGroups.forEach(g => {
-                if (mergedGroups.length > 0 && mergedGroups[mergedGroups.length - 1].name === g.name) {
-                    mergedGroups[mergedGroups.length - 1].items.push(...g.items);
-                } else {
-                    mergedGroups.push({ name: g.name, items: [...g.items] });
+            const totalReqs = finalGroups.reduce((total, group) => total + group.items.length, 0);
+            return { groups: finalGroups, totalReqs, scoreError };
+        }
+
+        function saveRubricEditor(lines, rebuild = true) {
+            textareaChucNang.value = lines.join('\n');
+            autoSaveDraft();
+            updateLivePreview(rebuild);
+        }
+
+        previewParsedContainer?.addEventListener('change', event => {
+            const input = event.target;
+            if (!input.matches('[data-rubric-points], [data-rubric-label], [data-rubric-cap], [data-rubric-clo]')) return;
+            const lines = textareaChucNang.value.split('\n');
+            const index = Number(input.dataset.line);
+            if (!Number.isInteger(index) || !lines[index]) return;
+            const value = input.value.trim().replace(/[\r\n]+/g, ' ');
+            const suffix = lines[index].match(/\s*\[điểm\s*:[^\]]*\]\s*$/iu);
+            const withoutScore = suffix ? lines[index].slice(0, suffix.index) : lines[index];
+            const groupSuffix = withoutScore.match(/\s*\[nhóm\s*:[^\]]*\]\s*$/iu);
+            if (input.matches('[data-rubric-cap], [data-rubric-clo]')) {
+                const group = input.closest('[data-rubric-heading]');
+                const cap = group.querySelector('[data-rubric-cap]').value.trim();
+                const clo = group.querySelector('[data-rubric-clo]').value.trim().toUpperCase() || 'CLO3';
+                const label = groupSuffix ? withoutScore.slice(0, groupSuffix.index) : withoutScore;
+                lines[index] = label.trimEnd() + ' [nhóm: ' + cap + ' | ' + clo + ']' + (suffix?.[0] || '');
+            } else if (input.matches('[data-rubric-points]')) {
+                lines[index] = withoutScore.trimEnd() + (value ? ' [điểm: ' + value + ']' : '');
+            } else if (value) {
+                const prefix = input.dataset.standalone === '1' ? (withoutScore.match(/^\d+\.\s+/)?.[0] || '') : '  - ';
+                const cleanValue = prefix && value.startsWith(prefix) ? value.slice(prefix.length) : value;
+                lines[index] = prefix + cleanValue + (groupSuffix?.[0] || '') + (suffix?.[0] || '');
+            }
+            saveRubricEditor(lines, false);
+        });
+
+        previewParsedContainer?.addEventListener('click', event => {
+            const edit = event.target.closest('[data-rubric-action]');
+            if (edit) {
+                const lines = textareaChucNang.value.split('\n');
+                const index = Number(edit.dataset.line);
+                const other = Number(edit.dataset.other);
+                if (edit.dataset.rubricAction === 'remove') {
+                    lines.splice(index, 1);
+                    const parent = Number(edit.dataset.parent);
+                    if (Number.isInteger(parent) && parent >= 0 && parent < index) lines.splice(parent, 1);
                 }
+                else if (Number.isInteger(other) && other >= 0 && other < lines.length) [lines[index], lines[other]] = [lines[other], lines[index]];
+                saveRubricEditor(lines);
+                return;
+            }
+            const button = event.target.closest('[data-add-rubric-item]');
+            if (!button) return;
+            const input = button.closest('[data-rubric-group-editor]').querySelector('input');
+            const title = input.value.trim();
+            if (!title) {
+                input.focus();
+                return;
+            }
+            const lines = textareaChucNang.value.split('\n');
+            const index = Number(button.dataset.addRubricItem);
+            if (index === -1) {
+                lines.push('', 'Chức năng: ' + title);
+            } else if (Number.isInteger(index) && index >= 0 && index < lines.length) {
+                if (button.dataset.standalone === '1') {
+                    const previousScore = lines[index].match(/\s*\[điểm\s*:\s*([^\]]+)\]\s*$/iu);
+                    if (previousScore) {
+                        let header = lines[index].slice(0, previousScore.index).trimEnd();
+                        if (!/\[nhóm\s*:/iu.test(header)) {
+                            header += ' [nhóm: ' + previousScore[1].trim() + ' | CLO3]';
+                        } else {
+                            header = header.replace(/\[nhóm\s*:\s*\|/iu, '[nhóm: ' + previousScore[1].trim() + ' |');
+                        }
+                        lines[index] = header;
+                    }
+                }
+                lines.splice(index + 1, 0, '  - ' + title);
+            }
+            saveRubricEditor(lines);
+        });
+
+        modalEl?.querySelectorAll('[data-rubric-insert]').forEach(button => {
+            button.addEventListener('click', () => {
+                const value = textareaChucNang.value;
+                const groups = parseTextToGroups(value).groups;
+                const nextBreak = value.indexOf('\n', textareaChucNang.selectionEnd);
+                const position = nextBreak === -1 ? value.length : nextBreak;
+                const prefix = position && value[position - 1] !== '\n' ? '\n' : '';
+                const isGroup = button.dataset.rubricInsert === 'group';
+                const score = isGroup ? '0,50' : '0,25';
+                const line = isGroup
+                    ? (groups.length + 1) + '. Chức năng mới [nhóm: ' + score + ' | CLO3]'
+                    : '  • Yêu cầu mới [điểm: ' + score + ']';
+                textareaChucNang.setRangeText(prefix + line, position, position, 'end');
+                textareaChucNang.focus();
+                const scoreStart = position + prefix.length + line.lastIndexOf(score);
+                textareaChucNang.setSelectionRange(scoreStart, scoreStart + score.length);
+                autoSaveDraft();
+                updateLivePreview();
             });
+        });
 
-            let totalReqs = 0;
-            mergedGroups.forEach(g => { totalReqs += g.items.length; });
+        const quickRubricAdd = modalEl?.querySelector('#quickRubricAdd');
+        quickRubricAdd?.addEventListener('click', () => {
+            const titleInput = modalEl.querySelector('#quickRubricTitle');
+            const capInput = modalEl.querySelector('#quickRubricCap');
+            const cloInput = modalEl.querySelector('#quickRubricClo');
+            const childrenInput = modalEl.querySelector('#quickRubricChildren');
+            const warning = modalEl.querySelector('#quickRubricError');
+            const title = titleInput.value.trim();
+            const cap = capInput.value.trim();
+            const clo = cloInput.value.trim().toUpperCase() || 'CLO3';
+            if (!title) {
+                warning.textContent = 'Nhập tên chức năng lớn.';
+                titleInput.focus();
+                return;
+            }
+            if (!/^CLO\d+(?:\.\d+)?$/.test(clo)) {
+                warning.textContent = 'Nhập mã CLO hợp lệ, ví dụ CLO3 hoặc CLO2.1.';
+                cloInput.focus();
+                return;
+            }
+            const max = Number(cap.replace(',', '.'));
+            const children = childrenInput.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            if (cap && (!/^\d{1,2}(?:[.,]\d{1,2})?$/.test(cap) || max <= 0
+                || max > (children.length ? targetScoreCap : 0.50))) {
+                warning.textContent = children.length ? 'Điểm chức năng lớn phải nằm trong trần mẫu.' : 'Chức năng không có mục con được tối đa 0,50 điểm.';
+                capInput.focus();
+                return;
+            }
+            const lines = textareaChucNang.value.trimEnd().split('\n');
+            const largest = Math.max(0, ...lines.map(line => Number(line.match(/^(\d+)\.\s/)?.[1] || 0)));
+            lines.push('', (largest + 1) + '. ' + title + ' [nhóm: ' + cap + ' | ' + clo + ']');
+            for (const child of children) {
+                const weighted = child.match(/^(.+?)\s*\|\s*(\d+(?:[.,]\d+)?)$/);
+                lines.push('  • ' + (weighted ? weighted[1] + ' [điểm: ' + weighted[2] + ']' : child));
+            }
+            saveRubricEditor(lines);
+            warning.textContent = '';
+            titleInput.value = '';
+            capInput.value = '';
+            childrenInput.value = '';
+            titleInput.focus();
+        });
 
-            return { groups: mergedGroups, totalReqs };
+        function rubricAddControl(index, standalone = false) {
+            const title = index === -1 ? 'Tên chức năng mới' : 'Nội dung yêu cầu mới';
+            return '<div class="input-group input-group-sm mt-2" data-rubric-group-editor>' +
+                '<input type="text" class="form-control" maxlength="500" aria-label="' + title + '" placeholder="' + title + '">' +
+                '<button type="button" class="btn btn-outline-primary" data-add-rubric-item="' + index +
+                '" data-standalone="' + (standalone ? '1' : '0') + '">' +
+                (index === -1 ? '+ Thêm chức năng' : '+ Thêm yêu cầu') + '</button></div>';
         }
 
         // Cập nhật Live Preview khung xem trước
-        function updateLivePreview() {
+        function updateLivePreview(rebuild = true) {
             if (!textareaChucNang) return;
-            const text = textareaChucNang.value.trim();
-            const { groups, totalReqs } = parseTextToGroups(text);
+            const text = textareaChucNang.value;
+            const { groups, totalReqs, scoreError } = parseTextToGroups(text);
+            const items = groups.flatMap(group => group.items);
+            const basic = activeLoaiKhoaLuan === 'KLCN' ? items.find(item => item.basic) : null;
+            const requirements = items.filter(item => item !== basic);
+            let error = scoreError;
+            if (basic && basic.manual != null && basic.manual !== 50) error = 'Chức năng cơ bản Cử nhân có mức cố định 0,50 điểm.';
 
-            const scores = distributeScoresExact(targetScoreCap, totalReqs);
-            let totalScore = 0;
-            scores.forEach(s => { totalScore += s; });
-            const formattedTotal = totalReqs > 0 ? totalScore.toFixed(2) : '0.00';
-            const avgScore = totalReqs > 0 ? (targetScoreCap / totalReqs).toFixed(2) : '0.00';
-            const targetFormatted = targetScoreCap.toFixed(2);
+            function allocate(rows, cap, strict) {
+                const manual = rows.filter(item => item.manual !== null);
+                const remaining = cap - manual.reduce((sum, item) => sum + item.manual, 0);
+                const automatic = rows.length - manual.length;
+                if ((strict || manual.length) && (remaining < automatic || remaining > automatic * 50)) {
+                    error ||= 'Điểm các yêu cầu con phải khớp tổng nhóm và nằm trong khoảng 0,01–0,50.';
+                    return;
+                }
+                const step = (strict || manual.length) && remaining % 5 === 0 && remaining >= automatic * 5 ? 5 : 1;
+                const scores = distributeScoresExact(remaining / (100 * step), automatic);
+                let next = 0;
+                rows.forEach(item => { item.points = item.manual === null ? scores[next++] * step : item.manual / 100; });
+            }
+
+            let capLeft = Math.round(targetScoreCap * 100);
+            const capped = groups.filter(group => group.cap != null && group.items.some(item => item !== basic));
+            const free = groups.filter(group => group.cap == null).flatMap(group => group.items).filter(item => item !== basic);
+            if (!error) {
+                capped.forEach(group => {
+                    capLeft -= group.cap;
+                    allocate(group.items.filter(item => item !== basic), group.cap, true);
+                });
+                if (capLeft < 0 || (capped.length && !free.length && capLeft !== 0)) {
+                    error ||= 'Tổng điểm các chức năng lớn phải khớp với trần của mẫu.';
+                } else if (!error) {
+                    allocate(free, capLeft, capped.length > 0);
+                }
+            }
+            if (error) requirements.forEach(item => { item.points = null; });
+            if (basic) basic.points = 0.50;
+            const formattedTotal = error ? '—' : requirements.reduce((sum, item) => sum + item.points, 0).toFixed(2);
+            const baseScore = activeLoaiKhoaLuan === 'KLCN' ? 0.50 : 0;
+            const totalTc7 = error ? '—' : (Number(formattedTotal) + (totalReqs ? baseScore : 0)).toFixed(2).replace('.', ',');
+            const breakdown = baseScore && totalReqs ? ' · Nghiệp vụ ' + formattedTotal.replace('.', ',') + 'đ + cơ bản 0,50đ' : '';
 
             if (previewSummaryText) {
-                previewSummaryText.innerHTML = `${totalReqs} yêu cầu &bull; mỗi yêu cầu &asymp; ${avgScore} đ &bull; tổng ${formattedTotal} / ${targetFormatted}đ`;
+                previewSummaryText.textContent = totalReqs + ' yêu cầu · Tổng TC7 ' + totalTc7 + ' / 4,00đ' + breakdown;
             }
 
             if (btnSubmitChucNang) {
-                btnSubmitChucNang.disabled = (totalReqs === 0);
+                btnSubmitChucNang.disabled = totalReqs === 0 || Boolean(error);
                 if (totalReqs === 0) {
                     btnSubmitChucNang.title = 'Vui lòng nhập ít nhất 1 yêu cầu chức năng (hoặc chọn Mẫu Cử nhân / Mẫu Kỹ sư) để lưu.';
                 } else {
-                    btnSubmitChucNang.title = `Sẵn sàng lưu ${totalReqs} yêu cầu (${formattedTotal}đ / ${targetFormatted}đ)`;
+                    btnSubmitChucNang.title = `Sẵn sàng lưu ${totalReqs} yêu cầu (${totalTc7} / 4,00đ)`;
                 }
             }
 
@@ -3026,13 +3032,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (totalReqs === 0) {
                     footerDraftNotice.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1"></i> Chưa có yêu cầu nào (Hãy nhập nội dung hoặc chọn mẫu).</span>`;
                 } else {
-                    footerDraftNotice.innerHTML = `<span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Đã cấu hình ${totalReqs} yêu cầu (${formattedTotal}đ / ${targetFormatted}đ) &bull; Sẵn sàng lưu</span>`;
+                    footerDraftNotice.innerHTML = `<span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Đã cấu hình ${totalReqs} yêu cầu (${totalTc7} / 4,00đ) &bull; Sẵn sàng lưu</span>`;
                 }
             }
 
             if (textareaInlineAlert) {
-                if (text.length > 0 && totalReqs === 0) {
-                    textareaInlineAlert.textContent = 'Vui lòng nhập nội dung yêu cầu hợp lệ.';
+                if (error || (text.length > 0 && totalReqs === 0)) {
+                    textareaInlineAlert.textContent = error || 'Vui lòng nhập nội dung yêu cầu hợp lệ.';
                     textareaInlineAlert.classList.remove('d-none');
                 } else {
                     textareaInlineAlert.textContent = '';
@@ -3041,42 +3047,77 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (previewParsedContainer) {
+                if (!rebuild) {
+                    previewParsedContainer.querySelectorAll('[data-rubric-points]').forEach(input => {
+                        const item = items.find(row => row.lineIndex === Number(input.dataset.line));
+                        if (item) input.placeholder = item.points == null ? '—' : item.points.toFixed(2).replace('.', ',');
+                    });
+                    previewParsedContainer.querySelectorAll('[data-rubric-group-total]').forEach((badge, index) => {
+                        const group = groups[index];
+                        if (group) {
+                            const total = group.items.reduce((sum, item) => sum + (item.points ?? 0), 0);
+                            badge.textContent = group.items.length + ' YC · ' + (error ? '—' : total.toFixed(2) + 'đ');
+                        }
+                    });
+                    return;
+                }
                 if (totalReqs === 0) {
                     previewParsedContainer.innerHTML = `
                         <div class="text-center py-4 text-muted small fst-italic">
                             Chưa có yêu cầu nào.<br>Hãy gõ danh sách bên trái hoặc chọn <strong>[Mẫu Cử nhân]</strong> / <strong>[Mẫu Kỹ sư]</strong>.
                         </div>
-                    `;
+                    ` + rubricAddControl(-1);
                     return;
                 }
 
                 let html = '';
-                let scoreIdx = 0;
+                const groupScore = group => group.items.reduce((sum, item) => sum + (item.points ?? 0), 0).toFixed(2);
                 groups.forEach(g => {
                     html += `
-                    <div class="mb-2 p-2 bg-light rounded border border-light-subtle">
-                        <div class="fw-bold text-dark small mb-1 pb-1 border-bottom d-flex justify-content-between align-items-center">
+                    <div class="mb-3 p-3 bg-white rounded-3 border">
+                        <div class="fw-bold text-dark small mb-3 pb-2 border-bottom d-flex justify-content-between align-items-center gap-2 flex-wrap">
                             <span><i class="fa-solid fa-folder me-1 text-primary"></i> ${escapeHtml(g.name)}</span>
-                            <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.65rem;">${g.items.length} YC</span>
+                            <span data-rubric-group-total class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.65rem;">${g.items.length} YC · ${error ? '—' : groupScore(g) + 'đ'}</span>
                         </div>
+                        ${g.lineIndex == null || g.items.every(item => item === basic) ? '' :
+                            `<div data-rubric-heading class="d-flex flex-wrap gap-3 mb-3">
+                                <label class="small flex-fill">Điểm tối đa chức năng
+                                    <input class="form-control form-control-sm" inputmode="decimal" data-rubric-cap data-line="${g.lineIndex}"
+                                        placeholder="Tự chia" value="${g.cap == null ? '' : (g.cap / 100).toFixed(2).replace('.', ',')}">
+                                </label>
+                                <label class="small flex-fill">CLO
+                                    <input class="form-control form-control-sm" data-rubric-clo data-line="${g.lineIndex}"
+                                        value="${escapeHtml(g.clo || 'CLO3')}">
+                                </label>
+                            </div>`}
                         <div class="space-y-1">
                     `;
-                    g.items.forEach(item => {
-                        const s = scores[scoreIdx++] || 0.50;
+                    g.items.forEach((item, index) => {
+                        const s = item.points;
                         html += `
-                        <div class="d-flex justify-content-between align-items-center py-1 ps-2 border-bottom border-light" style="font-size: 0.75rem;">
-                            <span class="text-dark text-truncate me-2" title="${escapeHtml(item)}">
-                                &bull; ${escapeHtml(item)}
-                            </span>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">
-                                +${s.toFixed(2)}đ
-                            </span>
+                        <div class="d-flex flex-wrap align-items-center gap-2 py-3 border-bottom">
+                            <textarea class="form-control form-control-sm w-100" rows="2" data-rubric-label
+                                data-line="${item.lineIndex}" data-standalone="${item.standalone ? '1' : '0'}"
+                                aria-label="Nội dung yêu cầu">${escapeHtml(item.label)}</textarea>
+                            <label class="small text-muted mb-0">Điểm tối đa</label>
+                            <input class="form-control form-control-sm text-end flex-shrink-0" style="width: 5rem" type="text"
+                                inputmode="decimal" data-rubric-points data-line="${item.lineIndex}"
+                                aria-label="Điểm tối đa cho yêu cầu" title="Bỏ trống để chia điểm tự động"
+                                value="${item.manual === null ? '' : (item.manual / 100).toFixed(2).replace('.', ',')}"
+                                placeholder="${s == null ? '—' : s.toFixed(2).replace('.', ',')}"
+                                ${item === basic ? 'readonly' : ''}>
+                            <button type="button" class="btn btn-sm btn-light" data-rubric-action="move" data-line="${item.lineIndex}"
+                                data-other="${g.items[index - 1]?.lineIndex ?? -1}" ${index ? '' : 'disabled'} aria-label="Đưa yêu cầu lên">↑</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-rubric-action="remove"
+                                data-line="${item.lineIndex}" data-parent="${!item.standalone && g.items.length === 1 ? (g.lineIndex ?? -1) : -1}"
+                                aria-label="Xóa yêu cầu">×</button>
                         </div>
                         `;
                     });
-                    html += `</div></div>`;
+                    const last = g.items[g.items.length - 1];
+                    html += '</div>' + rubricAddControl(last.lineIndex, last.standalone) + '</div>';
                 });
-                previewParsedContainer.innerHTML = html;
+                previewParsedContainer.innerHTML = html + rubricAddControl(-1);
             }
         }
 
@@ -3200,60 +3241,47 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Nạp tự động các phân hệ chức năng từ Đề Cương vào ô soạn thảo
-        window.applyOutlineAllToTextarea = function() {
-            const store = document.getElementById('outlineDataStore');
-            if (!store) return;
-            const moTa = store.getAttribute('data-mo-ta') || store.getAttribute('data-noi-dung') || '';
-            const yeuCau = store.getAttribute('data-yeu-cau') || '';
-            const mucTieu = store.getAttribute('data-muc-tieu') || '';
+        const rubricSampleDialog = document.getElementById('rubricSampleDialog');
+        const rubricSampleHint = document.getElementById('rubricSampleCopyHint');
+        const rubricSampleStatus = document.getElementById('rubricSampleStatus');
 
-            const fullSource = `${moTa}\n${yeuCau}\n${mucTieu}`.trim();
-            if (!fullSource) {
-                alert('Chưa tìm thấy nội dung chi tiết trong đề cương của đề tài này.');
-                return;
+        document.getElementById('openRubricSample')?.addEventListener('click', () => {
+            if (rubricSampleDialog.open) return;
+            rubricSampleHint.textContent = '';
+            rubricSampleStatus.textContent = '';
+            rubricSampleDialog.showModal();
+        });
+        document.getElementById('closeRubricSample')?.addEventListener('click', () => rubricSampleDialog.close());
+        rubricSampleDialog?.addEventListener('keydown', event => {
+            if (event.key === 'Escape') event.stopPropagation();
+        });
+        document.getElementById('copyRubricSample')?.addEventListener('click', async () => {
+            const sample = document.getElementById('rubricSampleText');
+            try {
+                await navigator.clipboard.writeText(sample.value);
+                rubricSampleDialog.close();
+                textareaChucNang.focus();
+                rubricSampleStatus.textContent = 'Đã sao chép. Nhấn Ctrl+V để dán.';
+            } catch {
+                sample.focus();
+                sample.select();
+                rubricSampleHint.textContent = 'Đã chọn mẫu. Nhấn Ctrl+C để sao chép.';
             }
-
-            const rawLines = fullSource.split('\n');
-            const extracted = [];
-            rawLines.forEach(l => {
-                const t = l.trim().replace(/^[\-\*\+\d\.\)]+/, '').trim();
-                if (t.length > 8 && t.length < 250) {
-                    extracted.push(t);
-                }
-            });
-
-            if (extracted.length === 0) {
-                alert('Không thể nhận diện danh sách chức năng từ đề cương. Đã nạp mẫu theo loại khóa luận.');
-                loadSampleTemplate(activeLoaiKhoaLuan);
-                return;
-            }
-
-            let resultText = '';
-            const chunkSize = Math.max(2, Math.ceil(extracted.length / 3));
-            for (let i = 0; i < extracted.length; i += chunkSize) {
-                const slice = extracted.slice(i, i + chunkSize);
-                const gNum = Math.floor(i / chunkSize) + 1;
-                resultText += `Phân hệ chức năng ${gNum < 10 ? '0' + gNum : gNum}:\n`;
-                slice.forEach(item => {
-                    resultText += `  ${item}\n`;
-                });
-            }
-
-            textareaChucNang.value = resultText.trim();
-            updateLivePreview();
-            autoSaveDraft();
-            textareaChucNang.focus();
-        };
+        });
 
         // Nạp mẫu chuẩn theo loại khóa luận
         window.loadSampleTemplate = function(loai) {
             if (!textareaChucNang) return;
-            if (loai === 'KLKS') {
-                textareaChucNang.value = "Chức năng cơ bản của ứng dụng:\n  Đăng nhập, đăng xuất, đổi mật khẩu, phân quyền ứng dụng\nCài đặt chức năng nghiệp vụ trên nền tảng Web:\n  Quản trị danh mục và dữ liệu hệ thống\n  Quy trình xử lý nghiệp vụ chính trên Web\n  Báo cáo thống kê số liệu và xuất tệp Excel/PDF\nCài đặt chức năng nghiệp vụ trên nền tảng Mobile:\n  Giao diện người dùng Mobile và xác thực sinh trắc học\n  Thao tác tác nghiệp thực địa qua thiết bị di động\n  Nhận thông báo đẩy (Push Notification) tức thời\n  Đồng bộ trạng thái và dữ liệu thời gian thực giữa Web và Mobile";
-            } else {
-                textareaChucNang.value = "Chức năng 01: Quản lý và xử lý đơn hàng tự động\n  Tiếp nhận và phân loại đơn hàng theo trạng thái\n  Tích hợp cổng thanh toán trực tuyến\nChức năng 02: Quản lý danh mục sản phẩm và kho hàng\n  Cập nhật tồn kho theo thời gian thực\n  Báo cáo thống kê doanh thu và hàng tồn kho\nChức năng 03: Phân hệ người dùng và thông báo đẩy\n  Đăng nhập đa kênh và xác thực OTP\n  Gửi thông báo đơn hàng qua Email/Zalo\n  Phân quyền vai trò và nhật ký thao tác hệ thống";
+            if (loai !== activeLoaiKhoaLuan) {
+                if (textareaInlineAlert) {
+                    textareaInlineAlert.textContent = 'Hồ sơ này chỉ dùng mẫu ' + (activeLoaiKhoaLuan === 'KLKS' ? 'Kỹ sư.' : 'Cử nhân.');
+                    textareaInlineAlert.classList.remove('d-none');
+                }
+                return;
             }
+            if (textareaChucNang.value.trim() !== textareaChucNang.defaultValue.trim()
+                && !confirm('Nạp mẫu sẽ thay thế phần đang soạn chưa lưu. Tiếp tục?')) return;
+            textareaChucNang.value = textareaChucNang.placeholder;
             updateLivePreview();
             autoSaveDraft();
             textareaChucNang.focus();
@@ -3350,153 +3378,50 @@ document.addEventListener('DOMContentLoaded', function() {
             selectFormulaStudent.appendChild(opt);
         });
 
-        // Hàm render giao diện đối chiếu sinh viên
+        const threshold = @json(\App\Services\CloCalculationService::PASSING_THRESHOLD);
+        const display = value => value === null ? '—' : value.toFixed(2);
+        const setText = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        };
+        const setRows = (id, rows) => {
+            const body = document.getElementById(id);
+            if (!body) return;
+            body.replaceChildren(...rows.map(values => {
+                const row = document.createElement('tr');
+                values.forEach(value => row.insertCell().textContent = value);
+                return row;
+            }));
+        };
+
         function renderFormulaModalStudent(maSV) {
             const student = councilCloData.students.find(s => s.maSV === maSV);
             if (!student) return;
 
-            // 1. Cập nhật thẻ thông tin sinh viên
-            const elName = document.getElementById('formulaStudentName');
-            const elMeta = document.getElementById('formulaStudentMeta');
-            const elFinal = document.getElementById('formulaStudentFinalScore');
-            const elBadges = document.getElementById('studentQuickBadges');
-            const elExCount = document.getElementById('formulaExaminersCount');
+            const {criteria, clo, complete, final, passed} = student.audit;
+            setText('formulaStudentName', student.hoTen + ' (' + student.maSV + ')');
+            setText('formulaStudentMeta', student.lop + ' · ' + student.tenDeTai);
+            setText('formulaStudentFinalScore', final === null ? 'Chưa đủ điểm' : display(final) + ' / 10');
+            setText('formulaExaminersCount', student.completed_examiners + '/3 phiếu hoàn tất');
+            setRows('formulaCriteriaTableBody', criteria.map((item, index) => [
+                index + 1, item.label, 'CLO' + item.code, display(item.max),
+                item.average === null ? 'Chưa đủ điểm' : '(' + item.scores.map(display).join(' + ') + ') / 3',
+                display(item.average),
+                display(item.max) + ' / 10 = ' + (item.weight * 100).toFixed(2) + '%',
+                item.average === null ? '—' : display(item.average) + ' × 10 / ' + display(item.max) + ' = ' + display(item.normalized),
+                item.weighted === null ? '—' : display(item.normalized) + ' × ' + item.weight.toPrecision(4) + ' = ' + item.weighted.toPrecision(6),
+            ]));
 
-            if (elName) elName.innerHTML = `<i class="fa-solid fa-user-graduate text-primary me-2"></i><strong>${student.hoTen}</strong> <span class="badge bg-light text-secondary border font-monospace ms-2">${student.maSV}</span>`;
-            if (elMeta) elMeta.innerHTML = `<i class="fa-solid fa-graduation-cap me-1"></i> Lớp: <strong>${student.lop}</strong> &bull; <i class="fa-solid fa-book-bookmark me-1 ms-1"></i> Đề tài: <em>${student.tenDeTai}</em>`;
-            if (elFinal) elFinal.textContent = `${Number(student.finalScore).toFixed(2)} / 10.0`;
-
-            const validExaminers = student.examiners ? student.examiners.filter(e => e.trangThai === 'Đã hoàn thành') : [];
-            const displayExaminersCount = validExaminers.length > 0 ? validExaminers.length : (student.examiners ? student.examiners.length : 0);
-            if (elExCount) elExCount.textContent = `${displayExaminersCount} Giám khảo tham gia`;
-
-            if (elBadges) {
-                const passBadge = student.allPassed
-                    ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> ĐẠT TẤT CẢ CHUẨN ĐẦU RA (CLO)</span>`
-                    : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5"><i class="fa-solid fa-circle-xmark me-1"></i> CHƯA ĐẠT CHUẨN ĐẦU RA</span>`;
-                elBadges.innerHTML = passBadge;
-            }
-
-            // 1.5. Render Bảng Thống Kê Điểm Trung Bình CLO
-            const tbody3Gv = document.getElementById('formulaClo3GvTableBody');
-            if (tbody3Gv && councilCloData.cloGroups) {
-                let html3Gv = '';
-                Object.keys(councilCloData.cloGroups).forEach(code => {
-                    const g = councilCloData.cloGroups[code];
-                    const cloData = student.cloScores[code] || {};
-                    const gv1 = (cloData.gv1 !== null && cloData.gv1 !== undefined) ? Number(cloData.gv1).toFixed(2) : '-';
-                    const gv2 = (cloData.gv2 !== null && cloData.gv2 !== undefined) ? Number(cloData.gv2).toFixed(2) : '-';
-                    const gv3 = (cloData.gv3 !== null && cloData.gv3 !== undefined) ? Number(cloData.gv3).toFixed(2) : '-';
-                    const avg = Number(cloData.score || 0).toFixed(2);
-                    const isPass = cloData.passed;
-                    const formulaStr = cloData.formula || `(${gv1} + ${gv2} + ${gv3}) / 3 = ${avg}`;
-
-                    html3Gv += `
-                        <tr>
-                            <td><span class="badge bg-primary-subtle text-primary font-monospace fw-bold fs-7">${code}</span></td>
-                            <td class="text-start ps-3"><span class="fw-semibold text-dark">${g.name || code}</span> <span class="text-muted small">(${g.plo || ''})</span></td>
-                            <td class="fw-bold fs-6 font-monospace text-primary" style="background-color: #ebf1f5;">${avg}</td>
-                            <td class="small text-muted">&ge; 4.00 / 10.0</td>
-                            <td class="text-start ps-2 font-monospace text-secondary small">${formulaStr}</td>
-                            <td>
-                                <span class="badge ${isPass ? 'bg-success' : 'bg-danger'} text-white px-2 py-1 fs-7">
-                                    ${isPass ? 'ĐẠT' : 'CHƯA ĐẠT'}
-                                </span>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody3Gv.innerHTML = html3Gv;
-            }
-
-            // 2. Render Bảng Điểm Trung Bình Tiêu Chí (D_TB)
-            const tbody = document.getElementById('formulaCriteriaTableBody');
-            if (tbody && councilCloData.rubric) {
-                let html = '';
-                councilCloData.rubric.forEach(crit => {
-                    const cId = crit.id;
-                    const cMax = Number(crit.max).toFixed(2);
-                    const avgScore = Number(student.critAverages[cId] || 0).toFixed(2);
-                    const formulaStr = student.critFormulas[cId] || 'Chưa có điểm';
-                    const isBonus = crit.is_bonus;
-
-                    html += `
-                        <tr class="${isBonus ? 'table-warning-subtle' : ''}">
-                            <td class="fw-bold text-secondary">${crit.stt}</td>
-                            <td class="text-start ps-3">
-                                <div class="fw-semibold text-dark">${crit.noi_dung}</div>
-                                ${isBonus ? '<span class="badge bg-warning text-dark font-monospace" style="font-size:0.65rem;">Điểm khuyến khích NCKH</span>' : ''}
-                            </td>
-                            <td><span class="badge bg-primary-subtle text-primary font-monospace">${crit.clo}</span></td>
-                            <td class="fw-bold">${cMax}</td>
-                            <td class="text-start ps-2 font-monospace text-secondary small">${formulaStr}</td>
-                            <td class="fw-bold text-primary fs-6">${avgScore}</td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
-            }
-
-            // 3. Render Các Thẻ Chuẩn Đầu Ra CLO
-            const cloContainer = document.getElementById('formulaCloCardsContainer');
-            if (cloContainer && councilCloData.cloGroups) {
-                let cardsHtml = '';
-                Object.keys(councilCloData.cloGroups).forEach(code => {
-                    const g = councilCloData.cloGroups[code];
-                    const cloData = student.cloScores[code] || { score: 0, sum_tb: 0, max_sum: g.max_sum, passed: false, formula: '' };
-                    const isPassed = cloData.passed;
-
-                    let criteriaListHtml = '';
-                    if (g.criteria && g.criteria.length > 0) {
-                        criteriaListHtml = g.criteria.map(c => {
-                            const sc = Number(student.critAverages[c.id] || 0).toFixed(2);
-                            const mx = Number(c.max).toFixed(2);
-                            return `<div class="d-flex justify-content-between align-items-center py-1 border-bottom small">
-                                <span class="text-secondary text-truncate me-2" style="max-width: 280px;" title="${c.noi_dung}">TC${c.stt}: ${c.noi_dung}</span>
-                                <span class="font-monospace fw-semibold ${sc >= mx ? 'text-success' : 'text-primary'}">${sc} / ${mx}đ</span>
-                            </div>`;
-                        }).join('');
-                    }
-
-                    cardsHtml += `
-                        <div class="col-md-6 col-12">
-                            <div class="card h-100 border ${isPassed ? 'border-success-subtle' : 'border-danger-subtle'} rounded-3 shadow-xs">
-                                <div class="card-header py-2 px-3 ${isPassed ? 'bg-success-subtle' : 'bg-danger-subtle'} d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge ${isPassed ? 'bg-success' : 'bg-danger'} text-white fw-bold font-monospace">${code}</span>
-                                        <span class="fw-bold ${isPassed ? 'text-success-emphasis' : 'text-danger-emphasis'} small">${g.name || code}</span>
-                                    </div>
-                                    <span class="badge ${isPassed ? 'bg-success' : 'bg-danger'} text-white px-2 py-1 fs-7">
-                                        <i class="fa-solid ${isPassed ? 'fa-check' : 'fa-xmark'} me-1"></i> ${isPassed ? 'ĐẠT' : 'CHƯA ĐẠT'}
-                                    </span>
-                                </div>
-                                <div class="card-body p-3 bg-white">
-                                    <div class="text-muted small mb-2 fw-semibold">
-                                        <i class="fa-solid fa-list-check me-1"></i> Các tiêu chí cấu thành (${g.criteria ? g.criteria.length : 0} tiêu chí):
-                                    </div>
-                                    <div class="mb-3 px-1">
-                                        ${criteriaListHtml}
-                                    </div>
-                                    <div class="p-2.5 rounded bg-light border font-monospace text-center small mb-2">
-                                        <div class="text-muted mb-0.5" style="font-size: 0.72rem;">Công thức thay số thực tế:</div>
-                                        <div class="fw-bold text-dark">${cloData.formula || `(${cloData.sum_tb} / ${cloData.max_sum}) * 10 = ${cloData.score}`}</div>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center pt-1 text-muted small">
-                                        <span>Ngưỡng đạt: <strong>&ge; 4.00</strong> / 10.0</span>
-                                        <span class="fw-bold fs-6 ${isPassed ? 'text-success' : 'text-danger'} font-monospace">
-                                            Điểm CLO: ${Number(cloData.score).toFixed(2)}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                cloContainer.innerHTML = cardsHtml;
-            }
+            setRows('formulaClo3GvTableBody', Object.entries(clo).map(([code, group]) => [
+                code, group.plo, display(group.score), display(threshold),
+                group.score === null ? 'Chưa đủ dữ liệu' : group.weighted.toPrecision(6) + ' / ' + group.weight.toPrecision(4) + ' = ' + display(group.score),
+                group.score === null ? 'Chưa đủ dữ liệu' : group.score >= threshold ? 'Đạt' : 'Không đạt',
+            ]));
+            setText('studentQuickBadges', complete
+                ? (passed ? 'Đạt chuẩn đầu ra học phần' : 'Không đạt chuẩn đầu ra học phần')
+                : 'Chưa đủ điểm để đánh giá chuẩn đầu ra');
         }
 
-        // Bắt sự kiện chuyển sinh viên trong dropdown
         selectFormulaStudent.addEventListener('change', function() {
             renderFormulaModalStudent(this.value);
         });

@@ -172,19 +172,7 @@
                 </td>
                 <td class="noi-dung-cell">
                     @if($cr['id'] === 'tc7' && !empty($functionalRequirements))
-                        <div class="text-bold">Xây dựng các chức năng cơ bản của ứng dụng: đăng nhập, đăng xuất, backup &amp; restore,…</div>
-                        <div class="text-bold" style="margin-top: 2px;">Cài đặt chức năng theo yêu cầu của bài toán:</div>
-                        @php $groupedReqs = collect($functionalRequirements)->groupBy('group'); @endphp
-                        @foreach($groupedReqs as $groupName => $reqItems)
-                            @if($groupName !== 'Chức năng cơ bản')
-                                <div class="noi-dung-bullet text-bold" style="margin-top: 2px;">&bull; {{ $groupName }}:</div>
-                                @foreach($reqItems as $r)
-                                    @if($r['id'] !== 'tc7_co_ban')
-                                        <div class="noi-dung-subbullet">&ndash; {{ $r['label'] }} (0.50đ)</div>
-                                    @endif
-                                @endforeach
-                            @endif
-                        @endforeach
+                        <div class="text-bold">Xây dựng các chức năng của hệ thống</div>
                     @else
                         @foreach($lines as $lineIdx => $line)
                             @php
@@ -238,6 +226,29 @@
                 </td>
                 @endforeach
             </tr>
+            @if($cId === 'tc7')
+                @foreach(collect($functionalRequirements)->groupBy('group') as $groupName => $requirements)
+                    <tr>
+                        <td></td>
+                        <td class="text-bold">{{ $groupName }}</td>
+                        <td></td>
+                        <td class="text-center">{{ number_format($requirements->sum('max'), 2, ',', '.') }}</td>
+                        @foreach($sinhViens as $sv)<td></td>@endforeach
+                    </tr>
+                    @foreach($requirements as $requirement)
+                        <tr>
+                            <td></td>
+                            <td class="noi-dung-subbullet">• {{ $requirement['label'] }}</td>
+                            <td class="text-center">{{ $requirement['clo'] ?? 'CLO3' }}</td>
+                            <td class="text-center">{{ number_format($requirement['max'], 2, ',', '.') }}</td>
+                            @foreach($sinhViens as $sv)
+                                @php $actual = $diemDaCham->get($sv->MaSV)?->ChiTietDiem[$requirement['id']] ?? null; @endphp
+                                <td class="text-center">{{ $actual === null ? '' : number_format($actual, 2, ',', '.') }}</td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                @endforeach
+            @endif
             @endforeach
 
             {{-- HÀNG TỔNG CỘNG --}}
