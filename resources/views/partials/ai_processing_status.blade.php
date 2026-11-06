@@ -1,5 +1,8 @@
 @php
     $processingState = $aiData['_processing'] ?? [];
+    $savedMapDone = (int) ($aiData['analysis']['analyzed_chunks'] ?? 0);
+    $savedMapTotal = (int) ($aiData['analysis']['total_chunks'] ?? 0);
+    $showRoundProgress = request()->routeIs('sinhvien.*') && (int) ($pb->dotNop?->ThuTu ?? 0) === 1;
     $reviewHasResults=(int)($aiData['requirements_review']['processing']['completed_checks']??0)>0;
     $processingActive = in_array($processingState['status'] ?? '', ['queued','running','waiting']);
     $processingErrors=$processingState['errors']??[];
@@ -11,14 +14,26 @@
 @endphp
 @if($teacherReportUi ?? false)
     @if($processingUrl)
-    <div class="ai-processing-status" @if($hideProcessingBanner) hidden style="display:none" @endif role="status" aria-live="polite" data-processing-errors='@json($processingErrors)' data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+    <div class="ai-processing-status" @if($showRoundProgress) data-round-analysis-progress @endif @if($hideProcessingBanner && !$showRoundProgress) hidden style="display:none" @endif role="status" aria-live="polite" data-processing-errors='@json($processingErrors)' data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-processing-started="{{ $processingState['queued_at'] ?? '' }}" data-processing-map-done="{{ $savedMapDone }}" data-processing-map-total="{{ $savedMapTotal }}" data-processing-next-retry="{{ $processingState['next_retry_at'] ?? 0 }}" data-processing-status="{{ $processingState['status'] ?? ($analysisComplete ? 'completed' : 'idle') }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
+        @if($showRoundProgress)
+            <h3 class="h6 fw-bold mb-2">Đợt 1 — Báo cáo tiến độ phân tích</h3>
+            <progress class="w-100" data-round-progress-bar max="{{ max(1, $savedMapTotal) }}" value="{{ $savedMapDone }}" aria-label="Tiến độ phân tích văn bản"></progress>
+            <p data-round-progress-counts></p>
+            <p data-round-progress-time></p>
+            <button type="button" class="ai-button" data-round-pause hidden>Tạm dừng</button>
+            <button type="button" class="ai-button" data-round-resume hidden>Tiếp tục</button>
+            <details class="mt-2">
+                <summary>Xem nhật ký xử lý</summary>
+                <ol data-round-progress-history></ol>
+            </details>
+        @endif
         <strong data-processing-title>{{ $processingActive ? 'Đang phân tích báo cáo' : (($processingState['status'] ?? '') === 'completed' ? 'Đã có kết quả phân tích' : 'Trạng thái phân tích') }}</strong>
         <p data-processing-message>{{ $processingActive ? 'Bạn có thể tiếp tục sử dụng trang trong khi chờ.' : 'Kết quả đã lưu được hiển thị bên dưới.' }}</p>
         <div class="ai-result-status-lines">
             <p data-processing-summary-result><strong>Tóm tắt báo cáo:</strong> {{ ($aiData['analysis']['status']??'')==='completed' ? 'Đã hoàn thành.' : 'Chưa hoàn tất.' }}</p>
             <p data-processing-review-result><strong>Đối chiếu yêu cầu:</strong> {{ ($aiData['requirements_review']['status']??'')==='completed' ? 'Đã có kết quả — giảng viên cần kiểm tra lại.' : (($aiData['requirements_review']['status']??'')==='partial' ? ($processingActive ? 'Đang đối chiếu yêu cầu.' : ($reviewHasResults ? 'Có kết quả tham khảo — giảng viên vui lòng kiểm tra dẫn chứng.' : 'Chưa có kết quả để đối chiếu.')) : 'Chưa có kết quả hoàn tất.') }}</p>
         </div>
-        <p data-processing-step></p>
+        <p data-processing-step>@if($savedMapTotal > 0)Đã lưu {{ min($savedMapDone, $savedMapTotal) }}/{{ $savedMapTotal }} phần văn bản.@endif</p>
         <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
         <button type="button" class="ai-button" data-open-ai-progress @if(!$processingActive) hidden @endif>Xem chi tiết tiến độ và thông báo</button>
         <button type="button" class="ai-button" data-ai-refresh-result hidden>Xem kết quả mới</button>
@@ -29,9 +44,9 @@
 <div class="ai-processing-status" role="status" aria-live="polite" data-result-revision="{{ app(\App\Services\AiReportProcessingService::class)->resultRevision($aiData) ?? '' }}" data-ai-processing-url="{{ $processingUrl }}" data-processing-active="{{ $processingActive ? '1' : '0' }}" data-summary-status="{{ $aiData['analysis']['status'] ?? '' }}" data-review-status="{{ $aiData['requirements_review']['status'] ?? '' }}" data-review-has-results="{{ $reviewHasResults ? '1' : '0' }}" data-processing-updated="{{ $processingState['updated_at'] ?? 0 }}">
     <strong data-processing-title>{{ ['queued'=>'Đang chờ xử lý','running'=>'Đang phân tích','waiting'=>'Đang chờ thử tiếp','completed'=>'Đã hoàn tất','partial'=>'Hoàn tất một phần'][$processingState['status'] ?? ''] ?? 'Trạng thái AI' }}</strong>
     <p data-processing-message>{{ $processingState['message'] ?? '' }}</p>
-    <p data-processing-step></p>
+    <p data-processing-step>@if($savedMapTotal > 0)Đã lưu {{ min($savedMapDone, $savedMapTotal) }}/{{ $savedMapTotal }} phần văn bản.@endif</p>
         <small class="ai-processing-wait-note">Thời gian chờ tóm tắt có thể kéo dài từ 3 đến 5 phút hoặc lâu hơn, tùy thuộc vào kích thước của file.</small>
-    <p data-processing-retry>@if(!empty($processingState['next_retry_at']))Thử tiếp sau: {{ date('H:i:s d/m/Y', $processingState['next_retry_at']) }} (giờ máy chủ).@endif</p>
+    <p data-processing-retry>@if(!empty($processingState['next_retry_at']))Thử tiếp sau: {{ \Carbon\Carbon::createFromTimestamp($processingState['next_retry_at'], 'Asia/Ho_Chi_Minh')->format('H:i:s d/m/Y') }} (giờ Việt Nam).@endif</p>
     <ul data-processing-errors>
         @foreach(collect($processingState['errors'] ?? [])->unique(fn ($e) => ($e['stage'] ?? '').'|'.($e['code'] ?? '')) as $error)
             <li>{{ $stepLabels[$error['stage'] ?? ''] ?? 'Xử lý AI' }}: {{ $error['message'] ?? 'Chưa hoàn tất.' }}</li>
@@ -95,7 +110,7 @@
                 banner.querySelector('[data-processing-message]').textContent=data.message || '';
                 const p=data.progress || {}, coverage=data.summary_coverage || {};
                 banner.querySelector('[data-processing-step]').textContent=[p.stage ? (stages[p.stage] || (p.engine === 'pdf_lab' ? p.stage : 'Đang xử lý')) : '',p.map_total ? `Đã đọc ${p.map_done || 0}/${p.map_total} phần báo cáo` : (coverage.total ? `Tóm tắt: ${coverage.done}/${coverage.total} phần` : ''),p.chapter_total ? `Tổng hợp chương: ${p.chapter_done || 0}/${p.chapter_total}` : '',p.completed_calls ? (p.engine === 'pdf_lab' ? `${p.completed_calls} lượt sinh nội dung đã thử (gồm checkpoint)` : `${p.completed_calls} lượt AI thành công trong lần chạy này`) : '',p.started_at ? `Đã chạy khoảng ${Math.max(0,Math.floor(Date.now()/1000-p.started_at))} giây trong lượt này` : '',p.waiting_seconds ? `Chờ điều tiết API khoảng ${p.waiting_seconds} giây` : '',p.reused_calls ? `Đã dùng lại ${p.reused_calls} bước từ bộ nhớ đệm` : ''].filter(Boolean).join(' · ');
-                banner.querySelector('[data-processing-retry]').textContent=data.next_retry_at ? 'Dự kiến thử tiếp: '+new Date(data.next_retry_at*1000).toLocaleString('vi-VN') : '';
+                banner.querySelector('[data-processing-retry]').textContent=data.next_retry_at ? 'Dự kiến thử tiếp: '+new Date(data.next_retry_at*1000).toLocaleString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'}) : '';
                 const list=banner.querySelector('[data-processing-errors]'); list.replaceChildren();
                 const seen=new Set();
                 for (const error of data.errors || []) {

@@ -69,6 +69,7 @@
                 @case('mau_08') BÁO CÁO TÌNH HÌNH TỔ CHỨC KHÓA LUẬN TỐT NGHIỆP @break
                 @case('mau_09') BÁO CÁO THỐNG KÊ KHÓA LUẬN THEO BỘ MÔN @break
                 @case('mau_10') BÁO CÁO THỐNG KÊ KHÓA LUẬN THEO HỌC PHẦN KHÓA LUẬN @break
+                @case('mau_11') BẢNG TỔNG HỢP ĐIỂM VÀ CHUẨN ĐẦU RA KHÓA LUẬN @break
                 @default BÁO CÁO TỔNG HỢP KẾT QUẢ KHÓA LUẬN TỐT NGHIỆP THEO ĐỢT &amp; HỘI ĐỒNG
             @endswitch
         </h5>
@@ -102,6 +103,9 @@
     {{-- NỘI DUNG BẢNG VĂN BẢN ĐÚNG THEO MẪU BÁO CÁO ĐANG CHỌN (1 -> 10)     --}}
     {{-- ═════════════════════════════════════════════════════════════════ --}}
     @switch($mauBaoCao)
+        @case('mau_11')
+            @include('thongke_baocao.partials.diem_clo_table', ['rows' => $data['danhSachTatCaSV']])
+            @break
 
         {{-- ───────────────────────────────────────────────────────────── --}}
         {{-- MẪU 02: BÁO CÁO THỐNG KÊ KẾT QUẢ THEO NGÀNH ĐÀO TẠO          --}}
@@ -741,6 +745,9 @@
                     </tbody>
                 </table>
             </div>
+            @if($config['show_detail'] ?? true)
+            @include('thongke_baocao.partials.filtered_councils', ['rows' => $data['danhSachTatCaSV'], 'groupMode' => 'department'])
+            @endif
             @break
 
         {{-- ───────────────────────────────────────────────────────────── --}}
@@ -786,6 +793,9 @@
                     </tbody>
                 </table>
             </div>
+            @if($config['show_detail'] ?? true)
+            @include('thongke_baocao.partials.filtered_councils', ['rows' => $data['danhSachTatCaSV'], 'groupMode' => 'course'])
+            @endif
             @break
 
         {{-- ───────────────────────────────────────────────────────────── --}}

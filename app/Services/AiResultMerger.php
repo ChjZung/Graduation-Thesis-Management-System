@@ -4,9 +4,24 @@ namespace App\Services;
 
 class AiResultMerger
 {
+    public static function validProgress(mixed $value): bool
+    {
+        $keys = ['cong_viec', 'kho_khan', 'ke_hoach'];
+        if (!is_array($value) || count($value) !== count($keys)) return false;
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $value)) return false;
+            if ($value[$key] !== null && (!is_string($value[$key]) || trim($value[$key]) === '')) return false;
+        }
+        return true;
+    }
+
     public function merge(array $old, array $new, bool $reviewOnly = false): array
     {
         $sameSource = empty($old['_source_hash']) || ($old['_source_hash'] === ($new['_source_hash'] ?? null));
+        if (!self::validProgress($new['progress_v1'] ?? null)) {
+            if (array_key_exists('progress_v1', $new)) $new['progress_v1_status'] = 'unavailable';
+            unset($new['progress_v1'], $new['progress_display']);
+        }
         if (!$sameSource) return $new;
         $oldAnalysis = $old['analysis'] ?? [];
         $newAnalysis = $new['analysis'] ?? [];
@@ -24,6 +39,27 @@ class AiResultMerger
             (empty($newAnalysis['total_units']) && empty($newAnalysis['total_pages']))
         ));
         $merged = $keepSummary ? $old : $new;
+        $priorProgress = $old['progress_v1'] ?? null;
+        $newProgress = $new['progress_v1'] ?? null;
+        unset($merged['progress_v1'], $merged['progress_v1_status'], $merged['progress_display']);
+        if (self::validProgress($newProgress) && (!$reviewOnly || !self::validProgress($priorProgress))
+            && (!self::validProgress($priorProgress)
+                || ($new['progress_v1_status'] ?? '') === 'complete'
+                || ($old['progress_v1_status'] ?? '') !== 'complete')) {
+            $merged['progress_v1'] = $newProgress;
+            $merged['progress_v1_status'] = $new['progress_v1_status'] ?? 'partial';
+            $merged['progress_display'] = $new['progress_display'] ?? [];
+        } elseif (self::validProgress($priorProgress)) {
+            $merged['progress_v1'] = $priorProgress;
+            $merged['progress_v1_status'] = $old['progress_v1_status'] ?? 'partial';
+            $merged['progress_display'] = $old['progress_display'] ?? [];
+        } elseif (($new['progress_v1_status'] ?? '') === 'unavailable'
+            || ($old['progress_v1_status'] ?? '') === 'unavailable') {
+            $merged['progress_v1_status'] = 'unavailable';
+        }
+        if (!empty($new['source_navigation']) || !empty($old['source_navigation'])) {
+            $merged['source_navigation'] = $new['source_navigation'] ?? $old['source_navigation'];
+        }
         // Caption metadata is independent of summary/review completion.
         if (($new['caption_index']['status'] ?? '') === 'completed' &&
             ($new['_source_hash'] ?? null) === ($old['_source_hash'] ?? $new['_source_hash'] ?? null)) {
@@ -85,6 +121,43 @@ class AiResultMerger
             $merged['content_review']=$audit;
         }
         if (isset($new['_source_hash'])) $merged['_source_hash'] = $new['_source_hash'];
+        $merged = self::fillMissingReading($merged, $old);
         return AiRequirementResultPolicy::preserveVerified($old, $merged, $new);
+    }
+
+    public static function fillMissingReading(array $current, array $saved): array
+    {
+        $hash = $current['_source_hash'] ?? $current['source_identity']['source_hash'] ?? null;
+        $version = $current['document_version_id'] ?? null;
+        if (!$hash || !$version || $hash !== ($saved['_source_hash'] ?? $saved['source_identity']['source_hash'] ?? null)
+            || $version !== ($saved['document_version_id'] ?? null)) return $current;
+
+        if (empty($current['overall_summary']) && !empty($saved['overall_summary'])) {
+            foreach (['overall_summary', 'overview_summary', 'document_content'] as $key) {
+                if (empty($current[$key]) && !empty($saved[$key])) $current[$key] = $saved[$key];
+            }
+        }
+        $current['chapters'] = self::fillReadingNodes($current['chapters'] ?? [], $saved['chapters'] ?? []);
+        return $current;
+    }
+
+    private static function fillReadingNodes(array $current, array $saved): array
+    {
+        if (!$current) return $saved;
+        $previous = array_column($saved, null, 'id');
+        foreach ($current as &$node) {
+            $old = $previous[$node['id'] ?? ''] ?? null;
+            if (!$old || ($old['title'] ?? null) !== ($node['title'] ?? null)
+                || ($old['start_page'] ?? null) !== ($node['start_page'] ?? null)
+                || ($old['end_page'] ?? null) !== ($node['end_page'] ?? null)) continue;
+            if (empty($node['chapter_reading']['paragraphs']) && !empty($old['chapter_reading']['paragraphs'])) {
+                $node['chapter_reading'] = array_replace($old['chapter_reading'], ['status'=>'partial']);
+                $node['items'] = $old['items'] ?? [];
+                $node['summary'] = $old['summary'] ?? '';
+            }
+            $node['sections'] = self::fillReadingNodes($node['sections'] ?? [], $old['sections'] ?? []);
+        }
+        unset($node);
+        return $current;
     }
 }

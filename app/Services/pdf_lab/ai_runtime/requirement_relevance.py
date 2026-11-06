@@ -13,6 +13,8 @@ PATTERNS = {
  'testing':r'kiem thu|thu nghiem|test case',
 }
 SUBJECTS = ['dang ky de tai','quan ly de tai','de xuat de tai','tien do','ho so bao ve','hoi dong','cham diem','sinh vien','dang nhap','nguoi dung']
+UI_SUBJECTS = [s for s in SUBJECTS if s not in ('sinh vien', 'nguoi dung')]
+UI_SUBJECTS += ['quan ly cau hoi', 'de thi', 'lich thi', 'ket qua thi']
 def norm(text):
     text=unicodedata.normalize('NFD',str(text).casefold().replace('đ','d'))
     return ' '.join(''.join(c for c in text if not unicodedata.combining(c)).split())
@@ -31,7 +33,7 @@ def relevant(req,text):
         subjects=[s.replace(' ','') for s in SUBJECTS if s.replace(' ','') in rc]
         if subjects and not any(s in tc for s in subjects):return False
     if 'ui' in wanted:
-        modules=[s.replace(' ','') for s in SUBJECTS if s not in ('sinh vien','nguoi dung') and s.replace(' ','') in rc]
+        modules=[s.replace(' ','') for s in UI_SUBJECTS if s.replace(' ','') in rc]
         if modules and not any(s in tc for s in modules):return False
     if wanted:return True
     stop=set('thiet ke so do quan ly he thong bao cao trinh bay cac va cua noi dung xay dung'.split())

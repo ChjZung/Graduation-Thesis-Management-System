@@ -207,6 +207,10 @@ class AiSummaryService
 
         $pythonBin = self::resolvePythonBinary();
 
+        $cacheDirectory = storage_path('app/private/ai_cache');
+        $cacheScope = $options['cache_scope'] ?? '';
+        if (preg_match('/^[a-f0-9]{64}$/D', $cacheScope)) $cacheDirectory .= '/runs/'.$cacheScope;
+
         $command = [
             $pythonBin,
             $scriptPath,
@@ -223,7 +227,7 @@ class AiSummaryService
             '--model',
             $model,
             '--cache-dir',
-            storage_path('app/private/ai_cache'),
+            $cacheDirectory,
             '--pipeline-version',
             config('ai_processing.pipeline_version', 'section-v6.1'),
         ];
@@ -248,7 +252,7 @@ class AiSummaryService
         if (!empty($options['review_only'])) {
             $command[] = '--review-only';
         }
-        if (!empty($options['fresh'])) {
+        if ($labPdf && !empty($options['fresh'])) {
             $command[] = '--fresh';
         }
         // Previous-version comparison belongs to the legacy pipeline only.
@@ -260,7 +264,8 @@ class AiSummaryService
         }
 
         $resultFile=$labPdf && !empty($options['progress_path']) ? $options['progress_path'].'.result.json' : null;
-        $partialFile=$resultFile ? $options['progress_path'].'.partial.json' : null;
+        $partialFile=!empty($options['progress_path']) ? $options['progress_path'].'.partial.json' : null;
+        if ($partialFile && is_file($partialFile)) @unlink($partialFile);
         if ($resultFile) { $command[]='--output'; $command[]=$resultFile; if (is_file($resultFile)) @unlink($resultFile); }
         $errorReason = '';
         $processFailure = null;
@@ -279,20 +284,24 @@ class AiSummaryService
                 'PYTHONUTF8' => '1',
                 'PYTHONIOENCODING' => 'utf-8',
                 'GEMINI_API_KEY' => $apiKey,
+                'GEMINI_FALLBACK_MODEL' => config('services.gemini.fallback_model'),
+                'GROQ_API_KEY' => config('services.groq.api_key'),
+                'GROQ_MODEL' => config('services.groq.model'),
                 'AI_RATE_DB' => storage_path('app/private/ai_limits.sqlite'),
                 'AI_RATE_SCOPE' => config('ai_processing.quota_scope'),
                 'AI_SAFE_RPM' => (string) config('ai_processing.rpm',4),
                 'AI_LITE_SAFE_RPM' => (string) config('ai_processing.lite_rpm',12),
                 'AI_SAFE_TPM' => (string) config('ai_processing.tpm',200000),
                 'AI_PROGRESS_FILE' => $options['progress_path'] ?? '',
+                'AI_CANCEL_FILE' => empty($options['progress_path']) ? '' : $options['progress_path'].'.cancel',
                 'AI_PARTIAL_RESULT_FILE' => is_callable($options['on_partial_result']??null) ? ($partialFile??'') : '',
                 'AI_EXACT_TOKEN_COUNT' => config('ai_processing.count_tokens', true) ? '1' : '0',
                 'AI_MAX_REQUEST_TOKENS' => (string) config('ai_processing.max_request_tokens', 12000),
 
             ]);
 
-            // Cho phép thời gian xử lý tối đa 240s cho các tài liệu PDF dài (Map-Reduce đa tầng)
-            $result = Process::timeout(360)->env($processEnv)->run($command, function ($type,$buffer) use ($partialFile,$options,&$lastPartialHash) {
+            $process = Process::timeout(360)->env($processEnv);
+            $onOutput = function ($type,$buffer) use ($partialFile,$options,&$lastPartialHash) {
                 if (!$partialFile || !is_callable($options['on_partial_result']??null) || !is_file($partialFile)) return;
                 $bytes=@file_get_contents($partialFile);
                 if ($bytes===false) return;
@@ -300,9 +309,11 @@ class AiSummaryService
                 if ($digest===$lastPartialHash) return;
                 $snapshot=json_decode($bytes,true);
                 if (!is_array($snapshot) || empty($snapshot['success']) || !is_array($snapshot['data']??null)) return;
-                try { ($options['on_partial_result'])($this->formatSummarizeResult($snapshot,$options['stage']??1)); $lastPartialHash=$digest; }
+                try { ($options['on_partial_result'])($this->formatSummarizeResult($snapshot,$options['stage']??1), !empty($snapshot['review_only'])); $lastPartialHash=$digest; }
                 catch (\Throwable $e) { Log::warning('AI partial publication deferred.', ['type'=>get_class($e)]); }
-            });
+            };
+            $result = $this->runAnalysisProcess($process, $command, $onOutput, $options['should_continue'] ?? null);
+            if ($result === null) return ['success'=>false, 'cancelled'=>true];
 
             if ($result->successful()) {
                 $output = $resultFile && is_file($resultFile) ? file_get_contents($resultFile) : preg_replace('/^AI_PARTIAL_READY\r?\n/m','',trim($result->output()));
@@ -343,6 +354,24 @@ class AiSummaryService
             $fallback['data']['analysis']['reused_calls'] = max(0, (int) ($progress['reused_calls'] ?? 0));
         }
         return $fallback;
+    }
+
+    private function runAnalysisProcess($process, array $command, callable $onOutput, ?callable $shouldContinue)
+    {
+        if ($shouldContinue === null) return $process->run($command, $onOutput);
+        if (!$shouldContinue()) return null;
+
+        $child = $process->start($command, $onOutput);
+        $deadline = hrtime(true) + 360_000_000_000;
+        try {
+            while ($child->running() && hrtime(true) < $deadline) {
+                usleep(1_000_000);
+                if (!$shouldContinue()) return null;
+            }
+            return $child->wait();
+        } finally {
+            if ($child->running()) $child->stop(0);
+        }
     }
 
     /**
@@ -451,11 +480,20 @@ class AiSummaryService
         ]));
         if ((int) ($data['schema_version'] ?? 0) >= 6) {
             foreach (['document_id', 'document_version_id', 'source_identity', 'analysis_status', 'overview_summary',
-                '_source_hash', 'chapters', 'caption_index', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', 'requirements_provenance', '_analysis_history'] as $field) {
+                '_source_hash', 'chapters', 'caption_index', 'source_navigation', 'content_review', 'analysis_metadata', 'validation', 'teacher_requirements', 'requirements_document', 'teacher_requirements_status', 'requirements_links_status', 'requirements_provenance', '_analysis_history'] as $field) {
                 if (array_key_exists($field, $data)) $sectionsData[$field] = $data[$field];
             }
             unset($sectionsData['difficulties'], $sectionsData['next_steps'], $sectionsData['completion_percentage'],
                 $sectionsData['completion_basis']);
+        }
+
+        if (AiResultMerger::validProgress($data['progress_v1'] ?? null)) {
+            $sectionsData['progress_v1'] = $data['progress_v1'];
+            $sectionsData['progress_display'] = is_array($data['progress_display'] ?? null) ? $data['progress_display'] : [];
+            $sectionsData['progress_v1_status'] = ($data['progress_v1_status'] ?? '') === 'complete'
+                ? 'complete' : 'partial';
+        } elseif (isset($data['progress_v1_status']) || array_key_exists('progress_v1', $data)) {
+            $sectionsData['progress_v1_status'] = 'unavailable';
         }
 
         $stdReport = $raw['standard_report'] ?? ((int) ($data['schema_version'] ?? 0) >= 5 ? [

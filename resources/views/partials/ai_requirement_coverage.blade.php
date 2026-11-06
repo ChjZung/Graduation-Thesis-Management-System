@@ -5,6 +5,8 @@
     $coverageData=$aiData;
     if(isset($reviewRound) && $reviewRound && ($aiData['summary_scope']['context_hash']??'')!==$reviewRound->maNguCanhDoiChieuAi()) $coverageData['requirements_binding_status']='stale';
     $coverage=\App\Support\AiRequirementCoverage::calculate($coverageData);
+    $hasVerifiedCoverage = $coverage['available'] && $coverage['found'] > 0;
+    $coverageLabel = $hasVerifiedCoverage ? number_format($coverage['percent'], 2, ',', '.').'%' : ($coverage['available'] ? 'Chưa xác minh được dẫn chứng' : 'Chưa có kết quả');
 @endphp
 @php
     $coverageKey=$coverageReportKey ?? ($pb->MaKhoi ?? '');
@@ -19,8 +21,8 @@
         <div class="card-body">
             <i class="fa-solid fa-percent" aria-hidden="true"></i>
             <h4>Tỷ lệ yêu cầu có dẫn chứng @if($coverageVersionNumber)(v{{ $coverageVersionNumber }})@endif</h4>
-            <strong data-ai-coverage-percent>{{ $coverage['available'] ? number_format($coverage['percent'],2,',','.') .'%' : 'Chưa có kết quả' }}</strong>
-            <p>{{ $coverage['available'] ? $coverage['found'].'/'.$coverage['leaves'].' mục có nguồn được tìm thấy.' : 'Chưa đủ dữ liệu để tính tỷ lệ.' }}</p>
+            <strong data-ai-coverage-percent>{{ $coverageLabel }}</strong>
+            <p>{{ $coverage['available'] ? $coverage['found'].'/'.$coverage['leaves'].' mục có nguồn đã xác minh.' : 'Chưa đủ dữ liệu để tính tỷ lệ.' }}</p>
             <button type="button" class="ai-metric-action" data-ai-open-requirements @if(!$coverageKey) disabled @endif>Xem yêu cầu được đối chiếu</button>
             <button type="button" class="ai-metric-action" data-ai-coverage-rules>Thể lệ ước tính tỷ lệ <i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
         </div>
@@ -30,7 +32,7 @@
         <div class="callout-body ai-coverage-body">
             @if($coverage['available'])
                 <div class="ai-coverage-value-row">
-                    <strong class="text-primary" style="font-size:2rem" data-ai-coverage-percent>{{ number_format($coverage['percent'],2,',','.') }}%</strong>
+                    <strong class="text-primary" style="font-size:2rem" data-ai-coverage-percent>{{ $coverageLabel }}</strong>
                     @if($coverage['provisional'])
                         <span class="ai-coverage-status" title="Một số tiêu chí chưa xác minh được nguồn. Xem chi tiết trong thể lệ."><span class="ai-coverage-status-dot" aria-hidden="true"></span>{{ in_array($coverageData['_processing']['status']??'', ['queued','running','waiting']) ? 'Đang cập nhật' : 'Cần đối chiếu lại với báo cáo gốc' }}</span>
                     @endif
@@ -46,14 +48,14 @@
     <template data-ai-coverage-rules-content>
         @if($coverageVersionNumber)<p class="small text-muted">Phiên bản báo cáo v{{ $coverageVersionNumber }}</p>@endif
         @if($coverage['available'])
-            <p><strong>{{ number_format($coverage['percent'],2,',','.') }}%</strong> · {{ $coverage['found'] }}/{{ $coverage['leaves'] }} mục có nguồn đã kiểm chứng vị trí.</p>
+            <p><strong>{{ $coverageLabel }}</strong> · {{ $coverage['found'] }}/{{ $coverage['leaves'] }} mục có nguồn đã kiểm chứng vị trí.</p>
             @if($coverage['provisional'])<p class="text-warning-emphasis">Một số tiêu chí chưa xác minh được nguồn. Tỷ lệ này có thể thay đổi khi đối chiếu bổ sung.</p>@endif
         <p class="small mb-2">Chia đều cho {{ $coverage['roots'] }} yêu cầu lớn; mục cha chia đều trọng số cho các mục con ghi rõ trong yêu cầu gốc. Không cộng trùng mục cha.</p>
 
             <p class="small text-muted d-md-none">Vuốt ngang bảng để xem đầy đủ các cột.</p>
             <div class="table-responsive mt-2" tabindex="0" role="region" aria-label="Bảng trọng số yêu cầu; có thể cuộn ngang"><table class="table table-sm mb-0"><thead><tr><th>Yêu cầu</th><th>Trọng số</th><th>Dẫn chứng</th><th>Đóng góp</th></tr></thead><tbody>
             @foreach($coverage['rows'] as $row)
-                <tr><td style="padding-left:{{ min($row['depth'],6)*16+8 }}px">{{ $row['label'] }}</td><td>{{ number_format($row['weight'],2,',','.') }}%</td><td>{{ $row['found']===null?'Tổng hợp từ mục con':($row['found']?($row['caption_only']?'Có tên hình/bảng — cần xem PDF':'Có dẫn chứng'):'Chưa tìm được / chưa liên kết được') }}</td><td>{{ $row['found']===null?'—':number_format($row['found']?$row['weight']:0,2,',','.') .'%' }}</td></tr>
+                <tr><td style="padding-left:{{ min($row['depth'],6)*16+8 }}px">{{ $row['label'] }}</td><td>{{ number_format($row['weight'],2,',','.') }}%</td><td>{{ $row['found']===null?'Tổng hợp từ mục con':($row['found']?($row['caption_only']?'Có tên hình/bảng — cần xem PDF':'Có dẫn chứng'):'Chưa tìm được / chưa liên kết được') }}</td><td>{{ $row['found']===null?'—':($row['found'] ? number_format($row['weight'],2,',','.') .'%' : '—') }}</td></tr>
             @endforeach
             </tbody></table></div>
 

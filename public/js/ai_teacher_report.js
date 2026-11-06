@@ -12,7 +12,7 @@
   const delta=button.left<bounds.left ? button.left-bounds.left : button.right>bounds.right ? button.right-bounds.right : 0;
   if(delta)nav.scrollTo({left:Math.max(0,nav.scrollLeft+delta),behavior:'instant'});
  }
- function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(key==='work')key='chapters';if(['chapters','requirements'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
+ function restoreTabs(card){let key;try{key=sessionStorage.getItem(storageKey(card));}catch{} if(key==='work')key='chapters';if(['chapters','evidence','diagrams','requirements','assessment'].includes(key)){const tab=card.querySelector('[data-ai-result-tab="'+key+'"]');if(tab && window.bootstrap?.Tab) bootstrap.Tab.getOrCreateInstance(tab).show();}}
  function clock(e){if(e.finished!=null)return e.finished;return Math.max(0,Math.floor((Date.now()-(e.anchor||Date.now()))/1000));}
  function stamp(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
  function problem(e){
@@ -24,14 +24,16 @@
   if(errors.some(x=>x.code==='input_changed') || (status==='partial' && !errors.length && /Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi/.test(state.message||'')))return 'Đầu vào hoặc cấu hình xử lý đã thay đổi so với lượt đang chờ. Lượt này dừng trước khi gọi AI; đây không phải lỗi hết thời gian. Vui lòng tải lại trang rồi chọn Phân tích lại. Nếu lặp lại, quản trị viên cần khởi động lại worker để nạp mã và cấu hình mới.';
   if(status==='running'&&errors.length&&errors.every(x=>x.stage==='process'&&x.code==='timeout'))return '';
   if(status==='waiting'&&errors.length&&errors.every(x=>x.code==='budget_exhausted'))return '';
-  const labels={timeout:'Lượt xử lý nền đã hết thời gian. Các bước đã lưu được giữ để tiếp tục; không cần phân tích lại từ đầu.',output_validation:'Bản tóm tắt AI chưa đạt yêu cầu kiểm tra nội dung hoặc độ dài. Phần đọc đã lưu được giữ; có thể tiếp tục để tạo lại riêng đầu ra lỗi.',request_failed:'Không gửi được yêu cầu phân tích. Vui lòng tải lại trang để kiểm tra trạng thái trước khi thử lại.',rate_limit:'API đang giới hạn lượt gọi hoặc hạn mức sử dụng.',authentication:'API key không hợp lệ hoặc không có quyền sử dụng mô hình. Quản trị viên cần kiểm tra cấu hình.',invalid_request:'API không chấp nhận yêu cầu. Quản trị viên cần kiểm tra cấu hình mô hình và dữ liệu gửi.',input_too_large:'Nội dung gửi AI vượt giới hạn cho phép.',extraction_failed:'Không trích xuất được nội dung văn bản của tài liệu.',worker_error:'Tiến trình xử lý nền gặp lỗi.',budget_exhausted:'Đã chạm giới hạn xử lý của lượt hiện tại.'};
+  const labels={provider_cooldown:'Gemini tạm bận (HTTP 503). Các phần đã xử lý được giữ lại.',service_unavailable:'Dịch vụ AI tạm thời chưa xử lý được yêu cầu.',timeout:'Lượt xử lý nền đã hết thời gian. Các bước đã lưu được giữ để tiếp tục; không cần phân tích lại từ đầu.',output_validation:'Bản tóm tắt AI chưa đạt yêu cầu kiểm tra nội dung hoặc độ dài. Phần đọc đã lưu được giữ; có thể tiếp tục để tạo lại riêng đầu ra lỗi.',request_failed:'Không gửi được yêu cầu phân tích. Vui lòng tải lại trang để kiểm tra trạng thái trước khi thử lại.',rate_limit:'API đang giới hạn lượt gọi hoặc hạn mức sử dụng.',authentication:'API key không hợp lệ hoặc không có quyền sử dụng mô hình. Quản trị viên cần kiểm tra cấu hình.',invalid_request:'API không chấp nhận yêu cầu. Quản trị viên cần kiểm tra cấu hình mô hình và dữ liệu gửi.',input_too_large:'Nội dung gửi AI vượt giới hạn cho phép.',extraction_failed:'Không trích xuất được nội dung văn bản của tài liệu.',worker_error:'Tiến trình xử lý nền gặp lỗi.',budget_exhausted:'Đã chạm giới hạn xử lý của lượt hiện tại.'};
   const messages=[...new Set(errors.map(x=>((x.engine_code||'').startsWith('reader_')&&x.engine_code!=='reader_model_limit'&&x.engine_code!=='reader_input_limit'&&x.code!=='budget_exhausted'?labels.output_validation:labels[x.code])||(status==='waiting'?'Dịch vụ AI gặp lỗi tạm thời.':'Một bước xử lý AI gặp lỗi.')))];
   if(active(status)&&state.worker_running===false)messages.push('Tiến trình chạy nền hiện chưa hoạt động; cần quản trị viên kiểm tra.');
+  if(errors.some(x=>x.primary_http_status===503 && x.cooldown_cached && String(x.model||'').startsWith('groq:')))
+   messages.push('Gemini tạm bận (HTTP 503); Groq đang trong thời gian chờ.');
   if(!messages.length)return '';
   if(errors.some(x=>x.code==='rate_limit'&&x.quota==='day'))messages.push('Nhà cung cấp báo đã chạm hạn mức ngày.');
   if(status==='waiting'&&Number(state.next_retry_at)>0){
    const retryDate=new Date(Number(state.next_retry_at)*1000);
-   messages.push('Tự thử tiếp lúc '+retryDate.toLocaleTimeString('vi-VN',{hour12:false})+' ('+retryDate.toLocaleDateString('vi-VN')+'). Không cần bấm phân tích lại.');
+   messages.push('Tự thử tiếp lúc '+retryDate.toLocaleTimeString('vi-VN',{hour12:false,timeZone:'Asia/Ho_Chi_Minh'})+' ('+retryDate.toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})+'). Không cần bấm phân tích lại.');
   }else if(['partial','failed'].includes(status))messages.push('Lượt này đã dừng; không tự thử lại. Kết quả đã lưu được giữ.');
   return messages.join(' ');
  }
@@ -47,6 +49,7 @@
   if(e.network)return 'Chưa cập nhật được trạng thái. Hệ thống sẽ kiểm tra lại; báo cáo và kết quả đã lưu được giữ.';
   if(e.denied)return 'Phiên đăng nhập đã thay đổi hoặc bạn không có quyền xem kết quả. Vui lòng đăng nhập lại.';
   const s=e.state?.status,errs=e.state?.errors||[];
+  if(s==='partial' && /hết lượt tự thử/u.test(e.state?.message||''))return e.state.message;
   if(problem(e))return active(s)?'Kết quả đã lưu được giữ. Xem thông báo sự cố bên dưới.':'Lượt xử lý chưa hoàn tất. Xem nguyên nhân và hướng xử lý bên dưới.';
   if(s==='cancelled')return e.state?.message||'Đã dừng tiến trình phân tích. Bạn có thể bấm Phân tích lại bất cứ lúc nào.';
   if(s==='completed')return e.reused?'Đang dùng lại kết quả đã lưu cho báo cáo và yêu cầu hiện tại.':'Kết quả phân tích đã được lưu. Bạn có thể xem nội dung bên dưới.';
@@ -58,11 +61,14 @@
   return 'AI đang tổng hợp nội dung từ báo cáo. Quá trình này có thể mất vài phút. Bạn có thể tiếp tục sử dụng trang.';
  }
  function detail(e){const p=e.state?.progress||{},s=e.state?.status;if(s==='completed')return 'Đã hoàn tất xử lý và lưu kết quả.';
-  const stage=String(p.stage||'');let step=/yêu cầu|dẫn chứng|đối chiếu/iu.test(stage)?'Đang đối chiếu yêu cầu của giảng viên.':/Map|map|extract/.test(stage)?'Đang đọc nội dung báo cáo.':'Đang tổng hợp nội dung báo cáo.';
-  if(s==='waiting'&&problem(e))step='Đã tạm dừng xử lý để chờ thử tiếp.';
+  const stage=String(p.stage||'');let step=/requirements_review|yêu cầu|dẫn chứng|đối chiếu/iu.test(stage)?'Đang đối chiếu yêu cầu của giảng viên.':/Map|map|extract/.test(stage)?'Đang đọc nội dung báo cáo.':'Đang tổng hợp nội dung báo cáo.';
+  if(s==='waiting'&&e.state?.errors?.some(x=>x.code==='provider_cooldown'||x.http_status===503))step='Gemini tạm bận. Hệ thống sẽ tự thử lại.';
+  else if(s==='waiting'&&problem(e))step='Đã tạm dừng xử lý để chờ thử tiếp.';
   if(stage.startsWith('Lập chỉ mục trang')&&s!=='waiting')step=stage+'. Đang chuẩn bị nguồn đối chiếu.';
   if(s==='queued')step='Yêu cầu đã được lưu, đang chờ đến lượt xử lý.';if(s==='submitting')step='Đang gửi yêu cầu phân tích.';
-  return (p.map_total?`Đã đọc ${Math.min(p.map_done||0,p.map_total)}/${p.map_total} phần văn bản. `:'')+step;
+  const saved=e.state?.summary_coverage||{},total=p.map_total||saved.total||0;
+  const done=Math.min(total,Math.max(p.map_done||0,saved.total===total?saved.done||0:0));
+  return (total?`Đã lưu ${done}/${total} phần văn bản. `:'')+step;
  }
  function hideProcessingBanner(state){
   if(state?.status==='completed')return true;
@@ -70,11 +76,42 @@
   return state?.status==='partial'&&state?.summary_status==='completed'&&errors.length>0&&
    errors.every(x=>x.stage==='requirements_review'&&x.engine_code==='review_incomplete');
  }
+ function renderRoundProgress(b,e,card){
+  if(!b.hasAttribute('data-round-analysis-progress'))return;
+  const s=e.state||{},p=s.progress||{},saved=s.summary_coverage||{};
+  const total=Number(p.map_total||saved.total||0);
+  const stored=Number(saved.total)===total?Number(saved.done||0):0;
+  const done=Math.min(total,Math.max(stored,p.map_durable?Number(p.map_done||0):0));
+  const working=s.status==='running'&&s.worker_running!==false&&!s.worker_stalled?(p.map_active||[]):[];
+  const bar=b.querySelector('[data-round-progress-bar]');
+  bar.max=total||1;bar.value=done;
+  const percent=total?(100*done/total).toLocaleString('vi-VN',{maximumFractionDigits:2}):'';
+  const counts=[total?'Đã lưu '+done+'/'+total+' phần · '+percent+'%':'Chưa có tổng số phần'];
+  if(working.length)counts.push('Đang xử lý '+working.length+' phần: '+working.join(', '));
+  if(Number.isInteger(p.map_failed))counts.push('Phần lỗi trong lượt này: '+p.map_failed);
+  if(total&&Number.isInteger(p.map_failed))counts.push('Còn chờ: '+Math.max(0,total-done-working.length-p.map_failed));
+  b.querySelector('[data-round-progress-counts]').textContent=counts.join(' · ');
+  const times=['Thời gian của lượt: '+stamp(clock(e))];
+  if(s.next_retry_at)times.push('Thử lại sau '+stamp(Math.max(0,Number(s.next_retry_at)-Date.now()/1000)));
+  b.querySelector('[data-round-progress-time]').textContent=times.join(' · ');
+  b.querySelector('[data-round-pause]').hidden=!active(s.status)||!card.dataset.cancelUrl;
+  const resume=b.querySelector('[data-round-resume]');
+  resume.hidden=!['paused','partial','failed'].includes(s.status)||!card.querySelector('[data-teacher-analyze-form]');
+  resume.textContent=s.status==='paused'?'Tiếp tục':'Thử lại phần chưa hoàn tất';
+  const entries=(s.history||[]).slice().reverse();
+  if(!entries.length)entries.push({message:s.message||'Chưa có nhật ký cho lượt này.'});
+  const history=b.querySelector('[data-round-progress-history]');
+  history.replaceChildren(...entries.map(entry=>{
+   const item=document.createElement('li');
+   item.textContent=(entry.at?new Date(entry.at*1000).toLocaleString('vi-VN')+' · ':'')+entry.message+(entry.error?.message?' '+entry.error.message:'');
+   return item;
+  }));
+ }
  function render(e){for(const card of cards(e)){
    card.querySelectorAll('[data-ai-review-submit]').forEach(b=>b.disabled=e.submitting||active(e.state?.status));
    card.querySelectorAll('[data-teacher-cancel-form]').forEach(f=>f.style.display=(active(e.state?.status)||e.submitting)?'inline-block':'none');
    card.querySelectorAll('[data-ai-processing-url]').forEach(b=>{
-    const hide=hideProcessingBanner(e.state);b.hidden=hide;b.style.display=hide?'none':'';
+    const hide=!b.hasAttribute('data-round-analysis-progress')&&hideProcessingBanner(e.state);b.hidden=hide;b.style.display=hide?'none':'';
     b.dataset.processingActive=active(e.state?.status)?'1':'0';b.dataset.processingStatus=e.state?.status||'idle';b.querySelector('[data-processing-title]').textContent=title(e);
     const summary=b.querySelector('[data-processing-summary-result]'),review=b.querySelector('[data-processing-review-result]');
     if(summary)summary.textContent='Tóm tắt báo cáo: '+(e.state?.summary_status==='completed'?(active(e.state?.status)?'Đã có bản tóm tắt để xem bên dưới; đối chiếu yêu cầu đang tiếp tục.':e.state?.status==='completed'?'Đã hoàn thành.':'Đang giữ kết quả đã lưu; lượt hiện tại chưa hoàn tất.'):(active(e.state?.status)?'Đang xử lý.':'Chưa hoàn tất.'));
@@ -87,6 +124,11 @@
     b.querySelectorAll('[data-ai-processing-problem]').forEach(notice=>notice.remove());
     b.querySelector('[data-processing-step]').textContent=active(e.state?.status)?detail(e)+' Thời gian đã chờ: '+stamp(clock(e)):'';
     const open=b.querySelector('[data-open-ai-progress]');if(open){const stopped=['partial','failed'].includes(e.state?.status);open.hidden=!active(e.state?.status)&&!e.network&&!stopped;open.textContent='Xem chi tiết tiến độ và thông báo';}
+    renderRoundProgress(b,e,card);
+    if(e.state?.status==='paused'||e.state?.worker_running===false||e.state?.worker_stalled){
+     b.querySelector('[data-processing-title]').textContent=e.state.status==='paused'?'Đã tạm dừng':e.state.worker_stalled?'Chưa có cập nhật từ tiến trình nền':'Đang chờ tiến trình xử lý nền';
+     b.querySelector('[data-processing-step]').textContent=e.state.message||'';
+    }
     const result=b.querySelector('[data-ai-refresh-result]');if(result)result.hidden=e.state?.status!=='completed'||e.loaded;
    });
   }
@@ -154,10 +196,12 @@
   })().catch(()=>{for(const c of cards(e)){const b=c.querySelector('[data-ai-refresh-result]');if(b){b.hidden=false;b.textContent='Xem kết quả mới';}}return false;}).finally(()=>e.refreshing=null);
   return e.refreshing;
  }
- async function poll(e){if(e.polling||e.denied)return;e.polling=true;
+ async function poll(e){if(e.polling||e.denied||e.cancelling)return;e.polling=true;
+  const cancelRevision=e.cancelRevision||0;
   try{const response=await fetch(e.url,{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin'});
+   if(cancelRevision!==(e.cancelRevision||0))return;
    if(response.redirected||[401,403,404].includes(response.status)){e.denied=true;e.state={status:'partial'};render(e);return;}
-   if(!response.ok)throw Error('status');const data=await response.json();accept(e,data);
+   if(!response.ok)throw Error('status');const data=await response.json();if(cancelRevision!==(e.cancelRevision||0))return;accept(e,data);
    const changed=data.result_revision&&data.result_revision!==e.lastRevision;
    if(changed || (!active(data.status)&&data.status==='completed'&&!e.loaded)){
     if(await refresh(e)){e.lastRevision=data.result_revision;if(!active(data.status))e.loaded=true;}
@@ -214,20 +258,20 @@
  });
  function scan(){document.querySelectorAll('.ai-teacher-report').forEach(card=>{if(!initialized.has(card)){initialized.add(card);restoreTabs(card);}const b=card.querySelector('[data-ai-processing-url]');if(!b)return;
    let e=jobs.get(b.dataset.aiProcessingUrl);
-   if(!e){e={url:b.dataset.aiProcessingUrl,key:card.dataset.reportKey,lastRevision:b.dataset.resultRevision||null,anchor:Date.now(),state:{status:b.dataset.processingStatus||'idle',summary_status:b.dataset.summaryStatus||null,review_status:b.dataset.reviewStatus||null,review_has_results:b.dataset.reviewHasResults==='1',queued_at:Number(b.dataset.processingStarted)||null,errors:JSON.parse(b.dataset.processingErrors||'[]')},loaded:true};jobs.set(e.url,e);
+   if(!e){e={url:b.dataset.aiProcessingUrl,key:card.dataset.reportKey,lastRevision:b.dataset.resultRevision||null,anchor:Date.now(),state:{status:b.dataset.processingStatus||'idle',summary_status:b.dataset.summaryStatus||null,review_status:b.dataset.reviewStatus||null,review_has_results:b.dataset.reviewHasResults==='1',queued_at:Number(b.dataset.processingStarted)||null,next_retry_at:Number(b.dataset.processingNextRetry)||null,summary_coverage:{done:Number(b.dataset.processingMapDone)||0,total:Number(b.dataset.processingMapTotal)||0},errors:JSON.parse(b.dataset.processingErrors||'[]')},loaded:true};jobs.set(e.url,e);
     // Background processing must not lock navigation or scrolling on page load.
-    if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);}}
+    if(b.dataset.processingActive==='1'){e.loaded=false;poll(e);}else if(b.hasAttribute('data-round-analysis-progress'))poll(e);}
    render(e);
   });syncCoverage();}
  async function submit(form,resume=false){const card=form.closest('.ai-teacher-report'),b=card.querySelector('[data-ai-processing-url]');if(!b)return;
   const e=jobs.get(b.dataset.aiProcessingUrl);if(!e||e.submitting||active(e.state?.status))return;
-  e.submitting=true;e.loaded=false;e.reused=false;e.finished=null;e.anchor=Date.now();e.state={status:'submitting'};render(e);
+  e.submitting=true;e.loaded=false;e.reused=false;e.finished=null;e.anchor=Date.now();e.state=resume?{...e.state,status:'submitting',next_retry_at:null}:{status:'submitting'};render(e);
   try{const body=new FormData(form);if(resume)body.set('fresh','0');const response=await fetch(form.action,{method:'POST',body,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
    if(!response.ok||response.redirected){if([401,403,419].includes(response.status))e.denied=true;throw Error('submit');}
    const data=await response.json();e.reused=!!data.reused;accept(e,data.state);if(active(e.state.status))poll(e);else{e.loaded=true;await refresh(e);}
   }catch{e.state={status:'partial',errors:[{code:'request_failed'}]};e.network=false;render(e);}finally{e.submitting=false;render(e);}
  }
- async function cancelJob(element){
+ async function cancelJob(element,pause=false){
   const card=element.closest?.('.ai-teacher-report') || (current ? cards(current)[0] : null);
   const form=card?.querySelector('[data-teacher-cancel-form]');
   const actionUrl=form?.action || card?.dataset.cancelUrl;
@@ -235,14 +279,16 @@
   const csrfToken=form?.querySelector('input[name="_token"]')?.value || card?.dataset.csrfToken || '';
   const b=card?.querySelector('[data-ai-processing-url]');
   const e=b ? jobs.get(b.dataset.aiProcessingUrl) : current;
-  if(e){ clearTimeout(e.timer); e.submitting=false; }
+  if(e?.cancelling)return;
+  if(e){ clearTimeout(e.timer); e.cancelling=true; e.cancelRevision=(e.cancelRevision||0)+1; }
   try{
    const response=await fetch(actionUrl,{
     method:'POST',
     headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrfToken},
-    credentials:'same-origin'
+    credentials:'same-origin',body:pause?new URLSearchParams({pause:'1'}):undefined
    });
-   if(response.ok){
+   if(!response.ok)throw Error('cancel');
+   {
     const data=await response.json();
     if(e){
      accept(e, data.state || {status:'cancelled',message:'Đã dừng tiến trình phân tích.'});
@@ -250,7 +296,9 @@
     }
    }
   }catch(err){
-   if(form) form.submit();
+   if(e){e.network=true;render(e);}
+  }finally{
+   if(e){e.cancelling=false;schedule(e,1000);}
   }
  }
  document.addEventListener('submit',event=>{
@@ -289,6 +337,10 @@
  });
  document.addEventListener('click',event=>{
   const card=event.target.closest('.ai-teacher-report'),b=card?.querySelector('[data-ai-processing-url]'),e=b&&jobs.get(b.dataset.aiProcessingUrl);
+  if(event.target.closest('[data-round-pause]')&&e)cancelJob(event.target,true);
+  if(event.target.closest('[data-round-resume]')&&e){
+   const form=card.querySelector('[data-teacher-analyze-form]');if(form)submit(form,true);
+  }
   if(event.target.closest('[data-open-ai-progress]')&&e)open(e);
   if(event.target.closest('[data-ai-refresh-result]')&&e){refresh(e);}
   if(event.target.closest('[data-progress-view]')&&current){const entry=current;bootstrap.Modal.getOrCreateInstance(modalNode()).hide();refresh(entry).then(()=>{const c=cards(entry).find(x=>!x.closest('dialog'));if(c){c.querySelector('.ai-details').hidden=false;c.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}});}

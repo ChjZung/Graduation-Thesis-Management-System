@@ -74,21 +74,52 @@
         @endif
         @if($sourceChanged)<p class="alert alert-warning">Tệp báo cáo đã thay đổi. Chọn Phân tích lại để đọc đúng tệp hiện tại.</p>@endif
         <nav class="ai-report-tabs nav nav-tabs" role="tablist" aria-label="Kết quả AI dành cho giảng viên">
-            @foreach(['chapters'=>'Tóm tắt theo chương','requirements'=>'Yêu cầu của giảng viên theo đợt'] as $tabKey=>$tabLabel)
+            @foreach(['chapters'=>'Tóm tắt', 'evidence'=>'Dẫn chứng', 'diagrams'=>'Sơ đồ và bảng', 'requirements'=>'Yêu cầu của giảng viên', 'assessment'=>'Tiến độ và đánh giá'] as $tabKey=>$tabLabel)
                 <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $uniqueId }}-tab-{{ $tabKey }}" data-bs-toggle="tab" data-bs-target="#{{ $uniqueId }}-pane-{{ $tabKey }}" type="button" role="tab" aria-controls="{{ $uniqueId }}-pane-{{ $tabKey }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" data-ai-result-tab="{{ $tabKey }}">{{ $tabLabel }}</button>
             @endforeach
         </nav>
         <div class="tab-content ai-report-tab-content">
             <div class="tab-pane fade show active" id="{{ $uniqueId }}-pane-chapters" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-chapters" tabindex="0" data-ai-pane="chapters">
-                @if(trim((string)$overallSummary)!=='')
-                    <section class="ai-section ai-section-overview" data-summary-overview><h3 class="ai-section-title mb-3">Tổng quan tài liệu</h3>
-                    @if(!$documentContent)<p>{{ $overallSummary }}</p>@else<ul class="ai-list" data-document-content>@foreach($documentContent as $contentItem)<li class="ai-list-item"><div class="ai-item-content"><div>{{ $contentItem['content'] ?? '' }}</div>@if(!empty($contentItem['source_references']))@include('partials.ai_lab_sources',['references'=>$contentItem['source_references'],'referenceContext'=>$contentItem['content']??'Tổng quan'])@endif</div></li>@endforeach</ul>@endif
+                @if(($analysis['engine'] ?? '') === 'pdf_lab' && $documentContent)
+                    <section class="ai-section ai-section-overview" data-summary-overview>
+                        <h3 class="ai-section-title mb-3">Tổng quan báo cáo</h3>
+                        @foreach($documentContent as $contentItem)
+                            <p>{{ $contentItem['content'] ?? '' }}</p>
+                        @endforeach
                     </section>
                 @endif
                 <section class="ai-section" data-structural-summary><h3 class="ai-section-title mb-3">Bản đọc theo chương dành cho giảng viên</h3>
-                    @forelse($aiData['chapters'] ?? [] as $chapter)@include('partials.ai_document_node',['node'=>$chapter])@empty<p class="ai-empty">Chưa có bản tóm tắt theo chương. Kết quả đã lưu, nếu có, được giữ ở phần tổng quan.</p>@endforelse
-                    @include('partials.ai_unassigned_captions')
+                    @forelse($displayChapters ?? ($aiData['chapters'] ?? []) as $chapter)@include('partials.ai_document_node',['node'=>$chapter])@empty<p class="ai-empty">Chưa có bản tóm tắt theo chương. Kết quả đã lưu, nếu có, được giữ ở phần tổng quan.</p>@endforelse
                 </section>
+            </div>
+            <div class="tab-pane fade" id="{{ $uniqueId }}-pane-evidence" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-evidence" tabindex="0" data-ai-pane="evidence">
+                @include('partials.ai_source_navigation', ['navigationMode'=>'search'])
+                @if(empty($aiData['source_navigation']['rows']))
+                    <p class="ai-empty">Chưa có chỉ mục dẫn chứng để tra cứu.</p>
+                @endif
+                @if($documentContent)
+                    <details>
+                        <summary>Dẫn chứng và các ý có nguồn trong phần tổng quan</summary>
+                        @include('partials.ai_summary_section', ['section'=>['key'=>'overview-evidence', 'title'=>'Nguồn đối chiếu', 'icon'=>'fa-file-lines', 'tone'=>'primary', 'items'=>$documentContent]])
+                    </details>
+                @endif
+                <h3 class="ai-section-title mt-3">Dẫn chứng theo chương và mục</h3>
+                @forelse($displayChapters ?? ($aiData['chapters'] ?? []) as $chapter)
+                    @include('partials.ai_document_evidence', ['node'=>$chapter])
+                @empty
+                    <p class="ai-muted">Chưa có dẫn chứng được lưu theo chương hoặc mục.</p>
+                @endforelse
+            </div>
+            <div class="tab-pane fade" id="{{ $uniqueId }}-pane-diagrams" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-diagrams" tabindex="0" data-ai-pane="diagrams">
+                @if(array_filter($aiData['source_navigation']['assets'] ?? [], \App\Support\AiReportPresentation::visibleReportAsset(...)))
+                    @include('partials.ai_source_navigation', ['navigationMode'=>'catalog'])
+                @else
+                    <p class="ai-empty">Chưa nhận diện được sơ đồ hoặc bảng trong phần đã đọc.</p>
+                @endif
+                @include('partials.ai_unassigned_captions')
+            </div>
+            <div class="tab-pane fade" id="{{ $uniqueId }}-pane-assessment" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-assessment" tabindex="0" data-ai-pane="assessment">
+                @include('partials.ai_report_progress')
             </div>
             <div class="tab-pane fade" id="{{ $uniqueId }}-pane-requirements" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-requirements" tabindex="0" data-ai-pane="requirements">
                 @if(($analysis['engine'] ?? '')==='pdf_lab')@include('partials.ai_lab_requirements')@elseif($reviewRound)@include('partials.ai_requirement_review')@else<p class="ai-empty">Giảng viên chưa thiết lập yêu cầu phân tích cho đợt nộp này.</p>@endif

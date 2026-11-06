@@ -157,8 +157,8 @@ def run_review(index,requirements,provider,state=None,settings=None,on_progress=
                 # authentication failures, quota errors or malformed responses.
                 if exc.status!=503 or attempt>=len(busy_retry_delays):raise
                 if generation and state['generation_calls']-first_calls>=settings.max_generation_calls:
-                    raise ApiError('Gemini trả 503 và đã chạm ngân sách lượt gọi; kết quả được giữ, bấm tiếp tục để thử lại.','review_call_budget') from None
-                delay=busy_retry_delays[attempt]
+                    raise
+                delay=max(busy_retry_delays[attempt], exc.retry_after or 0)
                 state.setdefault('retry_events',[]).append({'stage':stage,'status':503,'retry':attempt+1,'wait_seconds':delay})
                 notify(f'{stage} — Gemini trả 503, chờ {delay} giây rồi thử lại {attempt+1}/{len(busy_retry_delays)}')
                 time.sleep(delay)
@@ -181,7 +181,7 @@ def run_review(index,requirements,provider,state=None,settings=None,on_progress=
             return task['validated']
         except ApiError as exc:
             if exc.code not in ('review_call_budget','review_input_budget','pacing_wait','job_cancelled','job_lease_lost','job_deadline','job_budget','tpm_request_limit'):
-                error={'stage':stage,'code':exc.code,'message':str(exc),'check_ids':[c['check_id'] for c in group if 'check_id' in c]}
+                error={**exc.details(),'stage':stage,'check_ids':[c['check_id'] for c in group if 'check_id' in c]}
                 task['error']=error;state['errors'][task_id]=error
             raise
     def context():return {'intro':requirements['intro'],'general_conditions':[c['text'] for c in requirements['general_conditions']], 'document':index['document']}
@@ -274,7 +274,7 @@ def run_review(index,requirements,provider,state=None,settings=None,on_progress=
         state.pop('last_error',None)
     except ApiError as exc:
         state['processing_status']='PAUSED' if exc.code in ('review_call_budget','pacing_wait') else ('PARTIAL' if state['matches'] else 'FAILED')
-        state['last_error']={'code':exc.code,'message':str(exc)}
+        state['last_error']=exc.details()
     finally:
         state['elapsed_seconds']+=time.monotonic()-started;state['http_ledger'].extend(getattr(provider,'http_calls',[])[http_start:]);lock.release()
         if on_progress:on_progress(state.get('stage','Đã lưu trạng thái'))

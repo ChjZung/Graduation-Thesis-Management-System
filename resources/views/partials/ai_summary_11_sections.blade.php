@@ -18,6 +18,27 @@
     $difficulties = $aiData['difficulties'] ?? $aiData['kho_khan'] ?? [];
     $nextSteps = $aiData['next_steps'] ?? $aiData['ke_hoach_tiep_theo'] ?? [];
     $analysis = $aiData['analysis'] ?? [];
+    $displayChapters = $aiData['chapters'] ?? [];
+    if (($analysis['engine'] ?? '') === 'pdf_lab') {
+        $titleKey = static fn ($title) => preg_replace('/[^\p{L}\p{N}]+/u', '', mb_strtolower($title));
+        $displayChapters = array_values(array_filter($displayChapters, static function ($chapter) use ($displayChapters, $titleKey) {
+            $title = $chapter['title'] ?? '';
+            $start = (int) ($chapter['start_page'] ?? 0);
+            $end = (int) ($chapter['end_page'] ?? 0);
+            if (!$start || !preg_match('/^Chương\s+\d+\s*[:.]/iu', $title) || $end - $start > 2) {
+                return true;
+            }
+            foreach ($displayChapters as $candidate) {
+                $candidateStart = (int) ($candidate['start_page'] ?? 0);
+                $candidateEnd = (int) ($candidate['end_page'] ?? 0);
+                if ($candidateStart > $start && $candidateStart >= $end && $candidateEnd - $candidateStart >= 3
+                    && $titleKey($candidate['title'] ?? '') === $titleKey($title)) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+    }
     $reviewRound = $dotNop ?? ($pb->dotNop ?? null);
     $requirementsReview = $aiData['requirements_review'] ?? null;
     $flexibleSummary = (int) ($aiData['schema_version'] ?? 0) >= 5 && is_array($aiData['summary_sections'] ?? null);
@@ -245,7 +266,7 @@
                 <div class="ai-file"><i class="fa-regular fa-file-pdf" aria-hidden="true"></i><span>{{ $pb->TenFile ?? 'Báo cáo tiến độ' }}</span></div>
                 @if($structuralSummary)
                     <div class="ai-file" data-summary-metadata>
-                        Phiên bản {{ $pb->LanNop ?? 1 }} · {{ $analysis['total_units'] ?? 0 }} {{ $documentType === 'docx' ? 'vị trí' : 'trang' }} · {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? count($aiData['chapters'] ?? []) : ($analysis['sections_detected'] ?? 0) }} {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'chương/phần' : 'chương/mục' }} · {{ $showingSavedSummary ? 'Đang hiển thị bản đã lưu' : ($analysisComplete ? 'Hoàn tất' : 'Chưa đọc đầy đủ') }}
+                        Phiên bản {{ $pb->LanNop ?? 1 }} · {{ $analysis['total_units'] ?? 0 }} {{ $documentType === 'docx' ? 'vị trí' : 'trang' }} · {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? count($displayChapters) : ($analysis['sections_detected'] ?? 0) }} {{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'chương/phần' : 'chương/mục' }} · {{ $showingSavedSummary ? 'Đang hiển thị bản đã lưu' : ($analysisComplete ? 'Hoàn tất' : 'Chưa đọc đầy đủ') }}
                         @if(isset($analysis['processing_time_seconds'])) · {{ $showingSavedSummary ? 'Lượt xử lý bản đã lưu' : (($analysis['engine'] ?? '') === 'pdf_lab' ? 'Lượt xử lý gần nhất' : 'Xử lý') }} {{ number_format((float) $analysis['processing_time_seconds'], 1) }} giây @endif
                     </div>
                 @endif
@@ -333,6 +354,7 @@
         @if($sourceChanged)
             <p class="ai-review-note" data-summary-source-changed>Tệp đính kèm đã thay đổi. Bản tóm tắt cũ được giữ trong lịch sử; chọn Phân tích lại để đọc đúng tệp hiện tại.</p>
         @endif
+        @include('partials.ai_source_navigation')
         @if($structuralSummary && !empty($analysis['structure_fallback']))
             <p class="ai-review-note">Chưa nhận diện chắc chắn cấu trúc chương/mục. Nội dung được đọc theo thứ tự trang và đoạn, không tự đặt số mục.</p>
         @endif
@@ -468,8 +490,10 @@
             @endif
             @if($structuralSummary)
                 <section class="ai-section ai-section-wide" data-structural-summary>
-                    <div class="ai-section-head"><h3 class="ai-section-title">{{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'Bản đọc theo chương dành cho giảng viên' : 'Tóm tắt theo chương và mục' }}</h3></div>
-                    @foreach($aiData['chapters'] as $chapter)
+                    <div class="ai-section-head mb-2">
+                        <h3 class="ai-section-title">{{ ($analysis['engine'] ?? '') === 'pdf_lab' ? 'Bản đọc theo chương dành cho giảng viên' : 'Tóm tắt theo chương và mục' }}</h3>
+                    </div>
+                    @foreach($displayChapters as $chapter)
                         @include('partials.ai_document_node', ['node'=>$chapter])
                     @endforeach
                 </section>

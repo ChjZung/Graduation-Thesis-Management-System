@@ -360,7 +360,7 @@ class GiangVienController extends Controller
         ]);
 
         $maGV = trim($request->TenDangNhap);
-        $initialPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+        $initialPassword = 'Huit@2026';
 
         DB::transaction(function () use ($request, $maGV, $initialPassword) {
             $tk = TaiKhoan::create([
@@ -547,7 +547,7 @@ class GiangVienController extends Controller
                 // 1. Luôn đảm bảo tài khoản GV gốc của giảng viên có vai trò VT02 (Giảng viên)
                 $tkGV = TaiKhoan::where('TenDangNhap', $gv->MaGV)->first();
                 if (!$tkGV) {
-                    $tempPassGV = \Illuminate\Support\Str::password(10, true, true, false, false);
+                    $tempPassGV = 'Huit@2026';
                     $tkGV = TaiKhoan::create([
                         'MaTK'              => $gv->MaGV,
                         'TenDangNhap'       => $gv->MaGV,
@@ -580,7 +580,7 @@ class GiangVienController extends Controller
                 if ($chucVu === 'TK') {
                     $maKhoa = $request->ma_khoa;
                     $usernameTK = 'TK_' . $maKhoa . '_' . $gv->MaGV;
-                    $tempPassTK = \Illuminate\Support\Str::password(10, true, true, false, false);
+                    $tempPassTK = 'Huit@2026';
 
                     // Xóa tài khoản TBM cũ nếu có
                     TaiKhoan::where('TenDangNhap', 'LIKE', "TBM_%_{$gv->MaGV}")->delete();
@@ -611,7 +611,7 @@ class GiangVienController extends Controller
                     $maBM = $request->ma_bomon;
                     $bm = BoMon::findOrFail($maBM);
                     $usernameTBM = 'TBM_' . $maBM . '_' . $gv->MaGV;
-                    $tempPassTBM = \Illuminate\Support\Str::password(10, true, true, false, false);
+                    $tempPassTBM = 'Huit@2026';
 
                     // Xóa tài khoản TK cũ nếu có
                     TaiKhoan::where('TenDangNhap', 'LIKE', "TK_%_{$gv->MaGV}")->delete();

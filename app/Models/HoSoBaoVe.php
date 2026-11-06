@@ -89,6 +89,16 @@ class HoSoBaoVe extends Model
         ];
     }
 
+    public function hanNopHoanThienBaoCao(): ?\Carbon\Carbon
+    {
+        if ($this->HanNopBaoCaoSauBaoVe) {
+            return $this->HanNopBaoCaoSauBaoVe;
+        }
+
+        $ngayBaoVe = $this->hoiDong?->NgayBaoVe ?? $this->hoiDong?->ThoiGianBatDau;
+        return $ngayBaoVe ? \Carbon\Carbon::parse($ngayBaoVe)->addDays(10)->endOfDay() : null;
+    }
+
     public function giaoVu()
     {
         return $this->belongsTo(GiaoVu::class, 'MaGVu', 'MaGVu');

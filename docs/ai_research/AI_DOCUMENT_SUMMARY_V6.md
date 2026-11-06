@@ -170,7 +170,7 @@ Các test mới: `test_document_sections.py`, `test_ai_document_summary.py`, `Ai
 
 ## 11. Chạy và demo
 
-1. Khi cập nhật code, nếu worker AI cũ đang mở, dừng rồi mở lại `CHAY_AI.bat` để PHP worker nạp lớp mới. Không chạy hai worker trên cùng máy.
+1. Khi cập nhật code, nếu worker AI cũ đang mở, dừng rồi chạy lại `php artisan ai:work` để PHP worker nạp lớp mới. Không chạy hai worker trên cùng máy.
 2. Nộp PDF theo đợt hoặc bấm Phân tích lại trên bài có sẵn. Bài V3–V5 được giữ cho đến khi có kết quả V6 hợp lệ.
 3. Khi đang chạy/chờ, xem tiến độ đọc và nguyên nhân. `Cập nhật kết quả mới` chỉ tải dữ liệu đã lưu.
 4. Khi hoàn tất, mở chương/mục và bấm Trang để xem nguồn/tô sáng. Bấm Phân tích lại lần nữa: nhận thông báo dùng kết quả đã kiểm chứng, nội dung không đổi và không tạo job mới.

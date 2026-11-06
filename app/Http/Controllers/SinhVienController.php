@@ -205,7 +205,7 @@ class SinhVienController extends Controller
 
         $mssv = trim($request->TenDangNhap);
         $lop = Lop::with('nganh')->findOrFail($request->MaLop);
-        $initialPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+        $initialPassword = 'Huit@2026';
 
         DB::transaction(function () use ($request, $mssv, $lop, $initialPassword) {
             $tk = TaiKhoan::create([
@@ -486,7 +486,7 @@ class SinhVienController extends Controller
             $mssv = trim($request->TenDangNhap);
             $lop = Lop::with('nganh')->findOrFail($request->MaLop);
 
-            $initialPassword = \Illuminate\Support\Str::password(10, true, true, false, false);
+            $initialPassword = 'Huit@2026';
             $sv = DB::transaction(function () use ($request, $mssv, $lop, $initialPassword) {
                 // Tự động tạo tài khoản Portal cho sinh viên mới với mật khẩu ngẫu nhiên
                 $tk = TaiKhoan::create([
@@ -559,7 +559,7 @@ class SinhVienController extends Controller
 
             // Đảm bảo sinh viên có tài khoản nhưng không ghi đè tài khoản sẵn có
             if (!$sv->MaTK || !TaiKhoan::where('MaTK', $sv->MaTK)->exists()) {
-                $tempPassExisting = \Illuminate\Support\Str::password(10, true, true, false, false);
+                $tempPassExisting = 'Huit@2026';
                 $tk = TaiKhoan::firstOrCreate(
                     ['TenDangNhap' => $sv->MaSV],
                     [

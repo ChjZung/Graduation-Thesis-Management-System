@@ -2,6 +2,7 @@
 import re
 import unicodedata
 from .requirement_relevance import relevant, select_candidate, families
+from .requirement_review.parsing import criterion_spans
 
 STOP_WORDS = set(
     'va la cua cac nhung mot duoc cho voi trong theo ve co da de khi nay bao cao '
@@ -66,7 +67,15 @@ def parse_requirements_text(raw_text):
                     'text': line,
                     'quote': line
                 })
-    return items
+    criteria = []
+    for item in items:
+        body = item['text']
+        prefix = item['quote'][:len(item['quote'])-len(body)]
+        for start, end in criterion_spans(body):
+            criterion = body[start:end]
+            criteria.append(dict(item, id=f'req_{len(criteria)+1:03d}', text=criterion,
+                                 quote=(prefix if start == 0 else '') + criterion))
+    return criteria
 
 
 def flatten_chapters(chapters, parent_titles=None, parent_refs=None):

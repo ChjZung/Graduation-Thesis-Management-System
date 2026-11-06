@@ -37,7 +37,12 @@ class ProjectRateLimiter:
             db.execute('DELETE FROM calls WHERE at <= ?', (now-60,))
             row = db.execute('SELECT until,detail FROM cooldown WHERE scope=? AND model=?', (self.scope,model)).fetchone()
             if row and row[0] > now:
-                return row[0]-now, json.loads(row[1])
+                remaining = row[0] - now
+                detail = json.loads(row[1])
+                detail.update(original_retry_after=detail.get('retry_after'),
+                              retry_after=math.ceil(remaining), cooldown_until=math.ceil(row[0]),
+                              cooldown_cached=True)
+                return remaining, detail
             calls = db.execute('SELECT at,tokens FROM calls WHERE scope=? AND model=? ORDER BY at', (self.scope,model)).fetchall()
             rpm = max(1, self.lite_rpm if 'flash-lite' in model else self.rpm)
             wait = max(0, calls[-1][0]+60/rpm-now) if calls else 0
@@ -60,7 +65,11 @@ class ProjectRateLimiter:
         now = time.time() if now is None else now
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
-            until = now+max(1, detail.get('retry_after',60))
+            delay = detail.get('retry_after')
+            if type(delay) not in (int, float) or not math.isfinite(delay) or delay < 0:
+                delay = 60
+            until = now + max(1, delay)
             previous = db.execute('SELECT until FROM cooldown WHERE scope=? AND model=?',(self.scope,model)).fetchone()
             if not previous or until >= previous[0]:
                 db.execute('INSERT OR REPLACE INTO cooldown VALUES (?,?,?,?)',(self.scope,model,until,json.dumps(detail)))
+            return math.ceil(max(until, previous[0] if previous else until))

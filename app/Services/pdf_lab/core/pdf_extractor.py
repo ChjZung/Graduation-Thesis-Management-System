@@ -27,6 +27,18 @@ def source_bytes(source, settings=None):
     return data
 
 
+def parallel_text_regions(lines, page_width):
+    """Flag aligned columns or table cells without guessing their reading order."""
+    middle = page_width / 2
+    gap = page_width * .02
+    left = [line['bbox'] for line in lines if line['bbox'][2] < middle - gap]
+    right = [line['bbox'] for line in lines if line['bbox'][0] > middle + gap]
+    if min(len(left), len(right)) < 2:
+        return False
+    return max(min(b[1] for b in left), min(b[1] for b in right)) < min(
+        max(b[3] for b in left), max(b[3] for b in right))
+
+
 def extract_pdf(source, settings=None):
     settings = settings or Settings()
     data = source_bytes(source, settings)
@@ -85,7 +97,8 @@ def extract_pdf(source, settings=None):
                        if (r['bbox'][1] < page.rect.height * .08 or r['bbox'][3] > page.rect.height * .92)
                        and re.fullmatch(r'(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,8})', r['text'].strip())]
             pages.append({'page_index': index, 'page': index + 1, 'pdf_page_label': page.get_label(),
-                          'printed_number_candidates': printed, 'width': page.rect.width, 'height': page.rect.height,
+                          'printed_number_candidates': printed,
+                          'reading_order_requires_review': parallel_text_regions(page_lines, page.rect.width), 'width': page.rect.width, 'height': page.rect.height,
                           'start': page_start, 'end': offset, 'state': state, 'image_count': image_count,
                           'visual_regions': images + vectors,
                           'line_ids': [r['line_id'] for r in page_lines]})

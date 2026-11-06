@@ -26,7 +26,7 @@ import urllib.request
 import urllib.error
 import concurrent.futures
 from pdf_document_analysis import compact, exact_quote, document_structure
-from ai_processing import recovered_call, configure_session, error_detail, current_session
+from ai_processing import ProcessingError, recovered_call, configure_session, error_detail, current_session
 from ai_summary_hierarchy import structured_chunks, ground_map, hierarchical_reduce
 from pdf_evidence_retrieval import is_index_text
 
@@ -67,7 +67,8 @@ def extract_pdf_pages(pdf_path):
             for block in iter(lambda: source.read(1024 * 1024), b''):
                 digest.update(block)
         identity = digest.hexdigest() + Path(pdf_path).suffix.lower()
-        target = folder / ('extracted-layout-v6b-' + identity + '.json')
+        cache_prefix = 'extracted-docx-v2-' if Path(pdf_path).suffix.lower() == '.docx' else 'extracted-layout-v6b-'
+        target = folder / (cache_prefix + identity + '.json')
         try:
             if time.time() - target.stat().st_mtime < 3 * 86400:
                 saved = json.loads(target.read_text(encoding='utf-8'))
@@ -140,9 +141,9 @@ def clean_json_markdown(text):
     return text
 
 
-def call_gemini_api(prompt, api_key, model="gemini-3.5-flash-lite", timeout=60):
+def call_gemini_api(prompt, api_key, model="gemini-3.5-flash-lite", timeout=60, allow_groq=True):
     from ai_gemini_transport import generate
-    return generate(prompt,api_key,model,timeout,requests,clean_json_markdown)
+    return generate(prompt,api_key,model,timeout,requests,clean_json_markdown,allow_groq=allow_groq)
 
 
 def normalize_text_for_search(text):
@@ -905,10 +906,11 @@ def run_legacy_map_reduce_pipeline(pdf_path, api_key=None, model="gemini-3.5-fla
 
 
 def run_map_reduce_pipeline(pdf_path, api_key=None, model="gemini-3.5-flash-lite", stage=1,
-                            chunk_size=12000, chunk_overlap=350, method="map_reduce", review_context=None, settings=None, identity=None):
+                            chunk_size=12000, chunk_overlap=350, method="map_reduce", review_context=None, settings=None, identity=None, extracted=None):
     from ai_document_summary import run_pipeline
+    extract = extract_pdf_pages if extracted is None else lambda _: extracted
     return run_pipeline(pdf_path, api_key, model, review_context,
-                        extract_pdf_pages, build_structured_chunks, call_gemini_api,
+                        extract, build_structured_chunks, call_gemini_api,
                         heuristic=method == "heuristic_nlp", chunk_size=chunk_size, chunk_overlap=chunk_overlap, settings=settings, identity=identity)
 
 
@@ -1054,6 +1056,18 @@ def main():
         context = json.loads(args.review_context) if args.review_context else None
         if context is not None and not isinstance(context, dict):
             raise ValueError("Ngữ cảnh đối chiếu phải là JSON object.")
+        identity = json.loads(args.document_identity) if args.document_identity else None
+        from ai_source_navigation import from_units, publish
+        session.progress(stage='extract')
+        extracted = extract_pdf_pages(args.pdf)
+        navigation = from_units(extracted[0])
+        publish({'source_navigation': navigation}, identity, digest.hexdigest())
+        review = None
+        if context is not None:
+            from ai_requirement_review import review_requirements
+            session.progress(stage='requirements_review')
+            review = review_requirements(context, extracted[0], args.api_key, args.model, call_gemini_api)
+            publish({'requirements_review': review}, identity, digest.hexdigest())
         result = {"success": True, "data": {}} if args.review_only else run_map_reduce_pipeline(
             args.pdf,
             api_key=args.api_key,
@@ -1065,20 +1079,32 @@ def main():
             settings={'target_tokens': args.target_tokens, 'overlap_tokens': args.overlap_tokens,
                       'prompt_reserve_tokens': args.prompt_reserve_tokens, 'max_input_tokens': args.max_input_tokens,
                       'pipeline_version': args.pipeline_version},
-            identity=json.loads(args.document_identity) if args.document_identity else None
+            identity=identity, extracted=extracted
         )
-        if args.review_context:
-            from ai_requirement_review import review_requirements
-            context = json.loads(args.review_context)
-            if not isinstance(context, dict):
-                raise ValueError("Ngữ cảnh đối chiếu phải là JSON object.")
-            review_pages, review_total, _ = extract_pdf_pages(args.pdf)
-            review = review_requirements(context, review_pages, args.api_key, args.model, call_gemini_api)
+        if review is not None:
             if not isinstance(result.get("data"), dict):
                 result["data"] = {}
             result["data"]["requirements_review"] = review
-            result["total_units"] = review_total
-            result["total_pages"] = 0 if os.path.splitext(args.pdf)[1].lower() == '.docx' else review_total
+            result["total_units"] = extracted[1]
+            result["total_pages"] = 0 if args.pdf.lower().endswith('.docx') else extracted[1]
+        if not args.review_only and result.get('success') and isinstance(result.get('data'), dict):
+            from ai_report_progress import extract as extract_progress
+
+            def generate_progress(prompt, validator):
+                from functools import partial
+                gemini_only = partial(call_gemini_api, allow_groq=False)
+                value, _ = recovered_call(gemini_only, prompt, args.api_key, model=args.model,
+                                          timeout=45, validator=validator, stage='progress_v1')
+                return value
+
+            try:
+                progress = extract_progress(
+                    (unit['text'] for unit in extracted[0]), generate_progress,
+                    source_complete=not any(unit.get('visual_unread') for unit in extracted[0]),
+                )
+            except (ProcessingError, ValueError):
+                progress = {}
+            result['data'].update(progress or {'progress_v1_status': 'unavailable'})
         if isinstance(result.get('data'), dict) and isinstance(result['data'].get('analysis'), dict):
             result['data']['analysis']['reused_calls'] = session.cache_hits
             result['data']['analysis']['completed_calls'] = session.completed_calls
@@ -1086,6 +1112,7 @@ def main():
             if session.checkpoint_failed:
                 result['data']['analysis']['checkpoint_warning'] = 'Không lưu được bộ nhớ đệm riêng; lượt sau có thể phải đọc lại các phần đã xử lý.'
         if isinstance(result.get('data'),dict):
+            result['data']['source_navigation'] = navigation
             result['data']['processing_errors'] = session.errors
 
             # So sánh phiên bản (Lần 1 vs Lần 2)
@@ -1116,7 +1143,6 @@ def main():
             'pdf_size_limit', 'invalid_pdf_signature', 'pdf_password_required', 'pdf_page_limit_or_corrupt',
             'Failed to open', 'broken document'))
         if extraction_error:
-            from ai_processing import ProcessingError
             e = ProcessingError('extraction_failed')
         err_res = {
             "success": False,

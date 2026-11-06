@@ -144,7 +144,7 @@ class BaoCaoAiController extends Controller
     public function cancel(string $id, \App\Services\AiReportProcessingService $processing)
     {
         $report = $this->authorizedReport($id);
-        $state = $processing->cancel($report);
+        $state = $processing->cancel($report, request()->boolean('pause'));
         if (request()->expectsJson()) {
             return response()->json([
                 'state' => $processing->status($report->fresh()),

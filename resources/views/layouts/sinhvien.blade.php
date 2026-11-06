@@ -6,7 +6,11 @@
     <title>@yield('page_title', 'Sinh Viên') – Quản Lý Khóa Luận Tốt Nghiệp | HUIT</title>
     <meta name="description" content="Cổng Sinh Viên – Hệ thống Quản lý Công tác Khóa luận Tốt nghiệp HUIT">
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    @if(is_file(public_path('build/manifest.json')) || app(\Illuminate\Foundation\Vite::class)->isRunningHot())
+        @vite('resources/sass/app.scss')
+    @else
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    @endif
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- HUIT Theme -->
@@ -16,7 +20,7 @@
 </head>
 <body>
 
-<div class="wrapper d-flex">
+<div class="wrapper {{ request()->routeIs('sinhvien.dangky.index') ? 'd-block' : 'd-flex' }}">
 
     <!-- ═══ SIDEBAR ═══ -->
     <nav id="sidebar">

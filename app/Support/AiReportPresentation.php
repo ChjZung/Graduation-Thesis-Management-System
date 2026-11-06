@@ -4,6 +4,49 @@ namespace App\Support;
 /** Display counts only: quote matching is not semantic confidence or a grade. */
 final class AiReportPresentation
 {
+    public static function visibleReportAsset(array $asset): bool
+    {
+        $type = (string) ($asset['type'] ?? '');
+        $title = trim((string) ($asset['display_text'] ?? $asset['raw_text'] ?? $asset['quote'] ?? ''));
+        if (($asset['basis'] ?? '') === 'table' || $type === 'TABLE_CAPTION'
+            || preg_match('/^(?:bảng|table)\s+\d/iu', $title)
+            || (preg_match('/^Bảng\b/iu', $type) && !preg_match('/^(?:hình|figure)\b/iu', $title))) {
+            return true;
+        }
+
+        if (preg_match('/\b(?:ảnh chụp|ảnh minh họa|ảnh minh hoạ|màn hình|giao diện|screenshot|photograph)\b/iu', $title)) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b(?:sơ\s*đồ|lưu\s*đồ|biểu\s*đồ)|\b(?:mô hình dữ liệu|kiến trúc (?:hệ thống|phần mềm)|diagram|flowchart|use[\s-]*case|activity|sequence|erd|dfd|uml)\b/iu',
+            $title.' '.$type
+        );
+    }
+
+    public static function visibleReportNavigation(array $navigation): array
+    {
+        $assets = $navigation['assets'] ?? [];
+        $visible = array_values(array_filter($assets, self::visibleReportAsset(...)));
+        $hiddenByPage = [];
+        foreach ($assets as $asset) {
+            if (!self::visibleReportAsset($asset) && !empty($asset['quote']) && isset($asset['page'])) {
+                $hiddenByPage[$asset['page']][] = trim($asset['quote']);
+            }
+        }
+        $navigation['assets'] = $visible;
+        $navigation['rows'] = array_values(array_filter($navigation['rows'] ?? [], static function (array $row) use ($hiddenByPage): bool {
+            $quote = trim((string) ($row['quote'] ?? ''));
+            foreach ($hiddenByPage[$row['page'] ?? 0] ?? [] as $caption) {
+                if ($quote === $caption || (mb_strlen($quote) >= 12 && str_starts_with($caption, $quote))) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+        return $navigation;
+    }
+
     public static function metrics(array $data): array
     {
         $refs=[];$empty=0;$unlinked=0;

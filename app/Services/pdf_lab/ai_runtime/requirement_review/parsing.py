@@ -7,6 +7,20 @@ CONDITION=re.compile(r'^(?:#{1,6}\s*)?(?:\*\*)?(?:mỗi nội dung|chỉ xác nh
 NUMBER=re.compile(r'(?m)^(?P<indent>[ \t]*)(?P<number>\d+)(?P<marker>[.)])[ \t]+')
 
 
+ACTION_BOUNDARY = re.compile(
+    r'(?<=[.!?])\s+(?=(?:Khảo sát|Phân tích|Xây dựng|Thiết kế|Tổng hợp|Đánh giá|Kiểm thử|Triển khai)\b)'
+)
+
+
+def criterion_spans(text):
+    """Split explicit independent instructions, retaining exact source offsets."""
+    start = 0
+    for boundary in ACTION_BOUNDARY.finditer(text):
+        yield start, boundary.start()
+        start = boundary.end()
+    yield start, len(text)
+
+
 def sha(text):return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 

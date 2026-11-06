@@ -197,7 +197,7 @@ LINK_DATA:\n'''+json.dumps({'requirements':group,'evidence':pool,**({'requiremen
         state['generation_attempts']+=1
         response=provider.generate(prompt,schema(group),settings.max_output_tokens,task['tokens']);task['usage']=response.get('usage',{})
         try:task['validated']=validate_links(response['data'],group,evidence)
-        except ApiError as exc:task['error']={'code':exc.code,'message':str(exc)};raise
+        except ApiError as exc:task['error']=exc.details();raise
         return task['validated']
     def audit(group, linked):
         if not group:return linked
@@ -252,7 +252,7 @@ LINK_DATA:\n'''+json.dumps({'requirements':group,'evidence':pool,**({'requiremen
             state['model_info']=info
         output=audit(rows,execute(rows))
     except ApiError as exc:
-        status='paused' if exc.code=='requirement_link_call_budget' else 'error';error={'code':exc.code,'message':str(exc)}
+        status='paused' if exc.code=='requirement_link_call_budget' else 'error';error=exc.details()
     finally:state['http_ledger'].extend(getattr(provider,'http_calls',[])[ledger_start:])
     report={'version':VERSION,'identity':identity,'status':status,'error':error,'links':output,'generation_attempts':state['generation_attempts'],
             'support_review':'complete' if status=='complete' else 'pending',

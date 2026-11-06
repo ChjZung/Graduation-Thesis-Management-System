@@ -7,6 +7,8 @@ use App\Models\Khoa;
 use App\Models\BoMon;
 use App\Models\HocKy;
 use App\Models\GiangVien;
+use App\Models\Nganh;
+use App\Models\HocPhan;
 use App\Models\PhieuDangKy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

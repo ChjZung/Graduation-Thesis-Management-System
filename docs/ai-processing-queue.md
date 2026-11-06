@@ -4,7 +4,7 @@ Luồng nộp theo đợt, nộp báo cáo nhỏ và hai nút Phân tích lại 
 
 ## Chạy trên Laragon
 
-Nhấp đúp `CHAY_AI.bat` trong thư mục project, giữ cửa sổ đó mở khi dùng AI. Script chỉ chạy worker, không migrate/seed hoặc thay đổi dữ liệu nghiệp vụ. Nếu đã có worker, khóa file sẽ chặn chạy trùng.
+Chạy `php artisan ai:work` trong thư mục dự án và giữ cửa sổ đó mở khi dùng AI. Nếu đã có worker, khóa file sẽ chặn chạy trùng.
 
 Hoặc mở terminal ở thư mục project và chạy:
 
@@ -49,7 +49,7 @@ Nếu Python vượt thời gian của một lượt nền, mã lỗi là `timeo
 
 Khi kiểm chứng câu trích, dùng văn bản trong `source_spans` của chunk để so khớp; nhãn `[Trang N]` chèn vào prompt không phải văn bản của tác giả. Câu nhiều dòng vẫn phải khớp văn bản PDF gốc ở đúng trang và nằm trong phạm vi chunk; không được tìm rộng ra toàn trang để bỏ qua phạm vi đã đọc.
 
-Với tài liệu dài, hoàn tất Map–Reduce và đối chiếu có thể cần nhiều lượt nền. Giữ cửa sổ `CHAY_AI.bat` hoạt động. Chọn **Cập nhật kết quả mới** để xem bản đã lưu; nút này không gọi lại API. Khi đang đọc lượt đầu, giao diện chưa hiển thị các nhóm rỗng như một kết quả phân tích.
+Với tài liệu dài, hoàn tất Map–Reduce và đối chiếu có thể cần nhiều lượt nền. Giữ cửa sổ chạy `php artisan ai:work` hoạt động. Chọn **Cập nhật kết quả mới** để xem bản đã lưu; nút này không gọi lại API. Khi đang đọc lượt đầu, giao diện chưa hiển thị các nhóm rỗng như một kết quả phân tích.
 
 Pipeline hiện tại dùng [V6 theo chương/mục và kết quả cố định](ai_research/AI_DOCUMENT_SUMMARY_V6.md). Bản V5 vẫn có nhánh đọc tương thích. Tóm tắt cấu trúc độc lập với yêu cầu đợt; khi yêu cầu đổi, có thể giữ nguyên bản tóm tắt cùng PDF và chạy lại phần đối chiếu. JSON V5 đổi ngữ cảnh vẫn được đưa qua luồng nâng cấp phù hợp.
 

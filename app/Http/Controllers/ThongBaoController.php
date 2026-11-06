@@ -644,4 +644,13 @@ class ThongBaoController extends Controller
 
         return redirect()->back()->with('success', 'Đã đánh dấu thông báo là đã đọc!');
     }
+
+    /**
+     * Kích hoạt quét và phát hành thông báo nhắc nhở tự động (Lịch hẹn, Hạn báo cáo, Kế hoạch)
+     */
+    public function guiNhacNhoTuDong(Request $request)
+    {
+        $exitCode = \Illuminate\Support\Facades\Artisan::call('app:send-deadline-reminders', ['--force' => true]);
+        return redirect()->back()->with('success', 'Đã kích hoạt quét và phát hành thông báo nhắc nhở lịch gặp & hạn nộp báo cáo thành công!');
+    }
 }

@@ -208,6 +208,7 @@ class ThongKeBaoCaoController extends Controller
             'mau_08' => 'BaoCao_TinhHinhToChuc',
             'mau_09' => 'BaoCao_TheoBoMon',
             'mau_10' => 'BaoCao_TheoHocPhan',
+            'mau_11' => 'BaoCao_TongHopDiem_CLO',
             default  => 'BaoCao_KetQuaKhoaLuan',
         };
 

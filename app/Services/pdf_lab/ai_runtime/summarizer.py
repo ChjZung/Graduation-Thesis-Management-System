@@ -246,6 +246,8 @@ def run_summary(result, plan, provider, checkpoint=None, settings=None, batch_id
                     return entry['validated']
             else:
                 return entry['validated']
+        if entry.get('groq_split_required'):
+            raise ApiError('Gói PDF vượt ngân sách Groq.', 'groq_input_limit')
         if state['generation_attempts'] - generation_start >= settings.max_generation_calls:
             raise _Pause('Đã đạt số lượt sinh nội dung cho lần bấm này. Bấm tiếp tục để dùng kết quả đã có.')
         if on_progress:
@@ -259,14 +261,56 @@ def run_summary(result, plan, provider, checkpoint=None, settings=None, batch_id
         if settings.max_output_tokens > model_output or entry['input_tokens'] + settings.max_output_tokens > model_input:
             raise ApiError('Input và chỗ dành cho output vượt giới hạn model đã truy vấn. Điều chỉnh cấu hình.', 'model_limit')
         state['generation_attempts'] += 1
-        response = provider.generate(prompt, schema, settings.max_output_tokens, entry['input_tokens'])
+        try:
+            response = provider.generate(prompt, schema, settings.max_output_tokens, entry['input_tokens'])
+        except ApiError as exc:
+            if exc.code == 'groq_input_limit':
+                entry['groq_split_required'] = True
+            raise
         entry['usage'] = response.get('usage', {})
         try:
             entry['validated'] = validator(response['data'])
         except ApiError as exc:
-            entry['error'] = {'code': exc.code, 'message': str(exc)}
+            entry['error'] = exc.details()
             raise
         return entry['validated']
+
+    def map_batch(batch, label, depth=0):
+        document = result['document']
+        try:
+            return execute(map_prompt(batch), MAP_SCHEMA,
+                           lambda payload: validate_map(payload, batch, document), label)
+        except ApiError as exc:
+            if exc.code != 'groq_input_limit' or depth >= 8:
+                raise
+
+        fragments = batch['fragments']
+        if len(fragments) > 1:
+            middle = len(fragments) // 2
+            parts = [fragments[:middle], fragments[middle:]]
+        else:
+            fragment = fragments[0]
+            text = fragment['text']
+            if len(text) < 240:
+                raise ApiError('Gói tối thiểu vẫn vượt ngân sách Groq.', 'groq_input_limit')
+            middle = len(text) // 2
+            boundaries = [m.end() for m in re.finditer(r'\s+', text)
+                          if len(text) // 4 <= m.end() <= 3 * len(text) // 4]
+            cut = min(boundaries, key=lambda n: abs(n - middle)) if boundaries else middle
+            start = fragment['start']
+            parts = [[dict(fragment, text=text[a:b], start=start + a, end=start + b,
+                           start_page=page_for_offset(document, start + a),
+                           end_page=page_for_offset(document, start + b, True))]
+                     for a, b in ((0, cut), (cut, len(text)))]
+
+        results = [map_batch(dict(batch, fragments=part), f'{label}.{i}', depth + 1)
+                   for i, part in enumerate(parts, 1)]
+        items = [{'source_id': item['source_id'], 'summary': item['summary'],
+                  'evidence_quote': item['evidence_quote'], 'kind': item['model_kind']}
+                 for value in results for item in value['items'] if item['quote_status'] == 'MATCH']
+        return validate_map({'processed_source_ids': list(dict.fromkeys(
+            source_id for value in results for source_id in value['processed_source_ids'])),
+            'items': items}, batch, document)
 
     def reduce_entries(entries, label, depth=0):
         if not entries:
@@ -295,7 +339,7 @@ Phạm vi: ''' + label + '\nENTRIES:\n' + json.dumps(entries, ensure_ascii=False
         try:
             return execute(prompt, schema, lambda p: validate_completed_reduce(p, allowed, source_items), label)
         except ApiError as exc:
-            if exc.code != 'input_limit':
+            if exc.code not in ('input_limit', 'groq_input_limit') or len(entries) < 2:
                 raise
             mid = len(entries) // 2
             left = reduce_entries(entries[:mid], label + ' / phần 1', depth + 1)
@@ -312,7 +356,7 @@ Phạm vi: ''' + label + '\nENTRIES:\n' + json.dumps(entries, ensure_ascii=False
             state['model_info'] = info
         for bid in chosen:
             batch = all_batches[bid]
-            maps[bid] = execute(map_prompt(batch), MAP_SCHEMA, lambda p, b=batch: validate_map(p, b, result['document']), 'Map ' + bid)
+            maps[bid] = map_batch(batch, 'Map ' + bid)
             update()
         source_items = {i['item_id']: i for m in maps.values() for i in m['items']}
         matched = [i for m in maps.values() for i in m['items']
@@ -332,7 +376,7 @@ Phạm vi: ''' + label + '\nENTRIES:\n' + json.dumps(entries, ensure_ascii=False
     except _Pause as exc:
         status, error = 'paused', {'code': 'call_budget', 'message': str(exc)}
     except ApiError as exc:
-        status, error = 'error', {'code': exc.code, 'message': str(exc)}
+        status, error = 'error', exc.details()
     finally:
         state['http_ledger'].extend(getattr(provider, 'http_calls', [])[ledger_start:])
 

@@ -773,6 +773,7 @@
                     @endif
 
                     <!-- BÁO CÁO CHUYÊN MÔN VỚI GVHD -->
+                    @if($gvhd && ($allDotNops->isNotEmpty() || $baoCaos->isNotEmpty()))
                     <div class="pt-3 border-top">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <div>
@@ -783,9 +784,9 @@
                                     Các mốc nộp sản phẩm &amp; tài liệu trực tiếp cho Giảng viên hướng dẫn
                                 </div>
                             </div>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-2 px-3" style="font-size: 0.725rem;">
-                                <i class="fa-solid fa-check-double me-2"></i>Đạt {{ $soBaoCaoDat }}/{{ $tongDotNop ?? ($allDotNops->count() > 0 ? $allDotNops->count() : 5) }} đợt
-                            </span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-2 px-3" style="font-size: 0.725rem;">
+                                    <i class="fa-solid fa-check-double me-2"></i>Đạt {{ $soBaoCaoDat }}/{{ $tongDotNop }} đợt
+                                </span>
                         </div>
 
                         @if($allDotNops->isNotEmpty())
@@ -831,10 +832,10 @@
                                     </div>
                                 @endforeach
                             </div>
-                        @else
+                        @elseif($baoCaos->isNotEmpty())
                             <div class="d-flex flex-column gap-2">
-                                @foreach(range(1, 5) as $lan)
-                                    @php $bc = $baoCaos->firstWhere('LanBaoCao', $lan); @endphp
+                                @foreach($baoCaos as $bc)
+                                    @php $lan = $bc->LanBaoCao; @endphp
                                     <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center flex-wrap gap-3">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
@@ -852,12 +853,14 @@
                                             </div>
                                         </div>
                                         <a href="{{ route('sinhvien.baocao.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2" style="font-size: 0.775rem;">
-                                            {{ $bc ? 'Xem bài' : 'Nộp' }} &rarr;
+                                            Xem bài &rarr;
                                         </a>
                                     </div>
                                 @endforeach
                             </div>
                         @endif
+                    </div>
+                    @endif
 
                         <div class="mt-3 pt-2">
                             <div class="d-flex justify-content-between text-muted mb-2" style="font-size: 0.775rem;">
@@ -870,7 +873,6 @@
                                      aria-valuenow="{{ $tienDoPhanTram }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
-                    </div>
 
                 </div>
             </div>

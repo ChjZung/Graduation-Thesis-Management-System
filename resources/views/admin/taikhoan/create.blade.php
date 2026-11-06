@@ -61,11 +61,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Số Điện Thoại</label>
-                            <input type="text" name="SoDienThoai" class="form-control" value="{{ old('SoDienThoai') }}" placeholder="0901234567">
+                            <input type="text" name="SoDienThoai" class="form-control" value="{{ old('SoDienThoai') }}" placeholder="090Huit@20267">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Mật Khẩu Ban Đầu</label>
-                            <input type="password" name="MatKhau" class="form-control" placeholder="Để trống để lấy mặc định: 123456">
+                            <input type="password" name="MatKhau" class="form-control" placeholder="Để trống để lấy mặc định: Huit@2026">
                             <div class="form-text small">Tài khoản mới sẽ bắt buộc đổi mật khẩu trong lần đăng nhập đầu tiên (BR02).</div>
                         </div>
                     </div>

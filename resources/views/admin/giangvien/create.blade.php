@@ -28,7 +28,7 @@
                             @error('TenDangNhap')
                                 <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
                             @enderror
-                            <div class="form-text small text-muted">MaGV dùng làm tài khoản đăng nhập (10 ký tự, định dạng GV + 8 số). Mật khẩu: <code>123456</code></div>
+                            <div class="form-text small text-muted">MaGV dùng làm tài khoản đăng nhập (10 ký tự, định dạng GV + 8 số). Mật khẩu: <code>Huit@2026</code></div>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label-huit">Họ Và Tên Giảng Viên <span class="text-danger">*</span></label>
@@ -80,7 +80,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label-huit">Số Điện Thoại</label>
-                            <input type="text" name="SoDienThoai" class="form-control form-control-huit @error('SoDienThoai') is-invalid @enderror" value="{{ old('SoDienThoai') }}" placeholder="0912345678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
+                            <input type="text" name="SoDienThoai" class="form-control form-control-huit @error('SoDienThoai') is-invalid @enderror" value="{{ old('SoDienThoai') }}" placeholder="09Huit@202678" pattern="^0[0-9]{9}$" maxlength="10" inputmode="numeric" title="Số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0">
                             @error('SoDienThoai')
                                 <div class="invalid-feedback d-block fw-semibold" style="font-size: 13px;">{{ $message }}</div>
                             @enderror

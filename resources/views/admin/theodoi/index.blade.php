@@ -4,6 +4,24 @@
 
 @push('styles')
 <style>
+    #filterForm .theodoi-filter-fields {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: .75rem;
+    }
+    #filterForm .theodoi-filter-search { flex: 2 1 14rem; min-width: min(100%, 14rem); }
+    #filterForm .theodoi-filter-select { flex: 1 1 9.5rem; min-width: min(100%, 9.5rem); }
+    #filterForm .theodoi-filter-actions { flex: 0 0 auto; white-space: nowrap; }
+    #filterForm .form-select, #filterForm .input-group > *, #filterForm .theodoi-filter-actions > .btn {
+        min-height: 42px;
+    }
+    #filterForm .theodoi-filter-actions > .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     :root {
         --huit-primary: #00305a;
         --huit-accent: #0284c7;
@@ -207,9 +225,9 @@
                 <input type="hidden" name="status_code" value="{{ request('status_code') }}">
             @endif
 
-            <div class="row g-3 align-items-center">
+            <div class="theodoi-filter-fields">
                 {{-- Ô tìm kiếm từ khóa --}}
-                <div class="col-lg-3 col-md-6 col-12">
+                <div class="theodoi-filter-search">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-white border-end-0 text-muted ps-3">
                             <i class="fa-solid fa-magnifying-glass"></i>
@@ -220,7 +238,7 @@
                 </div>
 
                 {{-- Lọc Học kỳ --}}
-                <div class="col-lg-2 col-md-3 col-6">
+                <div class="theodoi-filter-select">
                     <select name="MaHocKy" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
                         <option value="">-- Tất cả học kỳ --</option>
                         @foreach($hocKies as $hk)
@@ -232,7 +250,7 @@
                 </div>
 
                 {{-- Lọc Khoa --}}
-                <div class="col-lg-2 col-md-3 col-6">
+                <div class="theodoi-filter-select">
                     <select name="MaKhoa" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
                         <option value="">-- Tất cả khoa --</option>
                         @foreach($khoas as $k)
@@ -244,7 +262,7 @@
                 </div>
 
                 {{-- Lọc Bộ môn --}}
-                <div class="col-lg-2 col-md-3 col-6">
+                <div class="theodoi-filter-select">
                     <select name="MaBoMon" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
                         <option value="">-- Tất cả bộ môn --</option>
                         @foreach($boMons as $bm)
@@ -256,8 +274,8 @@
                 </div>
 
                 {{-- Lọc GVHD --}}
-                <div class="col-lg-2 col-md-3 col-6">
-                    <select name="MaGV" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
+                <div class="theodoi-filter-select">
+                    <select aria-label="Giảng viên hướng dẫn" name="MaGV" class="form-select form-select-sm shadow-none" onchange="document.getElementById('filterForm').submit()">
                         <option value="">-- Tất cả GVHD --</option>
                         @foreach($giangViens as $gv)
                             <option value="{{ $gv->MaGV }}" {{ request('MaGV') == $gv->MaGV ? 'selected' : '' }}>
@@ -268,13 +286,13 @@
                 </div>
 
                 {{-- Nút bấm Lọc & Xóa lọc --}}
-                <div class="col-lg-1 col-md-12 col-12 d-flex gap-2 justify-content-end">
-                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold w-100 shadow-sm d-flex align-items-center justify-content-center" title="Áp dụng bộ lọc">
+                <div class="theodoi-filter-actions d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-sm d-flex align-items-center justify-content-center" title="Áp dụng bộ lọc">
                         <i class="fa-solid fa-filter me-2"></i>Lọc
                     </button>
                     @if(request()->anyFilled(['search', 'MaHocKy', 'MaKhoa', 'MaBoMon', 'MaGV', 'stage', 'status_code']))
                         <a href="{{ route('admin.theodoi.index', ['tab' => request('tab', 'tong-quan')]) }}" 
-                           class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" title="Xóa bộ lọc">
+                           class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" title="Xóa bộ lọc" aria-label="Xóa bộ lọc">
                             <i class="fa-solid fa-rotate-left"></i>
                         </a>
                     @endif

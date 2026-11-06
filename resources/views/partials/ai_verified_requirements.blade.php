@@ -11,7 +11,7 @@
         $supported=array_values(array_filter($item['report_points']??[],fn($p)=>($p['relation']??'')==='related_text' && count($p['source_references']??[])>0));
         $uncertain=array_values(array_filter($item['report_points']??[],fn($p)=>($p['relation']??'')!=='related_text' || count($p['source_references']??[])===0));
         if($supported)$groups['supported'][]=['item'=>$item,'points'=>$supported];
-        if($uncertain)$groups['uncertain'][]=['item'=>$item,'points'=>$uncertain];
+        if($uncertain || !$supported)$groups['uncertain'][]=['item'=>$item,'points'=>$uncertain];
     }
 @endphp
 <section class="ai-section ai-section-wide" data-teacher-requirements-summary data-verified-requirement-review>
@@ -76,6 +76,24 @@
                             <p class="ai-empty">Hệ thống chưa tìm được dẫn chứng phù hợp cho phần này. Giảng viên vui lòng đối chiếu báo cáo gốc; đây không phải kết luận sinh viên chưa thực hiện.</p>
                             @if($citationAvailable)<a href="{{ $pdfUrl }}" target="_blank" rel="noopener">Mở báo cáo gốc</a>@endif
                             @if(collect($entry['points'])->contains(fn($p)=>($p['check_status']??'')==='NEEDS_VISUAL_REVIEW'))<p class="small text-muted">Có mục hình/sơ đồ cần giảng viên xem trực tiếp trong PDF.</p>@endif
+                        @endif
+                        @if($entry['points'])
+                            <ul>
+                                @foreach($entry['points'] as $point)
+                                    <li>
+                                        {{ $point['title'] ?? $entry['item']['text'] ?? 'Tiêu chí' }}
+                                        @if(($point['check_status'] ?? '') === 'NEEDS_VISUAL_REVIEW')
+                                            <small>· Cần xem sơ đồ hoặc hình trong PDF</small>
+                                        @elseif(($point['check_status'] ?? '') === 'NOT_FOUND')
+                                            <small>· Chưa tìm thấy đoạn phù hợp</small>
+                                        @elseif(empty($point['source_references']))
+                                            <small>· Chưa xác minh được nguồn</small>
+                                        @else
+                                            <small>· Có nguồn để đối chiếu</small>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ul>
                         @endif
                         @if($textReferences || $captionReferences)
                             @php
