@@ -305,6 +305,17 @@ class ThongKeService
                 'badge'         => 'Học phần',
                 'color'         => 'info',
             ],
+            'mau_11' => [
+                'ma' => 'mau_11',
+                'soHieu' => 'MẪU 11',
+                'ten' => 'Bảng tổng hợp điểm và chuẩn đầu ra khóa luận',
+                'moTa' => 'Đối chiếu điểm trung bình hội đồng, điểm tổng kết và kết quả từng CLO.',
+                'loaiBaoCao' => 'Kết quả học phần',
+                'thongTinChinh' => ['Sinh viên, đề tài, GVHD và hội đồng', 'Điểm trung bình hội đồng và điểm tổng kết', 'Điểm từng CLO và kết luận đạt'],
+                'icon' => 'fa-table-list',
+                'badge' => 'Điểm và CLO',
+                'color' => 'primary',
+            ],
         ];
 
         return compact(
@@ -392,6 +403,7 @@ class ThongKeService
 
         // Lọc Bộ môn
         $maBoMon = $filters['MaBoMon'] ?? $filters['ma_bo_mon'] ?? null;
+        $bmAlt = null;
         if (!empty($maBoMon)) {
             $bmAlt = str_starts_with($maBoMon, 'BM_') ? substr($maBoMon, 3) : 'BM_' . $maBoMon;
             $hdQuery->whereHas('hoSoBaoVes.deTai.giangVien', fn($gv) => $gv->whereIn('MaBoMon', [$maBoMon, $bmAlt]));
@@ -504,6 +516,11 @@ class ThongKeService
                 $nhom = $hs->nhom;
                 $deTai = $hs->deTai;
                 $gvhd = $deTai?->giangVien;
+                if (($maBoMon && !in_array($gvhd?->MaBoMon, [$maBoMon, $bmAlt], true))
+                    || ($maHocPhan && $deTai?->MaHocPhan !== $maHocPhan)
+                    || ($maGV && $deTai?->MaGV !== $maGV)) {
+                    continue;
+                }
                 $gvpbList = $phanBiens->get($deTai?->MaDeTai ?? '', collect());
                 $gvpb = $gvpbList->first()?->giangVien;
 
@@ -572,29 +589,30 @@ class ThongKeService
 
                     // Điểm trung bình Hội đồng
                     $validScores = $phieusCuaHoSo->where('MaSV', $sv->MaSV)
+                        ->whereIn('MaGV', $thanhViens->pluck('MaGV')->all())
                         ->where('TrangThai', 'Đã hoàn thành')
                         ->whereNotNull('Diem')
+                        ->unique('MaGV')
                         ->pluck('Diem')
                         ->map(fn($d) => (float)$d);
                     $diemHD = $validScores->isNotEmpty() ? round($validScores->avg(), 2) : null;
 
                     // Điểm tổng kết
-                    if ($isDuPhieu) {
-                        $finalScore = $kqItem?->DiemChinhThuc ?? $kqItem?->DiemTongKet ?? ($diemHD ?? 0.0);
-                        $gradeData = self::quyDoiDiem((float)$finalScore);
-                    } else {
-                        $gradeData = self::quyDoiDiem(null);
-                    }
+                    $studentHasBallots = $isDuPhieu && $validScores->count() >= $soThanhVienHD;
+                    $finalScore = $studentHasBallots
+                        ? ($kqItem?->DiemChinhThuc ?? $kqItem?->DiemTongKet ?? $diemHD)
+                        : null;
+                    $gradeData = self::quyDoiDiem($finalScore === null ? null : (float) $finalScore);
 
-                    $outcome = ['passed' => null, 'failed_clos' => []];
-                    if ($isDuPhieu) {
+                    $outcome = ['passed' => null, 'failed_clos' => [], 'clo_scores' => []];
+                    if ($finalScore !== null) {
                         $hs->setRelation('hoiDong', $hd);
                         $scoreResult = new KetQuaSinhVien(['MaSV' => $sv->MaSV, 'DiemChinhThuc' => $finalScore]);
                         $outcome = app(StudentOutcomeService::class)->evaluate($scoreResult, $hs, $phieusCuaHoSo);
                         $gradeData['isDat'] = $outcome['passed'] === true;
                         $gradeData['ketQua'] = $outcome['passed'] === null ? 'Chưa đủ dữ liệu CLO' : ($gradeData['isDat'] ? 'Đạt' : 'Không đạt');
                     }
-                    $isStudentComplete = $isDuPhieu && $outcome['passed'] !== null;
+                    $isStudentComplete = $studentHasBallots && $outcome['passed'] !== null;
 
                     $maNgSV = $sv->lop?->MaNganh ?? $sv->MaNganh ?? $hd->MaNganh ?? 'CHUNG';
                     $tenNgSV = $sv->lop?->nganh?->TenNganh ?? $hd->nganh?->TenNganh ?? 'Chung';
@@ -635,10 +653,12 @@ class ThongKeService
                         'diemUVs'           => $diemUVs,
                         'diffScore'         => $diffScore,
                         'canhBaoLech'       => $canhBaoLech,
-                        'diemHD'            => $diemHD,
-                        'diemTongKet'       => $isDuPhieu ? $gradeData['diemHe10'] : null,
-                        'diemHe4'           => $isDuPhieu ? $gradeData['diemHe4'] : null,
-                        'diemChu'           => $isDuPhieu ? $gradeData['diemChu'] : null,
+                        'diemHD'            => $studentHasBallots ? $diemHD : null,
+                        'cloScores'         => $outcome['clo_scores'],
+                        'gpaTichLuy'        => $sv->DiemTichLuy,
+                        'diemTongKet'       => $studentHasBallots ? $gradeData['diemHe10'] : null,
+                        'diemHe4'           => $studentHasBallots ? $gradeData['diemHe4'] : null,
+                        'diemChu'           => $studentHasBallots ? $gradeData['diemChu'] : null,
                         'xepLoai'           => $gradeData['xepLoai'],
                         'ketQua'            => $gradeData['ketQua'],
                         'isDat'             => $isStudentComplete && $gradeData['isDat'],

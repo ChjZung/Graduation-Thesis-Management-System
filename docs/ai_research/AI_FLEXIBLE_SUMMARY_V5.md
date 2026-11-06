@@ -61,7 +61,7 @@ Ví dụ đầu ra theo hai yêu cầu khác nhau: [JSON minh họa](flexible_su
 - Quota, giới hạn đồng thời, thời gian mỗi lượt nền và lịch thử lại dùng cơ chế hiện có. Không tự đổi key, model hay bỏ qua cooldown.
 - Trang có ảnh/scan/sơ đồ chưa đọc được được ghi rõ. Chưa bổ sung OCR/vision; không cam kết đã hiểu mọi bảng hoặc ảnh chỉ vì đã trích được văn bản.
 - Popup giữ kiểm tra phiên, quyền và tệp; mở trang nguồn, tô vàng khi khớp. Kiểm tra câu trích không tương đương kiểm chứng nội dung luận văn là sự thật.
-- Không cần thay schema database. Báo cáo đã lưu không tự chạy lại hàng loạt. Chọn **Phân tích lại** trên bài muốn cập nhật, worker cần chạy bằng `php artisan ai:work` hoặc `CHAY_AI.bat`.
+- Không cần thay schema database. Báo cáo đã lưu không tự chạy lại hàng loạt. Chọn **Phân tích lại** trên bài muốn cập nhật, worker cần chạy bằng `php artisan ai:work`.
 
 ## Kiểm thử và thực nghiệm
 

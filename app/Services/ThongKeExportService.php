@@ -16,7 +16,7 @@ class ThongKeExportService
     {
         // Định hướng khổ giấy thông minh: mẫu tổng quan / phân bố ít cột dùng Portrait, mẫu nhiều cột dùng Landscape
         $defaultOrientation = match ($mauBaoCao) {
-            'mau_07', 'mau_08', 'mau_09', 'mau_10' => 'portrait',
+            'mau_07', 'mau_08' => 'portrait',
             default => 'landscape',
         };
         $chosenOrientation = !empty($config['kho_giay']) ? strtolower($config['kho_giay']) : $defaultOrientation;
@@ -43,6 +43,7 @@ class ThongKeExportService
             'mau_08' => 'thongke_baocao.pdf.mau_08_to_chuc',
             'mau_09' => 'thongke_baocao.pdf.mau_09_bo_mon',
             'mau_10' => 'thongke_baocao.pdf.mau_10_hoc_phan',
+            'mau_11' => 'thongke_baocao.pdf.mau_11_diem_clo',
         ];
 
         $viewName = $viewMap[$mauBaoCao] ?? 'thongke_baocao.pdf.mau_01_dot';

@@ -599,4 +599,42 @@ class LichHenHuongDanController extends Controller
 
         return redirect()->back()->with('success', 'Đã hủy lịch hẹn thành công và thông báo đến Thầy/Cô hướng dẫn.');
     }
+
+    /**
+     * GIẢNG VIÊN: Gửi thông báo nhắc nhở nhanh cho các nhóm sinh viên có lịch hẹn
+     */
+    public function guiNhacNhoLichHen(Request $request, $id)
+    {
+        $slot = LichGapHuongDan::with(['giangVien', 'dangKys.nhom.thanhViens.sinhVien'])->findOrFail($id);
+        $user = Auth::user();
+        $giangVien = GiangVien::getLoggedInGiangVien($user);
+
+        if ($giangVien && $slot->MaGV !== $giangVien->MaGV && !in_array($user->vaiTro?->TenVaiTro, ['Admin', 'Giáo vụ'])) {
+            abort(403, 'Bạn không có quyền gửi nhắc nhở cho khung giờ này.');
+        }
+
+        $thoiGianStr = $slot->ThoiGianBatDau->format('H:i d/m/Y');
+        $hinhThucStr = ($slot->HinhThuc === 'TrucTuyen') ? 'Trực tuyến' : 'Trực tiếp';
+        $diaDiemStr = ($slot->HinhThuc === 'TrucTuyen') ? ($slot->LinkCuocHop ?: 'Link trực tuyến') : ($slot->DiaDiem ?: 'Phòng làm việc GV');
+        $gvName = $slot->giangVien?->HoTen ?? 'Giảng viên hướng dẫn';
+
+        $sentCount = 0;
+        foreach ($slot->dangKys as $dk) {
+            if ($dk->nhom && in_array($dk->TrangThai, ['DaXacNhan', 'ChoXacNhan', 'da_xac_nhan', 'cho_xac_nhan'])) {
+                ThongBaoService::guiDenNhom(
+                    $dk->MaNhom,
+                    "[NHẮC LỊCH HẸN] Nhắc nhở lịch gặp hướng dẫn với Thầy/Cô {$gvName}",
+                    "Nhóm bạn có lịch hẹn gặp Thầy/Cô {$gvName} vào lúc {$thoiGianStr} [{$hinhThucStr} - {$diaDiemStr}]. Nội dung trao đổi: {$slot->NoiDung}. Vui lòng chuẩn bị tài liệu báo cáo và tham gia đúng giờ!",
+                    'Lịch hẹn'
+                );
+                $sentCount++;
+            }
+        }
+
+        if ($sentCount === 0) {
+            return redirect()->back()->with('warning', 'Khung giờ này chưa có nhóm sinh viên nào đăng ký để gửi nhắc nhở.');
+        }
+
+        return redirect()->back()->with('success', "Đã gửi thông báo nhắc nhở lịch hẹn thành công đến {$sentCount} nhóm sinh viên!");
+    }
 }

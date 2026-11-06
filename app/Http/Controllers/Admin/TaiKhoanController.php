@@ -451,7 +451,7 @@ class TaiKhoanController extends Controller
 
         $username = trim($request->TenDangNhap);
         $isManualPassword = $request->filled('MatKhau');
-        $password = $isManualPassword ? $request->MatKhau : \Illuminate\Support\Str::password(12, true, true, false, false);
+        $password = $isManualPassword ? $request->MatKhau : 'Huit@2026';
 
         DB::transaction(function () use ($request, $username, $password) {
             $tk = TaiKhoan::create([

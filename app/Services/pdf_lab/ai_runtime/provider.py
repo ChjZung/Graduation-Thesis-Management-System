@@ -1,7 +1,7 @@
 """Gemini REST adapter. Never logs credentials, prompts, or raw provider errors."""
 import json
+from email.utils import parsedate_to_datetime
 import re
-import socket
 import time
 import urllib.error
 import urllib.request
@@ -11,9 +11,35 @@ BASE = 'https://generativelanguage.googleapis.com/v1beta/'
 
 
 class ApiError(ValueError):
-    def __init__(self, message, code='api_error', status=None):
+    def __init__(self, message, code='api_error', status=None, retry_after=None, metadata=None):
         super().__init__(message)
         self.code, self.status = code, status
+        self.retry_after = retry_after
+        self.metadata = {key: value for key, value in (metadata or {}).items()
+                         if key in ('model', 'quota', 'cooldown_until', 'cooldown_cached',
+                                    'original_retry_after', 'primary_http_status', 'primary_model')}
+
+    def details(self):
+        return {'code': self.code, 'message': str(self), 'http_status': self.status,
+                'retry_after': self.retry_after, **self.metadata}
+
+    @classmethod
+    def from_details(cls, detail, default_code='api_error'):
+        return cls(detail.get('message', 'Chưa hoàn tất xử lý AI.'), detail.get('code', default_code),
+                   detail.get('http_status'), detail.get('retry_after'), metadata=detail)
+
+
+def retry_after_seconds(header):
+    if not header:
+        return None
+    try:
+        value = int(header)
+        return value if value >= 0 else None
+    except ValueError:
+        try:
+            return max(0, int(parsedate_to_datetime(header).timestamp() - time.time() + 0.999))
+        except (ValueError, TypeError, OverflowError, OSError):
+            return None
 
 
 class RequestPacer:
@@ -80,39 +106,38 @@ class GeminiClient:
         started = time.monotonic()
         event = {'operation': path.split(':')[-1] if ':' in path else 'model_metadata', 'status': 'attempted'}
         self.http_calls.append(event)
-        for attempt in range(2):
-            try:
-                with self._opener.open(request, timeout=self.timeout) as response:
-                    raw = response.read(16 * 1024 * 1024 + 1)
-                if len(raw) > 16 * 1024 * 1024:
-                    raise ApiError('Phản hồi API quá lớn.', 'response_size')
-                result = json.loads(raw)
-                if not isinstance(result, dict):
-                    raise ApiError('API trả phản hồi không hợp lệ.', 'invalid_response')
-                event['status'] = 'ok'
-                return result
-            except urllib.error.HTTPError as exc:
-                messages = {400: 'Request/model không hỗ trợ cấu hình JSON hiện tại. Kiểm tra model và ngân sách.',
-                    401: 'API key không hợp lệ.', 403: 'API key chưa có quyền gọi model hoặc bị giới hạn truy cập.',
-                    404: 'Không tìm thấy model. Nhập đúng Model ID được cấp trong Google AI Studio.',
-                    429: 'Hết hoặc vượt quota/tốc độ. Đã dừng; không tự thử lại để tránh hao lượt.',
-                    500: 'Google đang lỗi máy chủ. Kết quả trước đó vẫn được giữ.',
-                    503: 'Model đang bận. Chờ rồi bấm tiếp tục.'}
-                event['status'] = exc.code
-                exc.close()
-                raise ApiError(messages.get(exc.code, f'Gemini trả HTTP {exc.code}; đã dừng.'),
-                               'rate_limit' if exc.code == 429 else 'http_error', exc.code) from None
-            except (urllib.error.URLError, TimeoutError, socket.timeout, OSError):
-                if attempt == 0:
-                    time.sleep(2)
-                    continue
-                event['status'] = 'network_error'
-                raise ApiError('Không kết nối được Gemini hoặc request hết thời gian. Không tự gọi lại; kiểm tra mạng rồi tiếp tục.', 'network_error') from None
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                event['status'] = 'invalid_json'
-                raise ApiError('API trả dữ liệu không phải JSON hợp lệ.', 'invalid_response') from None
-            finally:
-                event['seconds'] = round(time.monotonic() - started, 3)
+        try:
+            with self._opener.open(request, timeout=self.timeout) as response:
+                raw = response.read(16 * 1024 * 1024 + 1)
+            if len(raw) > 16 * 1024 * 1024:
+                raise ApiError('Phản hồi API quá lớn.', 'response_size')
+            result = json.loads(raw)
+            if not isinstance(result, dict):
+                raise ApiError('API trả phản hồi không hợp lệ.', 'invalid_response')
+            event['status'] = 'ok'
+            return result
+        except urllib.error.HTTPError as exc:
+            messages = {400: 'Request/model không hỗ trợ cấu hình JSON hiện tại. Kiểm tra model và ngân sách.',
+                401: 'API key không hợp lệ.', 403: 'API key chưa có quyền gọi model hoặc bị giới hạn truy cập.',
+                404: 'Không tìm thấy model. Nhập đúng Model ID được cấp trong Google AI Studio.',
+                429: 'Hết hoặc vượt quota/tốc độ. Đã dừng; không tự thử lại để tránh hao lượt.',
+                500: 'Google đang lỗi máy chủ. Kết quả trước đó vẫn được giữ.',
+                503: 'Model đang bận. Chờ rồi bấm tiếp tục.'}
+            event['status'] = exc.code
+            retry_after = retry_after_seconds(exc.headers.get('Retry-After')) if exc.headers else None
+            exc.close()
+            raise ApiError(messages.get(exc.code, f'Gemini trả HTTP {exc.code}; đã dừng.'),
+                           'rate_limit' if exc.code == 429 else 'http_error', exc.code, retry_after) from None
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            reason = exc.reason if isinstance(exc, urllib.error.URLError) else exc
+            code = 'provider_timeout' if isinstance(reason, TimeoutError) else 'network_error'
+            event['status'] = code
+            raise ApiError('Gemini chưa phản hồi hoặc kết nối bị gián đoạn.', code) from None
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            event['status'] = 'invalid_json'
+            raise ApiError('API trả dữ liệu không phải JSON hợp lệ.', 'invalid_response') from None
+        finally:
+            event['seconds'] = round(time.monotonic() - started, 3)
 
     def model_info(self):
         info = self._request('models/' + self.model)

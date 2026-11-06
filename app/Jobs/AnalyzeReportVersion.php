@@ -31,14 +31,22 @@ class AnalyzeReportVersion implements ShouldQueue
             if (!$report) return;
             $state = $processing->payload($report)['_processing'] ?? [];
             if (($state['token'] ?? '') !== $this->token || !in_array($state['status'] ?? '',['queued','running','waiting'])) return;
-            if (($state['next_retry_at'] ?? 0) > time()) { $this->release($state['next_retry_at']-time()); return; }
+            $remaining = (int) ($state['next_retry_at'] ?? 0) - time();
+            if ($remaining > 0) { $this->release($remaining); return; }
             if ($processing->fingerprint($report) !== $state['fingerprint']) {
                 $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi. Hãy chọn Phân tích lại để xử lý theo đầu vào mới.',
                     'errors'=>[['stage'=>'worker','code'=>'input_changed']]]);
                 return;
             }
             $attempt = (int) ($state['attempts'] ?? 0)+1;
-            $processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'errors'=>[],'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.']);
+            if ($attempt > (int) config('ai_processing.max_passes', 20)) {
+                $processing->updateState($this->reportId, $this->token, [
+                    'status'=>'partial', 'next_retry_at'=>null,
+                    'message'=>'Đã hết lượt tự thử. Kết quả đã lưu được giữ; cần kiểm tra dịch vụ AI trước khi tiếp tục.',
+                ]);
+                return;
+            }
+            if (!$processing->updateState($this->reportId,$this->token,['status'=>'running','attempts'=>$attempt,'next_retry_at'=>null,'errors'=>[],'message'=>'AI đang xử lý báo cáo; các bước đã lưu sẽ được sử dụng lại.'])) return;
             $only = ($state['mode'] ?? '') === 'review';
             // The Lab reader reuses Map when the brief changes, then refreshes its cited requirements.
             if (config('ai_processing.pdf_engine') === 'pdf_lab' && strtolower(pathinfo($processing->path($report), PATHINFO_EXTENSION)) === 'pdf') $only = false;
@@ -65,22 +73,26 @@ class AnalyzeReportVersion implements ShouldQueue
                 'review_context'=>$report->dotNop?->nguCanhDoiChieuAi(),
                 'review_only'=>$only,
                 // Reset checkpoints once, not on every budget/timeout continuation.
-                'fresh'=>!empty($state['fresh']) && $attempt === 1,
+                'fresh'=>empty($state['cache_scope']) && !empty($state['fresh']) && $attempt === 1,
+                'cache_scope'=>$state['cache_scope'] ?? null,
+                'should_continue'=>fn () => $processing->isRunning($this->reportId, $this->token),
                 'progress_path'=>$processing->progressPath($this->token),
                 'document_identity'=>$processing->identity($report),
                 'previous_version'=>$prevData,
                 'stage'=>$report->dotNop?->giaiDoan?->ThuTu ?? 1,
-                'on_partial_result'=>function (array $partial) use ($processing,$ai,$state,$only) {
+                'on_partial_result'=>function (array $partial, bool $reviewOnly = false) use ($processing,$ai,$state,$only) {
                     $current=KhoiBaoCaoTienDo::with('dotNop.giaiDoan')->find($this->reportId);
                     if (empty($partial['data']['_source_hash']) ||
                         ($partial['data']['document_version_id']??null)!==$this->reportId) return;
                     if (!$current || ($processing->payload($current)['_processing']['token']??'')!==$this->token ||
                         $processing->fingerprint($current)!==$state['fingerprint'] ||
                         !$processing->sourceMatches($current,$partial['data'])) return;
-                    $ai->saveVersionSummary($current,$partial,['review_only'=>$only,'token'=>$this->token]);
+                    $ai->saveVersionSummary($current,$partial,['review_only'=>$only || $reviewOnly,'token'=>$this->token]);
                 },
             ]);
+            if (!empty($result['cancelled'])) return;
             $report->refresh()->load('dotNop.giaiDoan');
+            if (($processing->payload($report)['_processing']['token'] ?? '') !== $this->token) return;
             if ($processing->fingerprint($report) !== $state['fingerprint']) {
                 $processing->updateState($this->reportId,$this->token,['status'=>'partial','message'=>'Tệp, yêu cầu hoặc cấu hình xử lý đã thay đổi trong lúc phân tích. Kết quả trước đó được giữ; hãy phân tích lại theo đầu vào mới.']);
                 return;
@@ -97,12 +109,15 @@ class AnalyzeReportVersion implements ShouldQueue
             $ai->saveVersionSummary($report,$result,['review_only'=>$only,'token'=>$this->token]);
             // Schedule from this attempt's errors, even if a stronger previous result was retained.
             $next = $processing->retryState($data,$only,$attempt);
-            $processing->updateState($this->reportId,$this->token,$next);
-            if ($next['status'] === 'waiting') $this->release(max(1,$next['next_retry_at']-time()));
+            if ($processing->updateState($this->reportId,$this->token,$next) && $next['status'] === 'waiting') {
+                $this->release(max(1,$next['next_retry_at']-time()));
+            }
         } catch (\Throwable $error) {
-            $processing->updateState($this->reportId,$this->token,['status'=>'waiting','next_retry_at'=>time()+60,
+            $delays = $this->backoff();
+            $delay = $delays[min(count($delays)-1, max(0, $this->attempts()-1))];
+            if (!$processing->updateState($this->reportId,$this->token,['status'=>'waiting','next_retry_at'=>time()+$delay,
                 'message'=>'Tiến trình xử lý bị gián đoạn. Kết quả đã lưu được giữ lại; hệ thống sẽ thử tiếp.',
-                'errors'=>[['stage'=>'worker','code'=>'worker_error','message'=>'Chưa thực hiện được bước xử lý nền.']]]);
+                'errors'=>[['stage'=>'worker','code'=>'worker_error','message'=>'Chưa thực hiện được bước xử lý nền.']]])) return;
             throw $error;
         } finally { $lock->release(); }
     }
@@ -111,8 +126,13 @@ class AnalyzeReportVersion implements ShouldQueue
 
     public function failed(?\Throwable $error): void
     {
-        app(AiReportProcessingService::class)->updateState($this->reportId,$this->token,[
-            'status'=>'partial','message'=>'Tiến trình nền đã dừng sau các lần thử. Kết quả hợp lệ vẫn được giữ; có thể chọn Phân tích lại.',
-        ]);
+        $lock = Cache::store('file')->lock('ai-report:'.$this->reportId,420);
+        if (!$lock->get()) return;
+        try {
+            app(AiReportProcessingService::class)->updateState($this->reportId,$this->token,[
+                'status'=>'partial','next_retry_at'=>null,
+                'message'=>'Tiến trình nền đã hết lượt tự thử. Kết quả đã lưu được giữ; cần kiểm tra dịch vụ trước khi tiếp tục.',
+            ]);
+        } finally { $lock->release(); }
     }
 }

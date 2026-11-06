@@ -1,8 +1,7 @@
 ﻿MaBoMon,TenBoMon,MaKhoa,TruongBoMon,MoTa
-ATTT,"Bộ môn ATTT",CNTT,"TS. Trịnh Văn Thành",
-BM_KHAC_TEST,"Bộ môn Khác Test",KHOA_KHAC,,
-CNPM,"Bộ môn CNPM",CNTT,"TS. Trần Anh Dũng",
-HTTT,"Bộ môn HTTT",CNTT,"TS. Phạm Minh Tuấn",
-KHDL,"Bộ môn KHDL",CNTT,"TS. Đỗ Anh Minh",
-KHMT,"Bộ môn KHMT",CNTT,"PGS.TS. Võ Quốc Phong",
-MMT,"Bộ môn MMT",CNTT,"TS. Lê Hải Đăng",
+ATTT,Bộ môn ATTT,CNTT,TS. Trịnh Văn Thành,Bộ môn Bộ môn ATTT trực thuộc Khoa CNTT
+CNPM,Bộ môn CNPM,CNTT,TS. Trần Anh Dũng,Bộ môn Bộ môn CNPM trực thuộc Khoa CNTT
+HTTT,Bộ môn HTTT,CNTT,TS. Phạm Minh Tuấn,Bộ môn Bộ môn HTTT trực thuộc Khoa CNTT
+KHDL,Bộ môn KHDL,CNTT,TS. Đỗ Anh Minh,Bộ môn Bộ môn KHDL trực thuộc Khoa CNTT
+KHMT,Bộ môn KHMT,CNTT,PGS.TS. Võ Quốc Phong,Bộ môn Bộ môn KHMT trực thuộc Khoa CNTT
+MMT,Bộ môn MMT,CNTT,TS. Lê Hải Đăng,Bộ môn Bộ môn MMT trực thuộc Khoa CNTT

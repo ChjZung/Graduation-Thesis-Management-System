@@ -1,152 +1,181 @@
 # HƯỚNG DẪN DỮ LIỆU MẪU IMPORT EXCEL / CSV
+### HỆ THỐNG QUẢN LÝ KHÓA LUẬN TỐT NGHIỆP - TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM (HUIT)
 
-Thư mục này chứa toàn bộ các file mẫu chuẩn (`.xlsx` và `.csv` định dạng UTF-8 có BOM hiển thị tiếng Việt chuẩn trên Excel) dành cho hệ thống **Quản lý Đề tài & Khóa luận Tốt nghiệp**.
-
----
-
-## 1. THỨ TỰ NHẬP DỮ LIỆU KHUYẾN NGHỊ
-
-Để đảm bảo tính toàn vẹn dữ liệu (khóa ngoại liên kết giữa các bảng), vui lòng thực hiện import theo thứ tự số thứ tự đã được đánh số trên từng file:
-
-1. **`01_Khoa_Mau.xlsx` / `01_Khoa_Mau.csv`**: Danh mục Khoa
-2. **`02_BoMon_Mau.xlsx` / `02_BoMon_Mau.csv`**: Danh mục Bộ Môn (trực thuộc Khoa)
-3. **`03_Nganh_Mau.xlsx` / `03_Nganh_Mau.csv`**: Danh mục Ngành đào tạo (trực thuộc Khoa)
-4. **`04_Lop_Mau.xlsx` / `04_Lop_Mau.csv`**: Danh mục Lớp sinh viên (trực thuộc Ngành & Khoa)
-5. **`05_HocKy_Mau.xlsx` / `05_HocKy_Mau.csv`**: Danh mục Học kỳ / Năm học
-6. **`06_GiangVien_Mau.xlsx` / `06_GiangVien_Mau.csv`**: Danh sách Giảng viên (trực thuộc Bộ Môn, tự tạo Tài khoản)
-7. **`07_SinhVien_Mau.xlsx` / `07_SinhVien_Mau.csv`**: Danh sách Sinh viên (trực thuộc Lớp, tự liên kết Khoa/Ngành, tự tạo Tài khoản)
-8. **`09_SinhVien_TheoHocKy_Mau.xlsx` / `09_SinhVien_TheoHocKy_Mau.csv`**: Danh sách Sinh viên đủ điều kiện làm khóa luận theo học kỳ
-9. **`10_HocPhan_KhoaLuan_Mau.xlsx` / `10_HocPhan_KhoaLuan_Mau.csv`**: Danh mục Học phần Khóa luận cử nhân & Khóa luận tốt nghiệp (12 học phần cho 6 bộ môn)
-10. **`11_DeTai_KhoaLuan_Mau.xlsx` / `11_DeTai_KhoaLuan_Mau.csv`** (hoặc `DanhSach_DeTai_Mau.xlsx` / `.csv`): Danh sách Đề tài Khóa luận tốt nghiệp được đề xuất và công bố (chuẩn hóa theo 12 học phần của 6 bộ môn)
+Thư mục này chứa toàn bộ các file mẫu chuẩn (`.xlsx` và `.csv` định dạng **UTF-8 có BOM** hiển thị tiếng Việt chuẩn 100% trên mọi phiên bản Microsoft Excel) dành cho hệ thống **Quản lý Đề tài & Khóa luận Tốt nghiệp**.
 
 ---
 
-## 2. CHI TIẾT CÁC CỘT VÀ QUY TẮC NHẬP LIỆU
+## 1. THỨ TỰ NHẬP LIỆU CHUẨN (IMPORT SEQUENCE)
 
-### 1. Khoa (`01_Khoa_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
-|---|:---:|---|---|
-| `MaKhoa` | Tùy chọn | Chuỗi | Mã Khoa (VD: `NN`, `QTKD`). Nếu để trống, hệ thống tự sinh mã `K01`, `K02`... |
-| `TenKhoa` | **Có** | Chuỗi | Tên Khoa (VD: `Khoa Ngoại Ngữ`). Duy nhất, không được trùng lặp. |
-| `TruongKhoa` | Không | Chuỗi | Họ tên/Học vị Trưởng khoa (VD: `TS. Lê Thị Mai`). |
-| `MoTa` | Không | Chuỗi | Giới thiệu hoặc mô tả khoa. |
+Để đảm bảo tính toàn vẹn dữ liệu và các ràng buộc khóa ngoại (Foreign Keys) giữa các bảng trong hệ thống, vui lòng thực hiện import lần lượt theo đúng thứ tự đánh số từ **01** đến **12**:
 
-### 2. Bộ môn (`02_BoMon_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
-|---|:---:|---|---|
-| `MaBoMon` | Tùy chọn | Chuỗi | Mã Bộ Môn (VD: `BMANH`). Nếu để trống, hệ thống tự sinh mã `BM01`, `BM02`... |
-| `TenBoMon` | **Có** | Chuỗi | Tên Bộ Môn (VD: `Bộ Môn Tiếng Anh`). Duy nhất trong hệ thống. |
-| `MaKhoa` | **Có** | Chuỗi | Mã Khoa hoặc Tên Khoa quản lý bộ môn này. |
-| `TruongBoMon` | Không | Chuỗi | Họ tên Trưởng bộ môn. |
-| `MoTa` | Không | Chuỗi | Mô tả nhiệm vụ hoặc chuyên môn bộ môn. |
+| Thứ tự | Tên File Mẫu (.xlsx & .csv) | Bảng CSDL Tương Ứng | Ý Nghĩa / Mục Đích Nghiệp Vụ |
+|:---:|---|---|---|
+| **01** | `01_Khoa_Mau.xlsx` / `.csv` | `khoa` | Danh mục Khoa đào tạo (Khoa Công nghệ Thông tin) |
+| **02** | `02_BoMon_Mau.xlsx` / `.csv` | `bomon` | Danh mục 6 Bộ môn trực thuộc Khoa (CNPM, HTTT, ATTT, KHMT, KHDL, MMT) |
+| **03** | `03_Nganh_Mau.xlsx` / `.csv` | `nganh` | Danh mục 7 Ngành đào tạo trực thuộc Khoa |
+| **04** | `04_Lop_Mau.xlsx` / `.csv` | `lop` | Danh mục Lớp sinh viên chính quy |
+| **05** | `05_HocKy_Mau.xlsx` / `.csv` | `hocky` | Danh mục Học kỳ và Năm học (HK2425_1, HK2425_2, HK2526_1, HK2627_1...) |
+| **06** | `06_GiangVien_Mau.xlsx` / `.csv` | `giangvien`, `taikhoan` | Danh sách Giảng viên gốc (tự động tạo Tài khoản giảng viên `TenDangNhap = MaGV`, mật khẩu ban đầu `Huit@2026`) |
+| **07** | `07_SinhVien_Mau.xlsx` / `.csv` | `sinhvien`, `taikhoan` | Danh sách Sinh viên gốc (tự động tạo Tài khoản sinh viên `TenDangNhap = MSSV`, mật khẩu ban đầu `Huit@2026`) |
+| **08** | `08_HocPhan_KhoaLuan_Mau.xlsx` / `.csv` | `hocphan` | Danh mục 12 Học phần Khóa luận cử nhân & KLTN theo 6 bộ môn |
+| **09** | `09_HocPhan_HocKy_Mau.xlsx` / `.csv` | `hocphan_hocky` | Danh sách mở các học phần khóa luận áp dụng theo từng học kỳ |
+| **10** | `10_GiangVien_TheoHocKy_Mau.xlsx` / `.csv` | `chitieuhuongdan` | Phân công Giảng viên tham gia hướng dẫn & Định mức chỉ tiêu số nhóm tối đa theo học kỳ |
+| **11** | `11_SinhVien_TheoHocKy_Mau.xlsx` / `.csv` | `danhsachsvdudieukien` | Danh sách Sinh viên đủ điều kiện làm khóa luận theo từng học kỳ (xét tín chỉ và GPA) |
+| **12** | `12_DeTai_KhoaLuan_Mau.xlsx` / `.csv` | `detai` | Danh sách Đề tài Khóa luận tốt nghiệp được đề xuất và công bố (chuẩn hóa từ 265 đề tài thực tế của ngành CNTT) |
+| *Ref* | `12_DS_DangKy_DeTai_KLCN_Nganh_CNTT_MauGoc.xlsx` | *Tài liệu đối chiếu* | File phân công đề tài, giảng viên và nhóm sinh viên thực tế gốc của khoa CNTT |
 
-### 3. Ngành (`03_Nganh_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
-|---|:---:|---|---|
-| `MaNganh` | Tùy chọn | Chuỗi | Mã Ngành theo Bộ GD&ĐT (VD: `7220201`). Nếu để trống hệ thống tự sinh `NG01`, `NG02`... |
-| `TenNganh` | **Có** | Chuỗi | Tên Ngành đào tạo (VD: `Ngôn Ngữ Anh`). |
-| `MaKhoa` | **Có** | Chuỗi | Mã Khoa hoặc Tên Khoa chủ quản ngành này. |
+---
 
-### 4. Lớp (`04_Lop_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
-|---|:---:|---|---|
-| `MaLop` | Tùy chọn | Chuỗi | Mã Lớp (VD: `15DHNNA01`). Để trống sẽ lấy tự động bằng `TenLop`. |
-| `TenLop` | **Có** | Chuỗi | Tên lớp sinh hoạt (VD: `15DHNNA01`). Duy nhất. |
-| `MaNganh` | **Có** | Chuỗi | Mã Ngành hoặc Tên Ngành mà lớp trực thuộc. |
-| `KhoaHoc` | Không | Chuỗi | Khóa học theo niên giám (VD: `2024-2028`). Mặc định `2023-2027`. |
-| `MaKhoa` | Không | Chuỗi | Mã Khoa. Nếu để trống hệ thống tự lấy Khoa của Ngành tương ứng. |
+## 2. QUY ĐỊNH CHI TIẾT TỪNG FILE VÀ CẤU TRÚC CỘT
 
-### 5. Học kỳ (`05_HocKy_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+### 01. Khoa (`01_Khoa_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MaHocKy` | Tùy chọn | Chuỗi | Mã Học kỳ (VD: `HK2425_1`). Nếu để trống hệ thống tự sinh `HK01`, `HK02`... |
-| `TenHocKy` | **Có** | Chuỗi | Tên Học kỳ (VD: `Học kỳ 1 (2024-2025)`). |
-| `NamHoc` | **Có** | Chuỗi | Năm học (VD: `2024-2025`). Cặp `(TenHocKy, NamHoc)` là duy nhất. |
-| `NgayBatDau` | Không | Ngày | Ngày bắt đầu học kỳ (Định dạng `YYYY-MM-DD` hoặc `DD/MM/YYYY`). |
-| `NgayKetThuc`| Không | Ngày | Ngày kết thúc học kỳ. |
-| `TrangThai` | Không | Chuỗi | Trạng thái: `Chưa bắt đầu`, `Đang diễn ra`, `Đã kết thúc`. |
+| `MaKhoa` | Có | Chuỗi | Mã Khoa duy nhất (`CNTT`). |
+| `TenKhoa` | Có | Chuỗi | Tên đầy đủ của Khoa (`Khoa CNTT`). |
+| `TruongKhoa` | Không | Chuỗi | Họ tên & học vị Trưởng khoa (`PGS.TS. Nguyễn Văn Hùng`). |
+| `MoTa` | Không | Chuỗi | Giới thiệu hoặc thông tin liên hệ của văn phòng khoa. |
 
-### 6. Giảng viên (`06_GiangVien_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+### 02. Bộ môn (`02_BoMon_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MaGV` | **Có** | Chuỗi | Mã số Giảng viên (VD: `GV91`). Duy nhất trong hệ thống. |
-| `HoTen` | **Có** | Chuỗi | Họ và tên đầy đủ của Giảng viên. |
-| `Email` | Không | Chuỗi | Địa chỉ Email trường cấp (VD: `gv91_test@huit.edu.vn`). Duy nhất. |
-| `SoDienThoai`| Không | Chuỗi | Số điện thoại 10 chữ số (VD: `0981112233`). Duy nhất. |
-| `NgaySinh` | Không | Ngày | Ngày sinh (`YYYY-MM-DD` hoặc `DD/MM/YYYY`). |
+| `MaBoMon` | Có | Chuỗi | Mã Bộ môn (`CNPM`, `HTTT`, `ATTT`, `KHMT`, `KHDL`, `MMT`). |
+| `TenBoMon` | Có | Chuỗi | Tên Bộ môn (`Bộ môn CNPM`, `Bộ môn HTTT`...). |
+| `MaKhoa` | Có | Chuỗi | Mã Khoa trực thuộc (`CNTT`). |
+| `TruongBoMon` | Không | Chuỗi | Họ tên Trưởng bộ môn (`TS. Trần Anh Dũng`...). |
+| `MoTa` | Không | Chuỗi | Chuyên môn, hướng nghiên cứu của bộ môn. |
+
+### 03. Ngành (`03_Nganh_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MaNganh` | Có | Chuỗi | Mã ngành theo Bộ GD&ĐT (`7480201`, `7480103`, `7460112`...). |
+| `TenNganh` | Có | Chuỗi | Tên ngành đào tạo (`Công nghệ Thông tin`, `Kỹ thuật Phần mềm`...). |
+| `MaKhoa` | Có | Chuỗi | Mã Khoa quản lý (`CNTT`). |
+
+### 04. Lớp (`04_Lop_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MaLop` | Có | Chuỗi | Mã lớp sinh hoạt (`12DHCNTT01`, `12DHCNTT02`, `14DHTH12`...). |
+| `TenLop` | Có | Chuỗi | Tên lớp sinh hoạt. |
+| `MaNganh` | Có | Chuỗi | Mã Ngành hoặc Tên Ngành lớp trực thuộc (`7480201`). |
+| `KhoaHoc` | Không | Chuỗi | Khóa học (`2021-2025`, `2023-2027`). |
+| `MaKhoa` | Không | Chuỗi | Mã Khoa (`CNTT`). |
+
+### 05. Học kỳ (`05_HocKy_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MaHocKy` | Có | Chuỗi | Mã Học kỳ (`HK2425_1`, `HK2526_1`, `HK2627_1`). |
+| `TenHocKy` | Có | Chuỗi | Tên Học kỳ (`Học kỳ 1`, `Học kỳ 2`). |
+| `NamHoc` | Có | Chuỗi | Năm học (`2024-2025`, `2026-2027`). |
+| `NgayBatDau` | Không | Ngày | Ngày bắt đầu học kỳ (`YYYY-MM-DD`). |
+| `NgayKetThuc`| Không | Ngày | Ngày kết thúc học kỳ (`YYYY-MM-DD`). |
+| `TrangThai` | Không | Chuỗi | `Chưa bắt đầu`, `Đang diễn ra`, `Đã kết thúc`. |
+
+### 06. Giảng viên gốc (`06_GiangVien_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MaGV` | Có | Chuỗi | Mã số Giảng viên (`GV00000001`, `01001002`...). Duy nhất. |
+| `HoTen` | Có | Chuỗi | Họ và tên đầy đủ của giảng viên. |
+| `Email` | Có | Chuỗi | Email công vụ (`hungnv@huit.edu.vn`). |
+| `SoDienThoai`| Không | Chuỗi | Số điện thoại di động 10 chữ số. |
+| `NgaySinh` | Không | Ngày | Ngày sinh (`YYYY-MM-DD`). |
 | `GioiTinh` | Không | Chuỗi | `Nam` hoặc `Nữ`. |
-| `HocHam` | Không | Chuỗi | Học hàm (VD: `Giáo sư`, `Phó Giáo sư` hoặc để trống). |
-| `HocVi` | Không | Chuỗi | Học vị cao nhất (VD: `Tiến sĩ`, `Thạc sĩ`, `Cử nhân`). |
-| `MaBoMon` | **Có** | Chuỗi | Mã Bộ Môn (VD: `CNPM`, `HTTT`, `ATTT`, `MMT`, `KHMT`, `KHDL`) hoặc Tên Bộ Môn trực thuộc. |
-| `TrangThai` | Không | Chuỗi | Trạng thái công tác: `Đang công tác`, `Nghỉ phép`, `Đã nghỉ việc`. |
-> **Tính năng tự động**: Khi import Giảng viên, hệ thống tự động tạo Tài khoản (`TaiKhoan`) với tên đăng nhập bằng `MaGV` (chữ thường) và mật khẩu tạm thời an toàn ngẫu nhiên (hoặc `Huit@2026`), yêu cầu bắt buộc đổi mật khẩu khi đăng nhập lần đầu.
+| `HocHam` | Không | Chuỗi | `Giáo sư`, `Phó Giáo sư` hoặc để trống. |
+| `HocVi` | Có | Chuỗi | `Tiến sĩ`, `Thạc sĩ`, `Kỹ sư`, `Cử nhân`. |
+| `MaBoMon` | Có | Chuỗi | Mã Bộ môn giảng viên công tác (`CNPM`, `HTTT`...). |
+| `TrangThai` | Không | Chuỗi | `Đang công tác`, `Nghỉ phép`, `Đã nghỉ việc`. |
+> **Tính năng tự động**: Hệ thống tự động tạo Tài khoản người dùng với `TenDangNhap = MaGV`, vai trò `VT02` (Giảng viên) và mật khẩu ban đầu là `Huit@2026`.
 
-### 7. Sinh viên (`07_SinhVien_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+### 07. Sinh viên gốc (`07_SinhVien_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MSSV` | **Có** | Chuỗi | Mã số sinh viên (VD: `2001210001`). Duy nhất trong hệ thống. |
-| `HoTen` | **Có** | Chuỗi | Họ và tên đầy đủ của sinh viên. |
-| `Email` | Không | Chuỗi | Email trường cấp (VD: `2001210001@st.huit.edu.vn`). Duy nhất. |
-| `SoDienThoai`| Không | Chuỗi | Số điện thoại 10 số (VD: `0978001001`). Duy nhất. |
-| `NgaySinh` | Không | Ngày | Ngày sinh (`YYYY-MM-DD` hoặc `DD/MM/YYYY`). |
+| `MSSV` | Có | Chuỗi | Mã số sinh viên (`2001210001`, `2001230046`...). Duy nhất. |
+| `HoTen` | Có | Chuỗi | Họ và tên đầy đủ của sinh viên. |
+| `Email` | Có | Chuỗi | Email trường cấp (`2001210001@st.huit.edu.vn`). |
+| `SoDienThoai`| Không | Chuỗi | Số điện thoại di động. |
+| `NgaySinh` | Không | Ngày | Ngày sinh (`YYYY-MM-DD`). |
 | `GioiTinh` | Không | Chuỗi | `Nam` hoặc `Nữ`. |
-| `MaLop` | **Có** | Chuỗi | Mã Lớp hoặc Tên Lớp sinh viên đang theo học (VD: `12DHCNTT01`). |
-| `KhoaHoc` | Không | Chuỗi | Niên khóa (VD: `2021-2025`). Tự lấy theo Lớp nếu để trống. |
+| `MaLop` | Có | Chuỗi | Mã Lớp sinh hoạt của sinh viên (`12DHCNTT01`). |
+| `KhoaHoc` | Không | Chuỗi | Khóa học (`2021-2025`). |
 | `SoTinChiTichLuy`| Không | Số | Số tín chỉ đã tích lũy (VD: `128`). |
 | `DiemTichLuy`| Không | Số | Điểm trung bình tích lũy hệ 4 (VD: `3.45`). |
-| `TrangThai` | Không | Chuỗi | Trạng thái: `Đang học`, `Tạm dừng`, `Bảo lưu`, `Đã tốt nghiệp`. |
-> **Tính năng tự động**: Khi import Sinh viên, hệ thống tự động suy ra `MaKhoa` và `MaNganh` từ Lớp học, đồng thời tạo Tài khoản sinh viên với `TenDangNhap = MSSV`, mật khẩu tạm thời an toàn (yêu cầu đổi mật khẩu lần đầu).
+| `TrangThai` | Không | Chuỗi | `Đang học`, `Tạm dừng`, `Bảo lưu`. |
+> **Tính năng tự động**: Hệ thống tự động tạo Tài khoản sinh viên với `TenDangNhap = MSSV`, vai trò `VT03` (Sinh viên) và mật khẩu ban đầu là `Huit@2026`.
 
-### 8. Quy tắc Quản lý Tài khoản & Phân quyền
-> **Quy tắc hệ thống**: Hệ thống **không cần file import riêng cho tài khoản**. 
-> - **Sinh viên**: Khi import Sinh viên (`07_SinhVien_Mau`), hệ thống tự động khởi tạo 1 tài khoản duy nhất với `TenDangNhap = MSSV` (vai trò `VT03`).
-> - **Giảng viên**: Khi import Giảng viên (`06_GiangVien_Mau`), hệ thống tự động khởi tạo tài khoản Giảng viên với `TenDangNhap = MaGV` (vai trò `VT02`).
-> - **Trưởng Khoa & Trưởng Bộ Môn**: Từ hồ sơ giảng viên, hệ thống cấp thêm tài khoản chức vụ riêng biệt để thực hiện quyền phê duyệt:
->   - **Trưởng khoa**: `TK_{MaKhoa}_{MaGV}` (vai trò `VT05`).
->   - **Trưởng bộ môn**: `TBM_{MaKhoa}_{MaBoMon}_{MaGV}` (vai trò `VT04`).
->   - Cả tài khoản giảng viên và tài khoản chức vụ đều liên kết trực tiếp vào 1 hồ sơ giảng viên duy nhất (`MaGV`), giúp đồng bộ 100% dữ liệu họ tên, email, khoa, bộ môn trên toàn hệ thống.
-> - **Mật khẩu khởi tạo chuẩn**: Mặc định là `Huit@2026`, yêu cầu bắt buộc đổi mật khẩu ở lần đăng nhập đầu tiên.
+### 08. Học phần Khóa luận (`08_HocPhan_KhoaLuan_Mau`)
+Bao gồm 12 học phần khóa luận chuẩn hóa của 6 bộ môn thuộc khoa CNTT:
+- Công nghệ phần mềm: `HP_KLCN_CNPM`, `HP_KLTN_CNPM`
+- Hệ thống thông tin: `HP_KLCN_HTTT`, `HP_KLTN_HTTT`
+- An toàn thông tin: `HP_KLCN_ATTT`, `HP_KLTN_ATTT`
+- Khoa học máy tính: `HP_KLCN_KHMT`, `HP_KLTN_KHMT`
+- Khoa học dữ liệu & AI: `HP_KLCN_KHDL`, `HP_KLTN_KHDL`
+- Mạng máy tính & TT: `HP_KLCN_MMT`, `HP_KLTN_MMT`
 
-### 9. Sinh viên đủ điều kiện theo học kỳ (`09_SinhVien_TheoHocKy_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MSSV` | **Có** | Chuỗi | Mã số sinh viên đã có trong danh sách sinh viên. |
-| `HoTen` | **Có** | Chuỗi | Họ và tên sinh viên. |
-| `TrangThai` | Tùy chọn | Chuỗi | `Đủ điều kiện` hoặc `Chưa đủ điều kiện`. |
-| `GhiChu` | Tùy chọn | Chuỗi | Ghi chú lý do xét duyệt (VD: `Đủ điều kiện làm khóa luận tốt nghiệp`). |
+| `MaHocPhan` | Có | Chuỗi | Mã học phần (`HP_KLCN_CNPM`). |
+| `TenHocPhan` | Có | Chuỗi | Tên học phần (`Khóa luận cử nhân - Công nghệ phần mềm`). |
+| `SoTinChi` | Có | Số | Số tín chỉ (`10`). |
+| `MaKhoa` | Có | Chuỗi | Mã Khoa chủ quản (`CNTT`). |
+| `MaBoMon` | Có | Chuỗi | Mã Bộ môn chuyên môn (`CNPM`). |
+| `LoaiHocPhan`| Không | Chuỗi | `Khóa luận` hoặc `Chuyên ngành`. |
+| `MoTa` | Không | Chuỗi | Mục tiêu và nội dung chuẩn đầu ra của học phần. |
 
-### 10. Học phần Khóa luận cử nhân & Khóa luận tốt nghiệp (`10_HocPhan_KhoaLuan_Mau`)
-Danh mục gồm **12 học phần khóa luận chuẩn hóa theo 6 bộ môn** (mỗi bộ môn gồm 2 hệ: *Cử nhân* và *Tốt nghiệp*):
-- **Công nghệ phần mềm**: `HP_KLCN_CNPM` (Khóa luận cử nhân), `HP_KLTN_CNPM` (Khóa luận tốt nghiệp)
-- **Hệ thống thông tin**: `HP_KLCN_HTTT` (Khóa luận cử nhân), `HP_KLTN_HTTT` (Khóa luận tốt nghiệp)
-- **An toàn thông tin**: `HP_KLCN_ATTT` (Khóa luận cử nhân), `HP_KLTN_ATTT` (Khóa luận tốt nghiệp)
-- **Khoa học máy tính**: `HP_KLCN_KHMT` (Khóa luận cử nhân), `HP_KLTN_KHMT` (Khóa luận tốt nghiệp)
-- **Khoa học dữ liệu & AI**: `HP_KLCN_KHDL` (Khóa luận cử nhân), `HP_KLTN_KHDL` (Khóa luận tốt nghiệp)
-- **Mạng máy tính & Viễn thông**: `HP_KLCN_MMT` (Khóa luận cử nhân), `HP_KLTN_MMT` (Khóa luận tốt nghiệp)
-
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+### 09. Mở Học phần theo Học kỳ (`09_HocPhan_HocKy_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MaHocPhan` | Tùy chọn | Chuỗi | Mã học phần (VD: `HP_KLCN_CNPM`, `HP_KLTN_CNPM`...). Tự sinh nếu để trống. |
-| `TenHocPhan` | **Có** | Chuỗi | Tên học phần (VD: `Khóa luận cử nhân - Công nghệ phần mềm`). |
-| `SoTinChi` | **Có** | Số | Số tín chỉ của học phần (mặc định `10` tín chỉ cho Khóa luận). |
-| `MaKhoa` | **Có** | Chuỗi | Mã Khoa chủ quản (`CNTT`). |
-| `MaBoMon` | **Có** | Chuỗi | Mã Bộ Môn quản lý (`CNPM`, `HTTT`, `ATTT`, `MMT`, `KHMT`, `KHDL`). |
-| `LoaiHocPhan`| Không | Chuỗi | Loại học phần: `Khóa luận` hoặc `Chuyên ngành`. |
-| `MoTa` | Không | Chuỗi | Mô tả nội dung học phần khóa luận hoặc mục tiêu đầu ra. |
+| `MaHocPhan` | Có | Chuỗi | Mã học phần khóa luận đã có ở bước 08 (`HP_KLCN_CNPM`). |
+| `TenHocPhan` | Có | Chuỗi | Tên học phần hiển thị trực quan. |
+| `MaHocKy` | Có | Chuỗi | Mã học kỳ mở học phần (`HK2627_1`). |
+| `TrangThai` | Có | Chuỗi | Trạng thái mở (`Đang mở`, `Đã đóng`). |
+| `GhiChu` | Không | Chuỗi | Ghi chú kế hoạch đào tạo. |
 
-### 11. Đề tài Khóa luận tốt nghiệp (`11_DeTai_KhoaLuan_Mau` / `DanhSach_DeTai_Mau`)
-| Cột | Bắt buộc | Kiểu dữ liệu | Ý nghĩa & Ghi chú |
+### 10. Giảng viên theo Học kỳ (`10_GiangVien_TheoHocKy_Mau`)
+*(Bổ sung theo yêu cầu nghiệp vụ phân công & chỉ tiêu hướng dẫn)*
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
 |---|:---:|---|---|
-| `MaDeTai` | Tùy chọn | Chuỗi | Mã đề tài (VD: `DT01`, `DT02`). Nếu để trống, hệ thống tự động sinh `DT01`, `DT02`... |
-| `TenDeTai` | **Có** | Chuỗi | Tên đề tài khóa luận (tối thiểu 10 ký tự, không trùng lặp). |
-| `MoTa` | Tùy chọn | Chuỗi | Mô tả mục tiêu, bài toán và phạm vi nghiên cứu (tối thiểu 30 ký tự). |
-| `YeuCau` | Tùy chọn | Chuỗi | Yêu cầu năng lực đối với sinh viên thực hiện (tối thiểu 15 ký tự). |
-| `LinhVuc` | Tùy chọn | Chuỗi | Lĩnh vực chuyên môn (VD: `Công nghệ phần mềm`, `Hệ thống thông tin`, `An toàn thông tin`, `Khoa học máy tính`, `Khoa học dữ liệu`, `Mạng máy tính`). |
-| `MaHocPhan` | Tùy chọn | Chuỗi | Mã học phần thuộc bộ môn (VD: `HP_KLCN_CNPM`, `HP_KLTN_CNPM`, `HP_KLCN_HTTT`, `HP_KLTN_HTTT`...). Tự động nhận diện theo Bộ môn nếu để trống. |
-| `TenHocPhan` | Tùy chọn | Chuỗi | Tên học phần khóa luận tương ứng (hiển thị trực quan trên Excel). |
-| `MaGV` | **Có** | Chuỗi | Mã Giảng viên hướng dẫn (VD: `GV00000001`, `GV00000002`...). Hoặc có thể nhập Họ tên giảng viên tại cột `TenGV`. |
-| `TenGV` | Tùy chọn | Chuỗi | Họ và tên giảng viên hướng dẫn (hiển thị trực quan cho người dùng đọc). |
-| `MaHocKy` | Tùy chọn | Chuỗi | Mã học kỳ áp dụng (VD: `HK2627_1`). Mặc định học kỳ đang diễn ra nếu để trống. |
-| `SoLuongSinhVienToiDa` | Tùy chọn | Số | Số sinh viên tối đa trong một nhóm thực hiện đề tài (Mặc định: `3` theo quy chế đào tạo). |
-| `TrangThai` | Tùy chọn | Chuỗi | Trạng thái đề tài: `Đã công bố`, `Đã duyệt`, `Chờ duyệt cấp Bộ môn`, `Chờ duyệt cấp Khoa`. Mặc định `Đã công bố`. |
-> **Tính năng tự động**: Khi import danh sách đề tài, hệ thống tự động xác thực sự tồn tại của giảng viên, phân giải học phần theo bộ môn của giảng viên, sinh mã đề tài duy nhất `DTxx` (hỗ trợ chế độ Upsert ghi đè an toàn khi cập nhật) và ghi nhận lịch sử phê duyệt (`ChiTietDuyetDeTai`) đầy đủ.
+| `MaGV` | Có | Chuỗi | Mã giảng viên đã có ở bước 06 (`GV00000002`). |
+| `HoTen` | Có | Chuỗi | Họ tên giảng viên (`TS. Trần Anh Dũng`). |
+| `MaBoMon` | Có | Chuỗi | Bộ môn công tác (`CNPM`). |
+| `MaHocKy` | Có | Chuỗi | Học kỳ áp dụng chỉ tiêu (`HK2627_1`). |
+| `SoNhomToiDa`| Có | Số | Số nhóm tối đa được phép hướng dẫn (mặc định: `5` nhóm). |
+| `NgayPhanBo` | Không | Ngày | Ngày phân bổ chỉ tiêu (`YYYY-MM-DD`). |
+| `GhiChu` | Không | Chuỗi | Ghi chú quyết định phân công của khoa. |
+
+### 11. Sinh viên đủ điều kiện theo Học kỳ (`11_SinhVien_TheoHocKy_Mau`)
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MSSV` | Có | Chuỗi | Mã số sinh viên đã có ở bước 07 (`2001210001`). |
+| `HoTen` | Có | Chuỗi | Họ tên sinh viên (`Nguyễn Hoàng Long`). |
+| `MaLop` | Có | Chuỗi | Lớp sinh hoạt (`12DHCNTT01`). |
+| `MaHocKy` | Có | Chuỗi | Học kỳ xét duyệt điều kiện (`HK2627_1`). |
+| `SoTinChiTichLuy`| Không | Số | Số tín chỉ tích lũy tại thời điểm xét (Chuẩn: >= 115). |
+| `DiemTichLuy`| Không | Số | Điểm GPA tích lũy hệ 4 (Chuẩn: >= 2.0). |
+| `TrangThai` | Có | Chuỗi | `Đủ điều kiện` hoặc `Chưa đủ điều kiện`. |
+| `GhiChu` | Không | Chuỗi | Lý do hoặc ghi chú xét duyệt công bố. |
+
+### 12. Đề tài Khóa luận tốt nghiệp (`12_DeTai_KhoaLuan_Mau`)
+*(Được trích xuất và chuẩn hóa trực tiếp từ 265 đề tài thực tế của khoa CNTT HUIT)*
+| Cột | Bắt buộc | Kiểu | Mô tả & Ví dụ |
+|---|:---:|---|---|
+| `MaDeTai` | Có | Chuỗi | Mã đề tài (`CNTT-KLCN055`, `CNTT-KLCN051`...). |
+| `TenDeTai` | Có | Chuỗi | Tên đề tài khóa luận (Tối thiểu 10 ký tự). |
+| `MoTa` | Có | Chuỗi | Mô tả bài toán nghiên cứu, kiến trúc và phạm vi thực hiện. |
+| `YeuCau` | Có | Chuỗi | Yêu cầu năng lực công nghệ và kiến thức đối với sinh viên. |
+| `LinhVuc` | Có | Chuỗi | Lĩnh vực chuyên môn (`Công nghệ phần mềm`, `Hệ thống thông tin`, `Khoa học dữ liệu & Trí tuệ nhân tạo`, `An toàn thông tin`). |
+| `MaHocPhan` | Có | Chuỗi | Mã học phần khóa luận tương ứng (`HP_KLCN_CNPM`, `HP_KLCN_HTTT`...). |
+| `TenHocPhan` | Có | Chuỗi | Tên học phần khóa luận. |
+| `MaGV` | Có | Chuỗi | Mã giảng viên hướng dẫn (`01001002`, `01001003`...). |
+| `TenGV` | Có | Chuỗi | Họ và tên giảng viên hướng dẫn (`Vũ Văn Vinh`...). |
+| `MaHocKy` | Có | Chuỗi | Mã học kỳ áp dụng (`HK2627_1`). |
+| `SoLuongSinhVienToiDa`| Có | Số | Số lượng sinh viên tối đa một nhóm (Mặc định: `3` sinh viên/đề tài). |
+| `TrangThai` | Có | Chuỗi | Trạng thái đề tài: `Đã công bố` (hoặc `Chờ duyệt cấp Bộ môn`, `Chờ duyệt cấp Khoa`). |
+
+---
+
+## 3. LƯU Ý KHI SỬ DỤNG VÀ THỰC HIỆN IMPORT
+
+1. **Mật khẩu khởi tạo**: Tất cả tài khoản giảng viên và sinh viên khi import mới đều được gán mật khẩu mặc định là **`Huit@2026`** (tài khoản Admin là **`Admin@123`**). Người dùng sẽ được yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên.
+2. **Định dạng file**: Hệ thống hỗ trợ cả file `.xlsx` và `.csv`. Khi mở file `.csv` bằng Excel trên Windows, toàn bộ chữ tiếng Việt có dấu đều hiển thị chuẩn xác nhờ mã hóa UTF-8 BOM.
+3. **Tính toàn vẹn**: Khi import từ đầu cho một học kỳ mới, luôn chạy theo đúng thứ tự từ **01 đến 12** để tránh lỗi thiếu dữ liệu tham chiếu (foreign key mismatch).

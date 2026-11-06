@@ -533,6 +533,7 @@
                             </table>
                         </div>
                     </div>
+                        @include('thongke_baocao.partials.filtered_councils', ['rows' => $data['danhSachTatCaSV'], 'groupMode' => 'department'])
                     @break
 
                 {{-- ═════════════════════════════════════════════════════════════════ --}}
@@ -577,6 +578,7 @@
                             </table>
                         </div>
                     </div>
+                        @include('thongke_baocao.partials.filtered_councils', ['rows' => $data['danhSachTatCaSV'], 'groupMode' => 'course'])
                     @break
 
                 {{-- ═════════════════════════════════════════════════════════════════ --}}

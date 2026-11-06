@@ -252,6 +252,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
     Route::put('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'update'])->name('thongbao.update');
     Route::delete('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'destroy'])->name('thongbao.destroy');
     Route::post('/thongbao/{id}/send-now', [\App\Http\Controllers\ThongBaoController::class, 'sendNow'])->name('thongbao.sendNow');
+    Route::post('/thongbao/gui-nhac-nho-tu-dong', [\App\Http\Controllers\ThongBaoController::class, 'guiNhacNhoTuDong'])->name('admin.thongbao.gui_nhac_nho_tu_dong');
     Route::get('/thongbao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'show'])->name('admin.thongbao.show');
 
     // Thống kê Đề tài Khóa luận
@@ -383,6 +384,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     Route::post('/lich-hen/{id}/chuyen-trang-thai', [\App\Http\Controllers\LichHenHuongDanController::class, 'chuyenTrangThai'])->name('giangvien.lichhen.chuyenTrangThai');
     Route::post('/lich-hen/{id}/huy', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyKhungGio'])->name('giangvien.lichhen.huy');
     Route::post('/lich-hen/{id}/huy-luot-dat/{dangKyId}', [\App\Http\Controllers\LichHenHuongDanController::class, 'huyLuotDatCuaNhom'])->name('giangvien.lichhen.huyLuotDat');
+    Route::post('/lich-hen/{id}/nhac-nho', [\App\Http\Controllers\LichHenHuongDanController::class, 'guiNhacNhoLichHen'])->name('giangvien.lichhen.nhacnho');
 
     // Đổi mật khẩu alias
     Route::get('/doi-mat-khau', fn() => redirect()->route('password.change'));

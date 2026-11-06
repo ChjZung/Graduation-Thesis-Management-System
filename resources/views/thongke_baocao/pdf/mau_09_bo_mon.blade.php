@@ -52,4 +52,7 @@
             </tr>
         </tfoot>
     </table>
+    @if($config['show_detail'] ?? true)
+        @include('thongke_baocao.partials.filtered_councils', ['rows' => $danhSachTatCaSV, 'groupMode' => 'department'])
+    @endif
 @endsection

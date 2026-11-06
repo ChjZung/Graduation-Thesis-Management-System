@@ -232,7 +232,7 @@ class KetQuaController extends Controller
         }) ?? $hoSo->phienBanMoiNhat;
 
         // 5. Kiểm tra thời hạn nộp lại (deadline)
-        $hanNop = $hoSo->HanNopBaoCaoSauBaoVe ? \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe) : null;
+        $hanNop = $hoSo->hanNopHoanThienBaoCao();
         $isQuaHan = $hanNop && $hanNop->isPast();
 
         $isLeader = ($nhom->truongNhom?->MaSV === $sinhVien->MaSV)
@@ -323,8 +323,9 @@ class KetQuaController extends Controller
         }
 
         // 4. Kiểm tra thời hạn nộp lại (deadline)
-        if ($hoSo->HanNopBaoCaoSauBaoVe && now()->isAfter($hoSo->HanNopBaoCaoSauBaoVe)) {
-            return redirect()->back()->with('error', 'Đã quá thời hạn nộp lại báo cáo theo quy định (' . \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe)->format('d/m/Y H:i') . '). Vui lòng liên hệ Thư ký hội đồng hoặc Giáo vụ khoa để được hỗ trợ.');
+        $hanNop = $hoSo->hanNopHoanThienBaoCao();
+        if ($hanNop && now()->isAfter($hanNop)) {
+            return redirect()->back()->with('error', 'Đã quá thời hạn nộp lại báo cáo theo quy định (' . $hanNop->format('d/m/Y H:i') . '). Vui lòng liên hệ Thư ký hội đồng hoặc Giáo vụ khoa để được hỗ trợ.');
         }
 
         // 5. Kiểm tra trạng thái đã hoàn thành lưu trữ chưa

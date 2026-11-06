@@ -71,6 +71,11 @@ def build_section_tree(pages):
     index_pages = set()
     for page in pages:
         text = page['text']
+        if page.get('is_index'):
+            index_pages.add(page['page'])
+            continue
+        if page.get('source_kind') == 'docx' and page.get('source_location'):
+            continue
         leaders = len(re.findall(r'\.{3,}|…{2,}', text))
         contents_label = re.sub(r'\s+', '', fold(text[:180]))
         trailing_pages = sum(bool(re.search(r'\s\d+\s*$', line)) for line in text.splitlines())
@@ -86,11 +91,15 @@ def build_section_tree(pages):
         if i in consumed:
             continue
         text, page = line['text'], by_page[line['page']]
+        docx = page.get('source_kind') == 'docx'
+        if docx and line['page'] in index_pages:
+            ignored.append({'page': line['page'], 'start': line['start'], 'end': line['end'], 'reason': 'contents'})
+            continue
         marginal = line.get('marginal') and repeated[fold(text)] >= max(2, len(pages) // 4)
         if marginal or re.fullmatch(r'\s*(?:Trang\s*)?\d+\s*', text, re.I):
             ignored.append({'page': line['page'], 'start': line['start'], 'end': line['end'], 'reason': 'page_furniture'})
             continue
-        if (re.fullmatch(r'\s*\d+(?:\.\d+){1,5}[.)]?\s*', text) and i + 1 < len(lines)
+        if (not docx and re.fullmatch(r'\s*\d+(?:\.\d+){1,5}[.)]?\s*', text) and i + 1 < len(lines)
                 and line['page'] not in index_pages):
             nxt = lines[i + 1]
             same_row = (not line.get('bbox') or not nxt.get('bbox') or abs(line['bbox'][1] - nxt['bbox'][1]) < 3)
@@ -98,13 +107,16 @@ def build_section_tree(pages):
                 text = text.rstrip('.) ') + '. ' + nxt['text'].strip()
                 line = dict(line, end=nxt['end'])
                 consumed.add(i + 1)
-        candidate = heading(text) if line['page'] not in index_pages else None
+        if docx and page.get('source_location'):
+            candidate = page.get('docx_heading') if line['start'] == 0 else None
+        else:
+            candidate = heading(text) if line['page'] not in index_pages else None
         is_outline = any(fold(text) == fold(h.get('title', '')) for h in page.get('outline', []))
         style = bool(line.get('bold') or body_size and line.get('size', 0) >= body_size + .5 or is_outline)
         # Layout-less sources can use conservative short numbered headings.
-        if candidate and page.get('lines') and not style:
+        if candidate and not docx and page.get('lines') and not style:
             candidate = None
-        if candidate and candidate[3] == 'chapter' and not candidate[1] and i + 1 < len(lines):
+        if candidate and not docx and candidate[3] == 'chapter' and not candidate[1] and i + 1 < len(lines):
             nxt = lines[i + 1]
             next_heading = heading(nxt['text'])
             if (nxt['page'] == line['page'] and 2 < len(nxt['text'].strip()) < 140
@@ -126,13 +138,19 @@ def build_section_tree(pages):
         if candidate:
             number, title, level, kind = candidate
             # A numbered section must belong to the current chapter, not a table row.
-            if kind == 'section' and nodes:
+            if kind == 'section' and number and nodes:
                 chapter = next((n for n in reversed(nodes) if n['level'] == 1 and n['number']), None)
                 if chapter and str(chapter['number']).isdigit() and not number.startswith(str(chapter['number']) + '.'):
                     candidate = None
             if candidate:
+                if docx and page.get('source_location'):
+                    line = dict(line, end=len(page['text']))
+                    for following in range(i + 1, len(lines)):
+                        if lines[following]['page'] != line['page']:
+                            break
+                        consumed.add(following)
                 while stack and (stack[-1]['level'] >= level or kind == 'section'
-                                 and stack[-1]['number'] and not number.startswith(str(stack[-1]['number']) + '.')):
+                                 and number and stack[-1]['number'] and not number.startswith(str(stack[-1]['number']) + '.')):
                     stack.pop()
                 parent = stack[-1] if stack else None
                 current = {'id': f'S{len(nodes) + 1}', 'number': number, 'title': title or text.strip(),
@@ -140,6 +158,8 @@ def build_section_tree(pages):
                            'start_page': line['page'], 'end_page': line['page'], 'order_index': len(nodes),
                            'heading': {'page': line['page'], 'start': line['start'], 'end': line['end']},
                            'source_spans': [], 'content': ''}
+                if docx:
+                    current['heading']['source_location'] = page.get('source_location')
                 nodes.append(current)
                 stack.append(current)
                 continue

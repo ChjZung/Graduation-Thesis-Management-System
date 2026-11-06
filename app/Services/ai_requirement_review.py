@@ -150,9 +150,17 @@ def review_requirements(context, pages, api_key=None, model=None, call_api=None)
         return result
 
     index_requested = any(any(compact(term) in compact(c['requirement']) for term in ['mục lục', 'danh mục bảng', 'danh mục hình', 'từ viết tắt']) for c in criteria)
-    search_pages = pages if index_requested else [p for p in pages if not is_index_text(p.get('text', ''))]
-    result['coverage']['skipped_index_pages'] = [p['page'] for p in pages if p not in search_pages]
+    search_pages = [p for p in pages if p.get('text', '').strip() and
+                    (index_requested or not is_index_text(p.get('text', '')))]
+    result['coverage']['skipped_index_pages'] = [p['page'] for p in pages
+        if not index_requested and is_index_text(p.get('text', ''))]
     batches = page_batches(search_pages)
+    candidate_pages = {e['page'] for items in candidates.values() for e in items}
+    if candidate_pages:
+        def candidate_count(batch):
+            return sum(int(page) in candidate_pages
+                       for page in re.findall(r'^\[(?:NGUỒN|TRANG PDF) (\d+)', batch, re.MULTILINE))
+        batches.sort(key=candidate_count, reverse=True)
     if not batches:
         return pending("PDF chưa có văn bản đọc được. Cần kiểm tra trực tiếp hoặc nhận dạng OCR; chưa thể kết luận yêu cầu đã được thực hiện.")
     if not api_key or call_api is None:

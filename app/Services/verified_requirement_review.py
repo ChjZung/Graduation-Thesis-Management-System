@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from ai_runtime.requirement_review.engine import analysis_identity,make_report,run_review
-from ai_runtime.requirement_review.parsing import parse_requirements,sha
+from ai_runtime.requirement_review.parsing import criterion_spans,parse_requirements,sha
 from ai_runtime.requirement_review.source_index import build_source_index,VERSION as INDEX_VERSION
 from ai_runtime.summarizer import RunSettings,fingerprint
 
@@ -19,11 +19,18 @@ def requirement_set(context,document):
         if not value or value in seen:continue
         seen.add(value);part=parse_requirements(value);offset=max(0,raw.find(value))
         for item in part['items']:
-            item=dict(item,item_id=f'req_{len(items)+1:03}',char_start=item['char_start']+offset,char_end=item['char_end']+offset)
-            items.append(item)
+            body=item['original_text']
+            origin=item['char_start']+offset
+            for start,end in criterion_spans(body):
+                label=body[start:end]
+                if start == 0:
+                    label=item['original_label'][:len(item['original_label'])-len(body)]+label
+                items.append(dict(item,item_id=f'req_{len(items)+1:03}',
+                    original_text=body[start:end],original_label=label,
+                    char_start=origin+start,char_end=origin+end))
         conditions.extend(dict(c,char_start=c['char_start']+offset,char_end=c['char_end']+offset) for c in part['general_conditions'])
     if not items and raw.strip():return parse_requirements(raw)
-    return {'id':'teacher-context','version':sha(raw)[:16],'sha256':sha(raw),'raw_text':raw,'intro':'',
+    return {'id':'teacher-context','version':sha(raw)[:16]+'-criteria-1','sha256':sha(raw),'raw_text':raw,'intro':'',
         'items':items,'general_conditions':conditions,'warnings':[]}
 
 
@@ -79,10 +86,15 @@ def run_direct_review(path,context,document,identity,model,settings,cache_dir,pr
     # three attempts per task; valid results and semantic rejections stay intact.
     if not retry_failed:
         for tid,error in list(state.get('errors',{}).items()):
-            if error.get('code') not in ('http_error','rate_limit'):continue
+            if (error.get('http_status') not in (429, 500, 502, 503, 504)
+                and error.get('code') not in ('rate_limit', 'provider_timeout', 'network_error')):
+                continue
             counts=state.setdefault('_transient_retries',{});attempts=counts.get(tid,0)
             if attempts<2:
                 counts[tid]=attempts+1;state['errors'].pop(tid,None);state.get('tasks',{}).pop(tid,None);state.pop('last_error',None)
+            else:
+                # Keep the original HTTP metadata in the diagnostic report.
+                error['code'] = 'review_retry_exhausted'
     def checkpoint(label):
         state['_worker_run']=run_id;atomic_json(state_path,state)
         if on_snapshot:

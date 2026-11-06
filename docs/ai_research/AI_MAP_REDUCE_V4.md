@@ -89,7 +89,7 @@ Trạng thái: `met`, `partial`, `not_found`, `insufficient_evidence`. Không k�
 - Reduce tối đa 12 tầng; nếu không thu gọn, đầu vào quá lớn hoặc API lỗi thì trả kết quả nguồn giữ lại và đánh dấu chưa hoàn tất, không cố gửi request không giới hạn.
 - `ai_processing.py` giới hạn đồng thời 2 lượt, điều tiết theo quota đã cấu hình, tối đa 2 lần thử mỗi lời gọi có thể phục hồi; không gọi dồn khi quota/xác thực lỗi. Checkpoint riêng có thời hạn 3 ngày, không chứa key trong chẩn đoán.
 - Đổi yêu cầu giảng viên chạy lại đối chiếu; cache trích xuất và các Map không phụ thuộc yêu cầu vẫn dùng lại khi nội dung/model/prompt không đổi. Đổi schema dùng namespace mới để tránh tái sử dụng kết quả sai hợp đồng.
-- Worker vẫn cần chạy: `php artisan ai:work` hoặc `CHAY_AI.bat`. Tài liệu dài có thể cần nhiều lượt nền, mỗi lượt giữ các bước thành công.
+- Worker vẫn cần chạy: `php artisan ai:work`. Tài liệu dài có thể cần nhiều lượt nền, mỗi lượt giữ các bước thành công.
 - Chưa triển khai OCR/vision cho trang scan và sơ đồ. Cảnh báo minh bạch, không diễn giải ảnh thành kết luận thiếu nội dung.
 - Không có cam kết LLM luôn đánh giá đúng. Khớp trích dẫn, kiểm chứng bằng LLM và giảng viên kiểm tra trực tiếp là các bước khác nhau.
 

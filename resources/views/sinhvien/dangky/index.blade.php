@@ -2,7 +2,7 @@
 
 @section('page_title', 'Đăng Ký Đề Tài Khóa Luận')
 
-@section('content')
+@push('styles')
 <style>
     /* Thiết lập padding tổng thể và không gian thoáng đãng cho trang */
     .dangky-page-root {
@@ -119,6 +119,9 @@
         border-radius: 4px;
     }
 </style>
+@endpush
+
+@section('content')
 
 <div class="dangky-page-root">
     <!-- TIÊU ĐỀ TRANG & DẢI TRẠNG THÁI -->

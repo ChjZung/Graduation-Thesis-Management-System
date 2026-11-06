@@ -23,7 +23,7 @@ flowchart TD
 
 - Python 3.10+, cài `python -m pip install -r app/Services/pdf_lab/requirements.txt` vào Python được đặt ở `PYTHON_PATH`. Máy hiện tại đã có PyMuPDF 1.28.2.
 - Dùng `GEMINI_API_KEY`, `GEMINI_MODEL` hiện có trong `.env`. Không đưa key vào tham số CLI, JSON, hoặc browser.
-- Dùng `CHAY_DU_AN.bat` để mở web và worker; script không reset/seed database. Hoặc chạy `php artisan serve` và `php artisan ai:work` riêng. Worker dùng khóa để tránh chạy trùng.
+- Mở hai cửa sổ terminal rồi chạy `php artisan serve` và `php artisan ai:work`. Worker dùng khóa để tránh chạy trùng.
 - Cấu hình mới trong `config/ai_processing.php`: `pdf_engine=pdf_lab`, `lab.input_budget=8500`, `max_output_tokens=16384`, `max_generation_calls=5`, `pass_seconds=260`.
 - Mỗi lượt worker có giới hạn; hết lượt thì tiếp tục từ checkpoint sau khoảng 1 giây. Quota/mạng giữ chính sách chờ; sai key hoặc đầu ra không đạt dừng để người dùng xem lỗi. Không báo hoàn tất từ kết quả bị cắt.
 

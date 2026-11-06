@@ -56,7 +56,7 @@ def install_json_first(target, payload, validator=None):
 class ProcessingError(RuntimeError):
     def __init__(self, code, **details):
         self.code = code
-        self.details = {k:v for k,v in details.items() if k in ('quota','retry_after','model','http_status')}
+        self.details = {k:v for k,v in details.items() if k in ('quota','retry_after','model','http_status','cooldown_until','cooldown_cached','original_retry_after')}
         super().__init__(code)
 
 
@@ -83,6 +83,8 @@ def error_detail(error, stage='ai'):
         'extraction_failed':'Không đọc được tệp báo cáo; hãy kiểm tra định dạng và nội dung tệp.',
         'model_unavailable':'Model đã cấu hình hiện không khả dụng.',
         'service_unavailable':'Dịch vụ AI tạm thời chưa xử lý được yêu cầu.',
+        'analysis_cancelled':'Đã dừng lượt phân tích theo yêu cầu.',
+        'provider_cooldown':'Gemini liên tục trả lỗi 503. Đã giữ tiến độ và tạm ngưng gửi yêu cầu.',
     }
     if code not in messages: code='service_unavailable'
     detail={'stage':stage,'code':code,'message':messages[code]}
@@ -90,6 +92,11 @@ def error_detail(error, stage='ai'):
     if detail.get('quota') == 'day': detail['message']='API bị giới hạn hạn mức ngày. Đã tạm dừng và giữ kết quả để tiếp tục sau thời gian chờ.'
     elif code == 'rate_limit' and detail.get('quota') == 'unknown': detail['message']='API giới hạn lượt gọi; chưa xác định được hạn mức phút hay ngày. Hệ thống sẽ chờ rồi thử tiếp.'
     return detail
+
+
+def analysis_cancelled():
+    marker = os.environ.get('AI_CANCEL_FILE')
+    return bool(marker and os.path.isfile(marker))
 
 
 class CallSession:
@@ -106,15 +113,20 @@ class CallSession:
         self.namespace = namespace
         self.immutable = immutable
         self.completed_calls = 0
+        self.consecutive_unavailable = 0
+        self.provider_paused = False
         self.models_used = set()
         self.token_usage = {'prompt_tokens': 0, 'output_tokens': 0, 'total_tokens': 0, 'responses': 0}
         self.local = threading.local()
         self.progress_path = os.environ.get('AI_PROGRESS_FILE')
         self.limiter = None
+        self.groq_limiter = None
         if os.environ.get('AI_RATE_DB'):
             from ai_rate_limit import ProjectRateLimiter
             self.limiter = ProjectRateLimiter(os.environ['AI_RATE_DB'],os.environ.get('AI_RATE_SCOPE','default-gemini-project'),
                 int(os.environ.get('AI_SAFE_RPM',4)),int(os.environ.get('AI_LITE_SAFE_RPM',12)),int(os.environ.get('AI_SAFE_TPM',200000)))
+            if os.environ.get('GROQ_API_KEY') and os.environ.get('GROQ_MODEL'):
+                self.groq_limiter = ProjectRateLimiter(os.environ['AI_RATE_DB'], 'groq:' + os.environ.get('AI_RATE_SCOPE','default'), 30, 30, 8000)
 
     def progress(self, **values):
         if not self.progress_path: return
@@ -134,9 +146,13 @@ class CallSession:
                     except OSError: pass
 
     def before_http(self, model, tokens, deadline=None):
-        if not self.limiter: return
+        if analysis_cancelled():
+            raise ProcessingError('analysis_cancelled')
+        limiter = self.groq_limiter if model.startswith('groq:') else self.limiter
+        if not limiter: return
         while True:
-            wait, detail = self.limiter.reserve(model,tokens)
+            if analysis_cancelled(): raise ProcessingError('analysis_cancelled')
+            wait, detail = limiter.reserve(model,tokens)
             if detail and detail.get('code') == 'input_too_large':
                 raise ProcessingError('input_too_large',model=model)
             if wait <= 0:
@@ -148,7 +164,9 @@ class CallSession:
             time.sleep(min(wait,1))
 
     def defer(self, model, detail):
-        if self.limiter: self.limiter.defer(model,detail)
+        limiter = self.groq_limiter if model.startswith('groq:') else self.limiter
+        if limiter:
+            detail['cooldown_until'] = limiter.defer(model,detail)
 
     def record_usage(self, usage):
         if not isinstance(usage, dict): return
@@ -193,7 +211,21 @@ class CallSession:
                 if not self.slots.acquire(timeout=self.remaining(timeout)):
                     raise ProcessingError('budget_exhausted')
                 try:
-                    value, used = call_api(prompt, api_key, model=model, timeout=self.remaining(timeout))
+                    with self.lock:
+                        if self.provider_paused:
+                            raise ProcessingError('provider_cooldown', retry_after=30, http_status=503)
+                    try:
+                        value, used = call_api(prompt, api_key, model=model, timeout=self.remaining(timeout))
+                    except ProcessingError as error:
+                        if error.code == 'service_unavailable' and error.details.get('http_status') == 503:
+                            with self.lock:
+                                self.consecutive_unavailable += 1
+                                if self.consecutive_unavailable >= 3:
+                                    self.provider_paused = True
+                                    raise ProcessingError('provider_cooldown', retry_after=30, http_status=503) from None
+                        raise
+                    with self.lock:
+                        self.consecutive_unavailable = 0
                     if validator:
                         validator(value)
                 finally:
@@ -230,8 +262,8 @@ class CallSession:
                 detail = error_detail(error, stage)
                 with self.lock:
                     self.errors.append(detail)
-                if detail['code'] in ('authentication','rate_limit','budget_exhausted','invalid_request','input_too_large') or attempt == 1:
-                    raise ProcessingError(detail['code'],**{k:v for k,v in detail.items() if k in ('quota','retry_after','model','http_status')}) from None
+                if detail['code'] in ('authentication','rate_limit','budget_exhausted','invalid_request','input_too_large','provider_cooldown','analysis_cancelled') or attempt == 1:
+                    raise ProcessingError(detail['code'],**{k:v for k,v in detail.items() if k in ('quota','retry_after','model','http_status','cooldown_until','cooldown_cached','original_retry_after')}) from None
         raise ProcessingError('service_unavailable')
 
 

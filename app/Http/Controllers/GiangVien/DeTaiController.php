@@ -245,41 +245,59 @@ class DeTaiController extends Controller
         // Lưu ý: Giảng viên có thể đề xuất nhiều đề tài để Khoa/Bộ môn thẩm định lựa chọn, 
         // nhưng Khoa và Bộ môn chỉ phê duyệt và công bố tối đa đúng 5 đề tài cho mỗi giảng viên.
 
-        $count = DeTai::count() + 1;
-        $maDT = 'DT' . sprintf('%02d', $count);
-        while (DeTai::where('MaDeTai', $maDT)->exists()) {
-            $count++;
-            $maDT = 'DT' . sprintf('%02d', $count);
+        $maKhoa = $hocPhan->MaKhoa ?: $gv->boMon?->MaKhoa;
+        $maLoaiHocPhan = preg_match('/^HP_(KLCN|KLTN)_/', $hocPhan->MaHocPhan, $matches)
+            ? $matches[1]
+            : $hocPhan->MaHocPhan;
+        $prefix = strtoupper($maKhoa . '-' . $maLoaiHocPhan);
+        if (!$maKhoa || !preg_match('/^[A-Z0-9_-]{1,17}$/', $prefix)) {
+            return redirect()->back()->withInput()->withErrors(['MaHocPhan' => 'Mã khoa hoặc mã học phần không phù hợp để tạo mã đề tài.']);
         }
 
-        DeTai::create([
-            'MaDeTai' => $maDT,
-            'MaGV' => $gv->MaGV,
-            'TenDeTai' => $request->TenDeTai,
-            'MoTa' => $cleanedMoTa,
-            'YeuCau' => $cleanedYeuCau,
-            'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
-            'MaHocPhan' => $hocPhan->MaHocPhan,
-            'HocPhan' => $hocPhan->TenHocPhan,
-            'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
-            'FileDeCuong' => null,
-            'MaNganh' => null, // Đã bỏ theo yêu cầu, sinh viên đăng ký theo đúng ngành mình học
-            'MaHocKy' => $request->MaHocKy,
-            'TrangThai' => 'Chờ duyệt cấp Bộ môn',
-            'NgayDeXuat' => now(),
-        ]);
+        DB::transaction(function () use ($request, $gv, $hocPhan, $maKhoa, $prefix, $cleanedMoTa, $cleanedYeuCau) {
+            DB::table('khoa')->where('MaKhoa', $maKhoa)->lockForUpdate()->first();
 
-        ChiTietDuyetDeTai::create([
-            'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
-            'MaDeTai'       => $maDT,
-            'MaGV'          => $gv->MaGV,
-            'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên',
-            'HanhDong'      => 'Gửi đề xuất mới',
-            'TrangThaiCu'   => 'Bản nháp',
-            'TrangThai'     => 'Chờ duyệt cấp Bộ môn',
-            'LyDo'          => 'Giảng viên đề xuất đề tài mới.',
-            'NgayDuyet'     => now(),
-        ]);
+            $lastNumber = 0;
+            $pattern = '/^' . preg_quote($prefix, '/') . '(\d+)$/';
+            foreach (DeTai::where('MaDeTai', 'like', $prefix . '%')->pluck('MaDeTai') as $existingCode) {
+                if (preg_match($pattern, $existingCode, $matches)) {
+                    $lastNumber = max($lastNumber, (int) $matches[1]);
+                }
+            }
+            $maDT = $prefix . sprintf('%03d', $lastNumber + 1);
+            if (strlen($maDT) > 20) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['MaHocPhan' => 'Học phần đã hết mã đề tài khả dụng.']);
+            }
+
+            DeTai::create([
+                'MaDeTai' => $maDT,
+                'MaGV' => $gv->MaGV,
+                'TenDeTai' => $request->TenDeTai,
+                'MoTa' => $cleanedMoTa,
+                'YeuCau' => $cleanedYeuCau,
+                'LinhVuc' => $request->LinhVuc ?? 'Công Nghệ Thông Tin',
+                'MaHocPhan' => $hocPhan->MaHocPhan,
+                'HocPhan' => $hocPhan->TenHocPhan,
+                'SoLuongSinhVienToiDa' => 3, // Gán cứng 3 sinh viên theo quy định
+                'FileDeCuong' => null,
+                'MaNganh' => null, // Đã bỏ theo yêu cầu, sinh viên đăng ký theo đúng ngành mình học
+                'MaHocKy' => $request->MaHocKy,
+                'TrangThai' => 'Chờ duyệt cấp Bộ môn',
+                'NgayDeXuat' => now(),
+            ]);
+
+            ChiTietDuyetDeTai::create([
+                'MaDuyet'       => IdGenerator::nextChiTietDuyetDeTai() ?? ('CTD' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)),
+                'MaDeTai'       => $maDT,
+                'MaGV'          => $gv->MaGV,
+                'NguoiThucHien' => ($gv->HoTen ?? $gv->MaGV) . ' - Giảng viên',
+                'HanhDong'      => 'Gửi đề xuất mới',
+                'TrangThaiCu'   => 'Bản nháp',
+                'TrangThai'     => 'Chờ duyệt cấp Bộ môn',
+                'LyDo'          => 'Giảng viên đề xuất đề tài mới.',
+                'NgayDuyet'     => now(),
+            ]);
+        }, 3);
 
         return redirect()->route('giangvien.detai.index')->with('success', "Đề xuất đề tài '{$request->TenDeTai}' cho môn {$hocPhan->TenHocPhan} thành công! Đề tài đã được chuyển tới Trưởng bộ môn phê duyệt.");
     }

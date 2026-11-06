@@ -8,7 +8,7 @@ VERSION = 'caption-text-2'
 def folded(text):
     return ''.join(c for c in unicodedata.normalize('NFD', text.casefold()) if unicodedata.category(c) != 'Mn')
 
-PATTERN = re.compile(r'^(Hình|Bảng|Figure|Table)\s+(\d+(?:[.\-]\d+)*)(?:\s*[.:–—-]\s*|\s+)(\S.*)$', re.I)
+PATTERN = re.compile(r'^(Hình|Bảng|Figure|Table)(?:\s*[.:]\s*|\s+)(\d+(?:[.\-]\d+)*)(?:\s*[.:–—-]\s*|\s+)(\S.*)$', re.I)
 
 def extract_captions(result):
     doc = result['document']; sections = result['sections']; lines = doc['lines']; assets = []; seen = set()
@@ -29,7 +29,7 @@ def extract_captions(result):
         context = folded((section or {}).get('section_title', ''))
         if any(t in context for t in ('danh muc', 'muc luc', 'list of figures', 'list of tables', 'tai lieu tham khao')):
             continue
-        if re.search(r'\.{2,}\s*\d+\s*$', text) or re.search(r'\b(?:mo ta|trinh bay|the hien|duoc|cho thay|illustrates|shows)\b', folded(text.split(match[2], 1)[-1])) and text.endswith('.'):
+        if re.search(r'\.{3,}|Error!\s*Bookmark not defined', text, re.I) or re.search(r'\b(?:mo ta|trinh bay|the hien|duoc|cho thay|illustrates|shows)\b', folded(text.split(match[2], 1)[-1])) and text.endswith('.'):
             continue
         rows = [line]
         for nxt in lines[i+1:i+4]:
@@ -54,6 +54,40 @@ def extract_captions(result):
             'status': 'CAPTION_LOCATED' if section else 'CAPTION_AMBIGUOUS', 'content_analyzed': False,
             'source_type': 'CAPTION_REFERENCE', 'document_sha256': doc['sha256']})
     return {'version': VERSION, 'status': 'completed', 'assets': assets}
+
+def section_text_sources(result, section, limit=3):
+    """Return exact text excerpts, excluding headings, captions and running margins."""
+    document = result['document']
+    sid = section['section_id']
+    sources = {}
+    groups = []
+    for line in document['lines']:
+        start, end = line['start'], line['end']
+        if start < section['start']:
+            continue
+        if start >= section['end']:
+            break
+        text = line['text'].strip()
+        if (end > section['end'] or start == section['start'] or line.get('running_margin')
+                or not text or PATTERN.match(text) or not re.search(r'[^\W\d_]', text)):
+            continue
+        if groups and groups[-1][-1]['end'] == start and groups[-1][-1]['page'] == line['page'] and end - groups[-1][0]['start'] <= 520:
+            groups[-1].append(line)
+        else:
+            groups.append([line])
+    for group in groups:
+        start, end = group[0]['start'], group[-1]['end']
+        quote = document['text'][start:end].rstrip()
+        if len(re.findall(r'[^\W\d_]+', quote)) < 12:
+            continue
+        source_id = f'section-text-{sid}-{start}'
+        sources[source_id] = {'section_id': sid, 'kind':'other', 'summary':quote,
+                              'evidence_quote':quote, 'evidence_start':start, 'evidence_end':start+len(quote),
+                              'start_page':group[0]['page'], 'end_page':group[-1]['page']}
+        if len(sources) == limit:
+            break
+    return sources
+
 
 def section_nodes(result, evidence, make_item, root_id, caption_index):
     """Aggregate grounded Map observations; parent summaries include descendant text."""

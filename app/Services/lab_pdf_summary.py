@@ -13,12 +13,21 @@ LIB=Path(__file__).resolve().parent/'pdf_lab'
 sys.path.insert(0,str(LIB))
 from core import segment_pdf,prepare_ai_inputs,Settings,PackagingSettings,SegmentationError
 from ai_runtime import ApiError,GeminiClient,RunSettings
+from ai_gemini_transport import generate_groq
+from ai_report_progress import SCHEMA as PROGRESS_SCHEMA, extract as extract_progress
+from ai_processing import ProcessingError, analysis_cancelled, configure_session
+
+try:
+    import requests
+except ImportError:
+    requests = None
 from ai_runtime.content_review import safe_review_content
 from ai_runtime.summarizer import fingerprint
 from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
 from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION
-from core.caption_index import extract_captions, section_nodes, VERSION as CAPTION_VERSION
+from core.caption_index import extract_captions, section_nodes, section_text_sources, VERSION as CAPTION_VERSION
+from ai_source_navigation import from_pdf_lab, publish
 from ai_runtime.requirement_relevance import VERSION as MATCHER_VERSION
 
 ENGINE_VERSION='pdf-lab-v1.3'
@@ -63,16 +72,25 @@ def processing_error(error,stage='summary'):
     elif status==400 or code in ('invalid_request','invalid_model','reader_model_limit','model_limit','invalid_settings'):mapped='invalid_request'
     elif code in ('call_budget','reader_call_budget','worker_budget','requirement_link_call_budget','review_call_budget'):mapped='budget_exhausted'
     elif code in ('rate_limit','pacing_wait'):mapped='rate_limit'
-    elif code in ('reader_input_limit','input_limit','tpm_limit','requirement_link_input_limit'):mapped='input_too_large'
+    elif code in ('reader_input_limit','input_limit','groq_input_limit','tpm_limit','requirement_link_input_limit'):mapped='input_too_large'
     elif code in ('network_error','worker_network'):mapped='connection_error'
+    elif code=='provider_timeout':mapped='timeout'
     elif isinstance(error,SegmentationError):mapped='extraction_failed'
     elif code in ('http_error',):mapped='model_unavailable' if status==404 else 'service_unavailable'
+    elif code=='review_retry_exhausted':mapped='output_validation'
     elif code.startswith('reader_') or code in ('cached_reader_error','invalid_reader_output','invalid_reader_reference'):mapped='output_validation'
     elif isinstance(error,ApiError):mapped='invalid_request'
     else:mapped='service_unavailable'
     detail={'stage':stage,'code':mapped,'engine_code':code,'message':str(error) if isinstance(error,(ApiError,SegmentationError)) else 'Chưa hoàn tất xử lý AI. Các bước đã lưu được giữ.'}
     if mapped=='budget_exhausted':detail['message']='Đã lưu tiến độ; hệ thống sẽ tự tiếp tục các bước còn lại.'
-    if mapped=='rate_limit':detail.update(quota='unknown',retry_after=60)
+    if status is not None:detail['http_status']=status
+    detail.update(getattr(error, 'metadata', {}))
+    retry_after = getattr(error, 'retry_after', None)
+    if mapped == 'rate_limit':
+        detail.setdefault('quota', 'unknown')
+        detail['retry_after'] = 60 if retry_after is None else retry_after
+    elif retry_after is not None:
+        detail['retry_after'] = retry_after
     return detail
 
 
@@ -85,26 +103,104 @@ class SharedPacer:
             self.limiter=ProjectRateLimiter(os.environ['AI_RATE_DB'],os.environ.get('AI_RATE_SCOPE','default-gemini-project'),
                 int(os.environ.get('AI_SAFE_RPM',4)),int(os.environ.get('AI_LITE_SAFE_RPM',12)),int(os.environ.get('AI_SAFE_TPM',200000)))
     def before_request(self,input_tokens=0):
+        if analysis_cancelled():
+            raise ApiError('Lượt phân tích đã được dừng.', 'analysis_cancelled')
         if time.monotonic()+65>self.deadline:raise ApiError('Đã hết thời gian lượt xử lý nền; sẽ tiếp tục từ checkpoint.','worker_budget')
         if not self.limiter:return
         while True:
+            if analysis_cancelled(): raise ApiError('Lượt phân tích đã được dừng.', 'analysis_cancelled')
             wait,detail=self.limiter.reserve(self.model,input_tokens)
             if detail and detail.get('code')=='input_too_large':raise ApiError('Request vượt TPM đã cấu hình.','tpm_limit')
             if wait<=0:self.progress(waiting_seconds=0);return
             self.progress(waiting_seconds=int(wait)+1,stage='waiting')
-            if wait+65>=self.deadline-time.monotonic():raise ApiError('Chờ cửa sổ quota; giữ checkpoint để tiếp tục.','pacing_wait')
+            if wait+65>=self.deadline-time.monotonic():
+                raise ApiError('Chờ cửa sổ quota; giữ checkpoint để tiếp tục.', 'pacing_wait',
+                               status=detail.get('http_status'), retry_after=detail.get('retry_after'),
+                               metadata=detail)
             time.sleep(min(wait,1))
 
 
 class WorkerClient(GeminiClient):
+    def __init__(self, key, model, pacer):
+        super().__init__(key, model, timeout=60, pacer=pacer)
+        self.groq_key = os.environ.get('GROQ_API_KEY', '').strip()
+        self.groq_model = os.environ.get('GROQ_MODEL', '').strip()
+        self.gemini_retry_at = 0
+        self.gemini_fallback_error = None
+        if self.groq_key and self.groq_model:
+            configure_session(budget=max(1, pacer.deadline - time.monotonic()))
+
+    def allow_fallback_after(self, error):
+        if error.status != 503 or not (self.groq_key and self.groq_model):
+            return False
+        self.gemini_fallback_error = error
+        self.gemini_retry_at = time.monotonic() + max(30, error.retry_after or 0)
+        return True
+
+    def model_info(self):
+        if time.monotonic() < self.gemini_retry_at:
+            raise self.gemini_fallback_error
+        return super().model_info()
+
+    def count_tokens(self, prompt, schema, max_output_tokens):
+        if time.monotonic() >= self.gemini_retry_at:
+            try:
+                return super().count_tokens(prompt, schema, max_output_tokens)
+            except ApiError as error:
+                if not self.allow_fallback_after(error):
+                    raise
+        # Groq has no Gemini countTokens endpoint. A local estimate is used only
+        # for planning. The Groq transport separately checks its token budget.
+        return max(1, (len(prompt.encode('utf-8')) + 2) // 3)
+
+    def generate(self, prompt, schema, max_output_tokens, input_tokens):
+        if time.monotonic() >= self.gemini_retry_at:
+            try:
+                return super().generate(prompt, schema, max_output_tokens, input_tokens)
+            except ApiError as error:
+                if not self.allow_fallback_after(error):
+                    raise
+        instruction = '\nTrả về JSON theo cấu trúc sau:\n' + json.dumps(schema, ensure_ascii=False, separators=(',', ':'))
+        try:
+            data, used = generate_groq(prompt + instruction, self.groq_key, self.groq_model,
+                                       self.pacer.deadline, requests, lambda text: text)
+        except ProcessingError as error:
+            if error.code in ('input_too_large', 'invalid_response'):
+                raise ApiError('Gói PDF vượt ngân sách Groq hoặc đầu ra bị cắt.', 'groq_input_limit') from None
+            if error.code == 'budget_exhausted':
+                raise ApiError('Đã hết thời gian lượt xử lý nền.', 'worker_budget') from None
+            message = {'rate_limit': 'Groq đang giới hạn lượt gọi. Đã giữ checkpoint.',
+                       'authentication': f"Groq từ chối API key hoặc quyền truy cập (HTTP {error.details.get('http_status', '?')}).",
+                       'invalid_request': 'Groq từ chối cấu hình yêu cầu.',
+                       'model_unavailable': 'Groq không tìm thấy model đã cấu hình.',
+                       'invalid_json': 'Groq trả JSON không hợp lệ.',
+                       'invalid_response': 'Groq chưa trả kết quả đầy đủ.'}.get(error.code, 'Groq chưa hoàn tất yêu cầu.')
+            code = {'connection_error':'network_error','timeout':'provider_timeout',
+                    'service_unavailable':'http_error','model_unavailable':'http_error'}.get(error.code,error.code)
+            metadata = dict(error.details)
+            if self.gemini_fallback_error is not None:
+                metadata.update(primary_http_status=self.gemini_fallback_error.status, primary_model=self.model)
+            raise ApiError(message, code, error.details.get('http_status'),
+                           error.details.get('retry_after'), metadata=metadata) from None
+        if not isinstance(data, dict):
+            raise ApiError('Groq không trả JSON object.', 'invalid_response')
+        return {'data': data, 'usage': {'provider_model': used}, 'finish_reason': 'STOP'}
+
     def _request(self,*args,**kwargs):
         try:return super()._request(*args,**kwargs)
         except ApiError as exc:
+            exc.metadata.setdefault('model', self.model)
             if exc.status in (401,403):exc.code='authentication'
             elif exc.status==400:exc.code='invalid_request'
             elif exc.status==404:exc.code='invalid_model'
-            elif exc.status==429 and getattr(self.pacer,'limiter',None):
-                self.pacer.limiter.defer(self.model,{'code':'rate_limit','quota':'unknown','retry_after':60,'model':self.model})
+            elif getattr(self.pacer, 'limiter', None) and (
+                    exc.status == 429 or (exc.status == 503 and exc.retry_after is not None)):
+                until = self.pacer.limiter.defer(self.model, {
+                    'code': 'rate_limit' if exc.status == 429 else 'service_unavailable',
+                    'quota': 'unknown', 'retry_after': 60 if exc.retry_after is None else exc.retry_after,
+                    'http_status': exc.status, 'model': self.model,
+                })
+                exc.metadata.update(model=self.model, cooldown_until=until)
             raise
 
 
@@ -138,8 +234,43 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
             'items':[item(p['text'],p['evidence_ids']) for p in c.get('paragraphs',[])],
             'status':'completed' if c.get('paragraphs') and c.get('coverage')=='selected_text_complete' else 'partial','sections':[]})
     for chapter in chapters:
+        prose = [entry['content'] for entry in chapter['items']]
+        chapter['chapter_reading'] = {
+            'paragraphs': prose,
+            'error': summaries.get(chapter['id'], {}).get('reading_error'),
+            'status': ('complete' if prose and chapter['status'] == 'completed'
+                       and not summaries.get(chapter['id'], {}).get('visual_content_unread') else 'partial'),
+        }
+        if not prose:
+            chapter['items'] = [item(source['summary'], [iid], source['kind'])
+                                for iid, source in evidence.items()
+                                if source.get('section_id') == chapter['id'] and source.get('summary')]
         chapter['sections'] = section_nodes(result, evidence, item, chapter['id'], caption_index)
         chapter['related_assets'] = [a for a in caption_index['assets'] if a['section_id'] == chapter['id']]
+    section_prose = (reader or {}).get('section_summaries', {})
+    raw_sections = {}
+    mapped_sections = {entry.get('section_id') for entry in evidence.values()}
+    for section in result['sections']:
+        sid = section['section_id']
+        if section.get('parent_section_id') and section.get('include_in_map') and sid not in mapped_sections:
+            raw_sections[sid] = section_text_sources(result, section)
+    for sources in raw_sections.values():
+        evidence.update(sources)
+    def attach_section_reading(nodes):
+        for node in nodes:
+            paragraphs = section_prose.get(node['id'])
+            if paragraphs:
+                node['chapter_reading'] = {'paragraphs': [p['text'] for p in paragraphs], 'status': 'complete'}
+                node['items'] = [item(p['text'], p['evidence_ids']) for p in paragraphs]
+            elif node['status'] == 'insufficient_text':
+                sources = raw_sections.get(node['id'], {})
+                if sources:
+                    node['raw_source_references'] = item('', list(sources))['source_references']
+                elif node.get('related_assets'):
+                    node['visual_only'] = True
+            attach_section_reading(node.get('sections', []))
+    for chapter in chapters:
+        attach_section_reading(chapter['sections'])
     completed=[item(p['text'],p['item_ids'],'reported_work') for p in ((base or {}).get('final_result') or {}).get('completed_work',[])]
     teacher=[]
     matches={i['requirement_id']:i for i in (links or {}).get('links',[])}
@@ -171,18 +302,19 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
     except Exception:
         pass
     full=(base or {}).get('status')=='complete' and (reader or {}).get('status')=='complete' and (reader or {}).get('coverage',{}).get('all_planned_text_complete',False)
+    reading_errors = (reader or {}).get('reading_errors', [])
     visual=[p['page'] for p in result['document']['pages'] if p.get('image_count') or p.get('visual_regions')]
     source_coverage={'selected_text_coverage':plan['metrics'].get('selected_text_coverage'), 'excluded_sections':plan.get('excluded_sections',[])}
     counts={'total_chunks':len(plan['batches']),'analyzed_chunks':len((base or {}).get('map_results',{}))}
     analysis={'version':6,'engine':'pdf_lab','engine_version':ENGINE_VERSION,'reader_version':READER_VERSION,
-        'source':'gemini_map_reduce','method':'structure_aware_map_reduce','model':model,'status':'completed' if full else 'partial',
+        'source':'gemini_map_reduce','method':'structure_aware_map_reduce','model':model,'status':'completed' if full and not reading_errors else 'partial',
         'total_pages':result['document']['page_count'],'total_units':result['document']['page_count'],**counts,
         'text_complete':full,'reduce_completed':(base or {}).get('status')=='complete','completion_audit_completed':False,
-        'quality_checks_completed':full,'sections_detected':len(result['sections']),'semantic_audit_completed':False,'semantic_support':'NOT_VERIFIED',
+        'quality_checks_completed':full and not reading_errors,'sections_detected':len(result['sections']),'semantic_audit_completed':False,'semantic_support':'NOT_VERIFIED',
         'visual_unread_pages':visual,'source_coverage':source_coverage,'processing_time_seconds':round(elapsed,3),
         'token_settings':{'engine':ENGINE_VERSION,'plan':plan['fingerprint'],'settings':(base or {}).get('settings',{})},
         'errors':errors,'completed_calls':(base or {}).get('generation_attempts',0)+(reader or {}).get('generation_attempts',0)+(links or {}).get('generation_attempts',0),'requirements_link_version':LINK_VERSION,
-        'note':'Đã xử lý đủ các gói text của phương án. Câu trích đã khớp nguồn; chưa kiểm chứng ngữ nghĩa toàn diện, chưa đọc hình/sơ đồ hoặc các mục loại khỏi Map.' if full else 'Bản đọc đang xử lý; chưa dùng phần chưa đọc để kết luận báo cáo thiếu nội dung.',
+        'note': ('Đã đọc xong văn bản; một số bản tóm tắt chưa qua kiểm tra. Đối chiếu yêu cầu vẫn dùng nguồn đã lưu.' if reading_errors else '') or 'Đã xử lý đủ các gói text của phương án. Câu trích đã khớp nguồn; chưa kiểm chứng ngữ nghĩa toàn diện, chưa đọc hình/sơ đồ hoặc các mục loại khỏi Map.' if full else 'Bản đọc đang xử lý; chưa dùng phần chưa đọc để kết luận báo cáo thiếu nội dung.',
         'generated_at':datetime.now(timezone.utc).isoformat(),'source_labels':{str(p['page']):f"Trang {p['page']}" for p in result['document']['pages']}}
     content_review=safe_review_content(result,base)
     data={'caption_index':caption_index,'content_review':content_review,'schema_version':6,'document_type':'pdf','document_id':identity.get('document_id'),'document_version_id':identity.get('document_version_id'),
@@ -235,6 +367,16 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
     # Requirement answers have a separate output budget; chapter/Map caches keep theirs.
     link_settings=RunSettings(settings.input_budget,min(settings.max_output_tokens,8192),settings.max_generation_calls)
     source=segment_pdf(path,Settings());plan=prepare_ai_inputs(source,PackagingSettings())
+    navigation = from_pdf_lab(source, extract_captions(source)['assets'])
+    publish({'source_navigation': navigation}, identity, source['document']['sha256'])
+
+    progress_result = {}
+
+    def with_navigation(result):
+        result['data']['source_navigation'] = navigation
+        result['data'].update(progress_result)
+        return result
+
     requirements=context_document(context)
     reader_requirements=context_document({}) if direct_review else requirements
     binding=fingerprint([ENGINE_VERSION,READER_VERSION,identity,source['document']['sha256'],model,settings.input_budget,settings.max_output_tokens,plan['fingerprint']])
@@ -243,19 +385,21 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         for p in folder.glob('*.json'):
             try: p.unlink()
             except OSError: pass
-    summary_path=folder/'summary.json';reader_path=folder/'reader.json'
+    summary_path=folder/'summary.json';reader_path=folder/'reader_chapter_v2.json'
     summary_state=load_state(summary_path);reader_state=load_state(reader_path)
     if direct_review:
         from ai_runtime.requirement_review.prompts import PROMPT_VERSION
         from ai_runtime.requirement_review.validation import GUARD_VERSION
         from ai_runtime.requirement_review.retrieval import VERSION as RETRIEVAL_VERSION
         from ai_runtime.requirement_review.coverage import VERSION as COVERAGE_VERSION
-        review_key=fingerprint([requirements['fingerprint'],PROMPT_VERSION,GUARD_VERSION,RETRIEVAL_VERSION,COVERAGE_VERSION])
+        review_key=fingerprint([requirements['fingerprint'],PROMPT_VERSION,GUARD_VERSION,RETRIEVAL_VERSION,COVERAGE_VERSION,'criteria-1'])
         links_path=folder/('review_'+review_key[:16]+'.json')
     else:links_path=folder/'requirement_links.json'
     links_state=load_state(links_path)
     run_id=os.environ.get('AI_PROGRESS_FILE','manual')
     # A human-requested new generation may retry invalid output; an automatic pass may not.
+    if reader_state.get('_worker_run') != run_id and (reader_state.get('report') or {}).get('reading_errors'):
+        reader_state.pop('report', None)
     for state in (summary_state,reader_state,links_state):
         if state.get('_worker_run')!=run_id:
             state['tasks']={k:v for k,v in state.get('tasks',{}).items() if not v.get('error')}
@@ -267,6 +411,9 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         from ai_runtime.checkpoints import restore_completed_checkpoint
         summary_state=restore_completed_checkpoint(json.loads(Path(import_checkpoint).read_text(encoding='utf-8-sig')),source,plan,model,settings)
     base=summary_state.get('report');reader=reader_state.get('report')
+    if reader and reader.get('section_text_fallback_version') != 1:
+        reader = None
+        reader_state.pop('report', None)
     if base:
         from ai_runtime.summarizer import validate_map, map_prompt, MAP_SCHEMA
         batches_by_id = {b['batch_id']: b for b in plan['batches']}
@@ -308,11 +455,14 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         partial=reader_state.get('partial_chapters',[])
         if len(partial)>len(current_reader.get('chapter_summaries',[])):
             current_reader=dict(current_reader,status='running',chapter_summaries=partial)
+        if reader_state.get('partial_sections'):
+            current_reader=dict(current_reader,section_summaries=reader_state['partial_sections'])
         current_links=links_state.get('report') or links
         try:
             value=convert_result(source,plan,current_base,current_reader,requirements,identity,model,time.monotonic()-started,[],context,current_links)
             data=value['data']
-            visible=[data.get(k) for k in ('document_content','chapters','completed_work','teacher_requirements','content_review')]
+            data.update(progress_result)
+            visible=[data.get(k) for k in ('document_content','chapters','completed_work','teacher_requirements','content_review','progress_v1','progress_v1_status')]
             digest=fingerprint(visible)
             if digest==published_digest:return
             atomic_json(destination,value);published_digest=digest
@@ -325,10 +475,67 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
     error_list=[]
     try:
         deadline=started+int(options.get('pass_seconds',260))
-        if base and base.get('status')=='complete' and reader and reader.get('status')=='complete' and links and links.get('status')=='complete':
+        cached_analysis = (base and base.get('status') == 'complete' and reader
+                           and reader.get('status') == 'complete' and links and links.get('status') == 'complete')
+        provider = None
+        progress_calls = 0
+        if cached_analysis or settings.max_generation_calls > 1:
+            def generate_progress(prompt, validator):
+                nonlocal provider, progress_calls
+                path = folder / ('progress_v1_' + fingerprint(prompt)[:24] + '.json')
+                cached = load_state(path)
+                if cached:
+                    try:
+                        return validator(cached)
+                    except ValueError:
+                        pass
+                if provider is None:
+                    provider = provider_factory() if provider_factory else WorkerClient(
+                        key, model, pacer=SharedPacer(model, deadline, report_progress))
+                # This changed progress contract has not been benchmarked on Groq.
+                count = super(WorkerClient, provider).count_tokens if isinstance(provider, WorkerClient) else provider.count_tokens
+                generate = super(WorkerClient, provider).generate if isinstance(provider, WorkerClient) else provider.generate
+                tokens = count(prompt, PROGRESS_SCHEMA, 2048)
+                if tokens > settings.input_budget:
+                    raise ValueError('progress_input_budget')
+                progress_calls += 1
+                value = validator(generate(prompt, PROGRESS_SCHEMA, 2048, tokens)['data'])
+                try:
+                    atomic_json(path, value)
+                except OSError:
+                    pass
+                return value
+
+            fragments = [part for batch in plan['batches'] for part in batch['fragments']]
+            try:
+                progress_result = extract_progress(
+                    (part['text'] for part in fragments), generate_progress,
+                    source_complete=not any(part.get('section_visual_content_unread') for part in fragments)
+                    and not any(page.get('reading_order_requires_review')
+                                or page['state'] in ('scan_suspected', 'vector_without_text')
+                                for page in source['document']['pages']),
+                )
+            except ApiError as exc:
+                progress_result = {'progress_v1_status': 'unavailable'}
+                if exc.status in (429, 503) or exc.code in ('pacing_wait', 'provider_timeout', 'network_error'):
+                    # Progress itself stays Gemini-only. Let compatible Map/reader
+                    # tasks use their existing fallback policy in the same pass.
+                    fallback = not cached_analysis and isinstance(provider, WorkerClient) and provider.allow_fallback_after(exc)
+                    if not cached_analysis and not fallback:
+                        raise
+                    error_list.append(processing_error(exc, 'progress_v1'))
+            except ValueError:
+                progress_result = {}
+            if not progress_result:
+                progress_result = {'progress_v1_status': 'unavailable'}
+        if cached_analysis:
             report_progress(stage='complete',map_done=len(plan['batches']),map_total=len(plan['batches']),reused_calls=1)
-            return convert_result(source,plan,base,reader,requirements,identity,model,time.monotonic()-started,[],context,links)
-        provider=provider_factory() if provider_factory else WorkerClient(key,model,pacer=SharedPacer(model,deadline,report_progress))
+            return with_navigation(convert_result(source,plan,base,reader,requirements,identity,model,time.monotonic()-started,error_list,context,links))
+        if provider is None:
+            provider=provider_factory() if provider_factory else WorkerClient(key,model,pacer=SharedPacer(model,deadline,report_progress))
+        if progress_calls:
+            settings = RunSettings(settings.input_budget, settings.max_output_tokens,
+                                   settings.max_generation_calls - progress_calls)
         if not base or base.get('status')!='complete':
             before=summary_state.get('generation_attempts',0)
             base=run_summary_with_provenance(source,plan,provider,summary_state,settings,on_progress=phase,on_update=update)
@@ -354,13 +561,13 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
                     cache_dir,provider,atomic_json,load_state,phase,run_id,on_snapshot=review_snapshot)
                 links_state['report']=links
                 for error in review_errors:
-                    error_list.append(processing_error(ApiError(error.get('message','Chưa hoàn tất đối chiếu.'),error.get('code','review_incomplete')),'requirements_review'))
+                    error_list.append(processing_error(ApiError.from_details(error, 'review_incomplete'),'requirements_review'))
             else:
                 links=run_requirement_links(source,base,reader,provider,links_state,
                     RunSettings(link_settings.input_budget,link_settings.max_output_tokens,max(1,settings.max_generation_calls-used)),on_progress=phase)
-        for obj in (base,reader,links):
+        for stage, obj in (('summary', base), ('reader', reader), ('requirements_review', links)):
             if obj and obj.get('error'):
-                error=obj['error'];error_list.append(processing_error(ApiError(error['message'],error['code'])))
+                error=obj['error'];error_list.append(processing_error(ApiError.from_details(error), stage))
         if not reader and not error_list:error_list.append(processing_error(ApiError('Chưa hoàn tất bản đọc.','worker_budget')))
     except (ApiError,SegmentationError) as exc:error_list.append(processing_error(exc))
     finally:checkpoint()
@@ -368,7 +575,7 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         raise ApiError('Tệp nguồn đã thay đổi trong lúc xử lý.','source_changed')
     report_progress(stage='complete' if links and links.get('status')=='complete' else 'partial',map_done=len((base or {}).get('map_results',{})),map_total=len(plan['batches']),
         completed_calls=summary_state.get('generation_attempts',0)+reader_state.get('generation_attempts',0)+links_state.get('generation_attempts',0),waiting_seconds=0)
-    return convert_result(source,plan,base,reader,requirements,identity,model,time.monotonic()-started,error_list,context,links)
+    return with_navigation(convert_result(source,plan,base,reader,requirements,identity,model,time.monotonic()-started,error_list,context,links))
 
 
 def main():

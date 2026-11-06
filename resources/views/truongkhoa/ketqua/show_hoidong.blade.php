@@ -493,7 +493,7 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-dark">Thời hạn nộp lại báo cáo hoàn thiện <span class="text-danger">*</span>:</label>
                                 <input type="datetime-local" name="HanNopBaoCaoSauBaoVe" class="form-control" 
-                                       value="{{ $hoSo->HanNopBaoCaoSauBaoVe ? \Carbon\Carbon::parse($hoSo->HanNopBaoCaoSauBaoVe)->format('Y-m-d\TH:i') : now()->addDays(7)->format('Y-m-d\T17:00') }}" required>
+                                       value="{{ $hoSo->hanNopHoanThienBaoCao()?->format('Y-m-d\TH:i') }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-dark">Người phụ trách kiểm tra, xác nhận <span class="text-danger">*</span>:</label>

@@ -35,7 +35,7 @@ def is_abstract_heading(text):
 
 def is_special_heading(text):
     title = folded(text).rstrip(' :')
-    return title in SPECIAL or is_abstract_heading(text) or bool(re.match(r'^phu luc\s+[a-z0-9]', title))
+    return title.replace(' ', '') == 'modau' or title in SPECIAL or is_abstract_heading(text) or bool(re.match(r'^phu luc\s+[a-z0-9]', title))
 
 
 def toc_entry(text):
@@ -43,6 +43,41 @@ def toc_entry(text):
     return bool(re.search(r'\.{3,}|…{2,}', text)
                 and re.search(r'\s(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,8})\s*$', text)
                 and re.search(r'[^\W\d_]', re.split(r'\.{3,}|…{2,}', text)[0], re.UNICODE))
+
+
+def chapter_preview_starts(lines, toc_pages):
+    """Recognize a compact chapter list repeated as headings across the body."""
+    chapters = []
+    for row in lines:
+        text = row['text'].strip()
+        match = CHAPTER.match(text)
+        if not match or row['running_margin'] or row['page'] in toc_pages or toc_entry(text):
+            continue
+        title = re.sub(r'[^a-z0-9]+', '', folded(match.group(2)))
+        if title:
+            chapters.append((row, (match.group(1).casefold(), title)))
+
+    previews = set()
+    for i, (first, key) in enumerate(chapters):
+        if first['start'] in previews:
+            continue
+        for j in range(i + 2, len(chapters) - 1):
+            body, body_key = chapters[j]
+            if body_key != key:
+                continue
+            length = 0
+            while (i + length < j and j + length < len(chapters)
+                   and chapters[i + length][1] == chapters[j + length][1]
+                   and chapters[i + length][0]['page'] - first['page'] <= 2):
+                length += 1
+            if length < 2:
+                continue
+            early_end = chapters[i + length - 1][0]
+            body_end = chapters[j + length - 1][0]
+            if body['page'] >= early_end['page'] and body_end['page'] - body['page'] > 2:
+                previews.update(row['start'] for row, _ in chapters[i:i + length])
+                break
+    return previews
 
 
 def detect_headings(document, settings):
@@ -61,13 +96,26 @@ def detect_headings(document, settings):
         titles = any(folded(t) in {'muc luc', 'contents', 'table of contents', 'danh muc hinh', 'danh muc bang'} for t in rows)
         if leaders >= 3 or (titles and numeric_tails >= 3):
             toc_pages.add(page['page'])
+    preview_starts = chapter_preview_starts(lines, toc_pages)
     candidates, accepted, consumed = [], [], set()
     in_introduction = False
     current_chapter_num = None
+    outline_start = None
+    chapter_occurrences = defaultdict(list)
+    for row in lines:
+        label = row['text'].strip()
+        chapter_match = CHAPTER.match(label)
+        if chapter_match and chapter_match.group(2).isupper():
+            chapter_occurrences[re.sub(r'[^a-z0-9]+', '', folded(label))].append(row['start'])
     for i, row in enumerate(lines):
         if row['line_id'] in consumed:
             continue
         text = row['text'].strip()
+        compact_title = re.sub(r'[^a-z0-9]+', '', folded(text))
+        if compact_title == 'modau':
+            text = 'MỞ ĐẦU'
+        if compact_title in {'bocucbaocao', 'cautrucbaocao', 'bocuckhoaluan', 'cautruckhoaluan'}:
+            outline_start = row['page']
         chapter, numbered = CHAPTER.match(text), NUMBERED.match(text)
         special = is_special_heading(text)
         bookmark = outline.get((folded(text), row['page'])) if settings.use_outline else None
@@ -159,6 +207,11 @@ def detect_headings(document, settings):
             if not row['bold'] and not text.isupper() and row['font_size'] <= body_size * 1.08:
                 rejected.append('Định dạng chữ thường/không đậm giống nội dung văn bản, không phải tiêu đề đặc biệt.')
 
+        if row['start'] in preview_starts:
+            rejected.append('Danh sách giới thiệu chương; các tiêu đề tương ứng xuất hiện trong thân bài.')
+        if chapter and outline_start is not None and row['page'] - outline_start <= 4 and not chapter.group(2).isupper():
+            if any(start > row['start'] for start in chapter_occurrences.get(compact_title, [])):
+                rejected.append('Dòng giới thiệu bố cục; chương có tiêu đề chính ở phần nội dung.')
         if caption:
             rejected.append('Chú thích hình/bảng, không phải heading.')
         if page_number:
@@ -221,6 +274,7 @@ def detect_headings(document, settings):
         if accepted_flag:
             accepted.append(candidate)
             if chapter:
+                outline_start = None
                 current_chapter_num = number
             elif special:
                 if folded(text) in {'ket luan', 'tai lieu tham khao', 'phu luc', 'conclusion', 'references', 'appendix'} or bool(re.match(r'^phu luc\s+[a-z0-9]', folded(text))):

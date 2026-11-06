@@ -197,8 +197,7 @@
                                 @endif
                             </div>
                         @else
-                            <div class="fw-semibold text-secondary mb-1">Theo thông báo từ Hội đồng</div>
-                            <span class="badge bg-secondary-subtle text-secondary">Chưa chốt hạn chót</span>
+                            <span class="badge bg-secondary-subtle text-secondary">Chưa có lịch bảo vệ hoặc hạn nộp riêng</span>
                         @endif
                     </div>
                 </div>
