@@ -1173,7 +1173,10 @@
                 </button>
             </div>
         </div>
-    <!-- MODAL XEM BÁO CÁO TRỰC TIẾP TRÊN MÀN HÌNH (KHÔNG CHUYỂN TAB) -->
+    </div>
+</div>
+
+<!-- MODAL XEM BÁO CÁO TRỰC TIẾP TRÊN MÀN HÌNH (KHÔNG CHUYỂN TAB) -->
 <div class="modal fade" id="modalPdfPreview" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px);">
     <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw; height: 92vh;">
         <div class="modal-content h-100 shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
