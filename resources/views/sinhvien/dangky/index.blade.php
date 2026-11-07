@@ -782,7 +782,6 @@
                 @endforelse
             </div>
         </div>
-        </div>
 
         @if($detais->hasPages())
         <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
