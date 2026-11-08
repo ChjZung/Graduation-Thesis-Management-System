@@ -84,8 +84,8 @@ graph TD
 ### 2. Các bước cài đặt chi tiết
 
 ```bash
-# 1. Clone repository từ GitHub
-git clone -b thuy-duong https://github.com/ChjZung/Graduation-Thesis-Management-System.git
+# 1. Clone repository từ GitHub (nhánh chính: main)
+git clone https://github.com/ChjZung/Graduation-Thesis-Management-System.git
 cd Graduation-Thesis-Management-System
 
 # 2. Cài đặt các gói phụ thuộc PHP qua Composer
@@ -342,11 +342,18 @@ Graduation-Thesis-Management-System/
 
 ---
 
-## 👥 THÀNH VIÊN DỰ ÁN
+## 👥 THÀNH VIÊN THỰC HIỆN DỰ ÁN
 
-- **Khoa Công Nghệ Thông Tin — Trường Đại Học Công Thương TP. Hồ Chí Minh (HUIT)**
-- **Nhánh phát triển chính thức**: `thuy-duong`
-- **Tác giả / Nhóm thực hiện**: Thùy Dương & Nhóm phát triển Hệ thống Quản lý Khóa Luận Tốt Nghiệp HUIT.
+- **Đơn vị đào tạo**: Khoa Công Nghệ Thông Tin — **Trường Đại Học Công Thương TP. Hồ Chí Minh (HUIT)**
+- **Nhánh chính thức (Default Branch)**: `main`
+
+### 📋 Danh sách thành viên nhóm đề tài:
+
+| STT | MSSV | Họ và Tên | Lớp | Vai trò |
+|:---:|:---:|---|:---:|:---:|
+| 1 | **2001230136** | **Nguyễn Thị Thùy Dương** | 14DHTH05 | **Nhóm trưởng (Leader)** |
+| 2 | **2001230106** | **Hồ Chí Dũng** | 14DHTH05 | **Thành viên** |
+| 3 | **2001230634** | **La Thuận Phát** | 14DHTH11 | **Thành viên** |
 
 ---
 *Bản quyền © 2026 Khoa CNTT - Trường Đại Học Công Thương TP. Hồ Chí Minh.*
