@@ -6,7 +6,9 @@ from pathlib import Path
 
 SCRIPT=r'''
 import sys,json,hashlib
+from pathlib import Path
 sys.path.insert(0,sys.argv[1])
+sys.path.insert(0,str(Path(sys.argv[1]).parent))
 from ai_runtime.instructor import run_reader,requirement_document
 from ai_runtime.summarizer import RunSettings
 quote='Đã xây dựng chức năng chính như đăng nhập, quản lý đề tài và theo dõi tiến độ.'
@@ -21,10 +23,12 @@ class P:
     def generate(self,prompt,schema,*args):
         self.prompts.append(prompt)
         ids=schema['properties']['paragraphs']['items']['properties']['evidence_ids']['items']['enum']
-        text=('Nội dung '*200+quote) if len(self.prompts)==1 else quote
+        text=('Nội dung '*200+quote) if len(self.prompts)==1 else (
+            'Báo cáo ghi nhận nhóm đã triển khai ba chức năng gồm đăng nhập, quản lý đề tài và theo dõi tiến độ.')
         return dict(data={'paragraphs':[dict(text=text,evidence_ids=ids)]},usage={})
 p=P();out=run_reader({'document':{'sha256':'doc'},'fingerprint':'source'},plan,base,requirement_document(''),p,{},RunSettings(8500,8192,5))
 assert out['status']=='complete',out.get('error')
+assert not out['reading_errors'],out['reading_errors']
 assert len(p.prompts)==2
 print(hashlib.sha256(p.prompts[1].encode()).hexdigest())
 '''

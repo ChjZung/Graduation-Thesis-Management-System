@@ -124,7 +124,9 @@ class AiReportProcessingService
                 $reviewGuardReady = ($data['analysis']['engine'] ?? '') !== 'pdf_lab' ||
                     ($data['requirements_review']['status'] ?? '') === 'not_configured' ||
                     ($data['requirements_review']['presentation_guard']['version'] ?? '') === AiRequirementResultPolicy::OUTPUT_GUARD_VERSION;
-                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete']) && $captionReady && $reviewGuardReady) {
+                $overviewReady = ($data['analysis']['engine'] ?? '') !== 'pdf_lab' ||
+                    !empty($data['overview_summary']) || !empty($data['analysis']['overview_version']);
+                if (($data['_canonical_fingerprint'] ?? '') === $fingerprint && !empty($data['analysis']['text_complete']) && $captionReady && $reviewGuardReady && $overviewReady) {
                     return array_merge($state, ['status'=>($data['analysis']['status'] ?? '') === 'completed' ? 'completed' : 'partial', 'reused'=>true,
                         'message'=>'Đang sử dụng kết quả đã kiểm chứng. Tệp và cấu hình không đổi nên không gọi AI sinh lại.']);
                 }

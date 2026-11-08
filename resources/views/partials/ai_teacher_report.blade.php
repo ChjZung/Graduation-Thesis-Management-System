@@ -3,6 +3,12 @@
     $reportTopic = $deTai ?? ($reviewRound?->deTai ?? ($nhom->deTai ?? null));
     $reportAdvisor = $giangVien ?? $reportTopic?->giangVien;
     $uiMetrics = \App\Support\AiReportPresentation::metrics($aiData);
+    $overviewChapters = $aiData['chapters'] ?? [];
+    $summarizedChapters = array_values(array_filter($overviewChapters, static fn (array $chapter) =>
+        !empty($chapter['chapter_reading']['paragraphs'])
+    ));
+    $overviewHasMissingChapters = ($analysis['engine'] ?? '') === 'pdf_lab'
+        && count($summarizedChapters) < count($overviewChapters);
     $reportPhase = $reviewRound?->giaiDoan?->TenGiaiDoan ?? ($aiData['requirements_document']['period'] ?? 'Chưa có thông tin');
     $reportRound = $reviewRound?->TenDotNop ?? ($aiData['requirements_document']['title'] ?? 'Chưa có thông tin');
     $generatedAt = null;
@@ -80,12 +86,16 @@
         </nav>
         <div class="tab-content ai-report-tab-content">
             <div class="tab-pane fade show active" id="{{ $uniqueId }}-pane-chapters" role="tabpanel" aria-labelledby="{{ $uniqueId }}-tab-chapters" tabindex="0" data-ai-pane="chapters">
-                @if(($analysis['engine'] ?? '') === 'pdf_lab' && $documentContent)
+                @if(($analysis['engine'] ?? '') === 'pdf_lab' && ($documentContent || $overviewHasMissingChapters))
                     <section class="ai-section ai-section-overview" data-summary-overview>
                         <h3 class="ai-section-title mb-3">Tổng quan báo cáo</h3>
-                        @foreach($documentContent as $contentItem)
-                            <p>{{ $contentItem['content'] ?? '' }}</p>
-                        @endforeach
+                        @if($documentContent)
+                            @foreach($documentContent as $contentItem)
+                                <p>{{ $contentItem['content'] ?? '' }}</p>
+                            @endforeach
+                        @else
+                            <p class="ai-muted">Chưa có tổng quan toàn báo cáo. Đã có tóm tắt cho {{ count($summarizedChapters) }}/{{ count($overviewChapters) }} phần. Xem các phần đã có nội dung bên dưới.</p>
+                        @endif
                     </section>
                 @endif
                 <section class="ai-section" data-structural-summary><h3 class="ai-section-title mb-3">Bản đọc theo chương dành cho giảng viên</h3>

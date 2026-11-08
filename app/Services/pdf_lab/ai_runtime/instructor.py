@@ -10,6 +10,7 @@ from core.caption_index import section_text_sources
 from .reader_quality import priority_score, required_outputs, validate_quality, EXPECTED, normalized
 
 VERSION = 'instructor-reader-1.2'
+OVERVIEW_VERSION = 1
 MAX_READER_WORDS = 180
 MAX_READER_PARAGRAPHS = 2
 LOCAL_READING_ERRORS = frozenset({
@@ -224,6 +225,16 @@ Mức khẳng định phải theo dẫn chứng: theory là giới thiệu kiế
 Mỗi đoạn phải kèm evidence_ids thực sự hỗ trợ toàn bộ các nhận định; chỉ dùng ID có trong ENTRIES. Giữ tham chiếu nguồn gốc qua các cấp tổng hợp.
 Nếu TITLE là Tổng quan, viết 1–2 đoạn giới thiệu báo cáo dựa trên các chương đã đọc, không tự đánh giá đạt/không đạt.
 DOC: '''+base['document_sha256']+'\nTITLE: '+label+'\nREQUIRED_OUTPUTS: '+json.dumps(requirement,ensure_ascii=False)+'\nENTRIES:\n'+json.dumps(entries,ensure_ascii=False,separators=(',',':'))
+        if label.startswith('Tổng quan'):
+            scope = 'cả báo cáo' if coverage['all_planned_text_complete'] else 'phần báo cáo đã đọc'
+            prompt = (
+                f'Viết tổng quan cho {scope} dựa trên chapter_title của các đoạn nguồn. '
+                'Nguồn gồm tóm tắt chương và các ý có dẫn chứng từ bước Map. '
+                'Mở đầu bằng đề tài, mục tiêu và phạm vi. Nêu các nội dung chính xuyên suốt từ khảo sát, '
+                'phân tích và thiết kế đến cài đặt, thử nghiệm và kết quả nếu nguồn có đề cập. '
+                'Mỗi ý phải có dẫn chứng từ chương tương ứng. Chỉ dành tối đa một câu cho nền tảng công nghệ. '
+                'Không gọi toàn báo cáo là một chương.\n' + prompt
+            )
         if section:
             prompt = 'Đây là MỘT MỤC CON. Viết 1–3 câu diễn đạt lại, chỉ nêu ý thuộc mục này và gắn ID nguồn.\n' + CHAPTER_RULES.split('\n', 1)[1] + prompt.replace('tổng cộng khoảng 80–100 từ', 'tổng cộng khoảng 30–70 từ')
         elif chapter:
@@ -255,6 +266,7 @@ TITLE: '''+requirements['title']+'\nPERIOD: '+requirements['period']+'\nSOURCE:\
             teacher.extend(response['items'])
         seen=set();teacher=[i for i in teacher if not ((i['text'],i['evidence_quote']) in seen or seen.add((i['text'],i['evidence_quote'])))]
         roots=list(dict.fromkeys(b['root_id'] for b in plan['batches']))
+        overview_entries = []
         for rid in roots:
             batches=[b for b in plan['batches'] if b['root_id']==rid]
             covered=[b['batch_id'] for b in batches if b['batch_id'] in selected]
@@ -275,12 +287,17 @@ TITLE: '''+requirements['title']+'\nPERIOD: '+requirements['period']+'\nSOURCE:\
                 'reading_error':chapter_error,'selected_batches':covered,'missing_batches':missing,'coverage':'not_selected' if not covered else 'partial' if missing else 'selected_text_complete',
                 'visual_content_unread':any(i.get('section_visual_content_unread') for i in all_items.values() if i['root_id']==rid),
                 'note':'Phần này chưa được chọn xử lý.' if not covered else 'Chưa có đủ ý có trích dẫn khớp; không kết luận tác giả chưa thực hiện.' if not paragraphs else ''})
+            # Map facts are already filtered to the selected batches and matching source quotes.
+            overview_entries.extend(dict(entry, chapter_title=batches[0]['chapter_title'])
+                                    for entry in (paragraphs or entries[:3]) if covered)
             state['partial_chapters']=copy.deepcopy(chapters)
             if on_progress:on_progress('Đã lưu bản đọc: '+batches[0]['chapter_title'])
-        entries=[p for c in chapters for p in c['paragraphs']]
-        active=[c for c in chapters if c['paragraphs']]
         try:
-            overview=copy.deepcopy(active[0]['paragraphs']) if len(active)==1 else summarize(entries,'Tổng quan phần báo cáo đã đọc') if entries else []
+            if len(chapters) == 1 and chapters[0]['paragraphs']:
+                overview = copy.deepcopy(chapters[0]['paragraphs'])
+            elif overview_entries:
+                label = 'Tổng quan báo cáo' if coverage['all_planned_text_complete'] else 'Tổng quan phần báo cáo đã đọc'
+                overview = summarize(overview_entries, label)
         except ApiError as exc:
             if exc.code not in LOCAL_READING_ERRORS:
                 raise
@@ -318,7 +335,8 @@ TITLE: '''+requirements['title']+'\nPERIOD: '+requirements['period']+'\nSOURCE:\
         'status':status,'error':error,'reading_errors':reading_errors,'model':provider.model,'source_report_identity':base['identity'],
         'document_sha256':base['document_sha256'],'plan_fingerprint':base['plan_fingerprint'],
         'selected_batch_ids':base['selected_batch_ids'],'whole_document_scope':coverage['all_planned_text_complete'],
-        'coverage':coverage, 'overview_reused_from_single_chapter':len([c for c in chapters if c['paragraphs']])==1 and bool(overview),
+        'coverage':coverage, 'overview_version':OVERVIEW_VERSION,
+        'overview_reused_from_single_chapter':len(chapters)==1 and bool(chapters[0]['paragraphs']),
         'reading_policy':{'max_words_per_chapter':MAX_READER_WORDS,'max_paragraphs_per_chapter':MAX_READER_PARAGRAPHS,'semantic_support':'NOT_VERIFIED'},
         'report_overview':overview,'chapter_summaries':chapters,'section_summaries':section_summaries,'section_text_fallback_version':1,'completed_work':(base.get('final_result') or {}).get('completed_work',[]),
         'teacher_requirements':teacher,'requirements_status':'provided' if requirements['sources'] else 'missing',

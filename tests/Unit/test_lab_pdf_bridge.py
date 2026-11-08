@@ -82,6 +82,33 @@ def test_resume_from_disk_and_completed_read_never_calls_provider(tmp_path):
     assert len(calls)==before and out['data']['analysis']['status']=='completed'
 
 
+def test_old_reader_cache_with_missing_overview_keeps_map_and_regenerates_overview(tmp_path):
+    p = Provider()
+    options = {'max_generation_calls': 1}
+    def run():
+        return bridge.run_pipeline(PDF, 'fake', p.model, tmp_path, options=options, provider_factory=lambda: p)
+
+    for _ in range(30):
+        original = run()['data']
+        if original['analysis']['status'] == 'completed':
+            break
+    assert original['analysis']['status'] == 'completed'
+    assert original['overview_summary']
+    path = next(tmp_path.rglob('reader_chapter_v2.json'))
+    state = json.loads(path.read_text(encoding='utf-8'))
+    state['report'].pop('overview_version')
+    state['report']['report_overview'] = []
+    state['tasks'] = {key: task for key, task in state['tasks'].items()
+                      if not task['label'].startswith('Tổng quan')}
+    path.write_text(json.dumps(state), encoding='utf-8')
+
+    before = p.calls
+    recovered = run()['data']
+    assert recovered['overview_summary'] == original['overview_summary']
+    assert recovered['analysis']['overview_version'] == bridge.OVERVIEW_VERSION
+    assert p.calls == before + 1
+
+
 def test_changed_teacher_brief_reuses_maps_and_chapters_but_updates_source(tmp_path):
     p=Provider();opts={'max_generation_calls':100}
     a=bridge.run_pipeline(PDF,'fake',p.model,tmp_path,context={'submission_requirements':'Hoàn thiện sơ đồ hoạt động trong tuần này.'},options=opts,provider_factory=lambda:p)
