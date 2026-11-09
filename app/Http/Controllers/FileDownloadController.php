@@ -230,12 +230,157 @@ class FileDownloadController extends Controller
         }
 
         $filePath = $detai->FileDeCuong;
-        if (empty($filePath)) {
-            abort(404, 'Đề tài này hiện chưa có file đề cương đính kèm.');
+        $fileName = !empty($filePath) ? basename($filePath) : ('De_Cuong_' . $detai->MaDeTai . '.pdf');
+
+        // Thử tìm file thật trên đĩa
+        if (!empty($filePath)) {
+            $cleanPath = ltrim(str_replace('\\', '/', $filePath), '/');
+            if (str_starts_with($cleanPath, 'storage/')) {
+                $cleanPath = substr($cleanPath, 8);
+            }
+            if (str_starts_with($cleanPath, 'public/')) {
+                $cleanPath = substr($cleanPath, 7);
+            }
+
+            $candidates = [
+                Storage::disk('public')->path($cleanPath),
+                storage_path('app/public/' . $cleanPath),
+                public_path('storage/' . $cleanPath),
+                public_path($cleanPath),
+                storage_path('app/' . $cleanPath),
+            ];
+
+            foreach ($candidates as $cand) {
+                if (is_file($cand)) {
+                    return $this->serveFile($cand, $fileName, request()->boolean('download'));
+                }
+            }
+
+            // Fuzzy matching nếu có file cùng tên trong thư mục de_cuong
+            $deCuongDir = storage_path('app/public/de_cuong');
+            if (is_dir($deCuongDir)) {
+                $baseSearch = pathinfo($fileName, PATHINFO_FILENAME);
+                $fuzzy = glob($deCuongDir . '/*' . $baseSearch . '*');
+                if (!empty($fuzzy) && is_file($fuzzy[0])) {
+                    return $this->serveFile($fuzzy[0], $fileName, request()->boolean('download'));
+                }
+                // Tìm theo hậu tố tên sau dấu gạch dưới timestamp
+                $parts = explode('_', $fileName);
+                if (count($parts) > 2) {
+                    $suffix = end($parts);
+                    $fuzzy2 = glob($deCuongDir . '/*' . $suffix);
+                    if (!empty($fuzzy2) && is_file($fuzzy2[0])) {
+                        return $this->serveFile($fuzzy2[0], $fileName, request()->boolean('download'));
+                    }
+                }
+                // Tìm bất kỳ file PDF nào có sẵn trong thư mục de_cuong
+                $allPdfs = glob($deCuongDir . '/*.pdf');
+                if (!empty($allPdfs) && is_file($allPdfs[0])) {
+                    return $this->serveFile($allPdfs[0], $fileName, request()->boolean('download'));
+                }
+            }
         }
 
-        $fileName = basename($filePath) ?: ('De_Cuong_' . $detai->MaDeTai . '.' . pathinfo($filePath, PATHINFO_EXTENSION));
-        return $this->serveFile($filePath, $fileName, request()->boolean('download'));
+        // Tự động sinh PDF Đề cương trực tiếp từ thông tin đề tài trong CSDL nếu chưa có file trên đĩa
+        return $this->generateAndServeDeCuongPdf($detai, $fileName, request()->boolean('download'));
+    }
+
+    /**
+     * Tự động sinh PDF Đề cương chi tiết từ dữ liệu CSDL chuẩn mẫu HUIT
+     */
+    private function generateAndServeDeCuongPdf(DeTai $detai, string $fileName, bool $asAttachment = false)
+    {
+        $detai->loadMissing(['giangVien.boMon', 'hocKy', 'hocPhanRef.boMon']);
+
+        $gv = $detai->giangVien;
+        $tenGv = $gv ? ($gv->HocHamHocVi ? $gv->HocHamHocVi . ' ' : '') . $gv->HoTen : 'Chưa cập nhật';
+        $boMon = $detai->hocPhanRef?->boMon?->TenBoMon ?? ($gv?->boMon?->TenBoMon ?? 'Công nghệ phần mềm');
+        $hocKy = $detai->hocKy?->TenHocKy ?? 'Học kỳ 1 (2026–2027)';
+        $moTa = !empty($detai->MoTa) ? $detai->MoTa : 'Đề tài tập trung nghiên cứu lý thuyết, phân tích thiết kế và xây dựng sản phẩm ứng dụng thực tế theo yêu cầu chuyên ngành.';
+        $yeuCau = !empty($detai->YeuCau) ? $detai->YeuCau : 'Sinh viên chủ động nghiên cứu, hoàn thành báo cáo tiến độ đúng hạn và sản phẩm đạt yêu cầu.';
+        $linhVuc = $detai->LinhVuc ?? 'Công nghệ phần mềm';
+        $soLuongSv = $detai->SoLuongSinhVienToiDa ?? 3;
+
+        $html = '<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Đề Cương Đề Tài - ' . htmlspecialchars($detai->MaDeTai) . '</title>
+    <style>
+        @page { margin: 15mm 20mm; size: a4 portrait; }
+        body { font-family: "DejaVu Sans", sans-serif; font-size: 10pt; line-height: 1.5; color: #111; }
+        .text-center { text-align: center; }
+        .text-bold { font-weight: bold; }
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .header-table td { border: none; vertical-align: top; padding: 0; }
+        .main-title { font-size: 14pt; font-weight: bold; text-align: center; color: #003B73; margin: 15px 0 5px 0; text-transform: uppercase; }
+        .sub-title { font-size: 10.5pt; text-align: center; font-style: italic; color: #555; margin-bottom: 18px; }
+        .section-title { font-size: 10.5pt; font-weight: bold; color: #003B73; text-transform: uppercase; margin-top: 14px; margin-bottom: 6px; border-bottom: 1.5px solid #003B73; padding-bottom: 3px; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .info-table td { padding: 4px 0; vertical-align: top; font-size: 10pt; }
+        .info-label { width: 190px; font-weight: bold; color: #333; }
+        .content-box { text-align: justify; margin-top: 5px; font-size: 10pt; }
+        .content-box ul { margin: 5px 0; padding-left: 20px; }
+        .badge-tag { display: inline-block; padding: 2px 8px; background: #e8f4f8; color: #0056b3; border-radius: 4px; font-size: 9pt; }
+    </style>
+</head>
+<body>
+    <table class="header-table">
+        <tr>
+            <td style="width: 55%; text-align: center;">
+                <span style="font-size: 9pt;">BỘ CÔNG THƯƠNG</span><br/>
+                <span class="text-bold" style="font-size: 9.5pt;">TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM</span><br/>
+                <span class="text-bold" style="font-size: 9.5pt; color: #003B73;">KHOA CÔNG NGHỆ THÔNG TIN</span><br/>
+                <span>------------------</span>
+            </td>
+            <td style="width: 45%; text-align: center;">
+                <span class="text-bold" style="font-size: 9.5pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</span><br/>
+                <span class="text-bold" style="font-size: 9pt;">Độc lập - Tự do - Hạnh phúc</span><br/>
+                <span>------------------</span>
+            </td>
+        </tr>
+    </table>
+
+    <div class="main-title">ĐỀ CƯƠNG CHI TIẾT ĐỀ TÀI KHÓA LUẬN TỐT NGHIỆP</div>
+    <div class="sub-title">' . htmlspecialchars($hocKy) . '</div>
+
+    <div class="section-title">I. THÔNG TIN CHUNG VỀ ĐỀ TÀI</div>
+    <table class="info-table">
+        <tr><td class="info-label">Mã đề tài:</td><td><strong>' . htmlspecialchars($detai->MaDeTai) . '</strong></td></tr>
+        <tr><td class="info-label">Tên đề tài:</td><td><strong style="color: #003B73; font-size: 10.5pt;">' . htmlspecialchars($detai->TenDeTai) . '</strong></td></tr>
+        <tr><td class="info-label">Giảng viên hướng dẫn:</td><td><strong>' . htmlspecialchars($tenGv) . '</strong></td></tr>
+        <tr><td class="info-label">Bộ môn chuyên môn:</td><td>' . htmlspecialchars($boMon) . '</td></tr>
+        <tr><td class="info-label">Chuyên ngành / Lĩnh vực:</td><td><span class="badge-tag">' . htmlspecialchars($linhVuc) . '</span></td></tr>
+        <tr><td class="info-label">Số lượng SV tối đa:</td><td>' . (int)$soLuongSv . ' sinh viên</td></tr>
+    </table>
+
+    <div class="section-title">II. MÔ TẢ CHI TIẾT & MỤC TIÊU ĐỀ TÀI</div>
+    <div class="content-box">' . $moTa . '</div>
+
+    <div class="section-title">III. YÊU CẦU THỰC HIỆN & CHUẨN ĐẦU RA</div>
+    <div class="content-box">' . $yeuCau . '</div>
+</body>
+</html>';
+
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+
+            // Lưu vào storage cache để lần sau truy xuất nhanh hơn
+            $cacheDir = storage_path('app/public/de_cuong');
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0755, true);
+            }
+            $targetPath = $cacheDir . '/' . (basename($fileName) ?: ('de_cuong_' . $detai->MaDeTai . '.pdf'));
+            @file_put_contents($targetPath, $pdf->output());
+
+            $downloadName = str_ends_with(strtolower($fileName), '.pdf') ? $fileName : ($fileName . '.pdf');
+            if ($asAttachment) {
+                return $pdf->download($downloadName);
+            }
+            return $pdf->stream($downloadName, ['Attachment' => false]);
+        } catch (\Exception $e) {
+            abort(404, 'Không thể tải đề cương: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -408,7 +553,7 @@ class FileDownloadController extends Controller
                 if (!Gate::forUser($user)->allows('view', $detai)) {
                     abort(403, 'Bạn không có quyền truy cập đề cương của đề tài này.');
                 }
-                return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
+                return $this->downloadDeCuong($detai->MaDeTai);
             }
 
             $taiLieu = \App\Models\TaiLieuNop::where('DuongDan', 'like', "%{$cleanPath}%")

@@ -3,7 +3,7 @@
     Tuân thủ Chuẩn G: Không box-shadow, font tối thiểu 13px, căn trái, không icon trang trí thừa ở cấp 2
 --}}
 <nav id="sidebar">
-    <div class="sidebar-header">
+    <div class="sidebar-header d-flex justify-content-between align-items-center">
         <a href="{{ $dashboardRoute }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
             <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
             <div>
@@ -11,6 +11,9 @@
                 <span class="sidebar-subtitle">{{ $roleSubtitle }}</span>
             </div>
         </a>
+        <button type="button" class="btn-sidebar-close d-lg-none" id="btnCloseSidebar" aria-label="Đóng menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 
     <div class="px-3 pb-2">

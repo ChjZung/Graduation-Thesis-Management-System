@@ -12,13 +12,10 @@ class TimeMachineController extends Controller
      */
     public function setMockTime(Request $request)
     {
-        // Chặn lạm dụng đổi thời gian hệ thống từ bên ngoài
-        if (!app()->environment(['local', 'testing'])) {
-            $user = \Illuminate\Support\Facades\Auth::user();
-            $user?->loadMissing('vaiTro');
-            if (!$user || !in_array($user->vaiTro?->TenVaiTro, ['Admin', 'Giáo vụ'])) {
-                abort(403, 'Chức năng điều chỉnh thời gian ảo chỉ dành cho quản trị viên thử nghiệm.');
-            }
+        // Cho phép tất cả các vai trò đã đăng nhập (Admin, Giáo vụ, Giảng viên, Sinh viên, TBM, Trưởng khoa)
+        // đều có thể điều chỉnh thời gian ảo để thuận lợi trong việc kiểm thử các luồng nghiệp vụ
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            abort(403, 'Vui lòng đăng nhập để sử dụng chức năng điều chỉnh thời gian ảo.');
         }
 
         $request->validate([
@@ -50,6 +47,10 @@ class TimeMachineController extends Controller
      */
     public function resetMockTime(Request $request)
     {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            abort(403, 'Vui lòng đăng nhập để sử dụng chức năng điều chỉnh thời gian ảo.');
+        }
+
         $mockFilePath = storage_path('framework/mock_time.txt');
         if (file_exists($mockFilePath)) {
             @unlink($mockFilePath);

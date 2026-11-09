@@ -20,7 +20,7 @@
 
     <!-- ═══ SIDEBAR ═══ -->
     <nav id="sidebar">
-        <div class="sidebar-header">
+        <div class="sidebar-header d-flex justify-content-between align-items-center">
             <a href="{{ route('giangvien.my_tasks') }}" class="sidebar-brand text-decoration-none text-white d-flex align-items-center">
                 <img src="{{ asset('images/logotruong.jpg') }}" alt="Logo HUIT" class="sidebar-logo">
                 <div>
@@ -28,6 +28,9 @@
                     <span class="sidebar-subtitle">HUIT – Cổng Giảng Viên</span>
                 </div>
             </a>
+            <button type="button" class="btn-sidebar-close d-lg-none" id="btnCloseSidebar" aria-label="Đóng menu">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
 
         <div class="px-3 pb-2">
@@ -151,6 +154,9 @@
             <!-- Topbar / Breadcrumb Bar -->
             <div class="admin-top-bar d-flex justify-content-between align-items-center w-100 min-w-0">
                 <div class="d-flex align-items-center min-w-0 overflow-hidden flex-nowrap me-2 me-md-3">
+                    <button type="button" id="btnToggleSidebar" class="btn-sidebar-toggle d-lg-none" aria-label="Mở menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <div class="admin-breadcrumb d-flex align-items-center min-w-0 overflow-hidden flex-nowrap">
                         <a href="{{ route('giangvien.dashboard') }}" class="flex-shrink-0 text-nowrap">Trang chủ</a>
                         <span class="separator flex-shrink-0">&gt;</span>

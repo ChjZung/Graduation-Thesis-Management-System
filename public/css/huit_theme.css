@@ -4851,18 +4851,11 @@ html, body {
     flex: 1 1 auto;
 }
 
-/* 2. SIDEBAR DI ĐỘNG & NÚT MENU HAMBURGER (ẨN HOÀN TOÀN THEO YÊU CẦU) */
+/* 2. NÚT MENU HAMBURGER & NÚT ĐÓNG (Mặc định ẩn trên màn hình lớn Desktop) */
 #btnToggleSidebar,
-.btn-sidebar-toggle {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
+.btn-sidebar-toggle,
+.btn-sidebar-close {
+    display: none;
 }
 
 @media (max-width: 991.98px) {
@@ -4894,10 +4887,69 @@ html, body {
         margin-left: 0 !important;
     }
 
+    /* Nút Hamburger Mở Sidebar trên Mobile & Tablet */
     #btnToggleSidebar,
     .btn-sidebar-toggle {
-        display: none !important;
-        visibility: hidden !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        color: #003366;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+        font-size: 1.15rem;
+        margin-right: 10px;
+        padding: 0;
+        line-height: 1;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    #btnToggleSidebar:hover,
+    .btn-sidebar-toggle:hover,
+    #btnToggleSidebar:active,
+    .btn-sidebar-toggle:active {
+        background: #003366;
+        color: #ffffff;
+        border-color: #003366;
+    }
+
+    /* Nút Đóng (X) trên Sidebar Header */
+    .btn-sidebar-close {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0;
+        line-height: 1;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        margin-right: 14px;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .btn-sidebar-close:hover,
+    .btn-sidebar-close:active {
+        background: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.4);
     }
 
     .sidebar-backdrop {
