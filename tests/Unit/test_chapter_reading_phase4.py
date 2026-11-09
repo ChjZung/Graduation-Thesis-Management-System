@@ -86,7 +86,7 @@ class ChapterReadingTest(unittest.TestCase):
         self.assertEqual(short['chapter_summaries'][0]['paragraphs'][0]['text'], PROSE.split('. ')[0] + '.')
 
 
-    def test_bad_chapter_does_not_block_next_chapter(self):
+    def test_bad_chapter_uses_matching_map_facts_in_the_overview(self):
         from unittest.mock import patch
         from ai_runtime import instructor
 
@@ -104,6 +104,8 @@ class ChapterReadingTest(unittest.TestCase):
             }]}
             for i in ids
         }
+        maps['b1']['items'].append({'item_id': 'bad', 'quote_status': 'MISMATCH', 'kind': 'design',
+                                   'root_id': 'c1', 'summary': 'Nguồn sai', 'evidence_quote': 'Nguồn sai'})
         base = {'status': 'complete', 'document_sha256': 'hash', 'plan_fingerprint': 'plan',
                 'selected_batch_ids': ['b1','b2'], 'map_results': maps, 'identity': 'base'}
         plan = {'fingerprint': 'plan', 'source_fingerprint': 'source',
@@ -124,6 +126,11 @@ class ChapterReadingTest(unittest.TestCase):
 
             def generate(self, prompt, schema, *args):
                 allowed = schema['properties']['paragraphs']['items']['properties']['evidence_ids']['items']['enum']
+                if 'TITLE: Tổng quan báo cáo' in prompt:
+                    assert first in prompt and second in prompt
+                    assert QUOTES[0] in prompt and valid in prompt
+                    assert 'Nguồn sai' not in prompt
+                    assert allowed == ['1', '2']
                 return {'data': {'paragraphs': [{'text': broken if allowed == ['1'] else valid,
                                                 'evidence_ids': allowed}]}}
 
@@ -139,6 +146,7 @@ class ChapterReadingTest(unittest.TestCase):
         self.assertEqual(output['reading_errors'], [{'root_id': 'c1', 'code': 'reader_missing_key_outputs'}])
         self.assertEqual(output['chapter_summaries'][0]['paragraphs'], [])
         self.assertEqual(output['chapter_summaries'][1]['paragraphs'][0]['text'], valid)
+        self.assertEqual(output['report_overview'][0]['evidence_ids'], ids)
 
 
 if __name__ == '__main__':

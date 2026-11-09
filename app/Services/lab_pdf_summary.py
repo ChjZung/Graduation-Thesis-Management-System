@@ -25,7 +25,7 @@ from ai_runtime.content_review import safe_review_content
 from ai_runtime.summarizer import fingerprint
 from ai_runtime.model_transfer import run_summary_with_provenance
 from ai_runtime.requirement_links import run_requirement_links, build_candidates, link_identity, VERSION as LINK_VERSION
-from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION
+from ai_runtime.instructor import run_reader,requirement_document,reader_fingerprint,VERSION as READER_VERSION,OVERVIEW_VERSION
 from core.caption_index import extract_captions, section_nodes, section_text_sources, VERSION as CAPTION_VERSION
 from ai_source_navigation import from_pdf_lab, publish
 from ai_runtime.requirement_relevance import VERSION as MATCHER_VERSION
@@ -307,6 +307,7 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
     source_coverage={'selected_text_coverage':plan['metrics'].get('selected_text_coverage'), 'excluded_sections':plan.get('excluded_sections',[])}
     counts={'total_chunks':len(plan['batches']),'analyzed_chunks':len((base or {}).get('map_results',{}))}
     analysis={'version':6,'engine':'pdf_lab','engine_version':ENGINE_VERSION,'reader_version':READER_VERSION,
+        'overview_version':(reader or {}).get('overview_version'),
         'source':'gemini_map_reduce','method':'structure_aware_map_reduce','model':model,'status':'completed' if full and not reading_errors else 'partial',
         'total_pages':result['document']['page_count'],'total_units':result['document']['page_count'],**counts,
         'text_complete':full,'reduce_completed':(base or {}).get('status')=='complete','completion_audit_completed':False,
@@ -411,7 +412,8 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         from ai_runtime.checkpoints import restore_completed_checkpoint
         summary_state=restore_completed_checkpoint(json.loads(Path(import_checkpoint).read_text(encoding='utf-8-sig')),source,plan,model,settings)
     base=summary_state.get('report');reader=reader_state.get('report')
-    if reader and reader.get('section_text_fallback_version') != 1:
+    if reader and (reader.get('section_text_fallback_version') != 1 or
+                   (not reader.get('report_overview') and reader.get('overview_version') != OVERVIEW_VERSION)):
         reader = None
         reader_state.pop('report', None)
     if base:
