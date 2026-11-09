@@ -9,7 +9,7 @@
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        // 1. Nhúng Style CSS cho Nút Toggle & Nút Đóng để tránh bị ảnh hưởng bởi cache CSS cũ
+        // 1. Nhúng toàn bộ Style CSS cần thiết cho Mobile Sidebar
         const styleId = 'huit-mobile-sidebar-style';
         if (!document.getElementById(styleId)) {
             const style = document.createElement('style');
@@ -77,6 +77,45 @@
                         background: rgba(255, 255, 255, 0.28) !important;
                         color: #ffffff !important;
                     }
+                    #sidebar {
+                        position: fixed !important;
+                        top: 0 !important;
+                        bottom: 0 !important;
+                        left: 0 !important;
+                        width: 280px !important;
+                        max-width: 85vw !important;
+                        height: 100vh !important;
+                        height: 100dvh !important;
+                        z-index: 1060 !important;
+                        transform: translateX(-100%) !important;
+                        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        overflow-y: auto !important;
+                    }
+                    #sidebar.show, #sidebar.active {
+                        transform: translateX(0) !important;
+                        box-shadow: 6px 0 30px rgba(0, 0, 0, 0.35) !important;
+                    }
+                    .sidebar-backdrop {
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100vw !important;
+                        height: 100vh !important;
+                        height: 100dvh !important;
+                        background: rgba(15, 23, 42, 0.55) !important;
+                        backdrop-filter: blur(2px) !important;
+                        z-index: 1055 !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        transition: all 0.28s ease !important;
+                    }
+                    .sidebar-backdrop.show {
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    }
+                    body.sidebar-mobile-open {
+                        overflow: hidden !important;
+                    }
                 }
             `;
             document.head.appendChild(style);
@@ -91,7 +130,7 @@
             document.body.appendChild(backdrop);
         }
 
-        // 3. Tự động tiêm nút Hamburger Toggle nếu layout chưa có
+        // 3. Tự động thêm nút Hamburger Toggle nếu layout chưa có
         let toggleBtns = document.querySelectorAll('#btnToggleSidebar, .btn-sidebar-toggle');
         if (toggleBtns.length === 0) {
             const topBar = document.querySelector('.admin-top-bar');
