@@ -170,7 +170,7 @@
                 </div>
                 <div class="col-md-6">
                     <span>Người được phân công kiểm tra:</span>
-                    <strong class="text-dark ms-1">{{ $hoSo->NguoiKiemTraChinhSua ?? 'GVHD' }}</strong>
+                    <strong class="text-dark ms-1">{{ $hoSo->deTai?->giangVien?->HoTen ?? 'GVHD' }}</strong>
                 </div>
             </div>
         </div>
@@ -240,7 +240,15 @@
         </div>
     </div>
 
-    <div class="alert alert-info" role="status">Báo cáo hoàn thiện đã nộp. Giảng viên chỉ xem và tải tệp, không nhận xét hoặc đánh giá thêm.</div>
+    @if($latestBaoCao->TrangThai === 'Đạt')
+        <p class="text-success fw-semibold">Đã xác nhận báo cáo sau bảo vệ.</p>
+    @elseif(in_array($latestBaoCao->TrangThai, ['Đã nộp', 'Yêu cầu sửa tiếp'], true) && filled($latestBaoCao->DuongDanFile))
+        <form method="POST" action="{{ route('giangvien.kiemtra_baocao_sau_baove.xacnhan', $hoSo->MaHoSo) }}" class="mb-4">
+            @csrf
+            <input type="hidden" name="bao_cao_id" value="{{ $latestBaoCao->id }}">
+            <button type="submit" class="btn btn-success">Xác nhận báo cáo sau bảo vệ</button>
+        </form>
+    @endif
     @endif
 
     <!-- Khối 4: Toàn Bộ Lịch Sử Các Lần Nộp Lại Báo Cáo -->

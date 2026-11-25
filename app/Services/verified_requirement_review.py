@@ -86,6 +86,8 @@ def run_direct_review(path,context,document,identity,model,settings,cache_dir,pr
     # three attempts per task; valid results and semantic rejections stay intact.
     if not retry_failed:
         for tid,error in list(state.get('errors',{}).items()):
+            if error.get('code') in ('authentication', 'billing', 'missing_key'):
+                continue
             if (error.get('http_status') not in (429, 500, 502, 503, 504)
                 and error.get('code') not in ('rate_limit', 'provider_timeout', 'network_error')):
                 continue

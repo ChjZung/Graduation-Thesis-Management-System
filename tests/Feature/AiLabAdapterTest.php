@@ -23,7 +23,7 @@ class AiLabAdapterTest extends TestCase
     }
     public function test_pdf_service_uses_lab_adapter_and_passes_key_only_through_environment(): void
     {
-        config(['ai_processing.pdf_engine'=>'pdf_lab','ai_processing.lab'=>['max_generation_calls'=>5], 'services.gemini.api_key'=>'fixture-private-key']);
+        config(['ai_processing.pdf_engine'=>'pdf_lab','ai_processing.lab'=>['max_generation_calls'=>5], 'services.llm_provider'=>'gemini', 'services.gemini.api_key'=>'fixture-private-key']);
         Process::fake(fn()=>Process::result(output:json_encode($this->labPayload(),JSON_UNESCAPED_UNICODE)));
         $result=app(AiSummaryService::class)->summarizePdf('fixture.pdf');
         $this->assertSame('pdf_lab',$result['data']['analysis']['engine']);
@@ -32,6 +32,50 @@ class AiLabAdapterTest extends TestCase
             && !str_contains(json_encode($p->command),'fixture-private-key') && ($p->environment['GEMINI_API_KEY'] ?? '')==='fixture-private-key');
         $this->assertArrayNotHasKey('completion_percentage',$result['data']);
     }
+    public function test_kandes_routes_pdf_and_docx_without_passing_other_providers_keys(): void
+    {
+        config([
+            'ai_processing.pdf_engine' => 'pdf_lab',
+            'services.llm_provider' => 'kandes',
+            'services.kandes.api_key' => 'fixture-kandes-key',
+            'services.kandes.model' => 'gemini-3-8-flash-high',
+            'services.gemini.api_key' => 'fixture-google-key',
+            'services.groq.api_key' => 'fixture-groq-key',
+        ]);
+        Process::fake(fn () => Process::result(output: json_encode($this->labPayload())));
+        $service = app(AiSummaryService::class);
+
+        foreach (['fixture.pdf' => 'lab_pdf_summary.py', 'fixture.docx' => 'ai_summarizer.py'] as $file => $script) {
+            $service->summarizePdf($file);
+            Process::assertRan(function ($process) use ($script) {
+                $usesLegacyArguments = $script === 'ai_summarizer.py';
+
+                return in_array(base_path('app/Services/'.$script), $process->command, true)
+                    && !in_array('--chunk-size', $process->command, true)
+                    && !in_array('--chunk-overlap', $process->command, true)
+                    && in_array('--target-tokens', $process->command, true) === $usesLegacyArguments
+                    && in_array('--overlap-tokens', $process->command, true) === $usesLegacyArguments
+                    && in_array('gemini-3-8-flash-high', $process->command, true)
+                    && !str_contains(json_encode($process->command), 'fixture-kandes-key')
+                    && $process->environment['LLM_PROVIDER'] === 'kandes'
+                    && $process->environment['KANDES_API_KEY'] === 'fixture-kandes-key'
+                    && $process->environment['GEMINI_API_KEY'] === false
+                    && $process->environment['GROQ_API_KEY'] === false;
+            });
+        }
+    }
+
+    public function test_kandes_billing_error_even_with_429_stops_queue_retry(): void
+    {
+        $data = ['analysis' => ['status' => 'partial'], 'processing_errors' => [[
+            'stage' => 'summary', 'code' => 'billing', 'http_status' => 429,
+        ]]];
+
+        $retry = app(AiReportProcessingService::class)->retryState($data, false, 1);
+        $this->assertSame('partial', $retry['status']);
+        $this->assertNull($retry['next_retry_at']);
+    }
+
     public function test_pdf_resubmission_does_not_pass_large_unsupported_previous_payload_to_python(): void
     {
         config(['ai_processing.pdf_engine'=>'pdf_lab','services.gemini.api_key'=>'fixture-private-key']);

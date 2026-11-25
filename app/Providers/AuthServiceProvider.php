@@ -27,5 +27,10 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+        \Illuminate\Support\Facades\Gate::define('manage-mysql-backups', function (\App\Models\TaiKhoan $user): bool {
+            return config('mysql_backup.enabled')
+                && in_array((string) $user->getAuthIdentifier(), config('mysql_backup.operator_ids', []), true)
+                && in_array($user->vaiTro?->TenVaiTro, ['Admin', 'Giáo vụ'], true);
+        });
     }
 }

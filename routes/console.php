@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:send-deadline-reminders')->dailyAt('08:00');
 
+if (config('mysql_backup.enabled')) {
+    Schedule::command('backup:mysql tick')->everyMinute()->timezone('UTC')->runInBackground();
+}
+

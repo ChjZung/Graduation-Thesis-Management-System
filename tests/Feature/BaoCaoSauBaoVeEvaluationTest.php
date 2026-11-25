@@ -214,55 +214,55 @@ class BaoCaoSauBaoVeEvaluationTest extends TestCase
         $this->assertStringContainsString('Đoạn 2', $renderedPlain);
     }
 
-    /**
-     * Test evaluation page (/giangvien/kiem-tra-bao-cao-sau-bao-ve/{id})
-     * Textarea receives clean plain text without <p>...</p> tags, and TomTatChinhSua doesn't print raw <p>
-     */
-    public function test_evaluation_page_displays_clean_plain_text_in_textarea(): void
+    public function test_only_advisor_can_confirm_and_release_the_submitted_report(): void
     {
-        $response = $this->actingAs($this->lecturerUser)
-            ->get(route('giangvien.kiemtra_baocao_sau_baove.show', $this->hoSo->MaHoSo));
+        $admin = TaiKhoan::whereHas('vaiTro', fn($role) => $role->whereIn('TenVaiTro', ['Admin', 'Giáo vụ']))->firstOrFail();
+        $admin->update(['TrangThaiMatKhau' => 'ACTIVE', 'BatBuocDoiMatKhau' => false]);
+        $detail = route('admin.baocao_sau_chamdiem.show', $this->hoSo->MaHoSo);
+        $list = route('admin.baocao_sau_chamdiem.index', ['search' => $this->hoSo->MaHoSo]);
+        $deanRole = \App\Models\VaiTro::where('TenVaiTro', 'Trưởng khoa')->firstOrFail();
+        $dean = TaiKhoan::create([
+            'MaTK' => 'TK_DEAN_' . bin2hex(random_bytes(4)),
+            'TenDangNhap' => 'TK_' . $this->hoSo->deTai->giangVien->boMon->MaKhoa . '_' . bin2hex(random_bytes(4)),
+            'MatKhau' => bcrypt('123456'),
+            'MaVaiTro' => $deanRole->MaVaiTro,
+            'TrangThai' => true,
+            'TrangThaiMatKhau' => 'ACTIVE',
+            'BatBuocDoiMatKhau' => false,
+        ]);
+        $deanDetail = route('truongkhoa.baocao_sau_chamdiem.show', $this->hoSo->MaHoSo);
+        $deanList = route('truongkhoa.baocao_sau_chamdiem.index', ['search' => $this->hoSo->MaHoSo]);
+        $preview = route('baocao_sau_baove.pdf', $this->baoCao->id);
+        $confirm = route('giangvien.kiemtra_baocao_sau_baove.xacnhan', $this->hoSo->MaHoSo);
+        $data = ['bao_cao_id' => $this->baoCao->id];
 
-        $response->assertOk();
+        $this->actingAs($admin)->get($list)->assertOk()->assertDontSee($detail, false);
+        $this->get($detail)->assertNotFound();
+        $this->get($preview)->assertForbidden();
+        $this->actingAs($dean)->get($deanList)->assertOk()->assertDontSee($deanDetail, false);
+        $this->get($deanDetail)->assertNotFound();
 
-        // Ensure TomTatChinhSua is rendered cleanly and NOT displaying raw literal text <p>44r534dg</p>
-        $content = $response->getContent();
-        $this->assertStringNotContainsString('&lt;p&gt;44r534dg&lt;/p&gt;', $content);
-        $this->assertStringContainsString('44r534dg', $content);
+        $this->hoSo->update(['NguoiKiemTraChinhSua' => $this->unauthorizedUser->giangVien->MaGV]);
+        $this->actingAs($this->unauthorizedUser)->post($confirm, $data)->assertForbidden();
+        $this->assertSame('Đã nộp', $this->baoCao->fresh()->TrangThai);
 
-        // Ensure the textarea value does not contain <p> or &lt;p&gt;
-        preg_match('/<textarea[^>]*name="NhanXetGV"[^>]*>(.*?)<\/textarea>/s', $content, $matches);
-        $this->assertNotEmpty($matches, 'Textarea NhanXetGV not found in response');
-        $textareaValue = $matches[1];
-        $this->assertStringNotContainsString('<p>', $textareaValue);
-        $this->assertStringNotContainsString('&lt;p&gt;', $textareaValue);
-        $this->assertStringContainsString('Báo cáo toàn văn đã được chỉnh sửa đúng theo ý kiến góp ý', $textareaValue);
+        $teacherPage = route('giangvien.kiemtra_baocao_sau_baove.show', $this->hoSo->MaHoSo);
+        $this->actingAs($this->lecturerUser)->get($teacherPage)->assertOk()->assertSee($confirm, false);
+        $this->post($confirm, ['bao_cao_id' => $this->baoCao->id + 1])->assertStatus(409);
+        $this->from($teacherPage)->post($confirm, $data)->assertRedirect($teacherPage);
+        $this->assertSame('Đạt', $this->baoCao->fresh()->TrangThai);
+        $this->assertSame('DaHoanThanh', $this->hoSo->fresh()->TrangThaiChinhSuaSauBaoVe);
 
-        // Ensure the PDF button triggers quickPreviewOutline
-        $this->assertStringContainsString('quickPreviewOutline', $content);
-        $this->assertStringContainsString(route('baocao_sau_baove.pdf', $this->baoCao->id), $content);
-    }
+        $saved = $this->baoCao->fresh()->getAttributes();
+        $this->post($confirm, $data)->assertRedirect();
+        $this->assertSame($saved, $this->baoCao->fresh()->getAttributes());
 
-    /**
-     * Test lecturer saving assessment stores plain text without <p> wrapper
-     */
-    public function test_danh_gia_saves_clean_plain_text(): void
-    {
-        $comment = "Bản báo cáo sau bảo vệ đã tiếp thu toàn bộ góp ý của hội đồng.\nĐồng ý xác nhận đạt.";
-
-        $response = $this->actingAs($this->lecturerUser)
-            ->post(route('giangvien.kiemtra_baocao_sau_baove.danhgia', $this->hoSo->MaHoSo), [
-                'HanhDong' => 'dat',
-                'NhanXetGV' => $comment,
-            ]);
-
-        $response->assertRedirect(route('giangvien.kiemtra_baocao_sau_baove.show', $this->hoSo->MaHoSo));
-
-        $this->baoCao->refresh();
-        $this->assertSame('Đạt', $this->baoCao->TrangThai);
-        // Verify comment is clean plain text, NOT wrapped in <p>...</p>
-        $this->assertSame($comment, $this->baoCao->NhanXetGV);
-        $this->assertStringNotContainsString('<p>', $this->baoCao->NhanXetGV);
+        $this->actingAs($admin)->get($list)->assertOk()->assertSee($detail, false);
+        $this->get($detail)->assertOk()->assertSee($this->baoCao->TenFile);
+        $this->actingAs($dean)->get($deanList)->assertOk()->assertSee($deanDetail, false);
+        $this->get($deanDetail)->assertOk()->assertSee($this->baoCao->TenFile);
+        $this->assertTrue(\Illuminate\Support\Facades\Gate::forUser($admin)
+            ->allows('viewPostDefenseReport', [$this->hoSo->fresh(), $this->baoCao->fresh()]));
     }
 
     /**

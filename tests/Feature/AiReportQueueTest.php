@@ -7,6 +7,7 @@ use App\Models\KhoiBaoCaoTienDo;
 use App\Services\AiReportProcessingService;
 use App\Services\AiSummaryService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Mockery;
@@ -126,6 +127,21 @@ class AiReportQueueTest extends TestCase
         $this->assertSame($before+1,DB::table('jobs')->where('queue','ai-reports')->count());
         $this->assertNull($report->fresh()->TomTatAI);
         $this->assertSame('sync',config('queue.default')); // Dedicated connection overrides the HTTP default.
+    }
+
+    public function test_mock_academic_time_does_not_delay_the_worker(): void
+    {
+        $report = $this->report();
+        $latestJobId = DB::table('jobs')->max('id') ?? 0;
+        $mockedTime = Carbon::now()->addWeek();
+
+        $state = Carbon::withTestNow($mockedTime, fn () => app(AiReportProcessingService::class)->enqueue($report));
+        $job = DB::table('jobs')->where('queue', 'ai-reports')->where('id', '>', $latestJobId)->first();
+
+        $this->assertSame('queued', $state['status']);
+        $this->assertNotNull($job);
+        $this->assertSame($state['queued_at'], (int) $job->available_at);
+        $this->assertLessThan($mockedTime->getTimestamp(), (int) $job->available_at);
     }
 
     public function test_transaction_rollback_removes_pending_state_and_job_together(): void

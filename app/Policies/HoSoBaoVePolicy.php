@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\BaoCaoSauBaoVe;
 use App\Models\GiangVien;
 use App\Models\HoSoBaoVe;
 use App\Models\TaiKhoan;
@@ -83,6 +84,17 @@ class HoSoBaoVePolicy
         }
 
         return false;
+    }
+
+    public function viewPostDefenseReport(TaiKhoan $user, HoSoBaoVe $hoSo, BaoCaoSauBaoVe $baoCao): bool
+    {
+        $role = $user->vaiTro?->TenVaiTro;
+        if ($user->isGiangVien() && $this->confirm($user, $hoSo)) {
+            return true;
+        }
+
+        return ($role === 'Sinh viên' || ($user->isAdmin() || $user->isTruongKhoa() || $user->isTruongBoMon()) && $baoCao->TrangThai === 'Đạt')
+            && $this->view($user, $hoSo);
     }
 
     /**

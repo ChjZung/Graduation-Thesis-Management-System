@@ -175,6 +175,14 @@
                 </div>
             </div>
 
+            @can('manage-mysql-backups')
+                <div class="sidebar-menu-group">
+                    <a href="{{ route('admin.mysql-backup.index') }}" class="submenu-link {{ request()->routeIs('admin.mysql-backup.*') ? 'active-sub' : '' }}">
+                        <i class="fa-solid fa-database me-2" aria-hidden="true"></i><span>Sao lưu và phục hồi dữ liệu</span>
+                    </a>
+                </div>
+            @endcan
+
             <!-- 5. DANH MỤC HỌC VỤ -->
             <div class="sidebar-menu-group">
                 @php

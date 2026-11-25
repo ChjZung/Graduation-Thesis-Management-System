@@ -55,7 +55,7 @@
             <a href="{{ route('giangvien.kiemtra_baocao_sau_baove.index', ['status' => 'da_hoan_thanh']) }}" class="text-decoration-none">
                 <div class="card border-0 shadow-sm h-100 rounded-3" style="border-left: 4px solid #198754 !important;">
                     <div class="card-body">
-                        <div class="text-muted small fw-semibold text-uppercase">Đã Xác Nhận Đạt</div>
+                        <div class="text-muted small fw-semibold text-uppercase">Đã xác nhận</div>
                         <h3 class="fw-bold my-1 text-success">{{ $counts['da_hoan_thanh'] }}</h3>
                         <div class="small text-muted">Hoàn thành lưu trữ Khoa</div>
                     </div>
@@ -78,7 +78,7 @@
                 <div class="col-md-3">
                     <select name="status" class="form-select">
                         <option value="">-- Tất cả trạng thái --</option>
-                        <option value="cho_kiem_tra" {{ request('status') === 'cho_kiem_tra' ? 'selected' : '' }}>Đã nộp — Đã nộp</option>
+                        <option value="cho_kiem_tra" {{ request('status') === 'cho_kiem_tra' ? 'selected' : '' }}>Chờ GVHD xác nhận</option>
                         <option value="yeu_cau_sua" {{ request('status') === 'yeu_cau_sua' ? 'selected' : '' }}>Yêu cầu sửa lại</option>
                         <option value="da_hoan_thanh" {{ request('status') === 'da_hoan_thanh' ? 'selected' : '' }}>Đã xác nhận hoàn thành</option>
                     </select>
@@ -167,7 +167,7 @@
                                 </td>
                                 <td class="text-center">
                                     @if($hs->TrangThaiChinhSuaSauBaoVe === 'DaHoanThanh')
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Đã Đạt Yêu Cầu</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Đã xác nhận</span>
                                     @elseif($hs->TrangThaiChinhSuaSauBaoVe === 'DaNop')
                                         <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">Đã Nộp - Chờ Duyệt</span>
                                     @elseif($hs->TrangThaiChinhSuaSauBaoVe === 'YeuCauSuaTiep')

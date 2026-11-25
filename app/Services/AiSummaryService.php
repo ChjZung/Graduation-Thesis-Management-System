@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\BaoCaoTienDo;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -11,11 +9,6 @@ use Illuminate\Process\Exceptions\ProcessTimedOutException;
 
 class AiSummaryService
 {
-    private const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent';
-    private const MAX_RETRIES     = 3;
-    private const CHUNK_SIZE      = 12000;
-    private const CHUNK_OVERLAP   = 350;
-
     public function saveVersionSummary(\App\Models\KhoiBaoCaoTienDo $report, array $result, array $options = []): void
     {
         // Each submission keeps its own JSON. The legacy table has ONE snapshot per MaBaoCao.
@@ -142,6 +135,26 @@ class AiSummaryService
     /**
      * Tự động kiểm tra và cài đặt thư viện cần thiết cho AI (PyMuPDF) nếu phát hiện máy mới / server mới.
      */
+    public static function kandesEnvironment(): array
+    {
+        return [
+            'KANDES_API_KEY' => (string) config('services.kandes.api_key'),
+            'KANDES_BASE_URL' => (string) config('services.kandes.base_url'),
+            'KANDES_MODEL' => (string) config('services.kandes.model'),
+            'KANDES_LOCK_FILE' => storage_path('app/private/kandes-request.lock'),
+        ];
+    }
+
+    public static function logKandesMetric(string $line): void
+    {
+        $prefix = 'AI_PROVIDER_METRIC ';
+        if (!str_starts_with($line, $prefix)) return;
+        $metric = json_decode(substr($line, strlen($prefix)), true);
+        if (is_array($metric)) Log::info('AI provider request', array_intersect_key($metric, array_flip([
+            'provider', 'model', 'operation', 'status', 'seconds', 'input_tokens', 'output_tokens',
+        ])));
+    }
+
     public static function checkAndSetupEnvironment(?\Closure $notify = null): array
     {
         $notify = $notify ?? fn ($type, $msg) => null;
@@ -177,10 +190,13 @@ class AiSummaryService
             }
         }
 
-        // 3. Kiểm tra biến GEMINI_API_KEY
-        $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY');
-        if (empty($apiKey) || $apiKey === 'your_gemini_api_key_here' || str_starts_with((string)$apiKey, 'your_')) {
-            $notify('warn', "CHÚ Ý: Chưa cấu hình GEMINI_API_KEY thực tế trong file .env.");
+        $provider = config('services.llm_provider', 'gemini');
+        $keyName = $provider === 'kandes' ? 'KANDES_API_KEY' : 'GEMINI_API_KEY';
+        $apiKey = config("services.{$provider}.api_key");
+        if (!in_array($provider, ['gemini', 'kandes'], true)) {
+            $notify('warn', 'LLM_PROVIDER phải là gemini hoặc kandes.');
+        } elseif (!is_string($apiKey) || trim($apiKey) === '' || str_starts_with($apiKey, 'your_')) {
+            $notify('warn', "Chưa cấu hình {$keyName} trong file .env.");
         }
 
         return ['ready' => true, 'python' => $python, 'version' => $pythonVer];
@@ -188,26 +204,35 @@ class AiSummaryService
 
     /**
      * Map-Reduce AI Summarizer cho file PDF báo cáo tiến độ.
-     * Sử dụng Python PyMuPDF + Google Gemini API (xác thực qua header x-goog-api-key).
-     * V6 dùng ngân sách token trong ai_processing.summary; tham số ký tự giữ tương thích cũ.
+     * Sử dụng Python PyMuPDF và nhà cung cấp LLM đã cấu hình.
      */
     public function summarizePdf(string $pdfPath, int $stage = 1, array $options = []): array
     {
         if (PHP_SAPI !== 'cli' && function_exists('set_time_limit')) {
             set_time_limit(420);
         }
-        $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '');
-        $model = config('services.gemini.model', 'gemini-3.5-flash-lite');
+        $provider = config('services.llm_provider', 'gemini');
+        if (!in_array($provider, ['gemini', 'kandes'], true)) {
+            $fallback = $this->fallbackSummarize($pdfPath, $stage, $options['review_context'] ?? []);
+            $fallback['data']['processing_errors'] = [[
+                'stage' => 'process', 'code' => 'invalid_request', 'message' => 'LLM_PROVIDER phải là gemini hoặc kandes.',
+            ]];
+            return $fallback;
+        }
+        $isKandes = $provider === 'kandes';
+        $apiKey = $isKandes ? '' : (config('services.gemini.api_key') ?: env('GEMINI_API_KEY', ''));
+        $model = $isKandes ? config('services.kandes.model') : config('services.gemini.model', 'gemini-3.5-flash-lite');
         $labPdf = strtolower(pathinfo($pdfPath, PATHINFO_EXTENSION)) === 'pdf' && config('ai_processing.pdf_engine') === 'pdf_lab';
         $scriptPath = base_path($labPdf ? 'app/Services/lab_pdf_summary.py' : 'app/Services/ai_summarizer.py');
 
-        $chunkSize = $options['chunk_size'] ?? self::CHUNK_SIZE;
-        $chunkOverlap = $options['chunk_overlap'] ?? self::CHUNK_OVERLAP;
         $method = $options['method'] ?? 'map_reduce';
 
         $pythonBin = self::resolvePythonBinary();
 
         $cacheDirectory = storage_path('app/private/ai_cache');
+        if ($isKandes) {
+            $cacheDirectory .= '/kandes-'.substr(hash('sha256', (string) config('services.kandes.base_url')), 0, 16);
+        }
         $cacheScope = $options['cache_scope'] ?? '';
         if (preg_match('/^[a-f0-9]{64}$/D', $cacheScope)) $cacheDirectory .= '/runs/'.$cacheScope;
 
@@ -218,10 +243,6 @@ class AiSummaryService
             $pdfPath,
             '--stage',
             (string)$stage,
-            '--chunk-size',
-            (string)$chunkSize,
-            '--chunk-overlap',
-            (string)$chunkOverlap,
             '--method',
             $method,
             '--model',
@@ -232,13 +253,14 @@ class AiSummaryService
             config('ai_processing.pipeline_version', 'section-v6.1'),
         ];
 
-        foreach (config('ai_processing.summary', []) as $name => $value) {
-            $command[] = '--'.str_replace('_', '-', $name);
-            $command[] = (string) $value;
-        }
         if ($labPdf) {
             $command[] = '--lab-settings';
             $command[] = json_encode(config('ai_processing.lab'), JSON_THROW_ON_ERROR);
+        } else {
+            foreach (config('ai_processing.summary', []) as $name => $value) {
+                $command[] = '--'.str_replace('_', '-', $name);
+                $command[] = (string) $value;
+            }
         }
         if (!empty($options['document_identity'])) {
             $command[] = '--document-identity';
@@ -300,8 +322,24 @@ class AiSummaryService
 
             ]);
 
+            $processEnv['LLM_PROVIDER'] = $provider;
+            if ($isKandes) {
+                $processEnv = array_merge($processEnv, self::kandesEnvironment(), [
+                    'GEMINI_API_KEY' => false,
+                    'GEMINI_FALLBACK_MODEL' => false,
+                    'GROQ_API_KEY' => false,
+                    'GROQ_MODEL' => false,
+                    'AI_RATE_SCOPE' => 'kandes:'.hash('sha256', (string) config('services.kandes.base_url')),
+                ]);
+            }
             $process = Process::timeout(360)->env($processEnv);
-            $onOutput = function ($type,$buffer) use ($partialFile,$options,&$lastPartialHash) {
+            $metricBuffer = '';
+            $onOutput = function ($type,$buffer) use ($partialFile,$options,&$lastPartialHash,$isKandes,&$metricBuffer) {
+                if ($isKandes && $type === 'err') {
+                    $lines = explode("\n", $metricBuffer.$buffer);
+                    $metricBuffer = substr(array_pop($lines), -4096);
+                    foreach ($lines as $line) self::logKandesMetric($line);
+                }
                 if (!$partialFile || !is_callable($options['on_partial_result']??null) || !is_file($partialFile)) return;
                 $bytes=@file_get_contents($partialFile);
                 if ($bytes===false) return;
@@ -601,176 +639,5 @@ class AiSummaryService
                 'completion_percentage' => null,
             ]
         ], $stage);
-    }
-
-    /**
-     * Tương thích ngược với các controller cũ gọi generate(BaoCaoTienDo $baoCao).
-     */
-    public function generate(BaoCaoTienDo $baoCao): array
-    {
-        if (!empty($baoCao->DuongDanFile)) {
-            $fullPath = Storage::disk('public')->path($baoCao->DuongDanFile);
-            if (file_exists($fullPath)) {
-                $aiRes = $this->summarizePdf($fullPath, $baoCao->LanBaoCao ?? 1);
-                $formatted = $aiRes['formatted'];
-
-                $completedText = !empty($formatted['completed_work']) ? $formatted['completed_work'] : 'Chưa có thông tin hoàn thành trong văn bản';
-                $diffText = !empty($formatted['difficulties']) ? $formatted['difficulties'] : 'Tài liệu không ghi nhận khó khăn';
-                $nextText = !empty($formatted['next_steps']) ? $formatted['next_steps'] : 'Tài liệu không ghi nhận kế hoạch tiếp theo';
-
-                return [
-                    'CongViecDaHoanThanh' => $completedText,
-                    'KhoKhan'             => $diffText,
-                    'KeHoachTuanToi'      => $nextText,
-                    'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao}: {$baoCao->TieuDe}**\n\n✅ **Đã hoàn thành:**\n{$completedText}\n\n⚠️ **Khó khăn:**\n{$diffText}\n\n📅 **Kế hoạch tiếp theo:**\n{$nextText}",
-                    'TomTatJson'          => $aiRes['data'],
-                    'DoTinCayAI'          => $aiRes['source'] === 'gemini_map_reduce' ? 95.00 : 85.00,
-                    'NgayTomTat'          => now(),
-                    'TrangThai'           => 'Đã tạo',
-                ];
-            }
-        }
-
-        $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY');
-        if ($apiKey) {
-            return $this->generateWithGemini($baoCao, $apiKey);
-        }
-
-        return $this->generateMock($baoCao);
-    }
-
-    /**
-     * Gọi trực tiếp Gemini API qua HTTP Client trong Laravel (Header x-goog-api-key)
-     * Ưu tiên Gemini 3.5 Flash, dự phòng Gemini 3.5 Flash-Lite khi dịch vụ lỗi.
-     */
-    private function generateWithGemini(BaoCaoTienDo $baoCao, string $apiKey): array
-    {
-        $vanBan = $this->extractText($baoCao);
-        $prompt = $this->buildPrompt($baoCao->LanBaoCao, $vanBan);
-        $configuredModel = config('services.gemini.model', 'gemini-3.5-flash-lite');
-
-        $candidateModels = array_unique([$configuredModel, 'gemini-3.5-flash-lite']);
-
-        foreach ($candidateModels as $currentModel) {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$currentModel}:generateContent";
-
-            for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
-                try {
-                    $response = Http::withHeaders([
-                        'x-goog-api-key' => $apiKey,
-                        'Content-Type' => 'application/json',
-                    ])->timeout(45)->post($url, [
-                        'contents' => [[
-                            'parts' => [['text' => $prompt]],
-                        ]],
-                        'generationConfig' => array_merge([
-                            'maxOutputTokens' => 4096,
-                            'responseMimeType' => 'application/json',
-                        ], (str_starts_with($currentModel, 'gemini-3.8') || str_starts_with($currentModel, 'gemini-3.6'))
-                            ? ['thinkingConfig' => ['thinkingLevel' => 'low']] : []),
-                    ]);
-
-                    if ($response->successful()) {
-                        $rawText = collect($response->json('candidates.0.content.parts', []))
-                            ->reject(fn ($part) => !empty($part['thought']))
-                            ->pluck('text')->implode('');
-                        $cleaned = trim($rawText);
-                        if (str_starts_with($cleaned, '```')) {
-                            $lines = explode("\n", $cleaned);
-                            if (str_starts_with($lines[0], '```')) {
-                                array_shift($lines);
-                            }
-                            if (!empty($lines) && trim(end($lines)) === '```') {
-                                array_pop($lines);
-                            }
-                            $cleaned = trim(implode("\n", $lines));
-                        }
-
-                        $data = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
-
-                        $cong = $data['CongViecDaHoanThanh'] ?? 'Văn bản chưa nêu rõ chi tiết công việc hoàn thành.';
-                        $kho  = $data['KhoKhan'] ?? 'Tài liệu không ghi nhận khó khăn đặc biệt.';
-                        $ke   = $data['KeHoachTuanToi'] ?? 'Tài liệu không đề cập đến kế hoạch cụ thể.';
-
-                        return [
-                            'CongViecDaHoanThanh' => $cong,
-                            'KhoKhan'             => $kho,
-                            'KeHoachTuanToi'      => $ke,
-                            'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$baoCao->LanBaoCao} ({$currentModel})**\n\n✅ **Đã hoàn thành:** {$cong}\n\n⚠️ **Khó khăn:** {$kho}\n\n📅 **Kế hoạch tiếp theo:** {$ke}",
-                            'DoTinCayAI'          => 95.00,
-                            'NgayTomTat'          => now(),
-                            'TrangThai'           => 'Đã tạo',
-                        ];
-                    }
-
-                    $status = $response->status();
-                    // Lỗi client 400, 401, 403 không retry model này
-                    if (in_array($status, [400, 401, 403])) {
-                        Log::error("AiSummaryService: Gemini API client error HTTP {$status}: " . $response->body());
-                        break 2;
-                    }
-
-                    // Nếu 404 (model dừng), chuyển ngay sang candidate model tiếp theo
-                    if ($status === 404) {
-                        Log::warning("AiSummaryService: Model {$currentModel} không tồn tại hoặc đã dừng (404), chuyển model dự phòng.");
-                        break;
-                    }
-
-                    // 429 hoặc 503: chờ theo exponential backoff
-                    sleep($attempt * 2);
-                } catch (\Throwable $e) {
-                    Log::warning("AiSummaryService: Lần thử {$attempt}/" . self::MAX_RETRIES . " model {$currentModel} thất bại: " . $e->getMessage());
-                    sleep($attempt * 2);
-                }
-            }
-        }
-
-        return $this->generateMock($baoCao);
-    }
-
-    private function extractText(BaoCaoTienDo $baoCao): string
-    {
-        $parts = [];
-        if (!empty($baoCao->NoiDungBaoCao)) {
-            $parts[] = "Ghi chú sinh viên: " . mb_substr($baoCao->NoiDungBaoCao, 0, 1000);
-        }
-        if (!empty($baoCao->LinkCode)) {
-            $parts[] = "Link source code: " . $baoCao->LinkCode;
-        }
-        return implode("\n\n", $parts) ?: "Báo cáo Mốc {$baoCao->LanBaoCao}";
-    }
-
-    private function buildPrompt(int $lan, string $vanBan): string
-    {
-        return <<<PROMPT
-Bạn là trợ lý AI thẩm định báo cáo tiến độ khóa luận tốt nghiệp (Mốc {$lan}/6).
-Đọc nội dung dưới đây và trích xuất thông tin ĐÚNG SỰ THỰC, KHÔNG TỰ BỊA NỘI DUNG.
-Nếu tài liệu không nhắc đến khó khăn hoặc kế hoạch, hãy ghi rõ "Tài liệu không đề cập".
-
-Trả về ĐÚNG FORMAT JSON sau (không thêm markdown ngoài JSON):
-{
-  "CongViecDaHoanThanh": "Mô tả ngắn gọn công việc đã hoàn thành",
-  "KhoKhan": "Các khó khăn thực tế gặp phải (nếu có)",
-  "KeHoachTuanToi": "Kế hoạch cụ thể cho giai đoạn tiếp theo (nếu có)"
-}
-
-NỘI DUNG BÁO CÁO:
-{$vanBan}
-PROMPT;
-    }
-
-    private function generateMock(BaoCaoTienDo $baoCao): array
-    {
-        $lan = $baoCao->LanBaoCao ?? 1;
-
-        return [
-            'CongViecDaHoanThanh' => "Tiếp nhận và rà soát báo cáo tiến độ Mốc {$lan}. (Chưa kích hoạt AI trực tuyến)",
-            'KhoKhan'             => "Chưa ghi nhận khó khăn qua hệ thống tự động.",
-            'KeHoachTuanToi'      => "Thực hiện theo kế hoạch khóa luận và hướng dẫn của GVHD.",
-            'NoiDungAI'           => "📋 **TÓM TẮT MỐC {$lan} [Dữ liệu cơ bản - Chưa qua Gemini]**\n\nHệ thống đã lưu nhận báo cáo. Vui lòng cấu hình GEMINI_API_KEY trong .env để kích hoạt thẩm định tự động chuyên sâu.",
-            'DoTinCayAI'          => 70.00,
-            'NgayTomTat'          => now(),
-            'TrangThai'           => 'Đã tạo',
-        ];
     }
 }

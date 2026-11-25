@@ -496,15 +496,8 @@
                                        value="{{ $hoSo->hanNopHoanThienBaoCao()?->format('Y-m-d\TH:i') }}" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">Người phụ trách kiểm tra, xác nhận <span class="text-danger">*</span>:</label>
-                                <select name="NguoiKiemTraChinhSua" class="form-select" required>
-                                    <option value="{{ $deTai->giangVien->MaGV ?? '' }}">GVHD: {{ $deTai->giangVien->HoTen ?? 'Chưa rõ' }}</option>
-                                    @foreach($hoiDong->sorted_thanh_viens as $tv)
-                                        @if($tv->MaGV !== ($deTai->giangVien->MaGV ?? ''))
-                                            <option value="{{ $tv->MaGV }}">{{ $tv->short_vai_tro }}: {{ $tv->giangVien->HoTen ?? $tv->MaGV }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
+                                <p class="form-label small fw-bold text-dark">Giảng viên xác nhận báo cáo</p>
+                                <p class="mb-0">{{ $deTai->giangVien->HoTen ?? 'Chưa phân công GVHD' }}</p>
                             </div>
                         </div>
                     </div>

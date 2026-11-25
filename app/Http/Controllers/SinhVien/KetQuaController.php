@@ -206,6 +206,7 @@ class KetQuaController extends Controller
         // 2. Kiểm tra điều kiện tiên quyết: Trưởng Khoa đã công bố điểm chưa?
         $ketQua = KetQuaSinhVien::with('hocKy')
             ->where('MaSV', $sinhVien->MaSV)
+            ->where('MaHoSo', $hoSo->MaHoSo)
             ->latest()
             ->first();
 
@@ -298,7 +299,8 @@ class KetQuaController extends Controller
         }
 
         // 1. Kiểm tra điều kiện điểm đã được công bố
-        $ketQua = KetQuaSinhVien::where('MaSV', $sinhVien->MaSV)->latest()->first();
+        $ketQua = KetQuaSinhVien::where('MaSV', $sinhVien->MaSV)
+            ->where('MaHoSo', $hoSo->MaHoSo)->latest()->first();
         $daCongBo = ($ketQua && $ketQua->TrangThai === 'Đã công bố')
             || in_array($hoSo->TrangThaiKetQua, ['DaCongBo', 'CoYeuCauChinhSua', 'DaNopChinhSua', 'DaHoanThanh']);
 
@@ -333,7 +335,7 @@ class KetQuaController extends Controller
             return redirect()->back()->with('error', 'Báo cáo sau bảo vệ của nhóm đã được xác nhận Đạt/Hoàn thành chuẩn lưu trữ. Không thể nộp lại.');
         }
 
-        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien, $user) {
+        DB::transaction(function () use ($request, $hoSo, $nhom, $sinhVien) {
             // Lock the parent even when no submission exists yet, preventing double-click races.
             $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($hoSo->MaHoSo);
             if (BaoCaoSauBaoVe::where('MaHoSo', $hoSo->MaHoSo)->exists()) {
@@ -349,7 +351,7 @@ class KetQuaController extends Controller
             $originalName = $file->getClientOriginalName();
             $ext = $file->getClientOriginalExtension();
             $safeFileName = 'BaoCao_HoanThien_v' . $lanChinhSuaHienTai . '_' . time() . '_' . \Illuminate\Support\Str::random(6) . '.' . $ext;
-            $filePath = $file->storeAs($subFolder, $safeFileName, 'public');
+            $filePath = $file->storeAs($subFolder, $safeFileName, 'local');
 
             // 2. Bản giải trình tiếp thu ý kiến của Hội đồng (nếu có)
             $fileGiaiTrinhPath = null;
@@ -358,7 +360,7 @@ class KetQuaController extends Controller
                 $fileGT = $request->file('FileGiaiTrinh');
                 $gtExt = $fileGT->getClientOriginalExtension();
                 $safeGTName = 'GiaiTrinh_v' . $lanChinhSuaHienTai . '_' . time() . '_' . \Illuminate\Support\Str::random(6) . '.' . $gtExt;
-                $fileGiaiTrinhPath = $fileGT->storeAs($subFolder, $safeGTName, 'public');
+                $fileGiaiTrinhPath = $fileGT->storeAs($subFolder, $safeGTName, 'local');
                 $tenFileGiaiTrinh = $fileGT->getClientOriginalName();
             }
 
@@ -369,7 +371,7 @@ class KetQuaController extends Controller
                 $fileMC = $request->file('FileMinhChung');
                 $mcExt = $fileMC->getClientOriginalExtension();
                 $safeMCName = 'MinhChung_v' . $lanChinhSuaHienTai . '_' . time() . '_' . \Illuminate\Support\Str::random(6) . '.' . $mcExt;
-                $fileMinhChungPath = $fileMC->storeAs($subFolder, $safeMCName, 'public');
+                $fileMinhChungPath = $fileMC->storeAs($subFolder, $safeMCName, 'local');
                 $tenFileMinhChung = $fileMC->getClientOriginalName();
             }
 
@@ -398,17 +400,6 @@ class KetQuaController extends Controller
                 'NgayNopBanChinhSua'        => now(),
             ]);
 
-            // Gửi thông báo đến Người kiểm tra (GVHD hoặc Thành viên HĐ phụ trách)
-            $nguoiKiemTra = $hoSo->NguoiKiemTraChinhSua ?? $nhom->deTai?->MaGV;
-            if ($nguoiKiemTra) {
-                ThongBaoService::gui(
-                    $nguoiKiemTra,
-                    'Sinh viên đã nộp lại báo cáo hoàn thiện sau bảo vệ',
-                    "Sinh viên {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp báo cáo hoàn thiện sau bảo vệ. Thầy/Cô có thể xem và tải tệp; không cần đánh giá thêm.",
-                    'Báo cáo sau bảo vệ'
-                );
-            }
-
             // Gửi thông báo cho thành viên trong nhóm
             ThongBaoService::guiDenNhom(
                 $nhom->MaNhom,
@@ -417,17 +408,19 @@ class KetQuaController extends Controller
                 'Báo cáo sau bảo vệ'
             );
 
-            // Gửi thông báo đến Cán bộ Quản lý liên quan: Giáo vụ, Trưởng khoa, Trưởng bộ môn (không gửi trùng)
-            ThongBaoService::thongBaoCanBoQuanLy(
-                $hoSo,
-                'Sinh viên đã nộp lại báo cáo hoàn thiện sau bảo vệ',
-                "Sinh viên {$sinhVien->HoTen} (Nhóm {$nhom->TenNhom} - Đề tài: {$nhom->deTai?->TenDeTai}) đã nộp Báo cáo hoàn thiện sau bảo vệ (Lần {$lanChinhSuaHienTai}). Kính mời Thầy/Cô kiểm tra.",
-                $user->MaTK
-            );
+            if ($maGV = $hoSo->deTai?->MaGV) {
+                ThongBaoService::gui(
+                    $maGV,
+                    'Có báo cáo sau bảo vệ chờ xác nhận',
+                    "Nhóm {$nhom->TenNhom} đã nộp báo cáo hoàn thiện. Mời Thầy/Cô xem tệp và xác nhận.",
+                    'Báo cáo sau bảo vệ',
+                    route('giangvien.kiemtra_baocao_sau_baove.show', $hoSo->MaHoSo)
+                );
+            }
         });
 
         return redirect()->route('sinhvien.ketqua.hoanthien')
-            ->with('success', 'Nộp báo cáo hoàn thiện thành công! Giảng viên hướng dẫn và Trưởng khoa có thể xem, tải tệp đã nộp.');
+            ->with('success', 'Nộp báo cáo hoàn thiện thành công! Báo cáo đang chờ giảng viên hướng dẫn xác nhận.');
     }
 
     /**

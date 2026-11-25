@@ -2,7 +2,10 @@
 @if(($node['kind'] ?? '') !== 'front_matter' || !empty($node['items']) || !empty($node['sections']))
 @php
     $nodeTitle = $node['title'] ?? '';
-    $visibleAssets = array_filter($node['related_assets'] ?? [], \App\Support\AiReportPresentation::visibleReportAsset(...));
+    $visibleAssets = array_filter($node['related_assets'] ?? [], static fn(array $asset) =>
+        in_array($asset['type'] ?? '', ['FIGURE_CAPTION', 'TABLE_CAPTION'], true)
+            ? trim((string) ($asset['display_text'] ?? '')) !== '' && (int) ($asset['page'] ?? 0) > 0
+            : \App\Support\AiReportPresentation::visibleReportAsset($asset));
     if ($documentType === 'pdf') {
         $nodeTitle = preg_replace(
             ['/(sở)(dữ)/iu', '/(dữ)(liệu)/iu', '/(xử)(lý)/iu', '/(trị)(hệ)/iu', '/(hệ)(thống)/iu'],
@@ -50,11 +53,13 @@
                 'icon'=>'fa-file-lines', 'tone'=>'primary', 'items'=>$node['items'],
             ]])
             </details>
+        @elseif($visibleAssets && empty($node['raw_source_references']))
+            {{-- Caption-only sections show their source links below without a generic empty-text message. --}}
         @elseif(($node['status'] ?? '') === 'insufficient_text')
             @if(!empty($node['raw_source_references']))
                 <p class="ai-muted">Đã tìm thấy văn bản trong PDF. Bản tóm tắt của mục này chưa được lưu.</p>
                 @include('partials.ai_lab_sources', ['references'=>$node['raw_source_references'], 'referenceContext'=>$nodeTitle])
-            @elseif(!empty($node['visual_only']))
+            @elseif(!empty($node['visual_only']) && !$visibleAssets)
                 <p class="ai-muted">Mục này có hình hoặc sơ đồ. Hãy mở PDF để xem nội dung trực quan.</p>
             @else
                 <p class="ai-empty">Chưa tìm được đoạn văn phù hợp để tóm tắt mục này.</p>
@@ -64,7 +69,7 @@
         @endif
         @if($visibleAssets)
             <div class="card border-info my-3"><div class="card-body">
-                <h6 class="text-primary">Sơ đồ và bảng liên quan</h6>
+                <h6 class="text-primary">Hình ảnh, sơ đồ và bảng trong mục</h6>
                 <small class="text-muted">Hệ thống chỉ nhận diện tên hình/bảng từ văn bản PDF. Nội dung bên trong chưa được AI phân tích; vui lòng xem PDF gốc để kiểm chứng.</small>
                 @foreach($visibleAssets as $asset)
                     <div class="border-top mt-2 pt-2">

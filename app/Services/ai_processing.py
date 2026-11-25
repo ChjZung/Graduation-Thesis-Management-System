@@ -73,6 +73,7 @@ def error_detail(error, stage='ai'):
     messages = {
         'rate_limit':'Dịch vụ AI đang giới hạn lượt gọi. Đã giữ kết quả để tiếp tục sau thời gian chờ.',
         'authentication':'Dịch vụ AI từ chối thông tin xác thực hoặc quyền truy cập.',
+        'billing':'Kandes báo hết số dư hoặc có lỗi thanh toán.',
         'timeout':'Dịch vụ AI chưa trả kết quả trong thời gian cho phép.',
         'connection_error':'Chưa kết nối được dịch vụ AI.',
         'budget_exhausted':'Đã hết thời gian của lượt xử lý nền; các bước thành công được giữ để tiếp tục.',
@@ -104,6 +105,7 @@ class CallSession:
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.deadline = time.monotonic() + budget if budget else None
         self.slots = threading.BoundedSemaphore(2)
+        self.terminal_provider_error = None
         self.lock = threading.Lock()
         self.progress_lock = threading.Lock()
         self.progress_fields = {}
@@ -212,12 +214,18 @@ class CallSession:
                     raise ProcessingError('budget_exhausted')
                 try:
                     with self.lock:
+                        if self.terminal_provider_error:
+                            code, details = self.terminal_provider_error
+                            raise ProcessingError(code, **details)
                         if self.provider_paused:
                             raise ProcessingError('provider_cooldown', retry_after=30, http_status=503)
                     try:
                         value, used = call_api(prompt, api_key, model=model, timeout=self.remaining(timeout))
                     except ProcessingError as error:
-                        if error.code == 'service_unavailable' and error.details.get('http_status') == 503:
+                        if os.environ.get('LLM_PROVIDER') == 'kandes' and error.code in ('authentication', 'billing'):
+                            with self.lock:
+                                self.terminal_provider_error = (error.code, error.details)
+                        if error.code == 'service_unavailable' and error.details.get('http_status') == 503 and os.environ.get('LLM_PROVIDER') != 'kandes':
                             with self.lock:
                                 self.consecutive_unavailable += 1
                                 if self.consecutive_unavailable >= 3:
@@ -262,7 +270,8 @@ class CallSession:
                 detail = error_detail(error, stage)
                 with self.lock:
                     self.errors.append(detail)
-                if detail['code'] in ('authentication','rate_limit','budget_exhausted','invalid_request','input_too_large','provider_cooldown','analysis_cancelled') or attempt == 1:
+                kandes_transport_failed = os.environ.get('LLM_PROVIDER') == 'kandes' and isinstance(error, ProcessingError)
+                if detail['code'] in ('authentication','billing','rate_limit','budget_exhausted','invalid_request','input_too_large','provider_cooldown','analysis_cancelled') or kandes_transport_failed or attempt == 1:
                     raise ProcessingError(detail['code'],**{k:v for k,v in detail.items() if k in ('quota','retry_after','model','http_status','cooldown_until','cooldown_cached','original_retry_after')}) from None
         raise ProcessingError('service_unavailable')
 

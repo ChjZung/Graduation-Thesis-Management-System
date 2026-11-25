@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\HoSoBaoVe;
-use App\Models\BaoCaoSauBaoVe;
 use App\Models\GiangVien;
 use App\Models\Khoa;
 use App\Models\BoMon;
@@ -123,7 +122,7 @@ class BaoCaoSauChamDiemController extends Controller
         $user = Auth::user();
         $scope = $this->getScope($user);
 
-        // Khởi tạo truy vấn hồ sơ đã bảo vệ hoặc có yêu cầu chỉnh sửa sau bảo vệ
+        // Chỉ hiển thị hồ sơ có bản nộp mới nhất đã được xác nhận.
         $query = HoSoBaoVe::with([
             'nhom.truongNhom',
             'nhom.thanhViens.sinhVien.lop',
@@ -135,13 +134,7 @@ class BaoCaoSauChamDiemController extends Controller
             'baoCaoSauBaoVes.sinhVienNop',
             'baoCaoSauBaoVeMoiNhat',
         ])
-        ->where(function ($q) {
-            $q->whereNotNull('YeuCauChinhSuaSauBaoVe')
-              ->orWhereNotNull('TrangThaiChinhSuaSauBaoVe')
-              ->orWhereHas('baoCaoSauBaoVes')
-              ->orWhereNotNull('FileBanChinhSua')
-              ->orWhereNotNull('MaHoiDong');
-        });
+        ->whereHas('baoCaoSauBaoVeMoiNhat', fn($report) => $report->where('TrangThai', 'Đạt'));
 
         // 1. Giới hạn phạm vi theo vai trò (Backend Scope Enforcement)
         if ($scope['role'] === 'truongkhoa') {
@@ -197,24 +190,6 @@ class BaoCaoSauChamDiemController extends Controller
             $query->where('MaHoiDong', $request->MaHoiDong);
         }
 
-        // 7. Bộ lọc Trạng thái nộp lại
-        if ($request->filled('status')) {
-            $st = $request->status;
-            if ($st === 'da_hoan_thanh' || $st === 'dat') {
-                $query->where('TrangThaiChinhSuaSauBaoVe', 'DaHoanThanh');
-            } elseif ($st === 'da_nop' || $st === 'cho_kiem_tra') {
-                $query->where('TrangThaiChinhSuaSauBaoVe', 'DaNop');
-            } elseif ($st === 'yeu_cau_sua' || $st === 'chua_dat') {
-                $query->where('TrangThaiChinhSuaSauBaoVe', 'YeuCauSuaTiep');
-            } elseif ($st === 'chua_nop') {
-                $query->where(function ($q) {
-                    $q->whereNull('TrangThaiChinhSuaSauBaoVe')
-                      ->orWhere('TrangThaiChinhSuaSauBaoVe', 'ChoSinhVienNop')
-                      ->orWhereDoesntHave('baoCaoSauBaoVes');
-                });
-            }
-        }
-
         // 8. Ô tìm kiếm: MSSV, Họ tên, Tên nhóm, Tên đề tài, Tên GVHD
         if ($request->filled('search')) {
             $s = trim($request->search);
@@ -230,19 +205,7 @@ class BaoCaoSauChamDiemController extends Controller
             });
         }
 
-        // Thống kê nhanh theo bộ đếm
-        $countBase = clone $query;
-        $counts = [
-            'total'          => (clone $countBase)->count(),
-            'cho_kiem_tra'   => (clone $countBase)->where('TrangThaiChinhSuaSauBaoVe', 'DaNop')->count(),
-            'yeu_cau_sua'    => (clone $countBase)->where('TrangThaiChinhSuaSauBaoVe', 'YeuCauSuaTiep')->count(),
-            'da_hoan_thanh'  => (clone $countBase)->where('TrangThaiChinhSuaSauBaoVe', 'DaHoanThanh')->count(),
-            'chua_nop'       => (clone $countBase)->where(function($q) {
-                $q->whereNull('TrangThaiChinhSuaSauBaoVe')
-                  ->orWhere('TrangThaiChinhSuaSauBaoVe', 'ChoSinhVienNop')
-                  ->orWhereDoesntHave('baoCaoSauBaoVes');
-            })->count(),
-        ];
+        $counts = ['total' => (clone $query)->count()];
 
         $hoSos = $query->orderBy('updated_at', 'desc')->paginate(5)->withQueryString();
 
@@ -323,7 +286,8 @@ class BaoCaoSauChamDiemController extends Controller
         }
 
         $latestBaoCao = $hoSo->baoCaoSauBaoVeMoiNhat;
-        $lichSuNop = $hoSo->baoCaoSauBaoVes()->orderBy('LanChinhSua', 'desc')->get();
+        abort_unless($latestBaoCao?->TrangThai === 'Đạt', 404);
+        $lichSuNop = $hoSo->baoCaoSauBaoVes()->where('TrangThai', 'Đạt')->get();
 
         return view('baocao_sau_chamdiem.show', compact(
             'scope',

@@ -5,12 +5,10 @@ namespace App\Http\Controllers\GiangVien;
 use App\Http\Controllers\Controller;
 use App\Models\GiangVien;
 use App\Models\HoSoBaoVe;
-use App\Models\BaoCaoSauBaoVe;
 use App\Services\ThongBaoService;
-use App\Helpers\HtmlHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class KiemTraBaoCaoSauBaoVeController extends Controller
 {
@@ -22,8 +20,10 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
             abort(404, 'Không tìm thấy hồ sơ giảng viên của tài khoản này.');
         }
 
-        // Tìm tất cả hồ sơ mà giảng viên là GVHD hoặc được Trưởng khoa phân công kiểm tra báo cáo sau bảo vệ
-        $query = HoSoBaoVe::with([
+        $base = HoSoBaoVe::whereHas('baoCaoSauBaoVes')
+            ->whereHas('deTai', fn($d) => $d->where('MaGV', $gv->MaGV));
+
+        $query = (clone $base)->with([
             'nhom.truongNhom',
             'nhom.thanhViens.sinhVien',
             'nhom.hocPhan',
@@ -31,17 +31,7 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
             'hoiDong',
             'baoCaoSauBaoVes.sinhVienNop',
             'baoCaoSauBaoVeMoiNhat',
-        ])
-        ->where(function ($q) {
-            $q->whereNotNull('YeuCauChinhSuaSauBaoVe')
-              ->orWhereNotNull('TrangThaiChinhSuaSauBaoVe')
-              ->orWhereHas('baoCaoSauBaoVes');
-        })
-        ->where(function ($q) use ($gv) {
-            $q->where('NguoiKiemTraChinhSua', $gv->MaGV)
-              ->orWhere('NguoiKiemTraChinhSua', 'like', "%{$gv->HoTen}%")
-              ->orWhereHas('deTai', fn($d) => $d->where('MaGV', $gv->MaGV));
-        });
+        ]);
 
         // Lọc theo trạng thái
         $status = $request->query('status');
@@ -63,18 +53,6 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
         }
 
         $hoSos = $query->orderBy('updated_at', 'desc')->paginate(5)->withQueryString();
-
-        // Thống kê
-        $base = HoSoBaoVe::where(function ($q) {
-                $q->whereNotNull('YeuCauChinhSuaSauBaoVe')
-                  ->orWhereNotNull('TrangThaiChinhSuaSauBaoVe')
-                  ->orWhereHas('baoCaoSauBaoVes');
-            })
-            ->where(function ($q) use ($gv) {
-                $q->where('NguoiKiemTraChinhSua', $gv->MaGV)
-                  ->orWhere('NguoiKiemTraChinhSua', 'like', "%{$gv->HoTen}%")
-                  ->orWhereHas('deTai', fn($d) => $d->where('MaGV', $gv->MaGV));
-            });
 
         $counts = [
             'total'          => (clone $base)->count(),
@@ -102,13 +80,8 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
             'baoCaoSauBaoVeMoiNhat',
         ])->findOrFail($id);
 
-        $isAuthorized = ($hoSo->NguoiKiemTraChinhSua === $gv->MaGV)
-            || str_contains($hoSo->NguoiKiemTraChinhSua ?? '', $gv->HoTen)
-            || ($hoSo->deTai && $hoSo->deTai->MaGV === $gv->MaGV);
-
-        if (!$isAuthorized) {
-            abort(403, 'Bạn không được phân công kiểm tra báo cáo sau bảo vệ của nhóm này.');
-        }
+        abort_unless($hoSo->deTai?->MaGV === $gv->MaGV, 403);
+        abort_unless($hoSo->baoCaoSauBaoVeMoiNhat, 404);
 
         $latestBaoCao = $hoSo->baoCaoSauBaoVeMoiNhat;
         $lichSuNop = $hoSo->baoCaoSauBaoVes;
@@ -116,8 +89,45 @@ class KiemTraBaoCaoSauBaoVeController extends Controller
         return view('giangvien.kiemtra_baocao_sau_baove.show', compact('gv', 'hoSo', 'latestBaoCao', 'lichSuNop'));
     }
 
-    public function danhGia(Request $request, $id)
+    public function xacNhan(Request $request, string $id)
     {
-        abort(403, 'Báo cáo hoàn thiện chỉ được xem và tải xuống; không nhận xét hoặc đánh giá thêm.');
+        $gv = GiangVien::getLoggedInGiangVien($request->user());
+        abort_unless($gv, 403);
+
+        $data = $request->validate(['bao_cao_id' => 'required|integer']);
+
+        DB::transaction(function () use ($id, $gv, $data) {
+            $hoSo = HoSoBaoVe::lockForUpdate()->findOrFail($id);
+            abort_unless($hoSo->deTai?->MaGV === $gv->MaGV, 403);
+
+            $baoCao = $hoSo->baoCaoSauBaoVeMoiNhat()->firstOrFail();
+            abort_unless((int) $baoCao->id === (int) $data['bao_cao_id'], 409, 'Bản nộp đã thay đổi. Vui lòng tải lại trang.');
+
+            if ($baoCao->TrangThai === 'Đạt') {
+                return;
+            }
+
+            abort_unless(in_array($baoCao->TrangThai, ['Đã nộp', 'Yêu cầu sửa tiếp'], true), 409);
+            abort_if(blank($baoCao->DuongDanFile), 409, 'Bản nộp chưa có tệp báo cáo.');
+
+            $ngayXacNhan = now();
+            $baoCao->update([
+                'TrangThai' => 'Đạt',
+                'NgayKiemTra' => $ngayXacNhan,
+                'NguoiKiemTra' => $gv->HoTen,
+            ]);
+            $hoSo->update([
+                'TrangThaiChinhSuaSauBaoVe' => 'DaHoanThanh',
+                'TrangThaiKetQua' => 'DaHoanThanh',
+                'NguoiKiemTraChinhSua' => $gv->MaGV,
+                'NgayXacNhanHoanThanhSauBaoVe' => $ngayXacNhan,
+            ]);
+
+            $noiDung = "Giảng viên hướng dẫn đã xác nhận báo cáo hoàn thiện của nhóm {$hoSo->nhom?->TenNhom}.";
+            ThongBaoService::guiDenNhom($hoSo->MaNhom, 'Đã xác nhận báo cáo sau bảo vệ', $noiDung, 'Báo cáo sau bảo vệ');
+            ThongBaoService::thongBaoCanBoQuanLy($hoSo, 'GVHD đã xác nhận báo cáo sau bảo vệ', $noiDung);
+        });
+
+        return back()->with('success', 'Đã xác nhận báo cáo sau bảo vệ.');
     }
 }

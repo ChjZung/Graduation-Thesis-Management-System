@@ -41,6 +41,6 @@ Dẫn chứng PDF mở đúng trang và tô vàng; DOCX mở bản xem văn bả
 
 Kiểm thử kỹ thuật bao gồm PDF/DOCX, bảng, nhóm rỗng, sai nguồn, lỗi API, tài liệu chỉ có kế hoạch, nhiều phiên bản và các thao tác xem dẫn chứng. Kiểm thử giao diện và khớp câu nguồn không thay thế đánh giá chất lượng ngữ nghĩa.
 
-Lệnh `ai:benchmark-reports` ghi độ trễ đầu cuối, tình trạng xử lý, JSON hợp lệ và nguồn xử lý thực tế. Precision/Recall/F1 chỉ tính khi có đáp án chuẩn đủ ba nhóm, bằng cách khớp câu evidence đã chuẩn hóa theo từng nhóm (micro exact evidence). Không có nhãn thì để null; không suy ra độ chính xác từ số trang/số mục hay tự gán 100%.
+Ở phiên bản thử nghiệm, lệnh `ai:benchmark-reports` từng ghi độ trễ đầu cuối, tình trạng xử lý, JSON hợp lệ và nguồn xử lý thực tế. Precision/Recall/F1 chỉ tính khi có đáp án chuẩn đủ ba nhóm, bằng cách khớp câu evidence đã chuẩn hóa theo từng nhóm (micro exact evidence). Không có nhãn thì để null; không suy ra độ chính xác từ số trang/số mục hay tự gán 100%.
 
 Hạn chế: PDF scan/ảnh chưa được OCR, Word không có trang cố định, mô hình có thể nhầm phân loại hoặc diễn giải; giảng viên cần kiểm tra dẫn chứng và đánh giá cuối cùng. Không dùng kết quả của bộ mẫu kiểm soát để suy rộng độ chính xác cho mọi báo cáo.

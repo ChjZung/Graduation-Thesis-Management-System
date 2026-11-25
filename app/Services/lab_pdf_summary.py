@@ -13,6 +13,7 @@ LIB=Path(__file__).resolve().parent/'pdf_lab'
 sys.path.insert(0,str(LIB))
 from core import segment_pdf,prepare_ai_inputs,Settings,PackagingSettings,SegmentationError
 from ai_runtime import ApiError,GeminiClient,RunSettings
+from ai_runtime.kandes import KandesClient
 from ai_gemini_transport import generate_groq
 from ai_report_progress import SCHEMA as PROGRESS_SCHEMA, extract as extract_progress
 from ai_processing import ProcessingError, analysis_cancelled, configure_session
@@ -33,8 +34,20 @@ from ai_runtime.requirement_relevance import VERSION as MATCHER_VERSION
 ENGINE_VERSION='pdf-lab-v1.3'
 
 
+def checkpoint_path(path):
+    if os.name != 'nt':
+        return Path(path)
+    absolute = os.path.abspath(path)
+    extended = '\\\\?\\'
+    if absolute.startswith(extended):
+        return Path(absolute)
+    if absolute.startswith('\\\\'):
+        return Path(extended + 'UNC\\' + absolute[2:])
+    return Path(extended + absolute)
+
+
 def atomic_json(path,value):
-    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+    path=checkpoint_path(path);path.parent.mkdir(parents=True,exist_ok=True)
     temporary=None
     try:
         with tempfile.NamedTemporaryFile('w',encoding='utf-8',dir=path.parent,delete=False) as f:
@@ -51,7 +64,7 @@ def atomic_json(path,value):
 
 def load_state(path):
     try:
-        value=json.loads(Path(path).read_text(encoding='utf-8'))
+        value=json.loads(checkpoint_path(path).read_text(encoding='utf-8'))
         return value if isinstance(value,dict) else {}
     except (OSError,ValueError):return {}
 
@@ -68,7 +81,8 @@ def context_document(context):
 
 def processing_error(error,stage='summary'):
     code=getattr(error,'code','service_unavailable');status=getattr(error,'status',None)
-    if status in (401,403) or code in ('missing_key','authentication'):mapped='authentication'
+    if code=='billing':mapped='billing'
+    elif status in (401,403) or code in ('missing_key','authentication'):mapped='authentication'
     elif status==400 or code in ('invalid_request','invalid_model','reader_model_limit','model_limit','invalid_settings'):mapped='invalid_request'
     elif code in ('call_budget','reader_call_budget','worker_budget','requirement_link_call_budget','review_call_budget'):mapped='budget_exhausted'
     elif code in ('rate_limit','pacing_wait'):mapped='rate_limit'
@@ -363,6 +377,8 @@ def convert_result(result,plan,base,reader,requirements,identity,model,elapsed,e
 
 def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=None,provider_factory=None,import_checkpoint=None,fresh=False):
     started=time.monotonic();options=options or {};context=context or {};identity=identity or {}
+    # Apply the extended path before constructing nested review and page checkpoints.
+    cache_dir=checkpoint_path(cache_dir)
     direct_review=options.get('review_engine')=='verified_v2'
     settings=RunSettings(int(options.get('input_budget',8500)),int(options.get('max_output_tokens',16384)),int(options.get('max_generation_calls',5)))
     # Requirement answers have a separate output budget; chapter/Map caches keep theirs.
@@ -480,6 +496,14 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
         cached_analysis = (base and base.get('status') == 'complete' and reader
                            and reader.get('status') == 'complete' and links and links.get('status') == 'complete')
         provider = None
+        def build_provider():
+            if provider_factory:
+                return provider_factory()
+            pacer = SharedPacer(model, deadline, report_progress)
+            if os.environ.get('LLM_PROVIDER') == 'kandes':
+                return KandesClient(os.environ.get('KANDES_API_KEY'), model, timeout=60, pacer=pacer)
+            return WorkerClient(key, model, pacer=pacer)
+
         progress_calls = 0
         if cached_analysis or settings.max_generation_calls > 1:
             def generate_progress(prompt, validator):
@@ -492,8 +516,7 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
                     except ValueError:
                         pass
                 if provider is None:
-                    provider = provider_factory() if provider_factory else WorkerClient(
-                        key, model, pacer=SharedPacer(model, deadline, report_progress))
+                    provider = build_provider()
                 # This changed progress contract has not been benchmarked on Groq.
                 count = super(WorkerClient, provider).count_tokens if isinstance(provider, WorkerClient) else provider.count_tokens
                 generate = super(WorkerClient, provider).generate if isinstance(provider, WorkerClient) else provider.generate
@@ -519,7 +542,12 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
                 )
             except ApiError as exc:
                 progress_result = {'progress_v1_status': 'unavailable'}
-                if exc.status in (429, 503) or exc.code in ('pacing_wait', 'provider_timeout', 'network_error'):
+                if isinstance(provider, KandesClient) or (
+                        provider is None and os.environ.get('LLM_PROVIDER') == 'kandes' and not provider_factory):
+                    if not cached_analysis or exc.code in ('billing', 'authentication', 'missing_key'):
+                        raise
+                    error_list.append(processing_error(exc, 'progress_v1'))
+                elif exc.status in (429, 503) or exc.code in ('pacing_wait', 'provider_timeout', 'network_error'):
                     # Progress itself stays Gemini-only. Let compatible Map/reader
                     # tasks use their existing fallback policy in the same pass.
                     fallback = not cached_analysis and isinstance(provider, WorkerClient) and provider.allow_fallback_after(exc)
@@ -534,7 +562,7 @@ def run_pipeline(path,key,model,cache_dir,context=None,identity=None,options=Non
             report_progress(stage='complete',map_done=len(plan['batches']),map_total=len(plan['batches']),reused_calls=1)
             return with_navigation(convert_result(source,plan,base,reader,requirements,identity,model,time.monotonic()-started,error_list,context,links))
         if provider is None:
-            provider=provider_factory() if provider_factory else WorkerClient(key,model,pacer=SharedPacer(model,deadline,report_progress))
+            provider = build_provider()
         if progress_calls:
             settings = RunSettings(settings.input_budget, settings.max_output_tokens,
                                    settings.max_generation_calls - progress_calls)
@@ -587,7 +615,7 @@ def main():
     parser.add_argument('--lab-settings');parser.add_argument('--import-lab-checkpoint');parser.add_argument('--output')
     parser.add_argument('--review-only',action='store_true')
     parser.add_argument('--fresh',action='store_true',help='Force fresh run without reading disk cache')
-    for name in ('stage','chunk-size','chunk-overlap','method','pipeline-version','target-tokens','overlap-tokens','prompt-reserve-tokens','max-input-tokens'):parser.add_argument('--'+name)
+    for name in ('stage','method','pipeline-version','target-tokens','overlap-tokens','prompt-reserve-tokens','max-input-tokens'):parser.add_argument('--'+name)
     args=parser.parse_args()
     try:
         result=run_pipeline(args.pdf,os.environ.get('GEMINI_API_KEY',''),args.model,args.cache_dir,

@@ -6,6 +6,9 @@ import math
 import time
 import hashlib
 import os
+import sys
+from pathlib import Path
+from types import SimpleNamespace
 import urllib.error
 import urllib.request
 
@@ -145,7 +148,42 @@ def generate_groq(prompt, key, model, deadline, requests_module, clean_json):
     return value, provider_model
 
 
+def generate_kandes(prompt, api_key, model, timeout):
+    lab_path = str(Path(__file__).resolve().parent / 'pdf_lab')
+    if lab_path not in sys.path:
+        sys.path.insert(0, lab_path)
+    from ai_runtime.kandes import KandesClient
+    from ai_runtime.provider import ApiError
+
+    session = current_session()
+    deadline = time.monotonic() + timeout
+    try:
+        pacer = SimpleNamespace(
+            before_request=lambda tokens: session.before_http(model, tokens + 8192, deadline),
+            limiter=session.limiter,
+        )
+        client = KandesClient(api_key, model, timeout=min(45, timeout), deadline=deadline, pacer=pacer)
+        tokens = client.count_tokens(prompt, None, 8192)
+        if tokens > int(os.environ.get('AI_MAX_REQUEST_TOKENS', '32000')):
+            raise ProcessingError('input_too_large', model=model)
+        response = client.generate(prompt, None, 8192, tokens)
+    except ApiError as exc:
+        code = {'billing': 'billing', 'missing_key': 'authentication', 'authentication': 'authentication',
+                'invalid_model': 'model_unavailable', 'invalid_request': 'invalid_request',
+                'provider_timeout': 'timeout', 'network_error': 'connection_error',
+                'worker_budget': 'budget_exhausted',
+                'rate_limit': 'rate_limit', 'pacing_wait': 'rate_limit',
+                'invalid_output': 'invalid_json', 'invalid_response': 'invalid_response',
+                'incomplete_response': 'invalid_response'}.get(exc.code, 'service_unavailable')
+        raise ProcessingError(code, model=model, http_status=exc.status, retry_after=exc.retry_after,
+                              cooldown_until=exc.metadata.get('cooldown_until')) from None
+    session.record_usage(response['usage'])
+    return response['data'], model
+
+
 def generate(prompt, api_key, model, timeout, requests_module, clean_json, allow_groq=True):
+    if os.environ.get('LLM_PROVIDER') == 'kandes':
+        return generate_kandes(prompt, api_key, model, timeout)
     groq_key = os.environ.get('GROQ_API_KEY', '').strip()
     groq_model = os.environ.get('GROQ_MODEL', '').strip()
     deadline = time.monotonic() + timeout

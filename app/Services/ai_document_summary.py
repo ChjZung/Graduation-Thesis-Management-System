@@ -185,8 +185,8 @@ PHẦN Ý ĐÃ KIỂM CHỨNG (sẽ kiểm tra hết các phần): {json.dumps(c
     return deduplicate(accepted), rejected, True
 
 
-def run_pipeline(path, api_key, model, context, extract, build_chunks=None, api=None,
-                 heuristic=False, chunk_size=12000, chunk_overlap=350, settings=None, identity=None):
+def run_pipeline(path, api_key, model, context, extract, api=None,
+                 heuristic=False, settings=None, identity=None):
     started = time.monotonic()
     settings = dict({'target_tokens':2500, 'overlap_tokens':200, 'prompt_reserve_tokens':1500,
                      'max_input_tokens':12000, 'pipeline_version':'section-v6.1'}, **(settings or {}))

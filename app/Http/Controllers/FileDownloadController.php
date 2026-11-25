@@ -204,6 +204,14 @@ class FileDownloadController extends Controller
             abort(404, 'Không tìm thấy hồ sơ bảo vệ tương ứng.');
         }
 
+        if (filled($filePath) && $filePath === $hoSo->FileBanChinhSua) {
+            $baoCao = $hoSo->baoCaoSauBaoVes()->where('DuongDanFile', $filePath)->first();
+            if ($baoCao) {
+                abort_unless(Gate::forUser($user)->allows('viewPostDefenseReport', [$hoSo, $baoCao]), 403);
+                return $this->serveFile($filePath, $baoCao->TenFile, request()->boolean('download'), postDefenseReport: true);
+            }
+        }
+
         // Kiểm tra phân quyền qua HoSoBaoVePolicy
         if (!Gate::forUser($user)->allows('view', $hoSo)) {
             abort(403, 'Bạn không có quyền tải xuống hoặc xem tệp tài liệu này.');
@@ -416,9 +424,7 @@ class FileDownloadController extends Controller
             abort(404, 'Không tìm thấy thông tin hồ sơ bảo vệ của báo cáo này.');
         }
 
-        if (!Gate::forUser($user)->allows('view', $hoSo)) {
-            abort(403, 'Bạn không có quyền tải xuống hoặc xem tệp tài liệu này.');
-        }
+        abort_unless(Gate::forUser($user)->allows('viewPostDefenseReport', [$hoSo, $baoCao]), 403);
 
         $type = request('type', 'main');
         if ($type === 'giai_trinh') {
@@ -432,7 +438,7 @@ class FileDownloadController extends Controller
             $fileName = $baoCao->TenFile ?: 'Bao_Cao_Hoan_Thien.pdf';
         }
 
-        return $this->serveFile($filePath, $fileName, $asAttachment);
+        return $this->serveFile($filePath, $fileName, $asAttachment, postDefenseReport: true);
     }
 
     /**
@@ -455,7 +461,7 @@ class FileDownloadController extends Controller
     /**
      * Phục vụ file an toàn từ Storage
      */
-    private function serveFile(?string $storedPath, string $downloadName, bool $asAttachment = false)
+    private function serveFile(?string $storedPath, string $downloadName, bool $asAttachment = false, bool $postDefenseReport = false)
     {
         if (empty($storedPath)) {
             abort(404, 'Đường dẫn tệp không tồn tại.');
@@ -514,6 +520,10 @@ class FileDownloadController extends Controller
             public_path($cleanPath),
             public_path($decodedPath),
         ];
+
+        if ($postDefenseReport) {
+            array_unshift($candidates, Storage::disk('local')->path($cleanPath));
+        }
 
         foreach ($candidates as $candidate) {
             if (is_file($candidate)) {
@@ -599,6 +609,18 @@ class FileDownloadController extends Controller
             }
         }
 
+        // Bản hoàn thiện, giải trình và minh chứng phải qua cùng một kiểm tra quyền.
+        if (str_starts_with($decodedPath, 'baocao_saubaove/') || str_contains($decodedPath, '/bao_cao_sau_bao_ve/')) {
+            $baoCao = BaoCaoSauBaoVe::whereIn('DuongDanFile', [$cleanPath, $decodedPath])
+                ->orWhereIn('FileGiaiTrinh', [$cleanPath, $decodedPath])
+                ->orWhereIn('FileMinhChung', [$cleanPath, $decodedPath])
+                ->firstOrFail();
+
+            $hoSo = $baoCao->hoSoBaoVe;
+            abort_unless($hoSo && Gate::forUser($user)->allows('viewPostDefenseReport', [$hoSo, $baoCao]), 403);
+            return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'), postDefenseReport: true);
+        }
+
         // 3. Nếu là tệp Hồ sơ bảo vệ (hoso/...)
         if (str_starts_with($cleanPath, 'hoso/') || str_starts_with($cleanPath, 'tep_hoso/') || str_starts_with($decodedPath, 'hoso/') || str_starts_with($decodedPath, 'tep_hoso/')) {
             $tep = TepHoSoBaoVe::where('DuongDanFile', 'like', "%{$cleanPath}%")
@@ -622,24 +644,6 @@ class FileDownloadController extends Controller
             if ($hoSo) {
                 if (!Gate::forUser($user)->allows('view', $hoSo)) {
                     abort(403, 'Bạn không có quyền truy cập tệp hồ sơ này.');
-                }
-                return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
-            }
-        }
-
-        // 4. Nếu là tệp Báo cáo sau bảo vệ
-        if (str_starts_with($cleanPath, 'baocao_saubaove/') || str_starts_with($decodedPath, 'baocao_saubaove/')) {
-            $baoCao = BaoCaoSauBaoVe::where('DuongDanFile', 'like', "%{$cleanPath}%")
-                ->orWhere('DuongDanFile', 'like', "%{$decodedPath}%")
-                ->orWhere('FileGiaiTrinh', 'like', "%{$cleanPath}%")
-                ->orWhere('FileGiaiTrinh', 'like', "%{$decodedPath}%")
-                ->orWhere('FileMinhChung', 'like', "%{$cleanPath}%")
-                ->orWhere('FileMinhChung', 'like', "%{$decodedPath}%")
-                ->first();
-
-            if ($baoCao && $baoCao->hoSoBaoVe) {
-                if (!Gate::forUser($user)->allows('view', $baoCao->hoSoBaoVe)) {
-                    abort(403, 'Bạn không có quyền truy cập tệp báo cáo này.');
                 }
                 return $this->serveFile($cleanPath, basename($cleanPath), $request->boolean('download'));
             }

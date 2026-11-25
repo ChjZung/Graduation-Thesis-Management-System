@@ -116,7 +116,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold text-dark small">Ngành Đào Tạo <span class="text-danger">*</span></label>
+                                    <label for="MaNganh" class="form-label fw-bold text-dark small">Ngành của hội đồng <span class="text-danger">*</span></label>
                                     <select name="MaNganh" id="MaNganh" class="form-select" required>
                                         @foreach($nganhs as $ng)
                                         <option value="{{ $ng->MaNganh }}" {{ old('MaNganh') == $ng->MaNganh ? 'selected' : '' }}>
@@ -236,8 +236,8 @@
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <select id="filterNganhDeTai" class="form-select">
-                                            <option value="">— Tất cả Ngành đào tạo —</option>
+                                        <select id="filterNganhDeTai" class="form-select" aria-label="Lọc theo ngành đào tạo của nhóm">
+                                            <option value="">— Tất cả ngành của nhóm —</option>
                                             @foreach($nganhs as $ng)
                                             <option value="{{ $ng->MaNganh }}">{{ $ng->TenNganh }} ({{ $ng->MaNganh }})</option>
                                             @endforeach
@@ -362,6 +362,13 @@
                                             </td>
                                         </tr>
                                         @endforelse
+                                        @if($danhSachHoSo->isNotEmpty())
+                                        <tr id="emptyFilteredDeTai" hidden>
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                Không có hồ sơ phù hợp với bộ lọc. Hãy chọn ngành của nhóm hoặc đổi bộ lọc.
+                                            </td>
+                                        </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -974,22 +981,13 @@
     document.getElementById('filterBoMonDeTai')?.addEventListener('change', filterDeTaiTable);
     document.getElementById('filterTrangThaiHoSo')?.addEventListener('change', filterDeTaiTable);
 
-    // Đồng bộ Ngành từ Bước 1 sang bộ lọc Bước 2
-    document.getElementById('MaNganh')?.addEventListener('change', function() {
-        const val = this.value;
-        const fn = document.getElementById('filterNganhDeTai');
-        if (fn && val) {
-            fn.value = val;
-            filterDeTaiTable();
-        }
-    });
-
     function filterDeTaiTable() {
         const query = document.getElementById('searchDeTai')?.value?.toLowerCase().trim() || '';
         const nganhFilter = document.getElementById('filterNganhDeTai')?.value || '';
         const bmFilter = document.getElementById('filterBoMonDeTai')?.value?.toLowerCase() || '';
         const statusFilter = document.getElementById('filterTrangThaiHoSo')?.value || '';
 
+        let hasMatches = false;
         document.querySelectorAll('#tbodyDeTai tr.row-detai').forEach(row => {
             const searchData = row.getAttribute('data-search') || '';
             const rowNganh = row.getAttribute('data-manganh') || '';
@@ -1006,10 +1004,13 @@
 
             if (matchQuery && matchNganh && matchBM && matchStatus) {
                 row.style.display = '';
+                hasMatches = true;
             } else {
                 row.style.display = 'none';
             }
         });
+        const emptyRow = document.getElementById('emptyFilteredDeTai');
+        if (emptyRow) emptyRow.hidden = hasMatches;
     }
 
     // Dữ liệu số lượng và vai trò HĐ của giảng viên theo từng học kỳ (toàn bộ học kỳ trong hệ thống)
@@ -1620,6 +1621,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        filterDeTaiTable();
+
         // 1. Phục hồi các lựa chọn thành viên từ old input hoặc hội đồng hiện tại
         const oldMembers = @json(old('thanh_viens', []));
         for (const [index, member] of Object.entries(oldMembers || {})) {

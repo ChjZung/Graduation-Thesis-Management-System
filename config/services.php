@@ -35,6 +35,14 @@ return [
         ],
     ],
 
+    'llm_provider' => env('LLM_PROVIDER', 'gemini'),
+
+    'kandes' => [
+        'api_key' => env('KANDES_API_KEY'),
+        'base_url' => env('KANDES_BASE_URL', 'https://apistudio.kandes.shop/v1'),
+        'model' => env('KANDES_MODEL', 'gemini-3-8-flash-high'),
+    ],
+
     // Google Gemini API — Thêm GEMINI_API_KEY và GEMINI_MODEL vào .env để bật AI thật
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),

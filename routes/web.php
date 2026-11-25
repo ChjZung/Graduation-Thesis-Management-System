@@ -106,6 +106,13 @@ Route::middleware(['auth'])->group(function () {
 // ADMIN / GIÁO VỤ ROUTES
 // ==========================================
 Route::middleware(['auth', 'role:Admin'])->prefix('admin')->group(function () {
+    Route::middleware('can:manage-mysql-backups')->prefix('mysql-backup')->name('admin.mysql-backup.')->group(function () {
+        $controller = \App\Http\Controllers\Admin\MysqlBackupController::class;
+        Route::get('/', [$controller, 'index'])->name('index');
+        Route::post('/', [$controller, 'store'])->middleware('throttle:3,1')->name('store');
+        Route::get('/{id}/download', [$controller, 'download'])->whereUuid('id')->name('download');
+        Route::delete('/{id}', [$controller, 'destroy'])->whereUuid('id')->name('destroy');
+    });
 
     // Dashboard & Thống kê Báo cáo
     Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
@@ -366,7 +373,7 @@ Route::middleware(['auth', 'role:Giảng viên'])->prefix('giangvien')->group(fu
     // Kiểm tra & Đánh giá Báo cáo hoàn thiện sau bảo vệ
     Route::get('/kiem-tra-bao-cao-sau-bao-ve', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'index'])->name('giangvien.kiemtra_baocao_sau_baove.index');
     Route::get('/kiem-tra-bao-cao-sau-bao-ve/{id}', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'show'])->name('giangvien.kiemtra_baocao_sau_baove.show');
-    Route::post('/kiem-tra-bao-cao-sau-bao-ve/{id}/danh-gia', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'danhGia'])->name('giangvien.kiemtra_baocao_sau_baove.danhgia');
+    Route::post('/kiem-tra-bao-cao-sau-bao-ve/{id}/xac-nhan', [\App\Http\Controllers\GiangVien\KiemTraBaoCaoSauBaoVeController::class, 'xacNhan'])->name('giangvien.kiemtra_baocao_sau_baove.xacnhan');
 
     // Thông báo cho Giảng viên (xem, soạn và gửi đến nhóm hướng dẫn)
     Route::get('/thongbao', [\App\Http\Controllers\GiangVien\ThongBaoController::class, 'index'])->name('giangvien.thongbao.index');

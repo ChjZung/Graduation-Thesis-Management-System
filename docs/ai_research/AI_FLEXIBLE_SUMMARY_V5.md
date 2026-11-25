@@ -24,7 +24,7 @@ Yêu cầu trống → `document_fallback` được máy chủ áp dụng. Yêu 
 - Đối chiếu riêng dùng `ai_requirement_review.py`, truy tìm văn bản gốc và kiểm chứng nguồn/mức liên quan bằng `ai_citation_audit.py`.
 - Lưu JSON theo từng phiên bản bài nộp. Blade dùng schema 5 cho giao diện linh hoạt; schema lịch sử vẫn đọc được.
 
-`ai_summary_hierarchy.py` tiếp tục cung cấp bộ phân đoạn và ước lượng token. Hàm `run_legacy_map_reduce_pipeline` giữ triển khai cũ để tương thích và so sánh; entrypoint CLI và web gọi pipeline V5.
+`ai_summary_hierarchy.py` tiếp tục cung cấp bộ phân đoạn và ước lượng token. Ở thời điểm V5, hàm `run_legacy_map_reduce_pipeline` giữ triển khai cũ để so sánh. Hệ thống hiện tại đã gỡ hàm này.
 
 ## Hợp đồng dữ liệu
 

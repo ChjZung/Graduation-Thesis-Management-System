@@ -63,8 +63,11 @@ class AiReportProcessingService
 
     public function fingerprint(KhoiBaoCaoTienDo $report): string
     {
+        $provider = config('services.llm_provider', 'gemini');
+        $modelIdentity = $provider === 'gemini' ? config('services.gemini.model') :
+            [$provider, config('services.kandes.model'), config('services.kandes.base_url')];
         return hash('sha256', json_encode([hash_file('sha256',$this->path($report)), $this->identity($report),
-            $report->dotNop?->nguCanhDoiChieuAi(), config('services.gemini.model'), config('ai_processing.summary'),
+            $report->dotNop?->nguCanhDoiChieuAi(), $modelIdentity, config('ai_processing.summary'),
             config('ai_processing.pipeline_version', 'section-v6.1'), config('ai_processing.pdf_engine'), config('ai_processing.lab')], JSON_UNESCAPED_UNICODE));
     }
 
@@ -156,7 +159,11 @@ class AiReportProcessingService
             }
             $data['_processing'] = $state;
             $locked->update(['TomTatJson'=>$data]);
-            AnalyzeReportVersion::dispatch($locked->MaKhoi,$state['token'])->onConnection('ai')->onQueue('ai-reports');
+            // A simulated academic date must not delay the real-time worker.
+            AnalyzeReportVersion::dispatch($locked->MaKhoi, $state['token'])
+                ->onConnection('ai')
+                ->onQueue('ai-reports')
+                ->delay(new \DateTimeImmutable('@'.$state['queued_at']));
             return $state;
         });
     }
@@ -344,7 +351,7 @@ class AiReportProcessingService
             fn ($e) => ($e['stage'] ?? '') === 'progress_v1'
                 && in_array($e['code'] ?? '', ['rate_limit','service_unavailable','timeout','connection_error'], true));
         if ($summaryDone && $reviewDone && !$progressWaiting) return ['status'=>'completed','message'=>$reviewOnly ? 'Đã hoàn tất đối chiếu yêu cầu. Phần tóm tắt trước đó được giữ nguyên.' : 'Đã hoàn tất phân tích và các bước đối chiếu hiện có.','errors'=>[]];
-        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','invalid_request','input_too_large','extraction_failed','output_validation']));
+        $fatal = array_filter($errors, fn ($e) => in_array($e['code'] ?? '', ['authentication','billing','invalid_request','input_too_large','extraction_failed','output_validation']));
         if ($attempt >= config('ai_processing.max_passes',20)) {
             return ['status'=>'partial','next_retry_at'=>null,'message'=>'Đã hết lượt tự thử. Kết quả đã lưu được giữ; cần kiểm tra dịch vụ AI trước khi tiếp tục.','errors'=>$errors];
         }

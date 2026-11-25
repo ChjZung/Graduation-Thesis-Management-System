@@ -93,12 +93,15 @@ class AiSetupCommand extends Command
             $rows[] = ['Cơ sở dữ liệu', 'Không thể kết nối CSDL', 'LỖI'];
         }
 
-        // 5. Gemini API Key
-        $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY');
-        if (empty($apiKey) || $apiKey === 'your_gemini_api_key_here' || str_starts_with((string)$apiKey, 'your_')) {
-            $rows[] = ['Khóa Google Gemini API', 'Chưa có key thực tế trong .env', 'CẦN CẤU HÌNH'];
+        $provider = config('services.llm_provider', 'gemini');
+        if (!in_array($provider, ['gemini', 'kandes'], true)) {
+            $hasError = true;
+            $rows[] = ['LLM_PROVIDER', 'Giá trị hợp lệ là gemini hoặc kandes', 'LỖI'];
         } else {
-            $rows[] = ['Khóa Google Gemini API', 'Đã cấu hình (' . substr($apiKey, 0, 6) . '...)', 'Sẵn sàng'];
+            $apiKey = (string) config("services.{$provider}.api_key");
+            $configured = trim($apiKey) !== '' && !str_starts_with($apiKey, 'your_');
+            $rows[] = ["Khóa API ({$provider})", $configured ? 'Đã cấu hình' : 'Chưa có key thực tế trong .env',
+                $configured ? 'Sẵn sàng' : 'CẦN CẤU HÌNH'];
         }
 
         // In bảng báo cáo

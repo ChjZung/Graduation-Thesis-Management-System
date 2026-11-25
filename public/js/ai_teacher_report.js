@@ -169,7 +169,7 @@
     const expanded=!!existing.closest('dialog');
     const oldBody=existing.querySelector('.ai-details');
     const position={top:oldBody?.scrollTop||0,left:oldBody?.scrollLeft||0};
-    const selection=[...existing.querySelectorAll('[role="tab"].active')].map(t=>({attribute:t.hasAttribute('data-ai-result-tab')?'data-ai-result-tab':t.hasAttribute('data-ai-work-tab')?'data-ai-work-tab':'data-ai-requirement-tab',value:t.dataset.aiResultTab||t.dataset.aiWorkTab||t.dataset.aiRequirementTab}));
+    const selection=[...existing.querySelectorAll('[role="tab"].active')].map(t=>({attribute:t.hasAttribute('data-ai-result-tab')?'data-ai-result-tab':'data-ai-requirement-tab',value:t.dataset.aiResultTab||t.dataset.aiRequirementTab}));
     const detailKey=d=>d.dataset.documentNode ? 'node:'+d.dataset.documentNode :
       'detail:'+(d.querySelector('summary')?.textContent||'')+'|'+(d.parentElement.querySelector('h4,h3')?.textContent||'')+'|'+
       [...d.querySelectorAll('[data-citation-quote]')].map(b=>b.dataset.citationPage+':'+b.dataset.citationQuote).join('|');
@@ -318,10 +318,10 @@
  // Reserve the current panel height during tab layout so scroll containers cannot
  // clamp to zero when Bootstrap briefly hides the old pane before showing the new.
  document.addEventListener('show.bs.tab',event=>{
-  const tab=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab], [data-ai-work-tab]'),card=tab?.closest('.ai-teacher-report');if(!card)return;
-  const container=tab.closest('.ai-details'),content=tab.dataset.aiWorkTab ? tab.closest('[data-ai-work-summary]').querySelector('[data-ai-work-content]') : tab.dataset.aiRequirementTab ? tab.closest('[data-teacher-requirements-summary]').querySelector('[data-ai-requirement-content]') : card.querySelector('.tab-content');
+  const tab=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab]'),card=tab?.closest('.ai-teacher-report');if(!card)return;
+  const container=tab.closest('.ai-details'),content=tab.dataset.aiRequirementTab ? tab.closest('[data-teacher-requirements-summary]').querySelector('[data-ai-requirement-content]') : card.querySelector('.tab-content');
   if(!container||!content)return;
-  if(tab.dataset.aiWorkTab||tab.dataset.aiRequirementTab){
+  if(tab.dataset.aiRequirementTab){
    const siblings=[...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')];
    const previous=event.relatedTarget;
    const direction=previous&&siblings.indexOf(tab)<siblings.indexOf(previous)?-1:1;
@@ -333,7 +333,7 @@
  });
  document.addEventListener('shown.bs.tab',event=>{
   if(event.target.closest('#pills-tab-sv')){syncCoverage();return;}
-  const t=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab], [data-ai-work-tab]'),c=t?.closest('.ai-teacher-report');if(!c)return;
+  const t=event.target.closest('[data-ai-result-tab], [data-ai-requirement-tab]'),c=t?.closest('.ai-teacher-report');if(!c)return;
   if(t.dataset.aiResultTab)try{sessionStorage.setItem(storageKey(c),t.dataset.aiResultTab);}catch{}
   revealTab(t);
   const s=tabScroll.get(c);if(!s)return;tabScroll.delete(c);

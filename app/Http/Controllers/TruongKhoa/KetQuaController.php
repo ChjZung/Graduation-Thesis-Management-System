@@ -753,12 +753,10 @@ class KetQuaController extends Controller
             'MaHoSo'                    => 'required|exists:HoSoBaoVe,MaHoSo',
             'YeuCauChinhSuaSauBaoVe'    => 'required|string|max:3000',
             'HanNopBaoCaoSauBaoVe'      => 'required|date|after:now',
-            'NguoiKiemTraChinhSua'      => 'required|string|max:100',
         ], [
             'YeuCauChinhSuaSauBaoVe.required' => 'Vui lòng nhập nội dung cần chỉnh sửa theo kết luận của Hội đồng.',
             'HanNopBaoCaoSauBaoVe.required'   => 'Vui lòng thiết lập thời hạn hoàn thành nộp lại báo cáo.',
             'HanNopBaoCaoSauBaoVe.after'      => 'Thời hạn nộp lại phải sau thời điểm hiện tại.',
-            'NguoiKiemTraChinhSua.required'   => 'Vui lòng chỉ định người kiểm tra, xác nhận báo cáo sau chỉnh sửa.',
         ]);
 
         $hoSo = HoSoBaoVe::with(['nhom.deTai.giangVien', 'hoiDong'])->findOrFail($request->MaHoSo);
@@ -766,7 +764,7 @@ class KetQuaController extends Controller
         abort_if($hoSo->baoCaoSauBaoVes()->exists(), 403, 'Báo cáo hoàn thiện đã nộp chỉ được xem và tải xuống; không yêu cầu chỉnh sửa thêm.');
         $hoSo->YeuCauChinhSuaSauBaoVe = $request->YeuCauChinhSuaSauBaoVe;
         $hoSo->HanNopBaoCaoSauBaoVe = $request->HanNopBaoCaoSauBaoVe;
-        $hoSo->NguoiKiemTraChinhSua = $request->NguoiKiemTraChinhSua;
+        $hoSo->NguoiKiemTraChinhSua = $hoSo->deTai?->MaGV;
         $hoSo->TrangThaiChinhSuaSauBaoVe = 'ChoSinhVienNop';
         $hoSo->TrangThaiKetQua = 'CoYeuCauChinhSua';
         $hoSo->save();
@@ -779,15 +777,7 @@ class KetQuaController extends Controller
             'Yêu cầu chỉnh sửa'
         );
 
-        // Gửi thông báo đến người kiểm tra
-        ThongBaoService::gui(
-            $request->NguoiKiemTraChinhSua,
-            'Phân công kiểm tra báo cáo sau bảo vệ',
-            "Thầy/Cô được Trưởng khoa phân công kiểm tra, xác nhận báo cáo chỉnh sửa sau bảo vệ của nhóm {$hoSo->nhom?->TenNhom} (Đề tài: {$hoSo->nhom?->deTai?->TenDeTai}).",
-            'Phân công'
-        );
-
-        return redirect()->back()->with('success', 'Đã ghi nhận yêu cầu chỉnh sửa báo cáo sau bảo vệ và phát thông báo đến nhóm sinh viên cùng giảng viên phụ trách kiểm tra!');
+        return redirect()->back()->with('success', 'Đã ghi nhận yêu cầu chỉnh sửa báo cáo sau bảo vệ và phát thông báo đến nhóm sinh viên!');
     }
 
     public function exportExcel(Request $request)

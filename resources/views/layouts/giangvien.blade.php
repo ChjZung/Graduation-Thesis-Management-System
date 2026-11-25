@@ -133,7 +133,7 @@
                         <span>Xác nhận hồ sơ BV</span>
                     </a>
                     <a href="{{ route('giangvien.kiemtra_baocao_sau_baove.index') }}" class="submenu-link {{ request()->routeIs('giangvien.kiemtra_baocao_sau_baove.*') ? 'active-sub' : '' }}">
-                        <span>Kết quả sau báo cáo</span>
+                        <span>Xác nhận báo cáo sau bảo vệ</span>
                     </a>
                 </div>
             </div>

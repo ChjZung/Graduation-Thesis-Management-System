@@ -131,11 +131,11 @@
                     @endphp
                     @if($trangThaiSua === 'DaHoanThanh')
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold fs-6">
-                            <i class="fa-solid fa-circle-check me-1"></i> Báo Cáo Đã Đạt Chuẩn Lưu Trữ
+                            <i class="fa-solid fa-circle-check me-1"></i> GVHD đã xác nhận báo cáo
                         </span>
                     @elseif($trangThaiSua === 'DaNop')
                         <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3 py-2 fw-semibold fs-6">
-                            <i class="fa-solid fa-hourglass-half me-1"></i> Đã nộp báo cáo hoàn thiện
+                            <i class="fa-solid fa-hourglass-half me-1"></i> Đã nộp · Chờ GVHD xác nhận
                         </span>
                     @elseif($trangThaiSua === 'YeuCauSuaTiep')
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold fs-6">

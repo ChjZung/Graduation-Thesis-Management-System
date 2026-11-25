@@ -210,7 +210,7 @@
                 </div>
                 <div class="col-md-6">
                     <span>Người theo dõi báo cáo:</span>
-                    <strong class="text-dark ms-1">{{ $hoSo->NguoiKiemTraChinhSua ?? 'Giảng viên hướng dẫn' }}</strong>
+                    <strong class="text-dark ms-1">{{ $latestBaoCao?->NguoiKiemTra ?? $hoSo->deTai?->giangVien?->HoTen ?? 'Giảng viên hướng dẫn' }}</strong>
                 </div>
             </div>
         </div>
@@ -285,7 +285,16 @@
                 </div>
             </div>
 
-            <div class="alert alert-info mt-4 mb-0" role="status">Báo cáo hoàn thiện đã nộp. Giảng viên hướng dẫn và Trưởng khoa chỉ xem, tải tệp; không đánh giá hoặc yêu cầu nộp lại.</div>
+            <div class="alert alert-success mt-4 mb-0" role="status">
+                <i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i>
+                Đã được GVHD xác nhận
+                @if($latestBaoCao->NguoiKiemTra)
+                    · {{ $latestBaoCao->NguoiKiemTra }}
+                @endif
+                @if($latestBaoCao->NgayKiemTra)
+                    · {{ $latestBaoCao->NgayKiemTra->format('d/m/Y H:i') }}
+                @endif
+            </div>
         </div>
     </div>
     @endif

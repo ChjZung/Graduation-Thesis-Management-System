@@ -12,7 +12,6 @@ use App\Models\ThanhVienNhom;
 use App\Models\KhoiBaoCaoTienDo;
 use App\Models\TomTatBaoCao;
 use App\Helpers\IdGenerator;
-use App\Jobs\GenerateAiSummaryJob;
 use App\Models\GiaiDoanThucHien;
 use App\Models\DotNopBaoCao;
 use App\Services\ThesisProgressService;

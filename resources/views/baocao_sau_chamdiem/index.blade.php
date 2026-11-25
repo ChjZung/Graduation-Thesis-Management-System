@@ -81,62 +81,9 @@
         </div>
     </div>
 
-    <!-- Summary KPI Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg">
-            <a href="{{ route($scope['routePrefix'] . '.index') }}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #0072ce !important;">
-                    <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Tổng Hồ Sơ</div>
-                        <h3 class="fw-bold my-1 text-primary">{{ $counts['total'] }}</h3>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Hồ sơ sau bảo vệ</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg">
-            <a href="{{ route($scope['routePrefix'] . '.index', array_merge(request()->except('status', 'page'), ['status' => 'da_nop'])) }}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #0dcaf0 !important;">
-                    <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Đã nộp</div>
-                        <h3 class="fw-bold my-1 text-info">{{ $counts['cho_kiem_tra'] }}</h3>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Đã nộp bản mới</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg">
-            <a href="{{ route($scope['routePrefix'] . '.index', array_merge(request()->except('status', 'page'), ['status' => 'chua_dat'])) }}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #dc3545 !important;">
-                    <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Chưa Đạt (Cần Sửa)</div>
-                        <h3 class="fw-bold my-1 text-danger">{{ $counts['yeu_cau_sua'] }}</h3>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Yêu cầu sửa tiếp</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg">
-            <a href="{{ route($scope['routePrefix'] . '.index', array_merge(request()->except('status', 'page'), ['status' => 'dat'])) }}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #198754 !important;">
-                    <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Đã Hoàn Thành (Đạt)</div>
-                        <h3 class="fw-bold my-1 text-success">{{ $counts['da_hoan_thanh'] }}</h3>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Chuẩn lưu trữ Khoa</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg">
-            <a href="{{ route($scope['routePrefix'] . '.index', array_merge(request()->except('status', 'page'), ['status' => 'chua_nop'])) }}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="border-left: 4px solid #6c757d !important;">
-                    <div class="card-body p-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">Chưa Nộp Lại</div>
-                        <h3 class="fw-bold my-1 text-secondary">{{ $counts['chua_nop'] }}</h3>
-                        <div class="small text-muted" style="font-size: 0.75rem;">Chờ sinh viên nộp</div>
-                    </div>
-                </div>
-            </a>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <strong>{{ $counts['total'] }}</strong> hồ sơ có báo cáo đã được GVHD xác nhận
         </div>
     </div>
 
@@ -215,17 +162,6 @@
                             {{ $hd->TenHoiDong }}
                         </option>
                     @endforeach
-                </select>
-            </div>
-
-            <!-- Trạng thái hoàn thiện -->
-            <div class="col-6 col-md-4 col-xl-3 min-w-0">
-                <select name="status" class="form-select text-truncate w-100" title="Trạng thái hoàn thiện">
-                    <option value="">-- Tất cả trạng thái --</option>
-                    <option value="da_nop" {{ in_array(request('status'), ['da_nop', 'cho_kiem_tra']) ? 'selected' : '' }}>Đã nộp báo cáo hoàn thiện</option>
-                    <option value="dat" {{ in_array(request('status'), ['dat', 'da_hoan_thanh']) ? 'selected' : '' }}>Đạt (Đã hoàn thành)</option>
-                    <option value="chua_dat" {{ in_array(request('status'), ['chua_dat', 'yeu_cau_sua']) ? 'selected' : '' }}>Chưa đạt (Yêu cầu sửa)</option>
-                    <option value="chua_nop" {{ request('status') === 'chua_nop' ? 'selected' : '' }}>Chưa nộp</option>
                 </select>
             </div>
 
@@ -337,7 +273,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    @if($hs->TrangThaiChinhSuaSauBaoVe === 'DaHoanThanh')
+                                    @if($latest?->TrangThai === 'Đạt')
                                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-bold">
                                             <i class="fa-solid fa-circle-check me-1"></i> Đạt
                                         </span>
@@ -381,7 +317,7 @@
                                             <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                         </a>
 
-                                        @if($latest && $latest->FileBaoCao)
+                                        @if($latest && $latest->DuongDanFile)
                                         <button type="button" 
                                                 class="btn btn-sm btn-light border text-danger rounded-circle p-1" 
                                                 style="width: 28px; height: 28px;"
